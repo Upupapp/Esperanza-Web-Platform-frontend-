@@ -32,8 +32,8 @@
                         size="sm"
                         icon="bell"
                         class="shrink-0 hidden sm:inline-flex"
-                        @click="$dispatch('toast', { message: 'We will remind you before this event starts.', variant: 'info' })"
-                    >Remind Me</x-ui.button>
+                        @click="$dispatch('toast', { message: $store.lang.current === 'en' ? 'We will remind you before this event starts.' : 'Paalalahanan ka namin bago magsimula ang kaganapang ito.', variant: 'info' })"
+                    ><x-ui.t fil="Paalalahanan Ako" en="Remind Me" /></x-ui.button>
                 </div>
             </x-ui.card>
         @endforeach

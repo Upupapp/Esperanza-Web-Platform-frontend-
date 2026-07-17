@@ -1,0 +1,210 @@
+@php
+    $payments = [
+        ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Dokyu', 'item' => 'Cedula (Community Tax Certificate)', 'amount' => '₱32.00', 'method' => null, 'receipt' => null, 'status' => 'Waiting Requirements', 'date' => 'Jul 8, 2026'],
+        ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'type' => 'Dokyu', 'item' => 'Business Permit (New)', 'amount' => '₱1,250.00', 'method' => 'PayMaya', 'receipt' => 'PayMaya Receipt.png', 'status' => 'Pending Review', 'date' => 'Jul 10, 2026'],
+        ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Dokyu', 'item' => 'Barangay Clearance', 'amount' => '₱50.00', 'method' => 'Payment in Center', 'receipt' => 'OR-88214.jpg', 'status' => 'Approved', 'date' => 'Jul 3, 2026'],
+        ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'type' => 'Dokyu', 'item' => 'Certificate of Residency', 'amount' => '₱50.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt.jpg', 'status' => 'Approved', 'date' => 'Jun 29, 2026'],
+        ['ref' => 'DR-2026-1655', 'citizen' => 'Rosemarie Tan', 'type' => 'Dokyu', 'item' => 'Business Permit Renewal', 'amount' => '₱980.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt (blurred).jpg', 'status' => 'Rejected', 'date' => 'May 12, 2026'],
+        ['ref' => 'DR-2026-1490', 'citizen' => 'Michael Bacus', 'type' => 'Dokyu', 'item' => 'Real Property Tax Clearance', 'amount' => '₱100.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt 2.jpg', 'status' => 'Approved', 'date' => 'Apr 20, 2026'],
+        ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'type' => 'Tulong', 'item' => 'Social Pension — Documentary Fee', 'amount' => '₱100.00', 'method' => 'Payment in Center', 'receipt' => 'OR-77031.jpg', 'status' => 'Approved', 'date' => 'Feb 10, 2026'],
+    ];
+
+    $adminFiles = [
+        ['name' => 'GCash Receipt Scan.jpg', 'category' => 'IMG'],
+        ['name' => 'PayMaya Confirmation.png', 'category' => 'IMG'],
+        ['name' => 'Official Receipt (OR) Scan.pdf', 'category' => 'PDF'],
+    ];
+
+    $tabs = ['all' => 'All', 'unpaid' => 'Awaiting Payment', 'review' => 'Pending Review', 'paid' => 'Paid'];
+
+    $totalInvoiced = 2562.00;
+    $totalCollected = 300.00;
+    $paidCount = collect($payments)->where('status', 'Approved')->count();
+    $reviewCount = collect($payments)->where('status', 'Pending Review')->count();
+    $unpaidCount = collect($payments)->where('status', 'Waiting Requirements')->count();
+@endphp
+
+<x-layouts.admin title="Payments" subtitle="Track Dokyu and Tulong invoices, methods, and attached receipts." active="payments">
+    <div x-data="{ tab: 'all', open: false, selected: null, payments: @js($payments), adminFiles: @js($adminFiles), method: null, receipt: null, showReceiptPicker: false }" class="animate-fade-up">
+
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+            <x-ui.stat-card label="Total Invoiced" value="₱{{ number_format($totalInvoiced, 2) }}" icon="receipt" color="brand" sublabel="This month" :delay="0" />
+            <x-ui.stat-card label="Total Collected" value="₱{{ number_format($totalCollected, 2) }}" icon="banknote" color="green" :delay="40" />
+            <x-ui.stat-card label="Paid" value="{{ $paidCount }}" valueBind="payments.filter(p => p.status === 'Approved').length" icon="check-circle-2" color="green" :delay="80" />
+            <x-ui.stat-card label="Pending Review" value="{{ $reviewCount }}" valueBind="payments.filter(p => p.status === 'Pending Review').length" icon="clock" color="orange" sublabel="Receipt awaiting verification" :delay="120" />
+            <x-ui.stat-card label="Awaiting Payment" value="{{ $unpaidCount }}" valueBind="payments.filter(p => p.status === 'Waiting Requirements').length" icon="circle-dollar-sign" color="red" :delay="160" />
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit overflow-x-auto">
+                @foreach($tabs as $key => $label)
+                    <button
+                        @click="tab = '{{ $key }}'"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                        :class="tab === '{{ $key }}' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"
+                    >{{ $label }}</button>
+                @endforeach
+            </div>
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input type="text" placeholder="Search reference or citizen..." class="w-64 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
+            </div>
+        </div>
+
+        <x-ui.table>
+            <thead>
+                <tr class="border-b border-slate-100 bg-slate-50/60">
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Citizen</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Item</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Method</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Receipt</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Date</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                    <th class="px-4 py-2.5"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                @foreach($payments as $i => $p)
+                    <tr
+                        x-show="tab === 'all' || (tab === 'unpaid' && payments[{{ $i }}].status === 'Waiting Requirements') || (tab === 'review' && payments[{{ $i }}].status === 'Pending Review') || (tab === 'paid' && payments[{{ $i }}].status === 'Approved')"
+                        class="hover:bg-slate-50/70 transition-colors"
+                    >
+                        <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ $p['ref'] }}</td>
+                        <td class="px-4 py-3 text-slate-700 font-medium whitespace-nowrap">{{ $p['citizen'] }}</td>
+                        <td class="px-4 py-3 text-slate-500 hidden md:table-cell">{{ $p['item'] }}</td>
+                        <td class="px-4 py-3 text-slate-700 font-semibold whitespace-nowrap">{{ $p['amount'] }}</td>
+                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="payments[{{ $i }}].method || '—'"></td>
+                        <td class="px-4 py-3 hidden lg:table-cell">
+                            <span class="inline-flex items-center gap-1 text-xs text-brand-600" x-show="payments[{{ $i }}].receipt">
+                                <i data-lucide="paperclip" class="w-3.5 h-3.5"></i><span x-text="payments[{{ $i }}].receipt"></span>
+                            </span>
+                            <span class="text-xs text-slate-300" x-show="!payments[{{ $i }}].receipt">—</span>
+                        </td>
+                        <td class="px-4 py-3 text-slate-500 hidden sm:table-cell whitespace-nowrap">{{ $p['date'] }}</td>
+                        <td class="px-4 py-3">
+                            <x-ui.badge status="Waiting Requirements" x-show="payments[{{ $i }}].status === 'Waiting Requirements'" />
+                            <x-ui.badge status="Pending Review" x-show="payments[{{ $i }}].status === 'Pending Review'" x-cloak />
+                            <x-ui.badge status="Approved" x-show="payments[{{ $i }}].status === 'Approved'" x-cloak />
+                            <x-ui.badge status="Rejected" x-show="payments[{{ $i }}].status === 'Rejected'" x-cloak />
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <button
+                                @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false"
+                                class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap"
+                            >Manage</button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </x-ui.table>
+
+        <x-ui.modal title="Payment Details" maxWidth="lg">
+            <template x-if="selected !== null">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-mono text-slate-400" x-text="payments[selected].ref"></span>
+                        <span class="text-[11px] font-medium px-2 py-0.5 rounded-full" :class="payments[selected].type === 'Dokyu' ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'" x-text="payments[selected].type"></span>
+                    </div>
+
+                    <!-- Invoice -->
+                    <div class="rounded-xl border border-slate-200 overflow-hidden mb-5">
+                        <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+                            <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Invoice Summary</p>
+                            <span class="text-[10px] font-mono text-slate-400">Municipality of Esperanza</span>
+                        </div>
+                        <div class="px-4 py-3.5 text-sm">
+                            <div class="flex items-center justify-between py-1.5">
+                                <span class="text-slate-500">Citizen</span>
+                                <span class="text-slate-700 font-medium" x-text="payments[selected].citizen"></span>
+                            </div>
+                            <div class="flex items-center justify-between py-1.5">
+                                <span class="text-slate-500">Item</span>
+                                <span class="text-slate-700 font-medium text-right" x-text="payments[selected].item"></span>
+                            </div>
+                            <div class="flex items-center justify-between py-1.5">
+                                <span class="text-slate-500">Date Invoiced</span>
+                                <span class="text-slate-700 font-medium" x-text="payments[selected].date"></span>
+                            </div>
+                            <div class="border-t border-dashed border-slate-200 my-2"></div>
+                            <div class="flex items-center justify-between py-1">
+                                <span class="text-sm font-semibold text-navy-900">Total Due</span>
+                                <span class="text-base font-bold text-brand-700" x-text="payments[selected].amount"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Read-only receipt view for rows with a receipt already -->
+                    <div class="rounded-xl border border-slate-200 p-3 mb-2 flex items-center justify-between gap-3" x-show="payments[selected].receipt">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="paperclip" class="w-4 h-4"></i></span>
+                            <div class="min-w-0">
+                                <p class="text-xs font-medium text-slate-700 truncate" x-text="payments[selected].receipt"></p>
+                                <p class="text-[11px] text-slate-400" x-text="'Paid via ' + (payments[selected].method || 'unspecified method')"></p>
+                            </div>
+                        </div>
+                        <button type="button" @click="$dispatch('toast', { message: 'Receipt preview is a frontend mock — no file is stored.', variant: 'info' })" class="text-xs font-medium text-brand-600 hover:underline shrink-0">View</button>
+                    </div>
+
+                    <!-- Admin: attach receipt on behalf of citizen (Waiting Requirements rows) -->
+                    <div x-show="payments[selected].status === 'Waiting Requirements'" x-cloak>
+                        <p class="text-sm font-semibold text-navy-900 mb-3 mt-4">Record Payment</p>
+                        <p class="text-xs text-slate-400 mb-3">If the citizen paid over-the-counter or you've verified proof of payment, record it here.</p>
+                        <div class="space-y-2 mb-4">
+                            <template x-for="m in ['GCash', 'PayMaya', 'Payment in Center']" :key="m">
+                                <label
+                                    class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-200"
+                                    :class="method === m ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
+                                >
+                                    <input type="radio" name="admin_payment_method" class="text-brand-600 focus:ring-brand-200" :checked="method === m" @change="method = m">
+                                    <span class="text-sm font-medium text-slate-700" x-text="m"></span>
+                                </label>
+                            </template>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 p-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-xs text-slate-600 flex-1">Attach receipt / proof of payment</p>
+                                <button type="button" x-show="!receipt" @click="showReceiptPicker = !showReceiptPicker" class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap">Attach File</button>
+                                <div class="flex items-center gap-1.5 shrink-0" x-show="receipt">
+                                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i><span x-text="receipt"></span></span>
+                                    <button type="button" @click="receipt = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                </div>
+                            </div>
+                            <div x-show="showReceiptPicker" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1">
+                                <template x-for="file in adminFiles" :key="file.name">
+                                    <button type="button" @click="receipt = file.name; showReceiptPicker = false" class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+                                        <span class="w-5 h-5 rounded text-[8px] font-bold flex items-center justify-center text-white shrink-0" :class="file.category === 'IMG' ? 'bg-brand-500' : 'bg-rose-500'" x-text="file.category"></span>
+                                        <span class="text-xs text-slate-600 flex-1 truncate" x-text="file.name"></span>
+                                    </button>
+                                </template>
+                                <button type="button" @click="receipt = 'Scanned OR.jpg'; showReceiptPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })" class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors text-brand-600">
+                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i><span class="text-xs font-medium">Upload scanned copy</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <x-slot:footer>
+                <template x-if="selected !== null && payments[selected].status === 'Waiting Requirements'">
+                    <x-ui.button
+                        size="sm" icon="check"
+                        ::disabled="!method || !receipt"
+                        @click="payments[selected].method = method; payments[selected].receipt = receipt; payments[selected].status = 'Pending Review'; open = false; $dispatch('toast', { message: 'Payment recorded — sent for verification.', variant: 'success' })"
+                    >Save & Send for Verification</x-ui.button>
+                </template>
+                <template x-if="selected !== null && payments[selected].status === 'Pending Review'">
+                    <div class="flex items-center gap-2.5">
+                        <x-ui.button variant="danger" size="sm" @click="payments[selected].status = 'Rejected'; open = false; $dispatch('toast', { message: 'Receipt rejected — citizen will be notified.', variant: 'error' })">Reject Receipt</x-ui.button>
+                        <x-ui.button size="sm" icon="check" @click="payments[selected].status = 'Approved'; open = false; $dispatch('toast', { message: 'Payment verified and marked as paid.', variant: 'success' })">Verify Payment</x-ui.button>
+                    </div>
+                </template>
+                <template x-if="selected !== null && !['Waiting Requirements', 'Pending Review'].includes(payments[selected].status)">
+                    <x-ui.button size="sm" @click="open = false">Close</x-ui.button>
+                </template>
+            </x-slot:footer>
+        </x-ui.modal>
+    </div>
+</x-layouts.admin>

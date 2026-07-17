@@ -1,7 +1,7 @@
 <x-layouts.guest title="Citizen Login" image="esperanza-community.jpg" fullscreen>
     <div x-data="authForm('{{ route('citizen.dashboard') }}')">
         <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 mb-4 transition-colors">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik" en="Back" />
         </a>
 
         <div class="flex items-center justify-between animate-fade-up">
@@ -9,12 +9,12 @@
                 <i data-lucide="user" class="w-5 h-5"></i>
             </div>
             <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2.5 py-1">
-                <i data-lucide="shield-check" class="w-3 h-3"></i> Citizen Access
+                <i data-lucide="shield-check" class="w-3 h-3"></i> <x-ui.t fil="Access ng Mamamayan" en="Citizen Access" />
             </span>
         </div>
 
-        <h1 class="text-xl font-semibold text-navy-900 mt-3 animate-fade-up" style="animation-delay: 40ms">Welcome back</h1>
-        <p class="text-slate-500 text-sm mt-1 animate-fade-up" style="animation-delay: 60ms">Sign in to access document requests, assistance programs, and announcements.</p>
+        <h1 class="text-xl font-semibold text-navy-900 mt-3 animate-fade-up" style="animation-delay: 40ms"><x-ui.t fil="Maligayang Pagbabalik" en="Welcome back" /></h1>
+        <p class="text-slate-500 text-sm mt-1 animate-fade-up" style="animation-delay: 60ms"><x-ui.t fil="Mag-sign in para ma-access ang mga kahilingan sa dokumento, programang tulong, at balita." en="Sign in to access document requests, assistance programs, and announcements." /></p>
 
         <form class="mt-5 space-y-3.5" @submit.prevent="submit">
             <div class="animate-fade-up" style="animation-delay: 100ms">
@@ -22,7 +22,7 @@
             </div>
 
             <div class="animate-fade-up" style="animation-delay: 150ms" x-data="passwordField">
-                <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Password" en="Password" /></label>
                 <div class="relative">
                     <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none"></i>
                     <input
@@ -38,9 +38,9 @@
                 <div class="flex items-center justify-between mt-2">
                     <label class="flex items-center gap-2 text-sm text-slate-500">
                         <input type="checkbox" class="rounded border-slate-300 text-brand-600 focus:ring-brand-200">
-                        Remember me
+                        <x-ui.t fil="Tandaan ako" en="Remember me" />
                     </label>
-                    <a href="#" class="text-sm text-brand-600 hover:underline">Forgot password?</a>
+                    <a href="#" class="text-sm text-brand-600 hover:underline"><x-ui.t fil="Nakalimutan ang password?" en="Forgot password?" /></a>
                 </div>
             </div>
 
@@ -54,12 +54,12 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                <span x-text="loading ? 'Signing in…' : 'Sign In'"></span>
+                <span x-text="$store.lang.current === 'en' ? (loading ? 'Signing in…' : 'Sign In') : (loading ? 'Nagsa-sign in…' : 'Mag-sign In')"></span>
             </button>
         </form>
 
         <p class="text-center text-sm text-slate-400 mt-4">
-            Don't have an account? <a href="{{ route('citizen.register') }}" class="text-brand-600 font-medium hover:underline">Register here</a>
+            <x-ui.t fil="Wala ka pang account?" en="Don't have an account?" /> <a href="{{ route('citizen.register') }}" class="text-brand-600 font-medium hover:underline"><x-ui.t fil="Magrehistro rito" en="Register here" /></a>
         </p>
     </div>
 </x-layouts.guest>

@@ -17,6 +17,9 @@
         ['title' => 'Barangay Poblacion Medical Mission', 'date' => 'Jul 18, 2026', 'time' => '8:00 AM', 'venue' => 'Poblacion Covered Court'],
         ['title' => 'Livelihood Skills Training', 'date' => 'Jul 25, 2026', 'time' => '1:00 PM', 'venue' => 'Municipal Hall Conference Room'],
     ];
+
+    // Sampling: treated as true so the birthday greeting can be previewed on login.
+    $isBirthdayToday = true;
 @endphp
 
 <x-layouts.citizen title="Dashboard" subtitle="Welcome back to your Esperanza Citizen Portal." active="dashboard">
@@ -49,35 +52,43 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
                     <h2 class="text-lg font-semibold text-navy-900">Magandang araw, Maria Fe</h2>
-                    <p class="text-sm text-slate-400 mt-0.5">Brgy. Poblacion · Here's your account overview.</p>
+                    <p class="text-sm text-slate-400 mt-0.5">Brgy. Poblacion · <x-ui.t fil="narito ang buod ng iyong account." en="here's your account overview." /></p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <x-ui.button :href="route('citizen.assistance-requests')" variant="secondary" size="sm" icon="hand-heart">Request Assistance</x-ui.button>
-                    <x-ui.button :href="route('citizen.document-requests')" size="sm" icon="file-plus-2">New Document Request</x-ui.button>
+                    <x-ui.button :href="route('citizen.assistance-requests')" variant="secondary" size="sm" icon="hand-heart">Tulong</x-ui.button>
+                    <x-ui.button :href="route('citizen.document-requests')" size="sm" icon="file-plus-2"><x-ui.t fil="Bagong Kahilingan sa Dokyu" en="New Dokyu Request" /></x-ui.button>
                 </div>
             </div>
 
+            @php
+                $introFil = 'Ang <strong>Dokyu</strong> ay para sa paghingi ng mga dokumento ng munisipyo (clearance, ID, permit). Ang <strong>Tulong</strong> ay para sa pag-apply sa mga programang ayuda. Parehong simple ang hakbang: pumili, punan ang detalye, magbayad kung kailangan, pagkatapos i-review at i-submit — masusubaybayan mo anumang oras mula sa dashboard na ito.';
+                $introEn = "<strong>Dokyu</strong> is for requesting municipal documents (clearances, IDs, permits). <strong>Tulong</strong> is for applying to assistance and ayuda programs. Both use the same simple steps: choose, fill in details, pay if needed, then review and submit — you can track progress anytime from this dashboard.";
+            @endphp
+            <x-ui.page-intro id="dashboard" icon="compass" title="Bago ka lang? Narito ang mabilisang gabay." titleEn="New here? Here's a quick orientation.">
+                <span x-html="$store.lang.current === 'en' ? @js($introEn) : @js($introFil)">{!! $introFil !!}</span>
+            </x-ui.page-intro>
+
             <!-- KPI row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4">
-                <x-ui.stat-card label="Document Requests" value="4" icon="file-text" color="brand" sublabel="1 ready for release" :delay="0" />
-                <x-ui.stat-card label="Assistance Requests" value="1" icon="hand-heart" color="purple" sublabel="Approved this month" :delay="40" />
-                <x-ui.stat-card label="Unread Notifications" value="4" icon="bell" color="orange" sublabel="2 need your attention" :delay="80" />
-                <x-ui.stat-card label="Profile Completeness" value="82%" icon="user-round-check" color="green" trend="+10%" sublabel="Add a valid ID to finish" :delay="120" />
+                <x-ui.stat-card label="Dokyu" value="4" icon="file-text" color="brand" sublabel="1 handa nang kunin" sublabelEn="1 ready for release" :delay="0" />
+                <x-ui.stat-card label="Tulong" value="1" icon="hand-heart" color="purple" sublabel="Aprubado ngayong buwan" sublabelEn="Approved this month" :delay="40" />
+                <x-ui.stat-card label="Hindi Nabasang Abiso" labelEn="Unread Notifications" value="4" icon="bell" color="orange" sublabel="2 nangangailangan ng aksyon" sublabelEn="2 need your attention" :delay="80" />
+                <x-ui.stat-card label="Pagkakumpleto ng Profile" labelEn="Profile Completeness" value="82%" icon="user-round-check" color="green" trend="+10%" sublabel="Magdagdag ng valid ID para matapos" sublabelEn="Add a valid ID to finish" :delay="120" />
             </div>
 
             <!-- Middle row: my requests + announcements -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                 <x-ui.card padded="false" class="lg:col-span-2">
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="text-sm font-semibold text-navy-900">My Recent Requests</h3>
-                        <a href="{{ route('citizen.document-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View All</a>
+                        <h3 class="text-sm font-semibold text-navy-900"><x-ui.t fil="Mga Kamakailang Kahilingan" en="My Recent Requests" /></h3>
+                        <a href="{{ route('citizen.document-requests') }}" class="text-xs font-medium text-brand-600 hover:underline"><x-ui.t fil="Tingnan Lahat" en="View All" /></a>
                     </div>
                     <div class="divide-y divide-slate-50">
                         @foreach($requests as $req)
                             <div class="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-slate-50/70 transition-colors">
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700 truncate">{{ $req['type'] }}</p>
-                                    <p class="text-xs text-slate-400 mt-0.5 font-mono">{{ $req['ref'] }} · Submitted {{ $req['submitted'] }}</p>
+                                    <p class="text-xs text-slate-400 mt-0.5 font-mono">{{ $req['ref'] }} · <x-ui.t fil="Isinumite" en="Submitted" /> {{ $req['submitted'] }}</p>
                                 </div>
                                 <x-ui.badge :status="$req['status']" class="shrink-0" />
                             </div>
@@ -87,8 +98,8 @@
 
                 <x-ui.card padded="false">
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="text-sm font-semibold text-navy-900">Announcements</h3>
-                        <a href="{{ route('citizen.announcements') }}" class="text-xs font-medium text-brand-600 hover:underline">View All</a>
+                        <h3 class="text-sm font-semibold text-navy-900">Balita</h3>
+                        <a href="{{ route('citizen.announcements') }}" class="text-xs font-medium text-brand-600 hover:underline"><x-ui.t fil="Tingnan Lahat" en="View All" /></a>
                     </div>
                     <div class="divide-y divide-slate-50">
                         @foreach($announcements as $a)
@@ -110,8 +121,8 @@
             <!-- Upcoming events -->
             <x-ui.card padded="false">
                 <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                    <h3 class="text-sm font-semibold text-navy-900">Upcoming Events</h3>
-                    <a href="{{ route('citizen.events') }}" class="text-xs font-medium text-brand-600 hover:underline">View All</a>
+                    <h3 class="text-sm font-semibold text-navy-900"><x-ui.t fil="Mga Paparating na Kaganapan" en="Upcoming Events" /></h3>
+                    <a href="{{ route('citizen.events') }}" class="text-xs font-medium text-brand-600 hover:underline"><x-ui.t fil="Tingnan Lahat" en="View All" /></a>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-4 pb-4">
                     @foreach($events as $event)
@@ -131,4 +142,11 @@
             </x-ui.card>
         </div>
     </div>
+
+    @if($isBirthdayToday)
+        <div
+            x-data
+            x-init="setTimeout(() => { if (!sessionStorage.getItem('esperanza_birthday_seen')) { $dispatch('show-birthday-popup'); sessionStorage.setItem('esperanza_birthday_seen', '1'); } }, 1400)"
+        ></div>
+    @endif
 </x-layouts.citizen>

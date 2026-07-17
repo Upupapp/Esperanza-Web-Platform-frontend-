@@ -13,7 +13,7 @@
         <x-citizen.sidebar :active="$active" />
 
         <div class="flex-1 flex flex-col min-w-0">
-            <x-citizen.topbar :title="$title" :subtitle="$subtitle" />
+            <x-citizen.topbar :title="$title" :subtitle="$subtitle" :active="$active" />
 
             <main class="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-6">
                 {{ $slot }}
@@ -22,5 +22,7 @@
     </div>
 
     <x-ui.toast-container />
+    <x-citizen.birthday-popup />
+    <x-citizen.fiesta-popup />
 </body>
 </html>

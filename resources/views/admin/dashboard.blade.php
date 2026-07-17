@@ -107,10 +107,10 @@
             <!-- KPI row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">
                 <x-ui.stat-card label="Registered Residents" value="17,842" icon="users" color="brand" trend="+312" sublabel="Across 20 barangays" :delay="0" />
-                <x-ui.stat-card label="Document Requests" value="1,284" icon="file-text" color="green" trend="+8.4%" sublabel="This month" :delay="40" />
+                <x-ui.stat-card label="Dokyu" value="1,284" icon="file-text" color="green" trend="+8.4%" sublabel="This month" :delay="40" />
                 <x-ui.stat-card label="Pending Approvals" value="63" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" />
-                <x-ui.stat-card label="Assistance Requests" value="417" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" />
-                <x-ui.stat-card label="Announcements" value="28" icon="megaphone" color="gold" sublabel="Published this year" :delay="160" />
+                <x-ui.stat-card label="Tulong" value="417" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" />
+                <x-ui.stat-card label="Balita" value="28" icon="megaphone" color="gold" sublabel="Published this year" :delay="160" />
                 <x-ui.stat-card label="Avg. Processing Time" value="2.4 days" icon="timer" color="red" trend="-0.6 days" trendDirection="down" sublabel="Document requests" :delay="200" />
             </div>
 
@@ -118,7 +118,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-navy-900">Document Requests</h3>
+                        <h3 class="font-semibold text-navy-900">Dokyu</h3>
                         <a href="{{ route('admin.document-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
                     <div
@@ -146,7 +146,7 @@
 
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-navy-900">Assistance Requests</h3>
+                        <h3 class="font-semibold text-navy-900">Tulong</h3>
                         <a href="{{ route('admin.assistance-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
                     <div
@@ -200,14 +200,14 @@
                         <h3 class="font-semibold text-navy-900">Requests Trend (YTD)</h3>
                     </div>
                     <div class="flex items-center gap-4 text-xs text-slate-400 mb-4">
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Document Requests</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Assistance Requests</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
                     </div>
                     <div class="h-52" x-data="lineChart({
                         labels: @js($trendLabels),
                         datasets: [
-                            { label: 'Document Requests', data: @js($trendDocuments), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' },
-                            { label: 'Assistance Requests', data: @js($trendAssistance), color: '#a855f7', fill: 'rgba(168,85,247,0.06)' },
+                            { label: 'Dokyu', data: @js($trendDocuments), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' },
+                            { label: 'Tulong', data: @js($trendAssistance), color: '#a855f7', fill: 'rgba(168,85,247,0.06)' },
                         ],
                     })">
                         <canvas x-ref="canvas"></canvas>

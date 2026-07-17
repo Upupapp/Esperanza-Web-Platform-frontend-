@@ -30,8 +30,9 @@
     <nav class="flex-1 overflow-y-auto scrollbar-thin px-2.5 py-3 space-y-0.5">
         <x-ui.nav-item dense :href="route('admin.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" />
-        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Document Requests" badge="18" :active="$active === 'document-requests'" />
-        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Assistance Requests" badge="9" :active="$active === 'assistance-requests'" />
+        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badge="18" :active="$active === 'document-requests'" />
+        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badge="9" :active="$active === 'assistance-requests'" />
+        <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" />
         <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Communications" :active="$active === 'communications'" />
         <x-ui.nav-item dense :href="route('admin.reports')" icon="file-bar-chart" label="Reports & Analytics" :active="$active === 'reports'" />
         <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" />

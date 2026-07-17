@@ -37,16 +37,16 @@ Route::view('/citizen/help/support', 'citizen.help', ['tab' => 'support'])->name
 Route::view('/admin/dashboard', 'admin.dashboard')->name('admin.dashboard');
 Route::view('/admin/document-requests', 'admin.document-requests')->name('admin.document-requests');
 Route::view('/admin/assistance-requests', 'admin.assistance-requests')->name('admin.assistance-requests');
+Route::view('/admin/payments', 'admin.payments')->name('admin.payments');
 
 // Constituents — Residents and Profiling Coverage merged into one page with tabs.
 Route::view('/admin/constituents', 'admin.constituents', ['tab' => 'residents'])->name('admin.constituents');
 Route::view('/admin/constituents/profiling', 'admin.constituents', ['tab' => 'profiling'])->name('admin.resident-profiling');
 
-// Communications — Announcements, Events, and Directory merged into one page with tabs.
-Route::view('/admin/communications', 'admin.communications', ['tab' => 'announcements'])->name('admin.communications');
-Route::view('/admin/communications/events', 'admin.communications', ['tab' => 'events'])->name('admin.events');
+// Communications — Balita (announcements) and Directory merged into one page with tabs.
+Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');
 Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');
-Route::view('/admin/announcements', 'admin.communications', ['tab' => 'announcements'])->name('admin.announcements');
+Route::view('/admin/announcements', 'admin.communications', ['tab' => 'balita'])->name('admin.announcements');
 
 // Reports & Analytics — merged into one page with tabs.
 Route::view('/admin/reports', 'admin.reports', ['tab' => 'reports'])->name('admin.reports');

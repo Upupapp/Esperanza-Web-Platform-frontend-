@@ -17,12 +17,12 @@
 <x-layouts.citizen title="Government Directory" subtitle="Contact details for municipal and barangay offices." active="directory">
     <div class="animate-fade-up">
 
-        <div class="relative mb-4 max-w-md">
+        <div class="relative mb-4 max-w-md" x-data>
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input type="text" placeholder="Search offices or barangays..." class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
+            <input type="text" x-bind:placeholder="$store.lang.current === 'en' ? 'Search offices or barangays...' : 'Maghanap ng opisina o barangay...'" class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
         </div>
 
-        <h3 class="text-sm font-semibold text-navy-900 mb-3">Municipal Offices</h3>
+        <h3 class="text-sm font-semibold text-navy-900 mb-3"><x-ui.t fil="Mga Opisina ng Munisipyo" en="Municipal Offices" /></h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
             @foreach($offices as $i => $office)
                 <x-ui.card class="animate-fade-up" style="animation-delay: {{ $i * 40 }}ms">
@@ -43,13 +43,13 @@
             @endforeach
         </div>
 
-        <h3 class="text-sm font-semibold text-navy-900 mb-3">Barangay Contacts</h3>
+        <h3 class="text-sm font-semibold text-navy-900 mb-3"><x-ui.t fil="Mga Kontak ng Barangay" en="Barangay Contacts" /></h3>
         <x-ui.table>
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Barangay</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Barangay Captain</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Contact</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"><x-ui.t fil="Kapitan ng Barangay" en="Barangay Captain" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell"><x-ui.t fil="Kontak" en="Contact" /></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-50">

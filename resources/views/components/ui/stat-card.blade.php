@@ -1,12 +1,15 @@
 @props([
     'label',
+    'labelEn' => null,
     'value',
     'icon',
     'color' => 'brand',
     'sublabel' => null,
+    'sublabelEn' => null,
     'trend' => null,
     'trendDirection' => 'up',
     'delay' => 0,
+    'valueBind' => null,
 ])
 
 @php
@@ -36,9 +39,9 @@
             </span>
         @endif
     </div>
-    <p class="mt-2.5 text-xl font-semibold text-navy-900 tabular-nums tracking-tight">{{ $value }}</p>
-    <p class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1">{{ $label }}</p>
+    <p class="mt-2.5 text-xl font-semibold text-navy-900 tabular-nums tracking-tight" @if($valueBind) x-text="{{ $valueBind }}" @endif>{{ $value }}</p>
+    <p class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</p>
     @if($sublabel)
-        <p class="text-[11px] text-slate-500 mt-0.5">{{ $sublabel }}</p>
+        <p class="text-[11px] text-slate-500 mt-0.5" x-text="$store.lang.current === 'en' ? @js($sublabelEn ?? $sublabel) : @js($sublabel)">{{ $sublabel }}</p>
     @endif
 </div>

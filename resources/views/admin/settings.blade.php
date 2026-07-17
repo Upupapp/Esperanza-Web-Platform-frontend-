@@ -14,14 +14,14 @@
     ];
 
     $logs = [
-        ['user' => 'Juan Dela Cruz', 'action' => 'Approved document request DR-2026-2154', 'module' => 'Document Requests', 'time' => 'Jul 10, 2026 · 9:42 AM', 'ip' => '203.177.42.11'],
-        ['user' => 'Corazon Villareal', 'action' => 'Published announcement "Free Medical & Dental Mission"', 'module' => 'Announcements', 'time' => 'Jul 9, 2026 · 4:15 PM', 'ip' => '203.177.42.19'],
+        ['user' => 'Juan Dela Cruz', 'action' => 'Approved document request DR-2026-2154', 'module' => 'Dokyu', 'time' => 'Jul 10, 2026 · 9:42 AM', 'ip' => '203.177.42.11'],
+        ['user' => 'Corazon Villareal', 'action' => 'Published announcement "Free Medical & Dental Mission"', 'module' => 'Balita', 'time' => 'Jul 9, 2026 · 4:15 PM', 'ip' => '203.177.42.19'],
         ['user' => 'Paolo Reyes', 'action' => 'Created personnel account for Angeline Mercado', 'module' => 'User Management', 'time' => 'Jul 9, 2026 · 2:03 PM', 'ip' => '203.177.42.02'],
-        ['user' => 'Bienvenido Salazar', 'action' => 'Released document request DR-2026-2187', 'module' => 'Document Requests', 'time' => 'Jul 8, 2026 · 11:27 AM', 'ip' => '203.177.42.33'],
-        ['user' => 'Leilani Domingo', 'action' => 'Approved assistance request AR-2026-0142', 'module' => 'Assistance Requests', 'time' => 'Jul 8, 2026 · 10:05 AM', 'ip' => '203.177.42.08'],
+        ['user' => 'Bienvenido Salazar', 'action' => 'Released document request DR-2026-2187', 'module' => 'Dokyu', 'time' => 'Jul 8, 2026 · 11:27 AM', 'ip' => '203.177.42.33'],
+        ['user' => 'Leilani Domingo', 'action' => 'Approved assistance request AR-2026-0142', 'module' => 'Tulong', 'time' => 'Jul 8, 2026 · 10:05 AM', 'ip' => '203.177.42.08'],
         ['user' => 'System', 'action' => 'Automated backup completed successfully', 'module' => 'System', 'time' => 'Jul 8, 2026 · 2:00 AM', 'ip' => 'internal'],
         ['user' => 'Juan Dela Cruz', 'action' => 'Updated municipality branding colors', 'module' => 'Branding', 'time' => 'Jul 7, 2026 · 3:41 PM', 'ip' => '203.177.42.11'],
-        ['user' => 'Marivic Ong', 'action' => 'Rejected document request DR-2026-1655', 'module' => 'Document Requests', 'time' => 'Jul 6, 2026 · 1:18 PM', 'ip' => '203.177.42.27'],
+        ['user' => 'Marivic Ong', 'action' => 'Rejected document request DR-2026-1655', 'module' => 'Dokyu', 'time' => 'Jul 6, 2026 · 1:18 PM', 'ip' => '203.177.42.27'],
     ];
 
     $tab = $tab ?? 'general';
@@ -178,9 +178,9 @@
                     </div>
                     <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
                         <option>All Modules</option>
-                        <option>Document Requests</option>
-                        <option>Assistance Requests</option>
-                        <option>Announcements</option>
+                        <option>Dokyu</option>
+                        <option>Tulong</option>
+                        <option>Balita</option>
                         <option>User Management</option>
                         <option>System</option>
                     </select>

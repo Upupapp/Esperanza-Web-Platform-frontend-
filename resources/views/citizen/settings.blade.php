@@ -1,10 +1,10 @@
 @php
     $notifPrefs = [
-        ['label' => 'Document request updates', 'desc' => 'Get notified when a request status changes.', 'checked' => true],
-        ['label' => 'Assistance request updates', 'desc' => 'Get notified about assistance program progress.', 'checked' => true],
-        ['label' => 'Municipal announcements', 'desc' => 'News and advisories from the municipality.', 'checked' => true],
-        ['label' => 'Event reminders', 'desc' => 'Reminders before events you\'re following.', 'checked' => false],
-        ['label' => 'SMS notifications', 'desc' => 'Receive critical updates via SMS as backup.', 'checked' => false],
+        ['label' => 'Document request updates', 'labelFil' => 'Update sa mga kahilingang dokumento', 'desc' => 'Get notified when a request status changes.', 'descFil' => 'Maaabisuhan ka kapag nagbago ang status ng iyong kahilingan.', 'checked' => true],
+        ['label' => 'Assistance request updates', 'labelFil' => 'Update sa mga kahilingang tulong', 'desc' => 'Get notified about assistance program progress.', 'descFil' => 'Maaabisuhan ka tungkol sa progreso ng iyong tulong.', 'checked' => true],
+        ['label' => 'Municipal announcements', 'labelFil' => 'Mga balita ng munisipyo', 'desc' => 'News and advisories from the municipality.', 'descFil' => 'Balita at abiso mula sa munisipyo.', 'checked' => true],
+        ['label' => 'Event reminders', 'labelFil' => 'Paalala sa mga kaganapan', 'desc' => 'Reminders before events you\'re following.', 'descFil' => 'Paalala bago magsimula ang mga sinusundan mong kaganapan.', 'checked' => false],
+        ['label' => 'SMS notifications', 'labelFil' => 'Abiso sa SMS', 'desc' => 'Receive critical updates via SMS as backup.', 'descFil' => 'Tumanggap ng mahahalagang update sa SMS bilang backup.', 'checked' => false],
     ];
 @endphp
 
@@ -14,13 +14,13 @@
         <div class="lg:col-span-1">
             <x-ui.card padded="false" class="p-2">
                 <nav class="space-y-0.5">
-                    @foreach(['notifications' => ['bell', 'Notifications'], 'security' => ['shield', 'Security'], 'privacy' => ['lock', 'Privacy'], 'preferences' => ['sliders-horizontal', 'Preferences']] as $key => [$icon, $label])
+                    @foreach(['notifications' => ['bell', 'Mga Abiso', 'Notifications'], 'security' => ['shield', 'Seguridad', 'Security'], 'privacy' => ['lock', 'Pribasiya', 'Privacy'], 'preferences' => ['sliders-horizontal', 'Kagustuhan', 'Preferences']] as $key => [$icon, $labelFil, $labelEn])
                         <button
                             @click="tab = '{{ $key }}'"
                             class="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors"
                             :class="tab === '{{ $key }}' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-50'"
                         >
-                            <i data-lucide="{{ $icon }}" class="w-4 h-4"></i>{{ $label }}
+                            <i data-lucide="{{ $icon }}" class="w-4 h-4"></i><x-ui.t :fil="$labelFil" :en="$labelEn" />
                         </button>
                     @endforeach
                 </nav>
@@ -30,14 +30,14 @@
         <div class="lg:col-span-3">
             <div x-show="tab === 'notifications'">
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-1">Notification Preferences</h3>
-                    <p class="text-xs text-slate-400 mb-4">Choose what updates you want to receive.</p>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Mga Kagustuhan sa Abiso" en="Notification Preferences" /></h3>
+                    <p class="text-xs text-slate-400 mb-4"><x-ui.t fil="Piliin kung anong mga update ang gusto mong matanggap." en="Choose what updates you want to receive." /></p>
                     <div class="divide-y divide-slate-50" x-data="{}">
                         @foreach($notifPrefs as $pref)
                             <label class="flex items-center justify-between gap-4 py-3.5 cursor-pointer">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700">{{ $pref['label'] }}</p>
-                                    <p class="text-xs text-slate-400 mt-0.5">{{ $pref['desc'] }}</p>
+                                    <p class="text-sm font-medium text-slate-700"><x-ui.t :fil="$pref['labelFil']" :en="$pref['label']" /></p>
+                                    <p class="text-xs text-slate-400 mt-0.5"><x-ui.t :fil="$pref['descFil']" :en="$pref['desc']" /></p>
                                 </div>
                                 <div class="relative shrink-0" x-data="{ on: {{ $pref['checked'] ? 'true' : 'false' }} }">
                                     <button
@@ -57,49 +57,64 @@
 
             <div x-show="tab === 'security'" x-cloak class="space-y-5">
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4">Change Password</h3>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-4"><x-ui.t fil="Palitan ang Password" en="Change Password" /></h3>
                     <div class="space-y-4 max-w-md">
                         <x-ui.input name="current_password" type="password" label="Current Password" icon="lock" placeholder="••••••••" />
                         <x-ui.input name="new_password" type="password" label="New Password" icon="lock" placeholder="••••••••" />
                         <x-ui.input name="confirm_password" type="password" label="Confirm New Password" icon="lock" placeholder="••••••••" />
-                        <x-ui.button icon="check" @click="$dispatch('toast', { message: 'Password updated — this is a frontend preview, no data is saved.', variant: 'success' })">Update Password</x-ui.button>
+                        <x-ui.button icon="check" @click="$dispatch('toast', { message: 'Password updated — this is a frontend preview, no data is saved.', variant: 'success' })"><x-ui.t fil="I-update ang Password" en="Update Password" /></x-ui.button>
                     </div>
                 </x-ui.card>
                 <x-ui.card class="flex items-center justify-between gap-4">
                     <div>
-                        <p class="text-sm font-medium text-navy-900">Two-Factor Authentication</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Add an extra layer of security to your account.</p>
+                        <p class="text-sm font-medium text-navy-900"><x-ui.t fil="Two-Factor Authentication" en="Two-Factor Authentication" /></p>
+                        <p class="text-xs text-slate-400 mt-0.5"><x-ui.t fil="Magdagdag ng karagdagang proteksyon sa iyong account." en="Add an extra layer of security to your account." /></p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm">Enable 2FA</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm"><x-ui.t fil="I-enable ang 2FA" en="Enable 2FA" /></x-ui.button>
                 </x-ui.card>
             </div>
 
             <div x-show="tab === 'privacy'" x-cloak>
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-1">Data Privacy</h3>
-                    <p class="text-xs text-slate-400 mb-4">Manage how your resident data is used across the platform, in line with the Data Privacy Act of 2012.</p>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Pribasiya ng Datos" en="Data Privacy" /></h3>
+                    <p class="text-xs text-slate-400 mb-4"><x-ui.t fil="Pamahalaan kung paano ginagamit ang iyong datos bilang residente sa buong platform, alinsunod sa Data Privacy Act of 2012." en="Manage how your resident data is used across the platform, in line with the Data Privacy Act of 2012." /></p>
                     <div class="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-100 p-4">
                         <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
-                        <p class="text-xs text-slate-500 leading-relaxed">The Municipality of Esperanza collects and processes your personal data solely for the purpose of delivering public services. Your data is not shared with third parties without consent.</p>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            <x-ui.t
+                                fil="Kinokolekta at pinoproseso ng Munisipyo ng Esperanza ang iyong personal na datos para lamang sa layunin ng paghahatid ng serbisyong publiko. Hindi ibinabahagi ang iyong datos sa ibang partido nang walang pahintulot."
+                                en="The Municipality of Esperanza collects and processes your personal data solely for the purpose of delivering public services. Your data is not shared with third parties without consent."
+                            />
+                        </p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm" icon="download" class="mt-4">Request My Data</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" icon="download" class="mt-4"><x-ui.t fil="Hilingin ang Aking Datos" en="Request My Data" /></x-ui.button>
                 </x-ui.card>
             </div>
 
             <div x-show="tab === 'preferences'" x-cloak>
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4">General Preferences</h3>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-4"><x-ui.t fil="Pangkalahatang Kagustuhan" en="General Preferences" /></h3>
                     <div class="space-y-4 max-w-md">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Language</label>
-                            <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
-                                <option>English</option>
-                                <option>Filipino</option>
-                                <option>Bicolano</option>
-                            </select>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Wika" en="Language" /></label>
+                            <p class="text-xs text-slate-400 mb-2.5"><x-ui.t fil="Piliin ang wikang gagamitin sa Citizen Portal." en="Choose the language used across the Citizen Portal." /></p>
+                            <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
+                                <button
+                                    type="button"
+                                    @click="$store.lang.set('fil'); $dispatch('toast', { message: 'Naka-Filipino na ang wika ng portal.', variant: 'success' })"
+                                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                                    :class="$store.lang.current === 'fil' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                                >Filipino</button>
+                                <button
+                                    type="button"
+                                    @click="$store.lang.set('en'); $dispatch('toast', { message: 'Portal language set to English.', variant: 'success' })"
+                                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                                    :class="$store.lang.current === 'en' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                                >English</button>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Time Zone</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Time Zone" en="Time Zone" /></label>
                             <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
                                 <option>(GMT+8:00) Manila</option>
                             </select>

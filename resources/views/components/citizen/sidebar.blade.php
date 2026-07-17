@@ -20,7 +20,7 @@
         >
         <div x-show="!collapsed" x-transition.opacity.duration.150ms class="min-w-0">
             <p class="text-[13px] font-semibold tracking-wide leading-tight truncate">Esperanza LGU</p>
-            <p class="text-[10.5px] text-slate-400 truncate">Citizen Portal</p>
+            <p class="text-[10.5px] text-slate-400 truncate" x-text="$store.lang.current === 'en' ? 'Citizen Portal' : 'Portal ng Mamamayan'"></p>
         </div>
         <button @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white">
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -28,13 +28,13 @@
     </div>
 
     <nav class="flex-1 overflow-y-auto scrollbar-thin px-2.5 py-4 space-y-0.5">
-        <x-ui.nav-item dense :href="route('citizen.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
-        <x-ui.nav-item dense :href="route('citizen.document-requests')" icon="file-text" label="Document Requests" badge="2" :active="$active === 'document-requests'" />
-        <x-ui.nav-item dense :href="route('citizen.assistance-requests')" icon="hand-heart" label="Assistance Requests" badge="1" :active="$active === 'assistance-requests'" />
-        <x-ui.nav-item dense :href="route('citizen.announcements')" icon="megaphone" label="Announcements" :active="$active === 'announcements'" />
-        <x-ui.nav-item dense :href="route('citizen.events')" icon="calendar-days" label="Events" :active="$active === 'events'" />
-        <x-ui.nav-item dense :href="route('citizen.directory')" icon="building-2" label="Gov't Directory" :active="$active === 'directory'" />
-        <x-ui.nav-item dense :href="route('citizen.faqs')" icon="life-buoy" label="Help & Support" :active="$active === 'help'" />
+        <x-ui.nav-item dense :href="route('citizen.dashboard')" icon="layout-dashboard" label="Home" labelEn="Dashboard" :active="$active === 'dashboard'" />
+        <x-ui.nav-item dense :href="route('citizen.document-requests')" icon="file-text" label="Dokyu" badge="2" :active="$active === 'document-requests'" />
+        <x-ui.nav-item dense :href="route('citizen.assistance-requests')" icon="hand-heart" label="Tulong" badge="1" :active="$active === 'assistance-requests'" />
+        <x-ui.nav-item dense :href="route('citizen.announcements')" icon="megaphone" label="Balita" :active="$active === 'announcements'" />
+        <x-ui.nav-item dense :href="route('citizen.events')" icon="calendar-days" label="Mga Kaganapan" labelEn="Events" :active="$active === 'events'" />
+        <x-ui.nav-item dense :href="route('citizen.directory')" icon="building-2" label="Direktoryo ng Pamahalaan" labelEn="Gov't Directory" :active="$active === 'directory'" />
+        <x-ui.nav-item dense :href="route('citizen.faqs')" icon="life-buoy" label="Suporta" labelEn="Help & Support" :active="$active === 'help'" />
     </nav>
 
     <div class="border-t border-white/10 p-2.5 shrink-0">
@@ -43,7 +43,7 @@
             class="w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"
         >
             <i data-lucide="panel-left-close" class="w-4 h-4 transition-transform duration-300" :class="collapsed && 'rotate-180'"></i>
-            <span x-show="!collapsed">Collapse</span>
+            <span x-show="!collapsed" x-text="$store.lang.current === 'en' ? 'Collapse' : 'I-collapse'"></span>
         </button>
     </div>
 </aside>

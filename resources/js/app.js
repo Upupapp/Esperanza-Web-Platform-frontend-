@@ -11,6 +11,14 @@ window.Alpine = Alpine;
 window.Chart = Chart;
 
 document.addEventListener('alpine:init', () => {
+    Alpine.store('lang', {
+        current: localStorage.getItem('esperanza_lang') || 'fil',
+        set(lang) {
+            this.current = lang;
+            localStorage.setItem('esperanza_lang', lang);
+        },
+    });
+
     Alpine.data('dropdown', () => ({
         open: false,
         toggle() {
@@ -138,4 +146,11 @@ function renderIcons() {
 window.renderIcons = renderIcons;
 
 renderIcons();
+
+// Modals use x-teleport to escape transformed ancestors (see modal.blade.php).
+// Teleported content lives inside an inert <template> until Alpine relocates
+// it during its initial walk, so icons inside modals aren't in the live DOM
+// yet when renderIcons() runs above — catch them once Alpine finishes init.
+document.addEventListener('alpine:initialized', () => renderIcons());
+
 Alpine.start();

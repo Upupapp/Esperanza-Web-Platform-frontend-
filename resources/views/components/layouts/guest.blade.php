@@ -35,13 +35,6 @@
                 </div>
 
                 <div class="animate-fade-up" style="animation-delay: 100ms">
-                    <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-300 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2.5 py-1 mb-5">
-                        <span class="relative flex w-1.5 h-1.5">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full w-1.5 h-1.5 bg-emerald-400"></span>
-                        </span>
-                        Platform Status: Operational
-                    </span>
                     <p class="font-display text-3xl leading-snug max-w-md">One platform for every resident, family, and frontliner of Esperanza.</p>
                     <p class="text-white/60 text-sm mt-4 max-w-sm">Request documents, follow up assistance programs, and stay informed on municipal announcements — all in one place.</p>
                 </div>

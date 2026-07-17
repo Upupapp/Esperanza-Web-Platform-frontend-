@@ -107,14 +107,14 @@
                 <x-ui.card class="lg:col-span-2">
                     <h3 class="text-sm font-semibold text-navy-900 mb-1">Requests Trend (YTD)</h3>
                     <div class="flex items-center gap-4 text-xs text-slate-400 mb-4">
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Document Requests</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Assistance Requests</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
                     </div>
                     <div class="h-64" x-data="lineChart({
                         labels: @js($trendLabels),
                         datasets: [
-                            { label: 'Document Requests', data: @js($trendDocuments), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' },
-                            { label: 'Assistance Requests', data: @js($trendAssistance), color: '#a855f7', fill: 'rgba(168,85,247,0.06)' },
+                            { label: 'Dokyu', data: @js($trendDocuments), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' },
+                            { label: 'Tulong', data: @js($trendAssistance), color: '#a855f7', fill: 'rgba(168,85,247,0.06)' },
                         ],
                     })">
                         <canvas x-ref="canvas"></canvas>
