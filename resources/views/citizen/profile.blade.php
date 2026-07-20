@@ -162,7 +162,10 @@
                         <i data-lucide="check" class="w-7 h-7"></i>
                     </span>
                 </div>
-                <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Naisumite para sa Beripikasyon!" en="Submitted for Verification!" /></p>
+                <p class="text-sm font-semibold text-navy-900">
+                    <x-ui.t fil="Naisumite para sa Beripikasyon!" en="Submitted for Verification!" />
+                    <span class="inline-block animate-check-pop" style="animation-delay: 0.3s;">🙂</span>
+                </p>
                 <p class="text-xs text-slate-400 mt-1 max-w-[240px]"><x-ui.t fil="Susuriin ng aming staff ang iyong ID at ia-update ang iyong profile sa lalong madaling panahon." en="Our staff will review your ID and update your profile shortly." /></p>
             </div>
 

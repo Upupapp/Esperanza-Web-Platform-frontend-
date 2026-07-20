@@ -205,7 +205,10 @@
                                     <i data-lucide="check" class="w-7 h-7"></i>
                                 </span>
                             </div>
-                            <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Naisumite ang Kahilingan!" en="Request Submitted!" /></p>
+                            <p class="text-sm font-semibold text-navy-900">
+                                <x-ui.t fil="Naisumite ang Kahilingan!" en="Request Submitted!" />
+                                <span class="inline-block animate-check-pop" style="animation-delay: 0.3s;">🙂</span>
+                            </p>
                             <p class="text-xs text-slate-400 mt-1 max-w-[220px]"><x-ui.t fil="Aabisuhan ka namin kapag na-review na ang iyong kahilingan sa Dokyu." en="We'll notify you once your Dokyu request is reviewed." /></p>
                         </div>
 
