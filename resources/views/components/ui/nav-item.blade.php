@@ -1,4 +1,4 @@
-@props(['href' => '#', 'icon', 'label', 'labelEn' => null, 'active' => false, 'badge' => null, 'dense' => false])
+@props(['href' => '#', 'icon', 'label', 'labelEn' => null, 'active' => false, 'badge' => null, 'dense' => false, 'moduleKey' => null])
 
 <a
     href="{{ $href }}"
@@ -7,6 +7,7 @@
         {{ $active ? 'bg-brand-600 text-white shadow-[0_4px_14px_-2px_rgba(47,98,245,0.45)]' : 'text-slate-300/90 hover:bg-white/[0.06] hover:text-white' }}"
     :class="collapsed && 'justify-center px-0'"
     :title="collapsed ? (($store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label))) : ''"
+    @if($moduleKey) x-show="$store.session.can('{{ $moduleKey }}')" x-cloak @endif
 >
     <i data-lucide="{{ $icon }}" class="{{ $dense ? 'w-4 h-4' : 'w-[18px] h-[18px]' }} shrink-0 {{ $active ? 'text-white' : 'text-slate-400 group-hover:text-white' }} transition-colors"></i>
     <span x-show="!collapsed" x-transition.opacity.duration.150ms class="truncate" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</span>

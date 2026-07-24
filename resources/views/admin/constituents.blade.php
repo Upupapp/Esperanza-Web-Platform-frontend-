@@ -40,25 +40,65 @@
         ];
     })->sortByDesc('pct')->values();
 
+    // Per-barangay headline counts, used to simulate what a Barangay-scoped
+    // admin account (see User Management → Add Personnel → Access Scope)
+    // would see instead of the municipality-wide totals below.
+    $municipalStats = ['residents' => '17,842', 'households' => '4,918', 'families' => '6,204', 'verified' => '79%', 'newThisMonth' => '284'];
+
+    $barangayStats = collect(config('esperanza.barangays'))->mapWithKeys(function ($name) {
+        $residents = rand(620, 1480);
+        $verifiedPct = rand(58, 96);
+        return [$name => [
+            'residents' => number_format($residents),
+            'households' => number_format((int) round($residents / 3.6)),
+            'families' => number_format((int) round($residents / 2.9)),
+            'verified' => $verifiedPct . '%',
+            'newThisMonth' => (string) rand(2, 22),
+        ]];
+    });
+
     $tab = $tab ?? 'residents';
 @endphp
 
 <x-layouts.admin title="Constituents" subtitle="Browse registered residents and profiling coverage." active="constituents">
-    <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up">
+    <div
+        x-data="{
+            tab: '{{ $tab }}',
+            municipalStats: @js($municipalStats),
+            barangayStats: @js($barangayStats),
+            get activeStats() {
+                const scope = this.$store.session.account?.scope;
+                return (!scope || scope === 'Municipal') ? this.municipalStats : (this.barangayStats[scope] || this.municipalStats);
+            },
+        }"
+        class="animate-fade-up"
+    >
+
+        <div x-show="!$store.session.can('constituents')" x-cloak>
+            <x-admin.access-restricted module="Constituent Management" icon="users" />
+        </div>
+
+        <div x-show="$store.session.can('constituents')" x-cloak>
 
         <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4">
             <button @click="tab = 'residents'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'residents' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users" class="w-3.5 h-3.5"></i>Residents</button>
             <button @click="tab = 'profiling'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'profiling' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="user-round-search" class="w-3.5 h-3.5"></i>Profiling Coverage</button>
         </div>
 
+        <!-- Access scope banner — reflects whichever sample account is signed in -->
+        <div x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
+            <i data-lucide="map-pin" class="w-4 h-4 text-purple-500 shrink-0"></i>
+            <p class="text-xs text-purple-700">Signed in with barangay-scoped access — data outside <span class="font-medium" x-text="'Brgy. ' + $store.session.account?.scope"></span> is hidden below.</p>
+        </div>
+
         <!-- Residents -->
         <div x-show="tab === 'residents'" x-data="{ view: 'individuals', idFilter: 'all' }">
             <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-                <x-ui.stat-card label="Registered Residents" value="17,842" icon="users" color="brand" trend="+312" sublabel="Across 20 barangays" :delay="0" />
-                <x-ui.stat-card label="Households" value="4,918" icon="home" color="green" sublabel="Physical dwellings" :delay="40" />
-                <x-ui.stat-card label="Families" value="6,204" icon="users-round" color="purple" sublabel="May share a household" :delay="80" />
-                <x-ui.stat-card label="ID Verified" value="79%" icon="badge-check" color="gold" sublabel="14,095 of 17,842" :delay="120" />
-                <x-ui.stat-card label="New This Month" value="284" icon="user-plus" color="red" trend="+6.1%" :delay="160" />
+                <x-ui.stat-card label="Registered Residents" value="17,842" valueBind="activeStats.residents" icon="users" color="brand" :delay="0" />
+                <x-ui.stat-card label="Households" value="4,918" valueBind="activeStats.households" icon="home" color="green" :delay="40" />
+                <x-ui.stat-card label="Families" value="6,204" valueBind="activeStats.families" icon="users-round" color="purple" :delay="80" />
+                <x-ui.stat-card label="ID Verified" value="79%" valueBind="activeStats.verified" icon="badge-check" color="gold" :delay="120" />
+                <x-ui.stat-card label="New This Month" value="284" valueBind="activeStats.newThisMonth" icon="user-plus" color="red" :delay="160" />
             </div>
 
             <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4">
@@ -75,12 +115,13 @@
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <input type="text" placeholder="Search residents..." class="w-56 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
                         </div>
-                        <select class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        <select x-show="!$store.session.account || $store.session.account.scope === 'Municipal'" class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
                             <option value="">All Barangays</option>
                             @foreach($barangayOptions as $b)
                                 <option value="{{ $b }}">{{ $b }}</option>
                             @endforeach
                         </select>
+                        <span x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3.5 py-2.5"><i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span> only</span>
                         <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
                             @foreach(['all' => 'All', 'verified' => 'Verified', 'unverified' => 'Unverified'] as $key => $label)
                                 <button
@@ -109,7 +150,7 @@
                     <tbody class="divide-y divide-slate-50">
                         @foreach($individuals as $c)
                             <tr
-                                x-show="idFilter === 'all' || idFilter === '{{ $c['verified'] ? 'verified' : 'unverified' }}'"
+                                x-show="(idFilter === 'all' || idFilter === '{{ $c['verified'] ? 'verified' : 'unverified' }}') && $store.session.inScope('{{ $c['barangay'] }}')"
                                 class="hover:bg-slate-50/70 transition-colors"
                             >
                                 <td class="px-4 py-2.5 flex items-center gap-3">
@@ -148,12 +189,13 @@
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <input type="text" placeholder="Search families or family head..." class="w-64 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
                         </div>
-                        <select class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        <select x-show="!$store.session.account || $store.session.account.scope === 'Municipal'" class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
                             <option value="">All Barangays</option>
                             @foreach($barangayOptions as $b)
                                 <option value="{{ $b }}">{{ $b }}</option>
                             @endforeach
                         </select>
+                        <span x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3.5 py-2.5"><i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span> only</span>
                     </div>
                     <x-ui.button icon="users-round" size="sm">Add Family</x-ui.button>
                 </div>
@@ -170,7 +212,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         @foreach($families as $f)
-                            <tr class="hover:bg-slate-50/70 transition-colors">
+                            <tr x-show="$store.session.inScope('{{ $f['barangay'] }}')" class="hover:bg-slate-50/70 transition-colors">
                                 <td class="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap">{{ $f['surname'] }} Family</td>
                                 <td class="px-4 py-2.5 text-slate-500 hidden md:table-cell font-mono text-xs">{{ $f['household'] }}</td>
                                 <td class="px-4 py-2.5 text-slate-500">Brgy. {{ $f['barangay'] }}</td>
@@ -193,12 +235,13 @@
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <input type="text" placeholder="Search households or household head..." class="w-64 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
                         </div>
-                        <select class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        <select x-show="!$store.session.account || $store.session.account.scope === 'Municipal'" class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
                             <option value="">All Barangays</option>
                             @foreach($barangayOptions as $b)
                                 <option value="{{ $b }}">{{ $b }}</option>
                             @endforeach
                         </select>
+                        <span x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3.5 py-2.5"><i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span> only</span>
                     </div>
                     <x-ui.button icon="home" size="sm">Add Household</x-ui.button>
                 </div>
@@ -215,7 +258,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         @foreach($households as $h)
-                            <tr class="hover:bg-slate-50/70 transition-colors">
+                            <tr x-show="$store.session.inScope('{{ $h['barangay'] }}')" class="hover:bg-slate-50/70 transition-colors">
                                 <td class="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap">{{ $h['name'] }}</td>
                                 <td class="px-4 py-2.5 text-slate-500">Brgy. {{ $h['barangay'] }}</td>
                                 <td class="px-4 py-2.5 text-slate-500 hidden sm:table-cell">{{ $h['head'] }}</td>
@@ -247,7 +290,7 @@
                 </div>
                 <div class="px-4 pb-4 space-y-4">
                     @foreach($profilingByBarangay as $b)
-                        <div>
+                        <div x-show="$store.session.inScope('{{ $b['name'] }}')">
                             <div class="flex items-center justify-between text-sm mb-1.5">
                                 <span class="text-slate-600 font-medium">Brgy. {{ $b['name'] }}</span>
                                 <span class="text-slate-400">{{ number_format($b['profiled']) }} / {{ number_format($b['total']) }} residents ({{ $b['pct'] }}%)</span>
@@ -264,6 +307,8 @@
                     @endforeach
                 </div>
             </x-ui.card>
+        </div>
+
         </div>
     </div>
 </x-layouts.admin>

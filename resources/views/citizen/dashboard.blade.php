@@ -6,10 +6,10 @@
         ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'submitted' => 'Jun 14, 2026', 'status' => 'Completed'],
     ];
 
-    $announcements = [
-        ['title' => 'Fiesta ng Esperanza 2026 — Schedule of Activities', 'body' => 'Join the municipality-wide celebration this August. Street dance, trade fair, and evening programs.', 'time' => 'Posted yesterday', 'icon' => 'megaphone', 'color' => 'text-gold-700 bg-gold-50'],
-        ['title' => 'Free Medical & Dental Mission — Brgy. Poblacion', 'body' => 'Free checkups, dental extraction, and medicine distribution at the covered court.', 'time' => 'Posted 3 days ago', 'icon' => 'stethoscope', 'color' => 'text-emerald-600 bg-emerald-50'],
-        ['title' => 'Online Document Requests now accept GCash payment', 'body' => 'Pay processing fees online and skip the queue at the Municipal Hall.', 'time' => 'Posted 5 days ago', 'icon' => 'credit-card', 'color' => 'text-brand-600 bg-brand-50'],
+    $balitaPreview = [
+        ['official' => true, 'author' => 'Esperanza LGU', 'body' => 'Sumali sa buong-munisipyong pagdiriwang ngayong Agosto! Street dancing, trade fair, at gabi-gabing cultural program sa Municipal Plaza.', 'time' => 'Posted yesterday', 'likes' => 214, 'comments' => 2],
+        ['official' => false, 'author' => 'Elmer Bantillo', 'initials' => 'EB', 'barangay' => 'Santiago', 'body' => 'Successful po ang blood donation drive natin ngayong araw! Umabot ng 40+ na donors. Maraming salamat sa lahat.', 'time' => '3 hrs ago', 'likes' => 47, 'comments' => 1],
+        ['official' => false, 'author' => 'Josefina Marbella', 'initials' => 'JM', 'barangay' => 'Baras', 'body' => 'Gusto ko lang magpasalamat sa MSWDO at OSCA sa mabilis na pag-asikaso ng aking social pension application.', 'time' => '1 day ago', 'likes' => 83, 'comments' => 1],
     ];
 
     $events = [
@@ -102,17 +102,26 @@
                         <a href="{{ route('citizen.announcements') }}" class="text-xs font-medium text-brand-600 hover:underline"><x-ui.t fil="Tingnan Lahat" en="View All" /></a>
                     </div>
                     <div class="divide-y divide-slate-50">
-                        @foreach($announcements as $a)
-                            <div class="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50/70 transition-colors">
-                                <span class="w-8 h-8 rounded-lg {{ $a['color'] }} flex items-center justify-center shrink-0">
-                                    <i data-lucide="{{ $a['icon'] }}" class="w-4 h-4"></i>
-                                </span>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700 leading-snug">{{ $a['title'] }}</p>
-                                    <p class="text-xs text-slate-400 mt-0.5 line-clamp-2">{{ $a['body'] }}</p>
-                                    <p class="text-[11px] text-slate-300 mt-1">{{ $a['time'] }}</p>
+                        @foreach($balitaPreview as $post)
+                            <a href="{{ route('citizen.announcements') }}" class="flex items-start gap-2.5 px-4 py-2.5 hover:bg-slate-50/70 transition-colors">
+                                @if($post['official'])
+                                    <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0">
+                                @else
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[10px]">{{ $post['initials'] }}</div>
+                                @endif
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-navy-900 flex items-center gap-1 truncate">
+                                        {{ $post['author'] }}
+                                        @if($post['official'])<i data-lucide="badge-check" class="w-3 h-3 text-brand-500 shrink-0"></i>@endif
+                                    </p>
+                                    <p class="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-snug">{{ $post['body'] }}</p>
+                                    <div class="flex items-center gap-2.5 mt-1 text-[10.5px] text-slate-400">
+                                        <span>{{ $post['time'] }}</span>
+                                        <span class="flex items-center gap-0.5"><i data-lucide="heart" class="w-2.5 h-2.5"></i>{{ $post['likes'] }}</span>
+                                        <span class="flex items-center gap-0.5"><i data-lucide="message-circle" class="w-2.5 h-2.5"></i>{{ $post['comments'] }}</span>
+                                    </div>
                                 </div>
-                            </div>
+                            </a>
                         @endforeach
                     </div>
                 </x-ui.card>

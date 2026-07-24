@@ -55,6 +55,7 @@ Route::view('/admin/reports/analytics', 'admin.reports', ['tab' => 'analytics'])
 // User Management — Personnel and Roles merged into one page with tabs.
 Route::view('/admin/users', 'admin.users', ['tab' => 'personnel'])->name('admin.users');
 Route::view('/admin/users/roles', 'admin.users', ['tab' => 'roles'])->name('admin.roles');
+Route::view('/admin/users/permissions', 'admin.users', ['tab' => 'permissions'])->name('admin.permissions');
 
 // Settings — General, Notifications, Security, Branding, Integrations, Audit Logs as tabs.
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');

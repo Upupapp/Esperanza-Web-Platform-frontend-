@@ -28,6 +28,6 @@ return [
         'Sorosimbajan',
         'Tawad',
         'Tunga',
-        'Villa1',
+        'Villa',
     ],
 ];

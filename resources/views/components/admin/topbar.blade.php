@@ -86,10 +86,10 @@
 
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl hover:bg-slate-100 transition-colors">
-                <x-ui.avatar name="Juan Dela Cruz" size="sm" />
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-xs" x-text="$store.session.initials()"></div>
                 <span class="hidden lg:block text-left">
-                    <span class="block text-sm font-medium text-navy-900 leading-tight">Juan Dela Cruz</span>
-                    <span class="block text-xs text-slate-400 leading-tight">Municipal Administrator</span>
+                    <span class="block text-sm font-medium text-navy-900 leading-tight" x-text="$store.session.account?.name ?? 'Guest Preview'"></span>
+                    <span class="block text-xs text-slate-400 leading-tight" x-text="$store.session.account?.role ?? 'Not signed in'"></span>
                 </span>
                 <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 hidden lg:block transition-transform duration-200" :class="open && 'rotate-180'"></i>
             </button>
@@ -100,11 +100,20 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right py-1.5"
+                class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right py-1.5"
             >
                 <div class="px-4 py-3 border-b border-slate-100">
-                    <p class="text-sm font-semibold text-navy-900">Juan Dela Cruz</p>
-                    <p class="text-xs text-slate-400">juan.delacruz@esperanza.gov.ph</p>
+                    <p class="text-sm font-semibold text-navy-900" x-text="$store.session.account?.name ?? 'Guest Preview'"></p>
+                    <p class="text-xs text-slate-400 font-mono" x-text="$store.session.account?.id ?? 'No account selected'"></p>
+                    <span
+                        x-show="$store.session.account"
+                        x-cloak
+                        class="inline-flex items-center gap-1 text-[10.5px] font-medium rounded-full px-2 py-0.5 mt-1.5"
+                        :class="$store.session.account?.scope === 'Municipal' ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'"
+                    >
+                        <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
+                        <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + $store.session.account?.scope"></span>
+                    </span>
                 </div>
                 <a href="#" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>My Profile
@@ -113,7 +122,7 @@
                     <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>Settings
                 </a>
                 <div class="border-t border-slate-100 my-1.5"></div>
-                <a href="{{ route('home') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors">
+                <a href="{{ route('logout') }}" @click="$store.session.logout()" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors">
                     <i data-lucide="log-out" class="w-4 h-4"></i>Sign Out
                 </a>
             </div>

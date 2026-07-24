@@ -27,14 +27,14 @@
         </button>
     </div>
 
-    <nav class="flex-1 overflow-y-auto scrollbar-thin px-2.5 py-4 space-y-0.5">
+    <nav class="flex-1 overflow-y-auto scrollbar-dark px-2.5 py-4 space-y-0.5">
         <x-ui.nav-item dense :href="route('citizen.dashboard')" icon="layout-dashboard" label="Home" labelEn="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('citizen.document-requests')" icon="file-text" label="Dokyu" badge="2" :active="$active === 'document-requests'" />
         <x-ui.nav-item dense :href="route('citizen.assistance-requests')" icon="hand-heart" label="Tulong" badge="1" :active="$active === 'assistance-requests'" />
         <x-ui.nav-item dense :href="route('citizen.announcements')" icon="megaphone" label="Balita" :active="$active === 'announcements'" />
-        <x-ui.nav-item dense :href="route('citizen.events')" icon="calendar-days" label="Mga Kaganapan" labelEn="Events" :active="$active === 'events'" />
-        <x-ui.nav-item dense :href="route('citizen.directory')" icon="building-2" label="Direktoryo ng Pamahalaan" labelEn="Gov't Directory" :active="$active === 'directory'" />
-        <x-ui.nav-item dense :href="route('citizen.faqs')" icon="life-buoy" label="Suporta" labelEn="Help & Support" :active="$active === 'help'" />
+        <x-ui.nav-item dense :href="route('citizen.events')" icon="calendar-days" label="Kaganapan" labelEn="Events" :active="$active === 'events'" />
+        <x-ui.nav-item dense :href="route('citizen.directory')" icon="building-2" label="Direktoryo" labelEn="Directory" :active="$active === 'directory'" />
+        <x-ui.nav-item dense :href="route('citizen.faqs')" icon="life-buoy" label="Suporta" labelEn="Help" :active="$active === 'help'" />
     </nav>
 
     <div class="border-t border-white/10 p-2.5 shrink-0">

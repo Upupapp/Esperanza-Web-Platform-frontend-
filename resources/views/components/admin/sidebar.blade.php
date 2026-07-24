@@ -27,19 +27,34 @@
         </button>
     </div>
 
+    <!-- Signed-in account + access scope -->
+    <div x-show="$store.session.account" x-cloak class="mx-2.5 mt-2.5 mb-1 px-3 py-2.5 rounded-xl bg-white/[0.06] border border-white/10">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1" x-show="!collapsed">Signed in as</p>
+        <p class="text-xs font-semibold text-white truncate" x-show="!collapsed" x-text="$store.session.account?.name"></p>
+        <p class="text-[10.5px] text-slate-400 truncate mb-1.5" x-show="!collapsed" x-text="$store.session.account?.id + ' · ' + $store.session.account?.role"></p>
+        <span
+            class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5"
+            :class="$store.session.account?.scope === 'Municipal' ? 'bg-brand-500/20 text-brand-300' : 'bg-purple-500/20 text-purple-300'"
+            x-show="!collapsed"
+        >
+            <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
+            <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + $store.session.account?.scope"></span>
+        </span>
+    </div>
+
     <nav class="flex-1 overflow-y-auto scrollbar-thin px-2.5 py-3 space-y-0.5">
         <x-ui.nav-item dense :href="route('admin.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
-        <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" />
-        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badge="18" :active="$active === 'document-requests'" />
-        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badge="9" :active="$active === 'assistance-requests'" />
-        <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" />
-        <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Communications" :active="$active === 'communications'" />
-        <x-ui.nav-item dense :href="route('admin.reports')" icon="file-bar-chart" label="Reports & Analytics" :active="$active === 'reports'" />
-        <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" />
+        <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" moduleKey="constituents" />
+        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badge="18" :active="$active === 'document-requests'" moduleKey="dokyu" />
+        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badge="9" :active="$active === 'assistance-requests'" moduleKey="tulong" />
+        <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
+        <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Communications" :active="$active === 'communications'" moduleKey="communications" />
+        <x-ui.nav-item dense :href="route('admin.reports')" icon="file-bar-chart" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />
+        <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" moduleKey="user_management" />
     </nav>
 
     <div class="border-t border-white/10 p-2.5 shrink-0">
-        <x-ui.nav-item dense :href="route('admin.settings')" icon="settings" label="Settings" :active="$active === 'settings'" />
+        <x-ui.nav-item dense :href="route('admin.settings')" icon="settings" label="Settings" :active="$active === 'settings'" moduleKey="settings" />
         <button
             @click="collapsed = !collapsed"
             class="mt-0.5 w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"

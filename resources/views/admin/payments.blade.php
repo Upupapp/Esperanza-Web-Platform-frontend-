@@ -27,6 +27,12 @@
 <x-layouts.admin title="Payments" subtitle="Track Dokyu and Tulong invoices, methods, and attached receipts." active="payments">
     <div x-data="{ tab: 'all', open: false, selected: null, payments: @js($payments), adminFiles: @js($adminFiles), method: null, receipt: null, showReceiptPicker: false }" class="animate-fade-up">
 
+        <div x-show="!$store.session.can('payments')" x-cloak>
+            <x-admin.access-restricted module="Payments" icon="receipt" />
+        </div>
+
+        <div x-show="$store.session.can('payments')" x-cloak>
+
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
             <x-ui.stat-card label="Total Invoiced" value="₱{{ number_format($totalInvoiced, 2) }}" icon="receipt" color="brand" sublabel="This month" :delay="0" />
             <x-ui.stat-card label="Total Collected" value="₱{{ number_format($totalCollected, 2) }}" icon="banknote" color="green" :delay="40" />
@@ -171,16 +177,15 @@
                                     <button type="button" @click="receipt = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                 </div>
                             </div>
-                            <div x-show="showReceiptPicker" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1">
-                                <template x-for="file in adminFiles" :key="file.name">
-                                    <button type="button" @click="receipt = file.name; showReceiptPicker = false" class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
-                                        <span class="w-5 h-5 rounded text-[8px] font-bold flex items-center justify-center text-white shrink-0" :class="file.category === 'IMG' ? 'bg-brand-500' : 'bg-rose-500'" x-text="file.category"></span>
-                                        <span class="text-xs text-slate-600 flex-1 truncate" x-text="file.name"></span>
-                                    </button>
-                                </template>
-                                <button type="button" @click="receipt = 'Scanned OR.jpg'; showReceiptPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })" class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors text-brand-600">
-                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i><span class="text-xs font-medium">Upload scanned copy</span>
-                                </button>
+                            <div x-show="showReceiptPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
+                                <x-ui.file-picker
+                                    files="adminFiles"
+                                    onSelect="receipt = file.name; showReceiptPicker = false"
+                                    uploadAction="receipt = 'Scanned OR.jpg'; showReceiptPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
+                                    :columns="2"
+                                    :search="false"
+                                    :bilingual="false"
+                                />
                             </div>
                         </div>
                     </div>
@@ -206,5 +211,7 @@
                 </template>
             </x-slot:footer>
         </x-ui.modal>
+
+        </div>
     </div>
 </x-layouts.admin>

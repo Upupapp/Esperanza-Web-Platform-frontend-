@@ -28,7 +28,13 @@
 @endphp
 
 <x-layouts.admin title="Settings" subtitle="Platform preferences and configuration." active="settings">
-    <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up">
+
+        <div x-show="!$store.session.can('settings')" x-cloak>
+            <x-admin.access-restricted module="System Settings" icon="settings" />
+        </div>
+
+        <div x-show="$store.session.can('settings')" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
         <div class="lg:col-span-1">
             <x-ui.card padded="false" class="p-2">
@@ -209,6 +215,8 @@
                     </tbody>
                 </x-ui.table>
             </div>
+        </div>
+
         </div>
     </div>
 </x-layouts.admin>

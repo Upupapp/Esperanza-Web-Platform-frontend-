@@ -203,28 +203,14 @@
                             <button type="button" @click="attachment = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </div>
-                    <div x-show="showFilePicker" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1">
-                        <template x-for="file in files" :key="file.name">
-                            <button
-                                type="button"
-                                @click="attachment = file.name; showFilePicker = false"
-                                class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
-                            >
-                                <span
-                                    class="w-5 h-5 rounded text-[8px] font-bold flex items-center justify-center text-white shrink-0"
-                                    :class="file.category === 'IMG' ? 'bg-brand-500' : (file.category === 'PDF' ? 'bg-rose-500' : 'bg-blue-500')"
-                                    x-text="file.category"
-                                ></span>
-                                <span class="text-xs text-slate-600 flex-1 truncate" x-text="file.name"></span>
-                            </button>
-                        </template>
-                        <button
-                            type="button"
-                            @click="attachment = 'New upload.jpg'; showFilePicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                            class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors text-brand-600"
-                        >
-                            <i data-lucide="upload" class="w-3.5 h-3.5"></i><span class="text-xs font-medium"><x-ui.t fil="Mag-upload ng bagong file" en="Upload a new file" /></span>
-                        </button>
+                    <div x-show="showFilePicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
+                        <x-ui.file-picker
+                            files="files"
+                            onSelect="attachment = file.name; showFilePicker = false"
+                            uploadAction="attachment = 'New upload.jpg'; showFilePicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
+                            :columns="2"
+                            :search="false"
+                        />
                     </div>
                 </div>
             </div>

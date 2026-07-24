@@ -19,6 +19,42 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
+    // Frontend-only "logged in as this role" simulation for the Administrative
+    // Portal (see config/esperanza_rbac.php). No real auth — the account object
+    // just persists to localStorage so nav/pages can gate content by module
+    // access and Municipal/Barangay scope. No session -> fail-open (unrestricted
+    // preview), since this is a design demo, not a real security boundary.
+    Alpine.store('session', {
+        account: JSON.parse(localStorage.getItem('esperanza_session') || 'null'),
+        login(account) {
+            this.account = account;
+            localStorage.setItem('esperanza_session', JSON.stringify(account));
+        },
+        logout() {
+            this.account = null;
+            localStorage.removeItem('esperanza_session');
+        },
+        can(moduleKey) {
+            if (!this.account) return true;
+            return (this.account.moduleKeys || []).includes(moduleKey);
+        },
+        inScope(barangay) {
+            if (!this.account) return true;
+            if (this.account.scope === 'Municipal') return true;
+            return this.account.scope === barangay;
+        },
+        initials() {
+            if (!this.account) return 'GP';
+            return this.account.name
+                .split(/\s+/)
+                .filter(Boolean)
+                .map((part) => part[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase();
+        },
+    });
+
     Alpine.data('dropdown', () => ({
         open: false,
         toggle() {

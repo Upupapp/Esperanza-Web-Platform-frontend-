@@ -27,6 +27,12 @@
 <x-layouts.admin title="Dokyu" subtitle="Track and process citizen document requests." active="document-requests">
     <div x-data="{ tab: 'all', open: false, selected: null }" class="animate-fade-up">
 
+        <div x-show="!$store.session.can('dokyu')" x-cloak>
+            <x-admin.access-restricted module="Dokyu (Document Requests)" icon="file-text" />
+        </div>
+
+        <div x-show="$store.session.can('dokyu')" x-cloak>
+
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <x-ui.stat-card label="Total Requests" value="1,284" icon="file-text" color="brand" trend="+8.4%" sublabel="This month" :delay="0" />
             <x-ui.stat-card label="Needs Action" value="63" icon="inbox" color="orange" sublabel="Review or verification" :delay="40" />
@@ -91,7 +97,7 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 @foreach($requests as $r)
-                    <tr class="hover:bg-slate-50/70 transition-colors">
+                    <tr x-show="$store.session.inScope('{{ $r['barangay'] }}')" x-cloak class="hover:bg-slate-50/70 transition-colors">
                         <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ $r['ref'] }}</td>
                         <td class="px-4 py-3 text-slate-700 font-medium whitespace-nowrap">{{ $r['citizen'] }}</td>
                         <td class="px-4 py-3 text-slate-500 hidden md:table-cell">{{ $r['type'] }}</td>
@@ -140,5 +146,7 @@
                 <x-ui.button size="sm" icon="check" @click="open = false; $dispatch('toast', { message: 'Moved to next stage: Approved.', variant: 'success' })">Approve & Continue</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
+
+        </div>
     </div>
 </x-layouts.admin>

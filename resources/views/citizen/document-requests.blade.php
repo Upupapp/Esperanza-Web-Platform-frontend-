@@ -99,7 +99,7 @@
                 @endforeach
             </div>
             <div class="flex items-center gap-2">
-                <div x-data="{ open: false, fileTab: 'all', showAdd: false }" class="contents">
+                <div x-data="{ open: false, fileTab: 'all', showAdd: false, availableFiles: @js($availableFiles) }" class="contents">
                     <x-ui.button @click="open = true" variant="secondary" icon="folder-open" size="sm"><x-ui.t fil="Aking mga Isinumiteng Dokyu" en="My Submitted Dokyus" /></x-ui.button>
                     <x-ui.modal title="Aking mga Isinumiteng Dokyu" titleEn="My Submitted Dokyus" maxWidth="2xl">
                         <p class="text-sm text-slate-500 mb-4"><x-ui.t fil="Mga dokumentong na-upload mo para sa iyong mga kahilingan sa Dokyu at Tulong." en="Documents you've uploaded for your Dokyu and Tulong requests." /></p>
@@ -128,20 +128,12 @@
                         </div>
 
                         <!-- Pre-uploaded file picker -->
-                        <div x-show="showAdd" x-cloak x-transition class="mb-4 rounded-xl border border-brand-100 bg-brand-50/50 p-3.5">
-                            <p class="text-xs font-semibold text-brand-700 uppercase tracking-wide mb-2.5"><x-ui.t fil="Mga file na nasa record na" en="Files already on record" /></p>
-                            <div class="space-y-1.5">
-                                @foreach($availableFiles as $file)
-                                    <div class="flex items-center gap-2.5 bg-white rounded-lg px-3 py-2 border border-slate-100">
-                                        <span class="w-7 h-7 rounded-md {{ $fileCardStyle[$file['category']]['badge'] }} flex items-center justify-center shrink-0 text-[10px] font-bold">{{ $file['category'] }}</span>
-                                        <span class="text-sm text-slate-700 flex-1 min-w-0 truncate">{{ $file['name'] }}</span>
-                                        <button
-                                            @click="showAdd = false; $dispatch('toast', { message: '{{ $file['name'] }} attached — this is a frontend preview, no data is saved.', variant: 'success' })"
-                                            class="text-xs font-medium text-brand-600 hover:underline shrink-0"
-                                        ><x-ui.t fil="Ikabit" en="Attach" /></button>
-                                    </div>
-                                @endforeach
-                            </div>
+                        <div x-show="showAdd" x-cloak x-transition class="mb-4">
+                            <x-ui.file-picker
+                                files="availableFiles"
+                                onSelect="showAdd = false; $dispatch('toast', { message: file.name + ' attached — this is a frontend preview, no data is saved.', variant: 'success' })"
+                                :columns="3"
+                            />
                         </div>
 
                         <!-- File gallery -->
@@ -294,28 +286,14 @@
                                                 <button type="button" @click="attachments[i] = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                             </div>
                                         </div>
-                                        <div x-show="showFilePicker === i" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1">
-                                            <template x-for="file in files" :key="file.name">
-                                                <button
-                                                    type="button"
-                                                    @click="attachments[i] = file.name; showFilePicker = null"
-                                                    class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
-                                                >
-                                                    <span
-                                                        class="w-5 h-5 rounded text-[8px] font-bold flex items-center justify-center text-white shrink-0"
-                                                        :class="file.category === 'IMG' ? 'bg-brand-500' : (file.category === 'PDF' ? 'bg-rose-500' : 'bg-blue-500')"
-                                                        x-text="file.category"
-                                                    ></span>
-                                                    <span class="text-xs text-slate-600 flex-1 truncate" x-text="file.name"></span>
-                                                </button>
-                                            </template>
-                                            <button
-                                                type="button"
-                                                @click="attachments[i] = 'New upload.jpg'; showFilePicker = null; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                                class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors text-brand-600"
-                                            >
-                                                <i data-lucide="upload" class="w-3.5 h-3.5"></i><span class="text-xs font-medium"><x-ui.t fil="Mag-upload ng bagong file" en="Upload a new file" /></span>
-                                            </button>
+                                        <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
+                                            <x-ui.file-picker
+                                                files="files"
+                                                onSelect="attachments[i] = file.name; showFilePicker = null"
+                                                uploadAction="attachments[i] = 'New upload.jpg'; showFilePicker = null; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
+                                                :columns="2"
+                                                :search="false"
+                                            />
                                         </div>
                                     </div>
                                 </template>
@@ -413,28 +391,14 @@
                                                         <button type="button" @click="receipt = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                                     </div>
                                                 </div>
-                                                <div x-show="showReceiptPicker" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-1">
-                                                    <template x-for="file in files" :key="file.name">
-                                                        <button
-                                                            type="button"
-                                                            @click="receipt = file.name; showReceiptPicker = false"
-                                                            class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
-                                                        >
-                                                            <span
-                                                                class="w-5 h-5 rounded text-[8px] font-bold flex items-center justify-center text-white shrink-0"
-                                                                :class="file.category === 'IMG' ? 'bg-brand-500' : (file.category === 'PDF' ? 'bg-rose-500' : 'bg-blue-500')"
-                                                                x-text="file.category"
-                                                            ></span>
-                                                            <span class="text-xs text-slate-600 flex-1 truncate" x-text="file.name"></span>
-                                                        </button>
-                                                    </template>
-                                                    <button
-                                                        type="button"
-                                                        @click="receipt = 'Receipt Scan.jpg'; showReceiptPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                                        class="w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors text-brand-600"
-                                                    >
-                                                        <i data-lucide="upload" class="w-3.5 h-3.5"></i><span class="text-xs font-medium"><x-ui.t fil="Mag-upload ng bagong file" en="Upload a new file" /></span>
-                                                    </button>
+                                                <div x-show="showReceiptPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
+                                                    <x-ui.file-picker
+                                                        files="files"
+                                                        onSelect="receipt = file.name; showReceiptPicker = false"
+                                                        uploadAction="receipt = 'Receipt Scan.jpg'; showReceiptPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
+                                                        :columns="2"
+                                                        :search="false"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

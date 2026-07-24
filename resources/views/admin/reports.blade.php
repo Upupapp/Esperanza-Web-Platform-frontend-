@@ -40,6 +40,17 @@
 <x-layouts.admin title="Reports & Analytics" subtitle="Generate reports and explore municipal service insights." active="reports">
     <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up">
 
+        <div x-show="!$store.session.can('reports')" x-cloak>
+            <x-admin.access-restricted module="Reports & Analytics" icon="chart-column" />
+        </div>
+
+        <div x-show="$store.session.can('reports')" x-cloak>
+
+        <div x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
+            <i data-lucide="map-pin" class="w-4 h-4 text-purple-500 shrink-0"></i>
+            <p class="text-xs text-purple-700">Reports below are municipality-wide reference data. Barangay-level report generation for your assigned barangay is coming soon.</p>
+        </div>
+
         <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4">
             <button @click="tab = 'reports'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'reports' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="file-bar-chart" class="w-3.5 h-3.5"></i>Reports</button>
             <button @click="tab = 'analytics'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'analytics' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="trending-up" class="w-3.5 h-3.5"></i>Analytics</button>
@@ -151,7 +162,7 @@
                 <h3 class="text-sm font-semibold text-navy-900 mb-4">Top Barangays by Digital Engagement</h3>
                 <div class="space-y-4">
                     @foreach($topBarangays as $b)
-                        <div>
+                        <div x-show="$store.session.inScope('{{ $b['name'] }}')" x-cloak>
                             <div class="flex items-center justify-between text-sm mb-1.5">
                                 <span class="text-slate-600 font-medium">Brgy. {{ $b['name'] }}</span>
                                 <span class="text-slate-400">{{ $b['pct'] }}%</span>
@@ -163,6 +174,8 @@
                     @endforeach
                 </div>
             </x-ui.card>
+        </div>
+
         </div>
     </div>
 </x-layouts.admin>

@@ -1,5 +1,35 @@
 <x-layouts.guest title="LGU Personnel Login" image="rectangle_cityhall.jpg" fullscreen>
-    <div x-data="authForm('{{ route('admin.dashboard') }}')">
+    <div
+        x-data="{
+            accounts: @js(config('esperanza_rbac.accounts')),
+            employeeId: '',
+            password: '',
+            loading: false,
+            error: '',
+            showSamples: false,
+            fill(account) {
+                this.employeeId = account.id;
+                this.password = 'demo1234';
+                this.error = '';
+            },
+            submit() {
+                if (this.loading) return;
+                const match = this.accounts.find(a => a.id.toLowerCase() === this.employeeId.trim().toLowerCase());
+                if (!match) {
+                    this.error = 'Employee ID not recognized. Try one of the sample accounts below.';
+                    this.showSamples = true;
+                    return;
+                }
+                this.error = '';
+                this.loading = true;
+                setTimeout(() => {
+                    this.loading = false;
+                    this.$store.session.login(match);
+                    window.location.href = '{{ route('admin.dashboard') }}';
+                }, 900);
+            },
+        }"
+    >
         <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 mb-4 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
         </a>
@@ -18,7 +48,7 @@
 
         <form class="mt-5 space-y-3.5" @submit.prevent="submit">
             <div class="animate-fade-up" style="animation-delay: 100ms">
-                <x-ui.input name="employee_id" type="text" label="Employee ID or Email" icon="badge-check" placeholder="ESP-2026-0142" class="font-mono" required />
+                <x-ui.input name="employee_id" type="text" label="Employee ID" icon="badge-check" placeholder="SA-001" class="font-mono uppercase" x-model="employeeId" required />
             </div>
 
             <div class="animate-fade-up" style="animation-delay: 150ms" x-data="passwordField">
@@ -28,6 +58,7 @@
                     <input
                         :type="visible ? 'text' : 'password'"
                         name="password" id="password" placeholder="••••••••" required
+                        x-model="password"
                         class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-navy-400 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-200"
                     >
                     <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
@@ -37,9 +68,9 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5 animate-fade-up" style="animation-delay: 190ms">
-                <i data-lucide="smartphone" class="w-4 h-4 text-slate-400 shrink-0"></i>
-                <p class="text-xs text-slate-400">Two-factor verification will be requested after password sign-in.</p>
+            <div x-show="error" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
+                <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>
+                <p class="text-xs text-rose-600" x-text="error"></p>
             </div>
 
             <button
@@ -56,6 +87,27 @@
                 <i data-lucide="arrow-right" class="w-4 h-4" x-show="!loading"></i>
             </button>
         </form>
+
+        <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 overflow-hidden animate-fade-up" style="animation-delay: 260ms">
+            <button type="button" @click="showSamples = !showSamples" class="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-left">
+                <span class="flex items-center gap-2 text-xs font-medium text-slate-600"><i data-lucide="flask-conical" class="w-3.5 h-3.5 text-slate-400"></i>Try a sample account (preview only)</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="showSamples && 'rotate-180'"></i>
+            </button>
+            <div x-show="showSamples" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                <div class="px-3.5 pb-3.5 grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-thin">
+                    <template x-for="account in accounts" :key="account.id">
+                        <button
+                            type="button" @click="fill(account)"
+                            class="text-left rounded-lg border px-2.5 py-2 transition-all duration-150"
+                            :class="employeeId.toLowerCase() === account.id.toLowerCase() ? 'border-navy-400 bg-white ring-2 ring-navy-100' : 'border-slate-200 bg-white hover:border-slate-300'"
+                        >
+                            <span class="block text-[11px] font-mono font-semibold text-navy-800" x-text="account.id"></span>
+                            <span class="block text-[10.5px] text-slate-400 truncate" x-text="account.role"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
 
         <p class="text-center text-xs text-slate-400 mt-4">
             Personnel accounts cannot self-register — contact the ICT Office for access.

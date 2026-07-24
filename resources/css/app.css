@@ -121,6 +121,19 @@
     .scrollbar-thin::-webkit-scrollbar-track {
         background: transparent;
     }
+    .scrollbar-dark::-webkit-scrollbar {
+        width: 5px;
+    }
+    .scrollbar-dark::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 9999px;
+    }
+    .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    .scrollbar-dark::-webkit-scrollbar-track {
+        background: transparent;
+    }
     .bg-grid-dots {
         background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1px);
         background-size: 22px 22px;

@@ -1,4 +1,6 @@
 @php
+    $permissionModules = config('esperanza_rbac.permission_modules');
+
     $docStatus = [
         ['label' => 'Completed', 'value' => 612, 'color' => '#22c55e'],
         ['label' => 'Processing', 'value' => 348, 'color' => '#2f62f5'],
@@ -30,7 +32,7 @@
 
     $alerts = [
         ['icon' => 'alert-triangle', 'color' => 'text-rose-600 bg-rose-50', 'title' => '23 document requests pending over 5 days', 'body' => 'Immediate attention required', 'time' => 'Jul 10, 2026'],
-        ['icon' => 'alert-circle', 'color' => 'text-amber-600 bg-amber-50', 'title' => 'Resident profiling in 4 barangays below 60%', 'body' => 'Field verification needed', 'time' => 'Jul 10, 2026'],
+        ['icon' => 'circle-alert', 'color' => 'text-amber-600 bg-amber-50', 'title' => 'Resident profiling in 4 barangays below 60%', 'body' => 'Field verification needed', 'time' => 'Jul 10, 2026'],
         ['icon' => 'file-clock', 'color' => 'text-brand-600 bg-brand-50', 'title' => '9 assistance requests awaiting budget clearance', 'body' => 'Action needed to avoid delays', 'time' => 'Jul 9, 2026'],
         ['icon' => 'check-circle-2', 'color' => 'text-emerald-600 bg-emerald-50', 'title' => 'Q2 citizen satisfaction survey results are in', 'body' => 'Ready to share with department heads', 'time' => 'Jul 8, 2026'],
     ];
@@ -45,7 +47,36 @@
 @endphp
 
 <x-layouts.admin title="Executive Dashboard" subtitle="Overview of citizen services and municipal operations." active="dashboard">
-    <div x-data="{ ready: false }" x-init="setTimeout(() => ready = true, 550)">
+    <div x-data="{ ready: false, modules: @js($permissionModules) }" x-init="setTimeout(() => ready = true, 550)">
+
+        <!-- Your Access summary — reflects whichever sample account is signed in -->
+        <div x-show="$store.session.account" x-cloak class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 bg-white rounded-2xl border border-slate-100 shadow-card px-4 py-3.5 animate-fade-up">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0" x-text="$store.session.initials()"></div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-navy-900 truncate">
+                        <span x-text="$store.session.account?.name"></span>
+                        <span class="text-slate-400 font-normal">· <span x-text="$store.session.account?.id" class="font-mono"></span></span>
+                    </p>
+                    <p class="text-xs text-slate-400" x-text="$store.session.account?.role + ' · ' + $store.session.account?.dept"></p>
+                </div>
+            </div>
+            <span
+                class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1 shrink-0"
+                :class="$store.session.account?.scope === 'Municipal' ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'"
+            >
+                <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-3 h-3"></i>
+                <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide access' : 'Brgy. ' + $store.session.account?.scope + ' only'"></span>
+            </span>
+            <div class="flex flex-wrap items-center gap-1.5 sm:ml-auto">
+                <template x-for="mod in modules.filter(m => $store.session.can(m.key))" :key="mod.key">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10.5px] font-medium">
+                        <i :data-lucide="mod.icon" class="w-3 h-3"></i>
+                        <span x-text="mod.name"></span>
+                    </span>
+                </template>
+            </div>
+        </div>
 
         <div class="flex items-center justify-between mb-4">
             <p class="text-sm text-slate-400">Real-time overview of citizen services and municipal operations.</p>
@@ -106,16 +137,17 @@
 
             <!-- KPI row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">
-                <x-ui.stat-card label="Registered Residents" value="17,842" icon="users" color="brand" trend="+312" sublabel="Across 20 barangays" :delay="0" />
-                <x-ui.stat-card label="Dokyu" value="1,284" icon="file-text" color="green" trend="+8.4%" sublabel="This month" :delay="40" />
-                <x-ui.stat-card label="Pending Approvals" value="63" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" />
-                <x-ui.stat-card label="Tulong" value="417" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" />
-                <x-ui.stat-card label="Balita" value="28" icon="megaphone" color="gold" sublabel="Published this year" :delay="160" />
-                <x-ui.stat-card label="Avg. Processing Time" value="2.4 days" icon="timer" color="red" trend="-0.6 days" trendDirection="down" sublabel="Document requests" :delay="200" />
+                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card label="Registered Residents" value="17,842" icon="users" color="brand" trend="+312" sublabel="Across 20 barangays" :delay="0" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card label="Dokyu" value="1,284" icon="file-text" color="green" trend="+8.4%" sublabel="This month" :delay="40" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card label="Pending Approvals" value="63" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" /></div>
+                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card label="Tulong" value="417" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" /></div>
+                <div x-show="$store.session.can('communications')" x-cloak><x-ui.stat-card label="Balita" value="28" icon="megaphone" color="gold" sublabel="Published this year" :delay="160" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card label="Avg. Processing Time" value="2.4 days" icon="timer" color="red" trend="-0.6 days" trendDirection="down" sublabel="Document requests" :delay="200" /></div>
             </div>
 
             <!-- Middle row: donuts + barangay list -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <div x-show="$store.session.can('dokyu')" x-cloak>
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold text-navy-900">Dokyu</h3>
@@ -143,7 +175,9 @@
                         @endforeach
                     </div>
                 </x-ui.card>
+                </div>
 
+                <div x-show="$store.session.can('tulong')" x-cloak>
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold text-navy-900">Tulong</h3>
@@ -171,7 +205,9 @@
                         @endforeach
                     </div>
                 </x-ui.card>
+                </div>
 
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong') || $store.session.can('constituents')" x-cloak>
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold text-navy-900">Requests by Barangay</h3>
@@ -179,7 +215,7 @@
                     </div>
                     <div class="space-y-4">
                         @foreach($barangayRequests as $brgy)
-                            <div>
+                            <div x-show="$store.session.inScope('{{ $brgy['name'] }}')" x-cloak>
                                 <div class="flex items-center justify-between text-sm mb-1.5">
                                     <span class="text-slate-600 font-medium">Brgy. {{ $brgy['name'] }}</span>
                                     <span class="text-slate-400">{{ $brgy['count'] }} requests</span>
@@ -191,10 +227,12 @@
                         @endforeach
                     </div>
                 </x-ui.card>
+                </div>
             </div>
 
             <!-- Bottom row: trend, alerts, activity -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak>
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="font-semibold text-navy-900">Requests Trend (YTD)</h3>
@@ -213,6 +251,7 @@
                         <canvas x-ref="canvas"></canvas>
                     </div>
                 </x-ui.card>
+                </div>
 
                 <x-ui.card padded="false">
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
