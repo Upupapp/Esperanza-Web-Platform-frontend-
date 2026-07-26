@@ -1,7 +1,7 @@
 @props([
     'label',
     'labelEn' => null,
-    'value',
+    'value' => null,
     'icon',
     'color' => 'brand',
     'sublabel' => null,
