@@ -1,9 +1,9 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
-import { Chart, ArcElement, DoughnutController, LineElement, LineController, PointElement, LinearScale, CategoryScale, Filler, Tooltip, Legend } from 'chart.js';
+import { Chart, ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend } from 'chart.js';
 
-Chart.register(ArcElement, DoughnutController, LineElement, LineController, PointElement, LinearScale, CategoryScale, Filler, Tooltip, Legend);
+Chart.register(ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend);
 Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
 Chart.defaults.color = '#64748b';
 
@@ -125,6 +125,38 @@ document.addEventListener('alpine:init', () => {
                     scales: {
                         x: { grid: { display: false }, border: { display: false } },
                         y: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { callback: (v) => config.yPrefix ? config.yPrefix + v : v } },
+                    },
+                },
+            });
+        },
+    }));
+
+    Alpine.data('barChart', (config) => ({
+        chart: null,
+        init() {
+            this.chart = new Chart(this.$refs.canvas, {
+                type: 'bar',
+                data: {
+                    labels: config.labels,
+                    datasets: (config.datasets || [{ label: config.label, data: config.values, backgroundColor: config.colors || config.color }]).map((ds) => ({
+                        label: ds.label,
+                        data: ds.data,
+                        backgroundColor: ds.color || ds.backgroundColor,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    })),
+                },
+                options: {
+                    indexAxis: config.horizontal ? 'y' : 'x',
+                    maintainAspectRatio: false,
+                    animation: { duration: 900, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { display: !!config.showLegend },
+                        tooltip: { padding: 10, cornerRadius: 8 },
+                    },
+                    scales: {
+                        x: { grid: { display: config.horizontal ? false : true, color: '#f1f5f9' }, border: { display: false } },
+                        y: { grid: { display: config.horizontal ? true : false, color: '#f1f5f9' }, border: { display: false } },
                     },
                 },
             });

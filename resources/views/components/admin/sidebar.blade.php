@@ -47,6 +47,7 @@
         <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" moduleKey="constituents" />
         <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badge="18" :active="$active === 'document-requests'" moduleKey="dokyu" />
         <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badge="9" :active="$active === 'assistance-requests'" moduleKey="tulong" />
+        <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />
         <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
         <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Communications" :active="$active === 'communications'" moduleKey="communications" />
         <x-ui.nav-item dense :href="route('admin.reports')" icon="file-bar-chart" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />

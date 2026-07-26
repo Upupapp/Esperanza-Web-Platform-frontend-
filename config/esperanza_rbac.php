@@ -237,4 +237,53 @@ return [
     'permission_modules' => $permissionModules,
     'roles' => $roles,
     'accounts' => $accounts,
+
+    // ── SAKUNA per-role grants (Disaster Risk Reduction & Emergency Operations) ─
+    'grants' => [
+        'Super Administrator'    => ['sakuna' => '*'],
+        'Municipal Administrator' => ['sakuna' => '*'],
+        'Department Head' => ['sakuna' => [
+            'sakuna_command'       => ['view', 'dispatch', 'escalate', 'close', 'export'],
+            'sakuna_vulnerability' => ['view', 'approve', 'export'],
+            'sakuna_incidents'     => ['view', 'validate', 'assign', 'dispatch', 'escalate', 'resolve', 'close', 'export'],
+            'sakuna_centers'       => ['view', 'open', 'close', 'assign', 'export'],
+            'sakuna_evacuees'      => ['view', 'check_in', 'transfer', 'check_out', 'export'],
+            'sakuna_resources'     => ['view', 'assign', 'deploy', 'return', 'export'],
+            'sakuna_relief'        => ['view', 'approve', 'release', 'export'],
+            'sakuna_damage'        => ['view', 'validate', 'approve', 'export'],
+            'sakuna_alerts'        => ['view', 'approve', 'export'],
+            'sakuna_reports'       => ['view', 'export'],
+        ]],
+        'Department Staff' => ['sakuna' => [
+            'sakuna_command'       => ['view', 'create', 'edit'],
+            'sakuna_vulnerability' => ['view', 'create', 'edit'],
+            'sakuna_incidents'     => ['view', 'create', 'edit', 'validate', 'assign'],
+            'sakuna_centers'       => ['view', 'create', 'edit'],
+            'sakuna_evacuees'      => ['view', 'create', 'edit', 'check_in'],
+            'sakuna_resources'     => ['view', 'create', 'edit', 'assign'],
+            'sakuna_relief'        => ['view', 'create', 'edit'],
+            'sakuna_damage'        => ['view', 'create', 'edit', 'validate'],
+            'sakuna_alerts'        => ['view', 'create', 'edit'],
+            'sakuna_reports'       => ['view'],
+        ]],
+        'Front Desk Officer' => ['sakuna' => [
+            'sakuna_incidents' => ['view', 'create'],
+            'sakuna_evacuees'  => ['view', 'create', 'check_in'],
+        ]],
+        'Records Officer' => ['sakuna' => [
+            'sakuna_vulnerability' => ['view', 'export'],
+            'sakuna_evacuees'      => ['view', 'export'],
+            'sakuna_damage'        => ['view', 'export'],
+            'sakuna_reports'       => ['view', 'export', 'print'],
+        ]],
+        'Information Officer' => ['sakuna' => [
+            'sakuna_command'   => ['view'],
+            'sakuna_incidents' => ['view'],
+            'sakuna_centers'   => ['view'],
+            'sakuna_evacuees'  => ['view'],
+            'sakuna_alerts'    => ['view', 'create', 'edit', 'review', 'approve', 'publish', 'cancel', 'archive'],
+            'sakuna_reports'   => ['view', 'export', 'print'],
+        ]],
+        'Citizen' => ['sakuna' => []],
+    ],
 ];

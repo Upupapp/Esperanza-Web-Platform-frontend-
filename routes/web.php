@@ -61,3 +61,16 @@ Route::view('/admin/users/permissions', 'admin.users', ['tab' => 'permissions'])
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');
 Route::view('/admin/settings/branding', 'admin.settings', ['tab' => 'branding'])->name('admin.branding');
 Route::view('/admin/settings/audit-logs', 'admin.settings', ['tab' => 'audit-logs'])->name('admin.audit-logs');
+
+// Sakuna — Disaster Risk Reduction, Emergency Operations, Evacuation, Relief, and Recovery Management.
+// All sub-routes resolve to the same view with a tab parameter.
+Route::view('/admin/sakuna', 'admin.sakuna', ['tab' => 'command-center'])->name('admin.sakuna');
+Route::view('/admin/sakuna/vulnerability', 'admin.sakuna', ['tab' => 'vulnerability'])->name('admin.sakuna.vulnerability');
+Route::view('/admin/sakuna/incidents', 'admin.sakuna', ['tab' => 'incidents'])->name('admin.sakuna.incidents');
+Route::view('/admin/sakuna/evacuation-centers', 'admin.sakuna', ['tab' => 'evacuation-centers'])->name('admin.sakuna.evacuation-centers');
+Route::view('/admin/sakuna/evacuees', 'admin.sakuna', ['tab' => 'evacuees'])->name('admin.sakuna.evacuees');
+Route::view('/admin/sakuna/resources', 'admin.sakuna', ['tab' => 'resources'])->name('admin.sakuna.resources');
+Route::view('/admin/sakuna/relief', 'admin.sakuna', ['tab' => 'relief'])->name('admin.sakuna.relief');
+Route::view('/admin/sakuna/damage-assessment', 'admin.sakuna', ['tab' => 'damage-assessment'])->name('admin.sakuna.damage-assessment');
+Route::view('/admin/sakuna/alerts', 'admin.sakuna', ['tab' => 'alerts'])->name('admin.sakuna.alerts');
+Route::view('/admin/sakuna/reports', 'admin.sakuna', ['tab' => 'reports'])->name('admin.sakuna.reports');
