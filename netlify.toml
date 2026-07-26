@@ -4,13 +4,24 @@
   publish  = "dist"
 
 [build.environment]
-  PHP_VERSION = "8.3"
-  NODE_VERSION = "20"
-  APP_ENV   = "production"
-  APP_DEBUG = "false"
-  # APP_KEY is intentionally omitted here — set it as a secret env variable
-  # in the Netlify UI: Site Settings → Environment Variables → APP_KEY
-  # Generate one with: php artisan key:generate --show
+  PHP_VERSION    = "8.3"
+  NODE_VERSION   = "20"
+  APP_ENV        = "production"
+  APP_DEBUG      = "false"
+  # APP_KEY must be set as a secret in the Netlify UI — do NOT put it here.
+  # Project configuration → Environment variables → Add variable
+  #   Key:   APP_KEY
+  #   Value: base64:kW0IQ9qoy4UBqcDa5FEh0bVWIWDXgXaW7yldE8lAjCg=
+
+  # Use in-memory drivers — this is a frontend-only static export, no DB needed.
+  DB_CONNECTION      = "sqlite"
+  DB_DATABASE        = ":memory:"
+  CACHE_STORE        = "array"
+  SESSION_DRIVER     = "array"
+  QUEUE_CONNECTION   = "sync"
+  LOG_CHANNEL        = "stderr"
+  BROADCAST_CONNECTION = "log"
+  FILESYSTEM_DISK    = "local"
 
 # ── Redirect rules ────────────────────────────────────────────────────────────
 # All known routes have an index.html in dist/; Netlify serves them automatically.
