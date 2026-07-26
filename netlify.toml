@@ -1,0 +1,27 @@
+[build]
+  # 1. Install PHP deps  2. Install JS deps  3. Vite build  4. Export to static HTML
+  command = "composer install --no-dev --optimize-autoloader && npm ci && npm run build && mkdir -p storage/framework/views storage/framework/sessions storage/framework/cache storage/logs && chmod -R 777 storage bootstrap/cache && APP_URL=$URL php export.php"
+  publish  = "dist"
+
+[build.environment]
+  PHP_VERSION = "8.3"
+  NODE_VERSION = "20"
+  APP_ENV   = "production"
+  APP_DEBUG = "false"
+  # APP_KEY is intentionally omitted here — set it as a secret env variable
+  # in the Netlify UI: Site Settings → Environment Variables → APP_KEY
+  # Generate one with: php artisan key:generate --show
+
+# ── Redirect rules ────────────────────────────────────────────────────────────
+# All known routes have an index.html in dist/; Netlify serves them automatically.
+# The rules below handle the /logout alias and a catch-all 404 fallback.
+
+[[redirects]]
+  from   = "/logout"
+  to     = "/"
+  status = 302
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 404
