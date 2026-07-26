@@ -45,6 +45,7 @@ $permissionModules = [
             ['key' => 'const_household', 'name' => 'Household Profiles', 'perms' => ['view', 'create', 'edit', 'delete', 'export']],
             ['key' => 'const_family', 'name' => 'Family Profiles', 'perms' => ['view', 'create', 'edit', 'delete']],
             ['key' => 'const_barangay', 'name' => 'Barangay Profiles', 'perms' => ['view', 'edit', 'export']],
+            ['key' => 'const_data_quality', 'name' => 'Data Quality Management', 'perms' => ['view', 'verify', 'assign', 'merge', 'resolve', 'view_sensitive', 'export']],
         ],
     ],
     [
@@ -233,6 +234,7 @@ return [
         'view' => 'View', 'create' => 'Create', 'edit' => 'Edit', 'delete' => 'Delete',
         'review' => 'Review', 'approve' => 'Approve', 'reject' => 'Reject', 'release' => 'Release',
         'export' => 'Export', 'print' => 'Print', 'archive' => 'Archive',
+        'verify' => 'Verify', 'assign' => 'Assign', 'merge' => 'Merge', 'resolve' => 'Resolve', 'view_sensitive' => 'View Sensitive',
     ],
     'permission_modules' => $permissionModules,
     'roles' => $roles,

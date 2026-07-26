@@ -1,314 +1,323 @@
 @php
-    $households = [
-        ['id' => 'HH-0001', 'name' => 'Bacaltos-Cruz Household', 'barangay' => 'Poblacion', 'families' => 2, 'members' => 7, 'head' => 'Maria Fe Bacaltos'],
-        ['id' => 'HH-0002', 'name' => 'Espenida Household', 'barangay' => 'Masbaranon', 'families' => 1, 'members' => 6, 'head' => 'Ronaldo Espenida'],
-        ['id' => 'HH-0003', 'name' => 'Marbella Household', 'barangay' => 'Baras', 'families' => 1, 'members' => 3, 'head' => 'Josefina Marbella'],
-        ['id' => 'HH-0004', 'name' => 'Dagohoy-Palma Household', 'barangay' => 'Domorog', 'families' => 2, 'members' => 8, 'head' => 'Alvin Dagohoy'],
-        ['id' => 'HH-0005', 'name' => 'Fajardo Household', 'barangay' => 'Rizal', 'families' => 1, 'members' => 7, 'head' => 'Angelica Fajardo'],
-    ];
-
-    $families = [
-        ['id' => 'FAM-0001', 'household' => 'HH-0001', 'surname' => 'Bacaltos', 'barangay' => 'Poblacion', 'head' => 'Maria Fe Bacaltos', 'members' => 4],
-        ['id' => 'FAM-0002', 'household' => 'HH-0001', 'surname' => 'Cruz', 'barangay' => 'Poblacion', 'head' => 'Ramon Cruz', 'members' => 3],
-        ['id' => 'FAM-0003', 'household' => 'HH-0002', 'surname' => 'Espenida', 'barangay' => 'Masbaranon', 'head' => 'Ronaldo Espenida', 'members' => 6],
-        ['id' => 'FAM-0004', 'household' => 'HH-0003', 'surname' => 'Marbella', 'barangay' => 'Baras', 'head' => 'Josefina Marbella', 'members' => 3],
-        ['id' => 'FAM-0005', 'household' => 'HH-0004', 'surname' => 'Dagohoy', 'barangay' => 'Domorog', 'head' => 'Alvin Dagohoy', 'members' => 5],
-        ['id' => 'FAM-0006', 'household' => 'HH-0004', 'surname' => 'Palma', 'barangay' => 'Domorog', 'head' => 'Rodrigo Palma', 'members' => 3],
-        ['id' => 'FAM-0007', 'household' => 'HH-0005', 'surname' => 'Fajardo', 'barangay' => 'Rizal', 'head' => 'Angelica Fajardo', 'members' => 7],
-    ];
-
-    $individuals = [
-        ['name' => 'Maria Fe Bacaltos', 'family' => 'FAM-0001', 'barangay' => 'Poblacion', 'contact' => '0917 342 8810', 'household' => 4, 'status' => 'Approved', 'verified' => true],
-        ['name' => 'Ronaldo Espenida', 'family' => 'FAM-0003', 'barangay' => 'Masbaranon', 'contact' => '0918 220 4471', 'household' => 6, 'status' => 'Approved', 'verified' => true],
-        ['name' => 'Josefina Marbella', 'family' => 'FAM-0004', 'barangay' => 'Baras', 'contact' => '0928 671 9902', 'household' => 3, 'status' => 'Pending Review', 'verified' => false],
-        ['name' => 'Alvin Dagohoy', 'family' => 'FAM-0005', 'barangay' => 'Domorog', 'contact' => '0917 004 5523', 'household' => 5, 'status' => 'Approved', 'verified' => true],
-        ['name' => 'Teresita Salazar', 'family' => 'FAM-0004', 'barangay' => 'Agoho', 'contact' => '0906 512 3384', 'household' => 2, 'status' => 'Under Verification', 'verified' => false],
-        ['name' => 'Michael Bacus', 'family' => 'FAM-0003', 'barangay' => 'Iligan', 'contact' => '0915 887 2201', 'household' => 4, 'status' => 'Approved', 'verified' => true],
-        ['name' => 'Angelica Fajardo', 'family' => 'FAM-0007', 'barangay' => 'Rizal', 'contact' => '0927 341 0098', 'household' => 7, 'status' => 'Pending Review', 'verified' => false],
-        ['name' => 'Rodrigo Palma', 'family' => 'FAM-0006', 'barangay' => 'Domorog', 'contact' => '0918 776 5540', 'household' => 3, 'status' => 'Approved', 'verified' => true],
-    ];
-
+    $data            = config('esperanza_constituents');
+    $individuals     = $data['individuals'];
+    $families        = $data['families'];
+    $households      = $data['households'];
+    $barangayCoverage= $data['barangayCoverage'];
+    $qualityIssues   = $data['dataQualityIssues'];
+    $municipalStats  = $data['municipalStats'];
+    $barangayStats   = $data['barangayStats'];
     $barangayOptions = config('esperanza.barangays');
-
-    $profilingByBarangay = collect(config('esperanza.barangays'))->map(function ($name) {
-        $pct = rand(38, 98);
-        return [
-            'name' => $name,
-            'profiled' => rand(180, 1400),
-            'total' => rand(1500, 2200),
-            'pct' => $pct,
-        ];
-    })->sortByDesc('pct')->values();
-
-    // Per-barangay headline counts, used to simulate what a Barangay-scoped
-    // admin account (see User Management → Add Personnel → Access Scope)
-    // would see instead of the municipality-wide totals below.
-    $municipalStats = ['residents' => '17,842', 'households' => '4,918', 'families' => '6,204', 'verified' => '79%', 'newThisMonth' => '284'];
-
-    $barangayStats = collect(config('esperanza.barangays'))->mapWithKeys(function ($name) {
-        $residents = rand(620, 1480);
-        $verifiedPct = rand(58, 96);
-        return [$name => [
-            'residents' => number_format($residents),
-            'households' => number_format((int) round($residents / 3.6)),
-            'families' => number_format((int) round($residents / 2.9)),
-            'verified' => $verifiedPct . '%',
-            'newThisMonth' => (string) rand(2, 22),
-        ]];
-    });
-
-    $tab = $tab ?? 'residents';
+    $tab  = $tab  ?? 'registry';
+    $view = $view ?? 'individuals';
 @endphp
 
-<x-layouts.admin title="Constituents" subtitle="Browse registered residents and profiling coverage." active="constituents">
-    <div
-        x-data="{
-            tab: '{{ $tab }}',
-            municipalStats: @js($municipalStats),
-            barangayStats: @js($barangayStats),
-            get activeStats() {
-                const scope = this.$store.session.account?.scope;
-                return (!scope || scope === 'Municipal') ? this.municipalStats : (this.barangayStats[scope] || this.municipalStats);
-            },
-        }"
-        class="animate-fade-up"
-    >
+<x-layouts.admin title="Constituents" subtitle="LGU constituent registry — residents, families, households." active="constituents">
+<div
+    x-data="{
+        tab:  '{{ $tab }}',
+        view: '{{ $view }}',
+        individuals:    @js($individuals),
+        families:       @js($families),
+        households:     @js($households),
+        qualityIssues:  @js($qualityIssues),
+        municipalStats: @js($municipalStats),
+        barangayStats:  @js($barangayStats),
+        search:             '',
+        barangayFilter:     '',
+        verificationFilter: '',
+        statusFilter:       '',
+        tagFilter:          '',
+        dqTypeFilter:       '',
+        dqStatusFilter:     '',
+        sortField: 'name',
+        sortDir:   'asc',
+        showIndividualDetail: false,
+        showAddIndividual:    false,
+        showFamilyDetail:     false,
+        showAddFamily:        false,
+        showHouseholdDetail:  false,
+        showAddHousehold:     false,
+        showLifecycle:        false,
+        showMerge:            false,
+        showAdvancedFilters:  false,
+        showDQDetail:         false,
+        showAddMenu:          false,
+        selectedIndividual:   null,
+        selectedFamily:       null,
+        selectedHousehold:    null,
+        selectedDQIssue:      null,
+        lifecycleAction:      '',
+        addIndividualStep: 1,
+        addFamilyStep:     1,
+        addHouseholdStep:  1,
+        individualTab: 'overview',
+        familyTab:     'overview',
+        householdTab:  'overview',
+        get activeStats() {
+            const s = this.$store.session.account?.scope;
+            return (!s || s === 'Municipal') ? this.municipalStats : (this.barangayStats[s] ?? this.municipalStats);
+        },
+        get isMunicipalScope() {
+            const s = this.$store.session.account?.scope;
+            return !s || s === 'Municipal';
+        },
+        get filteredIndividuals() {
+            let list = this.individuals.filter(r => {
+                if (!this.$store.session.inScope(r.barangay)) return false;
+                if (this.barangayFilter && r.barangay !== this.barangayFilter) return false;
+                if (this.verificationFilter && r.verification !== this.verificationFilter) return false;
+                if (this.tagFilter && !(r.tags||[]).includes(this.tagFilter)) return false;
+                if (this.search) {
+                    const q = this.search.toLowerCase();
+                    return (r.name||'').toLowerCase().includes(q)||(r.id||'').toLowerCase().includes(q)||(r.barangay||'').toLowerCase().includes(q)||(r.occupation||'').toLowerCase().includes(q)||(r.contact||'').includes(q);
+                }
+                return true;
+            });
+            if (this.sortField) {
+                list = [...list].sort((a,b) => this.sortDir==='asc' ? String(a[this.sortField]??'').localeCompare(String(b[this.sortField]??'')) : String(b[this.sortField]??'').localeCompare(String(a[this.sortField]??'')));
+            }
+            return list;
+        },
+        get filteredFamilies() {
+            return this.families.filter(f => {
+                if (!this.$store.session.inScope(f.barangay)) return false;
+                if (this.barangayFilter && f.barangay !== this.barangayFilter) return false;
+                if (this.search) { const q=this.search.toLowerCase(); return (f.label||'').toLowerCase().includes(q)||(f.head_name||'').toLowerCase().includes(q)||(f.id||'').toLowerCase().includes(q); }
+                return true;
+            });
+        },
+        get filteredHouseholds() {
+            return this.households.filter(h => {
+                if (!this.$store.session.inScope(h.barangay)) return false;
+                if (this.barangayFilter && h.barangay !== this.barangayFilter) return false;
+                if (this.search) { const q=this.search.toLowerCase(); return (h.label||'').toLowerCase().includes(q)||(h.head_name||'').toLowerCase().includes(q)||(h.id||'').toLowerCase().includes(q); }
+                return true;
+            });
+        },
+        get filteredQualityIssues() {
+            return this.qualityIssues.filter(i => {
+                if (!this.$store.session.inScope(i.barangay)) return false;
+                if (this.dqTypeFilter && i.type !== this.dqTypeFilter) return false;
+                if (this.dqStatusFilter && i.status !== this.dqStatusFilter) return false;
+                if (this.search) { const q=this.search.toLowerCase(); return (i.record_name||'').toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||(i.barangay||'').toLowerCase().includes(q); }
+                return true;
+            });
+        },
+        openIndividual(r) { this.selectedIndividual=r; this.individualTab='overview'; this.showIndividualDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
+        openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.$nextTick(()=>window.renderIcons?.()); },
+        openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.$nextTick(()=>window.renderIcons?.()); },
+        openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
+        openDQIssue(issue)       { this.selectedDQIssue=issue; this.showDQDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
+        verificationBadge(v) {
+            const m={'Verified':'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200','Partially Verified':'text-amber-700 bg-amber-50 ring-1 ring-amber-200','For Validation':'text-indigo-700 bg-indigo-50 ring-1 ring-indigo-200','Missing Documents':'text-orange-700 bg-orange-50 ring-1 ring-orange-200','Unverified':'text-slate-500 bg-slate-100 ring-1 ring-slate-200','Rejected':'text-rose-700 bg-rose-50 ring-1 ring-rose-200'};
+            return m[v]||m['Unverified'];
+        },
+        statusBadge(s) {
+            const m={'Active':'text-emerald-700 bg-emerald-50','New Resident':'text-brand-700 bg-brand-50','Transferred':'text-indigo-700 bg-indigo-50','Temporarily Away':'text-amber-700 bg-amber-50','Overseas':'text-teal-700 bg-teal-50','Deceased':'text-slate-500 bg-slate-100','Archived':'text-slate-400 bg-slate-50','Under Review':'text-purple-700 bg-purple-50'};
+            return m[s]||m['Active'];
+        },
+        severityBadge(s) {
+            const m={'Critical':'text-rose-700 bg-rose-50 ring-1 ring-rose-200','High':'text-orange-700 bg-orange-50 ring-1 ring-orange-200','Medium':'text-amber-700 bg-amber-50 ring-1 ring-amber-200','Low':'text-slate-600 bg-slate-100 ring-1 ring-slate-200'};
+            return m[s]||m['Low'];
+        },
+        completionColor(pct) { return pct>=90?'bg-emerald-500':pct>=70?'bg-amber-500':'bg-rose-500'; },
+        completionTextColor(pct) { return pct>=90?'text-emerald-700':pct>=70?'text-amber-700':'text-rose-700'; },
+        exportCSV(rows, filename) {
+            if (!rows.length) { this.$dispatch('toast',{message:'No records to export.',variant:'warning'}); return; }
+            const keys=Object.keys(rows[0]).filter(k=>!['services','emergency','member_ids','family_ids'].includes(k));
+            const csv=[keys.join(','),...rows.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))].join('\n');
+            const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:filename});
+            a.click(); this.$dispatch('toast',{message:'Exported successfully.',variant:'success'});
+        },
+        can(sub,perm) { return this.$store.session.canPerm?this.$store.session.canPerm(sub,perm):true; },
+        clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter=''; },
+    }"
+    class="animate-fade-up"
+>
 
-        <div x-show="!$store.session.can('constituents')" x-cloak>
-            <x-admin.access-restricted module="Constituent Management" icon="users" />
-        </div>
-
-        <div x-show="$store.session.can('constituents')" x-cloak>
-
-        <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4">
-            <button @click="tab = 'residents'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'residents' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users" class="w-3.5 h-3.5"></i>Residents</button>
-            <button @click="tab = 'profiling'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'profiling' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="user-round-search" class="w-3.5 h-3.5"></i>Profiling Coverage</button>
-        </div>
-
-        <!-- Access scope banner — reflects whichever sample account is signed in -->
-        <div x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
-            <i data-lucide="map-pin" class="w-4 h-4 text-purple-500 shrink-0"></i>
-            <p class="text-xs text-purple-700">Signed in with barangay-scoped access — data outside <span class="font-medium" x-text="'Brgy. ' + $store.session.account?.scope"></span> is hidden below.</p>
-        </div>
-
-        <!-- Residents -->
-        <div x-show="tab === 'residents'" x-data="{ view: 'individuals', idFilter: 'all' }">
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-                <x-ui.stat-card label="Registered Residents" value="17,842" valueBind="activeStats.residents" icon="users" color="brand" :delay="0" />
-                <x-ui.stat-card label="Households" value="4,918" valueBind="activeStats.households" icon="home" color="green" :delay="40" />
-                <x-ui.stat-card label="Families" value="6,204" valueBind="activeStats.families" icon="users-round" color="purple" :delay="80" />
-                <x-ui.stat-card label="ID Verified" value="79%" valueBind="activeStats.verified" icon="badge-check" color="gold" :delay="120" />
-                <x-ui.stat-card label="New This Month" value="284" valueBind="activeStats.newThisMonth" icon="user-plus" color="red" :delay="160" />
-            </div>
-
-            <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4">
-                <button @click="view = 'individuals'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="view === 'individuals' ? 'bg-navy-900 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="user" class="w-3.5 h-3.5"></i>Individuals</button>
-                <button @click="view = 'families'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="view === 'families' ? 'bg-navy-900 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Families</button>
-                <button @click="view = 'household'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="view === 'household' ? 'bg-navy-900 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="home" class="w-3.5 h-3.5"></i>Household</button>
-            </div>
-
-            <!-- Individuals -->
-            <div x-show="view === 'individuals'">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div class="flex items-center gap-2.5 flex-nowrap">
-                        <div class="relative">
-                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input type="text" placeholder="Search residents..." class="w-56 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
-                        </div>
-                        <select x-show="!$store.session.account || $store.session.account.scope === 'Municipal'" class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
-                            <option value="">All Barangays</option>
-                            @foreach($barangayOptions as $b)
-                                <option value="{{ $b }}">{{ $b }}</option>
-                            @endforeach
-                        </select>
-                        <span x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3.5 py-2.5"><i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span> only</span>
-                        <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
-                            @foreach(['all' => 'All', 'verified' => 'Verified', 'unverified' => 'Unverified'] as $key => $label)
-                                <button
-                                    @click="idFilter = '{{ $key }}'"
-                                    class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
-                                    :class="idFilter === '{{ $key }}' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-                                >{{ $label }}</button>
-                            @endforeach
-                        </div>
-                    </div>
-                    <x-ui.button icon="user-plus" size="sm">Add Individual</x-ui.button>
-                </div>
-
-                <x-ui.table>
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/60">
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Resident</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Family</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Barangay</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Contact</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">ID Verification</th>
-                            <th class="px-4 py-2.5"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach($individuals as $c)
-                            <tr
-                                x-show="(idFilter === 'all' || idFilter === '{{ $c['verified'] ? 'verified' : 'unverified' }}') && $store.session.inScope('{{ $c['barangay'] }}')"
-                                class="hover:bg-slate-50/70 transition-colors"
-                            >
-                                <td class="px-4 py-2.5 flex items-center gap-3">
-                                    <x-ui.avatar :name="$c['name']" size="sm" />
-                                    <span class="text-slate-700 font-medium whitespace-nowrap">{{ $c['name'] }}</span>
-                                </td>
-                                <td class="px-4 py-3 text-slate-500 hidden md:table-cell font-mono text-xs">{{ $c['family'] }}</td>
-                                <td class="px-4 py-3 text-slate-500">Brgy. {{ $c['barangay'] }}</td>
-                                <td class="px-4 py-3 text-slate-500 hidden lg:table-cell font-mono text-xs">{{ $c['contact'] }}</td>
-                                <td class="px-4 py-3"><x-ui.badge :status="$c['status']" /></td>
-                                <td class="px-4 py-3">
-                                    @if($c['verified'])
-                                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5 whitespace-nowrap">
-                                            <i data-lucide="badge-check" class="w-3 h-3"></i> Verified
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                                            <i data-lucide="shield-alert" class="w-3 h-3"></i> Unverified
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </x-ui.table>
-            </div>
-
-            <!-- Families -->
-            <div x-show="view === 'families'" x-cloak>
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div class="flex items-center gap-2.5 flex-nowrap">
-                        <div class="relative">
-                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input type="text" placeholder="Search families or family head..." class="w-64 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
-                        </div>
-                        <select x-show="!$store.session.account || $store.session.account.scope === 'Municipal'" class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
-                            <option value="">All Barangays</option>
-                            @foreach($barangayOptions as $b)
-                                <option value="{{ $b }}">{{ $b }}</option>
-                            @endforeach
-                        </select>
-                        <span x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3.5 py-2.5"><i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span> only</span>
-                    </div>
-                    <x-ui.button icon="users-round" size="sm">Add Family</x-ui.button>
-                </div>
-                <x-ui.table>
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/60">
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Family</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Household</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Barangay</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Family Head</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Members</th>
-                            <th class="px-4 py-2.5"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach($families as $f)
-                            <tr x-show="$store.session.inScope('{{ $f['barangay'] }}')" class="hover:bg-slate-50/70 transition-colors">
-                                <td class="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap">{{ $f['surname'] }} Family</td>
-                                <td class="px-4 py-2.5 text-slate-500 hidden md:table-cell font-mono text-xs">{{ $f['household'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-500">Brgy. {{ $f['barangay'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-500 hidden sm:table-cell">{{ $f['head'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-500">{{ $f['members'] }} members</td>
-                                <td class="px-4 py-2.5 text-right">
-                                    <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </x-ui.table>
-            </div>
-
-            <!-- Household -->
-            <div x-show="view === 'household'" x-cloak>
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div class="flex items-center gap-2.5 flex-nowrap">
-                        <div class="relative">
-                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input type="text" placeholder="Search households or household head..." class="w-64 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
-                        </div>
-                        <select x-show="!$store.session.account || $store.session.account.scope === 'Municipal'" class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
-                            <option value="">All Barangays</option>
-                            @foreach($barangayOptions as $b)
-                                <option value="{{ $b }}">{{ $b }}</option>
-                            @endforeach
-                        </select>
-                        <span x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3.5 py-2.5"><i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span> only</span>
-                    </div>
-                    <x-ui.button icon="home" size="sm">Add Household</x-ui.button>
-                </div>
-                <x-ui.table>
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/60">
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Household</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Barangay</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Household Head</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Families</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Members</th>
-                            <th class="px-4 py-2.5"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach($households as $h)
-                            <tr x-show="$store.session.inScope('{{ $h['barangay'] }}')" class="hover:bg-slate-50/70 transition-colors">
-                                <td class="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap">{{ $h['name'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-500">Brgy. {{ $h['barangay'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-500 hidden sm:table-cell">{{ $h['head'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-500">{{ $h['families'] }} {{ $h['families'] > 1 ? 'families' : 'family' }}</td>
-                                <td class="px-4 py-2.5 text-slate-500">{{ $h['members'] }} members</td>
-                                <td class="px-4 py-2.5 text-right">
-                                    <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </x-ui.table>
-            </div>
-        </div>
-
-        <!-- Profiling coverage -->
-        <div x-show="tab === 'profiling'" x-cloak>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card label="Barangays Profiled" value="20/20" icon="map-pin" color="brand" :delay="0" />
-                <x-ui.stat-card label="Households Recorded" value="4,918" icon="home" color="green" trend="+126" :delay="40" />
-                <x-ui.stat-card label="Avg. Completion Rate" value="71%" icon="clipboard-check" color="purple" :delay="80" />
-                <x-ui.stat-card label="Barangays Below 60%" value="4" icon="alert-triangle" color="red" sublabel="Needs field verification" :delay="120" />
-            </div>
-
-            <x-ui.card padded="false">
-                <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                    <h3 class="text-sm font-semibold text-navy-900">Profiling Completion by Barangay</h3>
-                    <x-ui.button variant="secondary" size="sm" icon="download">Export Report</x-ui.button>
-                </div>
-                <div class="px-4 pb-4 space-y-4">
-                    @foreach($profilingByBarangay as $b)
-                        <div x-show="$store.session.inScope('{{ $b['name'] }}')">
-                            <div class="flex items-center justify-between text-sm mb-1.5">
-                                <span class="text-slate-600 font-medium">Brgy. {{ $b['name'] }}</span>
-                                <span class="text-slate-400">{{ number_format($b['profiled']) }} / {{ number_format($b['total']) }} residents ({{ $b['pct'] }}%)</span>
-                            </div>
-                            <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                    class="h-full rounded-full transition-all duration-700 ease-out {{ $b['pct'] < 60 ? 'bg-gradient-to-r from-rose-500 to-rose-400' : ($b['pct'] < 80 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-emerald-500 to-emerald-400') }}"
-                                    style="width: 0%"
-                                    x-data
-                                    x-init="setTimeout(() => $el.style.width = '{{ $b['pct'] }}%', 150)"
-                                ></div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </x-ui.card>
-        </div>
-
-        </div>
+    <div x-show="!$store.session.can('constituents')" x-cloak>
+        <x-admin.access-restricted module="Constituent Management" icon="users" />
     </div>
+
+    <div x-show="$store.session.can('constituents')" x-cloak>
+
+        {{-- Scope banner --}}
+        <div x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak
+             class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
+            <i data-lucide="map-pin" class="w-4 h-4 text-purple-500 shrink-0"></i>
+            <p class="text-xs text-purple-700">Barangay-scoped access — data outside <strong x-text="'Brgy. '+$store.session.account?.scope"></strong> is hidden.</p>
+        </div>
+
+        {{-- Page header --}}
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+            <div>
+                <h1 class="text-lg font-bold text-navy-900">Constituent Registry</h1>
+                <p class="text-xs text-slate-400 mt-0.5">Municipality of Esperanza · 20 barangays · <span x-text="isMunicipalScope?'Municipality-wide view':'Brgy. '+$store.session.account?.scope+' view'"></span></p>
+            </div>
+            <div class="flex items-center gap-2 relative">
+                <button @click="showAddMenu=!showAddMenu" @click.outside="showAddMenu=false"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-200 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Record
+                    <i data-lucide="chevron-down" class="w-3 h-3 opacity-70 transition-transform" :class="showAddMenu&&'rotate-180'"></i>
+                </button>
+                <div x-show="showAddMenu" x-transition.origin.top.right x-cloak
+                     class="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl border border-slate-200 shadow-lg z-30 overflow-hidden">
+                    <button @click="addIndividualStep=1;showAddIndividual=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
+                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New Resident
+                    </button>
+                    <button @click="addFamilyStep=1;showAddFamily=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
+                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                        <i data-lucide="users-round" class="w-3.5 h-3.5 text-purple-500"></i>New Family
+                    </button>
+                    <button @click="addHouseholdStep=1;showAddHousehold=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
+                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                        <i data-lucide="home" class="w-3.5 h-3.5 text-emerald-500"></i>New Household
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Summary cards --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+            <x-ui.stat-card label="Registered Residents" valueBind="activeStats.residents"  icon="users"          color="brand"  :delay="0"   />
+            <x-ui.stat-card label="Active Households"    valueBind="activeStats.households" icon="home"           color="green"  :delay="40"  />
+            <x-ui.stat-card label="Recorded Families"    valueBind="activeStats.families"   icon="users-round"    color="purple" :delay="80"  />
+            <x-ui.stat-card label="ID Verified"          valueBind="activeStats.verified"   icon="badge-check"    color="gold"   :delay="120" />
+            <x-ui.stat-card label="Pending Validation"   valueBind="activeStats.pending"    icon="clock"          color="orange" :delay="160" />
+            <x-ui.stat-card label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="red"    :delay="200" sublabel="Needs attention" />
+        </div>
+
+        {{-- Primary tab bar --}}
+        <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-5">
+            <button @click="tab='registry';clearFilters()"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                    :class="tab==='registry'     ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                <i data-lucide="users" class="w-3.5 h-3.5"></i>Registry
+            </button>
+            <button @click="tab='profiling';clearFilters()"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                    :class="tab==='profiling'    ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                <i data-lucide="user-round-search" class="w-3.5 h-3.5"></i>Profiling Coverage
+            </button>
+            <button @click="tab='data-quality';clearFilters()"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 relative"
+                    :class="tab==='data-quality' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>Data Quality
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                      :class="tab==='data-quality' ? 'bg-white/25 text-white' : 'bg-rose-100 text-rose-600'">{{ count($qualityIssues) }}</span>
+            </button>
+        </div>
+
+        {{-- ── Registry tab ────────────────────────────────────────── --}}
+        <div x-show="tab === 'registry'">
+            <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit mb-4">
+                <button @click="view='individuals';clearFilters()"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                        :class="view==='individuals' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                    <i data-lucide="user" class="w-3.5 h-3.5"></i>Individuals
+                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredIndividuals.length"></span>
+                </button>
+                <button @click="view='families';clearFilters()"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                        :class="view==='families'    ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                    <i data-lucide="users-round" class="w-3.5 h-3.5"></i>Families
+                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredFamilies.length"></span>
+                </button>
+                <button @click="view='households';clearFilters()"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                        :class="view==='households'  ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                    <i data-lucide="home" class="w-3.5 h-3.5"></i>Households
+                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredHouseholds.length"></span>
+                </button>
+            </div>
+
+            {{-- Shared toolbar --}}
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input x-model="search" type="text"
+                               :placeholder="view==='individuals'?'Search residents...':view==='families'?'Search families...':'Search households...'"
+                               class="w-52 sm:w-64 pl-9 pr-3 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all shadow-card">
+                    </div>
+                    <select x-show="isMunicipalScope" x-model="barangayFilter"
+                            class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                        <option value="">All Barangays</option>
+                        @foreach($barangayOptions as $b)
+                            <option value="{{ $b }}">{{ $b }}</option>
+                        @endforeach
+                    </select>
+                    <span x-show="!isMunicipalScope" x-cloak
+                          class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2.5">
+                        <i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span>
+                    </span>
+                    <div x-show="view==='individuals'" class="flex items-center gap-2">
+                        <select x-model="verificationFilter"
+                                class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <option value="">All Verification</option>
+                            <option>Verified</option>
+                            <option>Partially Verified</option>
+                            <option>For Validation</option>
+                            <option>Unverified</option>
+                        </select>
+                        <select x-model="tagFilter"
+                                class="text-sm rounded-xl border border-slate-200 bg-white py-2.5 px-3 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <option value="">All Tags</option>
+                            <option value="senior">Senior Citizen</option>
+                            <option value="pwd">PWD</option>
+                            <option value="4ps">4Ps Beneficiary</option>
+                            <option value="solo_parent">Solo Parent</option>
+                            <option value="youth">Youth</option>
+                            <option value="child">Child</option>
+                            <option value="osy">Out-of-School Youth</option>
+                        </select>
+                    </div>
+                    <button x-show="search||barangayFilter||verificationFilter||tagFilter" @click="clearFilters()"
+                            class="text-xs text-slate-500 hover:text-rose-600 flex items-center gap-1 transition-colors">
+                        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>Clear
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button @click="exportCSV(view==='individuals'?filteredIndividuals:view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 shadow-card transition-all">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV
+                    </button>
+                    <button onclick="window.print()"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 shadow-card transition-all">
+                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>Print
+                    </button>
+                </div>
+            </div>
+
+            <div x-show="view==='individuals'">@include('admin.constituents.view-individuals')</div>
+            <div x-show="view==='families'"    x-cloak>@include('admin.constituents.view-families')</div>
+            <div x-show="view==='households'"  x-cloak>@include('admin.constituents.view-households')</div>
+        </div>
+
+        {{-- ── Profiling Coverage tab ──────────────────────────────── --}}
+        <div x-show="tab === 'profiling'" x-cloak>
+            @include('admin.constituents.tab-profiling')
+        </div>
+
+        {{-- ── Data Quality tab ────────────────────────────────────── --}}
+        <div x-show="tab === 'data-quality'" x-cloak>
+            @include('admin.constituents.tab-data-quality')
+        </div>
+
+    </div>
+
+    {{-- ── Modals ──────────────────────────────────────────────────── --}}
+    <div x-show="showIndividualDetail" x-cloak>@include('admin.constituents.modal-individual-detail')</div>
+    <div x-show="showAddIndividual"    x-cloak>@include('admin.constituents.modal-add-individual')</div>
+    <div x-show="showFamilyDetail"     x-cloak>@include('admin.constituents.modal-family-detail')</div>
+    <div x-show="showAddFamily"        x-cloak>@include('admin.constituents.modal-add-family')</div>
+    <div x-show="showHouseholdDetail"  x-cloak>@include('admin.constituents.modal-household-detail')</div>
+    <div x-show="showAddHousehold"     x-cloak>@include('admin.constituents.modal-add-household')</div>
+    <div x-show="showLifecycle"        x-cloak>@include('admin.constituents.modal-lifecycle')</div>
+    <div x-show="showMerge"            x-cloak>@include('admin.constituents.modal-merge')</div>
+    <div x-show="showDQDetail"         x-cloak>@include('admin.constituents.modal-dq-detail')</div>
+
+</div>
 </x-layouts.admin>

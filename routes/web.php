@@ -39,9 +39,12 @@ Route::view('/admin/document-requests', 'admin.document-requests')->name('admin.
 Route::view('/admin/assistance-requests', 'admin.assistance-requests')->name('admin.assistance-requests');
 Route::view('/admin/payments', 'admin.payments')->name('admin.payments');
 
-// Constituents — Residents and Profiling Coverage merged into one page with tabs.
-Route::view('/admin/constituents', 'admin.constituents', ['tab' => 'residents'])->name('admin.constituents');
+// Constituents — Registry, Profiling Coverage, and Data Quality as tabs.
+Route::view('/admin/constituents', 'admin.constituents', ['tab' => 'registry'])->name('admin.constituents');
+Route::view('/admin/constituents/families', 'admin.constituents', ['tab' => 'registry', 'view' => 'families'])->name('admin.constituents.families');
+Route::view('/admin/constituents/households', 'admin.constituents', ['tab' => 'registry', 'view' => 'households'])->name('admin.constituents.households');
 Route::view('/admin/constituents/profiling', 'admin.constituents', ['tab' => 'profiling'])->name('admin.resident-profiling');
+Route::view('/admin/constituents/data-quality', 'admin.constituents', ['tab' => 'data-quality'])->name('admin.constituents.data-quality');
 
 // Communications — Balita (announcements) and Directory merged into one page with tabs.
 Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');

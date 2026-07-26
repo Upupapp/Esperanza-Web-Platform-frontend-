@@ -38,6 +38,12 @@ document.addEventListener('alpine:init', () => {
             if (!this.account) return true;
             return (this.account.moduleKeys || []).includes(moduleKey);
         },
+        canPerm(submoduleKey, permission) {
+            if (!this.account) return true;
+            const perms = (this.account.permissions || {})[submoduleKey];
+            if (!perms) return false;
+            return Array.isArray(perms) ? perms.includes(permission) : perms === '*';
+        },
         inScope(barangay) {
             if (!this.account) return true;
             if (this.account.scope === 'Municipal') return true;
