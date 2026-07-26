@@ -3,7 +3,7 @@
 {{-- Open state bound to: showDQDetail --}}
 
 <div x-data="{ get open() { return showDQDetail }, set open(v) { showDQDetail = v } }">
-    <x-ui.modal :bind="$el" size="xl">
+    <x-ui.modal maxWidth="xl">
 
         {{-- ── MODAL HEADER ────────────────────────────────────────────────── --}}
         <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-slate-100">

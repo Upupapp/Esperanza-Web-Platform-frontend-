@@ -58,7 +58,7 @@
         }
     }
 }">
-<x-ui.modal :bind="$el" size="xl">
+<x-ui.modal maxWidth="xl">
 
     <div class="flex flex-col h-full max-h-[90vh]">
 

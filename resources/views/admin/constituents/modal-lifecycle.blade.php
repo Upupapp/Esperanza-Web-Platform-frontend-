@@ -74,7 +74,7 @@
         },
     }"
 >
-    <x-ui.modal :bind="$el" size="sm">
+    <x-ui.modal maxWidth="sm">
 
         {{-- ════════════════════════════════════════════════════════
              DYNAMIC HEADER — color and icon change per action

@@ -10,7 +10,7 @@
         set open(v) { showIndividualDetail = v; }
     }"
 >
-    <x-ui.modal :bind="$el" size="2xl">
+    <x-ui.modal maxWidth="2xl">
 
         {{-- ════════════════════════════════════════════════════════
              MODAL HEADER

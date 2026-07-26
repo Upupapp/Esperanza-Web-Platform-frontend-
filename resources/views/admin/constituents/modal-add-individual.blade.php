@@ -51,7 +51,7 @@
     }"
     @modal-closed.window="if (!showAddIndividual) resetForm()"
 >
-    <x-ui.modal :bind="$el" size="2xl">
+    <x-ui.modal maxWidth="2xl">
 
         {{-- ════════════════════════════════════════════════════════
              HEADER + STEP PROGRESS

@@ -28,7 +28,7 @@
         };
     },
 }">
-    <x-ui.modal :bind="$el" size="2xl">
+    <x-ui.modal maxWidth="2xl">
 
         {{-- ── MODAL HEADER ────────────────────────────────────────────────── --}}
         <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-slate-100">

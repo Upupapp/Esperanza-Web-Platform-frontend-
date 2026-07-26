@@ -5,7 +5,7 @@
     get open() { return showFamilyDetail },
     set open(v) { showFamilyDetail = v }
 }">
-<x-ui.modal :bind="$el" size="2xl">
+<x-ui.modal maxWidth="2xl">
 
     <template x-if="selectedFamily">
         <div class="flex flex-col h-full max-h-[90vh]">
