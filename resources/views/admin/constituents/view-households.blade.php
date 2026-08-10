@@ -40,7 +40,7 @@
                 <tr>
                     <td colspan="9" class="py-16 px-4 text-center">
                         <x-ui.empty-state
-                            icon="home"
+                            icon="house"
                             title="No households found"
                             subtitle="Try adjusting your search or filters, or register a new household."
                         />
@@ -58,7 +58,7 @@
                     <td class="px-4 py-3">
                         <div class="flex items-start gap-3">
                             <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center ring-2 ring-white shadow-sm">
-                                <i data-lucide="home" class="w-4 h-4 text-indigo-600"></i>
+                                <i data-lucide="house" class="w-4 h-4 text-indigo-600"></i>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-navy-900 truncate" x-text="h.label"></p>
@@ -72,7 +72,7 @@
                                         'bg-rose-100 text-rose-700': h.flood_risk === 'High'
                                     }"
                                 >
-                                    <i data-lucide="waves" class="w-3 h-3"></i>
+                                    <i data-lucide="waves-horizontal" class="w-3 h-3"></i>
                                     <span x-text="(h.flood_risk || 'Unknown') + ' Flood Risk'"></span>
                                 </span>
                             </div>
@@ -89,7 +89,7 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-2">
                             <template x-if="h.head_name">
-                                <x-ui.avatar :name="''" size="sm" x-bind:data-name="h.head_name" />
+                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(h.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                             </template>
                             <span class="text-sm text-navy-900" x-text="h.head_name || '—'"></span>
                         </div>
@@ -142,7 +142,7 @@
                                 :title="h.toilet ? 'Has Toilet Facility' : 'No Toilet Facility'"
                             >
                                 <i
-                                    data-lucide="toilet-2"
+                                    data-lucide="toilet"
                                     class="w-4 h-4 transition-colors"
                                     :class="h.toilet ? 'text-emerald-500' : 'text-slate-300'"
                                 ></i>

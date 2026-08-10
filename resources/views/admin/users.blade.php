@@ -39,7 +39,24 @@
         </div>
 
         {{-- ============================= PERSONNEL ============================= --}}
-        <div x-data="{ open: false }" x-show="tab === 'personnel'">
+        <div
+            x-data="{
+                open: false,
+                search: '',
+                users: @js($users),
+                statusStyles: {
+                    'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
+                    'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
+                    'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
+                    'Archived': ['bg-slate-100 text-slate-400 ring-slate-200', 'bg-slate-300'],
+                },
+                get filteredUsers() {
+                    const q = this.search.trim().toLowerCase();
+                    return this.users.filter(u => q === '' || u.name.toLowerCase().includes(q) || u.id.toLowerCase().includes(q) || u.role.toLowerCase().includes(q));
+                },
+            }"
+            x-show="tab === 'personnel'"
+        >
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 <x-ui.stat-card label="Total Personnel" value="46" icon="users" color="brand" :delay="0" />
                 <x-ui.stat-card label="Active Accounts" value="42" icon="user-round-check" color="green" :delay="40" />
@@ -47,12 +64,14 @@
                 <x-ui.stat-card label="Deactivated" value="1" icon="user-x" color="red" :delay="120" />
             </div>
 
-            <div class="flex items-center justify-between gap-3 mb-4">
-                <div class="relative">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input type="text" placeholder="Search personnel..." class="w-64 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 flex flex-wrap items-center gap-2">
+                <div class="relative flex-1 min-w-[200px]">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input type="text" x-model="search" placeholder="Search personnel..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
                 </div>
-                <x-ui.button @click="open = true" icon="user-plus" size="sm">Add Personnel</x-ui.button>
+                <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredUsers.length + ' of ' + users.length + ' personnel'"></p>
+                <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
+                <x-ui.button @click="open = true" icon="user-plus" size="sm" class="shrink-0">Add Personnel</x-ui.button>
             </div>
 
             <x-ui.table>
@@ -68,34 +87,42 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                    @foreach($users as $u)
+                    <template x-for="u in filteredUsers" :key="u.id">
                         <tr class="hover:bg-slate-50/70 transition-colors">
                             <td class="px-4 py-2.5 flex items-center gap-3">
-                                <x-ui.avatar :name="$u['name']" size="sm" />
-                                <span class="text-slate-700 font-medium whitespace-nowrap">{{ $u['name'] }}</span>
+                                <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-xs" x-text="u.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
+                                <span class="text-slate-700 font-medium whitespace-nowrap" x-text="u.name"></span>
                             </td>
-                            <td class="px-4 py-3 text-slate-500 hidden sm:table-cell font-mono text-xs">{{ $u['id'] }}</td>
-                            <td class="px-4 py-3 text-slate-500 hidden md:table-cell">{{ $u['role'] }}</td>
-                            <td class="px-4 py-3 text-slate-500 hidden lg:table-cell">{{ $u['dept'] }}</td>
+                            <td class="px-4 py-3 text-slate-500 hidden sm:table-cell font-mono text-xs" x-text="u.id"></td>
+                            <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="u.role"></td>
+                            <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="u.dept"></td>
                             <td class="px-4 py-3 hidden md:table-cell">
-                                @if($u['scope'] === 'Municipal')
-                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2.5 py-1 whitespace-nowrap">
-                                        <i data-lucide="landmark" class="w-3 h-3"></i> Municipality-wide
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-2.5 py-1 whitespace-nowrap">
-                                        <i data-lucide="map-pin" class="w-3 h-3"></i> Brgy. {{ $u['scope'] }}
-                                    </span>
-                                @endif
+                                <span
+                                    class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1 whitespace-nowrap border"
+                                    :class="u.scope === 'Municipal' ? 'text-brand-700 bg-brand-50 border-brand-100' : 'text-purple-700 bg-purple-50 border-purple-100'"
+                                >
+                                    <i :data-lucide="u.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-3 h-3"></i>
+                                    <span x-text="u.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + u.scope"></span>
+                                </span>
                             </td>
-                            <td class="px-4 py-3"><x-ui.badge :status="$u['status']" /></td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[u.status] || statusStyles['Approved'])[0]">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[u.status] || statusStyles['Approved'])[1]"></span>
+                                    <span x-text="u.status"></span>
+                                </span>
+                            </td>
                             <td class="px-4 py-3 text-right">
                                 <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="ellipsis-vertical" class="w-4 h-4"></i></button>
                             </td>
                         </tr>
-                    @endforeach
+                    </template>
                 </tbody>
             </x-ui.table>
+
+            <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredUsers.length === 0">
+                <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                <p class="text-sm font-medium text-slate-600">No personnel match this search.</p>
+            </div>
 
             {{-- ---------------- Add Personnel wizard ---------------- --}}
             <div
@@ -116,7 +143,7 @@
                 }"
                 x-init="$watch('open', v => { if (!v) reset(); })"
             >
-                <x-ui.modal title="Add Personnel Account" maxWidth="xl">
+                <x-ui.modal title="Add Personnel Account" maxWidth="3xl">
                     <div class="space-y-4">
                         <!-- Stepper -->
                         <div class="flex items-center gap-2 mb-1">

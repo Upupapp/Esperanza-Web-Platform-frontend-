@@ -22,7 +22,7 @@
             <div class="w-20 h-20 rounded-full bg-gradient-to-br from-gold-100 to-brand-50 flex items-center justify-center mb-4 animate-check-pop">
                 <i data-lucide="cake" class="w-10 h-10 text-gold-600"></i>
             </div>
-            <h3 class="text-lg font-semibold text-navy-900">Maligayang Kaarawan, Maria Fe! 🎉</h3>
+            <h3 class="text-lg font-semibold text-navy-900" x-text="'Maligayang Kaarawan, ' + ($store.citizenSession.account?.firstName ?? 'Kabalen') + '! 🎉'"></h3>
             <p class="text-sm text-slate-500 mt-2 max-w-[320px]">The Municipality of Esperanza wishes you good health, happiness, and blessings on your special day. Salamat sa patuloy na pagtitiwala sa ating LGU!</p>
         </div>
 

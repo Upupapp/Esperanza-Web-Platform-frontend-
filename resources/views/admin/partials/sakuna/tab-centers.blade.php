@@ -56,13 +56,13 @@
         <i data-lucide="door-open" class="w-3.5 h-3.5"></i> Open: 6
     </span>
     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Near Capacity: 2
+        <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i> Near Capacity: 2
     </span>
     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-sky-100 text-sky-700">
         <i data-lucide="clock" class="w-3.5 h-3.5"></i> Standby: 2
     </span>
     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Closed: 1
+        <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> Closed: 1
     </span>
     <span class="mx-1 text-slate-200 select-none">|</span>
     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
@@ -128,7 +128,7 @@
         $pct = min(100, round($center['occupants'] / max(1, $center['capacity']) * 100));
         $avail = $center['capacity'] - $center['occupants'];
     @endphp
-    <div x-show="centerRowVisible('{{ addslashes($center['name']) }}', '{{ $center['barangay'] }}', '{{ $center['status'] }}')"
+    <div x-show="$store.session.inScope('{{ $center['barangay'] }}') && centerRowVisible('{{ addslashes($center['name']) }}', '{{ $center['barangay'] }}', '{{ $center['status'] }}')"
         class="bg-white rounded-2xl shadow-card border border-slate-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
 
         {{-- Top: name + status --}}
@@ -198,7 +198,7 @@
                 <button
                     @click="pendingCenterAction = {{ json_encode($center) }}; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
                     class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-xl transition-colors">
-                    <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Close
+                    <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> Close
                 </button>
             @endif
         </div>
@@ -224,7 +224,7 @@
             <tbody class="divide-y divide-slate-50">
                 @foreach($centers as $center)
                 @php $pct = min(100, round($center['occupants'] / max(1, $center['capacity']) * 100)); @endphp
-                <tr x-show="centerRowVisible('{{ addslashes($center['name']) }}', '{{ $center['barangay'] }}', '{{ $center['status'] }}')"
+                <tr x-show="$store.session.inScope('{{ $center['barangay'] }}') && centerRowVisible('{{ addslashes($center['name']) }}', '{{ $center['barangay'] }}', '{{ $center['status'] }}')"
                     class="hover:bg-slate-50/60 transition-colors">
                     <td class="px-4 py-3">
                         <p class="text-sm font-medium text-slate-800">{{ $center['name'] }}</p>
@@ -262,7 +262,7 @@
                                 <button
                                     @click="pendingCenterAction = {{ json_encode($center) }}; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
                                     class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors">
-                                    <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Close
+                                    <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> Close
                                 </button>
                             @endif
                         </div>
@@ -723,7 +723,7 @@
 
         <div class="flex items-center gap-3 mb-4">
             <span class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="x-circle" class="w-5 h-5 text-rose-600"></i>
+                <i data-lucide="circle-x" class="w-5 h-5 text-rose-600"></i>
             </span>
             <h3 class="text-base font-semibold text-slate-800">Close Evacuation Center</h3>
         </div>
@@ -731,7 +731,7 @@
         {{-- Warning if center has occupants --}}
         <template x-if="pendingCenterAction && pendingCenterAction.occupants > 0">
             <div class="bg-amber-50 border border-amber-100 rounded-xl p-3.5 mb-4 flex items-start gap-2.5">
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
                 <div>
                     <p class="text-sm font-semibold text-amber-800">Center has active occupants</p>
                     <p class="text-xs text-amber-700 mt-0.5">
@@ -767,7 +767,7 @@
                 :class="closeCenterConfirmed ? 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer' : 'bg-slate-100 text-slate-400 cursor-not-allowed'"
                 @click="if(closeCenterConfirmed){ toast('Center closed and removed from active operations.', 'success'); showCloseCenterConfirm = false; closeCenterConfirmed = false; $nextTick(() => window.renderIcons?.()); }"
                 class="inline-flex items-center gap-1.5 text-sm font-medium px-5 py-2 rounded-xl transition-colors">
-                <i data-lucide="x-circle" class="w-4 h-4"></i> Confirm Close
+                <i data-lucide="circle-x" class="w-4 h-4"></i> Confirm Close
             </button>
         </div>
     </div>

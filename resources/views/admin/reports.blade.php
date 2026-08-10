@@ -52,7 +52,7 @@
         </div>
 
         <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4">
-            <button @click="tab = 'reports'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'reports' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="file-bar-chart" class="w-3.5 h-3.5"></i>Reports</button>
+            <button @click="tab = 'reports'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'reports' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="file-chart-column" class="w-3.5 h-3.5"></i>Reports</button>
             <button @click="tab = 'analytics'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'analytics' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="trending-up" class="w-3.5 h-3.5"></i>Analytics</button>
         </div>
 

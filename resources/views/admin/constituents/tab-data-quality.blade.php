@@ -84,7 +84,7 @@
             {{-- Status filter --}}
             <div class="relative">
                 <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
-                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                    <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                 </span>
                 <select
                     x-model="dqStatusFilter"
@@ -263,7 +263,7 @@
                         <td colspan="9" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center gap-3">
                                 <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">
-                                    <i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-500"></i>
+                                    <i data-lucide="circle-check" class="w-6 h-6 text-emerald-500"></i>
                                 </div>
                                 <div>
                                     <p class="text-sm font-semibold text-navy-900">No issues found</p>

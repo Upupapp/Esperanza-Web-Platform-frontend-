@@ -60,6 +60,9 @@ Route::view('/admin/users', 'admin.users', ['tab' => 'personnel'])->name('admin.
 Route::view('/admin/users/roles', 'admin.users', ['tab' => 'roles'])->name('admin.roles');
 Route::view('/admin/users/permissions', 'admin.users', ['tab' => 'permissions'])->name('admin.permissions');
 
+// Internal Forms — staff self-service forms (HR, GSO, Agriculture, MSWD), separate from citizen-facing Dokyu/Tulong.
+Route::view('/admin/internal-forms', 'admin.internal-forms', ['office' => 'hr'])->name('admin.internal-forms');
+
 // Settings — General, Notifications, Security, Branding, Integrations, Audit Logs as tabs.
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');
 Route::view('/admin/settings/branding', 'admin.settings', ['tab' => 'branding'])->name('admin.branding');

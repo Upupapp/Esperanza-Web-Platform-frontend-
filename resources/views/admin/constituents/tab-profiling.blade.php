@@ -15,7 +15,7 @@
         <x-ui.stat-card
             label="Households Recorded"
             value="4,918"
-            icon="home"
+            icon="house"
             color="green"
             :delay="75"
         />

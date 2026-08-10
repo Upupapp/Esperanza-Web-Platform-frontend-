@@ -42,16 +42,17 @@
         </span>
     </div>
 
-    <nav class="flex-1 overflow-y-auto scrollbar-thin px-2.5 py-3 space-y-0.5">
+    <nav class="flex-1 overflow-y-auto scrollbar-dark px-2.5 py-3 space-y-0.5">
         <x-ui.nav-item dense :href="route('admin.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" moduleKey="constituents" />
         <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badge="18" :active="$active === 'document-requests'" moduleKey="dokyu" />
         <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badge="9" :active="$active === 'assistance-requests'" moduleKey="tulong" />
         <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />
         <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
-        <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Communications" :active="$active === 'communications'" moduleKey="communications" />
-        <x-ui.nav-item dense :href="route('admin.reports')" icon="file-bar-chart" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />
+        <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Balita" :active="$active === 'communications'" moduleKey="communications" />
+        <x-ui.nav-item dense :href="route('admin.reports')" icon="file-chart-column" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />
         <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" moduleKey="user_management" />
+        <x-ui.nav-item dense :href="route('admin.internal-forms')" icon="clipboard-list" label="Internal Forms" :active="$active === 'internal-forms'" />
     </nav>
 
     <div class="border-t border-white/10 p-2.5 shrink-0">

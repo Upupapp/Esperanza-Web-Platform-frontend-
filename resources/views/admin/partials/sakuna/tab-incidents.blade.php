@@ -77,7 +77,7 @@
         <i data-lucide="truck" class="w-3.5 h-3.5"></i> Dispatched / On Scene: 5
     </span>
     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Resolved: 3
+        <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Resolved: 3
     </span>
     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
         <i data-lucide="clock" class="w-3.5 h-3.5"></i> Pending Validation: 2
@@ -171,7 +171,7 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 @foreach($incidents as $inc)
-                <tr x-show="rowVisible(
+                <tr x-show="$store.session.inScope('{{ $inc['barangay'] }}') && rowVisible(
                         incidentSearch, incidentTypeFilter, incidentSeverityFilter, incidentStatusFilter, incidentBarangayFilter,
                         '{{ $inc['id'] }}',
                         '{{ $inc['type'] }}',
@@ -283,7 +283,7 @@
                             @elseif($inc['status'] === 'On Scene')
                                 <button @click="toast('Incident {{ $inc['id'] }} marked as Resolved.', 'success')"
                                     class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg transition-colors">
-                                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Resolve
+                                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Resolve
                                 </button>
                             @elseif($inc['status'] === 'Resolved')
                                 <button @click="toast('Incident {{ $inc['id'] }} closed.', 'info')"
@@ -496,7 +496,7 @@
             <ol class="relative border-l border-slate-200 space-y-6 ml-3">
                 <li class="ml-6">
                     <span class="absolute -left-3 flex items-center justify-center w-6 h-6 bg-rose-100 rounded-full ring-4 ring-white">
-                        <i data-lucide="alert-circle" class="w-3 h-3 text-rose-600"></i>
+                        <i data-lucide="circle-alert" class="w-3 h-3 text-rose-600"></i>
                     </span>
                     <p class="text-xs text-slate-400 mb-0.5">Jul 15, 2026 — 06:12 AM</p>
                     <p class="text-sm font-medium text-slate-800">Incident reported</p>
@@ -580,7 +580,7 @@
                 </button>
                 <button @click="toast('Incident marked as Resolved.', 'success')"
                     class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors">
-                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Resolve
+                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Resolve
                 </button>
                 <button @click="toast('Incident closed.', 'info')"
                     class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors">

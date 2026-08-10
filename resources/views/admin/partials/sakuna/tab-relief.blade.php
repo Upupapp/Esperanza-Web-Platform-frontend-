@@ -42,7 +42,7 @@
                 <span class="font-bold text-slate-800">15</span>
             </div>
             <div class="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100 shadow-card text-sm">
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500"></i>
                 <span class="text-amber-700">Low Stock Items:</span>
                 <span class="font-bold text-amber-800">4</span>
             </div>
@@ -85,13 +85,13 @@
             <button
                 @click="showStockInModal = true; selectedInventoryItem = null"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <i data-lucide="circle-plus" class="w-4 h-4"></i>
                 Stock In
             </button>
             <button
                 @click="showStockOutModal = true; selectedInventoryItem = null"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors shadow-sm">
-                <i data-lucide="minus-circle" class="w-4 h-4"></i>
+                <i data-lucide="circle-minus" class="w-4 h-4"></i>
                 Stock Out
             </button>
         </div>
@@ -175,12 +175,12 @@
                                     <button
                                         @click="selectedInventoryItem = {{ json_encode($item) }}; showStockInModal = true"
                                         class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Stock In">
-                                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                                        <i data-lucide="circle-plus" class="w-3.5 h-3.5"></i>
                                     </button>
                                     <button
                                         @click="selectedInventoryItem = {{ json_encode($item) }}; showStockOutModal = true"
                                         class="p-1.5 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" title="Stock Out">
-                                        <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+                                        <i data-lucide="circle-minus" class="w-3.5 h-3.5"></i>
                                     </button>
                                     <button
                                         @click="$dispatch('toast', { message: 'Movement history for {{ $item['name'] }}.', variant: 'info' })"
@@ -480,7 +480,7 @@
 
         {{-- Duplicate Warning Banner --}}
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2 text-amber-700 text-sm">
-            <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
+            <i data-lucide="triangle-alert" class="w-4 h-4 flex-shrink-0"></i>
             Duplicate assistance warnings are active for the current operational period (SWM-2026-07).
         </div>
 
@@ -829,7 +829,7 @@
                 <button
                     @click="$dispatch('toast', { message: 'Stock added: +' + stockInQty + ' ' + stockInItem + '. Inventory updated.', variant: 'success' }); showStockInModal = false"
                     class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
-                    <i data-lucide="plus-circle" class="w-4 h-4 inline-block mr-1"></i>
+                    <i data-lucide="circle-plus" class="w-4 h-4 inline-block mr-1"></i>
                     Confirm Stock In
                 </button>
             </div>
@@ -872,7 +872,7 @@
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quantity to Release</label>
                         <input type="number" min="1" x-model="stockOutQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
                         <div x-show="stockOutQty > 999 && stockOutItem === ''" class="mt-1.5 flex items-center gap-1.5 text-xs text-amber-600">
-                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                            <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>
                             Requested quantity exceeds available stock.
                         </div>
                     </div>
@@ -905,7 +905,7 @@
                 <button
                     @click="$dispatch('toast', { message: 'Stock released: -' + stockOutQty + ' ' + (stockOutItem || 'item') + '.', variant: 'success' }); showStockOutModal = false"
                     class="px-5 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600 transition-colors shadow-sm">
-                    <i data-lucide="minus-circle" class="w-4 h-4 inline-block mr-1"></i>
+                    <i data-lucide="circle-minus" class="w-4 h-4 inline-block mr-1"></i>
                     Confirm Stock Out
                 </button>
             </div>

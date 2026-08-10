@@ -25,7 +25,36 @@
 @endphp
 
 <x-layouts.admin title="Payments" subtitle="Track Dokyu and Tulong invoices, methods, and attached receipts." active="payments">
-    <div x-data="{ tab: 'all', open: false, selected: null, payments: @js($payments), adminFiles: @js($adminFiles), method: null, receipt: null, showReceiptPicker: false }" class="animate-fade-up">
+    <div
+        x-data="{
+            tab: 'all',
+            search: '',
+            open: false,
+            selected: null,
+            payments: @js($payments),
+            adminFiles: @js($adminFiles),
+            method: null,
+            receipt: null,
+            showReceiptPicker: false,
+            processing: false,
+            runAction(fn) {
+                if (this.processing) return;
+                this.processing = true;
+                setTimeout(() => { fn(); this.processing = false; this.open = false; }, 700);
+            },
+            matches(p) {
+                const tabOk = this.tab === 'all'
+                    || (this.tab === 'unpaid' && p.status === 'Waiting Requirements')
+                    || (this.tab === 'review' && p.status === 'Pending Review')
+                    || (this.tab === 'paid' && p.status === 'Approved');
+                const q = this.search.trim().toLowerCase();
+                const searchOk = q === '' || p.ref.toLowerCase().includes(q) || p.citizen.toLowerCase().includes(q);
+                return tabOk && searchOk;
+            },
+            get visibleCount() { return this.payments.filter(p => this.matches(p)).length; },
+        }"
+        class="animate-fade-up"
+    >
 
         <div x-show="!$store.session.can('payments')" x-cloak>
             <x-admin.access-restricted module="Payments" icon="receipt" />
@@ -36,24 +65,29 @@
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
             <x-ui.stat-card label="Total Invoiced" value="₱{{ number_format($totalInvoiced, 2) }}" icon="receipt" color="brand" sublabel="This month" :delay="0" />
             <x-ui.stat-card label="Total Collected" value="₱{{ number_format($totalCollected, 2) }}" icon="banknote" color="green" :delay="40" />
-            <x-ui.stat-card label="Paid" value="{{ $paidCount }}" valueBind="payments.filter(p => p.status === 'Approved').length" icon="check-circle-2" color="green" :delay="80" />
+            <x-ui.stat-card label="Paid" value="{{ $paidCount }}" valueBind="payments.filter(p => p.status === 'Approved').length" icon="circle-check" color="green" :delay="80" />
             <x-ui.stat-card label="Pending Review" value="{{ $reviewCount }}" valueBind="payments.filter(p => p.status === 'Pending Review').length" icon="clock" color="orange" sublabel="Receipt awaiting verification" :delay="120" />
             <x-ui.stat-card label="Awaiting Payment" value="{{ $unpaidCount }}" valueBind="payments.filter(p => p.status === 'Waiting Requirements').length" icon="circle-dollar-sign" color="red" :delay="160" />
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit overflow-x-auto">
-                @foreach($tabs as $key => $label)
-                    <button
-                        @click="tab = '{{ $key }}'"
-                        class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
-                        :class="tab === '{{ $key }}' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"
-                    >{{ $label }}</button>
-                @endforeach
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="relative flex-1 min-w-[200px]">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                </div>
             </div>
-            <div class="relative">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input type="text" placeholder="Search reference or citizen..." class="w-64 pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                    @foreach($tabs as $key => $label)
+                        <button
+                            type="button" @click="tab = '{{ $key }}'"
+                            class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
+                            :class="tab === '{{ $key }}' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        >{{ $label }}</button>
+                    @endforeach
+                </div>
+                <p class="text-[11px] text-slate-400 shrink-0" x-text="visibleCount + ' of ' + payments.length + ' payments'"></p>
             </div>
         </div>
 
@@ -74,7 +108,7 @@
             <tbody class="divide-y divide-slate-50">
                 @foreach($payments as $i => $p)
                     <tr
-                        x-show="tab === 'all' || (tab === 'unpaid' && payments[{{ $i }}].status === 'Waiting Requirements') || (tab === 'review' && payments[{{ $i }}].status === 'Pending Review') || (tab === 'paid' && payments[{{ $i }}].status === 'Approved')"
+                        x-show="matches(payments[{{ $i }}])" x-cloak
                         class="hover:bg-slate-50/70 transition-colors"
                     >
                         <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ $p['ref'] }}</td>
@@ -105,6 +139,11 @@
                 @endforeach
             </tbody>
         </x-ui.table>
+
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="visibleCount === 0">
+            <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+            <p class="text-sm font-medium text-slate-600">No payments match these filters.</p>
+        </div>
 
         <x-ui.modal title="Payment Details" maxWidth="lg">
             <template x-if="selected !== null">
@@ -173,7 +212,7 @@
                                 <p class="text-xs text-slate-600 flex-1">Attach receipt / proof of payment</p>
                                 <button type="button" x-show="!receipt" @click="showReceiptPicker = !showReceiptPicker" class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap">Attach File</button>
                                 <div class="flex items-center gap-1.5 shrink-0" x-show="receipt">
-                                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i><span x-text="receipt"></span></span>
+                                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="receipt"></span></span>
                                     <button type="button" @click="receipt = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                 </div>
                             </div>
@@ -195,15 +234,32 @@
             <x-slot:footer>
                 <template x-if="selected !== null && payments[selected].status === 'Waiting Requirements'">
                     <x-ui.button
-                        size="sm" icon="check"
-                        ::disabled="!method || !receipt"
-                        @click="payments[selected].method = method; payments[selected].receipt = receipt; payments[selected].status = 'Pending Review'; open = false; $dispatch('toast', { message: 'Payment recorded — sent for verification.', variant: 'success' })"
-                    >Save & Send for Verification</x-ui.button>
+                        size="sm"
+                        ::disabled="!method || !receipt || processing"
+                        @click="runAction(() => { payments[selected].method = method; payments[selected].receipt = receipt; payments[selected].status = 'Pending Review'; $dispatch('toast', { message: 'Payment recorded — sent for verification.', variant: 'success' }); })"
+                    >
+                        <span class="inline-flex items-center gap-1.5">
+                            <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                            <i data-lucide="check" class="w-3.5 h-3.5" x-show="!processing"></i>
+                            <span x-text="processing ? 'Saving…' : 'Save & Send for Verification'"></span>
+                        </span>
+                    </x-ui.button>
                 </template>
                 <template x-if="selected !== null && payments[selected].status === 'Pending Review'">
                     <div class="flex items-center gap-2.5">
-                        <x-ui.button variant="danger" size="sm" @click="payments[selected].status = 'Rejected'; open = false; $dispatch('toast', { message: 'Receipt rejected — citizen will be notified.', variant: 'error' })">Reject Receipt</x-ui.button>
-                        <x-ui.button size="sm" icon="check" @click="payments[selected].status = 'Approved'; open = false; $dispatch('toast', { message: 'Payment verified and marked as paid.', variant: 'success' })">Verify Payment</x-ui.button>
+                        <x-ui.button variant="danger" size="sm" x-bind:disabled="processing" @click="runAction(() => { payments[selected].status = 'Rejected'; $dispatch('toast', { message: 'Receipt rejected — citizen will be notified.', variant: 'error' }); })">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                                <span x-text="processing ? 'Rejecting…' : 'Reject Receipt'"></span>
+                            </span>
+                        </x-ui.button>
+                        <x-ui.button size="sm" x-bind:disabled="processing" @click="runAction(() => { payments[selected].status = 'Approved'; $dispatch('toast', { message: 'Payment verified and marked as paid.', variant: 'success' }); })">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                                <i data-lucide="check" class="w-3.5 h-3.5" x-show="!processing"></i>
+                                <span x-text="processing ? 'Verifying…' : 'Verify Payment'"></span>
+                            </span>
+                        </x-ui.button>
                     </div>
                 </template>
                 <template x-if="selected !== null && !['Waiting Requirements', 'Pending Review'].includes(payments[selected].status)">

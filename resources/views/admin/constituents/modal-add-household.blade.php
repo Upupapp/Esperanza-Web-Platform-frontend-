@@ -264,7 +264,7 @@
                                 :class="form.flood_risk === fr.val ? fr.activeCls : 'border-slate-200 bg-white hover:border-slate-300'"
                             >
                                 <input type="radio" x-model="form.flood_risk" :value="fr.val" class="sr-only" />
-                                <i data-lucide="waves" class="w-5 h-5" :class="form.flood_risk === fr.val ? fr.iconCls : 'text-slate-400'"></i>
+                                <i data-lucide="waves-horizontal" class="w-5 h-5" :class="form.flood_risk === fr.val ? fr.iconCls : 'text-slate-400'"></i>
                                 <span class="text-xs font-semibold" :class="form.flood_risk === fr.val ? fr.textCls : 'text-slate-600'" x-text="fr.val"></span>
                                 <template x-if="form.flood_risk === fr.val">
                                     <div class="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" :class="fr.dotCls">
@@ -341,7 +341,7 @@
                         >
                             <input type="checkbox" x-model="form.toilet" class="sr-only" />
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="form.toilet ? 'bg-emerald-100' : 'bg-slate-100'">
-                                <i data-lucide="toilet-2" class="w-5 h-5" :class="form.toilet ? 'text-emerald-500' : 'text-slate-400'"></i>
+                                <i data-lucide="toilet" class="w-5 h-5" :class="form.toilet ? 'text-emerald-500' : 'text-slate-400'"></i>
                             </div>
                             <span class="text-xs font-semibold" :class="form.toilet ? 'text-emerald-700' : 'text-slate-600'">Has Toilet Facility</span>
                             <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"

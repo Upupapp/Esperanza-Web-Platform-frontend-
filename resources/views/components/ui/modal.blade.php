@@ -2,7 +2,7 @@
 
 @php
     // Roughly 1.5x the standard Tailwind max-w scale for each named tier.
-    $widths = ['sm' => 'max-w-xl', 'md' => 'max-w-2xl', 'lg' => 'max-w-3xl', 'xl' => 'max-w-4xl', '2xl' => 'max-w-5xl'];
+    $widths = ['sm' => 'max-w-xl', 'md' => 'max-w-2xl', 'lg' => 'max-w-3xl', 'xl' => 'max-w-4xl', '2xl' => 'max-w-5xl', '3xl' => 'max-w-6xl'];
     $w = $widths[$maxWidth] ?? $widths['md'];
 @endphp
 
@@ -25,7 +25,7 @@
                 x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100"
                 @click.outside="open = false"
-                style="max-height: 82vh; width: calc(100vw - 2rem);"
+                style="max-height: 88vh; width: calc(100vw - 2rem);"
                 class="relative bg-white rounded-2xl shadow-float {{ $w }} flex flex-col overflow-hidden"
             >
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">

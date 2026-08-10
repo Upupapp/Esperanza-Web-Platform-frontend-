@@ -87,9 +87,9 @@
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl hover:bg-slate-100 transition-colors">
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-xs" x-text="$store.session.initials()"></div>
-                <span class="hidden lg:block text-left">
-                    <span class="block text-sm font-medium text-navy-900 leading-tight" x-text="$store.session.account?.name ?? 'Guest Preview'"></span>
-                    <span class="block text-xs text-slate-400 leading-tight" x-text="$store.session.account?.role ?? 'Not signed in'"></span>
+                <span class="hidden lg:block text-left max-w-[120px]">
+                    <span class="block text-sm font-medium text-navy-900 leading-tight truncate" x-text="$store.session.account?.name ?? 'Guest Preview'"></span>
+                    <span class="block text-xs text-slate-400 leading-tight truncate" x-text="$store.session.account?.role ?? 'Not signed in'"></span>
                 </span>
                 <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 hidden lg:block transition-transform duration-200" :class="open && 'rotate-180'"></i>
             </button>

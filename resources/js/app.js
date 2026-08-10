@@ -61,6 +61,39 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
+    // Frontend-only "logged in as this resident" simulation for the Citizen
+    // Portal (see config/esperanza_citizens.php). Mirrors $store.session above
+    // but simpler — citizens don't have module permissions, just a barangay
+    // identity that Dokyu (and later other pages) can read to show the right
+    // barangay-specific content.
+    Alpine.store('citizenSession', {
+        account: JSON.parse(localStorage.getItem('esperanza_citizen_session') || 'null'),
+        login(account) {
+            this.account = account;
+            localStorage.setItem('esperanza_citizen_session', JSON.stringify(account));
+        },
+        logout() {
+            this.account = null;
+            localStorage.removeItem('esperanza_citizen_session');
+        },
+        initials() {
+            if (!this.account) return 'CI';
+            return ((this.account.firstName?.[0] || '') + (this.account.lastName?.[0] || '')).toUpperCase();
+        },
+    });
+
+    // Per-barangay directory (see components/layouts/citizen.blade.php, which
+    // injects window.__barangayCatalog from config/esperanza_barangay_documents.php).
+    // `.mine` lets any Citizen Portal page show the signed-in resident's own
+    // barangay seal/officials/contact without re-declaring the catalog per view.
+    Alpine.store('barangay', {
+        catalog: window.__barangayCatalog || {},
+        get mine() {
+            const b = Alpine.store('citizenSession').account?.barangay;
+            return b ? this.catalog[b] || null : null;
+        },
+    });
+
     Alpine.data('dropdown', () => ({
         open: false,
         toggle() {

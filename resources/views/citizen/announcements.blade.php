@@ -3,82 +3,10 @@
         ->filter()->map(fn ($p) => mb_substr($p, 0, 1))->take(2)->implode('');
     $truncate = fn (string $s, int $len = 62) => mb_strlen($s) > $len ? mb_substr($s, 0, $len) . '…' : $s;
 
-    $posts = [
-        [
-            'official' => true, 'author' => 'Esperanza LGU', 'barangay' => null, 'category' => 'Community',
-            'time' => 'Posted yesterday', 'body' => 'Sumali sa buong-munisipyong pagdiriwang ngayong Agosto! Street dancing, trade fair, at gabi-gabing cultural program sa Municipal Plaza. Maligayang pagdating sa lahat! 🎉',
-            'image' => 'esperanza_festival.jpg', 'video' => false,
-            'likes' => 214, 'shares' => 58,
-            'comments' => [
-                ['author' => 'Rosemarie Tan', 'initials' => $initials('Rosemarie Tan'), 'body' => 'Sana araw-araw may ganito, sobrang saya po ng fiesta natin! 🥳', 'time' => '20 hrs ago', 'likes' => 6, 'liked' => false],
-                ['author' => 'Elmer Bantillo', 'initials' => $initials('Elmer Bantillo'), 'body' => 'Anong oras po ang street dancing sa opening day?', 'time' => '18 hrs ago', 'likes' => 2, 'liked' => false],
-            ],
-        ],
-        [
-            'official' => false, 'author' => 'Elmer Bantillo', 'barangay' => 'Santiago', 'category' => null,
-            'time' => '3 hrs ago', 'body' => 'Successful po ang blood donation drive natin ngayong araw dito sa Brgy. Santiago! Umabot ng 40+ na donors. Maraming salamat sa lahat ng dumalo at sa Red Cross Masbate! 🩸🙏',
-            'image' => 'esperanza_community1.jpg', 'video' => false,
-            'likes' => 47, 'shares' => 6,
-            'comments' => [
-                ['author' => 'Maria Fe Bacaltos', 'initials' => $initials('Maria Fe Bacaltos'), 'body' => 'Ang galing naman nito! Sana makasali ako sa susunod.', 'time' => '2 hrs ago', 'likes' => 3, 'liked' => false],
-            ],
-        ],
-        [
-            'official' => true, 'author' => 'Esperanza LGU', 'barangay' => null, 'category' => 'Health',
-            'time' => 'Posted 3 days ago', 'body' => "Libreng check-up, dental extraction, at pamimigay ng gamot sa covered court. Magdala po ng valid ID at PhilHealth card kung meron. Sa lahat, halina't makinabang!",
-            'image' => 'esperanza_people.jpg', 'video' => false,
-            'likes' => 156, 'shares' => 31,
-            'comments' => [
-                ['author' => 'Teresita Salazar', 'initials' => $initials('Teresita Salazar'), 'body' => 'Pwede po ba isama ang lola ko na senior citizen?', 'time' => '2 days ago', 'likes' => 1, 'liked' => false],
-            ],
-        ],
-        [
-            'official' => false, 'author' => 'Michael Bacus', 'barangay' => 'Iligan', 'category' => null,
-            'time' => '1 day ago', 'body' => 'May nakakita po ba nito? Nawala malapit sa covered court kagabi. Itim na may puting paa, mahiyain pero friendly naman. Tulungan niyo po ako i-share. 🐕💔',
-            'image' => 'esperanza_event3.jpg', 'video' => false,
-            'likes' => 29, 'shares' => 22,
-            'comments' => [],
-        ],
-        [
-            'official' => false, 'author' => 'Josefina Marbella', 'barangay' => 'Baras', 'category' => null,
-            'time' => '1 day ago', 'body' => 'Gusto ko lang po magpasalamat sa MSWDO at OSCA sa mabilis na pag-asikaso ng aking social pension application. Simple lang pero malaking tulong na po sa amin. Maraming salamat po talaga! 🙏',
-            'image' => null, 'video' => false,
-            'likes' => 83, 'shares' => 4,
-            'comments' => [
-                ['author' => 'Corazon Villareal', 'initials' => $initials('Corazon Villareal'), 'body' => 'Salamat din po sa patuloy na tiwala sa aming serbisyo, Nanay Josefina! 💙', 'time' => '20 hrs ago', 'likes' => 9, 'liked' => false],
-            ],
-        ],
-        [
-            'official' => false, 'author' => 'Angelica Fajardo', 'barangay' => 'Rizal', 'category' => null,
-            'time' => '2 days ago', 'body' => 'Coverage ng aming fiesta rehearsal kagabi! Ang saya-saya, sana dumagsa kayo sa opening program. 💃🎊',
-            'image' => 'esperanza_event2.jpg', 'video' => true,
-            'likes' => 61, 'shares' => 9,
-            'comments' => [],
-        ],
-        [
-            'official' => true, 'author' => 'Esperanza LGU', 'barangay' => null, 'category' => 'Public Service',
-            'time' => 'Posted 5 days ago', 'body' => 'Maaari na pong bayaran online ang processing fees ng inyong document requests gamit ang GCash — hindi na kailangang pumila pa sa Municipal Hall.',
-            'image' => 'esperanza-community.jpg', 'video' => false,
-            'likes' => 98, 'shares' => 27,
-            'comments' => [],
-        ],
-        [
-            'official' => false, 'author' => 'Teresita Salazar', 'barangay' => 'Agoho', 'category' => null,
-            'time' => '4 days ago', 'body' => 'Tanong lang po, kailan po ulit ang susunod na free medical mission? Gusto ko sanang isama ang lola ko na senior citizen. Salamat po sa sasagot!',
-            'image' => null, 'video' => false,
-            'likes' => 12, 'shares' => 1,
-            'comments' => [
-                ['author' => 'Esperanza LGU', 'initials' => 'LGU', 'body' => 'Magandang araw po! Target po namin ang susunod na medical mission sa Brgy. Masbaranon this August. Aabisuhan po namin dito sa Balita.', 'time' => '3 days ago', 'likes' => 5, 'liked' => false],
-            ],
-        ],
-        [
-            'official' => true, 'author' => 'Esperanza LGU', 'barangay' => null, 'category' => 'Advisory',
-            'time' => 'Posted 1 week ago', 'body' => 'Naglabas ng low pressure area advisory ang PAGASA. Pinapaalalahanan ang mga residente sa mga coastal barangay na sundan ang mga update mula sa MDRRMO.',
-            'image' => 'esperanza-boats.jpg', 'video' => false,
-            'likes' => 74, 'shares' => 35,
-            'comments' => [],
-        ],
-    ];
+    // Shared with citizen/dashboard.blade.php's Balita preview — see config/esperanza_balita.php.
+    $posts = config('esperanza_balita.posts');
+    $categories = config('esperanza_balita.categories');
+    $mediaLibrary = config('esperanza_balita.mediaLibrary');
 
     foreach ($posts as $i => $post) {
         $posts[$i]['id'] = $i;
@@ -94,19 +22,10 @@
 
         // Every comment can hold its own replies, shown nested right under it.
         foreach ($post['comments'] as $ci => $comment) {
+            $posts[$i]['comments'][$ci]['initials'] = $comment['author'] === 'Esperanza LGU' ? 'LGU' : $initials($comment['author']);
             $posts[$i]['comments'][$ci]['replies'] = [];
         }
     }
-
-    $categories = ['All', 'Official', 'Community', 'Health', 'Public Service', 'Advisory', 'Livelihood'];
-
-    $mediaLibrary = [
-        ['name' => 'Fiesta Rehearsal Photo.jpg', 'category' => 'IMG'],
-        ['name' => 'Barangay Cleanup.jpg', 'category' => 'IMG'],
-        ['name' => 'Medical Mission Clip.mp4', 'category' => 'VID'],
-        ['name' => 'Salamat Po.gif', 'category' => 'GIF'],
-        ['name' => 'Clapping Hands.gif', 'category' => 'GIF'],
-    ];
 
     $recentPosts = collect($posts)->take(4);
     $trendingPosts = collect($posts)->sortByDesc('likes')->take(3)->values();
@@ -122,6 +41,11 @@
     <div
         x-data="{
             cat: 'All',
+            matchesCat(post) {
+                if (this.cat === 'MyBarangay') return post.barangay === this.$store.citizenSession.account?.barangay;
+                return this.cat === 'All' || (this.cat === 'Official' && post.official) || (this.cat === 'Community' && !post.official) || this.cat === post.category;
+            },
+            get filteredPostCount() { return this.posts.filter(p => this.matchesCat(p)).length; },
             posts: @js($posts),
             mediaLibrary: @js($mediaLibrary),
             open: false,
@@ -131,6 +55,11 @@
             commentMediaPicker: null,
             replyingTo: {},
             replyText: {},
+            myName() {
+                const a = this.$store.citizenSession.account;
+                return a ? a.fullName : 'Resident';
+            },
+            myInitials() { return this.$store.citizenSession.initials(); },
             toggleLike(post) {
                 post.liked = !post.liked;
                 post.likes += post.liked ? 1 : -1;
@@ -139,7 +68,7 @@
                 const text = (this.commentDraft[post.id] || '').trim();
                 const media = this.commentMedia[post.id] || null;
                 if (!text && !media) return;
-                post.comments.push({ author: 'Maria Fe Bacaltos', initials: 'MB', body: text, time: 'Ngayon lang', media, likes: 0, liked: false, replies: [] });
+                post.comments.push({ author: this.myName(), initials: this.myInitials(), body: text, time: 'Ngayon lang', media, likes: 0, liked: false, replies: [] });
                 this.commentDraft[post.id] = '';
                 this.commentMedia[post.id] = null;
                 this.commentMediaPicker = null;
@@ -156,7 +85,7 @@
             submitReply(post, ci) {
                 const text = (this.replyText[post.id] || '').trim();
                 if (!text) return;
-                post.comments[ci].replies.push({ author: 'Maria Fe Bacaltos', initials: 'MB', body: text, time: 'Ngayon lang', likes: 0, liked: false });
+                post.comments[ci].replies.push({ author: this.myName(), initials: this.myInitials(), body: text, time: 'Ngayon lang', likes: 0, liked: false });
                 this.replyText[post.id] = '';
                 this.replyingTo[post.id] = null;
                 this.$nextTick(() => window.renderIcons?.());
@@ -212,12 +141,13 @@
                     reset() { this.open = false; this.composerText = ''; this.composerMedia = []; this.showMediaPicker = false; this.pickerCategory = null; },
                     submit() {
                         if (!this.composerText.trim()) return;
+                        const me = this.$store.citizenSession.account;
                         this.posts.unshift({
-                            id: Date.now(), official: false, author: 'Maria Fe Bacaltos', barangay: 'Poblacion', category: null,
+                            id: Date.now(), official: false, author: me ? me.fullName : 'Resident', barangay: me ? me.barangay : 'Poblacion', category: null,
                             time: 'Ngayon lang', body: this.composerText,
                             media: this.composerMedia.map(m => ({ name: m.name, category: m.category, real: false })),
                             likes: 0, shares: 0, comments: [],
-                            initials: 'MB', liked: false, showComments: false,
+                            initials: this.$store.citizenSession.initials(), liked: false, showComments: false,
                         });
                         this.reset();
                         this.$nextTick(() => window.renderIcons?.());
@@ -228,7 +158,7 @@
                         <div class="relative bg-gradient-to-br from-brand-50 via-white to-purple-50/60 px-4 pt-4 pb-3.5">
                             <div class="relative flex items-center gap-3">
                                 <div class="relative shrink-0">
-                                    <x-ui.avatar name="Maria Fe Bacaltos" size="md" />
+                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
                                     <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white"></span>
                                 </div>
                                 <button
@@ -236,7 +166,7 @@
                                     class="flex-1 text-left group"
                                 >
                                     <span class="block px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-slate-400 text-sm shadow-sm group-hover:border-brand-300 group-hover:shadow-card group-hover:-translate-y-0.5 transition-all duration-200">
-                                        <x-ui.t fil="Ano ang balita mo, Maria Fe?" en="What's on your mind, Maria Fe?" />
+                                        <span x-text="($store.lang.current === 'en' ? 'What\'s on your mind, ' : 'Ano ang balita mo, ') + ($store.citizenSession.account?.firstName ?? 'Resident') + '?'"></span>
                                     </span>
                                 </button>
                             </div>
@@ -260,9 +190,9 @@
                     <x-ui.modal title="Gumawa ng Post" titleEn="Create Post" maxWidth="md">
                         <!-- Identity + audience -->
                         <div class="flex items-center gap-2.5 mb-3">
-                            <x-ui.avatar name="Maria Fe Bacaltos" size="md" />
+                            <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900">Maria Fe Bacaltos</p>
+                                <p class="text-sm font-semibold text-navy-900" x-text="$store.citizenSession.account?.fullName || 'Resident'"></p>
                                 <button
                                     type="button"
                                     @click="audience = audience === 'Lahat' ? 'Brgy. Poblacion' : 'Lahat'"
@@ -354,21 +284,30 @@
                 </x-ui.modal>
 
                 <!-- Category filter -->
-                <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit overflow-x-auto mb-3">
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
                     @foreach($categories as $c)
                         <button
                             @click="cat = '{{ $c }}'"
-                            class="px-3 py-1 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
-                            :class="cat === '{{ $c }}' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"
+                            class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
+                            :class="cat === '{{ $c }}' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
                         >@if($c === 'All')<x-ui.t fil="Lahat" en="All" />@elseif($c === 'Official')<x-ui.t fil="Opisyal" en="Official" />@elseif($c === 'Community')<x-ui.t fil="Komunidad" en="Community" />@else{{ $c }}@endif</button>
                     @endforeach
+                    <button
+                        x-show="$store.barangay.mine" x-cloak
+                        @click="cat = 'MyBarangay'"
+                        class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1"
+                        :class="cat === 'MyBarangay' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                    ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></button>
+                </div>
+                <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredPostCount + ' ' + ($store.lang.current === 'en' ? 'of ' + posts.length + ' posts' : 'sa ' + posts.length + ' post')"></p>
                 </div>
 
                 <!-- Feed -->
                 <div class="space-y-3">
                     <template x-for="post in posts" :key="post.id">
                         <div
-                            x-show="cat === 'All' || (cat === 'Official' && post.official) || (cat === 'Community' && !post.official) || cat === post.category"
+                            x-show="matchesCat(post)"
                             class="bg-white rounded-2xl border border-slate-100 shadow-card"
                         >
                             <!-- Header -->
@@ -437,7 +376,7 @@
                                         class="absolute right-0 top-full mt-1 z-20 w-48 bg-white rounded-2xl shadow-float border border-slate-100 py-1.5"
                                     >
                                         <button
-                                            type="button" x-show="post.author === 'Maria Fe Bacaltos'"
+                                            type="button" x-show="post.author === ($store.citizenSession.account?.fullName || '')"
                                             @click="deletePost(post); menuOpen = false"
                                             class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 transition-colors"
                                         ><i data-lucide="trash-2" class="w-4 h-4"></i><x-ui.t fil="Burahin" en="Delete" /></button>
@@ -447,7 +386,7 @@
                                             class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                                         ><i data-lucide="eye-off" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Itago" en="Hide" /></button>
                                         <button
-                                            type="button" x-show="post.author !== 'Maria Fe Bacaltos'"
+                                            type="button" x-show="post.author !== ($store.citizenSession.account?.fullName || '')"
                                             @click="mutePost(post); menuOpen = false"
                                             class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                                         ><i data-lucide="bell-off" class="w-4 h-4 text-slate-400"></i><span x-text="($store.lang.current === 'en' ? 'Mute ' : 'I-mute si ') + post.author"></span></button>
@@ -695,7 +634,7 @@
                                 </div>
 
                                 <div class="flex items-center gap-2.5">
-                                    <x-ui.avatar name="Maria Fe Bacaltos" size="sm" class="!w-7 !h-7 !text-[10px]" />
+                                    <div class="w-7 h-7 text-[10px] rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
                                     <div class="flex-1 relative">
                                         <input
                                             type="text"
@@ -721,6 +660,10 @@
                             </div>
                         </div>
                     </template>
+                    <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="filteredPostCount === 0">
+                        <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="megaphone-off" class="w-5 h-5"></i></span>
+                        <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Wala pang balita sa kategoryang ito." en="No Balita posts in this category yet." /></p>
+                    </div>
                 </div>
             </div>
 

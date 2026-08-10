@@ -37,7 +37,7 @@
 
     @if($error)
         <p class="mt-1.5 text-xs text-rose-500 flex items-center gap-1">
-            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>{{ $error }}
+            <i data-lucide="circle-alert" class="w-3.5 h-3.5"></i>{{ $error }}
         </p>
     @endif
 </div>

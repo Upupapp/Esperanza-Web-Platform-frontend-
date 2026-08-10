@@ -27,6 +27,21 @@
         </button>
     </div>
 
+    <!-- My Barangay identity strip -->
+    <div x-show="!collapsed && $store.barangay.mine" x-cloak class="flex items-center gap-2 px-4 py-2.5 border-b border-white/10 bg-white/[0.03] shrink-0">
+        <div class="relative w-6 h-6 shrink-0">
+            <div class="absolute inset-0 rounded-full bg-white/10 flex items-center justify-center text-white/40"><i data-lucide="map-pinned" class="w-3 h-3"></i></div>
+            <img
+                :src="$store.barangay.mine?.seal ? '{{ rtrim(asset(''), '/') }}/' + $store.barangay.mine.seal : ''"
+                x-show="$store.barangay.mine?.seal" onerror="this.style.display='none'" alt=""
+                class="relative w-6 h-6 rounded-full object-cover"
+            >
+        </div>
+        <p class="text-[11px] text-white/70 truncate">
+            Brgy. <span class="font-medium text-white" x-text="$store.barangay.mine?.label"></span>
+        </p>
+    </div>
+
     <nav class="flex-1 overflow-y-auto scrollbar-dark px-2.5 py-4 space-y-0.5">
         <x-ui.nav-item dense :href="route('citizen.dashboard')" icon="layout-dashboard" label="Home" labelEn="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('citizen.document-requests')" icon="file-text" label="Dokyu" badge="2" :active="$active === 'document-requests'" />

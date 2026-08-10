@@ -45,7 +45,7 @@
                                 </span>
                                 <template x-if="selectedFamily.household_id">
                                     <span class="inline-flex items-center gap-1 text-xs text-blue-600">
-                                        <i data-lucide="home" class="w-3 h-3"></i>
+                                        <i data-lucide="house" class="w-3 h-3"></i>
                                         <span x-text="'Household HH-' + selectedFamily.household_id"></span>
                                     </span>
                                 </template>
@@ -114,7 +114,7 @@
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.sitio || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="home" class="w-3.5 h-3.5 text-slate-400"></i> Household ID</dt>
+                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5 text-slate-400"></i> Household ID</dt>
                                         <dd class="text-xs font-semibold text-blue-600" x-text="selectedFamily.household_id ? ('HH-' + selectedFamily.household_id) : 'Unlinked'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
@@ -204,7 +204,7 @@
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50/40 cursor-pointer transition-colors"
                                     @click="openIndividual(r)"
                                 >
-                                    <x-ui.avatar :name="''" size="sm" x-bind:data-name="r.name" />
+                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
                                         <p class="text-xs text-slate-400">
@@ -246,7 +246,7 @@
                                 <div class="min-w-0">
                                     <p class="text-sm font-semibold text-navy-900" x-text="prog"></p>
                                     <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 mt-0.5">
-                                        <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                        <i data-lucide="circle-check" class="w-3 h-3"></i>
                                         Active
                                     </span>
                                 </div>
@@ -318,7 +318,7 @@
     {{-- Placeholder when no family selected --}}
     <template x-if="!selectedFamily">
         <div class="flex items-center justify-center h-48 text-slate-400 text-sm">
-            <i data-lucide="loader-2" class="w-6 h-6 animate-spin mr-2"></i>
+            <i data-lucide="loader-circle" class="w-6 h-6 animate-spin mr-2"></i>
             Loading family details…
         </div>
     </template>

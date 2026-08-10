@@ -233,7 +233,7 @@
                     {{-- Open merge review CTA --}}
                     <div class="pt-3 border-t border-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <p class="text-xs text-rose-700">
-                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>
+                            <i data-lucide="triangle-alert" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>
                             Both records require side-by-side review before merging. This action cannot be undone.
                         </p>
                         <button
@@ -285,7 +285,7 @@
                     @click="showDQDetail = false; $dispatch('toast',{message:'Issue marked as resolved. Great work!',variant:'success'})"
                     class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm"
                 >
-                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Mark Resolved
+                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Mark Resolved
                 </button>
 
             </div>

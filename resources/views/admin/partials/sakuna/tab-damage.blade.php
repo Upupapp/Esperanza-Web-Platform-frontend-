@@ -31,7 +31,7 @@
             <span class="font-bold text-slate-800">8</span>
         </div>
         <div class="flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100 shadow-card text-sm">
-            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+            <i data-lucide="circle-check" class="w-4 h-4 text-emerald-500"></i>
             <span class="text-emerald-700">Approved:</span>
             <span class="font-bold text-emerald-800">1</span>
         </div>
@@ -51,7 +51,7 @@
             <span class="font-bold text-amber-800">4</span>
         </div>
         <div class="flex items-center gap-2 px-4 py-2 bg-rose-50 rounded-xl border border-rose-100 shadow-card text-sm">
-            <i data-lucide="peso-sign" class="w-4 h-4 text-rose-500"></i>
+            <i data-lucide="banknote" class="w-4 h-4 text-rose-500"></i>
             <span class="text-rose-700">Est. Total Damage:</span>
             <span class="font-bold text-rose-800">₱9,570,000</span>
         </div>
@@ -143,6 +143,7 @@
                     @endphp
                     <tr
                         x-show="
+                            $store.session.inScope('{{ $a['barangay'] }}') &&
                             (damageSearch === '' || '{{ strtolower($a['id']) }}'.includes(damageSearch.toLowerCase()) || '{{ strtolower($a['barangay']) }}'.includes(damageSearch.toLowerCase())) &&
                             (damageTypeFilter === '' || '{{ $a['type'] }}' === damageTypeFilter) &&
                             (damageStatusFilter === '' || '{{ $a['status'] }}' === damageStatusFilter) &&
@@ -206,7 +207,7 @@
                                 <button
                                     @click="$dispatch('toast', { message: '{{ $a['id'] }} approved.', variant: 'success' })"
                                     class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Approve">
-                                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>
                                 </button>
                                 @endif
                                 <button
@@ -234,7 +235,7 @@
     <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
         <div class="p-5 border-b border-slate-100">
             <div class="flex items-center gap-2">
-                <i data-lucide="bar-chart-3" class="w-5 h-5 text-brand-blue"></i>
+                <i data-lucide="chart-column" class="w-5 h-5 text-brand-blue"></i>
                 <h3 class="text-base font-bold text-navy-900">Municipal Consolidated Summary — SWM-2026-07</h3>
             </div>
             <p class="text-xs text-slate-500 mt-1">Estimates subject to validation. Assessment coverage: 8 of 20 barangays.</p>

@@ -27,6 +27,17 @@
             verification_status: 'A',
         };
     },
+
+    merging: false,
+    confirmMerge() {
+        if (this.merging) return;
+        this.merging = true;
+        setTimeout(() => {
+            this.merging = false;
+            this.open = false;
+            this.$dispatch('toast', { message: 'Records merged successfully. Secondary record has been archived.', variant: 'success' });
+        }, 900);
+    },
 }">
     <x-ui.modal maxWidth="2xl">
 
@@ -375,8 +386,8 @@
 
             {{-- Left: Cancel --}}
             <button
-                @click="showMerge = false"
-                class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition"
+                @click="showMerge = false" x-bind:disabled="merging"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:pointer-events-none"
             >
                 <i data-lucide="x" class="w-3.5 h-3.5"></i> Cancel
             </button>
@@ -388,11 +399,12 @@
                     &rarr; canonical entry
                 </p>
                 <button
-                    @click="showMerge = false; $dispatch('toast',{message:'Records merged successfully. Secondary record has been archived.',variant:'success'})"
-                    class="inline-flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-bold rounded-lg bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 transition shadow-md shadow-rose-200 shrink-0"
+                    @click="confirmMerge()" x-bind:disabled="merging"
+                    class="inline-flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-bold rounded-lg bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 transition shadow-md shadow-rose-200 shrink-0 disabled:opacity-70 disabled:pointer-events-none"
                 >
-                    <i data-lucide="git-merge" class="w-3.5 h-3.5"></i>
-                    Proceed with Merge
+                    <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="merging" x-cloak></i>
+                    <i data-lucide="git-merge" class="w-3.5 h-3.5" x-show="!merging"></i>
+                    <span x-text="merging ? 'Merging…' : 'Proceed with Merge'"></span>
                 </button>
             </div>
 

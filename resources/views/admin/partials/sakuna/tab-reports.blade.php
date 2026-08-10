@@ -164,7 +164,7 @@
                 ['label' => 'Avg. Validation Time', 'value' => '28',   'unit' => 'min',    'icon' => 'clock',          'color' => 'bg-blue-50 text-blue-600',    'change' => '-4 min vs last op', 'positive' => true],
                 ['label' => 'Avg. Dispatch Time',   'value' => '14',   'unit' => 'min',    'icon' => 'zap',            'color' => 'bg-emerald-50 text-emerald-600','change' => '-2 min vs last op', 'positive' => true],
                 ['label' => 'Avg. Arrival Time',    'value' => '42',   'unit' => 'min',    'icon' => 'map-pin',        'color' => 'bg-amber-50 text-amber-600',  'change' => '+5 min vs last op', 'positive' => false],
-                ['label' => 'Incidents Resolved',   'value' => '3/13', 'unit' => '(23%)',  'icon' => 'check-circle',   'color' => 'bg-emerald-50 text-emerald-600','change' => '10 still active',   'positive' => null],
+                ['label' => 'Incidents Resolved',   'value' => '3/13', 'unit' => '(23%)',  'icon' => 'circle-check',   'color' => 'bg-emerald-50 text-emerald-600','change' => '10 still active',   'positive' => null],
             ];
         @endphp
         @foreach($kpis as $kpi)

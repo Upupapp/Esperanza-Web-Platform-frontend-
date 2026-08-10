@@ -9,7 +9,39 @@
 @endphp
 
 <x-layouts.citizen title="Settings" subtitle="Manage your account preferences." active="settings">
-    <div x-data="{ tab: 'notifications' }" class="animate-fade-up grid grid-cols-1 lg:grid-cols-4 gap-5">
+    <div
+        x-data="{
+            tab: 'notifications',
+            savingPassword: false,
+            enabling2fa: false,
+            requestingData: false,
+            updatePassword() {
+                if (this.savingPassword) return;
+                this.savingPassword = true;
+                setTimeout(() => {
+                    this.savingPassword = false;
+                    this.$dispatch('toast', { message: 'Password updated — this is a frontend preview, no data is saved.', variant: 'success' });
+                }, 800);
+            },
+            enable2fa() {
+                if (this.enabling2fa) return;
+                this.enabling2fa = true;
+                setTimeout(() => {
+                    this.enabling2fa = false;
+                    this.$dispatch('toast', { message: 'Two-factor authentication setup is a frontend preview — no data is saved.', variant: 'info' });
+                }, 800);
+            },
+            requestData() {
+                if (this.requestingData) return;
+                this.requestingData = true;
+                setTimeout(() => {
+                    this.requestingData = false;
+                    this.$dispatch('toast', { message: 'Data export request received — this is a frontend preview, no file is generated.', variant: 'success' });
+                }, 800);
+            },
+        }"
+        class="animate-fade-up grid grid-cols-1 lg:grid-cols-4 gap-5"
+    >
 
         <div class="lg:col-span-1">
             <x-ui.card padded="false" class="p-2">
@@ -62,7 +94,13 @@
                         <x-ui.input name="current_password" type="password" label="Current Password" icon="lock" placeholder="••••••••" />
                         <x-ui.input name="new_password" type="password" label="New Password" icon="lock" placeholder="••••••••" />
                         <x-ui.input name="confirm_password" type="password" label="Confirm New Password" icon="lock" placeholder="••••••••" />
-                        <x-ui.button icon="check" @click="$dispatch('toast', { message: 'Password updated — this is a frontend preview, no data is saved.', variant: 'success' })"><x-ui.t fil="I-update ang Password" en="Update Password" /></x-ui.button>
+                        <x-ui.button x-bind:disabled="savingPassword" @click="updatePassword()">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="savingPassword" x-cloak></i>
+                                <i data-lucide="check" class="w-3.5 h-3.5" x-show="!savingPassword"></i>
+                                <span x-text="savingPassword ? ($store.lang.current === 'en' ? 'Saving…' : 'Sine-save…') : ($store.lang.current === 'en' ? 'Update Password' : 'I-update ang Password')"></span>
+                            </span>
+                        </x-ui.button>
                     </div>
                 </x-ui.card>
                 <x-ui.card class="flex items-center justify-between gap-4">
@@ -70,7 +108,12 @@
                         <p class="text-sm font-medium text-navy-900"><x-ui.t fil="Two-Factor Authentication" en="Two-Factor Authentication" /></p>
                         <p class="text-xs text-slate-400 mt-0.5"><x-ui.t fil="Magdagdag ng karagdagang proteksyon sa iyong account." en="Add an extra layer of security to your account." /></p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm"><x-ui.t fil="I-enable ang 2FA" en="Enable 2FA" /></x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="enabling2fa" @click="enable2fa()">
+                        <span class="inline-flex items-center gap-1.5">
+                            <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="enabling2fa" x-cloak></i>
+                            <span x-text="enabling2fa ? ($store.lang.current === 'en' ? 'Enabling…' : 'Ina-enable…') : ($store.lang.current === 'en' ? 'Enable 2FA' : 'I-enable ang 2FA')"></span>
+                        </span>
+                    </x-ui.button>
                 </x-ui.card>
             </div>
 
@@ -87,7 +130,13 @@
                             />
                         </p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm" icon="download" class="mt-4"><x-ui.t fil="Hilingin ang Aking Datos" en="Request My Data" /></x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" class="mt-4" x-bind:disabled="requestingData" @click="requestData()">
+                        <span class="inline-flex items-center gap-1.5">
+                            <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="requestingData" x-cloak></i>
+                            <i data-lucide="download" class="w-3.5 h-3.5" x-show="!requestingData"></i>
+                            <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Requesting…' : 'Hinihiling…') : ($store.lang.current === 'en' ? 'Request My Data' : 'Hilingin ang Aking Datos')"></span>
+                        </span>
+                    </x-ui.button>
                 </x-ui.card>
             </div>
 

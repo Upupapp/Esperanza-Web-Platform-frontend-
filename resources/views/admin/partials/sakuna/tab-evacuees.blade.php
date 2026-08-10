@@ -179,6 +179,7 @@
                 @foreach($evacuees as $ev)
                 <tr
                     x-show="
+                        $store.session.inScope('{{ $ev['home_brgy'] }}') &&
                         (evacueeSearch === '' || '{{ strtolower($ev['id']) }}'.includes(evacueeSearch.toLowerCase()) || '{{ strtolower($ev['head']) }}'.includes(evacueeSearch.toLowerCase())) &&
                         (evCenterFilter === '' || evCenterFilter === '{{ $ev['center'] }}') &&
                         (evStatusFilter === '' || evStatusFilter === '{{ $ev['status'] }}') &&
@@ -255,7 +256,7 @@
                             <div class="relative">
                                 <button @click="open = !open; $nextTick(() => window.renderIcons?.())"
                                     class="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="More actions">
-                                    <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                                    <i data-lucide="ellipsis" class="w-4 h-4"></i>
                                 </button>
                                 <div x-show="open" x-cloak
                                     x-transition:enter="transition ease-out duration-100"
@@ -374,7 +375,7 @@
             {{-- Section 1: Household Information --}}
             <div>
                 <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                    <i data-lucide="home" class="w-3.5 h-3.5"></i> Household Information
+                    <i data-lucide="house" class="w-3.5 h-3.5"></i> Household Information
                 </h4>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-50 rounded-xl p-3">
@@ -427,7 +428,7 @@
                         <div class="flex flex-wrap gap-2">
                             <template x-for="flag in (selectedEvacuee?.health_flags ?? [])">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-700">
-                                    <i data-lucide="alert-circle" class="w-3 h-3 text-rose-400"></i>
+                                    <i data-lucide="circle-alert" class="w-3 h-3 text-rose-400"></i>
                                     <span x-text="flag"></span>
                                 </span>
                             </template>
@@ -447,14 +448,14 @@
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
                         <div class="flex items-center gap-2">
-                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+                            <i data-lucide="circle-check" class="w-4 h-4 text-emerald-500"></i>
                             <span class="text-sm text-slate-700">1x Hygiene Kit</span>
                         </div>
                         <span class="text-xs text-slate-400">Jul 15 — 08:00</span>
                     </div>
                     <div class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
                         <div class="flex items-center gap-2">
-                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+                            <i data-lucide="circle-check" class="w-4 h-4 text-emerald-500"></i>
                             <span class="text-sm text-slate-700">1x Blanket</span>
                         </div>
                         <span class="text-xs text-slate-400">Jul 15 — 08:00</span>
@@ -602,7 +603,7 @@
                             <p class="text-xs text-slate-400">{{ $res['id'] }} · {{ $res['brgy'] }}, {{ $res['sitio'] }}</p>
                         </div>
                         <template x-if="selectedResident === '{{ $res['name'] }}'">
-                            <i data-lucide="check-circle" class="w-5 h-5 text-brand-600 flex-shrink-0"></i>
+                            <i data-lucide="circle-check" class="w-5 h-5 text-brand-600 flex-shrink-0"></i>
                         </template>
                     </button>
                     @endforeach
@@ -666,7 +667,7 @@
             {{-- Step 4: Center Assignment --}}
             <div x-show="evacueeRegStep === 4" class="space-y-4">
                 <div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500 flex-shrink-0"></i>
+                    <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 flex-shrink-0"></i>
                     <p class="text-xs text-amber-700">Household ESP-2021-045123 is not currently checked in at any center.</p>
                 </div>
                 <div>
@@ -722,7 +723,7 @@
             <div x-show="evacueeRegStep === 6" class="space-y-4">
                 <div class="flex flex-col items-center text-center gap-3 py-4">
                     <div class="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                        <i data-lucide="check-circle-2" class="w-7 h-7 text-emerald-600"></i>
+                        <i data-lucide="circle-check" class="w-7 h-7 text-emerald-600"></i>
                     </div>
                     <h4 class="text-base font-semibold text-slate-800">Ready to Complete Check-In</h4>
                     <p class="text-sm text-slate-500">Review the summary below, then click Complete Check-In to register the household.</p>
@@ -779,7 +780,7 @@
             <template x-if="evacueeRegStep === 6">
                 <button @click="toast('Household EVA-015 successfully checked in at Masbaranon Elementary School.', 'success'); showEvacueeReg = false; evacueeRegStep = 1; selectedResident = null"
                     class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl px-4 py-2 transition-colors">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i> Complete Check-In
+                    <i data-lucide="circle-check" class="w-4 h-4"></i> Complete Check-In
                 </button>
             </template>
         </div>

@@ -125,7 +125,7 @@
         {{-- High-Risk Barangays --}}
         <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-4">
             <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
-                <i data-lucide="map-pin-alert" class="w-5 h-5 text-orange-600"></i>
+                <i data-lucide="map-pin" class="w-5 h-5 text-orange-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight">7</p>
             <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">High-Risk Barangays</p>
@@ -352,7 +352,7 @@
                                             class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                             title="Validate"
                                         >
-                                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                            <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>
                                         </button>
                                         <button
                                             @click="dispatchTarget = @js($inc); showDispatch = true; $nextTick(() => window.renderIcons?.())"
@@ -427,11 +427,11 @@
         <div class="divide-y divide-slate-50">
             @php
                 $opAlerts = [
-                    ['color' => 'rose',  'icon' => 'alert-triangle', 'msg' => 'Masbaranon Elementary School at 94% capacity — risk of overcrowding. Activate contingency center.', 'time' => '08:15 AM'],
+                    ['color' => 'rose',  'icon' => 'triangle-alert', 'msg' => 'Masbaranon Elementary School at 94% capacity — risk of overcrowding. Activate contingency center.', 'time' => '08:15 AM'],
                     ['color' => 'amber', 'icon' => 'package-x',      'msg' => 'ORS (Oral Rehydration) supply at 80 sachets — below reorder level of 100. Request restocking from RHU.', 'time' => '08:12 AM'],
                     ['color' => 'orange','icon' => 'truck',           'msg' => 'Rescue Team Bravo en route to Domorog — ETA unconfirmed due to blocked upland road.', 'time' => '08:05 AM'],
                     ['color' => 'rose',  'icon' => 'clock',           'msg' => 'INC-2026-0073 (Missing Person, San Roque) — unresolved for 17 hours. Escalation required.', 'time' => '07:50 AM'],
-                    ['color' => 'amber', 'icon' => 'building-x',     'msg' => 'Santiago Barangay Hall not inspected in 2026 — cannot be activated as an evacuation center.', 'time' => '07:30 AM'],
+                    ['color' => 'amber', 'icon' => 'building',     'msg' => 'Santiago Barangay Hall not inspected in 2026 — cannot be activated as an evacuation center.', 'time' => '07:30 AM'],
                     ['color' => 'slate', 'icon' => 'zap-off',        'msg' => 'INC-2026-0076 (Power Interruption, Iligan) — pending validation. MASELCO follow-up needed.', 'time' => '07:20 AM'],
                     ['color' => 'amber', 'icon' => 'fuel',            'msg' => 'Generator G1 fuel at 40% — needs refueling before next deployment cycle.', 'time' => '07:10 AM'],
                     ['color' => 'orange','icon' => 'calendar-clock',  'msg' => 'EC-005 (Magsaysay) last inspected April 2026 — formal inspection recommended before continued operation.', 'time' => '06:55 AM'],
@@ -467,13 +467,13 @@
             <div class="px-5 py-4 space-y-0">
                 @php
                     $feed = [
-                        ['icon' => 'check-circle-2', 'color' => 'bg-emerald-50 text-emerald-600', 'text' => 'INC-2026-0084 validated — Masbaranon flooding confirmed active', 'time' => '08:10 AM'],
+                        ['icon' => 'circle-check', 'color' => 'bg-emerald-50 text-emerald-600', 'text' => 'INC-2026-0084 validated — Masbaranon flooding confirmed active', 'time' => '08:10 AM'],
                         ['icon' => 'send',           'color' => 'bg-purple-50 text-purple-600',   'text' => 'Rescue Team Alpha dispatched to Masbaranon (INC-2026-0084)', 'time' => '07:58 AM'],
                         ['icon' => 'door-open',      'color' => 'bg-emerald-50 text-emerald-600', 'text' => 'EC-006 (Municipal Gymnasium) officially opened as evacuation center', 'time' => '07:30 AM'],
                         ['icon' => 'users',          'color' => 'bg-blue-50 text-blue-600',       'text' => '7 families checked in — EC-006, Sector 1', 'time' => '07:35 AM'],
                         ['icon' => 'package',        'color' => 'bg-amber-50 text-amber-600',     'text' => 'Relief goods staging commenced at EC-006 (Municipal Gymnasium)', 'time' => '07:40 AM'],
                         ['icon' => 'megaphone',      'color' => 'bg-orange-50 text-orange-600',   'text' => 'Advisory ALT-2026-0023 (Pre-emptive Evacuation, Masbaranon) published', 'time' => '05:30 AM'],
-                        ['icon' => 'alert-circle',   'color' => 'bg-rose-50 text-rose-600',       'text' => 'EC-002 (Masbaranon Elem. School) near-capacity alert triggered at 94%', 'time' => '08:15 AM'],
+                        ['icon' => 'circle-alert',   'color' => 'bg-rose-50 text-rose-600',       'text' => 'EC-002 (Masbaranon Elem. School) near-capacity alert triggered at 94%', 'time' => '08:15 AM'],
                         ['icon' => 'clipboard-list', 'color' => 'bg-brand-50 text-brand-600',     'text' => 'DNA-2026-0018 (Rapid Assessment — Masbaranon) submitted to PDRRMO', 'time' => '08:20 AM'],
                         ['icon' => 'ambulance',      'color' => 'bg-pink-50 text-pink-600',       'text' => 'Municipal Ambulance dispatched to EC-001 — INC-2026-0080 (Medical)', 'time' => '08:22 AM'],
                         ['icon' => 'bell-ring',      'color' => 'bg-slate-50 text-slate-500',     'text' => 'ALT-2026-0022 (Class Suspension) published — Jul 14, 10:00 PM', 'time' => 'Jul 14'],

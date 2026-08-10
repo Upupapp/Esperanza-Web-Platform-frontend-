@@ -191,6 +191,7 @@
                 @foreach($resources as $res)
                 <tr
                     x-show="
+                        $store.session.inScope('{{ $res['barangay'] }}') &&
                         (resourceSearch === '' || '{{ strtolower($res['id']) }}'.includes(resourceSearch.toLowerCase()) || '{{ strtolower($res['name']) }}'.includes(resourceSearch.toLowerCase())) &&
                         (resourceCategoryFilter === '' || resourceCategoryFilter === '{{ $res['category'] }}') &&
                         (resourceStatusFilter === '' || resourceStatusFilter === '{{ $res['status'] }}')
@@ -298,7 +299,7 @@
                             <div class="relative">
                                 <button @click="open = !open; $nextTick(() => window.renderIcons?.())"
                                     class="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="More">
-                                    <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                                    <i data-lucide="ellipsis" class="w-4 h-4"></i>
                                 </button>
                                 <div x-show="open" x-cloak
                                     x-transition:enter="transition ease-out duration-100"
@@ -362,7 +363,7 @@
             {{-- Status conflict warning --}}
             <template x-if="selectedResource && !['Available','Standby'].includes(selectedResource.status)">
                 <div class="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"></i>
+                    <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"></i>
                     <p class="text-xs text-amber-700">
                         This resource is currently <strong x-text="selectedResource?.status"></strong>.
                         Reassigning may create a conflict. Confirm only if the existing deployment is resolved.
@@ -606,7 +607,7 @@
                     ] as $ins)
                     <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
                         <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="check-square" class="w-3.5 h-3.5 text-emerald-500"></i>
+                            <i data-lucide="square-check" class="w-3.5 h-3.5 text-emerald-500"></i>
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center gap-2">

@@ -386,7 +386,7 @@
                 {{-- English version (collapsible) --}}
                 <details class="border border-slate-100 rounded-xl overflow-hidden">
                     <summary class="px-4 py-3 text-xs font-semibold text-slate-600 cursor-pointer hover:bg-slate-50 transition-colors list-none flex items-center gap-2">
-                        <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <i data-lucide="circle-plus" class="w-3.5 h-3.5 text-slate-400"></i>
                         Add English version (optional)
                     </summary>
                     <div class="px-4 pb-4 pt-2 border-t border-slate-100">
@@ -655,7 +655,7 @@
 
                 {{-- Critical warning --}}
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700 text-sm flex items-start gap-2">
-                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                    <i data-lucide="triangle-alert" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
                     <div>
                         <p class="font-semibold mb-1">Critical Municipality-Wide Alert</p>
                         <p class="text-xs leading-relaxed">This alert will be sent to all residents in the Municipality of Esperanza across 4 channels. This action cannot be undone without cancelling the alert.</p>

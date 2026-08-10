@@ -90,7 +90,7 @@
                         <td class="px-4 py-3">
                             <div class="flex items-start gap-3 min-w-0">
                                 <div class="flex-shrink-0 relative">
-                                    <x-ui.avatar :name="''" size="md" x-bind:data-name="r.name" />
+                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     {{-- Sex indicator dot --}}
                                     <span
                                         class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center text-white"
@@ -211,7 +211,7 @@
                                     aria-haspopup="true"
                                     title="More actions"
                                 >
-                                    <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                                    <i data-lucide="ellipsis" class="w-4 h-4"></i>
                                 </button>
 
                                 {{-- Dropdown --}}

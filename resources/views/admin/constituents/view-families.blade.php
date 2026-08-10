@@ -89,7 +89,7 @@
                                 @click.stop="openHousehold(filteredHouseholds.find(h=>h.id===f.household_id) || {id:f.household_id,label:'HH-'+f.household_id})"
                                 class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
                             >
-                                <i data-lucide="home" class="w-3 h-3"></i>
+                                <i data-lucide="house" class="w-3 h-3"></i>
                                 <span x-text="'HH-' + f.household_id"></span>
                             </button>
                         </template>
@@ -102,7 +102,7 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-2">
                             <template x-if="f.head_name">
-                                <x-ui.avatar :name="''" size="sm" x-bind:data-name="f.head_name" />
+                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(f.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                             </template>
                             <span class="text-sm text-navy-900" x-text="f.head_name || '—'"></span>
                         </div>

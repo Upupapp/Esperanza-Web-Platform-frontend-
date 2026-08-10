@@ -152,11 +152,13 @@
     active="sakuna"
 >
 
-@php
-    $canViewSakuna = $store_session_can ?? true; // frontend-only permission simulation
-@endphp
+<div x-show="!$store.session.can('sakuna')" x-cloak>
+    <x-admin.access-restricted module="Sakuna (Disaster Risk & Emergency Ops)" icon="shield-alert" />
+</div>
 
 <div
+    x-show="$store.session.can('sakuna')"
+    x-cloak
     x-data="{
         activeTab: '{{ $activeTab }}',
         opStatus: 'Red Alert',

@@ -24,6 +24,20 @@ $permissionModules = [
             ['key' => 'dokyu_business_renewal', 'name' => 'Business Permit Renewal', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
             ['key' => 'dokyu_rpt', 'name' => 'Real Property Tax Clearance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release']],
             ['key' => 'dokyu_senior_id', 'name' => 'Senior Citizen ID', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release']],
+            // Additional municipal documents (see config/esperanza_municipal_documents.php).
+            // Keys match the citizen-facing document 'key' exactly so both sides stay in sync.
+            ['key' => 'mcro_marriage', 'name' => 'Certificate of Marriage (Certified Copy / Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
+            ['key' => 'mcro_live_birth', 'name' => 'Certificate of Live Birth (Certified Copy / Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
+            ['key' => 'mcro_delayed_registration', 'name' => 'Affidavit for Delayed Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
+            ['key' => 'municipal_pet_registration', 'name' => 'Pet Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            // Barangay-issued documents (see config/esperanza_barangay_documents.php).
+            // Keys match the citizen-facing document 'key' exactly so both sides stay in sync.
+            ['key' => 'brgy_cert_death_registration', 'name' => 'Barangay Certification (Registration of Death)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_cert_late_registration', 'name' => 'Barangay Certification (Late Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_business_clearance', 'name' => 'Barangay Business Clearance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_residency', 'name' => 'Barangay Residency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_first_time_jobseeker', 'name' => 'First Time Jobseeker Certificate (RA 11261)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_indigency', 'name' => 'Barangay Indigency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
         ],
     ],
     [
@@ -62,6 +76,7 @@ $permissionModules = [
             ['key' => 'comm_community', 'name' => 'Community Posts (Moderation)', 'perms' => ['view', 'review', 'approve', 'reject', 'archive']],
             ['key' => 'comm_events', 'name' => 'Events', 'perms' => ['view', 'create', 'edit', 'delete', 'archive']],
             ['key' => 'comm_directory', 'name' => 'Government Directory', 'perms' => ['view', 'create', 'edit', 'delete']],
+            ['key' => 'comm_barangay_directory', 'name' => 'Barangay Directory', 'perms' => ['view', 'edit']],
         ],
     ],
     [
@@ -86,6 +101,21 @@ $permissionModules = [
         'submodules' => [
             ['key' => 'set_general', 'name' => 'General Settings', 'perms' => ['view', 'edit']],
             ['key' => 'set_branding', 'name' => 'Municipality Branding', 'perms' => ['view', 'edit']],
+        ],
+    ],
+    [
+        'key' => 'sakuna', 'name' => 'Sakuna (Disaster Risk & Emergency Ops)', 'icon' => 'shield-alert',
+        'submodules' => [
+            ['key' => 'sakuna_command', 'name' => 'Command Center', 'perms' => ['view', 'create', 'edit', 'dispatch', 'escalate', 'close', 'export']],
+            ['key' => 'sakuna_vulnerability', 'name' => 'Vulnerability Assessment', 'perms' => ['view', 'create', 'edit', 'approve', 'export']],
+            ['key' => 'sakuna_incidents', 'name' => 'Incidents', 'perms' => ['view', 'create', 'edit', 'validate', 'assign', 'dispatch', 'escalate', 'resolve', 'close', 'export']],
+            ['key' => 'sakuna_centers', 'name' => 'Evacuation Centers', 'perms' => ['view', 'create', 'edit', 'open', 'close', 'assign', 'export']],
+            ['key' => 'sakuna_evacuees', 'name' => 'Evacuees', 'perms' => ['view', 'create', 'edit', 'check_in', 'transfer', 'check_out', 'export']],
+            ['key' => 'sakuna_resources', 'name' => 'Resources', 'perms' => ['view', 'create', 'edit', 'assign', 'deploy', 'return', 'export']],
+            ['key' => 'sakuna_relief', 'name' => 'Relief Operations', 'perms' => ['view', 'create', 'edit', 'approve', 'release', 'export']],
+            ['key' => 'sakuna_damage', 'name' => 'Damage Assessment', 'perms' => ['view', 'create', 'edit', 'validate', 'approve', 'export']],
+            ['key' => 'sakuna_alerts', 'name' => 'Public Alerts', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'publish', 'cancel', 'archive', 'export']],
+            ['key' => 'sakuna_reports', 'name' => 'Reports', 'perms' => ['view', 'export', 'print']],
         ],
     ],
 ];
@@ -142,6 +172,7 @@ $roles = [
         'permissions' => $buildPermissions([
             'dokyu' => 'full', 'tulong' => 'full', 'constituents' => 'full', 'payments' => 'full',
             'communications' => 'full', 'reports' => 'view_export', 'user_management' => 'full', 'settings' => 'full',
+            'sakuna' => 'full',
         ]),
     ],
     [
@@ -185,12 +216,91 @@ $roles = [
         ]),
     ],
     [
+        'key' => 'barangay_secretary', 'name' => 'Barangay Secretary', 'icon' => 'map-pinned',
+        'color' => 'text-teal-700 bg-teal-50', 'users' => 20, 'editable' => true,
+        'desc' => 'Processes and releases their barangay\'s own certifications and clearances (residency, indigency, business clearance, etc.), manages their barangay\'s directory profile, and views resident records for their barangay. Always Barangay-scoped, never Municipal-wide.',
+        'permissions' => array_merge(
+            $buildPermissions(['constituents' => 'view']),
+            [
+                'comm_barangay_directory' => ['view', 'edit'],
+                'brgy_cert_death_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_cert_late_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_business_clearance' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_residency' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_first_time_jobseeker' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_indigency' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+            ]
+        ),
+    ],
+    [
         'key' => 'citizen', 'name' => 'Citizen', 'icon' => 'user-round',
         'color' => 'text-slate-600 bg-slate-100', 'users' => 8420, 'editable' => true,
         'desc' => 'Default role for residents registered on the Citizen Portal. Citizens manage only their own requests and profile — they have no access to Administrative Portal modules.',
         'permissions' => [],
     ],
 ];
+
+// ---------------------------------------------------------------
+// Sakuna (Disaster Risk Reduction & Emergency Operations) grants —
+// hand-authored per submodule rather than the generic preset levels above,
+// since Sakuna's action vocabulary (dispatch, validate, check_in, deploy...)
+// doesn't map onto the view/create/edit/approve preset shape. Merged into
+// each role's 'permissions' by role name below. Super Administrator gets
+// full access automatically (its permissions cover every submodule of
+// every module in $permissionModules); Municipal Administrator gets full
+// access via the 'sakuna' => 'full' preset above.
+// ---------------------------------------------------------------
+$sakunaGrantsByRoleName = [
+    'Department Head' => [
+        'sakuna_command' => ['view', 'dispatch', 'escalate', 'close', 'export'],
+        'sakuna_vulnerability' => ['view', 'approve', 'export'],
+        'sakuna_incidents' => ['view', 'validate', 'assign', 'dispatch', 'escalate', 'resolve', 'close', 'export'],
+        'sakuna_centers' => ['view', 'open', 'close', 'assign', 'export'],
+        'sakuna_evacuees' => ['view', 'check_in', 'transfer', 'check_out', 'export'],
+        'sakuna_resources' => ['view', 'assign', 'deploy', 'return', 'export'],
+        'sakuna_relief' => ['view', 'approve', 'release', 'export'],
+        'sakuna_damage' => ['view', 'validate', 'approve', 'export'],
+        'sakuna_alerts' => ['view', 'approve', 'export'],
+        'sakuna_reports' => ['view', 'export'],
+    ],
+    'Department Staff' => [
+        'sakuna_command' => ['view', 'create', 'edit'],
+        'sakuna_vulnerability' => ['view', 'create', 'edit'],
+        'sakuna_incidents' => ['view', 'create', 'edit', 'validate', 'assign'],
+        'sakuna_centers' => ['view', 'create', 'edit'],
+        'sakuna_evacuees' => ['view', 'create', 'edit', 'check_in'],
+        'sakuna_resources' => ['view', 'create', 'edit', 'assign'],
+        'sakuna_relief' => ['view', 'create', 'edit'],
+        'sakuna_damage' => ['view', 'create', 'edit', 'validate'],
+        'sakuna_alerts' => ['view', 'create', 'edit'],
+        'sakuna_reports' => ['view'],
+    ],
+    'Front Desk Officer' => [
+        'sakuna_incidents' => ['view', 'create'],
+        'sakuna_evacuees' => ['view', 'create', 'check_in'],
+    ],
+    'Records Officer' => [
+        'sakuna_vulnerability' => ['view', 'export'],
+        'sakuna_evacuees' => ['view', 'export'],
+        'sakuna_damage' => ['view', 'export'],
+        'sakuna_reports' => ['view', 'export', 'print'],
+    ],
+    'Information Officer' => [
+        'sakuna_command' => ['view'],
+        'sakuna_incidents' => ['view'],
+        'sakuna_centers' => ['view'],
+        'sakuna_evacuees' => ['view'],
+        'sakuna_alerts' => ['view', 'create', 'edit', 'review', 'approve', 'publish', 'cancel', 'archive'],
+        'sakuna_reports' => ['view', 'export', 'print'],
+    ],
+];
+
+foreach ($roles as &$role) {
+    if (isset($sakunaGrantsByRoleName[$role['name']])) {
+        $role['permissions'] = array_merge($role['permissions'], $sakunaGrantsByRoleName[$role['name']]);
+    }
+}
+unset($role);
 
 // ---------------------------------------------------------------
 // Sample personnel accounts — one (or more, to contrast Municipal vs.
@@ -210,6 +320,29 @@ $accounts = [
     ['id' => 'RO-001', 'name' => 'Bienvenido Salazar', 'roleKey' => 'records_officer', 'dept' => "Treasurer's Office", 'scope' => 'Municipal', 'status' => 'Approved'],
     ['id' => 'RO-002', 'name' => 'Dexter Villamor', 'roleKey' => 'records_officer', 'dept' => 'Barangay Santiago', 'scope' => 'Santiago', 'status' => 'Approved'],
     ['id' => 'IO-001', 'name' => 'Paolo Reyes', 'roleKey' => 'info_officer', 'dept' => 'ICT Office', 'scope' => 'Municipal', 'status' => 'Approved'],
+    ['id' => 'BS-001', 'name' => 'Leonora Batac', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Poblacion', 'scope' => 'Poblacion', 'status' => 'Approved'],
+    ['id' => 'BS-002', 'name' => 'Herminia Cordova', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Santiago', 'scope' => 'Santiago', 'status' => 'Approved'],
+    // Labangtaytay is the first barangay fully onboarded (real document templates,
+    // officials, and seal). Names below match config/esperanza_barangay_documents.php's
+    // 'barangay_secretary' entry per barangay — keep the two in sync.
+    ['id' => 'BS-003', 'name' => 'Jenneth A. Cachila', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Labangtaytay', 'scope' => 'Labangtaytay', 'status' => 'Approved'],
+    ['id' => 'BS-004', 'name' => 'Rosalinda T. Bagsic', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Agoho', 'scope' => 'Agoho', 'status' => 'Approved'],
+    ['id' => 'BS-005', 'name' => 'Milagros D. Fernandez', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Almero', 'scope' => 'Almero', 'status' => 'Approved'],
+    ['id' => 'BS-006', 'name' => 'Corazon B. Ilagan', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Baras', 'scope' => 'Baras', 'status' => 'Approved'],
+    ['id' => 'BS-007', 'name' => 'Teresita M. Ronquillo', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Domorog', 'scope' => 'Domorog', 'status' => 'Approved'],
+    ['id' => 'BS-008', 'name' => 'Susana R. Palma', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Guadalupe', 'scope' => 'Guadalupe', 'status' => 'Approved'],
+    ['id' => 'BS-009', 'name' => 'Anabelle F. Torion', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Iligan', 'scope' => 'Iligan', 'status' => 'Approved'],
+    ['id' => 'BS-010', 'name' => 'Marilou G. Sarona', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Labrador', 'scope' => 'Labrador', 'status' => 'Approved'],
+    ['id' => 'BS-011', 'name' => 'Josefina L. Roxas', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Libertad', 'scope' => 'Libertad', 'status' => 'Approved'],
+    ['id' => 'BS-012', 'name' => 'Erlinda C. Nacario', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Magsaysay', 'scope' => 'Magsaysay', 'status' => 'Approved'],
+    ['id' => 'BS-013', 'name' => 'Perla S. Villaruel', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Masbaranon', 'scope' => 'Masbaranon', 'status' => 'Approved'],
+    ['id' => 'BS-014', 'name' => 'Gloria T. Manlangit', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Potingbato', 'scope' => 'Potingbato', 'status' => 'Approved'],
+    ['id' => 'BS-015', 'name' => 'Lourdes M. Abrenica', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Rizal', 'scope' => 'Rizal', 'status' => 'Approved'],
+    ['id' => 'BS-016', 'name' => 'Adelina R. Cortez', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay San Roque', 'scope' => 'San Roque', 'status' => 'Approved'],
+    ['id' => 'BS-017', 'name' => 'Remedios A. Pantoja', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Sorosimbajan', 'scope' => 'Sorosimbajan', 'status' => 'Approved'],
+    ['id' => 'BS-018', 'name' => 'Victoria C. Salceda', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Tawad', 'scope' => 'Tawad', 'status' => 'Approved'],
+    ['id' => 'BS-019', 'name' => 'Felicidad B. Marasigan', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Tunga', 'scope' => 'Tunga', 'status' => 'Approved'],
+    ['id' => 'BS-020', 'name' => 'Consolacion S. Empuerto', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Villa', 'scope' => 'Villa', 'status' => 'Approved'],
 ];
 
 $roleByKey = collect($roles)->keyBy('key');
@@ -235,57 +368,11 @@ return [
         'review' => 'Review', 'approve' => 'Approve', 'reject' => 'Reject', 'release' => 'Release',
         'export' => 'Export', 'print' => 'Print', 'archive' => 'Archive',
         'verify' => 'Verify', 'assign' => 'Assign', 'merge' => 'Merge', 'resolve' => 'Resolve', 'view_sensitive' => 'View Sensitive',
+        'dispatch' => 'Dispatch', 'escalate' => 'Escalate', 'validate' => 'Validate', 'open' => 'Open',
+        'check_in' => 'Check In', 'transfer' => 'Transfer', 'check_out' => 'Check Out', 'deploy' => 'Deploy',
+        'return' => 'Return', 'publish' => 'Publish', 'cancel' => 'Cancel',
     ],
     'permission_modules' => $permissionModules,
     'roles' => $roles,
     'accounts' => $accounts,
-
-    // ── SAKUNA per-role grants (Disaster Risk Reduction & Emergency Operations) ─
-    'grants' => [
-        'Super Administrator'    => ['sakuna' => '*'],
-        'Municipal Administrator' => ['sakuna' => '*'],
-        'Department Head' => ['sakuna' => [
-            'sakuna_command'       => ['view', 'dispatch', 'escalate', 'close', 'export'],
-            'sakuna_vulnerability' => ['view', 'approve', 'export'],
-            'sakuna_incidents'     => ['view', 'validate', 'assign', 'dispatch', 'escalate', 'resolve', 'close', 'export'],
-            'sakuna_centers'       => ['view', 'open', 'close', 'assign', 'export'],
-            'sakuna_evacuees'      => ['view', 'check_in', 'transfer', 'check_out', 'export'],
-            'sakuna_resources'     => ['view', 'assign', 'deploy', 'return', 'export'],
-            'sakuna_relief'        => ['view', 'approve', 'release', 'export'],
-            'sakuna_damage'        => ['view', 'validate', 'approve', 'export'],
-            'sakuna_alerts'        => ['view', 'approve', 'export'],
-            'sakuna_reports'       => ['view', 'export'],
-        ]],
-        'Department Staff' => ['sakuna' => [
-            'sakuna_command'       => ['view', 'create', 'edit'],
-            'sakuna_vulnerability' => ['view', 'create', 'edit'],
-            'sakuna_incidents'     => ['view', 'create', 'edit', 'validate', 'assign'],
-            'sakuna_centers'       => ['view', 'create', 'edit'],
-            'sakuna_evacuees'      => ['view', 'create', 'edit', 'check_in'],
-            'sakuna_resources'     => ['view', 'create', 'edit', 'assign'],
-            'sakuna_relief'        => ['view', 'create', 'edit'],
-            'sakuna_damage'        => ['view', 'create', 'edit', 'validate'],
-            'sakuna_alerts'        => ['view', 'create', 'edit'],
-            'sakuna_reports'       => ['view'],
-        ]],
-        'Front Desk Officer' => ['sakuna' => [
-            'sakuna_incidents' => ['view', 'create'],
-            'sakuna_evacuees'  => ['view', 'create', 'check_in'],
-        ]],
-        'Records Officer' => ['sakuna' => [
-            'sakuna_vulnerability' => ['view', 'export'],
-            'sakuna_evacuees'      => ['view', 'export'],
-            'sakuna_damage'        => ['view', 'export'],
-            'sakuna_reports'       => ['view', 'export', 'print'],
-        ]],
-        'Information Officer' => ['sakuna' => [
-            'sakuna_command'   => ['view'],
-            'sakuna_incidents' => ['view'],
-            'sakuna_centers'   => ['view'],
-            'sakuna_evacuees'  => ['view'],
-            'sakuna_alerts'    => ['view', 'create', 'edit', 'review', 'approve', 'publish', 'cancel', 'archive'],
-            'sakuna_reports'   => ['view', 'export', 'print'],
-        ]],
-        'Citizen' => ['sakuna' => []],
-    ],
 ];

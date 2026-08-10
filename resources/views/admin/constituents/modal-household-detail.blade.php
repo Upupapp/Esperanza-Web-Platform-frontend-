@@ -16,7 +16,7 @@
                     <div class="flex items-start gap-4 min-w-0">
                         {{-- Household icon --}}
                         <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md">
-                            <i data-lucide="home" class="w-6 h-6 text-white"></i>
+                            <i data-lucide="house" class="w-6 h-6 text-white"></i>
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center flex-wrap gap-2">
@@ -30,7 +30,7 @@
                                         'bg-rose-100 text-rose-700': selectedHousehold.flood_risk === 'High'
                                     }"
                                 >
-                                    <i data-lucide="waves" class="w-3 h-3"></i>
+                                    <i data-lucide="waves-horizontal" class="w-3 h-3"></i>
                                     <span x-text="(selectedHousehold.flood_risk || 'Unknown') + ' Flood Risk'"></span>
                                 </span>
                                 {{-- Verification badge --}}
@@ -154,7 +154,7 @@
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.housing_tenure || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="waves" class="w-3.5 h-3.5 text-slate-400"></i> Flood Risk</dt>
+                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="waves-horizontal" class="w-3.5 h-3.5 text-slate-400"></i> Flood Risk</dt>
                                         <dd>
                                             <span
                                                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
@@ -240,7 +240,7 @@
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50/40 cursor-pointer transition-colors"
                                     @click="openIndividual(r)"
                                 >
-                                    <x-ui.avatar :name="''" size="sm" x-bind:data-name="r.name" />
+                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
                                         <div class="flex items-center gap-2 mt-0.5">
@@ -318,7 +318,7 @@
                                 class="w-16 h-16 rounded-2xl flex items-center justify-center"
                                 :class="selectedHousehold.toilet ? 'bg-emerald-100' : 'bg-slate-100'"
                             >
-                                <i data-lucide="toilet-2" class="w-8 h-8" :class="selectedHousehold.toilet ? 'text-emerald-500' : 'text-slate-300'"></i>
+                                <i data-lucide="toilet" class="w-8 h-8" :class="selectedHousehold.toilet ? 'text-emerald-500' : 'text-slate-300'"></i>
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-navy-900">Toilet Facility</p>
@@ -353,7 +353,7 @@
                                     'bg-rose-100': selectedHousehold.flood_risk === 'High'
                                 }"
                             >
-                                <i data-lucide="waves" class="w-5 h-5"
+                                <i data-lucide="waves-horizontal" class="w-5 h-5"
                                     :class="{
                                         'text-emerald-600': selectedHousehold.flood_risk === 'Low',
                                         'text-amber-600': selectedHousehold.flood_risk === 'Medium',
@@ -409,7 +409,7 @@
                                 <div class="min-w-0">
                                     <p class="text-sm font-semibold text-navy-900" x-text="prog"></p>
                                     <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 mt-0.5">
-                                        <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                        <i data-lucide="circle-check" class="w-3 h-3"></i>
                                         Active
                                     </span>
                                 </div>
@@ -481,7 +481,7 @@
     {{-- Loading placeholder --}}
     <template x-if="!selectedHousehold">
         <div class="flex items-center justify-center h-48 text-slate-400 text-sm">
-            <i data-lucide="loader-2" class="w-6 h-6 animate-spin mr-2"></i>
+            <i data-lucide="loader-circle" class="w-6 h-6 animate-spin mr-2"></i>
             Loading household details…
         </div>
     </template>
