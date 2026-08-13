@@ -88,10 +88,10 @@
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     <template x-for="u in filteredUsers" :key="u.id">
-                        <tr class="hover:bg-slate-50/70 transition-colors">
+                        <tr class="hover:bg-slate-50/70 transition-colors group">
                             <td class="px-4 py-2.5 flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-xs" x-text="u.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
-                                <span class="text-slate-700 font-medium whitespace-nowrap" x-text="u.name"></span>
+                                <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-xs ring-2 ring-white shadow-sm" x-text="u.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
+                                <span class="text-slate-700 font-medium whitespace-nowrap group-hover:text-brand-600 transition-colors" x-text="u.name"></span>
                             </td>
                             <td class="px-4 py-3 text-slate-500 hidden sm:table-cell font-mono text-xs" x-text="u.id"></td>
                             <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="u.role"></td>
@@ -143,7 +143,7 @@
                 }"
                 x-init="$watch('open', v => { if (!v) reset(); })"
             >
-                <x-ui.modal title="Add Personnel Account" maxWidth="3xl">
+                <x-ui.modal title="Add Personnel Account" maxWidth="3xl" :fullscreen="true">
                     <div class="space-y-4">
                         <!-- Stepper -->
                         <div class="flex items-center gap-2 mb-1">

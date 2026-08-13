@@ -9,6 +9,8 @@
 
 <div x-data="{
     incidentBarangayFilter: '',
+    incStep: 1,
+    incStepLabels: ['Incident Details', 'Impact & Needs', 'Reporter Information'],
 
     incidentTypeIcon(type) {
         const map = {
@@ -67,21 +69,11 @@
 
 {{-- ── Stats Summary ────────────────────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap gap-2">
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-        <i data-lucide="list" class="w-3.5 h-3.5"></i> Total: 13
-    </span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700">
-        <i data-lucide="flame" class="w-3.5 h-3.5"></i> Critical: 3
-    </span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-        <i data-lucide="truck" class="w-3.5 h-3.5"></i> Dispatched / On Scene: 5
-    </span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-        <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Resolved: 3
-    </span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-        <i data-lucide="clock" class="w-3.5 h-3.5"></i> Pending Validation: 2
-    </span>
+    <x-ui.pill color="slate"><i data-lucide="list" class="w-3.5 h-3.5"></i> Total: 13</x-ui.pill>
+    <x-ui.pill color="rose"><i data-lucide="flame" class="w-3.5 h-3.5"></i> Critical: 3</x-ui.pill>
+    <x-ui.pill color="orange"><i data-lucide="truck" class="w-3.5 h-3.5"></i> Dispatched / On Scene: 5</x-ui.pill>
+    <x-ui.pill color="emerald"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Resolved: 3</x-ui.pill>
+    <x-ui.pill color="amber"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Pending Validation: 2</x-ui.pill>
 </div>
 
 {{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
@@ -599,6 +591,7 @@
 {{-- CREATE INCIDENT MODAL                                                                  --}}
 {{-- ────────────────────────────────────────────────────────────────────────────────────── --}}
 <div x-show="showCreateIncident" x-cloak
+    x-effect="showCreateIncident && (incStep = 1)"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showCreateIncident = false"
     x-transition:enter="transition ease-out duration-200"
@@ -632,7 +625,29 @@
 
         {{-- Form Body --}}
         <div class="px-6 py-5 space-y-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {{-- Step progress indicator --}}
+            <nav class="flex items-center gap-0" aria-label="Incident report steps">
+                <template x-for="(label, idx) in incStepLabels" :key="idx">
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="flex items-center w-full">
+                            <div class="flex-1 h-0.5" :class="incStep > idx + 1 ? 'bg-brand-600' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
+                            <div
+                                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
+                                :class="incStep >= idx + 1 ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-400'"
+                            >
+                                <template x-if="incStep > idx + 1"><i data-lucide="check" class="w-3 h-3"></i></template>
+                                <template x-if="incStep <= idx + 1"><span x-text="idx + 1"></span></template>
+                            </div>
+                            <div class="flex-1 h-0.5" :class="[incStep > idx + 1 ? 'bg-brand-600' : 'bg-slate-200', idx === incStepLabels.length - 1 ? '!bg-transparent' : '']"></div>
+                        </div>
+                        <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="incStep === idx + 1 ? 'text-brand-600' : incStep > idx + 1 ? 'text-brand-500' : 'text-slate-400'" x-text="label"></span>
+                    </div>
+                </template>
+            </nav>
+
+            {{-- Step 1: Incident Details --}}
+            <div x-show="incStep === 1" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Incident Type --}}
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1.5">Incident Type <span class="text-rose-500">*</span></label>
@@ -699,34 +714,54 @@
                     <textarea rows="4" placeholder="Describe the incident in detail — nature, current situation, immediate danger, etc."
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none transition-colors"></textarea>
                 </div>
-                {{-- People Affected --}}
-                <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">People Affected (est.)</label>
-                    <input type="number" min="0" placeholder="0"
-                        class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+            </div>
+
+            {{-- Step 2: Impact & Needs --}}
+            <div x-show="incStep === 2" class="space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{-- People Affected --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5">People Affected (est.)</label>
+                        <input type="number" min="0" placeholder="0"
+                            class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    </div>
+                    {{-- Persons Needing Rescue --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Persons Needing Rescue</label>
+                        <input type="number" min="0" placeholder="0"
+                            class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    </div>
                 </div>
-                {{-- Persons Needing Rescue --}}
+
+                {{-- Special Needs --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Persons Needing Rescue</label>
-                    <input type="number" min="0" placeholder="0"
-                        class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-2">Special Needs Involved</label>
+                    <div class="flex flex-wrap gap-3">
+                        @foreach(['Senior Citizen', 'PWD', 'Pregnant', 'Infant', 'Bedridden'] as $need)
+                            <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400">
+                                {{ $need }}
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Immediate Requirements --}}
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-2">Immediate Requirements Needed</label>
+                    <div class="flex flex-wrap gap-3">
+                        @foreach(['Food', 'Water', 'Rescue', 'Medical', 'Shelter', 'Road Clearing', 'Power Restoration'] as $req)
+                            <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400">
+                                {{ $req }}
+                            </label>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 
-            {{-- Special Needs --}}
-            <div>
-                <label class="block text-xs font-medium text-slate-700 mb-2">Special Needs Involved</label>
-                <div class="flex flex-wrap gap-3">
-                    @foreach(['Senior Citizen', 'PWD', 'Pregnant', 'Infant', 'Bedridden'] as $need)
-                        <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400">
-                            {{ $need }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="border-t border-slate-100 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {{-- Step 3: Reporter Information --}}
+            <div x-show="incStep === 3" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Reporter Name --}}
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1.5">Reporter Name <span class="text-rose-500">*</span></label>
@@ -755,29 +790,25 @@
                     </select>
                 </div>
             </div>
-
-            {{-- Immediate Requirements --}}
-            <div>
-                <label class="block text-xs font-medium text-slate-700 mb-2">Immediate Requirements Needed</label>
-                <div class="flex flex-wrap gap-3">
-                    @foreach(['Food', 'Water', 'Rescue', 'Medical', 'Shelter', 'Road Clearing', 'Power Restoration'] as $req)
-                        <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400">
-                            {{ $req }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
         </div>
 
         {{-- Footer --}}
-        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl">
-            <button @click="showCreateIncident = false"
+        <div class="flex items-center gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl">
+            <button @click="showCreateIncident = false" x-show="incStep === 1"
                 class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-xl transition-colors">
                 Cancel
             </button>
-            <button @click="toast('Incident INC-2026-0085 created and logged.', 'success'); showCreateIncident = false; $nextTick(() => window.renderIcons?.())"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-xl transition-colors">
+            <button @click="incStep--" x-show="incStep > 1"
+                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-xl transition-colors">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back
+            </button>
+            <span class="text-xs text-slate-400 ml-1" x-text="'Step ' + incStep + ' of ' + incStepLabels.length"></span>
+            <button @click="incStep++; $nextTick(() => window.renderIcons?.())" x-show="incStep < incStepLabels.length"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-xl transition-colors ml-auto">
+                Next <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+            <button @click="toast('Incident INC-2026-0085 created and logged.', 'success'); showCreateIncident = false; $nextTick(() => window.renderIcons?.())" x-show="incStep >= incStepLabels.length"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-xl transition-colors ml-auto">
                 <i data-lucide="save" class="w-4 h-4"></i> Submit Incident
             </button>
         </div>

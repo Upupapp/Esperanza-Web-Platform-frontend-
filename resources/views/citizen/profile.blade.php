@@ -109,7 +109,7 @@
                     <p class="text-xs font-semibold text-white" x-text="($store.citizenSession.account?.profileCompleteness || 0) + '%'"></p>
                 </div>
                 <div class="h-1.5 rounded-full bg-white/15 overflow-hidden">
-                    <div class="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-300 transition-all duration-500" :style="'width:' + ($store.citizenSession.account?.profileCompleteness || 0) + '%'"></div>
+                    <div class="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-300 transition-all duration-[600ms] ease-standard" :style="'width:' + ($store.citizenSession.account?.profileCompleteness || 0) + '%'"></div>
                 </div>
             </div>
         </div>
@@ -282,7 +282,7 @@
 
                 <div class="mb-3">
                     <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Uri ng ID" en="ID Type" /></label>
-                    <select x-model="idType" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <select x-model="idType" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="" disabled x-text="$store.lang.current === 'en' ? 'Select ID type' : 'Pumili ng uri ng ID'"></option>
                         <template x-for="t in idTypes" :key="t">
                             <option :value="t" x-text="t"></option>
@@ -340,7 +340,7 @@
         </x-ui.modal>
 
         <div x-data="{ get open() { return showEditProfile }, set open(v) { showEditProfile = v } }">
-            <x-ui.modal title="I-edit ang Profile" titleEn="Edit Profile" maxWidth="md">
+            <x-ui.modal title="I-edit ang Profile" titleEn="Edit Profile" maxWidth="md" :fullscreen="true">
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-3">
                         <x-ui.input name="edit_first_name" label="First Name" x-model="editForm.firstName" />

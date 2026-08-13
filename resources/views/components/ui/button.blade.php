@@ -8,12 +8,15 @@
 ])
 
 @php
-    $base = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 ease-out select-none focus:outline-none focus-visible:ring-4 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none';
+    $base = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-[160ms] ease-standard select-none focus:outline-none focus-visible:ring-4 active:duration-[80ms] active:scale-[0.985] disabled:opacity-50 disabled:pointer-events-none';
 
+    // Explicit min-height guarantees the WCAG 2.5.5 touch-target floor
+    // regardless of padding/line-height math. `sm` is the intentional
+    // "compact" tier — reserved for row/table actions, not general buttons.
     $sizes = [
-        'sm' => 'px-3.5 py-2 text-xs',
-        'md' => 'px-4.5 py-2.5 text-sm',
-        'lg' => 'px-6 py-3.5 text-sm',
+        'sm' => 'min-h-[36px] px-3.5 py-2 text-xs',
+        'md' => 'min-h-[44px] px-4.5 py-2.5 text-sm',
+        'lg' => 'min-h-[48px] px-6 py-3.5 text-sm',
     ];
 
     $variants = [

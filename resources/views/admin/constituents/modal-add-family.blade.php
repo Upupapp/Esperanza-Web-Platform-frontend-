@@ -34,7 +34,7 @@
         this.form = { surname: '', family_type: 'Nuclear', barangay: '', sitio: '', head_name: '', household_id: '', notes: '', programs: [] }
     }
 }">
-<x-ui.modal maxWidth="xl">
+<x-ui.modal maxWidth="xl" :fullscreen="true">
 
     <div class="flex flex-col h-full max-h-[85vh]">
 

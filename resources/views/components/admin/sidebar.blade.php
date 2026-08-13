@@ -56,7 +56,6 @@
     </nav>
 
     <div class="border-t border-white/10 p-2.5 shrink-0">
-        <x-ui.nav-item dense :href="route('admin.settings')" icon="settings" label="Settings" :active="$active === 'settings'" moduleKey="settings" />
         <button
             @click="collapsed = !collapsed"
             class="mt-0.5 w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"

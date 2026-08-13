@@ -191,14 +191,20 @@
                             (evHealthFilter === 'Infants' && {{ (collect($ev['health_flags'])->filter(fn($f) => str_starts_with($f, 'Infant'))->count() > 0) ? 'true' : 'false' }})
                         )
                     "
-                    class="hover:bg-slate-50/60 transition-colors"
+                    class="hover:bg-slate-50/60 transition-colors cursor-pointer group"
+                    @click="selectedEvacuee = {{ json_encode($ev) }}; showEvacueeDetail = true; $nextTick(() => window.renderIcons?.())"
                 >
                     <td class="px-4 py-3 whitespace-nowrap">
                         <span class="font-mono text-xs text-slate-500">{{ $ev['id'] }}</span>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
-                        <div class="font-medium text-slate-800">{{ $ev['head'] }}</div>
-                        <div class="text-xs text-slate-400">{{ $ev['members'] }} {{ $ev['members'] === 1 ? 'member' : 'members' }}</div>
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0">{{ strtoupper(collect(explode(' ', $ev['head']))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('')) }}</div>
+                            <div class="min-w-0">
+                                <div class="font-medium text-slate-800 group-hover:text-brand-600 transition-colors truncate">{{ $ev['head'] }}</div>
+                                <div class="text-xs text-slate-400">{{ $ev['members'] }} {{ $ev['members'] === 1 ? 'member' : 'members' }}</div>
+                            </div>
+                        </div>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div class="text-slate-700">{{ $ev['home_brgy'] }}</div>
@@ -241,7 +247,7 @@
                             default => 'bg-slate-100 text-slate-600',
                         } }} px-2.5 py-0.5 rounded-full text-xs font-medium">{{ $ev['status'] }}</span>
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap">
+                    <td class="px-4 py-3 whitespace-nowrap" @click.stop>
                         <div class="flex items-center justify-end gap-1" x-data="{ open: false }" @click.outside="open = false">
                             <button
                                 @click="selectedEvacuee = {{ json_encode($ev) }}; showEvacueeDetail = true; $nextTick(() => window.renderIcons?.())"

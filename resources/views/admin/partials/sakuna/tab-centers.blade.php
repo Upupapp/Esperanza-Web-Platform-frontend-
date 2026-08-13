@@ -11,6 +11,8 @@
     viewMode: 'grid',
     centerBarangayFilter: '',
     closeCenterConfirmed: false,
+    centerStep: 1,
+    centerStepLabels: ['Facility Details', 'Capacity & Management'],
 
     centerRowVisible(name, barangay, status) {
         const q = centerSearch.toLowerCase();
@@ -777,6 +779,7 @@
 {{-- ADD CENTER MODAL                                                                       --}}
 {{-- ────────────────────────────────────────────────────────────────────────────────────── --}}
 <div x-show="showCreateCenter" x-cloak
+    x-effect="showCreateCenter && (centerStep = 1)"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showCreateCenter = false"
     x-transition:enter="transition ease-out duration-200"
@@ -810,48 +813,74 @@
 
         {{-- Form --}}
         <div class="px-6 py-5 space-y-4">
-            {{-- Center Name --}}
-            <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1.5">Center Name <span class="text-rose-500">*</span></label>
-                <input type="text" placeholder="e.g. Poblacion Elementary School"
-                    class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
-            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {{-- Barangay --}}
+            {{-- Step progress indicator --}}
+            <nav class="flex items-center gap-0 mb-1" aria-label="Center registration steps">
+                <template x-for="(label, idx) in centerStepLabels" :key="idx">
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="flex items-center w-full">
+                            <div class="flex-1 h-0.5" :class="centerStep > idx + 1 ? 'bg-brand-600' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
+                            <div
+                                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
+                                :class="centerStep >= idx + 1 ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-400'"
+                            >
+                                <template x-if="centerStep > idx + 1"><i data-lucide="check" class="w-3 h-3"></i></template>
+                                <template x-if="centerStep <= idx + 1"><span x-text="idx + 1"></span></template>
+                            </div>
+                            <div class="flex-1 h-0.5" :class="[centerStep > idx + 1 ? 'bg-brand-600' : 'bg-slate-200', idx === centerStepLabels.length - 1 ? '!bg-transparent' : '']"></div>
+                        </div>
+                        <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="centerStep === idx + 1 ? 'text-brand-600' : centerStep > idx + 1 ? 'text-brand-500' : 'text-slate-400'" x-text="label"></span>
+                    </div>
+                </template>
+            </nav>
+
+            {{-- Step 1: Facility Details --}}
+            <div x-show="centerStep === 1" class="space-y-4">
+                {{-- Center Name --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Barangay <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
-                        <option value="">Select barangay...</option>
-                        @foreach($barangays as $brgy)
-                            <option>{{ $brgy }}</option>
-                        @endforeach
-                    </select>
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Center Name <span class="text-rose-500">*</span></label>
+                    <input type="text" placeholder="e.g. Poblacion Elementary School"
+                        class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
-                {{-- Facility Type --}}
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{-- Barangay --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Barangay <span class="text-rose-500">*</span></label>
+                        <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                            <option value="">Select barangay...</option>
+                            @foreach($barangays as $brgy)
+                                <option>{{ $brgy }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    {{-- Facility Type --}}
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Facility Type <span class="text-rose-500">*</span></label>
+                        <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                            <option value="">Select type...</option>
+                            <option>School</option>
+                            <option>Barangay Hall</option>
+                            <option>Covered Court</option>
+                            <option>Municipal Building</option>
+                            <option>Multi-Purpose Hall</option>
+                            <option>Church Facility</option>
+                            <option>Temporary Tent Site</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- Full Address --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Facility Type <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
-                        <option value="">Select type...</option>
-                        <option>School</option>
-                        <option>Barangay Hall</option>
-                        <option>Covered Court</option>
-                        <option>Municipal Building</option>
-                        <option>Multi-Purpose Hall</option>
-                        <option>Church Facility</option>
-                        <option>Temporary Tent Site</option>
-                        <option>Other</option>
-                    </select>
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Full Address</label>
+                    <input type="text" placeholder="Street / Sitio, Barangay, Esperanza, Masbate"
+                        class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
             </div>
 
-            {{-- Full Address --}}
-            <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1.5">Full Address</label>
-                <input type="text" placeholder="Street / Sitio, Barangay, Esperanza, Masbate"
-                    class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
-            </div>
-
+            {{-- Step 2: Capacity & Management --}}
+            <div x-show="centerStep === 2" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Recommended Capacity --}}
                 <div>
@@ -895,16 +924,26 @@
                     <option>Needs Inspection</option>
                 </select>
             </div>
+            </div>
         </div>
 
         {{-- Footer --}}
-        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl">
-            <button @click="showCreateCenter = false"
+        <div class="flex items-center gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl">
+            <button @click="showCreateCenter = false" x-show="centerStep === 1"
                 class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-xl transition-colors">
                 Cancel
             </button>
-            <button @click="toast('Evacuation center EC-011 registered.', 'success'); showCreateCenter = false; $nextTick(() => window.renderIcons?.())"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-xl transition-colors">
+            <button @click="centerStep--" x-show="centerStep > 1"
+                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-xl transition-colors">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back
+            </button>
+            <span class="text-xs text-slate-400 ml-1" x-text="'Step ' + centerStep + ' of ' + centerStepLabels.length"></span>
+            <button @click="centerStep++; $nextTick(() => window.renderIcons?.())" x-show="centerStep < centerStepLabels.length"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-xl transition-colors ml-auto">
+                Next <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+            <button @click="toast('Evacuation center EC-011 registered.', 'success'); showCreateCenter = false; $nextTick(() => window.renderIcons?.())" x-show="centerStep >= centerStepLabels.length"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-xl transition-colors ml-auto">
                 <i data-lucide="save" class="w-4 h-4"></i> Register Center
             </button>
         </div>

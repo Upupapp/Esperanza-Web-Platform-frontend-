@@ -57,8 +57,9 @@
             class="flex flex-col items-center text-center py-6 px-2"
             x-show="{{ $files }}.filter(f => !pickerQuery || f.name.toLowerCase().includes(pickerQuery.toLowerCase())).length === 0"
         >
-            <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="folder-search" class="w-4 h-4"></i></span>
-            <p class="text-[11px] text-slate-400">{{ $empty }}</p>
+            <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2" aria-hidden="true"><i data-lucide="folder-search" class="w-4 h-4"></i></span>
+            <p class="text-[11px] text-slate-400" x-text="pickerQuery ? 'No matches for &quot;' + pickerQuery + '&quot;.' : @js($empty)"></p>
+            <p class="text-[10px] text-slate-300 mt-0.5" x-show="pickerQuery">Try a different search term.</p>
         </div>
     </div>
 

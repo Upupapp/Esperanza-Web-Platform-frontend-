@@ -113,7 +113,7 @@
                             type="button"
                             @click="selectDay(cell)"
                             :disabled="!cell"
-                            class="aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 text-xs transition-all duration-150 relative"
+                            class="aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 text-xs transition-all duration-[160ms] ease-standard relative"
                             :class="!cell ? 'pointer-events-none' : (selectedDate === cell.key ? 'bg-brand-600 text-white font-semibold shadow-sm' : (eventsOn(cell.key).length ? 'text-navy-900 font-medium hover:bg-brand-50' : 'text-slate-500 hover:bg-slate-50'))"
                         >
                             <span x-show="cell" x-text="cell?.day"></span>
@@ -167,7 +167,7 @@
                         </div>
                         <button
                             type="button"
-                            class="shrink-0 hidden sm:inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition-all duration-200 active:scale-[0.97]"
+                            class="shrink-0 hidden sm:inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition-all duration-[160ms] ease-standard active:scale-[0.97]"
                             :class="reminders[event.key + event.title] ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-white text-slate-700 border border-slate-200 shadow-card hover:bg-slate-50 hover:border-slate-300'"
                             @click="
                                 reminders[event.key + event.title] = !reminders[event.key + event.title];

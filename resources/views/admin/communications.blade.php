@@ -54,6 +54,15 @@
         ['name' => 'barangay-cleanup-highlights.mp4', 'category' => 'VID'],
     ];
 
+    // Barangay Blotter — day-to-day peace-and-order incident log kept by the Barangay Secretary,
+    // distinct from Sakuna's disaster Incident Management (that module is calamity-response only).
+    $blotterEntries = [
+        ['ref' => 'BLT-2026-0041', 'barangay' => 'Labangtaytay', 'date' => 'Jul 10, 2026', 'type' => 'Noise Complaint', 'details' => "Kapitbahay reported ang malakas na videoke sa Purok 10 hanggang alas-dose ng gabi. Pinag-usapan ang magkabilang panig, nagkasundo na tatapusin ang videoke bago mag-alas-diyes.", 'reportedBy' => 'Jenneth A. Cachila', 'status' => 'Resolved'],
+        ['ref' => 'BLT-2026-0038', 'barangay' => 'Labangtaytay', 'date' => 'Jun 22, 2026', 'type' => 'Property Dispute', 'details' => 'Away sa hangganan ng lote sa pagitan ng dalawang magkapitbahay sa Purok 9. Na-refer sa Lupong Tagapamayapa para sa mediation.', 'reportedBy' => 'Jenneth A. Cachila', 'status' => 'Under Mediation'],
+        ['ref' => 'BLT-2026-0025', 'barangay' => 'Poblacion', 'date' => 'May 30, 2026', 'type' => 'Lost Item', 'details' => 'Nawalang cellphone na-report sa Barangay Hall, na-turn over ng nakakita ilang oras pagkatapos.', 'reportedBy' => 'Barangay Secretary', 'status' => 'Resolved'],
+        ['ref' => 'BLT-2026-0019', 'barangay' => 'Masbaranon', 'date' => 'May 12, 2026', 'type' => 'Domestic Dispute', 'details' => 'Away mag-asawa na-report ng kapitbahay. Pinuntahan ng Barangay Tanod, pinayapa ang magkabilang panig, walang isinampang reklamo.', 'reportedBy' => 'Barangay Secretary', 'status' => 'Closed'],
+    ];
+
     $tab = $tab ?? 'balita';
 @endphp
 
@@ -118,6 +127,34 @@
                     (this.communitySearch === '' || p.author.toLowerCase().includes(this.communitySearch.toLowerCase()) || p.body.toLowerCase().includes(this.communitySearch.toLowerCase()))
                 );
             },
+
+            // Barangay Blotter — peace-and-order incident log, scoped like everything else by inScope().
+            blotterEntries: @js($blotterEntries),
+            blotterSearch: '',
+            blotterBarangayFilter: 'All',
+            showAddBlotter: false,
+            newBlotter: { barangay: '{{ $barangays[0]['name'] ?? '' }}', date: '', type: '', details: '' },
+            get filteredBlotter() {
+                return this.blotterEntries.filter(b =>
+                    this.$store.session.inScope(b.barangay) &&
+                    (this.blotterBarangayFilter === 'All' || b.barangay === this.blotterBarangayFilter) &&
+                    (this.blotterSearch === '' || b.type.toLowerCase().includes(this.blotterSearch.toLowerCase()) || b.details.toLowerCase().includes(this.blotterSearch.toLowerCase()))
+                );
+            },
+            addBlotterEntry() {
+                this.blotterEntries.unshift({
+                    ref: 'BLT-2026-' + Math.floor(1000 + Math.random() * 9000),
+                    barangay: this.newBlotter.barangay,
+                    date: this.newBlotter.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                    type: this.newBlotter.type,
+                    details: this.newBlotter.details,
+                    reportedBy: this.$store.session.account?.name || 'Barangay Secretary',
+                    status: 'Open',
+                });
+                this.showAddBlotter = false;
+                this.newBlotter = { barangay: '{{ $barangays[0]['name'] ?? '' }}', date: '', type: '', details: '' };
+                $dispatch('toast', { message: 'Blotter entry logged.', variant: 'success' });
+            },
         }"
         class="animate-fade-up"
     >
@@ -136,6 +173,7 @@
             </button>
             <button @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
             <button @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
+            <button @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
         </div>
 
         <!-- Balita -->
@@ -152,13 +190,13 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input type="text" x-model="balitaSearch" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        <input type="text" x-model="balitaSearch" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select x-model="balitaCategory" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <select x-model="balitaCategory" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Categories</option>
                         <template x-for="c in ['Community','Health','Public Service','Advisory','Livelihood','Governance']" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select x-model="balitaScope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <select x-model="balitaScope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Audiences</option>
                         <option value="Municipal">Municipal-wide</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
@@ -183,9 +221,9 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="a in filteredAnnouncements" :key="a.title">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 group">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard group">
                         <div class="relative h-36 overflow-hidden">
-                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + a.image" alt="" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + a.image" alt="" class="w-full h-full object-cover transition-transform duration-[220ms] ease-standard group-hover:scale-105">
                             <div class="absolute inset-0 bg-gradient-to-t from-navy-950/50 via-transparent to-transparent"></div>
                             <span class="absolute top-2.5 left-2.5 text-[10px] font-semibold text-white bg-navy-900/70 backdrop-blur rounded-full px-2.5 py-1" x-text="a.category"></span>
                             <span class="absolute top-2.5 right-2.5">
@@ -230,12 +268,12 @@
                 </div>
             </div>
 
-            <x-ui.modal title="New Balita" maxWidth="lg">
+            <x-ui.modal title="New Balita" maxWidth="lg" :fullscreen="true">
                 <div class="space-y-4">
                     <x-ui.input name="title" label="Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" />
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
-                        <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             <option>Community</option>
                             <option>Health</option>
                             <option>Public Service</option>
@@ -250,7 +288,7 @@
                         <div class="grid grid-cols-2 gap-2.5">
                             <button
                                 type="button" @click="newBalitaAudience = 'Municipal'"
-                                class="text-left rounded-xl border p-3 transition-all duration-150"
+                                class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard"
                                 :class="newBalitaAudience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                             >
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
@@ -259,7 +297,7 @@
                             </button>
                             <button
                                 type="button" @click="newBalitaAudience = 'Barangay'"
-                                class="text-left rounded-xl border p-3 transition-all duration-150"
+                                class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard"
                                 :class="newBalitaAudience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                             >
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
@@ -267,8 +305,8 @@
                                 <p class="text-[10.5px] text-slate-500 mt-0.5">Only that barangay sees it</p>
                             </button>
                         </div>
-                        <div x-show="newBalitaAudience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
-                            <select x-model="newBalitaBarangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        <div x-show="newBalitaAudience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
+                            <select x-model="newBalitaBarangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                             </select>
                         </div>
@@ -276,7 +314,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Content</label>
-                        <textarea rows="4" placeholder="Write the announcement content..." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"></textarea>
+                        <textarea rows="4" placeholder="Write the announcement content..." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                     </div>
 
                     <div>
@@ -288,7 +326,7 @@
                         <div x-show="!newBalitaAttachment">
                             <button
                                 type="button" @click="showMediaPicker = !showMediaPicker"
-                                class="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed py-5 text-xs font-medium transition-all duration-200"
+                                class="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed py-5 text-xs font-medium transition-all duration-[160ms] ease-standard"
                                 :class="showMediaPicker ? 'border-brand-300 bg-brand-50/50 text-brand-600' : 'border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-slate-500 hover:text-brand-600'"
                             >
                                 <i data-lucide="image-plus" class="w-5 h-5"></i>
@@ -306,14 +344,14 @@
                             <button type="button" @click="newBalitaAttachment = null" class="text-slate-300 hover:text-rose-500 shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                         </div>
 
-                        <div x-show="showMediaPicker" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
+                        <div x-show="showMediaPicker" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
                             <x-ui.file-picker
                                 files="balitaMedia"
                                 onSelect="newBalitaAttachment = file.name; showMediaPicker = false"
                                 uploadAction="newBalitaAttachment = 'New upload.jpg'; showMediaPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
                                 :columns="3"
                                 :bilingual="false"
-                                empty="No media found."
+                                empty="No media uploaded yet."
                             />
                         </div>
                     </div>
@@ -367,9 +405,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input type="text" x-model="communitySearch" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        <input type="text" x-model="communitySearch" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select x-model="communityScope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <select x-model="communityScope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Barangays</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
@@ -391,7 +429,7 @@
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <template x-for="p in filteredCommunityPosts" :key="p.author + p.time">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
                         <!-- Header -->
                         <div class="flex items-center gap-2.5 p-3.5 pb-2.5">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-sm" x-text="p.author.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
@@ -453,6 +491,7 @@
 
                 <x-slot:footer>
                     <x-ui.button variant="danger" size="sm" @click="selectedPost.status = 'Archived'; postOpen = false; $dispatch('toast', { message: 'Post hidden from Balita feed.', variant: 'error' })">Hide Post</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" icon="share-2" @click="selectedPost.shares++; $dispatch('toast', { message: 'Shared to the Municipal Balita feed.', variant: 'success' })">Share to Municipal Feed</x-ui.button>
                     <x-ui.button variant="secondary" size="sm" @click="selectedPost.featured = !selectedPost.featured; $dispatch('toast', { message: selectedPost.featured ? 'Post featured on Balita.' : 'Post unfeatured.', variant: 'success' })"><span x-text="selectedPost && selectedPost.featured ? 'Unfeature' : 'Feature Post'"></span></x-ui.button>
                     <x-ui.button size="sm" icon="check" @click="selectedPost.status = 'Approved'; postOpen = false; $dispatch('toast', { message: 'Post approved and kept live.', variant: 'success' })">Approve & Keep Live</x-ui.button>
                 </x-slot:footer>
@@ -516,6 +555,94 @@
                         ><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                     </div>
                 </template>
+            </div>
+        </div>
+
+        <!-- Barangay Blotter -->
+        <div x-show="tab === 'blotter'" x-cloak>
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <div class="relative flex-1 min-w-[200px]">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input type="text" x-model="blotterSearch" placeholder="Search incident type or details..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                </div>
+                <select x-model="blotterBarangayFilter" class="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-brand-300 focus:outline-none transition-colors">
+                    <option value="All">All Barangays</option>
+                    <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
+                </select>
+                <button @click="showAddBlotter = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3.5 py-2 shadow-card transition-colors ml-auto">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Entry
+                </button>
+            </div>
+
+            <div class="space-y-2.5">
+                <template x-for="b in filteredBlotter" :key="b.ref">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="book-text" class="w-4 h-4"></i></span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-navy-900 truncate" x-text="b.type"></p>
+                                    <p class="text-xs text-slate-400" x-text="'Brgy. ' + b.barangay + ' — ' + b.date + ' — ' + b.ref"></p>
+                                </div>
+                            </div>
+                            <span
+                                class="inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap shrink-0"
+                                :class="{
+                                    'bg-amber-50 text-amber-700 ring-amber-200': b.status === 'Open',
+                                    'bg-indigo-50 text-indigo-700 ring-indigo-200': b.status === 'Under Mediation',
+                                    'bg-emerald-50 text-emerald-700 ring-emerald-200': b.status === 'Resolved',
+                                    'bg-slate-100 text-slate-500 ring-slate-200': b.status === 'Closed',
+                                }"
+                                x-text="b.status"
+                            ></span>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed pl-[46px]" x-text="b.details"></p>
+                        <p class="text-xs text-slate-400 mt-2 pl-[46px]">Reported by <span class="font-medium text-slate-600" x-text="b.reportedBy"></span></p>
+                    </div>
+                </template>
+                <div class="flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filteredBlotter.length === 0">
+                    <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                    <p class="text-sm font-medium text-slate-600">No blotter entries match your filters.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Blotter Entry Modal -->
+        <div x-show="showAddBlotter" x-cloak
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" @click.self="showAddBlotter = false">
+            <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                class="bg-white rounded-2xl shadow-float w-full max-w-lg">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                    <h3 class="text-sm font-semibold text-navy-900">Log Blotter Entry</h3>
+                    <button @click="showAddBlotter = false" class="text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Barangay</label>
+                        <select x-model="newBlotter.barangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                            <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
+                            <input type="date" x-model="newBlotter.date" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Incident Type</label>
+                            <input type="text" x-model="newBlotter.type" placeholder="e.g. Noise Complaint" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Details</label>
+                        <textarea rows="4" x-model="newBlotter.details" placeholder="Describe the incident..." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 resize-none"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-100 bg-slate-50/60">
+                    <x-ui.button variant="secondary" size="sm" @click="showAddBlotter = false">Cancel</x-ui.button>
+                    <x-ui.button size="sm" @click="addBlotterEntry()">Log Entry</x-ui.button>
+                </div>
             </div>
         </div>
 

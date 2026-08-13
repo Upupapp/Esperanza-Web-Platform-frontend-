@@ -6,6 +6,8 @@
         ['title' => 'Revenue & Fees Collected', 'desc' => 'Document processing fees by month.', 'icon' => 'wallet', 'color' => 'text-gold-700 bg-gold-50'],
         ['title' => 'Barangay Activity Report', 'desc' => 'Requests and engagement by barangay.', 'icon' => 'map-pin', 'color' => 'text-indigo-600 bg-indigo-50'],
         ['title' => 'Citizen Satisfaction Survey', 'desc' => 'Quarterly service feedback summary.', 'icon' => 'smile', 'color' => 'text-rose-600 bg-rose-50'],
+        ['title' => 'Internal Forms Submissions', 'desc' => 'Staff form activity across HR, GSO, Agriculture, and MSWD.', 'icon' => 'clipboard-list', 'color' => 'text-indigo-600 bg-indigo-50'],
+        ['title' => 'Sakuna Incident Reports', 'desc' => 'Disaster incident volume, severity, and response status.', 'icon' => 'triangle-alert', 'color' => 'text-orange-600 bg-orange-50'],
     ];
 
     $recent = [
@@ -13,7 +15,29 @@
         ['name' => 'Barangay Activity Report — June 2026', 'generated' => 'Jul 2, 2026', 'by' => 'Corazon Villareal', 'format' => 'XLSX'],
         ['name' => 'Assistance Programs Report — Q2 2026', 'generated' => 'Jun 30, 2026', 'by' => 'Juan Dela Cruz', 'format' => 'PDF'],
         ['name' => 'Resident Profiling Coverage — May 2026', 'generated' => 'Jun 3, 2026', 'by' => 'Paolo Reyes', 'format' => 'XLSX'],
+        ['name' => 'Internal Forms Submissions — July 2026', 'generated' => 'Jul 11, 2026', 'by' => 'Angeline Mercado', 'format' => 'XLSX'],
+        ['name' => 'Sakuna Incident Reports — SWM-2026-07', 'generated' => 'Jul 15, 2026', 'by' => 'Sgt. Ramiro Dela Vega', 'format' => 'PDF'],
     ];
+
+    // Internal Forms — sourced from the shared config so this stays in sync
+    // with the Internal Forms module's own "Recent Submissions" list.
+    $internalFormsCfg   = config('esperanza_internal_forms');
+    $internalSubmissions = $internalFormsCfg['submissions'];
+    $officeColors = ['MHRMO' => '#2f62f5', 'MGSO' => '#f59e0b', 'Agriculture' => '#22c55e', 'MSWD' => '#a855f7'];
+    $internalOfficeSplit = collect($internalSubmissions)
+        ->groupBy('office')
+        ->map(fn ($rows, $office) => ['label' => $office, 'value' => $rows->count(), 'color' => $officeColors[$office] ?? '#64748b'])
+        ->values()->all();
+
+    // Sakuna incidents — mirrors the current SWM-2026-07 active-period incident
+    // log on the Sakuna Command Center (12 incidents), broken down by severity.
+    $incidentSeveritySplit = [
+        ['label' => 'Critical', 'value' => 2, 'color' => '#e11d48'],
+        ['label' => 'High',     'value' => 5, 'color' => '#f97316'],
+        ['label' => 'Medium',   'value' => 4, 'color' => '#f59e0b'],
+        ['label' => 'Low',      'value' => 1, 'color' => '#64748b'],
+    ];
+    $incidentTotal = array_sum(array_column($incidentSeveritySplit, 'value'));
 
     $trendLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
     $trendDocuments = [140, 168, 190, 205, 230, 255, 268];
@@ -61,9 +85,10 @@
             <h3 class="text-sm font-semibold text-navy-900 mb-3">Generate a Report</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
                 @foreach($reportTypes as $i => $report)
-                    <x-ui.card class="group cursor-pointer animate-fade-up" style="animation-delay: {{ $i * 40 }}ms" @click="$dispatch('toast', { message: 'Generating {{ $report['title'] }}…', variant: 'info' })">
+                    {{-- Stagger only the first 3 cards (choreography rule: max 3 steps, rest appear together) --}}
+                    <x-ui.card class="group cursor-pointer animate-fade-up" style="animation-delay: {{ min($i, 2) * 40 }}ms" @click="$dispatch('toast', { message: 'Generating {{ $report['title'] }}…', variant: 'info' })">
                         <div class="flex items-start gap-3.5">
-                            <span class="w-11 h-11 rounded-xl {{ $report['color'] }} flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110">
+                            <span class="w-11 h-11 rounded-xl {{ $report['color'] }} flex items-center justify-center shrink-0 transition-transform duration-[220ms] ease-standard group-hover:scale-110">
                                 <i data-lucide="{{ $report['icon'] }}" class="w-5 h-5"></i>
                             </span>
                             <div class="min-w-0">
@@ -168,8 +193,68 @@
                                 <span class="text-slate-400">{{ $b['pct'] }}%</span>
                             </div>
                             <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-700 ease-out" style="width: 0%" x-init="setTimeout(() => $el.style.width = '{{ $b['pct'] }}%', 150)"></div>
+                                <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" style="width: 0%" x-init="setTimeout(() => $el.style.width = '{{ $b['pct'] }}%', 150)"></div>
                             </div>
+                        </div>
+                    @endforeach
+                </div>
+            </x-ui.card>
+        </div>
+
+        <h3 class="text-sm font-semibold text-navy-900 mb-3 mt-2">Internal Forms &amp; Incident Reports</h3>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <x-ui.stat-card label="Internal Forms Submitted" value="{{ count($internalSubmissions) }}" icon="clipboard-list" color="purple" :delay="0" />
+            <x-ui.stat-card label="Offices Covered" value="{{ count($internalFormsCfg['offices']) }}" icon="building-2" color="brand" :delay="40" />
+            <x-ui.stat-card label="Incidents Logged (SWM-2026-07)" value="{{ $incidentTotal }}" icon="triangle-alert" color="orange" :delay="80" />
+            <x-ui.stat-card label="Critical / High Severity" value="{{ $incidentSeveritySplit[0]['value'] + $incidentSeveritySplit[1]['value'] }}" icon="siren" color="red" :delay="120" />
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <x-ui.card>
+                <h3 class="text-sm font-semibold text-navy-900 mb-4">Internal Forms by Office</h3>
+                <div
+                    class="relative w-36 h-36 mx-auto"
+                    x-data="donutChart({ labels: @js(array_column($internalOfficeSplit, 'label')), values: @js(array_column($internalOfficeSplit, 'value')), colors: @js(array_column($internalOfficeSplit, 'color')) })"
+                >
+                    <canvas x-ref="canvas"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-xl font-semibold text-navy-900 tabular-nums">{{ count($internalSubmissions) }}</span>
+                        <span class="text-[11px] text-slate-400">Total</span>
+                    </div>
+                </div>
+                <div class="mt-5 space-y-2.5">
+                    @foreach($internalOfficeSplit as $row)
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="flex items-center gap-2 text-slate-500">
+                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $row['color'] }}"></span>
+                                {{ $row['label'] }}
+                            </span>
+                            <span class="font-medium text-navy-900 tabular-nums">{{ number_format($row['value']) }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </x-ui.card>
+
+            <x-ui.card>
+                <h3 class="text-sm font-semibold text-navy-900 mb-4">Incident Reports by Severity</h3>
+                <div
+                    class="relative w-36 h-36 mx-auto"
+                    x-data="donutChart({ labels: @js(array_column($incidentSeveritySplit, 'label')), values: @js(array_column($incidentSeveritySplit, 'value')), colors: @js(array_column($incidentSeveritySplit, 'color')) })"
+                >
+                    <canvas x-ref="canvas"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-xl font-semibold text-navy-900 tabular-nums">{{ $incidentTotal }}</span>
+                        <span class="text-[11px] text-slate-400">Total</span>
+                    </div>
+                </div>
+                <div class="mt-5 space-y-2.5">
+                    @foreach($incidentSeveritySplit as $row)
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="flex items-center gap-2 text-slate-500">
+                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $row['color'] }}"></span>
+                                {{ $row['label'] }}
+                            </span>
+                            <span class="font-medium text-navy-900 tabular-nums">{{ number_format($row['value']) }}</span>
                         </div>
                     @endforeach
                 </div>

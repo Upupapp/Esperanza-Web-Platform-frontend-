@@ -74,7 +74,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -109,10 +109,16 @@
                 @foreach($payments as $i => $p)
                     <tr
                         x-show="matches(payments[{{ $i }}])" x-cloak
-                        class="hover:bg-slate-50/70 transition-colors"
+                        class="hover:bg-slate-50/70 transition-colors group cursor-pointer"
+                        @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false"
                     >
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ $p['ref'] }}</td>
-                        <td class="px-4 py-3 text-slate-700 font-medium whitespace-nowrap">{{ $p['citizen'] }}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-slate-500" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false">{{ $p['ref'] }}</td>
+                        <td class="px-4 py-3" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0">{{ strtoupper(collect(explode(' ', $p['citizen']))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('')) }}</div>
+                                <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors">{{ $p['citizen'] }}</p>
+                            </div>
+                        </td>
                         <td class="px-4 py-3 text-slate-500 hidden md:table-cell">{{ $p['item'] }}</td>
                         <td class="px-4 py-3 text-slate-700 font-semibold whitespace-nowrap">{{ $p['amount'] }}</td>
                         <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="payments[{{ $i }}].method || '—'"></td>
@@ -129,7 +135,7 @@
                             <x-ui.badge status="Approved" x-show="payments[{{ $i }}].status === 'Approved'" x-cloak />
                             <x-ui.badge status="Rejected" x-show="payments[{{ $i }}].status === 'Rejected'" x-cloak />
                         </td>
-                        <td class="px-4 py-3 text-right">
+                        <td class="px-4 py-3 text-right" @click.stop>
                             <button
                                 @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false"
                                 class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap"
@@ -199,7 +205,7 @@
                         <div class="space-y-2 mb-4">
                             <template x-for="m in ['GCash', 'PayMaya', 'Payment in Center']" :key="m">
                                 <label
-                                    class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-200"
+                                    class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-[160ms] ease-standard"
                                     :class="method === m ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                 >
                                     <input type="radio" name="admin_payment_method" class="text-brand-600 focus:ring-brand-200" :checked="method === m" @change="method = m">

@@ -5,93 +5,123 @@
     get open() { return showFamilyDetail },
     set open(v) { showFamilyDetail = v }
 }">
-<x-ui.modal maxWidth="2xl">
+<x-ui.modal maxWidth="2xl" :bare="true" :fullscreen="true">
 
     <template x-if="selectedFamily">
-        <div class="flex flex-col h-full max-h-[90vh]">
+        <div class="flex flex-col min-h-0 h-full">
 
-            {{-- ── Modal Header ── --}}
-            <div class="flex-shrink-0 px-6 pt-6 pb-4 border-b border-slate-200">
-                <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-start gap-4 min-w-0">
-                        {{-- Family avatar --}}
-                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
-                            <span class="text-white font-bold text-base" x-text="selectedFamily.surname?.substring(0,2).toUpperCase()"></span>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center flex-wrap gap-2">
-                                <h2 class="text-lg font-bold text-navy-900 truncate" x-text="selectedFamily.label"></h2>
-                                {{-- Family type chip --}}
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-                                    :class="{
-                                        'bg-slate-100 text-slate-600': selectedFamily.family_type === 'Nuclear',
-                                        'bg-purple-100 text-purple-700': selectedFamily.family_type === 'Extended',
-                                        'bg-amber-100 text-amber-700': selectedFamily.family_type === 'Single Parent'
-                                    }"
-                                    x-text="selectedFamily.family_type"
-                                ></span>
-                                {{-- Verification badge --}}
-                                <span
-                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                                    :class="verificationBadge(selectedFamily.verification).class"
-                                    x-text="verificationBadge(selectedFamily.verification).label"
-                                ></span>
-                            </div>
-                            <div class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
-                                <span class="inline-flex items-center gap-1 text-xs text-slate-500">
-                                    <i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>
-                                    <span x-text="selectedFamily.barangay"></span>
-                                </span>
-                                <template x-if="selectedFamily.household_id">
-                                    <span class="inline-flex items-center gap-1 text-xs text-blue-600">
-                                        <i data-lucide="house" class="w-3 h-3"></i>
-                                        <span x-text="'Household HH-' + selectedFamily.household_id"></span>
-                                    </span>
-                                </template>
-                                <span class="text-xs text-slate-400 font-mono" x-text="'ID: ' + selectedFamily.id"></span>
-                            </div>
-                            {{-- Profile completion bar --}}
-                            <div class="flex items-center gap-2 mt-2">
-                                <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[180px]">
-                                    <div
-                                        class="h-full rounded-full transition-all"
-                                        :class="completionColor(selectedFamily.profile_pct)"
-                                        :style="'width:' + (selectedFamily.profile_pct||0) + '%'"
-                                    ></div>
-                                </div>
-                                <span class="text-xs font-semibold" :class="completionTextColor(selectedFamily.profile_pct)" x-text="(selectedFamily.profile_pct||0) + '% Complete'"></span>
-                            </div>
-                        </div>
-                    </div>
-                    {{-- Close button --}}
-                    <button @click="showFamilyDetail = false" class="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+            {{-- ════════════════════════════════════════════════════════
+                 MODAL HEADER (dark hero — matches individual/household)
+            ════════════════════════════════════════════════════════ --}}
+            <div class="relative shrink-0 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-900 text-white px-6 py-5 rounded-t-2xl overflow-hidden">
+                <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5 pointer-events-none"></div>
+                <div class="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none"></div>
+
+                {{-- Compact toggle + Close --}}
+                <div class="absolute top-4 right-4 flex items-center gap-1.5 z-20">
+                    <button type="button" @click="compact = !compact" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
+                        <span x-show="compact"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i></span>
+                        <span x-show="!compact"><i data-lucide="minimize-2" class="w-3.5 h-3.5"></i></span>
+                    </button>
+                    <button type="button" @click="showFamilyDetail = false" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Close">
+                        <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                {{-- Tab nav --}}
-                <div class="flex gap-1 mt-4 -mb-4 border-b-0">
-                    <template x-for="tab in [{id:'overview',icon:'layout-list',label:'Overview'},{id:'members',icon:'users',label:'Members'},{id:'programs',icon:'heart-handshake',label:'Programs'},{id:'history',icon:'clock',label:'History'}]" :key="tab.id">
-                        <button
-                            @click="familyTab = tab.id"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors"
-                            :class="familyTab === tab.id
-                                ? 'text-blue-600 border-blue-600 bg-blue-50/50'
-                                : 'text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300'"
-                        >
-                            <i :data-lucide="tab.icon" class="w-3.5 h-3.5"></i>
-                            <span x-text="tab.label"></span>
-                            <template x-if="tab.id === 'members'">
-                                <span class="ml-0.5 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600" x-text="selectedFamily.member_count"></span>
-                            </template>
-                        </button>
-                    </template>
+                <div class="flex items-start gap-5 relative z-10">
+
+                    {{-- Profile completion ring + avatar --}}
+                    <div class="flex-shrink-0 relative">
+                        <div class="relative w-20 h-20">
+                            <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r="36" stroke="rgba(255,255,255,0.15)" stroke-width="5" fill="none"/>
+                                <circle
+                                    cx="40" cy="40" r="36"
+                                    stroke="rgba(255,255,255,0.85)"
+                                    stroke-width="5"
+                                    fill="none"
+                                    stroke-linecap="round"
+                                    :stroke-dasharray="'226.2'"
+                                    :stroke-dashoffset="226.2 - (226.2 * (selectedFamily?.profile_pct || 0) / 100)"
+                                    class="transition-all duration-700"
+                                />
+                            </svg>
+                            <div class="absolute inset-2 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase">
+                                <span x-text="selectedFamily?.surname?.substring(0,2).toUpperCase()"></span>
+                            </div>
+                        </div>
+                        <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap">
+                            <span x-text="(selectedFamily?.profile_pct || 0) + '%'"></span>
+                        </div>
+                    </div>
+
+                    {{-- Identity block --}}
+                    <div class="flex-1 min-w-0 pt-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white" x-text="selectedFamily?.family_type"></span>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-white/80">
+                                <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                <span x-text="verificationBadge(selectedFamily?.verification).label"></span>
+                            </span>
+                            <span x-show="selectedFamily?.household_id" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100 ring-1 ring-emerald-300/30">
+                                <i data-lucide="house" class="w-3 h-3"></i>
+                                <span x-text="selectedFamily?.household_id"></span>
+                            </span>
+                        </div>
+
+                        <h2 class="text-xl font-bold text-white leading-tight truncate" x-text="selectedFamily?.label"></h2>
+                        <p class="text-sm text-white/60 mt-0.5">
+                            ID: <span class="font-mono font-medium text-white/80" x-text="selectedFamily?.id"></span>
+                            &nbsp;·&nbsp;
+                            <span x-text="(selectedFamily?.member_count || 0) + ' members'"></span>
+                        </p>
+
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-xs font-medium text-white/80">
+                                <i data-lucide="map-pin" class="w-3 h-3"></i>
+                                <span x-text="'Brgy. ' + (selectedFamily?.barangay || '—')"></span>
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-xs font-medium text-white/80">
+                                <i data-lucide="user" class="w-3 h-3"></i>
+                                <span x-text="selectedFamily?.head_name || 'No head listed'"></span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {{-- ── Tab Content (scrollable) ── --}}
-            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            {{-- ════════════════════════════════════════════════════════
+                 BODY: side nav + scrollable content panel
+            ════════════════════════════════════════════════════════ --}}
+            <div class="flex-1 min-h-0 flex flex-col sm:flex-row overflow-hidden">
+
+                {{-- ── Side nav ── --}}
+                <div class="w-full sm:w-48 shrink-0 flex flex-row sm:flex-col gap-0.5 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50/60 p-2 sm:p-2.5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto scrollbar-thin">
+                    <template x-for="tab in [
+                        {id:'overview',icon:'layout-list',label:'Overview'},
+                        {id:'members',icon:'users',label:'Members',count:selectedFamily?.member_count},
+                        {id:'programs',icon:'heart-handshake',label:'Programs'},
+                        {id:'history',icon:'clock',label:'History'}
+                    ]" :key="tab.id">
+                        <button
+                            @click="familyTab = tab.id"
+                            class="shrink-0 sm:w-full flex items-center gap-2 sm:gap-2.5 px-3 py-2 sm:py-2.5 rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap sm:whitespace-normal text-left"
+                            :class="familyTab === tab.id ? 'bg-white text-brand-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'"
+                        >
+                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="familyTab === tab.id ? 'text-brand-600' : 'text-slate-400'"></i>
+                            <span class="flex-1 min-w-0 sm:truncate" x-text="tab.label"></span>
+                            <span
+                                x-show="tab.count"
+                                class="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                                :class="familyTab === tab.id ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-slate-500'"
+                                x-text="tab.count"
+                            ></span>
+                        </button>
+                    </template>
+                </div>
+
+                {{-- ── Content panel ── --}}
+                <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-6 py-5 bg-slate-50/50 space-y-4">
 
                 {{-- ── OVERVIEW TAB ── --}}
                 <div x-show="familyTab === 'overview'" x-cloak>
@@ -115,7 +145,7 @@
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5 text-slate-400"></i> Household ID</dt>
-                                        <dd class="text-xs font-semibold text-blue-600" x-text="selectedFamily.household_id ? ('HH-' + selectedFamily.household_id) : 'Unlinked'"></dd>
+                                        <dd class="text-xs font-semibold text-blue-600" x-text="selectedFamily.household_id || 'Unlinked'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i> Head of Family</dt>
@@ -293,23 +323,12 @@
                     </x-ui.card>
                 </div>
 
+                </div>
             </div>
 
             {{-- ── Modal Footer ── --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3 rounded-b-2xl">
-                <button
-                    @click="showFamilyDetail = false"
-                    class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-                >
-                    Close
-                </button>
-                <button
-                    @click="$dispatch('toast', {message: 'Add member feature coming soon.', type: 'info'})"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    Add Member
-                </button>
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl">
+                <x-ui.button size="sm" icon="user-plus" @click="$dispatch('toast', {message: 'Add member feature coming soon.', type: 'info'})">Add Member</x-ui.button>
             </div>
 
         </div>

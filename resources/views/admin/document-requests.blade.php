@@ -189,9 +189,14 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 <template x-for="r in filteredRequests" :key="r.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="r.ref"></td>
-                        <td class="px-4 py-3 text-slate-700 font-medium whitespace-nowrap" x-text="r.citizen"></td>
+                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="open = true; selected = r">
+                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="r.ref" @click.stop="open = true; selected = r"></td>
+                        <td class="px-4 py-3" @click.stop="open = true; selected = r">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
+                            </div>
+                        </td>
                         <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="r.type"></td>
                         <td class="px-4 py-3 text-slate-500 hidden lg:table-cell"><span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap" x-text="r.office"></span></td>
                         <td class="px-4 py-3 text-slate-500 hidden lg:table-cell"><span x-text="'Brgy. ' + r.barangay"></span></td>
@@ -202,7 +207,7 @@
                                 <span x-text="r.status"></span>
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-right">
+                        <td class="px-4 py-3 text-right" @click.stop>
                             <button @click="open = true; selected = r" class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap">Process</button>
                         </td>
                     </tr>

@@ -48,8 +48,6 @@
             get filteredPostCount() { return this.posts.filter(p => this.matchesCat(p)).length; },
             posts: @js($posts),
             mediaLibrary: @js($mediaLibrary),
-            open: false,
-            sharePost: null,
             commentDraft: {},
             commentMedia: {},
             commentMediaPicker: null,
@@ -90,12 +88,6 @@
                 this.replyingTo[post.id] = null;
                 this.$nextTick(() => window.renderIcons?.());
             },
-            openShare(post) { this.sharePost = post; this.open = true; },
-            doShare() {
-                if (this.sharePost) this.sharePost.shares++;
-                this.open = false;
-                this.$dispatch('toast', { message: 'Naibahagi sa iyong Balita feed!', variant: 'success' });
-            },
             deletePost(post) {
                 const idx = this.posts.findIndex(p => p.id === post.id);
                 if (idx !== -1) this.posts.splice(idx, 1);
@@ -122,8 +114,8 @@
     >
         <x-ui.page-intro id="balita-feed" icon="users-round" title="Ngayon, pwede ka nang mag-post!" titleEn="You can now post to Balita!">
             <x-ui.t
-                fil="Ibahagi ang balita, larawan, o video sa iyong komunidad. I-like, i-comment, o i-share ang mga post ng kapwa residente at ng munisipyo."
-                en="Share news, photos, or videos with your community. Like, comment, or share posts from fellow residents and the municipality."
+                fil="Ibahagi ang balita, larawan, o video sa iyong komunidad. I-like o i-comment ang mga post ng kapwa residente at ng munisipyo."
+                en="Share news, photos, or videos with your community. Like or comment on posts from fellow residents and the municipality."
             />
         </x-ui.page-intro>
 
@@ -187,7 +179,7 @@
                         </div>
                     </x-ui.card>
 
-                    <x-ui.modal title="Gumawa ng Post" titleEn="Create Post" maxWidth="md">
+                    <x-ui.modal title="Gumawa ng Post" titleEn="Create Post" maxWidth="md" :fullscreen="true">
                         <!-- Identity + audience -->
                         <div class="flex items-center gap-2.5 mb-3">
                             <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
@@ -266,22 +258,6 @@
                     </x-ui.modal>
                 </div>
 
-                <!-- Share modal (uses the page-level 'open') -->
-                <x-ui.modal title="Ibahagi ang Post" titleEn="Share Post" maxWidth="sm">
-                    <div class="space-y-2">
-                        <button @click="doShare()" class="w-full flex items-center gap-3 rounded-xl border border-slate-200 p-2.5 hover:border-brand-300 hover:bg-brand-50/40 transition-colors text-left">
-                            <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="share-2" class="w-4 h-4"></i></span>
-                            <span class="text-sm font-medium text-slate-700"><x-ui.t fil="Ibahagi sa Balita Feed" en="Share to Balita Feed" /></span>
-                        </button>
-                        <button @click="doShare()" class="w-full flex items-center gap-3 rounded-xl border border-slate-200 p-2.5 hover:border-brand-300 hover:bg-brand-50/40 transition-colors text-left">
-                            <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="link" class="w-4 h-4"></i></span>
-                            <span class="text-sm font-medium text-slate-700"><x-ui.t fil="Kopyahin ang Link" en="Copy Link" /></span>
-                        </button>
-                    </div>
-                    <x-slot:footer>
-                        <x-ui.button variant="secondary" size="sm" @click="open = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
-                    </x-slot:footer>
-                </x-ui.modal>
 
                 <!-- Category filter -->
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -506,8 +482,9 @@
                                 </button>
                             </div>
 
-                            <!-- Actions -->
-                            <div class="grid grid-cols-3 gap-1 px-2.5 py-1.5 mt-1.5 border-t border-slate-100">
+                            <!-- Actions — residents can Like and Comment; sharing to the municipal
+                                 feed is an LGU-staff action (see admin/communications.blade.php) -->
+                            <div class="grid grid-cols-2 gap-1 px-2.5 py-1.5 mt-1.5 border-t border-slate-100">
                                 <button
                                     @click="toggleLike(post)"
                                     class="flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
@@ -518,9 +495,6 @@
                                 </button>
                                 <button @click="post.showComments = !post.showComments" class="flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-lg hover:bg-slate-50 transition-colors text-slate-500">
                                     <i data-lucide="message-circle" class="w-4 h-4"></i><x-ui.t fil="Komento" en="Comment" />
-                                </button>
-                                <button @click="openShare(post)" class="flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-lg hover:bg-slate-50 transition-colors text-slate-500">
-                                    <i data-lucide="share-2" class="w-4 h-4"></i><x-ui.t fil="Ibahagi" en="Share" />
                                 </button>
                             </div>
 

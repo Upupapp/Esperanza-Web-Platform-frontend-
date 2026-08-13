@@ -67,10 +67,10 @@
         <p class="text-slate-500 text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="scope ? 'Signing in to ' + (scope === 'Municipal' ? 'Municipal-wide access.' : 'Brgy. ' + scope + '.') : 'First, select your assigned access scope.'"></p>
 
         <!-- Step 1: choose access scope -->
-        <div x-show="!scope" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
+        <div x-show="!scope" x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
             <button
                 type="button" @click="chooseScope('Municipal')"
-                class="w-full flex items-center gap-2.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3.5 py-3 text-sm shadow-sm hover:shadow-card transition-all duration-150 mb-2.5"
+                class="w-full flex items-center gap-2.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3.5 py-3 text-sm shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard mb-2.5"
             >
                 <span class="w-8 h-8 rounded-lg bg-navy-50 text-navy-700 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                 <span>
@@ -81,13 +81,13 @@
 
             <div class="relative mb-2.5">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input type="text" x-model="scopeSearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-navy-300 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-200">
+                <input type="text" x-model="scopeSearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-navy-300 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard">
             </div>
             <div class="grid grid-cols-2 gap-1.5 max-h-56 overflow-y-auto scrollbar-thin pr-0.5">
                 <template x-for="b in filteredScopes" :key="b">
                     <button
                         type="button" @click="chooseScope(b)"
-                        class="flex items-center gap-1.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-navy-800 shadow-sm hover:shadow-card transition-all duration-150"
+                        class="flex items-center gap-1.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-navy-800 shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard"
                     >
                         <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i><span class="truncate" x-text="b"></span>
                     </button>
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Step 2: credentials, scoped to the chosen access scope -->
-        <div x-show="scope" x-cloak x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
+        <div x-show="scope" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
             <button
                 type="button" @click="scope = ''; scopeSearch = ''"
                 class="w-full flex items-center justify-between gap-2 rounded-xl border border-navy-200 bg-navy-50/60 px-3.5 py-2.5 text-left hover:bg-navy-50 transition-colors mb-3.5 animate-fade-up"
@@ -125,7 +125,7 @@
                             :type="visible ? 'text' : 'password'"
                             name="password" id="password" placeholder="••••••••" required
                             x-model="password"
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-navy-400 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-200"
+                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-navy-400 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
                         <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                             <i data-lucide="eye" class="w-[18px] h-[18px]" x-show="!visible"></i>
@@ -134,7 +134,7 @@
                     </div>
                 </div>
 
-                <div x-show="error" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
+                <div x-show="error" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
                     <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>
                     <p class="text-xs text-rose-600" x-text="error"></p>
                 </div>

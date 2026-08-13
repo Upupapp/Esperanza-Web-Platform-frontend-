@@ -22,7 +22,7 @@
     [$classes, $dot] = $styles[$status] ?? $styles['Draft'];
 @endphp
 
-<span {{ $attributes->merge(['class' => "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap $classes"]) }}>
+<span {{ $attributes->merge(['class' => "inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap $classes"]) }}>
     <span class="w-1.5 h-1.5 rounded-full {{ $dot }}"></span>
     {{ $status }}
 </span>

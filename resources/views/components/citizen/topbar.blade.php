@@ -108,9 +108,14 @@
                         <span x-text="$store.lang.current === 'en' ? item.en : item.fil"></span>
                     </a>
                 </template>
-                <p class="px-4 py-3 text-xs text-slate-400" x-show="filteredSearch.length === 0">
-                    <x-ui.t fil="Walang nahanap." en="No matches found." />
-                </p>
+                <div class="px-4 py-3 text-center" x-show="filteredSearch.length === 0">
+                    <p class="text-xs font-medium text-slate-500">
+                        <x-ui.t fil="Walang nahanap." en="No matches found." />
+                    </p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">
+                        <x-ui.t fil="Subukan ang ibang salita." en="Try a different search term." />
+                    </p>
+                </div>
             </div>
         </div>
 

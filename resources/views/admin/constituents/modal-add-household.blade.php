@@ -58,7 +58,7 @@
         }
     }
 }">
-<x-ui.modal maxWidth="xl">
+<x-ui.modal maxWidth="xl" :fullscreen="true">
 
     <div class="flex flex-col h-full max-h-[90vh]">
 

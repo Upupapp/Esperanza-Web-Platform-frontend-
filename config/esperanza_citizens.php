@@ -5,6 +5,30 @@
 // admin accounts, but for citizens. One sample resident per barangay, so the
 // barangay picker on the citizen login screen has someone to sign in as for
 // every barangay in config/esperanza.php.
+//
+// Account status vocabulary, the two flagship demo accounts (Ronaldo
+// Bautista / Marites Ferrer, including their exact emails), and the 6-step
+// registration wizard shape are sourced directly from the Esperanza-Mobile
+// Flutter app source (lib/models/citizen_account.dart, access_level.dart,
+// screens/auth/register_screen.dart, services/citizen_session_service.dart,
+// docs/USER_SIGNUP_AND_VERIFICATION_FLOW.md). Real status labels are
+// Pending Review -> Under Verification -> Approved / Rejected, with Draft as
+// a fallback for an unrecognized status (never a real persisted state — the
+// mobile source is explicit that Draft is not reachable); each maps to one
+// of three access tiers (Guest / Unverified / Verified) that gates
+// Dokyu/Tulong access. A fresh registration always starts at exactly 35%
+// profileCompleteness (hardcoded in register_screen.dart's submit step).
+//
+// Honesty note: `registeredAt`, `idUploaded`, `faceVerified`, and
+// `termsAccepted` are NOT fields the mobile app actually persists on its
+// CitizenAccount model — Terms/ID/Face-scan are ephemeral wizard state that
+// only exist during registration itself, and no signup timestamp is stored
+// anywhere in the mobile source. They're admin-side inferences added here
+// so the Web Admin can show a meaningful onboarding record: reaching
+// 'Pending Review' or any later status is only possible after passing all
+// three gates (the wizard blocks "Continue" otherwise), so back-filling
+// them as true for every account here is a safe, justified inference —
+// just not a literal mobile data field.
 
 return [
     'accounts' => [
@@ -23,8 +47,12 @@ return [
             'civilStatus' => 'Married',
             'occupation' => 'Fisherman',
             'residentSince' => 2015,
-            'profileCompleteness' => 78,
-            'status' => 'Approved',
+            'profileCompleteness' => 41,
+            'status' => 'Pending Review',
+            'registeredAt' => 'July 28, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1203',
@@ -43,6 +71,10 @@ return [
             'residentSince' => 2010,
             'profileCompleteness' => 82,
             'status' => 'Approved',
+            'registeredAt' => 'March 15, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1187',
@@ -61,6 +93,10 @@ return [
             'residentSince' => 2018,
             'profileCompleteness' => 65,
             'status' => 'Approved',
+            'registeredAt' => 'June 2, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1044',
@@ -79,6 +115,10 @@ return [
             'residentSince' => 2012,
             'profileCompleteness' => 90,
             'status' => 'Approved',
+            'registeredAt' => 'January 20, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1298',
@@ -97,6 +137,10 @@ return [
             'residentSince' => 2008,
             'profileCompleteness' => 71,
             'status' => 'Approved',
+            'registeredAt' => 'April 10, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1056',
@@ -115,6 +159,10 @@ return [
             'residentSince' => 2001,
             'profileCompleteness' => 88,
             'status' => 'Approved',
+            'registeredAt' => 'February 8, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1332',
@@ -131,8 +179,12 @@ return [
             'civilStatus' => 'Single',
             'occupation' => 'Farmer',
             'residentSince' => 2019,
-            'profileCompleteness' => 60,
+            'profileCompleteness' => 35,
             'status' => 'Pending Review',
+            'registeredAt' => 'August 13, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1071',
@@ -151,6 +203,10 @@ return [
             'residentSince' => 2011,
             'profileCompleteness' => 95,
             'status' => 'Approved',
+            'registeredAt' => 'May 5, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1219',
@@ -169,6 +225,10 @@ return [
             'residentSince' => 2005,
             'profileCompleteness' => 74,
             'status' => 'Approved',
+            'registeredAt' => 'March 22, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1145',
@@ -187,6 +247,10 @@ return [
             'residentSince' => 2016,
             'profileCompleteness' => 68,
             'status' => 'Approved',
+            'registeredAt' => 'July 14, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1278',
@@ -205,6 +269,10 @@ return [
             'residentSince' => 2013,
             'profileCompleteness' => 80,
             'status' => 'Approved',
+            'registeredAt' => 'September 30, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1010',
@@ -222,7 +290,11 @@ return [
             'occupation' => 'Municipal Utility Worker',
             'residentSince' => 2014,
             'profileCompleteness' => 92,
-            'status' => 'Approved',
+            'status' => 'Under Verification',
+            'registeredAt' => 'August 5, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1256',
@@ -241,6 +313,10 @@ return [
             'residentSince' => 2009,
             'profileCompleteness' => 76,
             'status' => 'Approved',
+            'registeredAt' => 'October 11, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1311',
@@ -258,7 +334,11 @@ return [
             'occupation' => 'College Student',
             'residentSince' => 2005,
             'profileCompleteness' => 55,
-            'status' => 'Approved',
+            'status' => 'Rejected',
+            'registeredAt' => 'July 20, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1092',
@@ -277,6 +357,10 @@ return [
             'residentSince' => 2007,
             'profileCompleteness' => 70,
             'status' => 'Approved',
+            'registeredAt' => 'November 3, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1167',
@@ -295,6 +379,10 @@ return [
             'residentSince' => 2015,
             'profileCompleteness' => 84,
             'status' => 'Approved',
+            'registeredAt' => 'December 19, 2025',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1233',
@@ -313,6 +401,10 @@ return [
             'residentSince' => 2020,
             'profileCompleteness' => 62,
             'status' => 'Approved',
+            'registeredAt' => 'February 25, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1288',
@@ -331,6 +423,10 @@ return [
             'residentSince' => 2017,
             'profileCompleteness' => 73,
             'status' => 'Approved',
+            'registeredAt' => 'April 17, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1029',
@@ -349,6 +445,10 @@ return [
             'residentSince' => 2003,
             'profileCompleteness' => 87,
             'status' => 'Approved',
+            'registeredAt' => 'January 9, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
         [
             'id' => 'ESP-RES-2024-1354',
@@ -367,6 +467,10 @@ return [
             'residentSince' => 2021,
             'profileCompleteness' => 66,
             'status' => 'Approved',
+            'registeredAt' => 'May 30, 2026',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
         ],
     ],
 ];

@@ -51,7 +51,7 @@
     }"
     @modal-closed.window="if (!showAddIndividual) resetForm()"
 >
-    <x-ui.modal maxWidth="2xl">
+    <x-ui.modal maxWidth="2xl" :fullscreen="true">
 
         {{-- ════════════════════════════════════════════════════════
              HEADER + STEP PROGRESS

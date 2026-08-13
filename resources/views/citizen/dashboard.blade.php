@@ -81,7 +81,7 @@
         <div
             x-show="ready"
             x-cloak
-            x-transition:enter="transition ease-out duration-500"
+            x-transition:enter="transition duration-[300ms] ease-standard"
             x-transition:enter-start="opacity-0 translate-y-2"
             x-transition:enter-end="opacity-100 translate-y-0"
         >
@@ -444,7 +444,7 @@
 
                         <a
                             href="{{ route('citizen.events') }}"
-                            class="block rounded-xl border border-slate-100 p-3.5 hover:border-brand-200 hover:shadow-card hover:-translate-y-0.5 transition-all duration-300"
+                            class="block rounded-xl border border-slate-100 p-3.5 hover:border-brand-200 hover:shadow-card hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
                         >
 
                             <div class="flex items-center gap-2 text-xs font-medium text-brand-600 mb-1.5">

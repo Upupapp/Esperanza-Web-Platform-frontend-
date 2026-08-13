@@ -147,6 +147,100 @@
             </div>
         </template>
 
+        <!-- Barangay Clearance -->
+        <template x-if="{{ $docKey }} === 'brgy_clearance'">
+            <div class="space-y-2.5">
+                <p>
+                    This is to certify that according to the records available to this office,
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.requester_name || '_______________________'"></span>,
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.age || '___'"></span> years of age, is a
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="({{ $bind }}.residency_type || 'permanent').toLowerCase()"></span> resident of Purok
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.purok || '___'"></span>, Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate.
+                </p>
+                <p>He/She has good moral character and has never been accused nor convicted of any crime involving moral turpitude, violation of Presidential Decrees, Municipal ordinance, and other laws, and is a bonafide resident of this barangay.</p>
+                <p>This CLEARANCE is being issued upon request of the herein interested party for:</p>
+                <p class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" x-text="(({{ $bind }}.purpose || []).join(', ') || '_______________________')"></p>
+            </div>
+        </template>
+
+        <!-- National ID / PSA Purpose -->
+        <template x-if="{{ $docKey }} === 'brgy_cert_national_id'">
+            <div class="space-y-2.5">
+                <p>This is to certify that <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.subject_name || '_______________________'"></span>, is a bonafide resident of this Barangay.</p>
+                <p>This further certifies for the other information of the above-named person, to wit:</p>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Father:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.father_name || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden):</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.mother_name || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Date of Birth:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.date_of_birth || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Place of Birth:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.place_of_birth || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Sex:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.sex || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Citizenship:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.citizenship || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Civil Status:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.civil_status || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Occupation:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.occupation || ' '"></span></p>
+                    <p class="col-span-2 flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Husband/Wife:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.spouse_name || ' '"></span></p>
+                </div>
+                <p>Issued upon request of the herein interested party for the <span class="font-semibold">Registration of NATIONAL ID</span> and for whatever legal purposes this will serve him/her best.</p>
+            </div>
+        </template>
+
+        <!-- Land / Property Certification -->
+        <template x-if="{{ $docKey }} === 'brgy_cert_land_property'">
+            <div class="space-y-2.5">
+                <p>
+                    This is to certify that <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.owner_name || '_______________________'"></span> is the owner of a lot with
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.lot_area || '___'"></span> square meters located at
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.lot_location || '_______________________'"></span>, Purok
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.purok || '___'"></span>, Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate.
+                </p>
+                <p x-show="{{ $bind }}.no_conflict_owner">This certifies further that this lot has no conflict of ownership with <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.no_conflict_owner"></span>.</p>
+                <p>This certification is issued for whatever legal purpose it may serve.</p>
+            </div>
+        </template>
+
+        <!-- General Purpose Certification -->
+        <template x-if="{{ $docKey }} === 'brgy_cert_general'">
+            <div class="space-y-2.5">
+                <p>
+                    This is to certify that <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.subject_name || '_______________________'"></span>,
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.age || '___'"></span> years of age,
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="({{ $bind }}.civil_status || '').toLowerCase() || '___'"></span>,
+                    is a bonafide resident of Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate.
+                </p>
+                <p>This certification is issued upon request of the herein interested party for <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.purpose || '_______________________'"></span> purposes.</p>
+                <p x-show="{{ $bind }}.details" x-text="{{ $bind }}.details"></p>
+            </div>
+        </template>
+
+        <!-- Business Permit -->
+        <template x-if="{{ $docKey }} === 'brgy_business_permit'">
+            <div class="space-y-2.5">
+                <p class="font-semibold uppercase text-center tracking-wide">Barangay Business Permit</p>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Proprietor:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.proprietor_name || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Nature of Business:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.business_name || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Business Location:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.business_location || ' '"></span></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Amount Paid:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.amount_paid || ' '"></span></p>
+                </div>
+                <p>This Permit is being issued subject to existing rules and regulations, provided however, that the necessary fees are paid to the Treasurer of the Barangay as assessed. This is non-transferable and shall be deemed null and void upon failure by the owner to follow the said rules and regulations set forth by the Local Government Unit of Esperanza, Masbate.</p>
+                <p class="text-[10px] text-slate-400 italic">This License, while in force, shall be posted in a conspicuous place in the business premises.</p>
+            </div>
+        </template>
+
+        <!-- Event / Special Permit -->
+        <template x-if="{{ $docKey }} === 'brgy_event_permit'">
+            <div class="space-y-2.5">
+                <p>
+                    The <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.organizer_name || '_______________________'"></span>, of Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate is requesting permission to hold a
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.event_type || '_______________'"></span> on
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.event_date || '___'"></span>, from
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.event_time_from || '___'"></span> to
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.event_time_to || '___'"></span>, at
+                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.venue || '_______________________'"></span>.
+                </p>
+                <p>This permit is granted subject to peace and order guidelines of the barangay and may be revoked at any time for cause.</p>
+            </div>
+        </template>
+
         <p class="text-[11px] text-slate-400 pt-1" x-show="{{ $bind }}.__validity" x-text="{{ $bind }}.__validity"></p>
     </div>
 

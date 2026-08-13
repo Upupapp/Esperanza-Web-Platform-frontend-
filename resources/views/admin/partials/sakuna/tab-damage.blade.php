@@ -663,6 +663,8 @@
         x-show="showCreateAssessment"
         x-cloak
         x-data="{
+            daStep: 1,
+            daStepLabels: ['Basic Info', 'Affected Population', 'Housing Damage', 'Infrastructure Damage', 'Immediate Needs', 'Total Damage'],
             newType: '',
             newIncident: '',
             newBarangay: '',
@@ -685,6 +687,7 @@
             needRoadClearing: false, needPowerRestoration: false,
             totalDamage: 0
         }"
+        x-effect="showCreateAssessment && (daStep = 1)"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
         @click.self="showCreateAssessment = false">
         <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
@@ -699,18 +702,31 @@
                 </button>
             </div>
 
+            {{-- Step progress indicator --}}
+            <nav class="flex items-center gap-0 mb-5" aria-label="Assessment steps">
+                <template x-for="(label, idx) in daStepLabels" :key="idx">
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="flex items-center w-full">
+                            <div class="flex-1 h-0.5" :class="daStep > idx + 1 ? 'bg-brand-blue' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
+                            <div
+                                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
+                                :class="daStep >= idx + 1 ? 'border-brand-blue bg-brand-blue text-white' : 'border-slate-200 bg-white text-slate-400'"
+                            >
+                                <template x-if="daStep > idx + 1"><i data-lucide="check" class="w-3 h-3"></i></template>
+                                <template x-if="daStep <= idx + 1"><span x-text="idx + 1"></span></template>
+                            </div>
+                            <div class="flex-1 h-0.5" :class="[daStep > idx + 1 ? 'bg-brand-blue' : 'bg-slate-200', idx === daStepLabels.length - 1 ? '!bg-transparent' : '']"></div>
+                        </div>
+                        <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="daStep === idx + 1 ? 'text-brand-blue' : daStep > idx + 1 ? 'text-brand-blue/70' : 'text-slate-400'" x-text="label"></span>
+                    </div>
+                </template>
+            </nav>
+
             <div class="space-y-5">
 
                 {{-- Section 1: Basic Info --}}
-                <details open class="group">
-                    <summary class="flex items-center justify-between cursor-pointer list-none py-2.5 border-b border-slate-100">
-                        <span class="text-sm font-semibold text-navy-900 flex items-center gap-2">
-                            <span class="w-5 h-5 bg-brand-blue text-white rounded-full text-xs flex items-center justify-center font-bold">1</span>
-                            Basic Information
-                        </span>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
-                    </summary>
-                    <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div x-show="daStep === 1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assessment Type</label>
                             <select x-model="newType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
@@ -756,18 +772,11 @@
                             <input type="text" x-model="newOffice" placeholder="e.g. Barangay DRRM Officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
                         </div>
                     </div>
-                </details>
+                </div>
 
                 {{-- Section 2: Affected Population --}}
-                <details open class="group">
-                    <summary class="flex items-center justify-between cursor-pointer list-none py-2.5 border-b border-slate-100">
-                        <span class="text-sm font-semibold text-navy-900 flex items-center gap-2">
-                            <span class="w-5 h-5 bg-brand-blue text-white rounded-full text-xs flex items-center justify-center font-bold">2</span>
-                            Affected Population
-                        </span>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
-                    </summary>
-                    <div class="pt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div x-show="daStep === 2">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         @foreach([
                             ['popAffected',  'Affected Families'],
                             ['popDisplaced', 'Displaced Families'],
@@ -783,18 +792,11 @@
                         </div>
                         @endforeach
                     </div>
-                </details>
+                </div>
 
                 {{-- Section 3: Housing Damage --}}
-                <details class="group">
-                    <summary class="flex items-center justify-between cursor-pointer list-none py-2.5 border-b border-slate-100">
-                        <span class="text-sm font-semibold text-navy-900 flex items-center gap-2">
-                            <span class="w-5 h-5 bg-brand-blue text-white rounded-full text-xs flex items-center justify-center font-bold">3</span>
-                            Housing Damage
-                        </span>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
-                    </summary>
-                    <div class="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div x-show="daStep === 3">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Partially Damaged</label>
                             <input type="number" min="0" x-model="housingPartial" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
@@ -812,18 +814,11 @@
                             <input type="number" min="0" x-model="housingEstimate" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
                         </div>
                     </div>
-                </details>
+                </div>
 
                 {{-- Section 4: Infrastructure Damage --}}
-                <details class="group">
-                    <summary class="flex items-center justify-between cursor-pointer list-none py-2.5 border-b border-slate-100">
-                        <span class="text-sm font-semibold text-navy-900 flex items-center gap-2">
-                            <span class="w-5 h-5 bg-brand-blue text-white rounded-full text-xs flex items-center justify-center font-bold">4</span>
-                            Infrastructure Damage
-                        </span>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
-                    </summary>
-                    <div class="pt-4 space-y-2">
+                <div x-show="daStep === 4">
+                    <div class="space-y-2">
                         @foreach([
                             ['infraRoads',    'infraRoadsAmt',    'Roads'],
                             ['infraBridges',  'infraBridgesAmt',  'Bridges'],
@@ -850,18 +845,11 @@
                         </div>
                         @endforeach
                     </div>
-                </details>
+                </div>
 
                 {{-- Section 5: Immediate Needs --}}
-                <details class="group">
-                    <summary class="flex items-center justify-between cursor-pointer list-none py-2.5 border-b border-slate-100">
-                        <span class="text-sm font-semibold text-navy-900 flex items-center gap-2">
-                            <span class="w-5 h-5 bg-brand-blue text-white rounded-full text-xs flex items-center justify-center font-bold">5</span>
-                            Immediate Needs
-                        </span>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
-                    </summary>
-                    <div class="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div x-show="daStep === 5">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         @foreach([
                             ['needFood',             'Food'],
                             ['needWater',            'Water'],
@@ -882,12 +870,11 @@
                         </label>
                         @endforeach
                     </div>
-                </details>
+                </div>
 
                 {{-- Section 6: Total Financial Damage --}}
-                <div class="bg-rose-50 rounded-xl p-4 border border-rose-100">
+                <div x-show="daStep === 6" class="bg-rose-50 rounded-xl p-4 border border-rose-100">
                     <label class="block text-sm font-semibold text-rose-800 mb-1.5">
-                        <span class="w-5 h-5 bg-rose-500 text-white rounded-full text-xs inline-flex items-center justify-center font-bold mr-1.5">6</span>
                         Estimated Total Financial Damage (₱)
                     </label>
                     <div class="relative">
@@ -906,15 +893,24 @@
 
             {{-- Modal Footer --}}
             <div class="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-slate-100">
-                <button @click="showCreateAssessment = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                <button @click="showCreateAssessment = false" x-show="daStep === 1" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                <button @click="daStep--" x-show="daStep > 1" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>Back
+                </button>
                 <button
                     @click="$dispatch('toast', { message: 'Assessment draft saved. You can continue editing later.', variant: 'info' })"
                     class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">
                     <i data-lucide="save" class="w-4 h-4 inline-block mr-1"></i>
                     Save as Draft
                 </button>
+                <span class="text-xs text-slate-400 mx-1" x-text="'Step ' + daStep + ' of ' + daStepLabels.length"></span>
                 <button
-                    @click="$dispatch('toast', { message: 'Assessment submitted for validation.', variant: 'success' }); showCreateAssessment = false"
+                    @click="daStep++; $nextTick(() => window.renderIcons?.())" x-show="daStep < daStepLabels.length"
+                    class="inline-flex items-center gap-1.5 px-5 py-2 bg-brand-blue text-white rounded-xl text-sm font-semibold hover:bg-brand-blue/90 transition-colors shadow-sm ml-auto">
+                    Next<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </button>
+                <button
+                    @click="$dispatch('toast', { message: 'Assessment submitted for validation.', variant: 'success' }); showCreateAssessment = false" x-show="daStep >= daStepLabels.length"
                     class="px-5 py-2 bg-brand-blue text-white rounded-xl text-sm font-semibold hover:bg-brand-blue/90 transition-colors shadow-sm ml-auto">
                     <i data-lucide="send" class="w-4 h-4 inline-block mr-1"></i>
                     Submit for Validation

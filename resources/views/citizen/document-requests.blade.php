@@ -71,45 +71,43 @@
         ];
     }
 
-    // Barangay-issued documents — every configured barangay is folded into the
-    // same flat $documentTypes list (so docs[selectedDoc] keeps working the
-    // same way for every step of the wizard), each tagged with 'barangay' so
-    // Step 1 can show only the signed-in citizen's own barangay under "Aking
-    // Barangay". $barangayCatalog carries the branding (seal, officials) per
-    // barangay for that tab's letterhead. Only Labangtaytay is onboarded so far
-    // — add more barangays to config/esperanza_barangay_documents.php and they
-    // pick up here automatically, no other changes needed.
+    // Barangay-issued documents — every barangay in config/esperanza_barangay_documents.php
+    // currently shares the exact same document schema (fields/requirements/process), only
+    // the barangay name/office/seal differ. Rather than pre-expanding that schema into 20
+    // full duplicate copies server-side (which used to bloat this page's payload ~10x for
+    // data 19/20 of which no citizen ever sees, since Step 1 only shows their own barangay),
+    // we ship the schema ONCE ($barangayDocTemplate) plus the list of barangay names
+    // ($barangayNames), and the wizard's own x-data expands them into the same flat 'docs'
+    // shape client-side on init — same final data/behavior, a fraction of the bytes.
+    // $barangayCatalog carries the branding (seal, officials) per barangay for the tab's
+    // letterhead. Only Labangtaytay is onboarded with real officials/history so far — add
+    // more barangays to config/esperanza_barangay_documents.php and they pick up here
+    // automatically, no other changes needed (as long as their 'documents' array still
+    // matches the shared schema; if any barangay ever needs a genuinely different set of
+    // documents, that one barangay would need to go back to explicit per-barangay expansion).
     $barangayCatalog = [];
+    $barangayNames = [];
+    $barangayDocTemplate = null;
     foreach (config('esperanza_barangay_documents') as $slug => $info) {
         $barangayCatalog[$info['label']] = [
             'label' => $info['label'],
             'seal' => $info['seal'],
             'officials' => $info['officials'],
         ];
-        foreach ($info['documents'] as $bd) {
-            $documentTypes[] = [
-                'key' => $bd['key'],
-                'name' => $bd['name'],
-                'office' => 'Barangay Hall (Brgy. ' . $info['label'] . ')',
-                'barangay' => $info['label'],
-                'fee' => $bd['fee'],
-                'days' => $bd['days'],
-                'requirements' => $bd['requirements'],
-                'process' => $bd['process'],
-                'fields' => $bd['fields'],
-                'certTitle' => $bd['title'],
-                'certSubtitle' => $bd['subtitle'] ?? null,
-                'validity' => $bd['validity'] ?? null,
-                'previewType' => 'barangay',
-            ];
+        $barangayNames[] = $info['label'];
+        if ($barangayDocTemplate === null) {
+            $barangayDocTemplate = $info['documents'];
         }
     }
 
     // Attach expected-processing-time onto each seeded request by matching its
     // document type name against $documentTypes, so the citizen-facing
     // "Track Request" view can compute an expected release date without
-    // needing every mock row to duplicate that detail by hand.
-    $daysByType = collect($documentTypes)->pluck('days', 'name');
+    // needing every mock row to duplicate that detail by hand. Barangay
+    // documents live in $barangayDocTemplate now (see above), so both are
+    // merged here for this lookup only — $documentTypes itself stays municipal-only.
+    $daysByType = collect($documentTypes)->pluck('days', 'name')
+        ->union(collect($barangayDocTemplate)->pluck('days', 'name'));
     foreach ($requests as &$r) {
         $r['days'] = $daysByType[$r['type']] ?? '3-5 working days';
     }
@@ -265,9 +263,9 @@
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             @foreach($submittedDocs as $doc)
                                 @php $style = $fileCardStyle[$doc['category']]; @endphp
-                                <div x-show="fileTab === 'all' || fileTab === '{{ $doc['category'] }}'" class="rounded-xl border border-slate-100 overflow-hidden hover:shadow-card-hover transition-all duration-300 group">
+                                <div x-show="fileTab === 'all' || fileTab === '{{ $doc['category'] }}'" class="rounded-xl border border-slate-100 overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard group">
                                     <div class="relative aspect-square bg-gradient-to-br {{ $style['ring'] }} flex items-center justify-center">
-                                        <i data-lucide="{{ $style['icon'] }}" class="w-9 h-9 {{ $style['iconColor'] }} transition-transform duration-300 group-hover:scale-110"></i>
+                                        <i data-lucide="{{ $style['icon'] }}" class="w-9 h-9 {{ $style['iconColor'] }} transition-transform duration-[220ms] ease-standard group-hover:scale-110"></i>
                                         <span class="absolute top-1.5 left-1.5 text-[9px] font-bold {{ $style['badge'] }} rounded px-1.5 py-0.5">{{ $doc['category'] }}</span>
                                         <span class="absolute top-1.5 right-1.5"><x-ui.badge :status="$doc['status']" class="!px-1.5 !py-0.5 !text-[9px]" /></span>
                                     </div>
@@ -297,7 +295,32 @@
                         alreadyPaid: false,
                         receipt: null,
                         showReceiptPicker: false,
-                        docs: @js($documentTypes),
+                        // Municipal docs come pre-built from the server; barangay docs are
+                        // expanded here from a single shared template ($barangayDocTemplate)
+                        // across every barangay name ($barangayNames) — same final shape/order/
+                        // indices as the old fully-server-expanded array (previewType, certTitle,
+                        // certSubtitle, validity, office, barangay all match field-for-field), just
+                        // built once client-side instead of duplicated 20x over the wire.
+                        docs: (() => {
+                            const municipal = @js($documentTypes);
+                            const template = @js($barangayDocTemplate);
+                            const barangayDocs = @js($barangayNames).flatMap(barangayLabel => template.map(bd => ({
+                                key: bd.key,
+                                name: bd.name,
+                                office: 'Barangay Hall (Brgy. ' + barangayLabel + ')',
+                                barangay: barangayLabel,
+                                fee: bd.fee,
+                                days: bd.days,
+                                requirements: bd.requirements,
+                                process: bd.process,
+                                fields: bd.fields,
+                                certTitle: bd.title,
+                                certSubtitle: bd.subtitle ?? null,
+                                validity: bd.validity ?? null,
+                                previewType: 'barangay',
+                            })));
+                            return [...municipal, ...barangayDocs];
+                        })(),
                         files: @js($submittedDocs),
                         barangayCatalog: @js($barangayCatalog),
                         catalogTab: 'barangay',
@@ -364,7 +387,7 @@
                     class="contents"
                 >
                     <x-ui.button @click="open = true" icon="file-plus" size="sm" class="shrink-0"><x-ui.t fil="Bagong Kahilingan sa Dokyu" en="New Dokyu Request" /></x-ui.button>
-                    <x-ui.modal title="Bagong Kahilingan sa Dokyu" titleEn="New Dokyu Request" maxWidth="3xl">
+                    <x-ui.modal title="Bagong Kahilingan sa Dokyu" titleEn="New Dokyu Request" maxWidth="3xl" :fullscreen="true">
                         <!-- Success state -->
                         <div x-show="submitted" x-cloak x-transition.opacity class="flex flex-col items-center justify-center text-center py-10">
                             <div class="relative flex items-center justify-center mb-4 w-16 h-16">
@@ -388,15 +411,15 @@
                                 <div class="flex-1 flex items-center">
                                     <div class="flex flex-col items-center gap-2 text-center">
                                         <span
-                                            class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300"
+                                            class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
                                             :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'bg-brand-600 text-white shadow-card ring-4 ring-brand-100' : 'bg-slate-100 text-slate-400')"
                                         >
                                             <i data-lucide="check" class="w-4 h-4" x-show="step > i + 1" x-cloak></i>
                                             <i :data-lucide="stepIcons[i]" class="w-4 h-4" x-show="step <= i + 1"></i>
                                         </span>
-                                        <span class="text-[11px] max-w-[100px] leading-tight transition-colors duration-300" :class="step === i + 1 ? 'text-navy-900 font-semibold' : 'text-slate-400'" x-text="label"></span>
+                                        <span class="text-[11px] max-w-[100px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-navy-900 font-semibold' : 'text-slate-400'" x-text="label"></span>
                                     </div>
-                                    <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-300" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < 3"></div>
+                                    <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < 3"></div>
                                 </div>
                             </template>
                         </div>
@@ -417,7 +440,7 @@
                                     <input
                                         type="text" x-model="search"
                                         x-bind:placeholder="$store.lang.current === 'en' ? 'Search documents...' : 'Maghanap ng dokumento...'"
-                                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                     >
                                 </div>
                             </div>
@@ -444,12 +467,12 @@
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                             <template x-for="doc in filteredMyBarangayDocs" :key="doc.i">
                                                 <label
-                                                    class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-200"
+                                                    class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
                                                     :class="selectedDoc === doc.i ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
                                                 >
                                                     <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
                                                     <div class="flex items-center justify-between mb-2.5">
-                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-200" :class="selectedDoc === doc.i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400'">
+                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400'">
                                                             <i data-lucide="file-text" class="w-4 h-4"></i>
                                                         </span>
                                                         <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
@@ -485,12 +508,12 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                     <template x-for="doc in filteredMunicipalDocs" :key="doc.i">
                                         <label
-                                            class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-200"
+                                            class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
                                             :class="selectedDoc === doc.i ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
                                         >
                                             <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
                                             <div class="flex items-center justify-between mb-2.5">
-                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-200" :class="selectedDoc === doc.i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400'">
+                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400'">
                                                     <i data-lucide="landmark" class="w-4 h-4"></i>
                                                 </span>
                                                 <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
@@ -554,13 +577,13 @@
                             <!-- Full-width: generic purpose OR structured fields (barangay documents) — sits below the two-column grid so it isn't squeezed beside the sticky Request Summary -->
                             <div class="mb-6" x-show="!(docs[selectedDoc]?.fields?.length)">
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Layunin" en="Purpose" /></label>
-                                <textarea rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"></textarea>
+                                <textarea rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                             </div>
 
                             <div class="mb-6" x-show="docs[selectedDoc]?.fields?.length" x-cloak>
                                 <p class="text-sm font-semibold text-navy-900 mb-1" x-text="docs[selectedDoc]?.certTitle || ''"></p>
                                 <p class="text-xs text-slate-400 mb-3" x-show="docs[selectedDoc]?.certSubtitle" x-text="docs[selectedDoc]?.certSubtitle"></p>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     <template x-for="f in (docs[selectedDoc]?.fields || [])" :key="f.key">
                                         <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2 lg:col-span-3' : ''">
                                             <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date'">
@@ -568,14 +591,14 @@
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                     <input
                                                         :type="f.type" x-model="formData[f.key]"
-                                                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                                                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                     >
                                                 </div>
                                             </template>
                                             <template x-if="f.type === 'select'">
                                                 <div>
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                    <select x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                                                    <select x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                         <option value="">—</option>
                                                         <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                     </select>

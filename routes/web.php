@@ -49,6 +49,7 @@ Route::view('/admin/constituents/data-quality', 'admin.constituents', ['tab' => 
 // Communications — Balita (announcements) and Directory merged into one page with tabs.
 Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');
 Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');
+Route::view('/admin/communications/blotter', 'admin.communications', ['tab' => 'blotter'])->name('admin.communications.blotter');
 Route::view('/admin/announcements', 'admin.communications', ['tab' => 'balita'])->name('admin.announcements');
 
 // Reports & Analytics — merged into one page with tabs.
@@ -78,5 +79,6 @@ Route::view('/admin/sakuna/evacuees', 'admin.sakuna', ['tab' => 'evacuees'])->na
 Route::view('/admin/sakuna/resources', 'admin.sakuna', ['tab' => 'resources'])->name('admin.sakuna.resources');
 Route::view('/admin/sakuna/relief', 'admin.sakuna', ['tab' => 'relief'])->name('admin.sakuna.relief');
 Route::view('/admin/sakuna/damage-assessment', 'admin.sakuna', ['tab' => 'damage-assessment'])->name('admin.sakuna.damage-assessment');
+Route::view('/admin/sakuna/bdrrmc-forms', 'admin.sakuna', ['tab' => 'bdrrmc-forms'])->name('admin.sakuna.bdrrmc-forms');
 Route::view('/admin/sakuna/alerts', 'admin.sakuna', ['tab' => 'alerts'])->name('admin.sakuna.alerts');
 Route::view('/admin/sakuna/reports', 'admin.sakuna', ['tab' => 'reports'])->name('admin.sakuna.reports');

@@ -1,15 +1,7 @@
 @php
     $offices = config('esperanza_internal_forms.offices');
     $office = $office ?? 'hr';
-
-    $submittedForms = [
-        ['ref' => 'IF-2026-1042', 'officeKey' => 'hr', 'office' => 'MHRMO', 'form' => 'Application for Leave', 'submittedBy' => 'Angeline Mercado', 'submitted' => 'Jul 10, 2026', 'status' => 'Approved'],
-        ['ref' => 'IF-2026-1039', 'officeKey' => 'hr', 'office' => 'MHRMO', 'form' => 'Pass Slip for Personal Business', 'submittedBy' => 'Rowena Aguilar', 'submitted' => 'Jul 9, 2026', 'status' => 'Approved'],
-        ['ref' => 'IF-2026-1035', 'officeKey' => 'gso', 'office' => 'MGSO', 'form' => "Driver's Trip Ticket", 'submittedBy' => 'Bienvenido Salazar', 'submitted' => 'Jul 8, 2026', 'status' => 'Pending Review'],
-        ['ref' => 'IF-2026-1031', 'officeKey' => 'gso', 'office' => 'MGSO', 'form' => "Borrower's Slip", 'submittedBy' => 'Paolo Reyes', 'submitted' => 'Jul 6, 2026', 'status' => 'Released'],
-        ['ref' => 'IF-2026-1028', 'officeKey' => 'agriculture', 'office' => 'Agriculture', 'form' => 'Dog Vaccination Report', 'submittedBy' => 'Antonio G. Ejes', 'submitted' => 'Jul 4, 2026', 'status' => 'Completed'],
-        ['ref' => 'IF-2026-1020', 'officeKey' => 'hr', 'office' => 'MHRMO', 'form' => 'Personal Data Sheet', 'submittedBy' => 'Dexter Villamor', 'submitted' => 'Jun 28, 2026', 'status' => 'Completed'],
-    ];
+    $submittedForms = config('esperanza_internal_forms.submissions');
 @endphp
 
 <x-layouts.admin title="Internal Forms" subtitle="Staff self-service forms for HR, GSO, Agriculture, and MSWD." active="internal-forms">
@@ -28,6 +20,35 @@
             showFilePicker: null,
             submitting: false,
             doneSubmit: false,
+            formStep: 1,
+            // Auto-splits a form's fields into logical steps: each repeatable
+            // table gets its own step, plain fields are chunked in groups of
+            // 6, and a Requirements/Attachments step is appended when present.
+            // A short form (few fields, no requirements) naturally resolves
+            // to a single step, so it renders exactly like a flat form.
+            get formSteps() {
+                if (!this.selectedForm) return [];
+                const steps = [];
+                let bucket = [];
+                const flush = () => { if (bucket.length) { steps.push({ type: 'fields', fields: bucket }); bucket = []; } };
+                (this.selectedForm.fields || []).forEach(f => {
+                    if (f.type === 'table') {
+                        flush();
+                        steps.push({ type: 'table', field: f, label: f.label });
+                    } else {
+                        bucket.push(f);
+                        if (bucket.length >= 6) flush();
+                    }
+                });
+                flush();
+                if (!steps.length) steps.push({ type: 'fields', fields: [] });
+                if ((this.selectedForm.requirements || []).length) steps.push({ type: 'requirements', label: 'Requirements & Attachments' });
+                const fieldSteps = steps.filter(s => s.type === 'fields');
+                fieldSteps.forEach((s, i) => { s.label = fieldSteps.length > 1 ? `Form Details — Part ${i + 1}` : 'Form Details'; });
+                return steps;
+            },
+            get totalFormSteps() { return this.formSteps.length; },
+            get currentFormStep() { return this.formSteps[this.formStep - 1] || { type: 'fields', fields: [] }; },
             get currentOffice() { return this.offices[this.office]; },
             // Only Super Administrator, Municipal Administrator, and Department
             // Heads (who review/approve their department's submissions) can see
@@ -54,6 +75,7 @@
                 this.selectedForm = f;
                 this.formData = {};
                 this.attachments = {};
+                this.formStep = 1;
                 (f.fields || []).forEach(fld => {
                     if (fld.type === 'checkbox-group') { this.formData[fld.key] = []; }
                     else if (fld.type === 'table') { this.formData[fld.key] = []; }
@@ -73,7 +95,7 @@
                 f.columns.forEach(c => { row[c.key] = ''; });
                 this.formData[f.key].push(row);
             },
-            reset() { this.open = false; this.selectedForm = null; this.formData = {}; this.attachments = {}; this.showFilePicker = null; this.doneSubmit = false; this.submitting = false; },
+            reset() { this.open = false; this.selectedForm = null; this.formData = {}; this.attachments = {}; this.showFilePicker = null; this.doneSubmit = false; this.submitting = false; this.formStep = 1; },
             submit() {
                 if (this.submitting) return;
                 this.submitting = true;
@@ -107,9 +129,9 @@
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Submissions" value="6" icon="clipboard-list" color="brand" :delay="0" />
-            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="1" icon="inbox" color="orange" :delay="40" />
-            <x-ui.stat-card label="Offices Covered" value="4" icon="building-2" color="purple" :delay="80" />
+            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Submissions" value="{{ count($submittedForms) }}" icon="clipboard-list" color="brand" :delay="0" />
+            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="2" icon="inbox" color="orange" :delay="40" />
+            <x-ui.stat-card label="Offices Covered" value="{{ count($offices) }}" icon="building-2" color="purple" :delay="80" />
             <x-ui.stat-card label="Forms Available" value="{{ collect($offices)->sum(fn ($o) => count($o['forms'])) }}" icon="file-stack" color="green" :delay="120" />
         </div>
 
@@ -126,7 +148,7 @@
             </div>
             <div class="relative">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                <input type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
             </div>
         </div>
 
@@ -135,7 +157,7 @@
             <template x-for="f in filteredForms" :key="f.key">
                 <button
                     type="button" @click="selectForm(f)"
-                    class="text-left bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 p-4"
+                    class="text-left bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard p-4"
                 >
                     <div class="flex items-start justify-between mb-2.5">
                         <span class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></span>
@@ -211,7 +233,7 @@
         </div>
 
         <!-- Fill-out Modal -->
-        <x-ui.modal title="Fill Out Form" maxWidth="2xl">
+        <x-ui.modal title="Fill Out Form" maxWidth="2xl" :fullscreen="true">
             <template x-if="selectedForm">
                 <div>
                     <!-- Success state -->
@@ -235,23 +257,45 @@
                             </div>
                         </div>
 
+                        {{-- Step progress indicator — only shown when the form actually needed splitting --}}
+                        <nav x-show="totalFormSteps > 1" x-cloak class="flex items-center gap-0 mb-5" aria-label="Form steps">
+                            <template x-for="(step, idx) in formSteps" :key="idx">
+                                <div class="flex-1 flex flex-col items-center">
+                                    <div class="flex items-center w-full">
+                                        <div class="flex-1 h-0.5" :class="formStep > idx + 1 ? 'bg-brand-500' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
+                                        <div
+                                            class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
+                                            :class="formStep >= idx + 1 ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-400'"
+                                        >
+                                            <template x-if="formStep > idx + 1"><i data-lucide="check" class="w-3.5 h-3.5"></i></template>
+                                            <template x-if="formStep <= idx + 1"><span x-text="idx + 1"></span></template>
+                                        </div>
+                                        <div class="flex-1 h-0.5" :class="[formStep > idx + 1 ? 'bg-brand-500' : 'bg-slate-200', idx === totalFormSteps - 1 ? '!bg-transparent' : '']"></div>
+                                    </div>
+                                    <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="formStep === idx + 1 ? 'text-brand-600' : formStep > idx + 1 ? 'text-brand-500' : 'text-slate-400'" x-text="step.label"></span>
+                                </div>
+                            </template>
+                        </nav>
+
                         <div class="max-h-[52vh] overflow-y-auto scrollbar-thin pr-1 space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <template x-for="f in (selectedForm.fields || []).filter(f => f.type !== 'table')" :key="f.key">
+
+                            {{-- Fields step --}}
+                            <div x-show="currentFormStep.type === 'fields'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <template x-for="f in (currentFormStep.fields || [])" :key="f.key">
                                     <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2' : ''">
                                         <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                 <input
                                                     :type="f.type" x-model="formData[f.key]"
-                                                    class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                                                    class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                 >
                                             </div>
                                         </template>
                                         <template x-if="f.type === 'select'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                <select x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                                                <select x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                     <option value="">—</option>
                                                     <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                 </select>
@@ -274,57 +318,60 @@
                                 </template>
                             </div>
 
-                            <!-- Full-width table fields -->
-                            <template x-for="f in (selectedForm.fields || []).filter(f => f.type === 'table')" :key="f.key">
-                                <div>
-                                    <div class="flex items-center justify-between mb-2.5">
-                                        <label class="block text-xs font-medium text-slate-700" x-text="f.label"></label>
-                                        <span class="text-[11px] text-slate-400" x-text="(formData[f.key] || []).length + ' added'"></span>
-                                    </div>
-                                    <div class="space-y-2.5">
-                                        <template x-for="(row, ri) in (formData[f.key] || [])" :key="ri">
-                                            <div class="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
-                                                <div class="flex items-center justify-between mb-3">
-                                                    <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-700 bg-brand-50 rounded-full pl-1.5 pr-2.5 py-1">
-                                                        <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3"></i>
-                                                        <span x-text="row[f.columns[0].key] || ((f.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
-                                                    </span>
-                                                    <button type="button" @click="formData[f.key].splice(ri, 1)" class="text-slate-300 hover:text-rose-500 transition-colors">
-                                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                                                    <template x-for="col in f.columns" :key="col.key">
-                                                        <div>
-                                                            <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1" x-text="col.label"></label>
-                                                            <input type="text" x-model="row[col.key]" class="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-150">
-                                                        </div>
-                                                    </template>
-                                                </div>
-                                            </div>
-                                        </template>
-
-                                        <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[f.key] || []).length === 0">
-                                            <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i :data-lucide="f.rowIcon || 'list'" class="w-4 h-4"></i></span>
-                                            <p class="text-xs text-slate-400">No entries yet.</p>
+                            {{-- Table step (repeatable rows) --}}
+                            <div x-show="currentFormStep.type === 'table'">
+                                <template x-if="currentFormStep.type === 'table'">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2.5">
+                                            <label class="block text-xs font-medium text-slate-700" x-text="currentFormStep.field.label"></label>
+                                            <span class="text-[11px] text-slate-400" x-text="(formData[currentFormStep.field.key] || []).length + ' added'"></span>
                                         </div>
+                                        <div class="space-y-2.5">
+                                            <template x-for="(row, ri) in (formData[currentFormStep.field.key] || [])" :key="ri">
+                                                <div class="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+                                                    <div class="flex items-center justify-between mb-3">
+                                                        <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-700 bg-brand-50 rounded-full pl-1.5 pr-2.5 py-1">
+                                                            <i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-3 h-3"></i>
+                                                            <span x-text="row[currentFormStep.field.columns[0].key] || ((currentFormStep.field.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
+                                                        </span>
+                                                        <button type="button" @click="formData[currentFormStep.field.key].splice(ri, 1)" class="text-slate-300 hover:text-rose-500 transition-colors">
+                                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                                                        <template x-for="col in currentFormStep.field.columns" :key="col.key">
+                                                            <div>
+                                                                <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1" x-text="col.label"></label>
+                                                                <input type="text" x-model="row[col.key]" class="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
 
-                                        <button
-                                            type="button" @click="addTableRow(f)"
-                                            class="w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-slate-500 hover:text-brand-600 py-2.5 transition-all duration-200"
-                                        >
-                                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                            <span x-text="'Add ' + (f.rowLabel || 'Entry')"></span>
-                                        </button>
+                                            <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[currentFormStep.field.key] || []).length === 0">
+                                                <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-4 h-4"></i></span>
+                                                <p class="text-xs text-slate-400">No entries yet.</p>
+                                            </div>
+
+                                            <button
+                                                type="button" @click="addTableRow(currentFormStep.field)"
+                                                class="w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-slate-500 hover:text-brand-600 py-2.5 transition-all duration-[160ms] ease-standard"
+                                            >
+                                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                                <span x-text="'Add ' + (currentFormStep.field.rowLabel || 'Entry')"></span>
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </template>
+                                </template>
+                            </div>
 
-                            <div x-show="(selectedForm.requirements || []).length">
-                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 mt-2">Requirements</p>
+                            {{-- Requirements step --}}
+                            <div x-show="currentFormStep.type === 'requirements'">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2" x-show="totalFormSteps === 1">Requirements</p>
                                 <div class="space-y-2">
                                     <template x-for="(req, i) in selectedForm.requirements || []" :key="i">
-                                        <div class="rounded-xl border p-3 transition-colors duration-200" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
+                                        <div class="rounded-xl border p-3 transition-colors duration-[160ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
                                             <div class="flex items-center justify-between gap-3">
                                                 <p class="text-xs text-slate-600 flex-1" x-text="req"></p>
                                                 <button type="button" x-show="!attachments[i]" @click="attachments[i] = 'Attached.pdf'" class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap">Attach File</button>
@@ -343,8 +390,15 @@
             </template>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" size="sm" x-show="!doneSubmit" @click="open = false">Cancel</x-ui.button>
-                <x-ui.button size="sm" x-show="!doneSubmit" x-bind:disabled="submitting" @click="submit()">
+                <x-ui.button variant="secondary" size="sm" x-show="!doneSubmit && formStep === 1" @click="open = false">Cancel</x-ui.button>
+                <x-ui.button variant="secondary" size="sm" x-show="!doneSubmit && formStep > 1" @click="formStep--">
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>Back</span>
+                </x-ui.button>
+                <span class="text-xs text-slate-400 mr-auto ml-3" x-show="!doneSubmit && totalFormSteps > 1" x-text="'Step ' + formStep + ' of ' + totalFormSteps"></span>
+                <x-ui.button size="sm" x-show="!doneSubmit && formStep < totalFormSteps" @click="formStep++; $nextTick(() => window.renderIcons?.())">
+                    <span class="inline-flex items-center gap-1.5">Next<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></span>
+                </x-ui.button>
+                <x-ui.button size="sm" x-show="!doneSubmit && formStep >= totalFormSteps" x-bind:disabled="submitting" @click="submit()">
                     <span class="inline-flex items-center gap-1.5">
                         <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>
                         <span x-text="submitting ? 'Submitting…' : 'Submit Form'"></span>

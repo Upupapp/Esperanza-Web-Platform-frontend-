@@ -1,6 +1,29 @@
 @php
     $data            = config('esperanza_constituents');
-    $individuals     = $data['individuals'];
+    $citizenAccounts = collect(config('esperanza_citizens')['accounts'])->keyBy('id');
+    $individuals     = collect($data['individuals'])->map(function ($ind) use ($citizenAccounts) {
+        if (!empty($ind['citizen_account_id']) && $citizenAccounts->has($ind['citizen_account_id'])) {
+            $acct = $citizenAccounts->get($ind['citizen_account_id']);
+            // Access tier mirrors Esperanza-Mobile's 3-tier model: only an
+            // 'Approved' status grants Verified (full Dokyu/Tulong access);
+            // every other status (Pending Review, Under Verification,
+            // Rejected, Draft) is Unverified.
+            $ind['citizen_account'] = [
+                'id'                   => $acct['id'],
+                'email'                => $acct['email'],
+                'mobile'               => $acct['mobile'],
+                'status'               => $acct['status'],
+                'access_level'         => $acct['status'] === 'Approved' ? 'Verified' : 'Unverified',
+                'resident_since'       => $acct['residentSince'],
+                'registered_at'        => $acct['registeredAt'],
+                'id_uploaded'          => $acct['idUploaded'],
+                'face_verified'        => $acct['faceVerified'],
+                'terms_accepted'       => $acct['termsAccepted'],
+                'profile_completeness' => $acct['profileCompleteness'],
+            ];
+        }
+        return $ind;
+    })->all();
     $families        = $data['families'];
     $households      = $data['households'];
     $barangayCoverage= $data['barangayCoverage'];
@@ -51,9 +74,19 @@
         addIndividualStep: 1,
         addFamilyStep:     1,
         addHouseholdStep:  1,
-        individualTab: 'overview',
+        individualTab: 'Overview',
         familyTab:     'overview',
         householdTab:  'overview',
+        get individualTimeline() {
+            const r = this.selectedIndividual; if (!r) return [];
+            const items = [];
+            if (r.created)      items.push({ date: r.created,      label: 'Record Created', desc: 'Resident profile encoded into the system.', icon: 'user-plus',       color: 'blue'   });
+            if (r.last_updated) items.push({ date: r.last_updated, label: 'Last Updated',   desc: 'Profile data last modified.',                icon: 'pencil',           color: 'amber'  });
+            (r.document_requests   || []).forEach(d => items.push({ date: d.submitted, label: 'Dokyu · ' + d.type,  desc: d.status + ' — ' + d.office,  icon: 'file-text',        color: 'indigo' }));
+            (r.assistance_requests || []).forEach(a => items.push({ date: a.submitted, label: 'Tulong · ' + a.type, desc: a.status + ' — ' + a.office,  icon: 'hand-heart',       color: 'rose'   }));
+            (r.incident_reports    || []).forEach(i => items.push({ date: i.date,      label: 'Sakuna · ' + i.type, desc: i.status + ' — ' + i.location, icon: 'triangle-alert',  color: 'orange' }));
+            return items.sort((a, b) => new Date(b.date) - new Date(a.date));
+        },
         get activeStats() {
             const s = this.$store.session.account?.scope;
             return (!s || s === 'Municipal') ? this.municipalStats : (this.barangayStats[s] ?? this.municipalStats);
@@ -104,7 +137,7 @@
                 return true;
             });
         },
-        openIndividual(r) { this.selectedIndividual=r; this.individualTab='overview'; this.showIndividualDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
+        openIndividual(r) { this.selectedIndividual=r; this.individualTab='Overview'; this.showIndividualDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
         openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.$nextTick(()=>window.renderIcons?.()); },
         openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.$nextTick(()=>window.renderIcons?.()); },
         openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
@@ -123,6 +156,30 @@
         },
         completionColor(pct) { return pct>=90?'bg-emerald-500':pct>=70?'bg-amber-500':'bg-rose-500'; },
         completionTextColor(pct) { return pct>=90?'text-emerald-700':pct>=70?'text-amber-700':'text-rose-700'; },
+        onboardingStatus(acct) {
+            if (!acct) return 'Draft';
+            const wizardDone = !!(acct.terms_accepted && acct.id_uploaded && acct.face_verified);
+            if (!wizardDone) return 'Draft';
+            if (acct.status === 'Approved') return 'Completed';
+            if (acct.status === 'Rejected') return 'Rejected';
+            return 'Submitted';
+        },
+        onboardingSteps(acct) {
+            if (!acct) return [];
+            const wizardDone = !!(acct.terms_accepted && acct.id_uploaded && acct.face_verified);
+            const isApproved = acct.status === 'Approved';
+            const isRejected = acct.status === 'Rejected';
+            return [
+                { label: 'Account Created', done: true },
+                { label: 'Personal Information Completed', done: true },
+                { label: 'Terms & Conditions Accepted', done: !!acct.terms_accepted },
+                { label: 'Valid ID Submitted', done: !!acct.id_uploaded },
+                { label: 'Face Verification Completed', done: !!acct.face_verified },
+                { label: 'Information Reviewed', done: wizardDone },
+                { label: 'Submitted for Verification', done: wizardDone },
+                { label: acct.status || 'Pending Review', done: isApproved, rejected: isRejected, current: wizardDone && !isApproved && !isRejected },
+            ];
+        },
         exportCSV(rows, filename) {
             if (!rows.length) { this.$dispatch('toast',{message:'No records to export.',variant:'warning'}); return; }
             const keys=Object.keys(rows[0]).filter(k=>!['services','emergency','member_ids','family_ids'].includes(k));

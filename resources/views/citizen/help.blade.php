@@ -124,7 +124,7 @@
                         <input
                             type="text" x-model="faqSearch"
                             x-bind:placeholder="$store.lang.current === 'en' ? 'Search FAQs...' : 'Maghanap ng tanong...'"
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
                     </div>
                 </div>
@@ -146,12 +146,12 @@
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
                         <button @click="activeIndex = activeIndex === faq.i ? null : faq.i" class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
                             <span class="text-sm font-medium text-slate-700" x-text="faq.q"></span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200" :class="activeIndex === faq.i && 'rotate-180'"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-[160ms] ease-standard" :class="activeIndex === faq.i && 'rotate-180'"></i>
                         </button>
                         <div
                             x-show="activeIndex === faq.i"
                             x-cloak
-                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter="transition duration-[200ms] ease-emphasized"
                             x-transition:enter-start="opacity-0 -translate-y-1"
                             x-transition:enter-end="opacity-100 translate-y-0"
                             class="px-5 pb-4 -mt-1"
@@ -190,7 +190,7 @@
                         <input
                             type="text" x-model="tutorialSearch"
                             x-bind:placeholder="$store.lang.current === 'en' ? 'Search tutorials...' : 'Maghanap ng gabay...'"
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
                     </div>
                 </div>
@@ -209,9 +209,9 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="tut in filteredTutorials" :key="tut.i">
-                    <div @click="watchTutorial(tut)" class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden cursor-pointer">
+                    <div @click="watchTutorial(tut)" class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard overflow-hidden cursor-pointer">
                         <div class="relative h-32 bg-gradient-to-br from-navy-900 to-brand-800 flex items-center justify-center">
-                            <div class="w-11 h-11 rounded-full bg-white/15 backdrop-blur flex items-center justify-center group-hover:scale-110 group-hover:bg-white/25 transition-all duration-300">
+                            <div class="w-11 h-11 rounded-full bg-white/15 backdrop-blur flex items-center justify-center group-hover:scale-110 group-hover:bg-white/25 transition-all duration-[220ms] ease-standard">
                                 <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>
                             </div>
                             <span class="absolute bottom-2.5 right-2.5 text-[11px] font-medium text-white bg-navy-950/70 px-2 py-0.5 rounded-md" x-text="tut.duration"></span>
@@ -245,7 +245,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Kategorya" en="Category" /></label>
-                                <select x-model="ticketForm.category" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                                <select x-model="ticketForm.category" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     <template x-for="c in ticketCategories" :key="c">
                                         <option :value="c" x-text="c"></option>
                                     </template>
@@ -255,7 +255,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Mensahe" en="Message" /></label>
-                            <textarea rows="4" x-model="ticketForm.message" placeholder="Describe your issue in detail" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"></textarea>
+                            <textarea rows="4" x-model="ticketForm.message" placeholder="Describe your issue in detail" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                         </div>
 
                         <div class="rounded-xl border border-slate-200 p-3">
@@ -288,7 +288,7 @@
                             type="button"
                             @click="submitTicket()"
                             :disabled="submitting || !ticketForm.subject || !ticketForm.message"
-                            class="btn-shine inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white px-5 py-2.5 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-200 active:scale-[0.98] disabled:opacity-50"
+                            class="btn-shine inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white px-5 py-2.5 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-50"
                         >
                             <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting" x-cloak></i>
                             <span x-text="$store.lang.current === 'en' ? (submitting ? 'Submitting…' : 'Submit Ticket') : (submitting ? 'Sinusumite…' : 'Isumite ang Ticket')"></span>

@@ -4,16 +4,18 @@
     x-data="toast"
     x-on:toast.window="push($event.detail.message, $event.detail.variant)"
     class="fixed top-5 right-5 z-[100] flex flex-col gap-2 w-[22rem] max-w-[calc(100vw-2.5rem)]"
+    role="status"
+    aria-live="polite"
 >
     <template x-for="item in items" :key="item.id">
         <div
             x-show="true"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-x-4 scale-95"
-            x-transition:enter-end="opacity-100 translate-x-0 scale-100"
-            x-transition:leave="transition ease-in duration-200"
+            x-transition:enter="transition ease-out duration-[260ms]"
+            x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-[160ms]"
             x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0 translate-x-2"
+            x-transition:leave-end="opacity-0 translate-y-1"
             class="flex items-start gap-3 rounded-xl shadow-float border bg-white px-4 py-3.5"
             :class="{
                 'border-emerald-100': item.variant === 'success',

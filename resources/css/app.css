@@ -16,6 +16,46 @@
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
     --font-display: 'Lora', ui-serif, Georgia, serif;
 
+    /*
+      Typography scale — hierarchy discipline ported from the same reference
+      audit as the motion tokens (sizes/weights/line-heights only; Esperanza
+      keeps its own Inter/Lora font identity, nothing here changes that).
+      Consumed via the .type-* classes in @layer components below, since
+      Tailwind's own `text-*` namespace is already claimed for color+size.
+    */
+    --text-display-size: 36px; --text-display-lh: 44px;
+    --text-page-size: 28px;    --text-page-lh: 36px;
+    --text-section-size: 20px; --text-section-lh: 28px;
+    --text-card-size: 16px;    --text-card-lh: 24px;
+    --text-body-size: 14px;    --text-body-lh: 22px;
+    --text-helper-size: 13px;  --text-helper-lh: 20px;
+    --text-label-size: 12px;   --text-label-lh: 16px;
+    --text-kpi-size: 32px;     --text-kpi-lh: 40px;
+    --text-table-header-size: 12px; --text-table-header-lh: 16px;
+    --text-table-cell-size: 13px;   --text-table-cell-lh: 20px;
+    --tracking-eyebrow: 0.08em;
+    --tracking-badge: 0.02em;
+
+    /*
+      Spacing rhythm — this scale (4/8/12/16/20/24/32/48px) is already
+      exactly Tailwind's default numeric spacing scale (1/2/3/4/5/6/8/12),
+      so no new tokens are needed there; the discipline is using those
+      specific stops consistently rather than arbitrary values like 3.5/2.5.
+      Reference: micro=1(4px) compact=2(8px) sm=3(12px) base=4(16px)
+      card=5(20px) section=6(24px) major=8(32px) page=12(48px).
+    */
+
+    /* Component sizing anchors, all WCAG 2.5.5-aware (44px min touch target). */
+    --size-btn-height: 44px;
+    --size-btn-height-compact: 36px;
+    --size-btn-height-lg: 48px;
+    --size-input-height: 44px;
+    --size-badge-height: 26px;
+    --size-icon-sm: 16px;
+    --size-icon-base: 20px;
+    --size-icon-lg: 36px;
+    --size-icon-hero: 56px;
+
     --color-navy-950: #070f24;
     --color-navy-900: #0b1730;
     --color-navy-800: #12203f;
@@ -46,6 +86,32 @@
     --shadow-card-hover: 0 4px 16px -4px rgb(15 23 42 / 0.12), 0 2px 6px -2px rgb(15 23 42 / 0.06);
     --shadow-float: 0 12px 32px -8px rgb(15 23 42 / 0.18);
 
+    /*
+      Motion tokens — interaction-quality reference ported from an external
+      design-system audit (duration/easing discipline only; no colors carried
+      over). Named by what triggers them, not by feel, so usage stays
+      consistent: duration-{instant,micro,card,drawer,page,reveal,meter,
+      analysis,countup,ambient} and ease-{standard,enter,exit,emphasized,
+      scan,spring-soft} are usable directly as Tailwind utilities.
+    */
+    --duration-instant: 80ms;
+    --duration-micro: 160ms;
+    --duration-card: 220ms;
+    --duration-drawer: 260ms;
+    --duration-page: 300ms;
+    --duration-reveal: 400ms;
+    --duration-meter: 600ms;
+    --duration-analysis: 720ms;
+    --duration-countup: 900ms;
+    --duration-ambient: 7000ms;
+
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --ease-scan: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring-soft: cubic-bezier(0.34, 1.56, 0.64, 1);
+
     --animate-fade-in: fade-in 0.4s ease-out both;
     --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
     --animate-shimmer: shimmer 1.8s ease-in-out infinite;
@@ -55,6 +121,9 @@
     --animate-check-pop: check-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     --animate-ring-pulse: ring-pulse 1.1s ease-out infinite;
     --animate-confetti-fall: confetti-fall 2.4s ease-in forwards;
+    --animate-success-pulse: success-pulse 0.3s ease-out both;
+    --animate-chip-pop: chip-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-float-subtle: float-subtle 4s ease-in-out infinite;
 
     @keyframes fade-in {
         from { opacity: 0; }
@@ -90,6 +159,19 @@
         0% { transform: translateY(-40px) rotate(0deg); opacity: 1; }
         100% { transform: translateY(220px) rotate(540deg); opacity: 0; }
     }
+    @keyframes success-pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.04); }
+        100% { transform: scale(1); }
+    }
+    @keyframes chip-pop {
+        from { opacity: 0; transform: scale(0.85); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes float-subtle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
 }
 
 @layer base {
@@ -102,6 +184,26 @@
     [x-cloak] {
         display: none !important;
     }
+
+    /* Single global fallback so every focusable element gets a visible ring
+       even where a component doesn't declare its own focus-visible classes. */
+    :focus-visible {
+        outline: 2px solid var(--color-brand-500);
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+
+    /* One global switch for the whole app: every animation/transition
+       collapses to effectively-instant when the user has asked for reduced
+       motion, so no individual component has to remember to opt out. */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
 }
 
 @layer components {
@@ -110,6 +212,49 @@
         background-image: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%);
         background-size: 400px 100%;
         animation: var(--animate-shimmer);
+    }
+
+    /* Section/card-level loading: skeleton lives inside an already-visible
+       card shell so nothing jumps once real content resolves. */
+    .card-skeleton {
+        @apply bg-white rounded-2xl border border-slate-100 shadow-card p-4 space-y-3;
+    }
+    .table-skeleton-row {
+        @apply flex items-center gap-4 px-4 py-3 border-b border-slate-50 last:border-0;
+    }
+
+    /* Typography hierarchy classes — see --text-* tokens above. Weight is
+       fixed per level (matches the reference discipline: 700 for headings/
+       KPIs, 600 for card titles/labels, 400 for body/helper/table cells). */
+    .type-display     { font-size: var(--text-display-size); line-height: var(--text-display-lh); font-weight: 700; }
+    .type-page-title   { font-size: var(--text-page-size); line-height: var(--text-page-lh); font-weight: 700; }
+    .type-section-title{ font-size: var(--text-section-size); line-height: var(--text-section-lh); font-weight: 700; }
+    .type-card-title    { font-size: var(--text-card-size); line-height: var(--text-card-lh); font-weight: 600; }
+    .type-body          { font-size: var(--text-body-size); line-height: var(--text-body-lh); font-weight: 400; }
+    .type-helper        { font-size: var(--text-helper-size); line-height: var(--text-helper-lh); font-weight: 400; }
+    .type-label         { font-size: var(--text-label-size); line-height: var(--text-label-lh); font-weight: 600; letter-spacing: var(--tracking-badge); }
+    .type-kpi           { font-size: var(--text-kpi-size); line-height: var(--text-kpi-lh); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .type-eyebrow        { font-size: var(--text-label-size); line-height: var(--text-label-lh); font-weight: 600; letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+
+    /* One-shot success glow — fires once on confirmation, never loops
+       (looping box-shadow is flagged as a perf/anxiety risk). */
+    .success-glow {
+        animation: success-glow-ring 0.4s ease-out;
+    }
+    @keyframes success-glow-ring {
+        0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-emerald-500) 35%, transparent); }
+        100% { box-shadow: 0 0 0 8px color-mix(in oklch, var(--color-emerald-500) 0%, transparent); }
+    }
+
+    /* GPU-safe meter/progress fill — scaleX instead of width so it never
+       triggers layout. Pair with a fixed-width track and origin-left. */
+    .meter-fill {
+        transform-origin: left;
+        animation: meter-fill-scale var(--duration-meter, 600ms) var(--ease-scan, ease-out) both;
+    }
+    @keyframes meter-fill-scale {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
     }
     .scrollbar-thin::-webkit-scrollbar {
         width: 6px;

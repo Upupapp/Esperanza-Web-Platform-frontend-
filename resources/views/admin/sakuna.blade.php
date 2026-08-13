@@ -369,7 +369,7 @@
                 <span x-text="opStatus"></span>
                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60" :class="open && 'rotate-180'" style="transition: transform 0.2s"></i>
             </button>
-            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95 -translate-y-1" x-transition:enter-end="opacity-100 scale-100 translate-y-0" class="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-30 py-1.5">
+            <div x-show="open" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95 -translate-y-1" x-transition:enter-end="opacity-100 scale-100 translate-y-0" class="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-30 py-1.5">
                 @foreach(['Normal', 'Monitoring', 'Blue Alert', 'Red Alert', 'Emergency Operations Activated', 'Recovery Operations'] as $s)
                     <button @click="opStatus = '{{ $s }}'; open = false; toast('Operational status set to {{ $s }}.', 'info')" class="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-slate-50" :class="opStatus === '{{ $s }}' ? 'text-brand-600 font-medium bg-brand-50/60' : 'text-slate-600'">{{ $s }}</button>
                 @endforeach
@@ -382,7 +382,7 @@
                 <span x-text="label" class="max-w-48 truncate"></span>
                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
             </button>
-            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-float border border-slate-100 z-30 py-1.5">
+            <div x-show="open" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-float border border-slate-100 z-30 py-1.5">
                 @foreach($periods as $p)
                     <button @click="label = '{{ $p['label'] }}'; selectedPeriod = '{{ $p['id'] }}'; open = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors {{ $p['active'] ? 'text-brand-600 font-medium' : 'text-slate-600' }}">
                         <div class="flex items-center gap-2">
@@ -420,6 +420,7 @@
                         ['key' => 'resources',          'label' => 'Resources',         'icon' => 'truck'],
                         ['key' => 'relief',             'label' => 'Relief & Logistics','icon' => 'package'],
                         ['key' => 'damage-assessment',  'label' => 'Damage',            'icon' => 'clipboard-list'],
+                        ['key' => 'bdrrmc-forms',       'label' => 'BDRRMC Forms',      'icon' => 'file-check'],
                         ['key' => 'alerts',             'label' => 'Alerts',            'icon' => 'bell-ring'],
                         ['key' => 'reports',            'label' => 'Reports',           'icon' => 'chart-bar'],
                     ];
@@ -480,6 +481,11 @@
                 @include('admin.partials.sakuna.tab-damage', ['assessments' => $assessments, 'barangays' => $barangays, 'incidents' => $incidents])
             </div>
 
+            {{-- BDRRMC Forms --}}
+            <div x-show="activeTab === 'bdrrmc-forms'" x-cloak>
+                @include('admin.partials.sakuna.tab-bdrrmc-forms')
+            </div>
+
             {{-- Alerts --}}
             <div x-show="activeTab === 'alerts'" x-cloak>
                 @include('admin.partials.sakuna.tab-alerts', ['alerts' => $alerts, 'barangays' => $barangays])
@@ -494,8 +500,8 @@
     </div>
 
     {{-- ── EOC Activation Confirmation Modal ──────────────────────────────── --}}
-    <div x-show="showEOCConfirm" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" @click.self="showEOCConfirm = false">
-        <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
+    <div x-show="showEOCConfirm" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" @click.self="showEOCConfirm = false">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center flex-shrink-0">
                     <i data-lucide="siren" class="w-6 h-6 text-rose-600"></i>

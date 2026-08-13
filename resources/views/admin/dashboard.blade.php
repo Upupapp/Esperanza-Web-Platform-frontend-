@@ -68,19 +68,26 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-1.5">
+                <div class="flex flex-wrap items-center gap-1.5 lg:max-w-xs xl:max-w-sm lg:justify-end" x-data="{ get myModules() { return modules.filter(m => $store.session.can(m.key)); } }">
                     <span
                         class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1 shrink-0 bg-white/10 text-white border border-white/20"
                     >
                         <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-3 h-3"></i>
                         <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide access' : 'Brgy. ' + $store.session.account?.scope + ' only'"></span>
                     </span>
-                    <template x-for="mod in modules.filter(m => $store.session.can(m.key))" :key="mod.key">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-white/80 text-[10.5px] font-medium border border-white/10">
+                    <template x-for="mod in myModules.slice(0, 3)" :key="mod.key">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-white/80 text-[10.5px] font-medium border border-white/10 shrink-0">
                             <i :data-lucide="mod.icon" class="w-3 h-3"></i>
                             <span x-text="mod.name"></span>
                         </span>
                     </template>
+                    <span
+                        x-show="myModules.length > 3"
+                        x-cloak
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 text-white/60 text-[10.5px] font-medium border border-white/10 shrink-0"
+                        x-text="'+' + (myModules.length - 3) + ' more'"
+                        :title="myModules.slice(3).map(m => m.name).join(', ')"
+                    ></span>
                 </div>
             </div>
         </div>

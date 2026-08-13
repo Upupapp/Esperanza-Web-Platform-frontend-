@@ -229,13 +229,50 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // Progressive-enhancement haptics: fires only for meaningful, user-triggered
+    // confirmations (never on load, scroll, hover, typing, or negative/rejection
+    // states). Feature-detected, reduced-motion-gated, and never throws — every
+    // call site should also carry a visible/textual signal, never rely on this
+    // alone (iOS Safari has no navigator.vibrate at all).
+    Alpine.store('haptics', {
+        enabled: true,
+        canVibrate() {
+            return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+        },
+        prefersReducedMotion() {
+            return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        },
+        fire(pattern) {
+            if (!this.enabled || !this.canVibrate() || this.prefersReducedMotion()) return;
+            try { navigator.vibrate(pattern); } catch { /* never throw */ }
+        },
+        selection() { this.fire([8]); },
+        press() { this.fire([6]); },
+        success() { this.fire([12]); },
+        warning() { this.fire([20]); },
+        actionComplete() { this.fire([8, 30, 8]); },
+        uploadComplete() { this.fire([10, 20, 10]); },
+        submitted() { this.fire([12, 30, 12]); },
+    });
+
+    // Toasts are a status channel, not an alert — auto-dismiss timing gives
+    // the user enough time to actually read before it disappears, and errors
+    // never self-dismiss since the user may still need to act on them.
+    // Never more than 2 on screen at once (oldest drops first).
     Alpine.data('toast', () => ({
         items: [],
         push(message, variant = 'success') {
             const id = Date.now() + Math.random();
+            while (this.items.length >= 2) this.dismiss(this.items[0].id);
             this.items.push({ id, message, variant });
             this.$nextTick(() => window.renderIcons?.());
-            setTimeout(() => this.dismiss(id), 4000);
+
+            if (variant === 'success') Alpine.store('haptics').success();
+            if (variant === 'warning') Alpine.store('haptics').warning();
+
+            if (variant === 'error') return; // stays until the user dismisses it
+            const dismissAfter = variant === 'warning' ? 8000 : 5000;
+            setTimeout(() => this.dismiss(id), dismissAfter);
         },
         dismiss(id) {
             this.items = this.items.filter((item) => item.id !== id);

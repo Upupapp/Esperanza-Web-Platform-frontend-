@@ -103,7 +103,10 @@
                                         class="font-semibold text-navy-900 text-sm leading-tight truncate group-hover:text-brand-600 transition-colors"
                                         x-text="r.name"
                                     ></p>
-                                    <p class="text-xs text-slate-400 mt-0.5" x-text="'ID: ' + r.id"></p>
+                                    <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                                        <span x-text="'ID: ' + r.id"></span>
+                                        <i x-show="r.citizen_account_id" data-lucide="smartphone" class="w-3 h-3 text-brand-500" title="Linked to Citizen Portal account"></i>
+                                    </p>
                                     {{-- Tag chips --}}
                                     <div class="flex flex-wrap gap-1 mt-1.5">
                                         <template x-for="tag in (r.tags || [])" :key="tag">
@@ -161,14 +164,20 @@
                                 <template x-if="r.verification === 'Verified'">
                                     <i data-lucide="shield-check" class="w-3 h-3"></i>
                                 </template>
-                                <template x-if="r.verification === 'Pending'">
-                                    <i data-lucide="clock" class="w-3 h-3"></i>
+                                <template x-if="r.verification === 'Partially Verified'">
+                                    <i data-lucide="shield-half" class="w-3 h-3"></i>
+                                </template>
+                                <template x-if="r.verification === 'For Validation'">
+                                    <i data-lucide="search" class="w-3 h-3"></i>
+                                </template>
+                                <template x-if="r.verification === 'Missing Documents'">
+                                    <i data-lucide="file-x" class="w-3 h-3"></i>
                                 </template>
                                 <template x-if="r.verification === 'Unverified'">
                                     <i data-lucide="shield-x" class="w-3 h-3"></i>
                                 </template>
-                                <template x-if="r.verification === 'For Validation'">
-                                    <i data-lucide="search" class="w-3 h-3"></i>
+                                <template x-if="r.verification === 'Rejected'">
+                                    <i data-lucide="ban" class="w-3 h-3"></i>
                                 </template>
                                 <span x-text="r.verification"></span>
                             </span>
