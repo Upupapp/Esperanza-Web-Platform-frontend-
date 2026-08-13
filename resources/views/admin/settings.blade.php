@@ -64,7 +64,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5">Default Language</label>
-                            <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                            <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <option>English</option>
                                 <option>Filipino</option>
                             </select>
@@ -89,10 +89,10 @@
                                     <button
                                         @click="on = !on"
                                         type="button"
-                                        class="w-10 h-6 rounded-full transition-colors duration-200 relative"
+                                        class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative"
                                         :class="on ? 'bg-brand-600' : 'bg-slate-200'"
                                     >
-                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200" :class="on && 'translate-x-4'"></span>
+                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="on && 'translate-x-4'"></span>
                                     </button>
                                 </div>
                             </label>
@@ -114,7 +114,7 @@
                         <p class="text-sm font-medium text-navy-900">Session Timeout</p>
                         <p class="text-xs text-slate-400 mt-0.5">Automatically sign out inactive sessions.</p>
                     </div>
-                    <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option>15 minutes</option>
                         <option selected>30 minutes</option>
                         <option>1 hour</option>
@@ -180,9 +180,9 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div class="relative">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input type="text" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200 shadow-card">
+                        <input type="text" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                     </div>
-                    <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option>All Modules</option>
                         <option>Dokyu</option>
                         <option>Tulong</option>

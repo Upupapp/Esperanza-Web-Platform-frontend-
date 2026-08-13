@@ -37,7 +37,7 @@
             <input
                 type="text"
                 placeholder="Search residents, requests, barangays..."
-                class="w-52 lg:w-72 pl-10 pr-4 py-2 text-sm rounded-xl bg-slate-100/80 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                class="w-52 lg:w-72 pl-10 pr-4 py-2 text-sm rounded-xl bg-slate-100/80 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
             >
         </div>
 
@@ -52,7 +52,7 @@
 
             <div
                 x-show="open"
-                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter="transition duration-[200ms] ease-emphasized"
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
@@ -91,12 +91,12 @@
                     <span class="block text-sm font-medium text-navy-900 leading-tight truncate" x-text="$store.session.account?.name ?? 'Guest Preview'"></span>
                     <span class="block text-xs text-slate-400 leading-tight truncate" x-text="$store.session.account?.role ?? 'Not signed in'"></span>
                 </span>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 hidden lg:block transition-transform duration-200" :class="open && 'rotate-180'"></i>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 hidden lg:block transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
             </button>
 
             <div
                 x-show="open"
-                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter="transition duration-[200ms] ease-emphasized"
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak

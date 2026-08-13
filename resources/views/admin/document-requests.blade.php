@@ -133,7 +133,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
                 <div x-data="{ open: false }" class="contents">
                     <x-ui.button @click="open = true" variant="secondary" icon="folder-open" size="sm" class="shrink-0">Citizen Documents Storage</x-ui.button>
@@ -230,16 +230,16 @@
                             <div class="flex-1 flex items-center">
                                 <div class="flex flex-col items-center gap-2 text-center">
                                     <span
-                                        class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300"
+                                        class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-[600ms] ease-standard"
                                         :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-500 text-white shadow-sm' : (stepIndex(selected.status) === {{ $i }} ? 'bg-brand-600 text-white shadow-card ring-4 ring-brand-100' : 'bg-slate-100 text-slate-400')"
                                     >
                                         <i data-lucide="check" class="w-4 h-4" x-show="stepIndex(selected.status) > {{ $i }}" x-cloak></i>
                                         <span x-show="stepIndex(selected.status) <= {{ $i }}">{{ $i + 1 }}</span>
                                     </span>
-                                    <span class="text-[11px] max-w-[80px] leading-tight transition-colors duration-300" :class="stepIndex(selected.status) === {{ $i }} ? 'text-navy-900 font-semibold' : 'text-slate-400'">{{ $step }}</span>
+                                    <span class="text-[11px] max-w-[80px] leading-tight transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) === {{ $i }} ? 'text-navy-900 font-semibold' : 'text-slate-400'">{{ $step }}</span>
                                 </div>
                                 @if(!$loop->last)
-                                    <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-300" :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-400' : 'bg-slate-100'"></div>
+                                    <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-400' : 'bg-slate-100'"></div>
                                 @endif
                             </div>
                         @endforeach

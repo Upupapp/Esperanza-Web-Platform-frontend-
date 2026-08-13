@@ -616,7 +616,7 @@
                                                         </template>
                                                     </div>
                                                     <div class="mt-2" x-show="f.allowOther">
-                                                        <input type="text" x-model="otherPurposeText[f.key]" placeholder="Others (please specify)" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                                                        <input type="text" x-model="otherPurposeText[f.key]" placeholder="Others (please specify)" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                     </div>
                                                 </div>
                                             </template>
@@ -631,12 +631,12 @@
                                 <p class="text-[11px] font-medium text-slate-400" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (docs[selectedDoc]?.requirements || []).length"></p>
                             </div>
                             <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
-                                <div class="h-full bg-emerald-400 rounded-full transition-all duration-300" :style="'width:' + (((docs[selectedDoc]?.requirements || []).length ? (Object.keys(attachments).filter(k => attachments[k]).length / (docs[selectedDoc]?.requirements || []).length) : 0) * 100) + '%'"></div>
+                                <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((docs[selectedDoc]?.requirements || []).length ? (Object.keys(attachments).filter(k => attachments[k]).length / (docs[selectedDoc]?.requirements || []).length) : 0) * 100) + '%'"></div>
                             </div>
                             <p class="text-xs text-slate-400 mb-3"><x-ui.t fil="Ikabit mula sa mga file na na-upload mo na, o mag-upload ng bago." en="Attach from your already-uploaded files, or upload a new one." /></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                 <template x-for="(req, i) in docs[selectedDoc]?.requirements || []" :key="i">
-                                    <div class="rounded-xl border p-3 transition-colors duration-200" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
+                                    <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
                                         <div class="flex items-center justify-between gap-3">
                                             <p class="text-xs text-slate-600 flex-1" x-text="req"></p>
                                             <button
@@ -686,7 +686,7 @@
                                                 <div class="space-y-2 mb-4">
                                                     <template x-for="m in paymentMethods" :key="m.key">
                                                         <label
-                                                            class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-200"
+                                                            class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-[220ms] ease-standard"
                                                             :class="paymentMethod === m.key ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                                         >
                                                             <input type="radio" name="payment_method" class="text-brand-600 focus:ring-brand-200" :checked="paymentMethod === m.key" @change="paymentMethod = m.key">
@@ -977,7 +977,7 @@
                                 <div class="flex-1 flex items-center">
                                     <div class="flex flex-col items-center gap-1.5 text-center">
                                         <span
-                                            class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-300"
+                                            class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-[300ms] ease-standard"
                                             :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-500 text-white' : (stepIndex(selectedRequest.status) === i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400')"
                                         >
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
@@ -985,7 +985,7 @@
                                         </span>
                                         <span class="text-[9px] max-w-[60px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-navy-900 font-medium' : 'text-slate-400'" x-text="label"></span>
                                     </div>
-                                    <div class="flex-1 h-0.5 -mt-4 transition-colors duration-300" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
+                                    <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
                                 </div>
                             </template>
                         </div>

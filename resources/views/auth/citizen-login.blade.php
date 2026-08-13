@@ -68,16 +68,16 @@
         <p class="text-slate-500 text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="barangay ? ($store.lang.current === 'en' ? 'Signing in to Brgy. ' + barangay + '.' : 'Nagsa-sign in sa Brgy. ' + barangay + '.') : ($store.lang.current === 'en' ? 'First, tell us which barangay you belong to.' : 'Una, sabihin sa amin kung anong barangay ka.')"></p>
 
         <!-- Step 1: choose barangay -->
-        <div x-show="!barangay" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
+        <div x-show="!barangay" x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
             <div class="relative mb-2.5">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input type="text" x-model="barangaySearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                <input type="text" x-model="barangaySearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
             </div>
             <div class="grid grid-cols-2 gap-1.5 max-h-64 overflow-y-auto scrollbar-thin pr-0.5">
                 <template x-for="b in filteredBarangays" :key="b">
                     <button
                         type="button" @click="chooseBarangay(b)"
-                        class="flex items-center gap-1.5 text-left rounded-xl border border-slate-200 bg-white hover:border-brand-300 hover:bg-brand-50/50 hover:-translate-y-0.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-brand-700 shadow-sm hover:shadow-card transition-all duration-150"
+                        class="flex items-center gap-1.5 text-left rounded-xl border border-slate-200 bg-white hover:border-brand-300 hover:bg-brand-50/50 hover:-translate-y-0.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-brand-700 shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard"
                     >
                         <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i><span class="truncate" x-text="b"></span>
                     </button>
@@ -90,7 +90,7 @@
         </div>
 
         <!-- Step 2: credentials, scoped to the chosen barangay -->
-        <div x-show="barangay" x-cloak x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
+        <div x-show="barangay" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
             <button
                 type="button" @click="barangay = ''; barangaySearch = ''"
                 class="w-full flex items-center justify-between gap-2 rounded-xl border border-brand-200 bg-brand-50/60 px-3.5 py-2.5 text-left hover:bg-brand-50 transition-colors mb-3.5 animate-fade-up"
@@ -112,7 +112,7 @@
                             :type="visible ? 'text' : 'password'"
                             name="password" id="password" placeholder="••••••••" required
                             x-model="password"
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
                         <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                             <i data-lucide="eye" class="w-[18px] h-[18px]" x-show="!visible"></i>
@@ -128,14 +128,14 @@
                     </div>
                 </div>
 
-                <div x-show="error" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
+                <div x-show="error" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
                     <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>
                     <p class="text-xs text-rose-600" x-text="error"></p>
                 </div>
 
                 <button
                     type="submit"
-                    class="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-200 active:scale-[0.98] disabled:opacity-70 animate-fade-up"
+                    class="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-70 animate-fade-up"
                     style="animation-delay: 120ms"
                     :disabled="loading"
                 >
@@ -151,15 +151,15 @@
         <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 overflow-hidden animate-fade-up" style="animation-delay: 230ms">
             <button type="button" @click="showSamples = !showSamples" class="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-left">
                 <span class="flex items-center gap-2 text-xs font-medium text-slate-600"><i data-lucide="flask-conical" class="w-3.5 h-3.5 text-slate-400"></i><x-ui.t fil="Subukan ang sample na account" en="Try a sample account (preview only)" /></span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="showSamples && 'rotate-180'"></i>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-[160ms] ease-standard" :class="showSamples && 'rotate-180'"></i>
             </button>
-            <div x-show="showSamples" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+            <div x-show="showSamples" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
                 <p class="px-3.5 pb-2 text-[10.5px] text-slate-400" x-show="!barangay"><x-ui.t fil="Awtomatikong mapipili ang barangay ayon sa account na pipiliin mo." en="Picking an account below will select its barangay for you." /></p>
                 <div class="px-3.5 pb-3.5 space-y-1.5 max-h-52 overflow-y-auto scrollbar-thin">
                     <template x-for="account in filteredAccounts" :key="account.id">
                         <button
                             type="button" @click="fill(account)"
-                            class="w-full text-left rounded-lg border px-3 py-2 transition-all duration-150"
+                            class="w-full text-left rounded-lg border px-3 py-2 transition-all duration-[160ms] ease-standard"
                             :class="identifier.toLowerCase() === account.id.toLowerCase() ? 'border-brand-400 bg-white ring-2 ring-brand-100' : 'border-slate-200 bg-white hover:border-slate-300'"
                         >
                             <span class="block text-xs font-semibold text-navy-800" x-text="account.fullName"></span>

@@ -141,7 +141,7 @@
 
                 <button
                     type="submit"
-                    class="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-200 active:scale-[0.98] disabled:opacity-70 animate-fade-up"
+                    class="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-70 animate-fade-up"
                     style="animation-delay: 120ms"
                     :disabled="loading"
                 >
@@ -158,15 +158,15 @@
         <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 overflow-hidden animate-fade-up" style="animation-delay: 260ms">
             <button type="button" @click="showSamples = !showSamples" class="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-left">
                 <span class="flex items-center gap-2 text-xs font-medium text-slate-600"><i data-lucide="flask-conical" class="w-3.5 h-3.5 text-slate-400"></i>Try a sample account (preview only)</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="showSamples && 'rotate-180'"></i>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-[160ms] ease-standard" :class="showSamples && 'rotate-180'"></i>
             </button>
-            <div x-show="showSamples" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+            <div x-show="showSamples" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
                 <p class="px-3.5 pb-2 text-[10.5px] text-slate-400" x-show="!scope">Picking an account below will select its access scope for you.</p>
                 <div class="px-3.5 pb-3.5 grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-thin">
                     <template x-for="account in filteredAccounts" :key="account.id">
                         <button
                             type="button" @click="fill(account)"
-                            class="text-left rounded-lg border px-2.5 py-2 transition-all duration-150"
+                            class="text-left rounded-lg border px-2.5 py-2 transition-all duration-[160ms] ease-standard"
                             :class="employeeId.toLowerCase() === account.id.toLowerCase() ? 'border-navy-400 bg-white ring-2 ring-navy-100' : 'border-slate-200 bg-white hover:border-slate-300'"
                         >
                             <span class="block text-[11px] font-mono font-semibold text-navy-800" x-text="account.id"></span>

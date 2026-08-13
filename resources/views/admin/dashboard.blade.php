@@ -102,12 +102,12 @@
                     >
                         <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
                         <span x-text="range"></span>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open && 'rotate-180'"></i>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
                     </button>
                     <div
                         x-show="open"
                         x-cloak
-                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter="transition duration-[200ms] ease-emphasized"
                         x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                         class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-30 origin-top-right py-1.5"
@@ -147,7 +147,7 @@
         </div>
 
         <!-- Real content -->
-        <div x-show="ready" x-cloak x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="ready" x-cloak x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
             <!-- KPI row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">

@@ -75,10 +75,10 @@
                                     <button
                                         @click="on = !on"
                                         type="button"
-                                        class="w-10 h-6 rounded-full transition-colors duration-200 relative"
+                                        class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative"
                                         :class="on ? 'bg-brand-600' : 'bg-slate-200'"
                                     >
-                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200" :class="on && 'translate-x-4'"></span>
+                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="on && 'translate-x-4'"></span>
                                     </button>
                                 </div>
                             </label>
@@ -164,7 +164,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Time Zone" en="Time Zone" /></label>
-                            <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                            <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <option>(GMT+8:00) Manila</option>
                             </select>
                         </div>

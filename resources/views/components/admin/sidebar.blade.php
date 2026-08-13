@@ -9,7 +9,7 @@
 ></div>
 
 <aside
-    class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-navy-900 text-white shrink-0 w-64 transition-transform duration-300 ease-out -translate-x-full lg:translate-x-0"
+    class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-navy-900 text-white shrink-0 w-64 transition-transform duration-[260ms] ease-standard -translate-x-full lg:translate-x-0"
     :class="[collapsed ? 'lg:w-[76px]' : 'lg:w-64', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
 >
     <div class="flex items-center gap-2.5 px-4 h-16 border-b border-white/10 shrink-0">
@@ -60,7 +60,7 @@
             @click="collapsed = !collapsed"
             class="mt-0.5 w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"
         >
-            <i data-lucide="panel-left-close" class="w-4 h-4 transition-transform duration-300" :class="collapsed && 'rotate-180'"></i>
+            <i data-lucide="panel-left-close" class="w-4 h-4 transition-transform duration-[160ms] ease-standard" :class="collapsed && 'rotate-180'"></i>
             <span x-show="!collapsed">Collapse</span>
         </button>
     </div>
