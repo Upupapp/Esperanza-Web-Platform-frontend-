@@ -58,6 +58,17 @@ document.addEventListener('alpine:init', () => {
             if (!['department_head', 'department_staff'].includes(this.account.roleKey)) return true;
             return this.account.dept === office;
         },
+        // Report-download gate: true if the account has 'export' on any
+        // Reports & Analytics submodule (rep_population/assistance/document/
+        // financial). Matches config/esperanza_rbac.php's 'reports' grant —
+        // Super Admin, Municipal Admin, Department Head, and Records Officer
+        // get it via the 'full'/'view_export' preset; Information Officer
+        // (view-only) and everyone else without the reports module do not.
+        canExportReports() {
+            if (!this.account) return true;
+            const perms = this.account.permissions || {};
+            return ['rep_population', 'rep_assistance', 'rep_document', 'rep_financial'].some((k) => (perms[k] || []).includes('export'));
+        },
         initials() {
             if (!this.account) return 'GP';
             return this.account.name

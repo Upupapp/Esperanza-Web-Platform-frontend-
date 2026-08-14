@@ -394,7 +394,14 @@
                                 <p class="text-xs text-slate-400" x-text="(selectedRole.users > 999 ? selectedRole.users.toLocaleString() : selectedRole.users) + ' personnel assigned'"></p>
                             </div>
                         </div>
-                        <x-ui.button size="sm" icon="save" x-show="selectedRole.editable" x-bind:disabled="!dirty" @click="savePerms()">Save Changes</x-ui.button>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <x-ui.button
+                                variant="secondary" size="sm" icon="download"
+                                x-show="$store.session.canExportReports()"
+                                @click="$dispatch('toast', { message: 'Downloading permission report for ' + selectedRole.name + ' — frontend preview only.', variant: 'default' })"
+                            >Download Report</x-ui.button>
+                            <x-ui.button size="sm" icon="save" x-show="selectedRole.editable" x-bind:disabled="!dirty" @click="savePerms()">Save Changes</x-ui.button>
+                        </div>
                     </div>
                     <p class="text-xs text-slate-500 mt-3 leading-relaxed" x-text="selectedRole.desc"></p>
                 </div>
