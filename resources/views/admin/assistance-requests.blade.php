@@ -299,7 +299,31 @@
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="'Brgy. ' + selected.barangay"></p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2.5 px-4 py-3 sm:col-span-2">
+                            <div class="flex items-center gap-2.5 px-4 py-3">
+                                <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="folder" class="w-4 h-4"></i></span>
+                                <div class="min-w-0">
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Category</p>
+                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.category"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 px-4 py-3">
+                                <span
+                                    class="w-8 h-8 rounded-lg border flex items-center justify-center shrink-0"
+                                    :class="{ 'bg-brand-50 text-brand-600 border-brand-100': selected.level === 'Municipal', 'bg-purple-50 text-purple-600 border-purple-100': selected.level === 'Multi-Office' }"
+                                ><i data-lucide="route" class="w-4 h-4"></i></span>
+                                <div class="min-w-0">
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Processing Level</p>
+                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.level"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 px-4 py-3">
+                                <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user-check" class="w-4 h-4"></i></span>
+                                <div class="min-w-0">
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Assigned Personnel</p>
+                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.assigned || 'Unassigned'"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="calendar" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
                                     <p class="text-[10px] text-slate-400 uppercase tracking-wide">Submitted</p>
@@ -307,6 +331,17 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-between gap-2 mt-3"
+                        x-show="!selected.assigned && (!$store.session.account || ['department_head', 'municipal_admin', 'super_admin'].includes($store.session.account?.roleKey))"
+                    >
+                        <p class="text-xs text-slate-400">This case hasn't been routed to a processor yet.</p>
+                        <x-ui.button
+                            variant="secondary" size="sm" icon="user-plus"
+                            @click="selected.assigned = $store.session.account?.name || 'You'; $dispatch('toast', { message: 'Assigned to yourself.', variant: 'success' })"
+                        >Assign to me</x-ui.button>
                     </div>
                 </div>
             </template>
