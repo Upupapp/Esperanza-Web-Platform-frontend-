@@ -145,7 +145,7 @@
                 @endforeach
 
                 <div class="flex flex-col items-center text-center py-12" x-show="visibleCount === 0">
-                    <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="inbox" class="w-5 h-5"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="inbox" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang abisong tumutugma dito." en="No notifications here." /></p>
                     <p class="text-xs text-slate-400 mt-0.5"><x-ui.t fil="Subukan ang ibang kategorya sa itaas." en="Try a different category above." /></p>
                 </div>

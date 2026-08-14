@@ -183,7 +183,7 @@
             </template>
 
             <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="selectedEvents.length === 0">
-                <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="calendar-x" class="w-5 h-5"></i></span>
+                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="calendar-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kaganapan sa petsang ito." en="No events on this date." /></p>
             </div>
         </div>

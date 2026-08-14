@@ -119,7 +119,7 @@
     {{-- ══════════════════════════════════════ 1. PROFILE OF EVACUEES ══════════════════════════════════════ --}}
     <template x-if="openForm === 'evacuees'">
     <div style="position: fixed; inset: 0; z-index: 50;">
-        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-slate-900/50 backdrop-blur-sm"></div>
+        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -214,7 +214,7 @@
     {{-- ══════════════════════════════════ 2. HUMAN, HOUSING & FLOODING ══════════════════════════════════ --}}
     <template x-if="openForm === 'human-housing'">
     <div style="position: fixed; inset: 0; z-index: 50;">
-        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-slate-900/50 backdrop-blur-sm"></div>
+        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -311,7 +311,7 @@
     {{-- ══════════════════════════════════════ 3. AGRICULTURE DAMAGES ══════════════════════════════════════ --}}
     <template x-if="openForm === 'agriculture'">
     <div style="position: fixed; inset: 0; z-index: 50;">
-        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-slate-900/50 backdrop-blur-sm"></div>
+        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -396,7 +396,7 @@
     {{-- ══════════════════════════════════════ 4. FISHING DAMAGES ══════════════════════════════════════ --}}
     <template x-if="openForm === 'fishing'">
     <div style="position: fixed; inset: 0; z-index: 50;">
-        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-slate-900/50 backdrop-blur-sm"></div>
+        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -467,7 +467,7 @@
     {{-- ══════════════════════════════════════ 5. BUSINESS DAMAGES ══════════════════════════════════════ --}}
     <template x-if="openForm === 'business'">
     <div style="position: fixed; inset: 0; z-index: 50;">
-        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-slate-900/50 backdrop-blur-sm"></div>
+        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -557,7 +557,7 @@
     {{-- ══════════════════════════════════════ 6. RELIEF DISTRIBUTION SHEET ══════════════════════════════════════ --}}
     <template x-if="openForm === 'rds'">
     <div style="position: fixed; inset: 0; z-index: 50;">
-        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-slate-900/50 backdrop-blur-sm"></div>
+        <div @click="openForm = null" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">

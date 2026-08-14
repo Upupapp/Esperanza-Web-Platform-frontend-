@@ -284,7 +284,7 @@
 <div
     x-show="showCreateAlert"
     x-cloak
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
     @click.self="showCreateAlert = false; alertComposerStep = 1"
     x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"

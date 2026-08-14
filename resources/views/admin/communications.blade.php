@@ -263,7 +263,7 @@
                     </div>
                 </template>
                 <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filteredAnnouncements.length === 0">
-                    <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No Balita posts match these filters.</p>
                 </div>
             </div>
@@ -464,7 +464,7 @@
                     </div>
                 </template>
                 <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filteredCommunityPosts.length === 0">
-                    <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No community posts match these filters.</p>
                 </div>
             </div>
@@ -601,7 +601,7 @@
                     </div>
                 </template>
                 <div class="flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filteredBlotter.length === 0">
-                    <span class="w-11 h-11 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No blotter entries match your filters.</p>
                 </div>
             </div>
@@ -610,7 +610,7 @@
         <!-- Log Blotter Entry Modal -->
         <div x-show="showAddBlotter" x-cloak
             x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" @click.self="showAddBlotter = false">
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm" @click.self="showAddBlotter = false">
             <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                 class="bg-white rounded-2xl shadow-float w-full max-w-lg">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">

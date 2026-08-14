@@ -555,7 +555,7 @@
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
     @click.self="showIncidentDetail = false"
     @keydown.escape.window="showIncidentDetail = false"
 >

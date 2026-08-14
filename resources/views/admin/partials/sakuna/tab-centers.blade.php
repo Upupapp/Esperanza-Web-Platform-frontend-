@@ -280,7 +280,7 @@
 {{-- CENTER DETAIL MODAL                                                                    --}}
 {{-- ────────────────────────────────────────────────────────────────────────────────────── --}}
 <div x-show="showCenterDetail" x-cloak
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
     @click.self="showCenterDetail = false"
     x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
@@ -662,7 +662,7 @@
 {{-- OPEN CENTER CONFIRMATION MODAL                                                         --}}
 {{-- ────────────────────────────────────────────────────────────────────────────────────── --}}
 <div x-show="showOpenCenterConfirm" x-cloak
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
     @click.self="showOpenCenterConfirm = false"
     x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
@@ -709,7 +709,7 @@
 {{-- CLOSE CENTER CONFIRMATION MODAL                                                        --}}
 {{-- ────────────────────────────────────────────────────────────────────────────────────── --}}
 <div x-show="showCloseCenterConfirm" x-cloak
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
     @click.self="showCloseCenterConfirm = false"
     x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
@@ -780,7 +780,7 @@
 {{-- ────────────────────────────────────────────────────────────────────────────────────── --}}
 <div x-show="showCreateCenter" x-cloak
     x-effect="showCreateCenter && (centerStep = 1)"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
     @click.self="showCreateCenter = false"
     x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
