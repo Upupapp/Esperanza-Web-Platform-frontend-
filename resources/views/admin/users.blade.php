@@ -41,6 +41,7 @@
             <button @click="tab = 'personnel'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'personnel' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="user-cog" class="w-3.5 h-3.5"></i>Personnel</button>
             <button @click="tab = 'roles'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'roles' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>Roles</button>
             <button @click="tab = 'permissions'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'permissions' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="key-round" class="w-3.5 h-3.5"></i>Permissions</button>
+            <button @click="tab = 'matrix'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'matrix' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="table-properties" class="w-3.5 h-3.5"></i>Dokyu &amp; Tulong Matrix</button>
         </div>
 
         {{-- ============================= PERSONNEL ============================= --}}
@@ -446,6 +447,68 @@
                     </div>
                     <p class="text-[11px] text-slate-400" x-show="accessedModules().length === 0">No module access granted.</p>
                 </div>
+            </div>
+        </div>
+
+        {{-- ============================= DOKYU & TULONG MATRIX ============================= --}}
+        <div x-show="tab === 'matrix'" x-cloak>
+            <div class="mb-4">
+                <p class="text-sm font-semibold text-navy-900">Role &times; Module &times; Scope &times; Permission</p>
+                <p class="text-xs text-slate-500 mt-0.5 max-w-2xl">Read-only reference showing how each of the 8 system roles is authorized across Dokyu and Tulong — the grant level, how row visibility is scoped, and which of the key routing actions each role can take. Built from the existing role/permission configuration; to change an actual grant, use the Permissions tab.</p>
+            </div>
+
+            <x-ui.table>
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/60">
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Role</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Dokyu / Tulong Grant</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Scope</th>
+                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assign</th>
+                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Review</th>
+                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Approve</th>
+                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reject</th>
+                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Release</th>
+                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reports</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        @php
+                            $matrixRows = [
+                                ['role' => 'Super Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
+                                ['role' => 'Municipal Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
+                                ['role' => 'Department Head', 'grant' => 'View + Edit + Review/Approve/Reject/Release', 'scope' => 'Own office', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
+                                ['role' => 'Department Staff', 'grant' => 'View + Edit (process)', 'scope' => 'Own office', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
+                                ['role' => 'Front Desk Officer', 'grant' => 'View + Edit (intake only)', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
+                                ['role' => 'Records Officer', 'grant' => 'View + Edit, Civil Registry only', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => true],
+                                ['role' => 'Barangay Secretary', 'grant' => 'View + Edit + Review/Approve/Release, Barangay Certificates only', 'scope' => 'Own barangay', 'assign' => false, 'review' => true, 'approve' => true, 'reject' => false, 'release' => true, 'reports' => false],
+                                ['role' => 'Citizen', 'grant' => 'Own requests only', 'scope' => 'Own records only', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
+                            ];
+                        @endphp
+                        @foreach($matrixRows as $row)
+                            <tr class="hover:bg-slate-50/70 transition-colors">
+                                <td class="px-4 py-3 font-medium text-navy-900 whitespace-nowrap">{{ $row['role'] }}</td>
+                                <td class="px-4 py-3 text-slate-500 max-w-xs">{{ $row['grant'] }}</td>
+                                <td class="px-4 py-3 text-slate-500 whitespace-nowrap">{{ $row['scope'] }}</td>
+                                @foreach(['assign', 'review', 'approve', 'reject', 'release', 'reports'] as $action)
+                                    <td class="px-4 py-3 text-center">
+                                        @if($row[$action])
+                                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 inline-block"></i>
+                                        @else
+                                            <span class="text-slate-300">&mdash;</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </x-ui.table>
+
+            <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    <strong class="text-slate-700">Report downloads</strong> stay restricted to roles with an existing reporting responsibility (Municipal Administrator, Records Officer), plus Department Head gains it newly &mdash; scoped to their own department's data, not municipality-wide. Department Staff and Front Desk do not get report download, per the least-privilege principle: a user who can view operational requests doesn't automatically need export/report access.
+                </p>
             </div>
         </div>
 
