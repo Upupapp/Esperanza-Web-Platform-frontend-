@@ -98,7 +98,7 @@
                 {{-- ── Side nav ── --}}
                 <div class="w-full sm:w-48 shrink-0 flex flex-row sm:flex-col gap-0.5 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50/60 p-2 sm:p-2.5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto scrollbar-thin">
                     <template x-for="tab in [
-                        {id:'overview',icon:'layout-list',label:'Overview'},
+                        {id:'overview',icon:'layout-dashboard',label:'Overview'},
                         {id:'members',icon:'users',label:'Members',count:selectedFamily?.member_count},
                         {id:'programs',icon:'heart-handshake',label:'Programs'},
                         {id:'history',icon:'history',label:'History'}
@@ -132,27 +132,27 @@
                                 <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Family Details</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i> Family Type</dt>
+                                        <dt class="text-xs text-slate-500">Family Type</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.family_type"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> Barangay</dt>
+                                        <dt class="text-xs text-slate-500">Barangay</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.barangay"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="milestone" class="w-3.5 h-3.5 text-slate-400"></i> Sitio / Purok</dt>
+                                        <dt class="text-xs text-slate-500">Sitio / Purok</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.sitio || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5 text-slate-400"></i> Household ID</dt>
+                                        <dt class="text-xs text-slate-500">Household ID</dt>
                                         <dd class="text-xs font-semibold text-blue-600" x-text="selectedFamily.household_id || 'Unlinked'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i> Head of Family</dt>
+                                        <dt class="text-xs text-slate-500">Head of Family</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.head_name || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i> Member Count</dt>
+                                        <dt class="text-xs text-slate-500">Member Count</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.member_count"></dd>
                                     </div>
                                 </dl>

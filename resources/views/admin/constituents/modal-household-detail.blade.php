@@ -46,8 +46,8 @@
                                     class="transition-all duration-[600ms] ease-standard"
                                 />
                             </svg>
-                            <div class="absolute inset-2 rounded-full bg-white/10 flex items-center justify-center text-white">
-                                <i data-lucide="house" class="w-7 h-7"></i>
+                            <div class="absolute inset-2 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase">
+                                <span x-text="(selectedHousehold?.label || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('')"></span>
                             </div>
                         </div>
                         <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap">
@@ -97,7 +97,7 @@
                 {{-- ── Side nav ── --}}
                 <div class="w-full sm:w-48 shrink-0 flex flex-row sm:flex-col gap-0.5 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50/60 p-2 sm:p-2.5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto scrollbar-thin">
                     <template x-for="tab in [
-                        {id:'overview',icon:'layout-list',label:'Overview'},
+                        {id:'overview',icon:'layout-dashboard',label:'Overview'},
                         {id:'members',icon:'users',label:'Members',count:selectedHousehold?.member_count},
                         {id:'amenities',icon:'plug-zap',label:'Amenities'},
                         {id:'programs',icon:'heart-handshake',label:'Programs'},
@@ -131,31 +131,31 @@
                             <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Location & Identification</h4>
                             <dl class="space-y-2.5">
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> Address</dt>
+                                    <dt class="text-xs text-slate-500">Address</dt>
                                     <dd class="text-xs font-semibold text-navy-900 text-right" x-text="selectedHousehold.address || '—'"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="hash" class="w-3.5 h-3.5 text-slate-400"></i> Household ID</dt>
+                                    <dt class="text-xs text-slate-500">Household ID</dt>
                                     <dd class="text-xs font-mono font-semibold text-navy-900" x-text="selectedHousehold.id"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> Barangay</dt>
+                                    <dt class="text-xs text-slate-500">Barangay</dt>
                                     <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.barangay"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="milestone" class="w-3.5 h-3.5 text-slate-400"></i> Sitio / Purok</dt>
+                                    <dt class="text-xs text-slate-500">Sitio / Purok</dt>
                                     <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.sitio || '—'"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i> Head of Household</dt>
+                                    <dt class="text-xs text-slate-500">Head of Household</dt>
                                     <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.head_name || '—'"></dd>
                                 </div>
                                 <div class="flex justify-between items-center gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i> Total Members</dt>
+                                    <dt class="text-xs text-slate-500">Total Members</dt>
                                     <dd class="text-xs font-bold text-navy-900" x-text="selectedHousehold.member_count"></dd>
                                 </div>
                                 <div class="flex justify-between items-center gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i> Family Count</dt>
+                                    <dt class="text-xs text-slate-500">Family Count</dt>
                                     <dd class="text-xs font-bold text-navy-900" x-text="selectedHousehold.family_count"></dd>
                                 </div>
                             </dl>
@@ -167,15 +167,15 @@
                                 <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Dwelling & Tenure</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400"></i> Dwelling Type</dt>
+                                        <dt class="text-xs text-slate-500">Dwelling Type</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.dwelling_type || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="key" class="w-3.5 h-3.5 text-slate-400"></i> Housing Tenure</dt>
+                                        <dt class="text-xs text-slate-500">Housing Tenure</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.housing_tenure || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="waves-horizontal" class="w-3.5 h-3.5 text-slate-400"></i> Flood Risk</dt>
+                                        <dt class="text-xs text-slate-500">Flood Risk</dt>
                                         <dd>
                                             <span
                                                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
@@ -189,7 +189,7 @@
                                         </dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500 flex items-center gap-1.5"><i data-lucide="triangle-alert" class="w-3.5 h-3.5 text-slate-400"></i> Hazard Zone</dt>
+                                        <dt class="text-xs text-slate-500">Hazard Zone</dt>
                                         <dd class="text-xs font-semibold text-navy-900 text-right" x-text="selectedHousehold.hazard_zone || '—'"></dd>
                                     </div>
                                 </dl>
