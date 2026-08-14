@@ -73,12 +73,9 @@
                     </select>
                 </div>
 
-                <button
-                    type="button" @click="next()"
-                    class="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98]"
-                >
-                    <x-ui.t fil="Susunod" en="Continue" /> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </button>
+                <x-ui.button type="button" @click="next()" size="lg" class="w-full" icon="arrow-right" iconPosition="right">
+                    <x-ui.t fil="Susunod" en="Continue" />
+                </x-ui.button>
             </div>
 
             <!-- Step 2: Address -->
@@ -100,18 +97,12 @@
                 <x-ui.input name="address" label="Complete Address" icon="house" placeholder="Purok 3, Sitio Mabuhay" required />
 
                 <div class="flex items-center gap-2.5">
-                    <button
-                        type="button" @click="back()"
-                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 py-3 px-5 text-sm font-medium transition-all duration-[160ms] ease-standard active:scale-[0.98]"
-                    >
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik" en="Back" />
-                    </button>
-                    <button
-                        type="button" @click="next()"
-                        class="btn-shine flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98]"
-                    >
-                        <x-ui.t fil="Susunod" en="Continue" /> <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </button>
+                    <x-ui.button type="button" @click="back()" variant="secondary" size="lg" icon="arrow-left">
+                        <x-ui.t fil="Bumalik" en="Back" />
+                    </x-ui.button>
+                    <x-ui.button type="button" @click="next()" size="lg" class="flex-1" icon="arrow-right" iconPosition="right">
+                        <x-ui.t fil="Susunod" en="Continue" />
+                    </x-ui.button>
                 </div>
             </div>
 
@@ -127,23 +118,16 @@
                 </label>
 
                 <div class="flex items-center gap-2.5">
-                    <button
-                        type="button" @click="back()" :disabled="loading"
-                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 py-3.5 px-5 text-sm font-medium transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
-                    >
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik" en="Back" />
-                    </button>
-                    <button
-                        type="submit"
-                        class="btn-shine flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white py-3.5 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-70"
-                        :disabled="loading"
-                    >
+                    <x-ui.button type="button" @click="back()" x-bind:disabled="loading" variant="secondary" size="lg" icon="arrow-left">
+                        <x-ui.t fil="Bumalik" en="Back" />
+                    </x-ui.button>
+                    <x-ui.button type="submit" size="lg" class="flex-1" x-bind:disabled="loading">
                         <svg x-show="loading" x-cloak class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
                         <span x-text="$store.lang.current === 'en' ? (loading ? 'Creating your account…' : 'Create Account') : (loading ? 'Ginagawa ang account…' : 'Gumawa ng Account')"></span>
-                    </button>
+                    </x-ui.button>
                 </div>
             </div>
         </form>

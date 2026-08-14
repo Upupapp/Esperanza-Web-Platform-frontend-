@@ -133,18 +133,19 @@
                     <p class="text-xs text-rose-600" x-text="error"></p>
                 </div>
 
-                <button
+                <x-ui.button
                     type="submit"
-                    class="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-70 animate-fade-up"
+                    size="lg"
+                    class="w-full animate-fade-up"
                     style="animation-delay: 120ms"
-                    :disabled="loading"
+                    x-bind:disabled="loading"
                 >
                     <svg x-show="loading" x-cloak class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
                     <span x-text="$store.lang.current === 'en' ? (loading ? 'Signing in…' : 'Sign In') : (loading ? 'Nagsa-sign in…' : 'Mag-sign In')"></span>
-                </button>
+                </x-ui.button>
             </form>
         </div>
 

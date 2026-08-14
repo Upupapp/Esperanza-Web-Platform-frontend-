@@ -141,7 +141,7 @@
 
                 <button
                     type="submit"
-                    class="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-70 animate-fade-up"
+                    class="btn-shine w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3.5 text-sm font-medium select-none shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-300 active:duration-[80ms] active:scale-[0.985] disabled:opacity-50 disabled:pointer-events-none animate-fade-up"
                     style="animation-delay: 120ms"
                     :disabled="loading"
                 >
