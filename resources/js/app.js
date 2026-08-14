@@ -49,6 +49,15 @@ document.addEventListener('alpine:init', () => {
             if (this.account.scope === 'Municipal') return true;
             return this.account.scope === barangay;
         },
+        // Department-based row visibility for Dokyu/Tulong, mirroring inScope()
+        // above. Only Department Head / Department Staff are office-restricted —
+        // Front Desk, Records Officer, Municipal/Super Admin see across offices
+        // (per the Dokyu & Tulong routing plan's role x scope matrix).
+        inDeptScope(office) {
+            if (!this.account) return true;
+            if (!['department_head', 'department_staff'].includes(this.account.roleKey)) return true;
+            return this.account.dept === office;
+        },
         initials() {
             if (!this.account) return 'GP';
             return this.account.name
