@@ -33,6 +33,40 @@
         ['ref' => 'DR-2026-2252', 'citizen' => 'Cherry Ann Sarmiento', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Villa)', 'barangay' => 'Villa', 'submitted' => 'Jul 10, 2026', 'status' => 'Ready for Release'],
     ];
 
+    // Classification lookup for the mock request rows above -- keyed by the
+    // exact (sometimes shortened) 'type' string already used in $requests, per
+    // the Dokyu & Tulong routing plan. Kept centralized here rather than
+    // hand-edited per row so every row's category/office/level stays correct
+    // and traceable to one source instead of 27 separate literals.
+    $dokyuClassification = [
+        'Barangay Residency' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Barangay Business Clearance' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Barangay Indigency' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'First Time Jobseeker Certificate (RA 11261)' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Barangay Certification (Registration of Death)' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Barangay Certification (Late Registration)' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Barangay Clearance' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Business Permit (New)' => ['category' => 'Business & Permits', 'office' => 'Business Permits & Licensing Office', 'level' => 'Multi-Office'],
+        'Business Permit Renewal' => ['category' => 'Business & Permits', 'office' => 'Business Permits & Licensing Office', 'level' => 'Multi-Office'],
+        'Cedula' => ['category' => 'Tax & Property', 'office' => "Municipal Treasurer's Office", 'level' => 'Municipal'],
+        'Real Property Tax Clearance' => ['category' => 'Tax & Property', 'office' => "Municipal Treasurer's Office", 'level' => 'Municipal'],
+        'Certificate of Indigency' => ['category' => 'Social Services', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
+        'Certificate of Residency' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
+        'Senior Citizen ID' => ['category' => 'Senior Citizen / PWD', 'office' => 'Office of Senior Citizens Affairs', 'level' => 'Municipal'],
+    ];
+    // Assigned-personnel is only populated for requests already picked up by
+    // a processor (mid-pipeline statuses) -- unassigned is the realistic
+    // default for a fresh queue, not every row needs one.
+    $assignedByRef = [
+        'DR-2026-2210' => 'Ferdinand Cortez', 'DR-2026-2154' => 'Marivic Ong', 'DR-2026-2098' => 'Teresita Fajardo',
+        'DR-2026-2228' => 'Jenneth A. Cachila', 'DR-2026-2247' => 'Precious Manalo',
+    ];
+    foreach ($requests as &$r) {
+        $r = array_merge($r, $dokyuClassification[$r['type']] ?? ['category' => 'Other Municipal Services', 'office' => $r['office'], 'level' => 'Municipal']);
+        $r['assigned'] = $assignedByRef[$r['ref']] ?? null;
+    }
+    unset($r);
+
     $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Ready for Release', 'done' => 'Completed'];
     $actionStatuses = ['Pending Review', 'Under Verification', 'Waiting Requirements', 'Processing'];
     $doneStatuses = ['Completed', 'Released'];
@@ -52,12 +86,19 @@
         x-data="{
             tab: 'all',
             search: '',
+            categoryFilter: '',
+            officeFilter: '',
+            levelFilter: '',
+            assignedFilter: '',
+            showAdvancedFilters: false,
             open: false,
             selected: null,
             processing: false,
             requests: @js($requests),
             actionStatuses: @js($actionStatuses),
             doneStatuses: @js($doneStatuses),
+            get categories() { return [...new Set(this.requests.map(r => r.category))].sort(); },
+            get offices() { return [...new Set(this.requests.map(r => r.office))].sort(); },
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
@@ -82,10 +123,16 @@
                 const q = this.search.trim().toLowerCase();
                 return this.requests.filter(r =>
                     this.$store.session.inScope(r.barangay) &&
+                    this.$store.session.inDeptScope(r.office) &&
                     this.matchesTab(r) &&
+                    (this.categoryFilter === '' || r.category === this.categoryFilter) &&
+                    (this.officeFilter === '' || r.office === this.officeFilter) &&
+                    (this.levelFilter === '' || r.level === this.levelFilter) &&
+                    (this.assignedFilter === '' || (this.assignedFilter === 'unassigned' ? !r.assigned : r.assigned === this.assignedFilter)) &&
                     (q === '' || r.ref.toLowerCase().includes(q) || r.citizen.toLowerCase().includes(q))
                 );
             },
+            clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; },
             stepIndex(status) {
                 const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Waiting Requirements': 1, 'Processing': 1, 'Approved': 2, 'Ready for Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
@@ -135,6 +182,17 @@
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
+                <select x-model="categoryFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
+                    <option value="">All Categories</option>
+                    <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
+                </select>
+                <button
+                    type="button" @click="showAdvancedFilters = !showAdvancedFilters"
+                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border transition-colors shrink-0"
+                    :class="showAdvancedFilters || officeFilter || levelFilter || assignedFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'"
+                >
+                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
+                </button>
                 <div x-data="{ open: false }" class="contents">
                     <x-ui.button @click="open = true" variant="secondary" icon="folder-open" size="sm" class="shrink-0">Citizen Documents Storage</x-ui.button>
                     <x-ui.modal title="Citizen Documents Storage" maxWidth="lg">
@@ -172,6 +230,28 @@
                 </div>
                 <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' requests'"></p>
             </div>
+
+            <div
+                x-show="showAdvancedFilters" x-cloak
+                x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100"
+            >
+                <select x-model="officeFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <option value="">All Offices</option>
+                    <template x-for="o in offices" :key="o"><option :value="o" x-text="o"></option></template>
+                </select>
+                <select x-model="levelFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <option value="">All Levels</option>
+                    <option value="Barangay">Barangay</option>
+                    <option value="Municipal">Municipal</option>
+                    <option value="Multi-Office">Multi-Office</option>
+                </select>
+                <select x-model="assignedFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <option value="">Anyone / Unassigned</option>
+                    <option value="unassigned">Unassigned only</option>
+                </select>
+                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-400 hover:text-slate-600 transition-colors" x-show="officeFilter || levelFilter || assignedFilter">Clear</button>
+            </div>
         </div>
 
         <x-ui.table>
@@ -182,6 +262,7 @@
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Document Type</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Office</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Barangay</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Assigned</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Submitted</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
                     <th class="px-4 py-2.5"></th>
@@ -197,9 +278,23 @@
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="r.type"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell"><span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap" x-text="r.office"></span></td>
+                        <td class="px-4 py-3 hidden md:table-cell">
+                            <p class="text-slate-700" x-text="r.type"></p>
+                            <p class="text-[11px] text-slate-400 mt-0.5" x-text="r.category"></p>
+                        </td>
+                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell">
+                            <span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap" x-text="r.office"></span>
+                            <span
+                                class="inline-block ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap"
+                                :class="{ 'bg-teal-50 text-teal-700': r.level === 'Barangay', 'bg-brand-50 text-brand-700': r.level === 'Municipal', 'bg-purple-50 text-purple-700': r.level === 'Multi-Office' }"
+                                x-text="r.level"
+                            ></span>
+                        </td>
                         <td class="px-4 py-3 text-slate-500 hidden lg:table-cell"><span x-text="'Brgy. ' + r.barangay"></span></td>
+                        <td class="px-4 py-3 text-slate-500 hidden xl:table-cell">
+                            <span x-show="r.assigned" x-text="r.assigned"></span>
+                            <span x-show="!r.assigned" class="text-slate-300 italic">Unassigned</span>
+                        </td>
                         <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="r.submitted"></td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[r.status] || statusStyles['Draft'])[0]">
