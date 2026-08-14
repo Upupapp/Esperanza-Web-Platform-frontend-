@@ -167,7 +167,7 @@
                                     <div class="flex justify-between items-center gap-2">
                                         <dt class="text-xs text-slate-500">Record Status</dt>
                                         <dd>
-                                            <x-ui.badge :status="''" x-bind:data-status="selectedFamily.status" />
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" :class="statusBadge(selectedFamily.status)" x-text="selectedFamily.status"></span>
                                         </dd>
                                     </div>
                                     <div class="flex justify-between items-center gap-2">

@@ -81,6 +81,7 @@ $permissionModules = [
             ['key' => 'const_family', 'name' => 'Family Profiles', 'perms' => ['view', 'create', 'edit', 'delete']],
             ['key' => 'const_barangay', 'name' => 'Barangay Profiles', 'perms' => ['view', 'edit', 'export']],
             ['key' => 'const_data_quality', 'name' => 'Data Quality Management', 'perms' => ['view', 'verify', 'assign', 'merge', 'resolve', 'view_sensitive', 'export']],
+            ['key' => 'const_document_storage', 'name' => 'Citizen Document Storage', 'perms' => ['view', 'view_sensitive', 'verify', 'edit', 'export']],
         ],
     ],
     [
@@ -244,6 +245,7 @@ $roles = [
             $buildPermissions(['constituents' => 'view']),
             [
                 'comm_barangay_directory' => ['view', 'edit'],
+                'const_document_storage' => ['view', 'verify'],
                 'brgy_cert_death_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
                 'brgy_cert_late_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
                 'brgy_business_clearance' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],

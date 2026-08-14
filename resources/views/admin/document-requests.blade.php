@@ -70,20 +70,12 @@
     $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Ready for Release', 'done' => 'Completed'];
     $actionStatuses = ['Pending Review', 'Under Verification', 'Waiting Requirements', 'Processing'];
     $doneStatuses = ['Completed', 'Released'];
-
-    $submittedDocs = [
-        ['name' => 'PhilSys National ID.jpg', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Valid ID', 'ref' => 'DR-2026-2210', 'uploaded' => 'Jul 8, 2026', 'status' => 'Under Verification'],
-        ['name' => 'DTI Registration.pdf', 'citizen' => 'Rosemarie Tan', 'type' => 'DTI/SEC Registration', 'ref' => 'DR-2026-2214', 'uploaded' => 'Jul 10, 2026', 'status' => 'Pending Review'],
-        ['name' => 'Barangay Certification.pdf', 'citizen' => 'Elmer Bantillo', 'type' => 'Barangay Certificate of Indigency', 'ref' => 'DR-2026-2201', 'uploaded' => 'Jul 7, 2026', 'status' => 'Waiting Requirements'],
-        ['name' => 'Fire Safety Inspection Cert.pdf', 'citizen' => 'Rosemarie Tan', 'type' => 'Fire Safety Inspection Certificate', 'ref' => 'DR-2026-1655', 'uploaded' => 'May 10, 2026', 'status' => 'Approved'],
-        ['name' => 'PSA Birth Certificate.pdf', 'citizen' => 'Teresita Salazar', 'type' => 'Proof of Age', 'ref' => 'DR-2026-2098', 'uploaded' => 'Jun 22, 2026', 'status' => 'Approved'],
-        ['name' => '2x2 ID Photo.jpg', 'citizen' => 'Josefina Marbella', 'type' => 'Photo', 'ref' => 'DR-2026-1998', 'uploaded' => 'Jun 14, 2026', 'status' => 'Completed'],
-    ];
 @endphp
 
 <x-layouts.admin title="Dokyu" subtitle="Track and process citizen document requests." active="document-requests">
     <div
         x-data="{
+            view: 'requests',
             tab: 'all',
             search: '',
             categoryFilter: '',
@@ -169,6 +161,21 @@
 
         <div x-show="$store.session.can('dokyu')" x-cloak>
 
+        <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto mb-4">
+            <button
+                type="button" @click="view = 'requests'"
+                class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                :class="view === 'requests' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+            ><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Document Requests</button>
+            <button
+                type="button" @click="view = 'storage'"
+                class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                :class="view === 'storage' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+            ><i data-lucide="folder-open" class="w-3.5 h-3.5"></i> Citizen Document Storage</button>
+        </div>
+
+        <div x-show="view === 'requests'">
+
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Requests" value="1,284" icon="file-text" color="brand" trend="+8.4%" sublabel="This month" :delay="0" />
             <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="63" icon="inbox" color="orange" sublabel="Review or verification" :delay="40" />
@@ -193,30 +200,6 @@
                 >
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
                 </button>
-                <div x-data="{ open: false }" class="contents">
-                    <x-ui.button @click="open = true" variant="secondary" icon="folder-open" size="sm" class="shrink-0">Citizen Documents Storage</x-ui.button>
-                    <x-ui.modal title="Citizen Documents Storage" maxWidth="lg">
-                        <p class="text-sm text-slate-500 mb-4">Supporting documents submitted by citizens for their Dokyu requests, awaiting or completed verification.</p>
-                        <div class="space-y-2">
-                            @foreach($submittedDocs as $doc)
-                                <div class="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
-                                    <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                                        <i data-lucide="file-text" class="w-4 h-4"></i>
-                                    </span>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="text-sm font-medium text-slate-700 truncate">{{ $doc['name'] }}</p>
-                                        <p class="text-xs text-slate-400">{{ $doc['citizen'] }} · {{ $doc['type'] }} · <span class="font-mono">{{ $doc['ref'] }}</span></p>
-                                    </div>
-                                    <x-ui.badge :status="$doc['status']" class="shrink-0" />
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <x-slot:footer>
-                            <x-ui.button size="sm" @click="open = false">Close</x-ui.button>
-                        </x-slot:footer>
-                    </x-ui.modal>
-                </div>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
@@ -433,6 +416,12 @@
                 </x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
+
+        </div>
+
+        <div x-show="view === 'storage'" x-cloak>
+            @include('admin.partials.citizen-document-storage')
+        </div>
 
         </div>
     </div>
