@@ -260,7 +260,7 @@
 
 
                 <!-- Category filter -->
-                <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
                     @foreach($categories as $c)
                         <button

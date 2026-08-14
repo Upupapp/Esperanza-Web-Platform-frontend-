@@ -117,7 +117,7 @@
 
         <!-- FAQs -->
         <div x-show="tab === 'faqs'" class="max-w-3xl">
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4">
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4">
                 <div class="flex flex-wrap items-center gap-2 mb-2.5">
                     <div class="relative flex-1 min-w-[180px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
@@ -183,7 +183,7 @@
 
         <!-- Tutorials -->
         <div x-show="tab === 'tutorials'" x-cloak>
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4">
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4">
                 <div class="flex flex-wrap items-center gap-2 mb-2.5">
                     <div class="relative flex-1 min-w-[180px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>

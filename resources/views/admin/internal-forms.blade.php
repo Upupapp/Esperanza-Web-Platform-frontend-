@@ -136,7 +136,7 @@
         </div>
 
         <!-- Office tabs + search -->
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+        <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
             <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
                 @foreach($offices as $key => $o)
                     <button

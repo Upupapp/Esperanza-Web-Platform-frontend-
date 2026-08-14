@@ -77,7 +77,7 @@
         class="animate-fade-up grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-5 items-start"
     >
         <!-- Calendar -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-4">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
             <!-- Legend: fixed at the very top so it never shifts position -->
             <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 mb-3 pb-3 border-b border-slate-100">
                 <template x-for="c in categories" :key="c.name">
