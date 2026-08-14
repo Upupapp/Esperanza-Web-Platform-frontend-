@@ -16,40 +16,61 @@ $permissionModules = [
     [
         'key' => 'dokyu', 'name' => 'Dokyu (Document Requests)', 'icon' => 'file-text',
         'submodules' => [
+            // Flagged for review (see the published classification plan): this looks like
+            // a duplicate of 'brgy_clearance' below from before the citizen catalogue and
+            // RBAC model were connected. Left in place rather than silently removed since
+            // it already has role grants attached.
             ['key' => 'dokyu_barangay_clearance', 'name' => 'Barangay Clearance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'dokyu_cedula', 'name' => 'Cedula (Community Tax Certificate)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
-            ['key' => 'dokyu_residency', 'name' => 'Certificate of Residency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
-            ['key' => 'dokyu_indigency', 'name' => 'Certificate of Indigency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
-            ['key' => 'dokyu_business_new', 'name' => 'Business Permit (New Application)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'dokyu_business_renewal', 'name' => 'Business Permit Renewal', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'dokyu_rpt', 'name' => 'Real Property Tax Clearance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release']],
-            ['key' => 'dokyu_senior_id', 'name' => 'Senior Citizen ID', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release']],
+            ['key' => 'dokyu_cedula', 'name' => 'Cedula (Community Tax Certificate)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release', 'archive']],
+            ['key' => 'dokyu_residency', 'name' => 'Certificate of Residency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release', 'archive']],
+            ['key' => 'dokyu_indigency', 'name' => 'Certificate of Indigency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release', 'archive']],
+            ['key' => 'dokyu_business_new', 'name' => 'Business Permit (New Application)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'dokyu_business_renewal', 'name' => 'Business Permit Renewal', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'dokyu_rpt', 'name' => 'Real Property Tax Clearance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'dokyu_senior_id', 'name' => 'Senior Citizen ID', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
             // Additional municipal documents (see config/esperanza_municipal_documents.php).
             // Keys match the citizen-facing document 'key' exactly so both sides stay in sync.
-            ['key' => 'mcro_marriage', 'name' => 'Certificate of Marriage (Certified Copy / Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'mcro_live_birth', 'name' => 'Certificate of Live Birth (Certified Copy / Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'mcro_delayed_registration', 'name' => 'Affidavit for Delayed Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'municipal_pet_registration', 'name' => 'Pet Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'mcro_marriage', 'name' => 'Certificate of Marriage (Certified Copy / Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'mcro_marriage_license', 'name' => 'Application for Marriage License', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'mcro_live_birth', 'name' => 'Certificate of Live Birth (Certified Copy / Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'mcro_death', 'name' => 'Certificate of Death (Certified Copy / Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'mcro_delayed_registration', 'name' => 'Affidavit for Delayed Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'municipal_pet_registration', 'name' => 'Pet Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release', 'archive']],
+            ['key' => 'msw_pwd_id', 'name' => 'PWD ID (Person with Disability Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'osca_senior_citizen', 'name' => 'Senior Citizen ID (OSCA Membership)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
             // Barangay-issued documents (see config/esperanza_barangay_documents.php).
             // Keys match the citizen-facing document 'key' exactly so both sides stay in sync.
+            // No 'assign' — a Barangay Secretary handles their own barangay's queue directly.
             ['key' => 'brgy_cert_death_registration', 'name' => 'Barangay Certification (Registration of Death)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
             ['key' => 'brgy_cert_late_registration', 'name' => 'Barangay Certification (Late Registration)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
             ['key' => 'brgy_business_clearance', 'name' => 'Barangay Business Clearance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
             ['key' => 'brgy_residency', 'name' => 'Barangay Residency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
             ['key' => 'brgy_first_time_jobseeker', 'name' => 'First Time Jobseeker Certificate (RA 11261)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
             ['key' => 'brgy_indigency', 'name' => 'Barangay Indigency', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_clearance', 'name' => 'Barangay Clearance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_cert_national_id', 'name' => 'Barangay Certification (National ID / PSA Purpose)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_cert_land_property', 'name' => 'Barangay Certification (Land / Property)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_cert_general', 'name' => 'Barangay Certification (General Purpose)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_business_permit', 'name' => 'Barangay Business Permit', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
+            ['key' => 'brgy_event_permit', 'name' => 'Barangay Event / Special Permit', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive']],
         ],
     ],
     [
         'key' => 'tulong', 'name' => 'Tulong (Citizen Assistance)', 'icon' => 'hand-heart',
         'submodules' => [
-            ['key' => 'tulong_medical', 'name' => 'Medical Assistance (AICS)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'tulong_burial', 'name' => 'Burial Assistance (AICS)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'tulong_educational', 'name' => 'Educational Assistance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'tulong_financial', 'name' => 'Financial Assistance (AICS)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive']],
-            ['key' => 'tulong_food', 'name' => 'Food / Relief Assistance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release']],
-            ['key' => 'tulong_pension', 'name' => 'Social Pension (Indigent Senior Citizen)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release']],
-            ['key' => 'tulong_solo_parent', 'name' => 'Solo Parent Cash Assistance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'release']],
+            ['key' => 'tulong_medical', 'name' => 'Medical Assistance (AICS)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'tulong_burial', 'name' => 'Burial Assistance (AICS)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'tulong_educational', 'name' => 'Educational Assistance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'tulong_financial', 'name' => 'Financial Assistance (AICS)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release', 'archive']],
+            ['key' => 'tulong_food', 'name' => 'Food / Relief Assistance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_pension', 'name' => 'Social Pension (Indigent Senior Citizen)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_solo_parent', 'name' => 'Solo Parent Cash Assistance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_erpat', 'name' => 'ERPAT Membership Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_tupad', 'name' => 'DOLE TUPAD Emergency Employment', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_tesda', 'name' => 'TESDA Skills Training Registration', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_livelihood_mapping', 'name' => 'Livelihood Business Mapping', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_kabuhayan', 'name' => 'Kabuhayan Program Beneficiary Application', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
+            ['key' => 'tulong_business_plan', 'name' => 'Individual Business Plan', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'assign', 'release']],
         ],
     ],
     [
@@ -128,7 +149,7 @@ $permissionModules = [
 $presetLevels = [
     'full' => fn ($perms) => $perms,
     'process' => fn ($perms) => array_values(array_intersect($perms, ['view', 'create', 'edit'])),
-    'approve' => fn ($perms) => array_values(array_intersect($perms, ['view', 'review', 'approve', 'reject', 'release'])),
+    'approve' => fn ($perms) => array_values(array_intersect($perms, ['view', 'review', 'approve', 'reject', 'assign', 'release'])),
     'view_export' => fn ($perms) => array_values(array_intersect($perms, ['view', 'export', 'print'])),
     'view' => fn ($perms) => array_values(array_intersect($perms, ['view'])),
 ];
@@ -229,6 +250,12 @@ $roles = [
                 'brgy_residency' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
                 'brgy_first_time_jobseeker' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
                 'brgy_indigency' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_clearance' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_cert_national_id' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_cert_land_property' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_cert_general' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_business_permit' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
+                'brgy_event_permit' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
             ]
         ),
     ],
