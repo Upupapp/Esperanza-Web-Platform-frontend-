@@ -425,8 +425,22 @@
                     types: @js($assistanceTypes),
                     files: @js($submittedDocs),
                     search: '',
+                    selectedCategory: null,
+                    categoryIcons: {
+                        'Medical & Health': 'stethoscope', 'Burial & Bereavement': 'flower', 'Education': 'graduation-cap',
+                        'Financial Assistance': 'wallet', 'Food & Relief': 'package', 'Social Protection': 'shield-check',
+                        'Employment & Livelihood': 'briefcase',
+                    },
                     formData: {},
                     get filteredTypes() { return this.types.map((t, i) => ({ ...t, i })).filter(t => t.name.toLowerCase().includes(this.search.toLowerCase())); },
+                    get assistanceCategories() {
+                        const counts = {};
+                        this.types.forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
+                        return Object.keys(counts).map(name => ({ name, count: counts[name], icon: this.categoryIcons[name] || 'folder' }));
+                    },
+                    get typesInCategory() { return this.filteredTypes.filter(t => t.category === this.selectedCategory); },
+                    chooseCategory(cat) { this.selectedCategory = cat; },
+                    backToCategories() { this.selectedCategory = null; this.search = ''; },
                     selectType(i) {
                         this.selectedType = i;
                         this.attachments = {};
@@ -466,7 +480,7 @@
                         en: ['Choose Assistance', 'Application Details', 'Payment', 'Review & Submit'],
                     },
                     stepIcons: ['hand-heart', 'user-round', 'credit-card', 'clipboard-check'],
-                    reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.paymentMethod = null; this.alreadyPaid = false; this.receipt = null; this.showReceiptPicker = false; this.search = ''; this.formData = {}; },
+                    reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.paymentMethod = null; this.alreadyPaid = false; this.receipt = null; this.showReceiptPicker = false; this.search = ''; this.formData = {}; this.selectedCategory = null; },
                     submitRequest() {
                         const type = this.types[this.selectedType];
                         this.requests.unshift({
@@ -534,33 +548,91 @@
                                 class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard"
                             >
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <template x-for="type in filteredTypes" :key="type.i">
-                                <label
-                                    class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                    :class="selectedType === type.i ? 'border-purple-400 bg-purple-50/60 ring-4 ring-purple-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
-                                >
-                                    <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
-                                    <div class="flex items-center justify-between mb-2.5">
-                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'">
-                                            <i :data-lucide="type.icon" class="w-4 h-4"></i>
-                                        </span>
-                                        <i data-lucide="circle-check" class="w-4 h-4 text-purple-500" x-show="selectedType === type.i" x-cloak></i>
+                        <!-- Category grid (shown first, or when searching) -->
+                        <template x-if="!selectedCategory || search">
+                            <div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" x-show="!search">
+                                    <template x-for="cat in assistanceCategories" :key="cat.name">
+                                        <button
+                                            type="button" @click="chooseCategory(cat.name)"
+                                            class="flex items-center gap-3 rounded-xl border border-slate-200 p-3.5 text-left hover:border-purple-300 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
+                                        >
+                                            <span class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                                                <i :data-lucide="cat.icon" class="w-5 h-5"></i>
+                                            </span>
+                                            <span class="min-w-0 flex-1">
+                                                <span class="block text-sm font-medium text-slate-700 truncate" x-text="cat.name"></span>
+                                                <span class="block text-xs text-slate-400 mt-0.5" x-text="cat.count + (cat.count === 1 ? ' program' : ' programs')"></span>
+                                            </span>
+                                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
+                                        </button>
+                                    </template>
+                                </div>
+
+                                <!-- Search results (flat, across categories) -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" x-show="search">
+                                    <template x-for="type in filteredTypes" :key="type.i">
+                                        <label
+                                            class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
+                                            :class="selectedType === type.i ? 'border-purple-400 bg-purple-50/60 ring-4 ring-purple-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
+                                        >
+                                            <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
+                                            <div class="flex items-center justify-between mb-2.5">
+                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'">
+                                                    <i :data-lucide="type.icon" class="w-4 h-4"></i>
+                                                </span>
+                                                <i data-lucide="circle-check" class="w-4 h-4 text-purple-500" x-show="selectedType === type.i" x-cloak></i>
+                                            </div>
+                                            <p class="text-sm font-medium text-slate-700 leading-snug" x-text="type.name"></p>
+                                            <p class="text-xs text-slate-400 mt-1 truncate" x-text="type.category + ' · ' + type.office_short"></p>
+                                            <span
+                                                class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
+                                                :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
+                                                x-text="type.amount"
+                                            ></span>
+                                        </label>
+                                    </template>
+                                    <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredTypes.length === 0">
+                                        <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
+                                        <p class="text-xs text-slate-400"><x-ui.t fil="Walang programang tumutugma." en="No assistance programs match your search." /></p>
                                     </div>
-                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="type.name"></p>
-                                    <p class="text-xs text-slate-400 mt-1 truncate" x-text="type.office"></p>
-                                    <span
-                                        class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                        :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
-                                        x-text="type.amount"
-                                    ></span>
-                                </label>
-                            </template>
-                            <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredTypes.length === 0">
-                                <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
-                                <p class="text-xs text-slate-400"><x-ui.t fil="Walang programang tumutugma." en="No assistance programs match your search." /></p>
+                                </div>
                             </div>
-                        </div>
+                        </template>
+
+                        <!-- Programs within the chosen category -->
+                        <template x-if="selectedCategory && !search">
+                            <div>
+                                <button type="button" @click="backToCategories()" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-purple-600 mb-3 transition-colors">
+                                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                                    <x-ui.t fil="Bumalik sa mga kategorya" en="Back to categories" />
+                                </button>
+                                <p class="text-sm font-semibold text-navy-900 mb-3" x-text="selectedCategory"></p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <template x-for="type in typesInCategory" :key="type.i">
+                                        <label
+                                            class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
+                                            :class="selectedType === type.i ? 'border-purple-400 bg-purple-50/60 ring-4 ring-purple-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
+                                        >
+                                            <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
+                                            <div class="flex items-center justify-between mb-2.5">
+                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'">
+                                                    <i :data-lucide="type.icon" class="w-4 h-4"></i>
+                                                </span>
+                                                <i data-lucide="circle-check" class="w-4 h-4 text-purple-500" x-show="selectedType === type.i" x-cloak></i>
+                                            </div>
+                                            <p class="text-sm font-medium text-slate-700 leading-snug" x-text="type.name"></p>
+                                            <p class="text-xs text-slate-400 mt-1 truncate" x-text="type.office_short"></p>
+                                            <span
+                                                class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
+                                                :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
+                                                x-text="type.amount"
+                                            ></span>
+                                        </label>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Step 2: application details + requirements -->
