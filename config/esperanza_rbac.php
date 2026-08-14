@@ -336,15 +336,15 @@ unset($role);
 // (SA/MA/DH/DS/FD/RO/IO) so the role is recognizable from the ID alone.
 // ---------------------------------------------------------------
 $accounts = [
-    ['id' => 'SA-001', 'name' => 'Ricardo Villanueva', 'roleKey' => 'super_admin', 'dept' => 'Office of the Mayor', 'scope' => 'Municipal', 'status' => 'Approved'],
-    ['id' => 'MA-001', 'name' => 'Juan Dela Cruz', 'roleKey' => 'municipal_admin', 'dept' => 'Office of the Mayor', 'scope' => 'Municipal', 'status' => 'Approved'],
-    ['id' => 'DH-001', 'name' => 'Corazon Villareal', 'roleKey' => 'department_head', 'dept' => 'MSWDO', 'scope' => 'Municipal', 'status' => 'Approved'],
-    ['id' => 'DH-002', 'name' => 'Marivic Ong', 'roleKey' => 'department_head', 'dept' => 'Civil Registrar', 'scope' => 'Municipal', 'status' => 'Approved'],
+    ['id' => 'SA-001', 'name' => 'Ricardo Villanueva', 'roleKey' => 'super_admin', 'dept' => 'Office of the Municipal Mayor', 'scope' => 'Municipal', 'status' => 'Approved'],
+    ['id' => 'MA-001', 'name' => 'Juan Dela Cruz', 'roleKey' => 'municipal_admin', 'dept' => 'Office of the Municipal Mayor', 'scope' => 'Municipal', 'status' => 'Approved'],
+    ['id' => 'DH-001', 'name' => 'Corazon Villareal', 'roleKey' => 'department_head', 'dept' => 'Municipal Social Welfare & Development Office', 'scope' => 'Municipal', 'status' => 'Approved'],
+    ['id' => 'DH-002', 'name' => 'Marivic Ong', 'roleKey' => 'department_head', 'dept' => 'Office of the Municipal Civil Registrar', 'scope' => 'Municipal', 'status' => 'Approved'],
     ['id' => 'DH-003', 'name' => 'Leilani Domingo', 'roleKey' => 'department_head', 'dept' => 'Municipal Health Office', 'scope' => 'Municipal', 'status' => 'Approved'],
-    ['id' => 'DS-001', 'name' => 'Ferdinand Cortez', 'roleKey' => 'department_staff', 'dept' => "Treasurer's Office", 'scope' => 'Municipal', 'status' => 'Archived'],
-    ['id' => 'FD-001', 'name' => 'Angeline Mercado', 'roleKey' => 'front_desk', 'dept' => 'Office of the Mayor', 'scope' => 'Municipal', 'status' => 'Pending Review'],
+    ['id' => 'DS-001', 'name' => 'Ferdinand Cortez', 'roleKey' => 'department_staff', 'dept' => "Municipal Treasurer's Office", 'scope' => 'Municipal', 'status' => 'Archived'],
+    ['id' => 'FD-001', 'name' => 'Angeline Mercado', 'roleKey' => 'front_desk', 'dept' => 'Office of the Municipal Mayor', 'scope' => 'Municipal', 'status' => 'Pending Review'],
     ['id' => 'FD-002', 'name' => 'Rowena Aguilar', 'roleKey' => 'front_desk', 'dept' => 'Barangay Poblacion', 'scope' => 'Poblacion', 'status' => 'Approved'],
-    ['id' => 'RO-001', 'name' => 'Bienvenido Salazar', 'roleKey' => 'records_officer', 'dept' => "Treasurer's Office", 'scope' => 'Municipal', 'status' => 'Approved'],
+    ['id' => 'RO-001', 'name' => 'Bienvenido Salazar', 'roleKey' => 'records_officer', 'dept' => "Municipal Treasurer's Office", 'scope' => 'Municipal', 'status' => 'Approved'],
     ['id' => 'RO-002', 'name' => 'Dexter Villamor', 'roleKey' => 'records_officer', 'dept' => 'Barangay Santiago', 'scope' => 'Santiago', 'status' => 'Approved'],
     ['id' => 'IO-001', 'name' => 'Paolo Reyes', 'roleKey' => 'info_officer', 'dept' => 'ICT Office', 'scope' => 'Municipal', 'status' => 'Approved'],
     ['id' => 'BS-001', 'name' => 'Leonora Batac', 'roleKey' => 'barangay_secretary', 'dept' => 'Barangay Poblacion', 'scope' => 'Poblacion', 'status' => 'Approved'],

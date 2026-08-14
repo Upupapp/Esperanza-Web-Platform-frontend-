@@ -6,6 +6,11 @@
         ['name' => 'Municipal Health Office', 'head' => 'Dr. Leilani F. Domingo', 'contact' => '(056) 333-1056', 'email' => 'health@esperanza.gov.ph', 'icon' => 'stethoscope', 'color' => 'from-emerald-500 to-emerald-700'],
         ['name' => 'Office of the Municipal Civil Registrar', 'head' => 'Narec N. Conag', 'contact' => '(056) 333-1067', 'email' => 'civilregistrar@esperanza.gov.ph', 'icon' => 'file-badge', 'color' => 'from-rose-500 to-rose-700'],
         ['name' => 'ICT Office', 'head' => 'Engr. Paolo J. Reyes', 'contact' => '(056) 333-1099', 'email' => 'ict@esperanza.gov.ph', 'icon' => 'monitor-cog', 'color' => 'from-brand-500 to-brand-700'],
+        ['name' => 'Business Permits & Licensing Office', 'head' => 'Mr. Reynaldo B. Solano', 'contact' => '(056) 333-1078', 'email' => 'bplo@esperanza.gov.ph', 'icon' => 'briefcase', 'color' => 'from-blue-500 to-blue-700'],
+        ['name' => 'Municipal Disaster Risk Reduction & Management Office', 'head' => 'Mr. Arnulfo C. Diaz', 'contact' => '(056) 333-1091', 'email' => 'mdrrmo@esperanza.gov.ph', 'icon' => 'shield-alert', 'color' => 'from-orange-500 to-orange-700'],
+        ['name' => 'Office of Senior Citizens Affairs', 'head' => 'Mrs. Adoracion V. Ferrer', 'contact' => '(056) 333-1085', 'email' => 'osca@esperanza.gov.ph', 'icon' => 'users', 'color' => 'from-teal-500 to-teal-700'],
+        ['name' => 'Municipal Agriculture Office', 'head' => 'Engr. Jever L. Malaras', 'contact' => '(056) 333-1052', 'email' => 'agriculture@esperanza.gov.ph', 'icon' => 'sprout', 'color' => 'from-lime-500 to-lime-700'],
+        ['name' => 'Public Employment Service Office', 'head' => 'Ms. Cristina M. Bayoneta', 'contact' => '(056) 333-1063', 'email' => 'mpeso@esperanza.gov.ph', 'icon' => 'briefcase-business', 'color' => 'from-indigo-500 to-indigo-700'],
     ];
 
     // Real per-barangay officials/seal/contact — same source of truth as the

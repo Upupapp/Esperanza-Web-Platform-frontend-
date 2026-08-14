@@ -9,7 +9,12 @@
 
     $roleNames = array_column($roles, 'name', 'key');
 
-    $departments = ['Office of the Mayor', 'MSWDO', "Treasurer's Office", 'Civil Registrar', 'Municipal Health Office', 'ICT Office', 'BPLO', 'OSCA', 'MDRRMO'];
+    $departments = [
+        'Office of the Municipal Mayor', 'Municipal Social Welfare & Development Office', "Municipal Treasurer's Office",
+        'Office of the Municipal Civil Registrar', 'Municipal Health Office', 'ICT Office',
+        'Business Permits & Licensing Office', 'Office of Senior Citizens Affairs',
+        'Municipal Disaster Risk Reduction & Management Office', 'Municipal Agriculture Office', 'Public Employment Service Office',
+    ];
 
     // Access scope: a Municipal account can act across the whole LGU; a
     // Barangay account is restricted to the data of one specific barangay.
