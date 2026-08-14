@@ -151,7 +151,7 @@
             {{-- Progress bar under steps --}}
             <div class="mt-4 h-1 bg-slate-100 rounded-full overflow-hidden -mx-6">
                 <div
-                    class="h-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-full transition-all duration-500"
+                    class="h-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-full transition-all duration-[600ms] ease-standard"
                     :style="'width:' + (((addIndividualStep - 1) / 2) * 100) + '%'"
                 ></div>
             </div>

@@ -302,7 +302,7 @@
                                     <i data-lucide="ellipsis" class="w-4 h-4"></i>
                                 </button>
                                 <div x-show="open" x-cloak
-                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter="transition duration-[160ms] ease-standard"
                                     x-transition:enter-start="opacity-0 scale-95"
                                     x-transition:enter-end="opacity-100 scale-100"
                                     class="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-float border border-slate-100 py-1 z-20 text-sm">
@@ -337,10 +337,10 @@
 
 {{-- ── Deploy Modal ────────────────────────────────────────────────────────────────────── --}}
 <div x-show="showDeployModal" x-cloak
-    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showDeployModal = false">
-    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-xl">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -474,10 +474,10 @@
 
 {{-- ── Resource Detail Modal ───────────────────────────────────────────────────────────── --}}
 <div x-show="showResourceDetail" x-cloak
-    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-slate-900/50 backdrop-blur-sm overflow-y-auto"
     @click.self="showResourceDetail = false">
-    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -558,7 +558,7 @@
                             }" x-text="selectedResource?.fuel >= 70 ? 'Sufficient' : (selectedResource?.fuel >= 40 ? 'Moderate' : 'Low — refuel needed')"></span>
                         </div>
                         <div class="h-2.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-500"
+                            <div class="h-full rounded-full transition-all duration-[600ms] ease-standard"
                                 :class="{
                                     'bg-emerald-500': selectedResource?.fuel >= 70,
                                     'bg-amber-400': selectedResource?.fuel >= 40 && selectedResource?.fuel < 70,
@@ -573,7 +573,7 @@
             {{-- Deployment History --}}
             <div>
                 <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> Deployment History
+                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Deployment History
                 </h4>
                 <div class="space-y-2">
                     @foreach([
@@ -651,10 +651,10 @@
 
 {{-- ── Add Resource Modal ──────────────────────────────────────────────────────────────── --}}
 <div x-show="showAddResourceModal" x-cloak
-    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showAddResourceModal = false">
-    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-xl">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">

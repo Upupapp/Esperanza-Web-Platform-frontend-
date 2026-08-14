@@ -113,7 +113,7 @@
                         <span class="font-semibold text-navy-900">3,421 / 5,012 &mdash; <span class="text-emerald-600">68%</span></span>
                     </div>
                     <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500 rounded-full transition-all duration-700" style="width: 68%"></div>
+                        <div class="h-full bg-emerald-500 rounded-full transition-all duration-[600ms] ease-standard" style="width: 68%"></div>
                     </div>
                 </div>
                 {{-- Household profiling bar --}}
@@ -123,7 +123,7 @@
                         <span class="font-semibold text-navy-900">3,628 / 4,918 &mdash; <span class="text-blue-600">74%</span></span>
                     </div>
                     <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-blue-500 rounded-full transition-all duration-700" style="width: 74%"></div>
+                        <div class="h-full bg-blue-500 rounded-full transition-all duration-[600ms] ease-standard" style="width: 74%"></div>
                     </div>
                 </div>
                 {{-- Barangays with ≥80% bar --}}
@@ -133,7 +133,7 @@
                         <span class="font-semibold text-navy-900">9 / 20 &mdash; <span class="text-purple-600">45%</span></span>
                     </div>
                     <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-purple-500 rounded-full transition-all duration-700" style="width: 45%"></div>
+                        <div class="h-full bg-purple-500 rounded-full transition-all duration-[600ms] ease-standard" style="width: 45%"></div>
                     </div>
                 </div>
                 {{-- Field visits this month --}}
@@ -143,7 +143,7 @@
                         <span class="font-semibold text-navy-900">14 completed</span>
                     </div>
                     <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-amber-400 rounded-full transition-all duration-700" style="width: 70%"></div>
+                        <div class="h-full bg-amber-400 rounded-full transition-all duration-[600ms] ease-standard" style="width: 70%"></div>
                     </div>
                 </div>
             </div>

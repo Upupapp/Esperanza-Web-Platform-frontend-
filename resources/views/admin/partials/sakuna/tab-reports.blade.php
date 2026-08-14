@@ -200,7 +200,7 @@
                     <span class="text-xs text-slate-600 w-28 flex-shrink-0">{{ $b['name'] }}</span>
                     <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                            class="h-2 bg-brand-500 rounded-full transition-all duration-700"
+                            class="h-2 bg-brand-500 rounded-full transition-all duration-[600ms] ease-standard"
                             style="width: {{ round(($b['count'] / $b['max']) * 100) }}%">
                         </div>
                     </div>

@@ -203,7 +203,7 @@
                     <p class="text-xs text-slate-400" x-text="$store.citizenSession.account?.email ?? 'No account selected'"></p>
                 </div>
                 <a href="{{ route('citizen.profile') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="user-round" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Aking Profile" en="My Profile" />
+                    <i data-lucide="user" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Aking Profile" en="My Profile" />
                 </a>
                 <a href="{{ route('citizen.settings') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                     <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Mga Setting" en="Settings" />

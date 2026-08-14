@@ -256,7 +256,7 @@
                             class="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 border-t border-slate-100 transition-colors"
                             :class="a.status === 'Pending Review' ? 'text-orange-600 hover:bg-orange-50/60' : 'text-brand-600 hover:bg-brand-50/60'"
                         >
-                            <i data-lucide="file-clock" class="w-3.5 h-3.5" x-show="a.status === 'Pending Review'"></i>
+                            <i data-lucide="history" class="w-3.5 h-3.5" x-show="a.status === 'Pending Review'"></i>
                             <i data-lucide="pencil" class="w-3.5 h-3.5" x-show="a.status !== 'Pending Review'"></i>
                             <span x-text="a.status === 'Pending Review' ? 'Review' : 'Edit'"></span>
                         </button>

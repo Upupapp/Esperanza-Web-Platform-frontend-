@@ -31,7 +31,7 @@
                     'bg-rose-50 text-rose-600': item.variant === 'error',
                 }"
             >
-                <i :data-lucide="item.variant === 'success' ? 'check-circle-2' : item.variant === 'error' ? 'alert-circle' : 'info'" class="w-4 h-4"></i>
+                <i :data-lucide="item.variant === 'success' ? 'circle-check' : item.variant === 'error' ? 'circle-alert' : 'info'" class="w-4 h-4"></i>
             </span>
             <p class="text-sm text-slate-600 flex-1 leading-snug pt-0.5" x-text="item.message"></p>
             <button @click="dismiss(item.id)" class="text-slate-300 hover:text-slate-500 transition-colors shrink-0">

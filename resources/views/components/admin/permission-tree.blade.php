@@ -58,7 +58,7 @@
         <input
             type="text" x-model="permQuery"
             placeholder="Search modules or permissions..."
-            class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+            class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
         >
     </div>
 
@@ -69,7 +69,7 @@
                     type="button" @click="toggleModule(mod.key)"
                     class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50/70 hover:bg-slate-100/70 transition-colors text-left"
                 >
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0" :class="isOpen(mod.key) && 'rotate-90'"></i>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-[160ms] ease-standard shrink-0" :class="isOpen(mod.key) && 'rotate-90'"></i>
                     <span class="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0 text-brand-600">
                         <i :data-lucide="mod.icon" class="w-3.5 h-3.5"></i>
                     </span>
@@ -87,7 +87,7 @@
 
                 <div
                     x-show="isOpen(mod.key)"
-                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter="transition duration-[160ms] ease-standard"
                     x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100"
                     x-cloak

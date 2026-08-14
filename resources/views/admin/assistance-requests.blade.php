@@ -101,7 +101,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -174,16 +174,16 @@
                             <div class="flex-1 flex items-center">
                                 <div class="flex flex-col items-center gap-2 text-center">
                                     <span
-                                        class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300"
+                                        class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-[600ms] ease-standard"
                                         :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-500 text-white shadow-sm' : (stepIndex(selected.status) === {{ $i }} ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-slate-400')"
                                     >
                                         <i data-lucide="check" class="w-4 h-4" x-show="stepIndex(selected.status) > {{ $i }}" x-cloak></i>
                                         <span x-show="stepIndex(selected.status) <= {{ $i }}">{{ $i + 1 }}</span>
                                     </span>
-                                    <span class="text-[11px] max-w-[80px] leading-tight transition-colors duration-300" :class="stepIndex(selected.status) === {{ $i }} ? 'text-navy-900 font-semibold' : 'text-slate-400'">{{ $step }}</span>
+                                    <span class="text-[11px] max-w-[80px] leading-tight transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) === {{ $i }} ? 'text-navy-900 font-semibold' : 'text-slate-400'">{{ $step }}</span>
                                 </div>
                                 @if(!$loop->last)
-                                    <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-300" :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-400' : 'bg-slate-100'"></div>
+                                    <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-400' : 'bg-slate-100'"></div>
                                 @endif
                             </div>
                         @endforeach
@@ -192,7 +192,7 @@
                     <div class="rounded-xl border border-slate-200 overflow-hidden">
                         <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 bg-slate-50/60">
                             <div class="flex items-center gap-2.5 px-4 py-3">
-                                <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user-round" class="w-4 h-4"></i></span>
+                                <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
                                     <p class="text-[10px] text-slate-400 uppercase tracking-wide">Citizen</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.citizen"></p>

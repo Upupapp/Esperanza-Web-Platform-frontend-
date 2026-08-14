@@ -265,7 +265,7 @@
                                     <i data-lucide="ellipsis" class="w-4 h-4"></i>
                                 </button>
                                 <div x-show="open" x-cloak
-                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter="transition duration-[160ms] ease-standard"
                                     x-transition:enter-start="opacity-0 scale-95"
                                     x-transition:enter-end="opacity-100 scale-100"
                                     class="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-float border border-slate-100 py-1 z-20 text-sm">
@@ -318,10 +318,10 @@
 
 {{-- ── Check-out Confirmation Modal ───────────────────────────────────────────────────── --}}
 <div x-show="showCheckoutConfirm" x-cloak
-    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showCheckoutConfirm = false">
-    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -350,10 +350,10 @@
 
 {{-- ── Evacuee Detail Modal ─────────────────────────────────────────────────────────────── --}}
 <div x-show="showEvacueeDetail" x-cloak
-    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-slate-900/50 backdrop-blur-sm overflow-y-auto"
     @click.self="showEvacueeDetail = false">
-    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
         {{-- Modal Header --}}
@@ -478,7 +478,7 @@
             {{-- Section 5: Activity Log --}}
             <div>
                 <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                    <i data-lucide="activity" class="w-3.5 h-3.5"></i> Activity Log
+                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Activity Log
                 </h4>
                 <div class="space-y-3 relative">
                     <div class="absolute left-[18px] top-2 bottom-2 w-px bg-slate-200"></div>
@@ -541,10 +541,10 @@
 
 {{-- ── Evacuee Registration Modal (Multi-step) ─────────────────────────────────────────── --}}
 <div x-show="showEvacueeReg" x-cloak
-    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-slate-900/50 backdrop-blur-sm overflow-y-auto"
     @click.self="showEvacueeReg = false">
-    <div x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
         {{-- Modal Header --}}
@@ -571,7 +571,7 @@
         <div class="px-6 pt-4">
             <div class="flex items-center gap-1">
                 @foreach([1,2,3,4,5,6] as $s)
-                <div class="flex-1 h-1.5 rounded-full transition-colors duration-300"
+                <div class="flex-1 h-1.5 rounded-full transition-colors duration-[600ms] ease-standard"
                     :class="evacueeRegStep >= {{ $s }} ? 'bg-brand-500' : 'bg-slate-200'"></div>
                 @endforeach
             </div>

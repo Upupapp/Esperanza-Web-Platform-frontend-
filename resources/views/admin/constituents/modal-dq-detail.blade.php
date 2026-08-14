@@ -216,7 +216,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
                                     <div
-                                        class="h-full rounded-full transition-all duration-500"
+                                        class="h-full rounded-full transition-all duration-[600ms] ease-standard"
                                         :class="(selectedDQIssue?.merge_candidate?.confidence || 0) >= 85 ? 'bg-rose-500' : (selectedDQIssue?.merge_candidate?.confidence || 0) >= 60 ? 'bg-amber-400' : 'bg-slate-400'"
                                         :style="'width:' + (selectedDQIssue?.merge_candidate?.confidence || 0) + '%'"
                                     ></div>

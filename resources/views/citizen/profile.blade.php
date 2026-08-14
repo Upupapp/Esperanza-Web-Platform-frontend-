@@ -85,7 +85,7 @@
                     </div>
                     <p class="text-sm text-white/60 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span class="flex items-center gap-1.5"><i data-lucide="hash" class="w-3.5 h-3.5"></i><span x-text="$store.citizenSession.account?.id"></span></span>
-                        <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="'Brgy. ' + ($store.citizenSession.account?.barangay || '—')"></span></span>
+                        <span class="flex items-center gap-1.5"><i data-lucide="map-pinned" class="w-3.5 h-3.5"></i><span x-text="'Brgy. ' + ($store.citizenSession.account?.barangay || '—')"></span></span>
                         <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i><span x-text="($store.lang.current === 'en' ? 'Resident since ' : 'Residente mula ') + ($store.citizenSession.account?.residentSince || '—')"></span></span>
                     </p>
                 </div>
@@ -118,7 +118,7 @@
             <!-- Personal information -->
             <div class="lg:col-span-2 space-y-5">
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4 flex items-center gap-2"><i data-lucide="user-round" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Personal na Impormasyon" en="Personal Information" /></h3>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Personal na Impormasyon" en="Personal Information" /></h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="signature" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
@@ -218,7 +218,7 @@
                 <!-- Household -->
                 <x-ui.card padded="false">
                     <div class="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="users-round" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Kasapi ng Sambahayan" en="Household Members" /></h3>
+                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Kasapi ng Sambahayan" en="Household Members" /></h3>
                         <span class="text-[11px] font-medium text-slate-400">{{ count($household) }}</span>
                     </div>
                     <div class="divide-y divide-slate-50">

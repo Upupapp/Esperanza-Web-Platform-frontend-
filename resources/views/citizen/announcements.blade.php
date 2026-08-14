@@ -146,7 +146,7 @@
                         this.$dispatch('toast', { message: 'Na-post na! — this is a frontend preview, no data is saved.', variant: 'success' });
                     },
                 }" class="contents">
-                    <x-ui.card padded="false" class="mb-3 overflow-hidden hover:shadow-card-hover transition-shadow duration-300">
+                    <x-ui.card padded="false" class="mb-3 overflow-hidden hover:shadow-card-hover transition-shadow duration-[220ms] ease-standard">
                         <div class="relative bg-gradient-to-br from-brand-50 via-white to-purple-50/60 px-4 pt-4 pb-3.5">
                             <div class="relative flex items-center gap-3">
                                 <div class="relative shrink-0">
@@ -157,7 +157,7 @@
                                     @click="open = true"
                                     class="flex-1 text-left group"
                                 >
-                                    <span class="block px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-slate-400 text-sm shadow-sm group-hover:border-brand-300 group-hover:shadow-card group-hover:-translate-y-0.5 transition-all duration-200">
+                                    <span class="block px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-slate-400 text-sm shadow-sm group-hover:border-brand-300 group-hover:shadow-card group-hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
                                         <span x-text="($store.lang.current === 'en' ? 'What\'s on your mind, ' : 'Ano ang balita mo, ') + ($store.citizenSession.account?.firstName ?? 'Resident') + '?'"></span>
                                     </span>
                                 </button>
@@ -297,7 +297,7 @@
                                     <!-- Hover profile card -->
                                     <div
                                         x-show="showCard"
-                                        x-transition:enter="transition ease-out duration-150"
+                                        x-transition:enter="transition duration-[160ms] ease-standard"
                                         x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                                         x-cloak
@@ -342,10 +342,10 @@
                                     <button
                                         type="button" @click="menuOpen = !menuOpen"
                                         class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                                    ><i data-lucide="ellipsis-vertical" class="w-4 h-4"></i></button>
+                                    ><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
                                     <div
                                         x-show="menuOpen"
-                                        x-transition:enter="transition ease-out duration-150"
+                                        x-transition:enter="transition duration-[160ms] ease-standard"
                                         x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                                         x-cloak
@@ -506,7 +506,7 @@
                                             <span x-text="c.initials"></span>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <div class="bg-white hover:shadow-card rounded-2xl px-3.5 py-2 inline-block max-w-full border border-slate-100 transition-shadow duration-200">
+                                            <div class="bg-white hover:shadow-card rounded-2xl px-3.5 py-2 inline-block max-w-full border border-slate-100 transition-shadow duration-[220ms] ease-standard">
                                                 <p class="text-[11px] font-semibold text-navy-900" x-text="c.author"></p>
                                                 <p class="text-xs text-slate-600 mt-0.5 leading-snug" x-show="c.body" x-text="c.body"></p>
                                                 <div
@@ -543,7 +543,7 @@
                                                         <span x-text="r.initials"></span>
                                                     </div>
                                                     <div class="min-w-0 flex-1">
-                                                        <div class="bg-white hover:shadow-card rounded-2xl px-3 py-1.5 inline-block max-w-full border border-slate-100 transition-shadow duration-200">
+                                                        <div class="bg-white hover:shadow-card rounded-2xl px-3 py-1.5 inline-block max-w-full border border-slate-100 transition-shadow duration-[220ms] ease-standard">
                                                             <p class="text-[10.5px] font-semibold text-navy-900" x-text="r.author"></p>
                                                             <p class="text-[11px] text-slate-600 mt-0.5 leading-snug" x-text="r.body"></p>
                                                         </div>
@@ -571,7 +571,7 @@
                                                         x-model="replyText[post.id]"
                                                         @keydown.enter="submitReply(post, ci)"
                                                         x-bind:placeholder="$store.lang.current === 'en' ? 'Write a reply...' : 'Sumagot...'"
-                                                        class="w-full rounded-full border border-slate-200 bg-white py-1.5 pl-3.5 pr-8 text-[11px] text-slate-800 placeholder:text-slate-400 shadow-sm focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                                                        class="w-full rounded-full border border-slate-200 bg-white py-1.5 pl-3.5 pr-8 text-[11px] text-slate-800 placeholder:text-slate-400 shadow-sm focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                     >
                                                     <button type="button" @click="submitReply(post, ci)" class="absolute right-2 top-1/2 -translate-y-1/2 text-brand-500 hover:text-brand-700">
                                                         <i data-lucide="send" class="w-3 h-3"></i>
@@ -615,7 +615,7 @@
                                             x-model="commentDraft[post.id]"
                                             @keydown.enter="addComment(post)"
                                             x-bind:placeholder="$store.lang.current === 'en' ? 'Write a comment...' : 'Sumulat ng komento...'"
-                                            class="w-full rounded-full border border-slate-200 bg-white py-2 pl-4 pr-[4.5rem] text-xs text-slate-800 placeholder:text-slate-400 shadow-sm focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200"
+                                            class="w-full rounded-full border border-slate-200 bg-white py-2 pl-4 pr-[4.5rem] text-xs text-slate-800 placeholder:text-slate-400 shadow-sm focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                         >
                                         <div class="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
                                             <button

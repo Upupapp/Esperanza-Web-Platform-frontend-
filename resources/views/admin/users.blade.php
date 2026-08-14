@@ -67,7 +67,7 @@
             <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input type="text" x-model="search" placeholder="Search personnel..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                    <input type="text" x-model="search" placeholder="Search personnel..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
                 <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredUsers.length + ' of ' + users.length + ' personnel'"></p>
                 <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
@@ -112,7 +112,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="ellipsis-vertical" class="w-4 h-4"></i></button>
+                                <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
                             </td>
                         </tr>
                     </template>
@@ -151,7 +151,7 @@
                                 <div class="flex items-center gap-2 flex-1">
                                     <div class="flex items-center gap-2 flex-1">
                                         <span
-                                            class="w-6 h-6 rounded-full flex items-center justify-center text-[10.5px] font-semibold shrink-0 transition-colors duration-200"
+                                            class="w-6 h-6 rounded-full flex items-center justify-center text-[10.5px] font-semibold shrink-0 transition-colors duration-[160ms] ease-standard"
                                             :class="step > i + 1 ? 'bg-emerald-500 text-white' : (step === i + 1 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400')"
                                         >
                                             <i data-lucide="check" class="w-3 h-3" x-show="step > i + 1"></i>
@@ -165,7 +165,7 @@
                         </div>
 
                         <!-- Step 1: Account Info -->
-                        <div x-show="step === 1" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
+                        <div x-show="step === 1" x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <x-ui.input name="first_name" label="First Name" placeholder="Angeline" x-model="form.firstName" />
                                 <x-ui.input name="last_name" label="Last Name" placeholder="Mercado" x-model="form.lastName" />
@@ -173,7 +173,7 @@
                             <x-ui.input name="email" type="email" label="Work Email" icon="mail" placeholder="angeline.mercado@esperanza.gov.ph" x-model="form.email" />
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Department</label>
-                                <select x-model="form.dept" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                                <select x-model="form.dept" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     @foreach($departments as $dept)
                                         <option value="{{ $dept }}">{{ $dept }}</option>
                                     @endforeach
@@ -182,13 +182,13 @@
                         </div>
 
                         <!-- Step 2: Assign Role -->
-                        <div x-show="step === 2" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
+                        <div x-show="step === 2" x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
                             <p class="text-xs text-slate-500 mb-3">Select the role that best matches this personnel's responsibilities. Permissions are inherited from the role and can be reviewed in the next step.</p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto scrollbar-thin pr-1 -mr-1">
                                 <template x-for="role in roles" :key="role.key">
                                     <button
                                         type="button" @click="form.roleKey = role.key"
-                                        class="text-left rounded-xl border p-3 transition-all duration-150"
+                                        class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard"
                                         :class="form.roleKey === role.key ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                     >
                                         <div class="flex items-center gap-2.5 mb-1.5">
@@ -204,12 +204,12 @@
                         </div>
 
                         <!-- Step 3: Access Scope -->
-                        <div x-show="step === 3" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3.5">
+                        <div x-show="step === 3" x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3.5">
                             <p class="text-xs text-slate-500 mb-1">Define the geographic boundary of this account's access — a Municipal account can act across the whole LGU, while a Barangay account only sees that barangay's data.</p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                 <button
                                     type="button" @click="form.scope = 'municipal'"
-                                    class="text-left rounded-xl border p-3.5 transition-all duration-150"
+                                    class="text-left rounded-xl border p-3.5 transition-all duration-[160ms] ease-standard"
                                     :class="form.scope === 'municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                 >
                                     <span class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-2"><i data-lucide="landmark" class="w-4.5 h-4.5"></i></span>
@@ -218,7 +218,7 @@
                                 </button>
                                 <button
                                     type="button" @click="form.scope = 'barangay'"
-                                    class="text-left rounded-xl border p-3.5 transition-all duration-150"
+                                    class="text-left rounded-xl border p-3.5 transition-all duration-[160ms] ease-standard"
                                     :class="form.scope === 'barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                 >
                                     <span class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-2"><i data-lucide="map-pin" class="w-4.5 h-4.5"></i></span>
@@ -227,9 +227,9 @@
                                 </button>
                             </div>
 
-                            <div x-show="form.scope === 'barangay'" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                            <div x-show="form.scope === 'barangay'" x-cloak x-transition:enter="transition duration-[160ms] ease-standard" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Barangay</label>
-                                <select x-model="form.barangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-200">
+                                <select x-model="form.barangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     <template x-for="b in barangays" :key="b">
                                         <option :value="b" x-text="'Brgy. ' + b"></option>
                                     </template>
@@ -239,7 +239,7 @@
                         </div>
 
                         <!-- Step 4: Review Access -->
-                        <div x-show="step === 4" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3.5">
+                        <div x-show="step === 4" x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-3.5">
                             <div class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
                                 <x-ui.avatar name="New Personnel" size="sm" />
                                 <div class="min-w-0 flex-1">
@@ -299,7 +299,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="role in roles" :key="role.key">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="role.color">
@@ -318,7 +318,7 @@
                             <button
                                 @click="tab = 'permissions'; window.dispatchEvent(new CustomEvent('select-role', { detail: role.key }))"
                                 class="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1"
-                            >View <i data-lucide="arrow-right" class="w-3 h-3"></i></button>
+                            >View <i data-lucide="eye" class="w-3 h-3"></i></button>
                         </div>
                     </div>
                 </template>
@@ -357,7 +357,7 @@
                 <template x-for="role in roles" :key="role.key">
                     <button
                         type="button" @click="selectRole(role.key)"
-                        class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors duration-150"
+                        class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors duration-[160ms] ease-standard"
                         :class="selectedRoleKey === role.key ? 'bg-brand-50 ring-1 ring-brand-200' : 'hover:bg-slate-50'"
                     >
                         <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="role.color">
@@ -411,7 +411,7 @@
                         <span class="text-xs text-slate-400 mb-1">/ <span x-text="totalAvailable()"></span> granted</span>
                     </div>
                     <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden mb-4">
-                        <div class="h-full bg-brand-500 rounded-full transition-all duration-300" :style="`width: ${totalAvailable() ? (totalGranted() / totalAvailable() * 100) : 0}%`"></div>
+                        <div class="h-full bg-brand-500 rounded-full transition-all duration-[600ms] ease-standard" :style="`width: ${totalAvailable() ? (totalGranted() / totalAvailable() * 100) : 0}%`"></div>
                     </div>
 
                     <div class="space-y-2.5">
@@ -422,7 +422,7 @@
                                     <span class="text-slate-400 shrink-0 ml-2" x-text="moduleGranted(mod) + '/' + moduleTotal(mod)"></span>
                                 </div>
                                 <div class="h-1 rounded-full bg-slate-100 overflow-hidden">
-                                    <div class="h-full bg-brand-400 rounded-full transition-all duration-300" :style="`width: ${moduleTotal(mod) ? (moduleGranted(mod) / moduleTotal(mod) * 100) : 0}%`"></div>
+                                    <div class="h-full bg-brand-400 rounded-full transition-all duration-[600ms] ease-standard" :style="`width: ${moduleTotal(mod) ? (moduleGranted(mod) / moduleTotal(mod) * 100) : 0}%`"></div>
                                 </div>
                             </div>
                         </template>

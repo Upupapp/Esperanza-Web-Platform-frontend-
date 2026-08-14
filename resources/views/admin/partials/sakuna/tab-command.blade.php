@@ -103,7 +103,7 @@
 <div
     x-show="ready"
     x-cloak
-    x-transition:enter="transition ease-out duration-500"
+    x-transition:enter="transition duration-[300ms] ease-standard"
     x-transition:enter-start="opacity-0 translate-y-2"
     x-transition:enter-end="opacity-100 translate-y-0"
     class="space-y-5"
@@ -113,8 +113,8 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
 
         {{-- Active Incidents --}}
-        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-4">
-            <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4">
+            <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
                 <i data-lucide="flame" class="w-5 h-5 text-rose-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight">14</p>
@@ -123,8 +123,8 @@
         </div>
 
         {{-- High-Risk Barangays --}}
-        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-4">
-            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
                 <i data-lucide="map-pin" class="w-5 h-5 text-orange-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight">7</p>
@@ -133,8 +133,8 @@
         </div>
 
         {{-- Families Evacuated --}}
-        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-4">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
                 <i data-lucide="house" class="w-5 h-5 text-blue-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight">312</p>
@@ -143,8 +143,8 @@
         </div>
 
         {{-- Open Evacuation Centers --}}
-        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-4">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
                 <i data-lucide="building-2" class="w-5 h-5 text-emerald-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight">8</p>
@@ -153,8 +153,8 @@
         </div>
 
         {{-- Responders Deployed --}}
-        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-4">
-            <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
                 <i data-lucide="shield" class="w-5 h-5 text-purple-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight">24</p>
@@ -163,8 +163,8 @@
         </div>
 
         {{-- Unresolved Priority Needs --}}
-        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-4">
-            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+        <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
                 <i data-lucide="circle-alert" class="w-5 h-5 text-amber-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight">7</p>
@@ -242,7 +242,7 @@
                             <div
                                 x-show="open"
                                 x-cloak
-                                x-transition:enter="transition ease-out duration-150"
+                                x-transition:enter="transition duration-[160ms] ease-standard"
                                 x-transition:enter-start="opacity-0 scale-90"
                                 x-transition:enter-end="opacity-100 scale-100"
                                 class="absolute z-30 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] rounded-xl p-3 w-52 shadow-float pointer-events-none"
@@ -296,7 +296,7 @@
                     @click="setTab('incidents')"
                     class="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1 transition-colors"
                 >
-                    View all <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    View all <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
             <div class="overflow-x-auto">
@@ -549,10 +549,10 @@
 <div
     x-show="showIncidentDetail"
     x-cloak
-    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
@@ -560,10 +560,10 @@
     @keydown.escape.window="showIncidentDetail = false"
 >
     <div
-        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave="transition duration-[150ms] ease-exit"
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
         class="bg-white rounded-2xl shadow-float w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
@@ -696,7 +696,7 @@
             {{-- Timeline --}}
             <div>
                 <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 mb-3">
-                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> Incident Timeline
+                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Incident Timeline
                 </h4>
                 <div class="space-y-0">
                     @php

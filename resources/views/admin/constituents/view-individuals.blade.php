@@ -188,7 +188,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div
-                                        class="h-full rounded-full transition-all duration-500"
+                                        class="h-full rounded-full transition-all duration-[600ms] ease-standard"
                                         :class="completionColor(r.profile_pct)"
                                         :style="'width:' + r.profile_pct + '%'"
                                     ></div>
@@ -227,10 +227,10 @@
                                 <div
                                     x-show="open"
                                     @click.outside="open = false"
-                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter="transition duration-[160ms] ease-standard"
                                     x-transition:enter-start="opacity-0 scale-95 translate-y-1"
                                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                    x-transition:leave="transition ease-in duration-75"
+                                    x-transition:leave="transition duration-[160ms] ease-standard"
                                     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                                     x-transition:leave-end="opacity-0 scale-95 translate-y-1"
                                     class="absolute right-0 z-50 mt-1 w-52 rounded-xl bg-white border border-slate-200 shadow-lg shadow-slate-200/60 divide-y divide-slate-100 overflow-hidden"

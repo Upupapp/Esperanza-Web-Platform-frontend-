@@ -199,7 +199,7 @@
                 (alertLevelFilter === '' || '{{ $alert['level'] }}' === alertLevelFilter) &&
                 (alertStatusFilter === '' || '{{ $alert['status'] }}' === alertStatusFilter)
             "
-            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter="transition duration-[220ms] ease-standard"
             x-transition:enter-start="opacity-0 translate-y-1"
             x-transition:enter-end="opacity-100 translate-y-0"
         >
@@ -286,16 +286,16 @@
     x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showCreateAlert = false; alertComposerStep = 1"
-    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
 >
     <div
         class="bg-white rounded-2xl shadow-float w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6"
-        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
     >
@@ -336,7 +336,7 @@
         </div>
 
         {{-- ── STEP 1: Compose ─────────────────────────────────────────── --}}
-        <div x-show="alertComposerStep === 1" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
+        <div x-show="alertComposerStep === 1" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
             <div class="space-y-4">
                 {{-- Title --}}
                 <div>
@@ -439,7 +439,7 @@
         </div>
 
         {{-- ── STEP 2: Target & Channels ───────────────────────────────── --}}
-        <div x-show="alertComposerStep === 2" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0"
+        <div x-show="alertComposerStep === 2" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0"
             x-data="{ targetScope: 'municipality', selectedBarangays: [], selectedGroups: [], selectedChannels: [] }">
             <div class="space-y-5">
                 {{-- Target Scope --}}
@@ -542,7 +542,7 @@
         </div>
 
         {{-- ── STEP 3: Preview ─────────────────────────────────────────── --}}
-        <div x-show="alertComposerStep === 3" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
+        <div x-show="alertComposerStep === 3" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
             <p class="text-xs text-slate-500 mb-4">Review how this alert will appear to recipients across delivery channels.</p>
             <div class="flex flex-col sm:flex-row gap-6 items-start justify-center">
                 {{-- Mobile push preview --}}
@@ -608,7 +608,7 @@
         </div>
 
         {{-- ── STEP 4: Publish ─────────────────────────────────────────── --}}
-        <div x-show="alertComposerStep === 4" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
+        <div x-show="alertComposerStep === 4" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0">
             <div class="space-y-4">
                 {{-- Summary box --}}
                 <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">

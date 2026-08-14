@@ -119,7 +119,7 @@
                         </div>
                         <div class="w-full h-2 bg-rose-100 rounded-full overflow-hidden">
                             <div
-                                class="h-full rounded-full transition-all duration-700"
+                                class="h-full rounded-full transition-all duration-[600ms] ease-standard"
                                 :class="(selectedDQIssue?.merge_candidate?.confidence || 0) >= 85 ? 'bg-rose-500' : 'bg-amber-400'"
                                 :style="'width:' + (selectedDQIssue?.merge_candidate?.confidence || 0) + '%'"
                             ></div>

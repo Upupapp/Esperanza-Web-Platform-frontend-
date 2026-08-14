@@ -282,15 +282,15 @@
 <div x-show="showCenterDetail" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showCenterDetail = false"
-    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0">
 
     <div x-data="{ centerTab: 'overview' }"
-        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -664,14 +664,14 @@
 <div x-show="showOpenCenterConfirm" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showOpenCenterConfirm = false"
-    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0">
 
-    <div x-transition:enter="transition ease-out duration-200"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
@@ -711,14 +711,14 @@
 <div x-show="showCloseCenterConfirm" x-cloak
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showCloseCenterConfirm = false"
-    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0">
 
-    <div x-transition:enter="transition ease-out duration-200"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
@@ -782,14 +782,14 @@
     x-effect="showCreateCenter && (centerStep = 1)"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
     @click.self="showCreateCenter = false"
-    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter="transition duration-[200ms] ease-emphasized"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
-    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0">
 
-    <div x-transition:enter="transition ease-out duration-200"
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-xl max-h-[90vh] overflow-y-auto">

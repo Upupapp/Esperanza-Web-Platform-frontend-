@@ -235,7 +235,7 @@
                                     <span class="text-slate-400">{{ $brgy['count'] }} requests</span>
                                 </div>
                                 <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-700 ease-out" style="width: 0%" x-init="setTimeout(() => $el.style.width = '{{ $brgy['pct'] }}%', 100)"></div>
+                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" style="width: 0%" x-init="setTimeout(() => $el.style.width = '{{ $brgy['pct'] }}%', 100)"></div>
                                 </div>
                             </div>
                         @endforeach

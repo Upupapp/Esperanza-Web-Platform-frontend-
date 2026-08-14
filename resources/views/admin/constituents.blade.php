@@ -226,7 +226,7 @@
                     </button>
                     <button @click="addFamilyStep=1;showAddFamily=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
-                        <i data-lucide="users-round" class="w-3.5 h-3.5 text-purple-500"></i>New Family
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-purple-500"></i>New Family
                     </button>
                     <button @click="addHouseholdStep=1;showAddHousehold=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
@@ -281,7 +281,7 @@
                     <button @click="view='families';clearFilters()"
                             class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
                             :class="view==='families'    ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
-                        <i data-lucide="users-round" class="w-3.5 h-3.5"></i>Families
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i>Families
                         <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredFamilies.length"></span>
                     </button>
                     <button @click="view='households';clearFilters()"

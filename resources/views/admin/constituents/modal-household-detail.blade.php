@@ -43,7 +43,7 @@
                                     stroke-linecap="round"
                                     :stroke-dasharray="'226.2'"
                                     :stroke-dashoffset="226.2 - (226.2 * (selectedHousehold?.profile_pct || 0) / 100)"
-                                    class="transition-all duration-700"
+                                    class="transition-all duration-[600ms] ease-standard"
                                 />
                             </svg>
                             <div class="absolute inset-2 rounded-full bg-white/10 flex items-center justify-center text-white">
@@ -101,7 +101,7 @@
                         {id:'members',icon:'users',label:'Members',count:selectedHousehold?.member_count},
                         {id:'amenities',icon:'plug-zap',label:'Amenities'},
                         {id:'programs',icon:'heart-handshake',label:'Programs'},
-                        {id:'history',icon:'clock',label:'History'}
+                        {id:'history',icon:'history',label:'History'}
                     ]" :key="tab.id">
                         <button
                             @click="householdTab = tab.id"
@@ -131,7 +131,7 @@
                             <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Location & Identification</h4>
                             <dl class="space-y-2.5">
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="locate" class="w-3.5 h-3.5 text-slate-400"></i> Address</dt>
+                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> Address</dt>
                                     <dd class="text-xs font-semibold text-navy-900 text-right" x-text="selectedHousehold.address || '—'"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
@@ -155,7 +155,7 @@
                                     <dd class="text-xs font-bold text-navy-900" x-text="selectedHousehold.member_count"></dd>
                                 </div>
                                 <div class="flex justify-between items-center gap-2">
-                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="users-round" class="w-3.5 h-3.5 text-slate-400"></i> Family Count</dt>
+                                    <dt class="text-xs text-slate-500 flex items-center gap-1.5 flex-shrink-0"><i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i> Family Count</dt>
                                     <dd class="text-xs font-bold text-navy-900" x-text="selectedHousehold.family_count"></dd>
                                 </div>
                             </dl>
