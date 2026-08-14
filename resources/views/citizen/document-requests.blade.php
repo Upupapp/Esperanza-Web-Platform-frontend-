@@ -10,32 +10,38 @@
 
     $documentTypes = [
         [
-            'name' => 'Cedula (Community Tax Certificate)', 'office' => "Treasurer's Office", 'fee' => '₱5.00 base + ₱1.00 per ₱1,000 income', 'days' => 'Same day',
+            'key' => 'dokyu_cedula', 'category' => 'Tax & Property',
+            'name' => 'Cedula (Community Tax Certificate)', 'office' => "Municipal Treasurer's Office", 'office_short' => "Treasurer's Office", 'level' => 'Municipal', 'fee' => '₱5.00 base + ₱1.00 per ₱1,000 income', 'days' => 'Same day',
             'requirements' => ['One (1) valid government-issued ID', 'Proof of income or Certificate of Employment (if applicable)'],
             'process' => ['Submit Request', 'Compute Tax Due', 'Pay Fee', 'Release'],
         ],
         [
-            'name' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'fee' => '₱50.00', 'days' => '1-2 working days',
+            'key' => 'dokyu_residency', 'category' => 'Civil Registry',
+            'name' => 'Certificate of Residency', 'office' => 'Office of the Municipal Civil Registrar', 'office_short' => 'Civil Registrar', 'level' => 'Municipal', 'fee' => '₱50.00', 'days' => '1-2 working days',
             'requirements' => ['One (1) valid government-issued ID', 'Barangay Clearance', 'Proof of residency (utility bill or lease contract)'],
             'process' => ['Submit Request', 'Verify Residency', 'Approval', 'Release'],
         ],
         [
-            'name' => 'Certificate of Indigency', 'office' => 'MSWDO', 'fee' => 'Free', 'days' => '2-3 working days',
+            'key' => 'dokyu_indigency', 'category' => 'Social Services',
+            'name' => 'Certificate of Indigency', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'level' => 'Municipal', 'fee' => 'Free', 'days' => '2-3 working days',
             'requirements' => ['One (1) valid government-issued ID', 'Barangay Certification of Indigency', 'Brief interview / case assessment with MSWDO'],
             'process' => ['Submit Request', 'MSWDO Interview', 'Case Assessment', 'Release'],
         ],
         [
-            'name' => 'Business Permit (New Application)', 'office' => 'BPLO', 'fee' => '₱500.00 and up (based on capital)', 'days' => '7 working days',
+            'key' => 'dokyu_business_new', 'category' => 'Business & Permits',
+            'name' => 'Business Permit (New Application)', 'office' => 'Business Permits & Licensing Office', 'office_short' => 'BPLO', 'level' => 'Multi-Office', 'fee' => '₱500.00 and up (based on capital)', 'days' => '7 working days',
             'requirements' => ['DTI or SEC Registration', 'Barangay Business Clearance', 'Locational / Zoning Clearance', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Cedula (Community Tax Certificate)', 'Lease contract or land title'],
             'process' => ['Submit Requirements', 'Zoning & Fire Inspection', 'Assessment & Payment', 'Release'],
         ],
         [
-            'name' => 'Business Permit Renewal', 'office' => 'BPLO', 'fee' => 'Based on prior year gross receipts', 'days' => '3 working days',
+            'key' => 'dokyu_business_renewal', 'category' => 'Business & Permits',
+            'name' => 'Business Permit Renewal', 'office' => 'Business Permits & Licensing Office', 'office_short' => 'BPLO', 'level' => 'Multi-Office', 'fee' => 'Based on prior year gross receipts', 'days' => '3 working days',
             'requirements' => ["Previous year's Business Permit and Official Receipt", 'Barangay Clearance (current year)', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Audited Financial Statement or Income Tax Return'],
             'process' => ['Submit Requirements', 'Verify Prior Permit', 'Assessment & Payment', 'Release'],
         ],
         [
-            'name' => 'Real Property Tax Clearance', 'office' => "Treasurer's Office", 'fee' => '₱100.00', 'days' => 'Same day',
+            'key' => 'dokyu_rpt', 'category' => 'Tax & Property',
+            'name' => 'Real Property Tax Clearance', 'office' => "Municipal Treasurer's Office", 'office_short' => "Treasurer's Office", 'level' => 'Municipal', 'fee' => '₱100.00', 'days' => 'Same day',
             'requirements' => ['Latest Tax Declaration', 'Official Receipt of last RPT payment', 'One (1) valid government-issued ID'],
             'process' => ['Submit Request', 'Verify Tax Records', 'Settle Balance (if any)', 'Release'],
         ],

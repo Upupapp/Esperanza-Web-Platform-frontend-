@@ -8,32 +8,37 @@
 
     $assistanceTypes = [
         [
-            'name' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'amount' => '₱1,000 – ₱150,000 per case', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'stethoscope',
+            'key' => 'tulong_medical', 'category' => 'Medical & Health', 'level' => 'Municipal',
+            'name' => 'Medical Assistance (AICS)', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => '₱1,000 – ₱150,000 per case', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'stethoscope',
             'desc' => 'Hospital bills, medicines, and treatment support under DSWD\'s Assistance to Individuals in Crisis Situation.',
             'requirements' => ['One (1) valid government-issued ID', "Medical Abstract or Doctor's prescription", 'Hospital bill or Statement of Account', 'Barangay Certificate of Indigency'],
             'process' => ['Submit Request', 'MSWDO Assessment', 'Approval', 'Cash / Guarantee Letter Release'],
         ],
         [
-            'name' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'amount' => 'Up to ₱5,000', 'fee' => 'Free', 'days' => '2-3 working days', 'icon' => 'flower',
+            'key' => 'tulong_burial', 'category' => 'Burial & Bereavement', 'level' => 'Municipal',
+            'name' => 'Burial Assistance (AICS)', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Up to ₱5,000', 'fee' => 'Free', 'days' => '2-3 working days', 'icon' => 'flower',
             'desc' => 'Financial aid for funeral and burial expenses. Must be filed within 15 days from date of death.',
             'requirements' => ['Death Certificate', 'Valid ID of claimant', 'Proof of relationship to the deceased', 'Funeral contract or bill', 'Barangay Certificate of Indigency'],
             'process' => ['Submit Request', 'Verify Death Certificate', 'Approval', 'Release'],
         ],
         [
-            'name' => 'Educational Assistance', 'office' => "MSWDO / Mayor's Office", 'amount' => 'Tuition + allowance per semester', 'fee' => 'Free', 'days' => '10-15 working days', 'icon' => 'graduation-cap',
+            'key' => 'tulong_educational', 'category' => 'Education', 'level' => 'Multi-Office',
+            'name' => 'Educational Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => "MSWDO / Mayor's Office", 'amount' => 'Tuition + allowance per semester', 'fee' => 'Free', 'days' => '10-15 working days', 'icon' => 'graduation-cap',
             'desc' => 'Municipal scholarship and school supplies support for indigent students in good academic standing.',
             'requirements' => ['Certificate of Enrollment', 'Report Card / Form 138 (GWA 80 and above)', 'Certificate of Indigency (family income below ₱120,000/year)', 'Barangay Residency Certificate'],
             'process' => ['Submit Requirements', 'Scholarship Committee Review', 'Approval', 'Disbursement'],
         ],
         [
-            'name' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'amount' => 'Based on social worker assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'wallet',
+            'key' => 'tulong_financial', 'category' => 'Financial Assistance', 'level' => 'Municipal',
+            'name' => 'Financial Assistance (AICS)', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Based on social worker assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'wallet',
             'desc' => 'Cash assistance for individuals and families in crisis situations.',
             'requirements' => ['One (1) valid government-issued ID', 'Barangay Certificate of Indigency', 'Brief interview / social case study with MSWDO'],
             'process' => ['Submit Request', 'Social Case Study', 'Approval', 'Release'],
         ],
         [
             // DSWD Family Assistance Card in Emergencies and Disasters (FACED)
-            'name' => 'Food / Relief Assistance', 'office' => 'MSWDO / MDRRMO', 'amount' => 'Relief goods package', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'package',
+            'key' => 'tulong_food', 'category' => 'Food & Relief', 'level' => 'Multi-Office',
+            'name' => 'Food / Relief Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO / MDRRMO', 'amount' => 'Relief goods package', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'package',
             'desc' => 'Food packs and relief goods for families affected by calamities or emergencies.',
             'requirements' => ['Barangay Certification', 'One (1) valid government-issued ID'],
             'process' => ['Submit Request', 'Barangay Verification', 'Approval', 'Distribution'],
@@ -71,14 +76,16 @@
             ],
         ],
         [
-            'name' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'amount' => '₱1,000/month (₱3,000 per quarter)', 'fee' => '₱100.00', 'days' => '5-7 working days', 'icon' => 'users',
+            'key' => 'tulong_pension', 'category' => 'Social Protection', 'level' => 'Municipal',
+            'name' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'Office of Senior Citizens Affairs', 'office_short' => 'OSCA', 'amount' => '₱1,000/month (₱3,000 per quarter)', 'fee' => '₱100.00', 'days' => '5-7 working days', 'icon' => 'users',
             'desc' => 'Monthly stipend for indigent senior citizens 60 and above with no pension or regular income.',
             'requirements' => ['Senior Citizen ID', 'Affidavit of no pension, income, or family support (notarized)', 'Barangay Certification'],
             'process' => ['Submit Requirements', 'OSCA / DSWD Verification', 'Enrollment', 'Quarterly Release'],
         ],
         [
             // DSWD Application Form for Solo Parent, Annex B (2023), per RA 11861
-            'name' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'amount' => 'Cash grant + goods, per assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'heart-handshake',
+            'key' => 'tulong_solo_parent', 'category' => 'Social Protection', 'level' => 'Municipal',
+            'name' => 'Solo Parent Cash Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Cash grant + goods, per assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'heart-handshake',
             'desc' => 'Support for solo parents under the Expanded Solo Parents Welfare Act (RA 11861).',
             'requirements' => ['Solo Parent ID', 'PSA Birth Certificate(s) of children', 'Barangay Certification'],
             'process' => ['Submit Requirements', 'MSWDO Assessment', 'Approval', 'Release'],
@@ -117,7 +124,8 @@
         ],
         [
             // DOLE TUPAD — Tulong Panghanapbuhay sa Ating Disadvantaged/Displaced Workers
-            'name' => 'DOLE TUPAD Emergency Employment', 'office' => 'MPESO', 'amount' => 'Minimum wage rate, 10-30 days of work', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'hard-hat',
+            'key' => 'tulong_tupad', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
+            'name' => 'DOLE TUPAD Emergency Employment', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Minimum wage rate, 10-30 days of work', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'hard-hat',
             'desc' => 'Short-term emergency employment for displaced, underemployed, or self-employed workers who lost livelihood.',
             'requirements' => ['One (1) valid government-issued ID', 'Barangay Certification of Residency'],
             'process' => ['Submit Profile Form', 'MPESO Screening', 'DOLE RO5 Validation', 'Project Deployment'],
@@ -145,7 +153,8 @@
             ],
         ],
         [
-            'name' => 'TESDA Skills Training Registration', 'office' => 'MPESO', 'amount' => 'Free training slot (scholarship-based)', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'graduation-cap',
+            'key' => 'tulong_tesda', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
+            'name' => 'TESDA Skills Training Registration', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Free training slot (scholarship-based)', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'graduation-cap',
             'desc' => 'Register for a TESDA technical-vocational training slot through the Municipal Public Employment Service Office.',
             'requirements' => ['One (1) 1x1 ID picture', 'One (1) valid government-issued ID'],
             'process' => ['Submit Registration Form', 'MPESO Endorsement to TESDA', 'Enrollment'],
@@ -166,7 +175,8 @@
             ],
         ],
         [
-            'name' => 'Livelihood Business Mapping', 'office' => 'MPESO', 'amount' => 'Self-assessment worksheet — no monetary grant', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'compass',
+            'key' => 'tulong_livelihood_mapping', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
+            'name' => 'Livelihood Business Mapping', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Self-assessment worksheet — no monetary grant', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'compass',
             'desc' => 'Rate your business interests and skills to find the most suitable livelihood project before applying for a MPESO livelihood grant.',
             'requirements' => ['None — self-assessment worksheet'],
             'process' => ['Applicant Self-Rates Business Interests', 'MPESO Livelihood Focal Reviews', 'Filing'],
@@ -189,7 +199,8 @@
             ],
         ],
         [
-            'name' => 'Kabuhayan Program Beneficiary Application', 'office' => 'MPESO', 'amount' => 'Livelihood package, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'sprout',
+            'key' => 'tulong_kabuhayan', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
+            'name' => 'Kabuhayan Program Beneficiary Application', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Livelihood package, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'sprout',
             'desc' => 'Apply for a DOLE-MPESO livelihood/kabuhayan program grant to start, restore, or grow a small business.',
             'requirements' => ['One (1) 1x1 ID picture', 'PWD ID (if applicable)'],
             'process' => ['Submit Profile Form', 'MPESO Screening', 'DOLE Endorsement'],
@@ -219,7 +230,8 @@
             ],
         ],
         [
-            'name' => 'Individual Business Plan', 'office' => 'MPESO', 'amount' => 'Start-up kit value, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'notebook-pen',
+            'key' => 'tulong_business_plan', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
+            'name' => 'Individual Business Plan', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Start-up kit value, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'notebook-pen',
             'desc' => 'Submit your business plan to support a DOLE livelihood grant application — required alongside the Business Mapping and Beneficiary Profile forms.',
             'requirements' => ['Completed Livelihood Business Mapping', 'Completed Kabuhayan Program Beneficiary Application'],
             'process' => ['Submit Business Plan', 'Provincial Livelihood Focal Person Evaluation', 'Approval / Disapproval'],
@@ -262,7 +274,8 @@
         ],
         [
             // EMPOWERMENT AND RE-AFFIRMATION OF PATERNAL ABILITIES — Esperanza Masbate Federation
-            'name' => 'ERPAT Membership Registration', 'office' => 'MSWDO', 'amount' => 'Free membership', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'user-round-plus',
+            'key' => 'tulong_erpat', 'category' => 'Social Protection', 'level' => 'Municipal',
+            'name' => 'ERPAT Membership Registration', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Free membership', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'user-round-plus',
             'desc' => 'Register as a member of the ERPAT (Empowerment and Re-affirmation of Paternal Abilities) Federation of Esperanza, Masbate.',
             'requirements' => ['One (1) valid government-issued ID'],
             'process' => ['Accomplish Registration Form', 'MSWD Review', 'Filing with ERPAT Federation'],

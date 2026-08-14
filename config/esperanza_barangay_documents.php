@@ -27,6 +27,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_cert_death_registration',
         'name' => 'Barangay Certification (Registration of Death)',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY CERTIFICATION',
         'fee' => 'Free', 'days' => 'Same day',
         'requirements' => ['One (1) valid government-issued ID of the requester', 'Proof of relationship to the deceased (if applicable)'],
@@ -46,6 +49,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_cert_late_registration',
         'name' => 'Barangay Certification (Late Registration)',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY CERTIFICATION',
         'subtitle' => 'Late Registration of Birth — for Death Registration',
         'fee' => 'Free', 'days' => '1-2 working days',
@@ -67,6 +73,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_business_clearance',
         'name' => 'Barangay Business Clearance',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY BUSINESS CLEARANCE',
         'fee' => '₱100.00', 'days' => 'Same day',
         'requirements' => ['One (1) valid government-issued ID', 'Right Thumbmark (to be taken at Barangay Hall)'],
@@ -84,6 +93,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_residency',
         'name' => 'Barangay Residency',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY RESIDENCY',
         'fee' => '₱30.00', 'days' => 'Same day',
         'requirements' => ['One (1) valid government-issued ID'],
@@ -103,6 +115,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_first_time_jobseeker',
         'name' => 'First Time Jobseeker Certificate (RA 11261)',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY CERTIFICATION',
         'subtitle' => 'First Time Jobseekers Assistance Act RA 11261',
         'fee' => 'Free', 'days' => 'Same day',
@@ -118,6 +133,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_indigency',
         'name' => 'Barangay Indigency',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY INDIGENCY',
         'fee' => 'Free', 'days' => '1 working day',
         'requirements' => ['One (1) valid government-issued ID', 'Brief interview with Barangay Social Worker (if available)'],
@@ -136,6 +154,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_clearance',
         'name' => 'Barangay Clearance',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY CLEARANCE',
         'fee' => '₱30.00', 'days' => 'Same day',
         'requirements' => ['One (1) valid government-issued ID', 'Right Thumbmark (to be taken at Barangay Hall)'],
@@ -155,6 +176,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_cert_national_id',
         'name' => 'Barangay Certification (National ID / PSA Purpose)',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY CERTIFICATION',
         'subtitle' => 'For Registration of National ID',
         'fee' => 'Free', 'days' => 'Same day',
@@ -176,6 +200,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_cert_land_property',
         'name' => 'Barangay Certification (Land / Property)',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY CERTIFICATION',
         'subtitle' => 'Land / Property Ownership',
         'fee' => '₱50.00', 'days' => '1-2 working days',
@@ -192,6 +219,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_cert_general',
         'name' => 'Barangay Certification (General Purpose)',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY CERTIFICATION',
         'fee' => 'Free', 'days' => 'Same day',
         'requirements' => ['One (1) valid government-issued ID of the requester'],
@@ -210,6 +240,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_business_permit',
         'name' => 'Barangay Business Permit',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY BUSINESS PERMIT',
         'fee' => '₱100.00', 'days' => 'Same day',
         'requirements' => ['Approved Barangay Business Clearance', 'One (1) valid government-issued ID of the proprietor'],
@@ -225,6 +258,9 @@ $standardDocuments = [
     [
         'key' => 'brgy_event_permit',
         'name' => 'Barangay Event / Special Permit',
+        'category' => 'Barangay Certificates',
+        'office' => 'Barangay Office',
+        'level' => 'Barangay',
         'title' => 'BARANGAY PERMIT',
         'subtitle' => 'Event / Special Occasion Permit',
         'fee' => '₱150.00', 'days' => '1-2 working days',
