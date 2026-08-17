@@ -8,6 +8,7 @@
         ['ref' => 'AR-2026-0044', 'citizen' => 'Michael Bacus', 'type' => 'Food / Relief Assistance', 'office' => 'MSWDO', 'barangay' => 'Iligan', 'submitted' => 'Mar 18, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'type' => 'Social Pension (Indigent Senior)', 'office' => 'OSCA', 'barangay' => 'Baras', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0022', 'citizen' => 'Rosemarie Tan', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Jan 28, 2026', 'status' => 'Waiting Requirements'],
+        ['ref' => 'AR-2026-0009', 'citizen' => 'Ferdinand Cortez', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.'],
     ];
 
     // Classification lookup for the mock request rows above, per the Dokyu &
@@ -48,6 +49,7 @@
             open: false,
             selected: null,
             processing: false,
+            rejectRemarks: '',
             requests: @js($requests),
             actionStatuses: @js($actionStatuses),
             releaseStatuses: @js($releaseStatuses),
@@ -91,10 +93,12 @@
                 return map[status] ?? 0;
             },
             reject() {
-                if (this.processing) return;
+                if (this.processing || !this.rejectRemarks.trim()) return;
                 this.processing = true;
                 setTimeout(() => {
                     this.selected.status = 'Rejected';
+                    this.selected.remarks = this.rejectRemarks.trim();
+                    this.rejectRemarks = '';
                     this.processing = false;
                     this.open = false;
                     this.$dispatch('toast', { message: 'Case ' + this.selected.ref + ' rejected.', variant: 'error' });
@@ -199,9 +203,9 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 <template x-for="r in filteredRequests" :key="r.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="open = true; selected = r">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="r.ref" @click.stop="open = true; selected = r"></td>
-                        <td class="px-4 py-3" @click.stop="open = true; selected = r">
+                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="open = true; selected = r; rejectRemarks = ''">
+                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="r.ref" @click.stop="open = true; selected = r; rejectRemarks = ''"></td>
+                        <td class="px-4 py-3" @click.stop="open = true; selected = r; rejectRemarks = ''">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
@@ -232,7 +236,7 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right" @click.stop>
-                            <button @click="open = true; selected = r" class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap">Review</button>
+                            <button @click="open = true; selected = r; rejectRemarks = ''" class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap">Review</button>
                         </td>
                     </tr>
                 </template>
@@ -343,11 +347,27 @@
                             @click="selected.assigned = $store.session.account?.name || 'You'; $dispatch('toast', { message: 'Assigned to yourself.', variant: 'success' })"
                         >Assign to me</x-ui.button>
                     </div>
+
+                    <div class="rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-3 mt-3 flex items-start gap-2.5" x-show="selected.status === 'Rejected' && selected.remarks">
+                        <i data-lucide="circle-x" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold text-rose-700">Rejection Remarks</p>
+                            <p class="text-xs text-rose-600 mt-0.5" x-text="selected.remarks"></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3" x-show="!['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'].includes(selected.status)">
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Rejection Remarks <span class="text-slate-400 font-normal">(required to reject — this is what the citizen will see to correct and resubmit)</span></label>
+                        <textarea
+                            x-model="rejectRemarks" rows="2" placeholder="e.g. Missing Medical Abstract. Please resubmit with this requirement attached."
+                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
+                        ></textarea>
+                    </div>
                 </div>
             </template>
 
             <x-slot:footer>
-                <x-ui.button variant="danger" size="sm" x-bind:disabled="processing" @click="reject()">
+                <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
                     <span class="inline-flex items-center gap-1.5">
                         <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                         <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>

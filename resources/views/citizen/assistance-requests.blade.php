@@ -4,6 +4,7 @@
         ['ref' => 'AR-2026-0098', 'type' => 'Educational Assistance', 'office' => 'MSWDO', 'purpose' => 'Tuition support for 2 dependents, SY 2026-2027', 'submitted' => 'May 20, 2026', 'status' => 'Released'],
         ['ref' => 'AR-2026-0061', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Livelihood capital support', 'submitted' => 'Apr 2, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0037', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'purpose' => 'Quarterly social pension enrollment', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
+        ['ref' => 'AR-2026-0009', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Funeral expenses support', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.'],
     ];
 
     $assistanceTypes = [
@@ -349,7 +350,22 @@
             pickupDirectory: @js($pickupDirectory),
             progressOpen: false,
             selectedRequest: null,
-            openProgress(r) { this.selectedRequest = r; this.progressOpen = true; },
+            resubmitNote: '',
+            resubmitting: false,
+            openProgress(r) { this.selectedRequest = r; this.resubmitNote = ''; this.progressOpen = true; },
+            resubmitRequest() {
+                if (this.resubmitting || !this.resubmitNote.trim()) return;
+                this.resubmitting = true;
+                setTimeout(() => {
+                    this.selectedRequest.status = 'Submitted';
+                    this.selectedRequest.purpose = this.resubmitNote.trim();
+                    this.selectedRequest.submitted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    delete this.selectedRequest.remarks;
+                    this.resubmitting = false;
+                    this.progressOpen = false;
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
+                }, 800);
+            },
             stepOrder: ['Submitted', 'Assigned', 'Approved', 'Released'],
             stepIndex(status) {
                 const map = { 'Submitted': 0, 'Pending Review': 0, 'Assigned': 1, 'Waiting Requirements': 1, 'Processing': 1, 'Approved': 2, 'Released': 3, 'Completed': 3, 'Rejected': 0 };
@@ -1159,9 +1175,31 @@
                             </template>
                         </div>
 
-                        <div class="rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 mt-5 flex items-center gap-2.5" x-show="selectedRequest.status === 'Rejected'">
-                            <i data-lucide="circle-x" class="w-4 h-4 text-rose-500 shrink-0"></i>
-                            <p class="text-xs text-rose-600"><x-ui.t fil="Tinanggihan ang kahilingang ito. Bisitahin ang opisina para sa detalye." en="This request was rejected. Visit the office below for details." /></p>
+                        <div class="rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Rejected'">
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="circle-x" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-rose-700"><x-ui.t fil="Tinanggihan ang kahilingang ito" en="This request was rejected" /></p>
+                                    <p class="text-xs text-rose-600 mt-0.5" x-show="selectedRequest.remarks" x-text="selectedRequest.remarks"></p>
+                                    <p class="text-xs text-rose-600 mt-0.5" x-show="!selectedRequest.remarks"><x-ui.t fil="Bisitahin ang opisina para sa detalye." en="Visit the office below for details." /></p>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 pt-3 border-t border-rose-100/70">
+                                <label class="block text-xs font-medium text-rose-700 mb-1.5"><x-ui.t fil="Itama at Isumite Muli" en="Correct & Resubmit" /></label>
+                                <textarea
+                                    x-model="resubmitNote" rows="2"
+                                    :placeholder="$store.lang.current === 'en' ? 'Describe what you corrected, or provide the missing requirement...' : 'Ilarawan kung ano ang inayos mo, o ibigay ang kulang na requirement...'"
+                                    class="w-full rounded-xl border border-rose-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
+                                ></textarea>
+                                <x-ui.button
+                                    size="sm" icon="rotate-ccw" class="mt-2.5 w-full justify-center"
+                                    x-bind:disabled="resubmitting || !resubmitNote.trim()"
+                                    @click="resubmitRequest()"
+                                >
+                                    <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Request' : 'Isumite Muli ang Kahilingan')"></span>
+                                </x-ui.button>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3 mt-5">
