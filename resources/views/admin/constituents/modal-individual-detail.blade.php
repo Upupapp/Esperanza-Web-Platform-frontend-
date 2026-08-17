@@ -436,17 +436,34 @@
                             {{-- Rejected / Under Verification callout — what's blocking full access --}}
                             <div
                                 x-show="['Pending Review','Under Verification','Rejected','Draft'].includes(selectedIndividual?.citizen_account?.status)"
-                                class="mt-5 pt-5 border-t border-slate-100 flex items-start gap-2.5 text-xs"
-                                :class="selectedIndividual?.citizen_account?.status === 'Rejected' ? 'text-rose-600' : 'text-amber-600'"
+                                class="mt-5 pt-5 border-t border-slate-100 text-xs"
                             >
-                                <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
-                                <span x-text="
-                                    selectedIndividual?.citizen_account?.status === 'Rejected'
-                                        ? 'Registration was rejected — resident needs to resubmit valid ID / details before Dokyu and Tulong access can be granted.'
-                                        : selectedIndividual?.citizen_account?.status === 'Under Verification'
-                                        ? 'LGU is actively reviewing this registration. Dokyu and Tulong remain locked until approved.'
-                                        : 'Registration submitted and awaiting LGU review. Dokyu and Tulong remain locked until approved.'
-                                "></span>
+                                <div class="flex items-start gap-2.5" :class="selectedIndividual?.citizen_account?.status === 'Rejected' ? 'text-rose-600' : 'text-amber-600'">
+                                    <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                                    <span x-text="
+                                        selectedIndividual?.citizen_account?.status === 'Rejected'
+                                            ? 'Registration was rejected — resident needs to resubmit valid ID / details before Dokyu and Tulong access can be granted.'
+                                            : selectedIndividual?.citizen_account?.status === 'Under Verification'
+                                            ? 'LGU is actively reviewing this registration. Dokyu and Tulong remain locked until approved.'
+                                            : 'Registration submitted and awaiting LGU review. Dokyu and Tulong remain locked until approved.'
+                                    "></span>
+                                </div>
+
+                                <p class="mt-2 text-rose-600 font-medium" x-show="selectedIndividual?.citizen_account?.status === 'Rejected' && selectedIndividual?.citizen_account?.reject_remarks" x-text="selectedIndividual?.citizen_account?.reject_remarks"></p>
+
+                                <div
+                                    class="mt-3.5 flex flex-wrap items-center gap-2"
+                                    x-show="['Pending Review','Under Verification'].includes(selectedIndividual?.citizen_account?.status) && (can('const_citizen_verification','verify') || can('const_citizen_verification','reject'))"
+                                >
+                                    <x-ui.button x-show="can('const_citizen_verification','verify')" size="sm" icon="check" @click="verifyCitizenAccount(selectedIndividual)">Approve Registration</x-ui.button>
+                                    <x-ui.button x-show="can('const_citizen_verification','reject')" variant="danger" size="sm" icon="x" x-bind:disabled="!rejectAccountRemarks.trim()" @click="rejectCitizenAccount(selectedIndividual)">Reject</x-ui.button>
+                                </div>
+                                <div class="mt-2.5" x-show="['Pending Review','Under Verification'].includes(selectedIndividual?.citizen_account?.status) && can('const_citizen_verification','reject')">
+                                    <textarea
+                                        x-model="rejectAccountRemarks" rows="2" placeholder="Remarks if rejecting — e.g. ID photo unreadable, name doesn't match uploaded ID..."
+                                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
+                                    ></textarea>
+                                </div>
                             </div>
                         </div>
                     </template>

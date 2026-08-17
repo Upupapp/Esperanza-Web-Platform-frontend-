@@ -82,6 +82,7 @@ $permissionModules = [
             ['key' => 'const_barangay', 'name' => 'Barangay Profiles', 'perms' => ['view', 'edit', 'export']],
             ['key' => 'const_data_quality', 'name' => 'Data Quality Management', 'perms' => ['view', 'verify', 'assign', 'merge', 'resolve', 'view_sensitive', 'export']],
             ['key' => 'const_document_storage', 'name' => 'Citizen Document Storage', 'perms' => ['view', 'view_sensitive', 'verify', 'edit', 'export']],
+            ['key' => 'const_citizen_verification', 'name' => 'Citizen Account Verification', 'perms' => ['view', 'verify', 'reject']],
         ],
     ],
     [
@@ -217,9 +218,12 @@ $roles = [
         'key' => 'front_desk', 'name' => 'Front Desk Officer', 'icon' => 'concierge-bell',
         'color' => 'text-orange-700 bg-orange-50', 'users' => 8, 'editable' => true,
         'desc' => 'First point of contact at the municipal hall — intakes new document and assistance requests and assists walk-in constituents.',
-        'permissions' => $buildPermissions([
-            'dokyu' => 'process', 'tulong' => 'process', 'constituents' => 'process', 'payments' => 'view',
-        ]),
+        'permissions' => array_merge(
+            $buildPermissions([
+                'dokyu' => 'process', 'tulong' => 'process', 'constituents' => 'process', 'payments' => 'view',
+            ]),
+            ['const_citizen_verification' => ['view', 'verify', 'reject']]
+        ),
     ],
     [
         'key' => 'records_officer', 'name' => 'Records Officer', 'icon' => 'archive',
@@ -246,6 +250,7 @@ $roles = [
             [
                 'comm_barangay_directory' => ['view', 'edit'],
                 'const_document_storage' => ['view', 'verify'],
+                'const_citizen_verification' => ['view', 'verify', 'reject'],
                 'brgy_cert_death_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
                 'brgy_cert_late_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
                 'brgy_business_clearance' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],

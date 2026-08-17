@@ -95,6 +95,50 @@
             const s = this.$store.session.account?.scope;
             return !s || s === 'Municipal';
         },
+        cvSearch: '',
+        cvStatusFilter: '',
+        rejectAccountRemarks: '',
+        get citizenAccountList() {
+            return this.individuals.filter(i => this.$store.session.inScope(i.barangay) && i.citizen_account);
+        },
+        get pendingCitizenVerificationCount() {
+            return this.citizenAccountList.filter(i => ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length;
+        },
+        get cvCounts() {
+            const list = this.citizenAccountList;
+            return {
+                pending: list.filter(i => i.citizen_account.status === 'Pending Review').length,
+                underVerification: list.filter(i => i.citizen_account.status === 'Under Verification').length,
+                approved: list.filter(i => i.citizen_account.status === 'Approved').length,
+                rejected: list.filter(i => i.citizen_account.status === 'Rejected').length,
+            };
+        },
+        get filteredCitizenAccounts() {
+            let list = this.citizenAccountList.filter(i => {
+                if (this.cvStatusFilter && i.citizen_account.status !== this.cvStatusFilter) return false;
+                if (this.cvSearch) {
+                    const q = this.cvSearch.toLowerCase();
+                    return (i.name || '').toLowerCase().includes(q) || (i.id || '').toLowerCase().includes(q) || (i.barangay || '').toLowerCase().includes(q) || (i.citizen_account.email || '').toLowerCase().includes(q);
+                }
+                return true;
+            });
+            const priority = s => ['Pending Review', 'Under Verification'].includes(s) ? 0 : 1;
+            return [...list].sort((a, b) => priority(a.citizen_account.status) - priority(b.citizen_account.status));
+        },
+        verifyCitizenAccount(i) {
+            i.citizen_account.status = 'Approved';
+            i.citizen_account.access_level = 'Verified';
+            delete i.citizen_account.reject_remarks;
+            this.$dispatch('toast', { message: i.name + '\'s citizen account was approved.', variant: 'success' });
+        },
+        rejectCitizenAccount(i) {
+            if (!this.rejectAccountRemarks.trim()) return;
+            i.citizen_account.status = 'Rejected';
+            i.citizen_account.access_level = 'Unverified';
+            i.citizen_account.reject_remarks = this.rejectAccountRemarks.trim();
+            this.rejectAccountRemarks = '';
+            this.$dispatch('toast', { message: i.name + '\'s citizen account was rejected.', variant: 'error' });
+        },
         get filteredIndividuals() {
             let list = this.individuals.filter(r => {
                 if (!this.$store.session.inScope(r.barangay)) return false;
@@ -137,7 +181,7 @@
                 return true;
             });
         },
-        openIndividual(r) { this.selectedIndividual=r; this.individualTab='Overview'; this.showIndividualDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
+        openIndividual(r) { this.selectedIndividual=r; this.individualTab='Overview'; this.rejectAccountRemarks=''; this.showIndividualDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
         openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.$nextTick(()=>window.renderIcons?.()); },
         openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.$nextTick(()=>window.renderIcons?.()); },
         openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
@@ -188,7 +232,7 @@
             a.click(); this.$dispatch('toast',{message:'Exported successfully.',variant:'success'});
         },
         can(sub,perm) { return this.$store.session.canPerm?this.$store.session.canPerm(sub,perm):true; },
-        clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter=''; },
+        clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.cvSearch='';this.cvStatusFilter=''; },
     }"
     class="animate-fade-up"
 >
@@ -264,6 +308,17 @@
                 <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>Data Quality
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                       :class="tab==='data-quality' ? 'bg-white/25 text-white' : 'bg-rose-100 text-rose-600'">{{ count($qualityIssues) }}</span>
+            </button>
+            <button @click="tab='citizen-verification';clearFilters()"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 relative"
+                    :class="tab==='citizen-verification' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>Citizen Verification
+                <span
+                    x-show="pendingCitizenVerificationCount > 0"
+                    class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    :class="tab==='citizen-verification' ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-600'"
+                    x-text="pendingCitizenVerificationCount"
+                ></span>
             </button>
         </div>
 
@@ -358,6 +413,11 @@
         {{-- ── Profiling Coverage tab ──────────────────────────────── --}}
         <div x-show="tab === 'profiling'" x-cloak>
             @include('admin.constituents.tab-profiling')
+        </div>
+
+        {{-- ── Citizen Verification tab ────────────────────────────── --}}
+        <div x-show="tab === 'citizen-verification'" x-cloak>
+            @include('admin.constituents.tab-citizen-verification')
         </div>
 
         {{-- ── Data Quality tab ────────────────────────────────────── --}}
