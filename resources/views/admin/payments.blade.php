@@ -1,12 +1,12 @@
 @php
     $payments = [
-        ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Dokyu', 'item' => 'Cedula (Community Tax Certificate)', 'amount' => '₱32.00', 'method' => null, 'receipt' => null, 'status' => 'Waiting Requirements', 'date' => 'Jul 8, 2026'],
-        ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'type' => 'Dokyu', 'item' => 'Business Permit (New)', 'amount' => '₱1,250.00', 'method' => 'PayMaya', 'receipt' => 'PayMaya Receipt.png', 'status' => 'Pending Review', 'date' => 'Jul 10, 2026'],
-        ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Dokyu', 'item' => 'Barangay Clearance', 'amount' => '₱50.00', 'method' => 'Payment in Center', 'receipt' => 'OR-88214.jpg', 'status' => 'Approved', 'date' => 'Jul 3, 2026'],
-        ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'type' => 'Dokyu', 'item' => 'Certificate of Residency', 'amount' => '₱50.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt.jpg', 'status' => 'Approved', 'date' => 'Jun 29, 2026'],
-        ['ref' => 'DR-2026-1655', 'citizen' => 'Rosemarie Tan', 'type' => 'Dokyu', 'item' => 'Business Permit Renewal', 'amount' => '₱980.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt (blurred).jpg', 'status' => 'Rejected', 'date' => 'May 12, 2026'],
-        ['ref' => 'DR-2026-1490', 'citizen' => 'Michael Bacus', 'type' => 'Dokyu', 'item' => 'Real Property Tax Clearance', 'amount' => '₱100.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt 2.jpg', 'status' => 'Approved', 'date' => 'Apr 20, 2026'],
-        ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'type' => 'Tulong', 'item' => 'Social Pension — Documentary Fee', 'amount' => '₱100.00', 'method' => 'Payment in Center', 'receipt' => 'OR-77031.jpg', 'status' => 'Approved', 'date' => 'Feb 10, 2026'],
+        ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Cedula (Community Tax Certificate)', 'amount' => '₱32.00', 'method' => null, 'receipt' => null, 'status' => 'Waiting Requirements', 'date' => 'Jul 8, 2026'],
+        ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'barangay' => 'Baras', 'type' => 'Dokyu', 'item' => 'Business Permit (New)', 'amount' => '₱1,250.00', 'method' => 'PayMaya', 'receipt' => 'PayMaya Receipt.png', 'status' => 'Pending Review', 'date' => 'Jul 10, 2026'],
+        ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Barangay Clearance', 'amount' => '₱50.00', 'method' => 'Payment in Center', 'receipt' => 'OR-88214.jpg', 'status' => 'Approved', 'date' => 'Jul 3, 2026'],
+        ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'barangay' => 'Iligan', 'type' => 'Dokyu', 'item' => 'Certificate of Residency', 'amount' => '₱50.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt.jpg', 'status' => 'Approved', 'date' => 'Jun 29, 2026'],
+        ['ref' => 'DR-2026-1655', 'citizen' => 'Rosemarie Tan', 'barangay' => 'Baras', 'type' => 'Dokyu', 'item' => 'Business Permit Renewal', 'amount' => '₱980.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt (blurred).jpg', 'status' => 'Rejected', 'date' => 'May 12, 2026'],
+        ['ref' => 'DR-2026-1490', 'citizen' => 'Michael Bacus', 'barangay' => 'Iligan', 'type' => 'Dokyu', 'item' => 'Real Property Tax Clearance', 'amount' => '₱100.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt 2.jpg', 'status' => 'Approved', 'date' => 'Apr 20, 2026'],
+        ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'barangay' => 'Baras', 'type' => 'Tulong', 'item' => 'Social Pension — Documentary Fee', 'amount' => '₱100.00', 'method' => 'Payment in Center', 'receipt' => 'OR-77031.jpg', 'status' => 'Approved', 'date' => 'Feb 10, 2026'],
     ];
 
     $adminFiles = [
@@ -29,6 +29,7 @@
         x-data="{
             tab: 'all',
             search: '',
+            barangayFilter: '',
             open: false,
             selected: null,
             payments: @js($payments),
@@ -37,19 +38,22 @@
             receipt: null,
             showReceiptPicker: false,
             processing: false,
+            get barangays() { return [...new Set(this.payments.map(p => p.barangay))].sort(); },
             runAction(fn) {
                 if (this.processing) return;
                 this.processing = true;
                 setTimeout(() => { fn(); this.processing = false; this.open = false; }, 700);
             },
             matches(p) {
+                if (!this.$store.session.inScope(p.barangay)) return false;
                 const tabOk = this.tab === 'all'
                     || (this.tab === 'unpaid' && p.status === 'Waiting Requirements')
                     || (this.tab === 'review' && p.status === 'Pending Review')
                     || (this.tab === 'paid' && p.status === 'Approved');
+                const barangayOk = this.barangayFilter === '' || p.barangay === this.barangayFilter;
                 const q = this.search.trim().toLowerCase();
                 const searchOk = q === '' || p.ref.toLowerCase().includes(q) || p.citizen.toLowerCase().includes(q);
-                return tabOk && searchOk;
+                return tabOk && barangayOk && searchOk;
             },
             get visibleCount() { return this.payments.filter(p => this.matches(p)).length; },
         }"
@@ -76,6 +80,11 @@
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
+                <select x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
+                    <option value="">All Barangays</option>
+                    <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                </select>
+                <button type="button" @click="barangayFilter = ''" x-show="barangayFilter" x-cloak class="text-xs text-slate-400 hover:text-slate-600 transition-colors shrink-0">Clear</button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">

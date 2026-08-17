@@ -82,6 +82,7 @@
             officeFilter: '',
             levelFilter: '',
             assignedFilter: '',
+            barangayFilter: '',
             showAdvancedFilters: false,
             open: false,
             selected: null,
@@ -92,6 +93,7 @@
             doneStatuses: @js($doneStatuses),
             get categories() { return [...new Set(this.requests.map(r => r.category))].sort(); },
             get offices() { return [...new Set(this.requests.map(r => r.office))].sort(); },
+            get barangays() { return [...new Set(this.requests.map(r => r.barangay))].sort(); },
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
@@ -122,10 +124,11 @@
                     (this.officeFilter === '' || r.office === this.officeFilter) &&
                     (this.levelFilter === '' || r.level === this.levelFilter) &&
                     (this.assignedFilter === '' || (this.assignedFilter === 'unassigned' ? !r.assigned : r.assigned === this.assignedFilter)) &&
+                    (this.barangayFilter === '' || r.barangay === this.barangayFilter) &&
                     (q === '' || r.ref.toLowerCase().includes(q) || r.citizen.toLowerCase().includes(q))
                 );
             },
-            clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; },
+            clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; },
             stepIndex(status) {
                 const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Waiting Requirements': 1, 'Processing': 1, 'Approved': 2, 'Ready for Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
@@ -199,7 +202,7 @@
                 <button
                     type="button" @click="showAdvancedFilters = !showAdvancedFilters"
                     class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border transition-colors shrink-0"
-                    :class="showAdvancedFilters || officeFilter || levelFilter || assignedFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'"
+                    :class="showAdvancedFilters || officeFilter || levelFilter || assignedFilter || barangayFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'"
                 >
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
                 </button>
@@ -232,11 +235,15 @@
                     <option value="Municipal">Municipal</option>
                     <option value="Multi-Office">Multi-Office</option>
                 </select>
+                <select x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <option value="">All Barangays</option>
+                    <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                </select>
                 <select x-model="assignedFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">Anyone / Unassigned</option>
                     <option value="unassigned">Unassigned only</option>
                 </select>
-                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-400 hover:text-slate-600 transition-colors" x-show="officeFilter || levelFilter || assignedFilter">Clear</button>
+                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-400 hover:text-slate-600 transition-colors" x-show="officeFilter || levelFilter || assignedFilter || barangayFilter">Clear</button>
             </div>
         </div>
 
