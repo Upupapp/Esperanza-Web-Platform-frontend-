@@ -24,6 +24,47 @@
         ['user' => 'Marivic Ong', 'action' => 'Rejected document request DR-2026-1655', 'module' => 'Dokyu', 'time' => 'Jul 6, 2026 · 1:18 PM', 'ip' => '203.177.42.27'],
     ];
 
+    // Service Catalog — configuration view over the Dokyu/Tulong service
+    // definitions that already drive the citizen wizards and admin routing
+    // (config/esperanza_municipal_documents.php, config/esperanza_barangay_documents.php,
+    // and the Tulong program list in config/esperanza_rbac.php's 'tulong'
+    // module). Reuses those real names/categories/offices rather than
+    // inventing a parallel taxonomy — editing here is a frontend preview
+    // only, same as the rest of this admin's mock CRUD (Roles, Personnel).
+    $tulongCategoryMeta = [
+        'tulong_medical' => ['category' => 'Medical & Health', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
+        'tulong_burial' => ['category' => 'Burial & Bereavement', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
+        'tulong_educational' => ['category' => 'Education', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Multi-Office'],
+        'tulong_financial' => ['category' => 'Financial Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
+        'tulong_food' => ['category' => 'Food & Relief', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Multi-Office'],
+        'tulong_pension' => ['category' => 'Social Protection', 'office' => 'Office of Senior Citizens Affairs', 'level' => 'Municipal'],
+        'tulong_solo_parent' => ['category' => 'Social Protection', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
+        'tulong_erpat' => ['category' => 'Social Protection', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
+        'tulong_tupad' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
+        'tulong_tesda' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
+        'tulong_livelihood_mapping' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
+        'tulong_kabuhayan' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
+        'tulong_business_plan' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
+    ];
+    $tulongSubmodules = collect(config('esperanza_rbac.permission_modules'))->firstWhere('key', 'tulong')['submodules'];
+
+    $serviceCatalog = collect(config('esperanza_municipal_documents.documents'))
+        ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
+        ->map(fn ($d) => [
+            'key' => $d['key'], 'name' => $d['name'], 'category' => $d['category'], 'office' => $d['office'], 'level' => $d['level'],
+            'fee' => $d['fee'] ?? 'Free', 'days' => $d['days'] ?? '—', 'requirements' => $d['requirements'] ?? [], 'process' => $d['process'] ?? [],
+            'service_type' => 'Dokyu', 'active' => true,
+        ])
+        ->concat(collect($tulongSubmodules)->map(fn ($s) => [
+            'key' => $s['key'], 'name' => $s['name'],
+            'category' => $tulongCategoryMeta[$s['key']]['category'], 'office' => $tulongCategoryMeta[$s['key']]['office'], 'level' => $tulongCategoryMeta[$s['key']]['level'],
+            'fee' => 'Free', 'days' => '3-5 working days', 'requirements' => ['One (1) valid government-issued ID', 'Barangay Certificate of Indigency'], 'process' => ['Submit Request', 'MSWDO Assessment', 'Approval', 'Release'],
+            'service_type' => 'Tulong', 'active' => true,
+        ]))
+        ->values()->all();
+
+    $catalogRoles = collect(config('esperanza_rbac.roles'))->where('key', '!=', 'citizen')->map(fn ($r) => ['key' => $r['key'], 'name' => $r['name']])->values()->all();
+
     $tab = $tab ?? 'general';
 @endphp
 
@@ -39,7 +80,7 @@
         <div class="lg:col-span-1">
             <x-ui.card padded="false" class="p-2">
                 <nav class="space-y-0.5">
-                    @foreach(['general' => ['building-2', 'General'], 'notifications' => ['bell', 'Notifications'], 'security' => ['shield', 'Security'], 'branding' => ['palette', 'Branding'], 'integrations' => ['plug', 'Integrations'], 'audit-logs' => ['scroll-text', 'Audit Logs']] as $key => [$icon, $label])
+                    @foreach(['general' => ['building-2', 'General'], 'notifications' => ['bell', 'Notifications'], 'security' => ['shield', 'Security'], 'branding' => ['palette', 'Branding'], 'service-catalog' => ['layout-list', 'Service Catalog'], 'integrations' => ['plug', 'Integrations'], 'audit-logs' => ['scroll-text', 'Audit Logs']] as $key => [$icon, $label])
                         <button
                             @click="tab = '{{ $key }}'"
                             class="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors"
@@ -157,6 +198,198 @@
                     </div>
                     <x-ui.button variant="secondary" size="sm" icon="pencil">Edit Information</x-ui.button>
                 </x-ui.card>
+            </div>
+
+            <div
+                x-data="{
+                    services: @js($serviceCatalog),
+                    roles: @js($catalogRoles),
+                    typeFilter: 'Dokyu',
+                    search: '',
+                    open: false,
+                    selected: null,
+                    isNew: false,
+                    reqInput: '',
+                    get filteredServices() {
+                        const q = this.search.trim().toLowerCase();
+                        return this.services.filter(s =>
+                            s.service_type === this.typeFilter &&
+                            (q === '' || s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q) || s.office.toLowerCase().includes(q))
+                        );
+                    },
+                    editService(s) {
+                        this.selected = JSON.parse(JSON.stringify(s));
+                        this.isNew = false;
+                        this.reqInput = '';
+                        this.open = true;
+                    },
+                    addService() {
+                        this.selected = { key: '', name: '', category: '', office: '', level: 'Municipal', fee: 'Free', days: '3-5 working days', requirements: [], process: ['Submit Request', 'Review', 'Approval', 'Release'], roles: [], service_type: this.typeFilter, active: true };
+                        this.isNew = true;
+                        this.reqInput = '';
+                        this.open = true;
+                    },
+                    addRequirement() {
+                        if (!this.reqInput.trim()) return;
+                        this.selected.requirements.push(this.reqInput.trim());
+                        this.reqInput = '';
+                    },
+                    removeRequirement(i) { this.selected.requirements.splice(i, 1); },
+                    toggleRole(key) {
+                        this.selected.roles = this.selected.roles || [];
+                        const i = this.selected.roles.indexOf(key);
+                        if (i === -1) { this.selected.roles.push(key); } else { this.selected.roles.splice(i, 1); }
+                    },
+                    saveService() {
+                        if (!this.selected.name.trim()) return;
+                        if (this.isNew) {
+                            this.selected.key = 'svc_' + this.selected.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                            this.services.push(this.selected);
+                        } else {
+                            const idx = this.services.findIndex(s => s.key === this.selected.key);
+                            if (idx !== -1) this.services[idx] = this.selected;
+                        }
+                        this.open = false;
+                        this.$dispatch('toast', { message: 'Service catalog updated — frontend preview only, no data is saved.', variant: 'success' });
+                    },
+                }"
+                x-show="tab === 'service-catalog'" x-cloak
+            >
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
+                        <button type="button" @click="typeFilter = 'Dokyu'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="typeFilter === 'Dokyu' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="file-text" class="w-3.5 h-3.5"></i>Dokyu</button>
+                        <button type="button" @click="typeFilter = 'Tulong'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="typeFilter === 'Tulong' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="hand-heart" class="w-3.5 h-3.5"></i>Tulong</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="relative">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <input type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
+                        </div>
+                        <x-ui.button size="sm" icon="plus" @click="addService()">Add Service</x-ui.button>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mb-3" x-text="filteredServices.length + ' ' + (filteredServices.length === 1 ? 'service' : 'services') + ' in ' + typeFilter"></p>
+
+                <x-ui.table>
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/60">
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Service</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Category</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Office</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Level</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                            <th class="px-4 py-2.5"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        <template x-for="s in filteredServices" :key="s.key">
+                            <tr class="hover:bg-slate-50/70 transition-colors cursor-pointer group" @click="editService(s)">
+                                <td class="px-4 py-3">
+                                    <p class="text-slate-700 font-medium group-hover:text-brand-600 transition-colors" x-text="s.name"></p>
+                                    <p class="text-[11px] text-slate-400" x-text="s.requirements.length + ' requirement' + (s.requirements.length === 1 ? '' : 's')"></p>
+                                </td>
+                                <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="s.category"></td>
+                                <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="s.office"></td>
+                                <td class="px-4 py-3 hidden sm:table-cell">
+                                    <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="{ 'bg-teal-50 text-teal-600': s.level === 'Barangay', 'bg-brand-50 text-brand-600': s.level === 'Municipal', 'bg-purple-50 text-purple-600': s.level === 'Multi-Office' }" x-text="s.level"></span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset" :class="s.active ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-slate-200'">
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="s.active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                                        <span x-text="s.active ? 'Active' : 'Inactive'"></span>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right" @click.stop>
+                                    <button @click="editService(s)" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </x-ui.table>
+
+                <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredServices.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <p class="text-sm font-medium text-slate-600">No services match this search.</p>
+                </div>
+
+                <x-ui.modal title="Edit Service" titleEn="Edit Service" maxWidth="lg">
+                    <template x-if="selected">
+                        <div class="space-y-4">
+                            <x-ui.input name="svc_name" label="Service Name" x-model="selected.name" />
+                            <div class="grid grid-cols-2 gap-3">
+                                <x-ui.input name="svc_category" label="Category" x-model="selected.category" />
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Processing Level</label>
+                                    <select x-model="selected.level" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <option value="Barangay">Barangay</option>
+                                        <option value="Municipal">Municipal</option>
+                                        <option value="Multi-Office">Multi-Office</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <x-ui.input name="svc_office" label="Responsible Office / Department" x-model="selected.office" />
+                            <div class="grid grid-cols-2 gap-3">
+                                <x-ui.input name="svc_fee" label="Fee" x-model="selected.fee" />
+                                <x-ui.input name="svc_days" label="Processing Time" x-model="selected.days" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Requirements</label>
+                                <ul class="space-y-1.5 mb-2">
+                                    <template x-for="(req, i) in selected.requirements" :key="i">
+                                        <li class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5">
+                                            <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                            <span class="flex-1 min-w-0" x-text="req"></span>
+                                            <button type="button" @click="removeRequirement(i)" class="text-slate-300 hover:text-rose-500 shrink-0"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                        </li>
+                                    </template>
+                                </ul>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" x-model="reqInput" @keydown.enter.prevent="addRequirement()" placeholder="Add a requirement..." class="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <x-ui.button variant="secondary" size="sm" icon="plus" @click="addRequirement()">Add</x-ui.button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Workflow</label>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <template x-for="(step, i) in selected.process" :key="i">
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 rounded-full px-2.5 py-1"><span class="text-slate-400" x-text="(i+1) + '.'"></span><span x-text="step"></span></span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Responsible Roles</label>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <template x-for="r in roles" :key="r.key">
+                                        <button
+                                            type="button" @click="toggleRole(r.key)"
+                                            class="text-[11px] font-medium rounded-full px-2.5 py-1 border transition-colors"
+                                            :class="(selected.roles || []).includes(r.key) ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
+                                            x-text="r.name"
+                                        ></button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <label class="flex items-center justify-between gap-4 py-1 cursor-pointer">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Active</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Inactive services are hidden from the citizen-facing catalog.</p>
+                                </div>
+                                <button type="button" @click="selected.active = !selected.active" class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative shrink-0" :class="selected.active ? 'bg-brand-600' : 'bg-slate-200'">
+                                    <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="selected.active && 'translate-x-4'"></span>
+                                </button>
+                            </label>
+                        </div>
+                    </template>
+
+                    <x-slot:footer>
+                        <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
+                        <x-ui.button size="sm" icon="check" @click="saveService()">Save Service</x-ui.button>
+                    </x-slot:footer>
+                </x-ui.modal>
             </div>
 
             <div x-show="tab === 'integrations'" x-cloak>
