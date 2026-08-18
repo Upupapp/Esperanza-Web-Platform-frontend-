@@ -23,13 +23,13 @@
         <thead>
             <tr class="bg-slate-50 border-b border-slate-200">
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Household</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Barangay / Sitio</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Head</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Families</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay / Sitio</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Head</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Families</th>
                 <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Members</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Dwelling</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Amenities</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap w-32">Completion</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Dwelling</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Amenities</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap w-32 hidden 2xl:table-cell">Completion</th>
                 <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
             </tr>
         </thead>
@@ -80,13 +80,13 @@
                     </td>
 
                     {{-- Barangay / Sitio --}}
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 hidden 2xl:table-cell">
                         <p class="text-sm text-navy-900 font-medium" x-text="h.barangay"></p>
                         <p class="text-xs text-slate-400" x-text="h.sitio ? ('Sitio ' + h.sitio) : '—'"></p>
                     </td>
 
                     {{-- Head --}}
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 hidden 2xl:table-cell">
                         <div class="flex items-center gap-2">
                             <template x-if="h.head_name">
                                 <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(h.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
@@ -96,7 +96,7 @@
                     </td>
 
                     {{-- Family count --}}
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-4 py-3 text-center hidden 2xl:table-cell">
                         <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold" x-text="h.family_count"></span>
                     </td>
 
@@ -106,13 +106,13 @@
                     </td>
 
                     {{-- Dwelling type --}}
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 hidden 2xl:table-cell">
                         <p class="text-sm text-navy-900 leading-tight" x-text="h.dwelling_type || '—'"></p>
                         <p class="text-xs text-slate-400 mt-0.5" x-text="h.housing_tenure || ''"></p>
                     </td>
 
                     {{-- Amenities: electricity / water / toilet icons --}}
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 hidden 2xl:table-cell">
                         <div class="flex items-center justify-center gap-2">
                             {{-- Electricity --}}
                             <span
@@ -151,7 +151,7 @@
                     </td>
 
                     {{-- Profile completion --}}
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 hidden 2xl:table-cell">
                         <div class="flex items-center gap-2">
                             <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                 <div

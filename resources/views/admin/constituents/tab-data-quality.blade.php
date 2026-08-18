@@ -138,13 +138,13 @@
             <table class="min-w-full divide-y divide-slate-100 text-sm">
                 <thead class="bg-slate-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Issue ID</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Issue ID</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Type</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Severity</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Barangay</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Barangay</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record Name</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Assigned To</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Created</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Assigned To</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Created</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                     </tr>
@@ -158,7 +158,7 @@
                             class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                         >
                             {{-- Issue ID --}}
-                            <td class="px-4 py-3 whitespace-nowrap" @click.stop>
+                            <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell" @click.stop>
                                 <span
                                     class="font-mono text-xs font-semibold text-navy-900"
                                     x-text="'#' + issue.id"
@@ -191,7 +191,7 @@
                             </td>
 
                             {{-- Barangay --}}
-                            <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-700">
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-700 hidden 2xl:table-cell">
                                 <span class="flex items-center gap-1.5">
                                     <i data-lucide="map-pin" class="w-3 h-3 text-slate-400 shrink-0"></i>
                                     <span x-text="issue.barangay"></span>
@@ -205,7 +205,7 @@
                             </td>
 
                             {{-- Assigned to --}}
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
                                 <div class="flex items-center gap-2">
                                     <span
                                         class="w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold flex items-center justify-center uppercase shrink-0"
@@ -216,7 +216,7 @@
                             </td>
 
                             {{-- Created date --}}
-                            <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500" x-text="issue.created"></td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500 hidden 2xl:table-cell" x-text="issue.created"></td>
 
                             {{-- Status badge --}}
                             <td class="px-4 py-3 whitespace-nowrap">

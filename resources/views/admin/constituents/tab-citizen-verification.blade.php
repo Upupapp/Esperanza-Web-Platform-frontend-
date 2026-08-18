@@ -75,10 +75,10 @@
                 <thead class="bg-slate-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Citizen</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Resident ID</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Registered</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Profile</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Resident ID</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Barangay</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Registered</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Profile</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                     </tr>
@@ -95,10 +95,10 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap" x-text="i.id"></td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap" x-text="'Brgy. ' + i.barangay"></td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap" x-text="i.citizen_account.registered_at || '—'"></td>
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            <td class="px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap hidden xl:table-cell" x-text="i.id"></td>
+                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell" x-text="'Brgy. ' + i.barangay"></td>
+                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell" x-text="i.citizen_account.registered_at || '—'"></td>
+                            <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
                                 <div class="flex items-center gap-2">
                                     <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden shrink-0">
                                         <div class="h-full rounded-full bg-brand-500" :style="'width:' + (i.citizen_account.profile_completeness || 0) + '%'"></div>

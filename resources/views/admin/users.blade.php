@@ -469,8 +469,8 @@
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/60">
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Role</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Dokyu / Tulong Grant</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Scope</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Dokyu / Tulong Grant</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Scope</th>
                             <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assign</th>
                             <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Review</th>
                             <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Approve</th>
@@ -495,8 +495,8 @@
                         @foreach($matrixRows as $row)
                             <tr class="hover:bg-slate-50/70 transition-colors">
                                 <td class="px-4 py-3 font-medium text-navy-900 whitespace-nowrap">{{ $row['role'] }}</td>
-                                <td class="px-4 py-3 text-slate-500 max-w-xs">{{ $row['grant'] }}</td>
-                                <td class="px-4 py-3 text-slate-500 whitespace-nowrap">{{ $row['scope'] }}</td>
+                                <td class="px-4 py-3 text-slate-500 max-w-xs hidden 2xl:table-cell">{{ $row['grant'] }}</td>
+                                <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell">{{ $row['scope'] }}</td>
                                 @foreach(['assign', 'review', 'approve', 'reject', 'release', 'reports'] as $action)
                                     <td class="px-4 py-3 text-center">
                                         @if($row[$action])

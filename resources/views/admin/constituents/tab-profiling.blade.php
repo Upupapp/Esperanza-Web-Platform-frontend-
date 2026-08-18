@@ -183,11 +183,11 @@
                 <thead class="bg-slate-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Residents Profiled</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Households Profiled</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap w-40">Coverage %</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Last Visit</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Assigned Encoder</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Residents Profiled</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Households Profiled</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap w-32">Coverage %</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Last Visit</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Assigned Encoder</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                     </tr>
@@ -224,20 +224,20 @@
                             </td>
 
                             {{-- Residents --}}
-                            <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums">
+                            <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums hidden xl:table-cell">
                                 <span class="font-semibold text-navy-900">{{ number_format($b['profiled']) }}</span>
                                 <span class="text-slate-400 text-xs"> / {{ number_format($b['residents']) }}</span>
                             </td>
 
                             {{-- Households --}}
-                            <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums">
+                            <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums hidden 2xl:table-cell">
                                 <span class="font-semibold text-navy-900">{{ number_format($b['hh_profiled']) }}</span>
                                 <span class="text-slate-400 text-xs"> / {{ number_format($b['hh']) }}</span>
                             </td>
 
                             {{-- Coverage % with progress bar --}}
                             <td class="px-4 py-3">
-                                <div class="flex items-center gap-2 min-w-[120px]">
+                                <div class="flex items-center gap-2 min-w-[90px]">
                                     <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                         <div class="h-full {{ $barColor }} rounded-full" style="width: {{ $pct }}%"></div>
                                     </div>
@@ -250,13 +250,13 @@
                             </td>
 
                             {{-- Last visit --}}
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
                                 <span class="text-slate-700 text-xs" title="{{ $visitFmt }}">{{ $visitLabel }}</span>
                                 <div class="text-[10px] text-slate-400">{{ $visitFmt }}</div>
                             </td>
 
                             {{-- Encoder --}}
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
                                 <div class="flex items-center gap-2">
                                     <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold flex items-center justify-center shrink-0 uppercase">
                                         {{ substr($b['encoder'], 0, 1) }}
