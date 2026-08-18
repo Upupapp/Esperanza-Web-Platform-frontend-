@@ -63,6 +63,10 @@
             releaseStatuses: @js($releaseStatuses),
             get categories() { return [...new Set(this.requests.map(r => r.category))].sort(); },
             get offices() { return [...new Set(this.requests.map(r => r.office))].sort(); },
+            get isMunicipalScope() {
+                const s = this.$store.session.account?.scope;
+                return !s || s === 'Municipal';
+            },
             barangays: @js($barangays),
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
@@ -211,10 +215,13 @@
                     <option value="Municipal">Municipal</option>
                     <option value="Multi-Office">Multi-Office</option>
                 </select>
-                <select x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select x-show="isMunicipalScope" x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">All Barangays</option>
                     <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                 </select>
+                <span x-show="!isMunicipalScope" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2">
+                    <i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span>
+                </span>
                 <select x-model="assignedFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">Anyone / Unassigned</option>
                     <option value="unassigned">Unassigned only</option>

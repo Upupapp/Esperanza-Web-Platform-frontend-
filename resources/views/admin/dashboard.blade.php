@@ -1,6 +1,39 @@
 @php
     $permissionModules = config('esperanza_rbac.permission_modules');
 
+    // Scope-aware headline stats: reuses the same municipal/per-barangay
+    // residents data already established in Constituents
+    // (config/esperanza_constituents.php) as the single source of truth,
+    // and derives proportional Dokyu/Tulong/Pending Approvals breakdowns
+    // from each barangay's real share of total residents, so a
+    // barangay-scoped account's dashboard shows figures scaled to their
+    // own barangay instead of the same municipality-wide totals everyone
+    // else sees (see Phase 14 of the RBAC/scope enforcement rules).
+    $constituentsData = config('esperanza_constituents');
+    $totalResidents = (int) str_replace(',', '', $constituentsData['municipalStats']['residents']);
+    $dokyuTotal = 1284;
+    $tulongTotal = 417;
+    $pendingApprovalsTotal = 63;
+
+    $municipalDashboardStats = [
+        'residents' => $constituentsData['municipalStats']['residents'],
+        'dokyu' => number_format($dokyuTotal),
+        'tulong' => number_format($tulongTotal),
+        'pending' => $pendingApprovalsTotal,
+        'sublabel' => 'Across 20 barangays',
+    ];
+    $barangayDashboardStats = [];
+    foreach ($constituentsData['barangayStats'] as $brgy => $stats) {
+        $share = ((int) str_replace(',', '', $stats['residents'])) / $totalResidents;
+        $barangayDashboardStats[$brgy] = [
+            'residents' => $stats['residents'],
+            'dokyu' => number_format((int) round($dokyuTotal * $share)),
+            'tulong' => number_format((int) round($tulongTotal * $share)),
+            'pending' => (int) round($pendingApprovalsTotal * $share),
+            'sublabel' => 'Brgy. ' . $brgy,
+        ];
+    }
+
     $docStatus = [
         ['label' => 'Completed', 'value' => 612, 'color' => '#22c55e'],
         ['label' => 'Processing', 'value' => 348, 'color' => '#2f62f5'],
@@ -47,7 +80,19 @@
 @endphp
 
 <x-layouts.admin title="Executive Dashboard" subtitle="Overview of citizen services and municipal operations." active="dashboard">
-    <div x-data="{ ready: false, modules: @js($permissionModules) }" x-init="setTimeout(() => ready = true, 550)">
+    <div
+        x-data="{
+            ready: false,
+            modules: @js($permissionModules),
+            municipalDashboardStats: @js($municipalDashboardStats),
+            barangayDashboardStats: @js($barangayDashboardStats),
+            get activeDashStats() {
+                const s = this.$store.session.account?.scope;
+                return (!s || s === 'Municipal') ? this.municipalDashboardStats : (this.barangayDashboardStats[s] ?? this.municipalDashboardStats);
+            },
+        }"
+        x-init="setTimeout(() => ready = true, 550)"
+    >
 
         <!-- Welcome hero — reflects whichever sample account is signed in -->
         <div x-show="$store.session.account" x-cloak class="relative rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 shadow-card animate-fade-up">
@@ -151,10 +196,10 @@
 
             <!-- KPI row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">
-                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card :href="route('admin.constituents')" label="Registered Residents" value="17,842" icon="users" color="brand" trend="+312" sublabel="Across 20 barangays" :delay="0" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Dokyu" value="1,284" icon="file-text" color="green" trend="+8.4%" sublabel="This month" :delay="40" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Pending Approvals" value="63" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" /></div>
-                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.assistance-requests')" label="Tulong" value="417" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" /></div>
+                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card :href="route('admin.constituents')" label="Registered Residents" valueBind="activeDashStats.residents" icon="users" color="brand" trend="+312" sublabel="Across 20 barangays" :delay="0" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Dokyu" valueBind="activeDashStats.dokyu" icon="file-text" color="green" trend="+8.4%" sublabel="This month" :delay="40" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Pending Approvals" valueBind="activeDashStats.pending" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" /></div>
+                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.assistance-requests')" label="Tulong" valueBind="activeDashStats.tulong" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" /></div>
                 <div x-show="$store.session.can('communications')" x-cloak><x-ui.stat-card :href="route('admin.communications')" label="Balita" value="28" icon="megaphone" color="gold" sublabel="Published this year" :delay="160" /></div>
                 <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.analytics')" label="Avg. Processing Time" value="2.4 days" icon="timer" color="red" trend="-0.6 days" trendDirection="down" sublabel="Document requests" :delay="200" /></div>
             </div>

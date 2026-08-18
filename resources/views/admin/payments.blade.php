@@ -63,6 +63,10 @@
             processing: false,
             barangays: @js($barangays),
             get categories() { return [...new Set(this.payments.map(p => p.category))].sort(); },
+            get isMunicipalScope() {
+                const s = this.$store.session.account?.scope;
+                return !s || s === 'Municipal';
+            },
             runAction(fn) {
                 if (this.processing) return;
                 this.processing = true;
@@ -143,10 +147,13 @@
                     <option value="Municipal">Municipal</option>
                     <option value="Multi-Office">Multi-Office</option>
                 </select>
-                <select x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select x-show="isMunicipalScope" x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">All Barangays</option>
                     <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                 </select>
+                <span x-show="!isMunicipalScope" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2">
+                    <i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span>
+                </span>
                 <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-400 hover:text-slate-600 transition-colors" x-show="levelFilter || barangayFilter">Clear</button>
             </div>
         </div>
