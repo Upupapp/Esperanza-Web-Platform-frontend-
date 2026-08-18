@@ -10,6 +10,25 @@
         ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'barangay' => 'Baras', 'type' => 'Tulong', 'item' => 'Social Pension — Documentary Fee', 'amount' => '₱100.00', 'method' => 'Payment in Center', 'receipt' => 'OR-77031.jpg', 'status' => 'Approved', 'date' => 'Feb 10, 2026'],
     ];
 
+    // Classification lookup for the mock payment rows above, keyed by the
+    // exact 'item' string -- reuses the same category/office/level values
+    // already established for these services in admin/document-requests.blade.php
+    // and admin/assistance-requests.blade.php, per the Dokyu & Tulong
+    // routing plan, so Payments stays organized the same way as both.
+    $paymentsClassification = [
+        'Cedula (Community Tax Certificate)' => ['category' => 'Tax & Property', 'office' => "Municipal Treasurer's Office", 'level' => 'Municipal'],
+        'Business Permit (New)' => ['category' => 'Business & Permits', 'office' => 'Business Permits & Licensing Office', 'level' => 'Multi-Office'],
+        'Barangay Clearance' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Certificate of Residency' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
+        'Business Permit Renewal' => ['category' => 'Business & Permits', 'office' => 'Business Permits & Licensing Office', 'level' => 'Multi-Office'],
+        'Real Property Tax Clearance' => ['category' => 'Tax & Property', 'office' => "Municipal Treasurer's Office", 'level' => 'Municipal'],
+        'Social Pension — Documentary Fee' => ['category' => 'Social Protection', 'office' => 'Office of Senior Citizens Affairs', 'level' => 'Municipal'],
+    ];
+    foreach ($payments as &$pmt) {
+        $pmt = array_merge($pmt, $paymentsClassification[$pmt['item']] ?? ['category' => 'Other', 'office' => $pmt['type'], 'level' => 'Municipal']);
+    }
+    unset($pmt);
+
     $adminFiles = [
         ['name' => 'GCash Receipt Scan.jpg', 'category' => 'IMG'],
         ['name' => 'PayMaya Confirmation.png', 'category' => 'IMG'],
@@ -31,6 +50,9 @@
             tab: 'all',
             search: '',
             barangayFilter: '',
+            categoryFilter: '',
+            levelFilter: '',
+            showAdvancedFilters: false,
             open: false,
             selected: null,
             payments: @js($payments),
@@ -40,6 +62,7 @@
             showReceiptPicker: false,
             processing: false,
             barangays: @js($barangays),
+            get categories() { return [...new Set(this.payments.map(p => p.category))].sort(); },
             runAction(fn) {
                 if (this.processing) return;
                 this.processing = true;
@@ -52,10 +75,13 @@
                     || (this.tab === 'review' && p.status === 'Pending Review')
                     || (this.tab === 'paid' && p.status === 'Approved');
                 const barangayOk = this.barangayFilter === '' || p.barangay === this.barangayFilter;
+                const categoryOk = this.categoryFilter === '' || p.category === this.categoryFilter;
+                const levelOk = this.levelFilter === '' || p.level === this.levelFilter;
                 const q = this.search.trim().toLowerCase();
                 const searchOk = q === '' || p.ref.toLowerCase().includes(q) || p.citizen.toLowerCase().includes(q);
-                return tabOk && barangayOk && searchOk;
+                return tabOk && barangayOk && categoryOk && levelOk && searchOk;
             },
+            clearAdvancedFilters() { this.levelFilter = ''; this.barangayFilter = ''; },
             get visibleCount() { return this.payments.filter(p => this.matches(p)).length; },
         }"
         class="animate-fade-up"
@@ -81,11 +107,17 @@
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
-                <select x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
-                    <option value="">All Barangays</option>
-                    <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                <select x-model="categoryFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
+                    <option value="">All Categories</option>
+                    <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                 </select>
-                <button type="button" @click="barangayFilter = ''" x-show="barangayFilter" x-cloak class="text-xs text-slate-400 hover:text-slate-600 transition-colors shrink-0">Clear</button>
+                <button
+                    type="button" @click="showAdvancedFilters = !showAdvancedFilters"
+                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border transition-colors shrink-0"
+                    :class="showAdvancedFilters || levelFilter || barangayFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'"
+                >
+                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
+                </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
@@ -98,6 +130,24 @@
                     @endforeach
                 </div>
                 <p class="text-[11px] text-slate-400 shrink-0" x-text="visibleCount + ' of ' + payments.length + ' payments'"></p>
+            </div>
+
+            <div
+                x-show="showAdvancedFilters" x-cloak
+                x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100"
+            >
+                <select x-model="levelFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <option value="">All Levels</option>
+                    <option value="Barangay">Barangay</option>
+                    <option value="Municipal">Municipal</option>
+                    <option value="Multi-Office">Multi-Office</option>
+                </select>
+                <select x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <option value="">All Barangays</option>
+                    <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                </select>
+                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-400 hover:text-slate-600 transition-colors" x-show="levelFilter || barangayFilter">Clear</button>
             </div>
         </div>
 
@@ -129,7 +179,15 @@
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors">{{ $p['citizen'] }}</p>
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden md:table-cell">{{ $p['item'] }}</td>
+                        <td class="px-4 py-3 hidden md:table-cell">
+                            <p class="text-slate-700">{{ $p['item'] }}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                {{ $p['category'] }}
+                                <span
+                                    class="inline-block ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap {{ $p['level'] === 'Barangay' ? 'bg-teal-50 text-teal-700' : ($p['level'] === 'Multi-Office' ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700') }}"
+                                >{{ $p['level'] }}</span>
+                            </p>
+                        </td>
                         <td class="px-4 py-3 text-slate-700 font-semibold whitespace-nowrap">{{ $p['amount'] }}</td>
                         <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="payments[{{ $i }}].method || '—'"></td>
                         <td class="px-4 py-3 hidden lg:table-cell">
