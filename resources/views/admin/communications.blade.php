@@ -9,6 +9,27 @@
         ['title' => 'Brgy. Labangtaytay Clean-Up Drive This Weekend', 'category' => 'Community', 'author' => 'Jenneth A. Cachila', 'date' => 'Jul 11, 2026', 'status' => 'Pending Review', 'image' => 'esperanza_community3.jpg', 'scope' => 'Labangtaytay'],
     ];
 
+    // Events — mirrors the citizen-facing calendar/list at citizen/events.blade.php
+    // (same title/date/time/venue/category/barangay shape and category palette),
+    // extended with the admin workflow fields (status, author) Balita already uses.
+    $events = [
+        ['title' => 'Fiesta ng Esperanza — Opening Program', 'date' => 'Aug 14, 2026', 'time' => '6:00 PM', 'venue' => 'Municipal Plaza', 'category' => 'Festival', 'barangay' => null, 'author' => 'Corazon Villareal', 'status' => 'Approved'],
+        ['title' => 'Barangay Poblacion Medical Mission', 'date' => 'Jul 18, 2026', 'time' => '8:00 AM', 'venue' => 'Poblacion Covered Court', 'category' => 'Health', 'barangay' => 'Poblacion', 'author' => 'Dr. Leilani Domingo', 'status' => 'Approved'],
+        ['title' => 'Livelihood Skills Training — Batch 2', 'date' => 'Jul 25, 2026', 'time' => '1:00 PM', 'venue' => 'Municipal Hall Conference Room', 'category' => 'Livelihood', 'barangay' => null, 'author' => 'Paolo Reyes', 'status' => 'Pending Review'],
+        ['title' => 'Brigada Eskwela 2026', 'date' => 'Aug 3, 2026', 'time' => '7:00 AM', 'venue' => 'Esperanza Central Elementary School', 'category' => 'Education', 'barangay' => 'Poblacion', 'author' => 'Corazon Villareal', 'status' => 'Approved'],
+        ['title' => 'Quarterly Barangay Assembly — Poblacion', 'date' => 'Aug 9, 2026', 'time' => '2:00 PM', 'venue' => 'Poblacion Barangay Hall', 'category' => 'Governance', 'barangay' => 'Poblacion', 'author' => 'Jenneth A. Cachila', 'status' => 'Draft'],
+        ['title' => 'Free Rabies Vaccination Drive — Brgy. Baras', 'date' => 'Aug 21, 2026', 'time' => '9:00 AM', 'venue' => 'Baras Barangay Hall', 'category' => 'Health', 'barangay' => 'Baras', 'author' => 'Dr. Leilani Domingo', 'status' => 'Pending Review'],
+        ['title' => 'Founding Anniversary Fun Run', 'date' => 'Jun 5, 2026', 'time' => '5:00 AM', 'venue' => 'Municipal Plaza to Esperanza Port', 'category' => 'Festival', 'barangay' => null, 'author' => 'Paolo Reyes', 'status' => 'Completed'],
+    ];
+
+    $eventCategoryColor = [
+        'Festival' => 'bg-gold-500',
+        'Health' => 'bg-emerald-500',
+        'Livelihood' => 'bg-purple-500',
+        'Education' => 'bg-blue-500',
+        'Governance' => 'bg-brand-500',
+    ];
+
     $offices = [
         ['name' => 'Office of the Municipal Mayor', 'head' => 'Hon. Ricardo M. Espallardo', 'contact' => '(056) 333-1021', 'email' => 'mayor@esperanza.gov.ph', 'icon' => 'landmark', 'color' => 'from-navy-600 to-navy-900'],
         ['name' => 'Municipal Social Welfare & Development Office', 'head' => 'Ms. Corazon P. Villareal', 'contact' => '(056) 333-1044', 'email' => 'mswdo@esperanza.gov.ph', 'icon' => 'hand-heart', 'color' => 'from-purple-500 to-purple-700'],
@@ -115,6 +136,33 @@
             newBalitaAttachment: null,
             showMediaPicker: false,
 
+            // Events: same Draft -> Pending Review -> Approved(published) -> Completed ->
+            // Archived workflow and filter treatment as Balita, applied to event listings
+            // instead of news posts. Reuses balitaMedia for the optional poster attachment
+            // rather than a second media library.
+            events: @js($events),
+            eventCategoryColor: @js($eventCategoryColor),
+            eventsStatus: 'All',
+            eventsScope: 'All',
+            eventsCategory: 'All',
+            eventsSearch: '',
+            eventReviewOpen: false,
+            selectedEvent: null,
+            visibleEvent(e) { return !e.barangay || this.$store.session.inScope(e.barangay); },
+            get filteredEvents() {
+                return this.events.filter(e =>
+                    this.visibleEvent(e) &&
+                    (this.eventsStatus === 'All' || e.status === this.eventsStatus) &&
+                    (this.eventsScope === 'All' || (this.eventsScope === 'Municipal' ? !e.barangay : e.barangay === this.eventsScope)) &&
+                    (this.eventsCategory === 'All' || e.category === this.eventsCategory) &&
+                    (this.eventsSearch === '' || e.title.toLowerCase().includes(this.eventsSearch.toLowerCase()))
+                );
+            },
+            reviewEvent(e) { this.selectedEvent = e; this.eventReviewOpen = true; },
+            newEventAudience: 'Municipal',
+            newEventBarangay: '{{ $barangays[0]['name'] ?? '' }}',
+            newEventAttachment: null,
+
             // Community Posts: same filter treatment as Balita
             communityStatus: 'All',
             communityScope: 'All',
@@ -170,6 +218,10 @@
             <button @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
                 <i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts
                 <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" :class="tab === 'community' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'" x-show="communityPosts.filter(p => p.status === 'Pending Review').length > 0" x-text="communityPosts.filter(p => p.status === 'Pending Review').length"></span>
+            </button>
+            <button @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
+                <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events
+                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" :class="tab === 'events' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'" x-show="events.filter(e => e.status === 'Pending Review').length > 0" x-text="events.filter(e => e.status === 'Pending Review').length"></span>
             </button>
             <button @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
             <button @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
@@ -386,6 +438,217 @@
                     <x-slot:footer>
                         <x-ui.button variant="danger" size="sm" @click="selectedAnnouncement.status = 'Draft'; open = false; $dispatch('toast', { message: 'Sent back to draft for revisions.', variant: 'error' })">Request Changes</x-ui.button>
                         <x-ui.button size="sm" icon="check" @click="selectedAnnouncement.status = 'Approved'; open = false; $dispatch('toast', { message: 'Balita post approved and published.', variant: 'success' })">Approve & Publish</x-ui.button>
+                    </x-slot:footer>
+                </x-ui.modal>
+            </div>
+        </div>
+
+        <!-- Events -->
+        <div x-show="tab === 'events'" x-data="{ open: false }" x-cloak>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <x-ui.stat-card label="Published" value="{{ collect($events)->whereIn('status', ['Approved','Completed'])->count() }}" valueBind="events.filter(e => ['Approved','Completed'].includes(e.status)).length" icon="calendar-check" color="brand" sublabel="Upcoming & past" :delay="0" />
+                <x-ui.stat-card label="Pending Review" value="{{ collect($events)->where('status', 'Pending Review')->count() }}" valueBind="events.filter(e => e.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="40" />
+                <x-ui.stat-card label="Drafts" value="{{ collect($events)->where('status', 'Draft')->count() }}" valueBind="events.filter(e => e.status === 'Draft').length" icon="pencil-line" color="purple" :delay="80" />
+                <x-ui.stat-card label="This Month" value="{{ collect($events)->count() }}" icon="calendar-days" color="green" sublabel="All barangays" :delay="120" />
+            </div>
+
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input type="text" x-model="eventsSearch" placeholder="Search event titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    </div>
+                    <select x-model="eventsCategory" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <option value="All">All Categories</option>
+                        <template x-for="c in Object.keys(eventCategoryColor)" :key="c"><option :value="c" x-text="c"></option></template>
+                    </select>
+                    <select x-model="eventsScope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <option value="All">All Audiences</option>
+                        <option value="Municipal">Municipal-wide</option>
+                        <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                    </select>
+                    <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
+                    <x-ui.button @click="open = true" icon="plus" size="sm" class="shrink-0">New Event</x-ui.button>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                        <template x-for="s in ['All','Draft','Pending Review','Approved','Completed','Archived']" :key="s">
+                            <button
+                                type="button" @click="eventsStatus = s"
+                                class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
+                                :class="eventsStatus === s ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                                x-text="s"
+                            ></button>
+                        </template>
+                    </div>
+                    <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredEvents.length + ' of ' + events.length + ' events'"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <template x-for="e in filteredEvents" :key="e.title">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard group">
+                        <div class="p-3.5 flex items-start gap-3">
+                            <div class="shrink-0 w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center overflow-hidden">
+                                <span class="w-full text-center text-[9px] font-bold text-white py-0.5" :class="eventCategoryColor[e.category] || 'bg-slate-400'" x-text="e.date.split(' ')[0].toUpperCase()"></span>
+                                <span class="text-sm font-bold text-navy-900 leading-none mt-1" x-text="e.date.match(/\d+/)[0]"></span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <span class="text-[10px] font-semibold text-white rounded-full px-2 py-0.5" :class="eventCategoryColor[e.category] || 'bg-slate-400'" x-text="e.category"></span>
+                                    <x-ui.badge status="Draft" x-show="e.status === 'Draft'" />
+                                    <x-ui.badge status="Pending Review" x-show="e.status === 'Pending Review'" x-cloak />
+                                    <x-ui.badge status="Approved" x-show="e.status === 'Approved'" x-cloak />
+                                    <x-ui.badge status="Completed" x-show="e.status === 'Completed'" x-cloak />
+                                    <x-ui.badge status="Archived" x-show="e.status === 'Archived'" x-cloak />
+                                </div>
+                                <p class="text-sm font-semibold text-navy-900 leading-snug line-clamp-2" x-text="e.title"></p>
+                                <p class="text-xs text-slate-400 mt-1 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3 shrink-0"></i><span x-text="e.time"></span></p>
+                                <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1 truncate"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span x-text="e.venue"></span></p>
+                            </div>
+                        </div>
+                        <div class="px-3.5 pb-3 flex items-center justify-between">
+                            <span
+                                class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5"
+                                :class="e.barangay ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'"
+                            >
+                                <i :data-lucide="e.barangay ? 'map-pin' : 'landmark'" class="w-2.5 h-2.5"></i>
+                                <span x-text="e.barangay ? 'Brgy. ' + e.barangay : 'Municipality-wide'"></span>
+                            </span>
+                            <span class="text-[11px] text-slate-400 truncate" x-text="e.author"></span>
+                        </div>
+                        <button
+                            @click="e.status === 'Pending Review' ? reviewEvent(e) : $dispatch('toast', { message: 'Editing events is a frontend preview.', variant: 'info' })"
+                            class="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 border-t border-slate-100 transition-colors"
+                            :class="e.status === 'Pending Review' ? 'text-orange-600 hover:bg-orange-50/60' : 'text-brand-600 hover:bg-brand-50/60'"
+                        >
+                            <i data-lucide="history" class="w-3.5 h-3.5" x-show="e.status === 'Pending Review'"></i>
+                            <i data-lucide="pencil" class="w-3.5 h-3.5" x-show="e.status !== 'Pending Review'"></i>
+                            <span x-text="e.status === 'Pending Review' ? 'Review' : 'Edit'"></span>
+                        </button>
+                    </div>
+                </template>
+                <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filteredEvents.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <p class="text-sm font-medium text-slate-600">No events match these filters.</p>
+                </div>
+            </div>
+
+            <x-ui.modal title="New Event" maxWidth="lg" :fullscreen="true">
+                <div class="space-y-4">
+                    <x-ui.input name="event_title" label="Event Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" />
+                    <div class="grid grid-cols-2 gap-3">
+                        <x-ui.input name="event_date" type="date" label="Date" />
+                        <x-ui.input name="event_time" type="time" label="Time" />
+                    </div>
+                    <x-ui.input name="event_venue" label="Venue" placeholder="e.g. Municipal Plaza" />
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
+                        <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <template x-for="c in Object.keys(eventCategoryColor)" :key="c"><option x-text="c" :value="c"></option></template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Audience</label>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button
+                                type="button" @click="newEventAudience = 'Municipal'"
+                                class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard"
+                                :class="newEventAudience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
+                            >
+                                <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
+                                <p class="text-xs font-semibold text-navy-900">Municipal-wide</p>
+                                <p class="text-[10.5px] text-slate-500 mt-0.5">Visible to every barangay</p>
+                            </button>
+                            <button
+                                type="button" @click="newEventAudience = 'Barangay'"
+                                class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard"
+                                :class="newEventAudience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
+                            >
+                                <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
+                                <p class="text-xs font-semibold text-navy-900">Specific Barangay</p>
+                                <p class="text-[10.5px] text-slate-500 mt-0.5">Only that barangay sees it</p>
+                            </button>
+                        </div>
+                        <div x-show="newEventAudience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
+                            <select x-model="newEventBarangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-sm font-medium text-slate-700">Poster <span class="text-slate-400 font-normal">(optional)</span></label>
+                            <span class="text-[10.5px] text-slate-400">Photo or graphic</span>
+                        </div>
+                        <div x-show="!newEventAttachment">
+                            <button
+                                type="button" @click="showMediaPicker = !showMediaPicker"
+                                class="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed py-5 text-xs font-medium transition-all duration-[160ms] ease-standard"
+                                :class="showMediaPicker ? 'border-brand-300 bg-brand-50/50 text-brand-600' : 'border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-slate-500 hover:text-brand-600'"
+                            >
+                                <i data-lucide="image-plus" class="w-5 h-5"></i>
+                                <span>Add Poster</span>
+                            </button>
+                        </div>
+                        <div x-show="newEventAttachment" x-cloak class="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
+                            <span class="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-100 to-brand-50 text-brand-500 flex items-center justify-center shrink-0"><i data-lucide="image" class="w-5 h-5"></i></span>
+                            <span class="text-xs font-medium text-slate-600 truncate flex-1" x-text="newEventAttachment"></span>
+                            <button type="button" @click="newEventAttachment = null" class="text-slate-300 hover:text-rose-500 shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                        <div x-show="showMediaPicker" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
+                            <x-ui.file-picker
+                                files="balitaMedia"
+                                onSelect="newEventAttachment = file.name; showMediaPicker = false"
+                                uploadAction="newEventAttachment = 'New upload.jpg'; showMediaPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
+                                :columns="3"
+                                :bilingual="false"
+                                empty="No media uploaded yet."
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <x-slot:footer>
+                    <x-ui.button variant="secondary" size="sm" @click="open = false; newEventAttachment = null; showMediaPicker = false; $dispatch('toast', { message: 'Saved as draft.', variant: 'info' })">Save as Draft</x-ui.button>
+                    <x-ui.button size="sm" icon="send" @click="open = false; newEventAttachment = null; showMediaPicker = false; $dispatch('toast', { message: 'Event submitted for review.', variant: 'success' })">Submit for Review</x-ui.button>
+                </x-slot:footer>
+            </x-ui.modal>
+
+            <div x-data="{ get open() { return eventReviewOpen; }, set open(v) { eventReviewOpen = v; } }">
+                <x-ui.modal title="Review Event" maxWidth="lg">
+                    <template x-if="selectedEvent">
+                        <div>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-sm" x-text="selectedEvent.author.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-navy-900" x-text="selectedEvent.author"></p>
+                                    <p class="text-xs text-slate-400" x-text="(selectedEvent.barangay ? 'Brgy. ' + selectedEvent.barangay : 'Municipality-wide') + ' · ' + selectedEvent.date"></p>
+                                </div>
+                                <span class="text-[10px] font-medium text-white rounded-full px-2 py-0.5 shrink-0" :class="eventCategoryColor[selectedEvent.category] || 'bg-slate-400'" x-text="selectedEvent.category"></span>
+                            </div>
+                            <p class="text-sm font-semibold text-navy-900 mb-2" x-text="selectedEvent.title"></p>
+                            <dl class="grid grid-cols-2 gap-3 mb-3">
+                                <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                    <dt class="text-[10px] text-slate-400 uppercase tracking-wide">Time</dt>
+                                    <dd class="text-sm font-semibold text-navy-900" x-text="selectedEvent.time"></dd>
+                                </div>
+                                <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                    <dt class="text-[10px] text-slate-400 uppercase tracking-wide">Venue</dt>
+                                    <dd class="text-sm font-semibold text-navy-900" x-text="selectedEvent.venue"></dd>
+                                </div>
+                            </dl>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5 text-xs text-slate-500">
+                                This event is awaiting review before it appears on the citizen Events calendar. Approving will publish it immediately to its selected audience.
+                            </div>
+                        </div>
+                    </template>
+
+                    <x-slot:footer>
+                        <x-ui.button variant="danger" size="sm" @click="selectedEvent.status = 'Draft'; open = false; $dispatch('toast', { message: 'Sent back to draft for revisions.', variant: 'error' })">Request Changes</x-ui.button>
+                        <x-ui.button size="sm" icon="check" @click="selectedEvent.status = 'Approved'; open = false; $dispatch('toast', { message: 'Event approved and published.', variant: 'success' })">Approve & Publish</x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
             </div>
