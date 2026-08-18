@@ -112,153 +112,16 @@
         x-init="$nextTick(() => window.renderIcons?.())"
         class="animate-fade-up max-w-6xl mx-auto"
     >
-        <x-ui.page-intro id="balita-feed" icon="users-round" title="Ngayon, pwede ka nang mag-post!" titleEn="You can now post to Balita!">
+        <x-ui.page-intro id="balita-feed" icon="users-round" title="Manatiling Updated sa Balita" titleEn="Stay Updated with Balita">
             <x-ui.t
-                fil="Ibahagi ang balita, larawan, o video sa iyong komunidad. I-like o i-comment ang mga post ng kapwa residente at ng munisipyo."
-                en="Share news, photos, or videos with your community. Like or comment on posts from fellow residents and the municipality."
+                fil="Tingnan ang mga balita, larawan, o video mula sa munisipyo at kapwa residente. I-like o i-comment ang mga post."
+                en="See news, photos, and videos from the municipality and fellow residents. Like or comment on posts."
             />
         </x-ui.page-intro>
 
         <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-5 items-start">
             <!-- Main column -->
             <div class="min-w-0">
-                <!-- Composer trigger + modal: own scoped 'open', independent of the Share modal below -->
-                <div x-data="{
-                    open: false,
-                    composerText: '',
-                    composerMedia: [],
-                    showMediaPicker: false,
-                    pickerCategory: null,
-                    audience: 'Lahat',
-                    reset() { this.open = false; this.composerText = ''; this.composerMedia = []; this.showMediaPicker = false; this.pickerCategory = null; },
-                    submit() {
-                        if (!this.composerText.trim()) return;
-                        const me = this.$store.citizenSession.account;
-                        this.posts.unshift({
-                            id: Date.now(), official: false, author: me ? me.fullName : 'Resident', barangay: me ? me.barangay : 'Poblacion', category: null,
-                            time: 'Ngayon lang', body: this.composerText,
-                            media: this.composerMedia.map(m => ({ name: m.name, category: m.category, real: false })),
-                            likes: 0, shares: 0, comments: [],
-                            initials: this.$store.citizenSession.initials(), liked: false, showComments: false,
-                        });
-                        this.reset();
-                        this.$nextTick(() => window.renderIcons?.());
-                        this.$dispatch('toast', { message: 'Na-post na! — this is a frontend preview, no data is saved.', variant: 'success' });
-                    },
-                }" class="contents">
-                    <x-ui.card padded="false" class="mb-3 overflow-hidden hover:shadow-card-hover transition-shadow duration-[220ms] ease-standard">
-                        <div class="relative bg-gradient-to-br from-brand-50 via-white to-purple-50/60 px-4 pt-4 pb-3.5">
-                            <div class="relative flex items-center gap-3">
-                                <div class="relative shrink-0">
-                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
-                                    <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white"></span>
-                                </div>
-                                <button
-                                    @click="open = true"
-                                    class="flex-1 text-left group"
-                                >
-                                    <span class="block px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 text-slate-400 text-sm shadow-sm group-hover:border-brand-300 group-hover:shadow-card group-hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
-                                        <span x-text="($store.lang.current === 'en' ? 'What\'s on your mind, ' : 'Ano ang balita mo, ') + ($store.citizenSession.account?.firstName ?? 'Resident') + '?'"></span>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">
-                            <button @click="open = true; pickerCategory = 'IMG'; showMediaPicker = true" class="flex items-center justify-center gap-2 py-2.5 text-xs font-medium text-slate-500 hover:bg-emerald-50/70 hover:text-emerald-700 transition-colors">
-                                <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center"><i data-lucide="image" class="w-3.5 h-3.5"></i></span>
-                                <x-ui.t fil="Larawan" en="Photo" />
-                            </button>
-                            <button @click="open = true; pickerCategory = 'VID'; showMediaPicker = true" class="flex items-center justify-center gap-2 py-2.5 text-xs font-medium text-slate-500 hover:bg-rose-50/70 hover:text-rose-700 transition-colors">
-                                <span class="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center"><i data-lucide="video" class="w-3.5 h-3.5"></i></span>
-                                <x-ui.t fil="Video" en="Video" />
-                            </button>
-                            <button @click="open = true; pickerCategory = 'GIF'; showMediaPicker = true" class="flex items-center justify-center gap-2 py-2.5 text-xs font-medium text-slate-500 hover:bg-purple-50/70 hover:text-purple-700 transition-colors">
-                                <span class="w-6 h-6 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center"><i data-lucide="sticker" class="w-3.5 h-3.5"></i></span>
-                                <x-ui.t fil="GIF" en="GIF" />
-                            </button>
-                        </div>
-                    </x-ui.card>
-
-                    <x-ui.modal title="Gumawa ng Post" titleEn="Create Post" maxWidth="md" :fullscreen="true">
-                        <!-- Identity + audience -->
-                        <div class="flex items-center gap-2.5 mb-3">
-                            <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
-                            <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900" x-text="$store.citizenSession.account?.fullName || 'Resident'"></p>
-                                <button
-                                    type="button"
-                                    @click="audience = audience === 'Lahat' ? 'Brgy. Poblacion' : 'Lahat'"
-                                    class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md px-1.5 py-0.5 mt-0.5 transition-colors"
-                                >
-                                    <i data-lucide="globe" class="w-3 h-3"></i>
-                                    <span x-text="audience"></span>
-                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Open, borderless textarea — feels like writing, not filling a form -->
-                        <textarea
-                            x-model="composerText"
-                            rows="4"
-                            x-bind:placeholder="$store.lang.current === 'en' ? 'Share something with your community...' : 'Ibahagi ang balita mo sa komunidad...'"
-                            class="w-full border-0 bg-transparent text-[15px] leading-relaxed text-slate-800 placeholder:text-slate-400 focus:ring-0 outline-none resize-none px-0"
-                        ></textarea>
-
-                        <!-- Attached media: large FB-style preview tiles, still ours (soft gradients, rounded-2xl) -->
-                        <div class="grid grid-cols-2 gap-2.5 mb-1" x-show="composerMedia.length > 0">
-                            <template x-for="(m, mi) in composerMedia" :key="mi">
-                                <div
-                                    class="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 flex flex-col items-center justify-center gap-1.5"
-                                    :class="m.category === 'VID' ? 'bg-gradient-to-br from-rose-100 via-rose-50 to-white' : (m.category === 'GIF' ? 'bg-gradient-to-br from-purple-100 via-purple-50 to-white' : 'bg-gradient-to-br from-brand-100 via-brand-50 to-white')"
-                                >
-                                    <span class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-card">
-                                        <i data-lucide="image" class="w-6 h-6 text-brand-500" x-show="m.category === 'IMG'"></i>
-                                        <i data-lucide="video" class="w-6 h-6 text-rose-500" x-show="m.category === 'VID'"></i>
-                                        <i data-lucide="sticker" class="w-6 h-6 text-purple-500" x-show="m.category === 'GIF'"></i>
-                                    </span>
-                                    <span class="text-[11px] font-medium text-slate-600 px-3 truncate max-w-full" x-text="m.name"></span>
-                                    <button
-                                        type="button" @click="composerMedia.splice(mi, 1)"
-                                        class="absolute top-2 right-2 w-7 h-7 rounded-full bg-navy-950/60 text-white flex items-center justify-center hover:bg-navy-950/80 transition-colors"
-                                    ><i data-lucide="x" class="w-4 h-4"></i></button>
-                                </div>
-                            </template>
-                            <button
-                                type="button" @click="pickerCategory = null; showMediaPicker = !showMediaPicker"
-                                class="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-1.5 text-slate-400 hover:border-brand-300 hover:bg-brand-50/40 hover:text-brand-500 transition-colors"
-                            >
-                                <span class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center"><i data-lucide="plus" class="w-5 h-5"></i></span>
-                                <span class="text-xs font-medium"><x-ui.t fil="Idagdag pa" en="Add more" /></span>
-                            </button>
-                        </div>
-
-                        <!-- Add to your post -->
-                        <div class="flex items-center justify-between rounded-xl border border-slate-200 px-3.5 py-2 mt-1">
-                            <p class="text-xs font-medium text-slate-500"><x-ui.t fil="Idagdag sa post" en="Add to your post" /></p>
-                            <div class="flex items-center gap-0.5">
-                                <button type="button" @click="pickerCategory = 'IMG'; showMediaPicker = !(showMediaPicker && pickerCategory === 'IMG')" class="w-8 h-8 rounded-full hover:bg-emerald-50 flex items-center justify-center text-emerald-500 transition-colors"><i data-lucide="image" class="w-[18px] h-[18px]"></i></button>
-                                <button type="button" @click="pickerCategory = 'VID'; showMediaPicker = !(showMediaPicker && pickerCategory === 'VID')" class="w-8 h-8 rounded-full hover:bg-rose-50 flex items-center justify-center text-rose-500 transition-colors"><i data-lucide="video" class="w-[18px] h-[18px]"></i></button>
-                                <button type="button" @click="pickerCategory = 'GIF'; showMediaPicker = !(showMediaPicker && pickerCategory === 'GIF')" class="w-8 h-8 rounded-full hover:bg-purple-50 flex items-center justify-center text-purple-500 transition-colors"><i data-lucide="sticker" class="w-[18px] h-[18px]"></i></button>
-                            </div>
-                        </div>
-
-                        <!-- Picker, filtered to whichever toolbar icon was clicked -->
-                        <div x-show="showMediaPicker" x-cloak x-transition class="mt-2">
-                            <x-ui.file-picker
-                                files="mediaLibrary.filter(f => !pickerCategory || f.category === pickerCategory)"
-                                onSelect="composerMedia.push(file); showMediaPicker = false; $nextTick(() => window.renderIcons?.())"
-                                uploadAction="composerMedia.push({ name: pickerCategory === 'VID' ? 'New video.mp4' : 'New upload.jpg', category: pickerCategory || 'IMG' }); showMediaPicker = false; $nextTick(() => window.renderIcons?.()); $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                            />
-                        </div>
-
-                        <x-slot:footer>
-                            <x-ui.button class="w-full" size="sm" icon="send" ::disabled="!composerText.trim()" @click="submit()"><x-ui.t fil="I-post" en="Post" /></x-ui.button>
-                        </x-slot:footer>
-                    </x-ui.modal>
-                </div>
-
-
                 <!-- Category filter -->
                 <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
