@@ -241,13 +241,13 @@
         <x-ui.table>
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Reference</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Citizen</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Assistance Type</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Office</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Barangay</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Assigned</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Submitted</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assistance Type</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Office</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Barangay</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Assigned</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Submitted</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
                     <th class="px-4 py-2.5"></th>
                 </tr>
@@ -255,18 +255,18 @@
             <tbody class="divide-y divide-slate-50">
                 <template x-for="r in filteredRequests" :key="r.ref">
                     <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="open = true; selected = r; rejectRemarks = ''">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="r.ref" @click.stop="open = true; selected = r; rejectRemarks = ''"></td>
+                        <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" x-text="r.ref" @click.stop="open = true; selected = r; rejectRemarks = ''"></td>
                         <td class="px-4 py-3" @click.stop="open = true; selected = r; rejectRemarks = ''">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
                             </div>
                         </td>
-                        <td class="px-4 py-3 hidden md:table-cell">
+                        <td class="px-4 py-3">
                             <p class="text-slate-700" x-text="r.type"></p>
                             <p class="text-[11px] text-slate-400 mt-0.5" x-text="r.category"></p>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell">
+                        <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell">
                             <span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap" x-text="r.office"></span>
                             <span
                                 class="inline-block ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap"
@@ -274,12 +274,12 @@
                                 x-text="r.level"
                             ></span>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell"><span x-text="'Brgy. ' + r.barangay"></span></td>
-                        <td class="px-4 py-3 text-slate-500 hidden xl:table-cell">
+                        <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell"><span x-text="'Brgy. ' + r.barangay"></span></td>
+                        <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell">
                             <span x-show="r.assigned" x-text="r.assigned"></span>
                             <span x-show="!r.assigned" class="text-slate-300 italic">Unassigned</span>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="r.submitted"></td>
+                        <td class="px-4 py-3 text-slate-500 hidden xl:table-cell" x-text="r.submitted"></td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[r.status] || statusStyles['Draft'])[0]">
                                 <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[r.status] || statusStyles['Draft'])[1]"></span>
