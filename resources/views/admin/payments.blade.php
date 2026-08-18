@@ -161,13 +161,13 @@
         <x-ui.table>
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Reference</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Citizen</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Item</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Item</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Method</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Receipt</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Date</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Method</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Receipt</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Date</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
                     <th class="px-4 py-2.5"></th>
                 </tr>
@@ -179,14 +179,14 @@
                         class="hover:bg-slate-50/70 transition-colors group cursor-pointer"
                         @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false"
                     >
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false">{{ $p['ref'] }}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false">{{ $p['ref'] }}</td>
                         <td class="px-4 py-3" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0">{{ strtoupper(collect(explode(' ', $p['citizen']))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('')) }}</div>
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors">{{ $p['citizen'] }}</p>
                             </div>
                         </td>
-                        <td class="px-4 py-3 hidden md:table-cell">
+                        <td class="px-4 py-3 hidden 2xl:table-cell">
                             <p class="text-slate-700">{{ $p['item'] }}</p>
                             <p class="text-[11px] text-slate-400 mt-0.5">
                                 {{ $p['category'] }}
@@ -196,14 +196,14 @@
                             </p>
                         </td>
                         <td class="px-4 py-3 text-slate-700 font-semibold whitespace-nowrap">{{ $p['amount'] }}</td>
-                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="payments[{{ $i }}].method || '—'"></td>
-                        <td class="px-4 py-3 hidden lg:table-cell">
+                        <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell" x-text="payments[{{ $i }}].method || '—'"></td>
+                        <td class="px-4 py-3 hidden 2xl:table-cell">
                             <span class="inline-flex items-center gap-1 text-xs text-brand-600" x-show="payments[{{ $i }}].receipt">
                                 <i data-lucide="paperclip" class="w-3.5 h-3.5"></i><span x-text="payments[{{ $i }}].receipt"></span>
                             </span>
                             <span class="text-xs text-slate-300" x-show="!payments[{{ $i }}].receipt">—</span>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden sm:table-cell whitespace-nowrap">{{ $p['date'] }}</td>
+                        <td class="px-4 py-3 text-slate-500 hidden xl:table-cell whitespace-nowrap">{{ $p['date'] }}</td>
                         <td class="px-4 py-3">
                             <x-ui.badge status="Waiting Requirements" x-show="payments[{{ $i }}].status === 'Waiting Requirements'" />
                             <x-ui.badge status="Pending Review" x-show="payments[{{ $i }}].status === 'Pending Review'" x-cloak />
