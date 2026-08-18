@@ -5,6 +5,13 @@
         ['ref' => 'AR-2026-0061', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Livelihood capital support', 'submitted' => 'Apr 2, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0037', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'purpose' => 'Quarterly social pension enrollment', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0009', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Funeral expenses support', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.'],
+        ['ref' => 'AR-2026-0022', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'purpose' => 'Cash grant + goods, per assessment', 'submitted' => 'Jan 28, 2026', 'status' => 'Waiting Requirements', 'requirements' => [
+            ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'My-SoloParentID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
+                ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
+            ]],
+            ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+        ]],
     ];
 
     $assistanceTypes = [
@@ -348,6 +355,7 @@
                 });
             },
             pickupDirectory: @js($pickupDirectory),
+            files: @js($submittedDocs),
             progressOpen: false,
             selectedRequest: null,
             resubmitNote: '',
@@ -361,6 +369,30 @@
                     this.selectedRequest.purpose = this.resubmitNote.trim();
                     this.selectedRequest.submitted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     delete this.selectedRequest.remarks;
+                    this.resubmitting = false;
+                    this.progressOpen = false;
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
+                }, 800);
+            },
+            replaceRequirementFile(req, fileName) {
+                req.versions = req.versions || [];
+                req.versions.push({ file: req.file, status: 'Rejected', date: req._rejectedDate || '', reject_reason: req.reject_reason, remarks: req.remarks });
+                req.file = fileName;
+                req.status = 'Pending Review';
+                req.reject_reason = null;
+                req.remarks = null;
+                req._showPicker = false;
+                this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Replacement uploaded — awaiting review.' : 'Na-upload ang kapalit — hinihintay ang pagsusuri.', variant: 'success' });
+            },
+            get canResubmitRequirements() {
+                return this.selectedRequest && (this.selectedRequest.requirements || []).every(r => r.status !== 'Rejected');
+            },
+            resubmitRequirements() {
+                if (this.resubmitting || !this.canResubmitRequirements) return;
+                this.resubmitting = true;
+                setTimeout(() => {
+                    this.selectedRequest.status = 'Submitted';
+                    this.selectedRequest.submitted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     this.resubmitting = false;
                     this.progressOpen = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
@@ -1198,6 +1230,58 @@
                                     @click="resubmitRequest()"
                                 >
                                     <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Request' : 'Isumite Muli ang Kahilingan')"></span>
+                                </x-ui.button>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Waiting Requirements' && (selectedRequest.requirements || []).length">
+                            <div class="flex items-start gap-2.5 px-3.5 py-2.5">
+                                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-amber-700"><x-ui.t fil="Kailangan ng Ayos ang Kahilingan" en="Application Needs Correction" /></p>
+                                    <p class="text-xs text-amber-600 mt-0.5"><x-ui.t fil="May mga requirement sa ibaba na kailangan ng atensyon." en="One or more requirements below need your attention." /></p>
+                                </div>
+                            </div>
+                            <div class="px-3.5 pb-3.5 space-y-2">
+                                <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
+                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-slate-200': req.status === 'Pending Review' }">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="flex items-center gap-2.5 min-w-0">
+                                                <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                                                <div class="min-w-0">
+                                                    <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
+                                                    <p class="text-[11px] text-slate-400 truncate" x-text="req.file"></p>
+                                                </div>
+                                            </div>
+                                            <span
+                                                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' }"
+                                            ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
+                                        </div>
+
+                                        <div x-show="req.status === 'Rejected'" class="mt-2 pt-2 border-t border-rose-100 text-[11px]">
+                                            <p class="font-semibold text-rose-700" x-text="req.reject_reason"></p>
+                                            <p class="text-rose-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
+                                            <button type="button" x-show="!req._showPicker" @click="req._showPicker = true" class="mt-1.5 text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Palitan ang Dokumento" en="Replace Document" /></button>
+                                            <div x-show="req._showPicker" x-cloak x-transition class="mt-2 pt-2 border-t border-rose-100/70">
+                                                <x-ui.file-picker
+                                                    files="files"
+                                                    onSelect="replaceRequirementFile(req, file.name)"
+                                                    uploadAction="replaceRequirementFile(req, 'New upload.jpg')"
+                                                    :columns="2"
+                                                    :search="false"
+                                                    :bilingual="false"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <x-ui.button
+                                    class="w-full justify-center" icon="rotate-ccw"
+                                    x-bind:disabled="resubmitting || !canResubmitRequirements"
+                                    @click="resubmitRequirements()"
+                                >
+                                    <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Application' : 'Isumite Muli ang Aplikasyon')"></span>
                                 </x-ui.button>
                             </div>
                         </div>

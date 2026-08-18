@@ -7,7 +7,13 @@
         ['ref' => 'AR-2026-0061', 'citizen' => 'Teresita Salazar', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Agoho', 'submitted' => 'Apr 2, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0044', 'citizen' => 'Michael Bacus', 'type' => 'Food / Relief Assistance', 'office' => 'MSWDO', 'barangay' => 'Iligan', 'submitted' => 'Mar 18, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'type' => 'Social Pension (Indigent Senior)', 'office' => 'OSCA', 'barangay' => 'Baras', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
-        ['ref' => 'AR-2026-0022', 'citizen' => 'Rosemarie Tan', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Jan 28, 2026', 'status' => 'Waiting Requirements'],
+        ['ref' => 'AR-2026-0022', 'citizen' => 'Rosemarie Tan', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Jan 28, 2026', 'status' => 'Waiting Requirements', 'requirements' => [
+            ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'Rosemarie-SoloParentID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
+                ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
+            ]],
+            ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert-Baras.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+        ]],
         ['ref' => 'AR-2026-0009', 'citizen' => 'Ferdinand Cortez', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.'],
     ];
 
@@ -106,6 +112,28 @@
                     this.open = false;
                     this.$dispatch('toast', { message: 'Case ' + this.selected.ref + ' rejected.', variant: 'error' });
                 }, 700);
+            },
+            rejectReasons: ['Invalid document', 'Incorrect document', 'Unreadable', 'Expired', 'Wrong document', 'Missing information', 'Does not meet requirement', 'Other'],
+            verifyRequirement(req) {
+                req.status = 'Approved';
+                req.reject_reason = null;
+                req.remarks = null;
+                this.$dispatch('toast', { message: req.name + ' verified.', variant: 'success' });
+            },
+            rejectRequirement(req) {
+                if (!req._reason) return;
+                req.versions = req.versions || [];
+                req.versions.push({ file: req.file, status: 'Rejected', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), reject_reason: req._reason, remarks: req._remarks || '' });
+                req.status = 'Rejected';
+                req.reject_reason = req._reason;
+                req.remarks = req._remarks || '';
+                req._rejecting = false;
+                req._reason = '';
+                req._remarks = '';
+                if (this.selected.status !== 'Rejected') {
+                    this.selected.status = 'Waiting Requirements';
+                }
+                this.$dispatch('toast', { message: req.name + ' rejected.', variant: 'error' });
             },
             approve() {
                 if (this.processing) return;
@@ -353,6 +381,63 @@
                             variant="secondary" size="sm" icon="user-plus"
                             @click="selected.assigned = $store.session.account?.name || 'You'; $dispatch('toast', { message: 'Assigned to yourself.', variant: 'success' })"
                         >Assign to me</x-ui.button>
+                    </div>
+
+                    <div class="mt-4" x-show="(selected.requirements || []).length">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Requirements</p>
+                            <p class="text-[11px] text-slate-400" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="req in (selected.requirements || [])" :key="req.key">
+                                <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-slate-200': req.status === 'Pending Review' }">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
+                                                <p class="text-[11px] text-slate-400 truncate" x-text="req.file"></p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
+                                            :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' }"
+                                        ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
+                                    </div>
+
+                                    <div x-show="req.status === 'Rejected'" class="mt-2 pt-2 border-t border-rose-100/70 text-[11px]">
+                                        <p class="font-semibold text-rose-700" x-text="req.reject_reason"></p>
+                                        <p class="text-rose-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
+                                        <button type="button" x-show="(req.versions || []).length" @click="req._showVersions = !req._showVersions" class="mt-1.5 text-slate-400 hover:text-slate-600 transition-colors">
+                                            <span x-text="(req._showVersions ? 'Hide' : 'Show') + ' version history (' + req.versions.length + ')'"></span>
+                                        </button>
+                                        <div x-show="req._showVersions" x-cloak class="mt-1.5 space-y-1 pl-2 border-l-2 border-rose-100">
+                                            <template x-for="(v, vi) in (req.versions || [])" :key="vi">
+                                                <p class="text-slate-400">Version <span x-text="vi + 1"></span> — <span x-text="v.status"></span> · <span x-text="v.date"></span><span x-show="v.reject_reason"> · <span x-text="v.reject_reason"></span></span></p>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mt-2" x-show="req.status === 'Pending Review' && !req._rejecting">
+                                        <button type="button" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Verify</button>
+                                        <span class="text-slate-200">·</span>
+                                        <button type="button" @click="req._rejecting = true; req._reason = ''; req._remarks = ''" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
+                                    </div>
+
+                                    <div x-show="req._rejecting" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
+                                        <select x-model="req._reason" class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                            <option value="">Select a reason...</option>
+                                            <template x-for="reason in rejectReasons" :key="reason"><option :value="reason" x-text="reason"></option></template>
+                                        </select>
+                                        <textarea x-model="req._remarks" rows="2" placeholder="Remarks for the citizen (optional)..." class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" x-bind:disabled="!req._reason" @click="rejectRequirement(req)" class="text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:pointer-events-none rounded-lg px-2.5 py-1.5 transition-colors">Confirm Reject</button>
+                                            <button type="button" @click="req._rejecting = false" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     <div class="rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-3 mt-3 flex items-start gap-2.5" x-show="selected.status === 'Rejected' && selected.remarks">
