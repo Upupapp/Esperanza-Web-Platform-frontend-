@@ -44,7 +44,7 @@
                     <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Status
                     </th>
-                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Actions
                     </th>
                 </tr>
@@ -210,97 +210,24 @@
                             ></span>
                         </td>
 
-                        {{-- Actions: 3-dot dropdown --}}
-                        <td class="px-4 py-3 text-right" @click.stop>
-                            <div class="relative inline-block" x-data="{ open: false }">
+                        {{-- Actions --}}
+                        <td class="px-4 py-3" @click.stop>
+                            <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
-                                    @click="open = !open"
-                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-1"
-                                    :aria-expanded="open"
-                                    aria-haspopup="true"
-                                    title="More actions"
+                                    @click="openIndividual(r)"
+                                    title="View resident detail"
+                                    class="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 >
-                                    <i data-lucide="ellipsis" class="w-4 h-4"></i>
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
-
-                                {{-- Dropdown --}}
-                                <div
-                                    x-show="open"
-                                    @click.outside="open = false"
-                                    x-transition:enter="transition duration-[160ms] ease-standard"
-                                    x-transition:enter-start="opacity-0 scale-95 translate-y-1"
-                                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                    x-transition:leave="transition duration-[160ms] ease-standard"
-                                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                    x-transition:leave-end="opacity-0 scale-95 translate-y-1"
-                                    class="absolute right-0 z-50 mt-1 w-52 rounded-xl bg-white border border-slate-200 shadow-lg shadow-slate-200/60 divide-y divide-slate-100 overflow-hidden"
-                                    style="display:none"
+                                <button
+                                    @click="$dispatch('toast', {message: 'Edit resident feature coming soon.', type: 'info'})"
+                                    title="Edit resident"
+                                    class="p-1.5 rounded-md text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                                 >
-                                    {{-- View Details --}}
-                                    <div class="py-1">
-                                        <button
-                                            @click="open=false; openIndividual(r)"
-                                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy-900 transition-colors text-left"
-                                        >
-                                            <i data-lucide="eye" class="w-4 h-4 text-slate-400"></i>
-                                            View Details
-                                        </button>
-                                    </div>
-
-                                    {{-- Lifecycle actions --}}
-                                    <div class="py-1">
-                                        <button
-                                            @click="open=false; openLifecycle(r, 'Transfer')"
-                                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy-900 transition-colors text-left"
-                                            x-show="can('individuals','transfer')"
-                                        >
-                                            <i data-lucide="arrow-right-from-line" class="w-4 h-4 text-indigo-400"></i>
-                                            Transfer Resident
-                                        </button>
-                                        <button
-                                            @click="open=false; openLifecycle(r, 'Deceased')"
-                                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-navy-900 transition-colors text-left"
-                                            x-show="can('individuals','mark_deceased')"
-                                        >
-                                            <i data-lucide="flower" class="w-4 h-4 text-slate-400"></i>
-                                            Mark as Deceased
-                                        </button>
-                                    </div>
-
-                                    {{-- Archive / Restore --}}
-                                    <div class="py-1">
-                                        <template x-if="r.status !== 'Archived'">
-                                            <button
-                                                @click="open=false; openLifecycle(r, 'Archive')"
-                                                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors text-left"
-                                                x-show="can('individuals','archive')"
-                                            >
-                                                <i data-lucide="archive" class="w-4 h-4"></i>
-                                                Archive Record
-                                            </button>
-                                        </template>
-                                        <template x-if="r.status === 'Archived'">
-                                            <button
-                                                @click="open=false; openLifecycle(r, 'Restore')"
-                                                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-emerald-600 hover:bg-emerald-50 transition-colors text-left"
-                                                x-show="can('individuals','restore')"
-                                            >
-                                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                                Restore Record
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
                             </div>
-
-                            {{-- Chevron for row tap on mobile --}}
-                            <button
-                                @click="openIndividual(r)"
-                                class="ml-1 w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-brand-500 hover:bg-slate-100 transition-colors sm:hidden"
-                                title="Open details"
-                            >
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </button>
                         </td>
 
                     </tr>
