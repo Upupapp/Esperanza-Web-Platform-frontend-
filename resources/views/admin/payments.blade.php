@@ -1,4 +1,5 @@
 @php
+    $barangays = config('esperanza.barangays');
     $payments = [
         ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Cedula (Community Tax Certificate)', 'amount' => '₱32.00', 'method' => null, 'receipt' => null, 'status' => 'Waiting Requirements', 'date' => 'Jul 8, 2026'],
         ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'barangay' => 'Baras', 'type' => 'Dokyu', 'item' => 'Business Permit (New)', 'amount' => '₱1,250.00', 'method' => 'PayMaya', 'receipt' => 'PayMaya Receipt.png', 'status' => 'Pending Review', 'date' => 'Jul 10, 2026'],
@@ -38,7 +39,7 @@
             receipt: null,
             showReceiptPicker: false,
             processing: false,
-            get barangays() { return [...new Set(this.payments.map(p => p.barangay))].sort(); },
+            barangays: @js($barangays),
             runAction(fn) {
                 if (this.processing) return;
                 this.processing = true;

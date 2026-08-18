@@ -1,4 +1,5 @@
 @php
+    $barangays = config('esperanza.barangays');
     $requests = [
         ['ref' => 'DR-2026-2231', 'citizen' => 'Perla Dionisio', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 12, 2026', 'status' => 'Pending Review'],
         ['ref' => 'DR-2026-2228', 'citizen' => 'Romeo Villaflor', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 11, 2026', 'status' => 'Ready for Release'],
@@ -99,7 +100,7 @@
             doneStatuses: @js($doneStatuses),
             get categories() { return [...new Set(this.requests.map(r => r.category))].sort(); },
             get offices() { return [...new Set(this.requests.map(r => r.office))].sort(); },
-            get barangays() { return [...new Set(this.requests.map(r => r.barangay))].sort(); },
+            barangays: @js($barangays),
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],

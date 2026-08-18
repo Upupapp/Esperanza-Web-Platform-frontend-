@@ -1,4 +1,5 @@
 @php
+    $barangays = config('esperanza.barangays');
     $requests = [
         ['ref' => 'AR-2026-0151', 'citizen' => 'Elmer Bantillo', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 9, 2026', 'status' => 'Pending Review'],
         ['ref' => 'AR-2026-0148', 'citizen' => 'Angelica Fajardo', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Rizal', 'submitted' => 'Jul 6, 2026', 'status' => 'Assigned'],
@@ -62,7 +63,7 @@
             releaseStatuses: @js($releaseStatuses),
             get categories() { return [...new Set(this.requests.map(r => r.category))].sort(); },
             get offices() { return [...new Set(this.requests.map(r => r.office))].sort(); },
-            get barangays() { return [...new Set(this.requests.map(r => r.barangay))].sort(); },
+            barangays: @js($barangays),
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
