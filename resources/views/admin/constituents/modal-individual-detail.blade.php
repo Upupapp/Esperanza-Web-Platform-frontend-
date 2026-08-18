@@ -974,7 +974,7 @@
                         </div>
                         <span
                             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
-                            :class="verificationBadge(selectedIndividual?.verification)"
+                            :class="verificationBadge(selectedIndividual?.verification).class"
                             x-text="selectedIndividual?.verification"
                         ></span>
                     </div>

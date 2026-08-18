@@ -95,6 +95,7 @@
             const s = this.$store.session.account?.scope;
             return !s || s === 'Municipal';
         },
+        cvType: 'Individual',
         cvSearch: '',
         cvStatusFilter: '',
         rejectAccountRemarks: '',
@@ -102,7 +103,10 @@
             return this.individuals.filter(i => this.$store.session.inScope(i.barangay) && i.citizen_account);
         },
         get pendingCitizenVerificationCount() {
-            return this.citizenAccountList.filter(i => ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length;
+            const indiv = this.citizenAccountList.filter(i => ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length;
+            const fam = this.cvFamilyList.filter(f => f.verification !== 'Verified').length;
+            const hh = this.cvHouseholdList.filter(h => h.verification !== 'Verified').length;
+            return indiv + fam + hh;
         },
         get cvCounts() {
             const list = this.citizenAccountList;
@@ -138,6 +142,65 @@
             i.citizen_account.reject_remarks = this.rejectAccountRemarks.trim();
             this.rejectAccountRemarks = '';
             this.$dispatch('toast', { message: i.name + '\'s citizen account was rejected.', variant: 'error' });
+        },
+        get cvFamilyList() {
+            return this.families.filter(f => this.$store.session.inScope(f.barangay));
+        },
+        get cvHouseholdList() {
+            return this.households.filter(h => this.$store.session.inScope(h.barangay));
+        },
+        get cvFamilyCounts() {
+            const list = this.cvFamilyList;
+            return {
+                unverified: list.filter(f => f.verification === 'Unverified').length,
+                partial: list.filter(f => f.verification === 'Partially Verified' || f.verification === 'For Validation' || f.verification === 'Missing Documents').length,
+                verified: list.filter(f => f.verification === 'Verified').length,
+                rejected: list.filter(f => f.verification === 'Rejected').length,
+            };
+        },
+        get cvHouseholdCounts() {
+            const list = this.cvHouseholdList;
+            return {
+                unverified: list.filter(h => h.verification === 'Unverified').length,
+                partial: list.filter(h => h.verification === 'Partially Verified' || h.verification === 'For Validation' || h.verification === 'Missing Documents').length,
+                verified: list.filter(h => h.verification === 'Verified').length,
+                rejected: list.filter(h => h.verification === 'Rejected').length,
+            };
+        },
+        get cvVerificationOptions() {
+            return ['Unverified', 'Partially Verified', 'For Validation', 'Missing Documents', 'Verified', 'Rejected'];
+        },
+        get filteredCvFamilies() {
+            let list = this.cvFamilyList.filter(f => {
+                if (this.cvStatusFilter && f.verification !== this.cvStatusFilter) return false;
+                if (this.cvSearch) {
+                    const q = this.cvSearch.toLowerCase();
+                    return (f.label || '').toLowerCase().includes(q) || (f.id || '').toLowerCase().includes(q) || (f.barangay || '').toLowerCase().includes(q) || (f.head_name || '').toLowerCase().includes(q);
+                }
+                return true;
+            });
+            const priority = v => v === 'Verified' ? 1 : 0;
+            return [...list].sort((a, b) => priority(a.verification) - priority(b.verification));
+        },
+        get filteredCvHouseholds() {
+            let list = this.cvHouseholdList.filter(h => {
+                if (this.cvStatusFilter && h.verification !== this.cvStatusFilter) return false;
+                if (this.cvSearch) {
+                    const q = this.cvSearch.toLowerCase();
+                    return (h.label || '').toLowerCase().includes(q) || (h.id || '').toLowerCase().includes(q) || (h.barangay || '').toLowerCase().includes(q) || (h.head_name || '').toLowerCase().includes(q);
+                }
+                return true;
+            });
+            const priority = v => v === 'Verified' ? 1 : 0;
+            return [...list].sort((a, b) => priority(a.verification) - priority(b.verification));
+        },
+        verifyFamily(f) {
+            f.verification = 'Verified';
+            this.$dispatch('toast', { message: f.label + ' has been marked as verified.', variant: 'success' });
+        },
+        verifyHousehold(h) {
+            h.verification = 'Verified';
+            this.$dispatch('toast', { message: h.label + ' has been marked as verified.', variant: 'success' });
         },
         get filteredIndividuals() {
             let list = this.individuals.filter(r => {
@@ -188,7 +251,7 @@
         openDQIssue(issue)       { this.selectedDQIssue=issue; this.showDQDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
         verificationBadge(v) {
             const m={'Verified':'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200','Partially Verified':'text-amber-700 bg-amber-50 ring-1 ring-amber-200','For Validation':'text-indigo-700 bg-indigo-50 ring-1 ring-indigo-200','Missing Documents':'text-orange-700 bg-orange-50 ring-1 ring-orange-200','Unverified':'text-slate-500 bg-slate-100 ring-1 ring-slate-200','Rejected':'text-rose-700 bg-rose-50 ring-1 ring-rose-200'};
-            return m[v]||m['Unverified'];
+            return { class: m[v]||m['Unverified'], label: v || 'Unverified' };
         },
         statusBadge(s) {
             const m={'Active':'text-emerald-700 bg-emerald-50','New Resident':'text-brand-700 bg-brand-50','Transferred':'text-indigo-700 bg-indigo-50','Temporarily Away':'text-amber-700 bg-amber-50','Overseas':'text-teal-700 bg-teal-50','Deceased':'text-slate-500 bg-slate-100','Archived':'text-slate-400 bg-slate-50','Under Review':'text-purple-700 bg-purple-50'};

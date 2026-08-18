@@ -159,7 +159,7 @@
                         <td class="px-4 py-3 hidden lg:table-cell">
                             <span
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                                :class="verificationBadge(r.verification)"
+                                :class="verificationBadge(r.verification).class"
                             >
                                 <template x-if="r.verification === 'Verified'">
                                     <i data-lucide="shield-check" class="w-3 h-3"></i>
