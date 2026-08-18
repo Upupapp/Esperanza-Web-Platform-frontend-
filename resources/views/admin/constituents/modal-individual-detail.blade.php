@@ -182,7 +182,7 @@
             <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-6 py-5 bg-slate-50/50">
 
             {{-- ── TAB 1: Overview ── --}}
-            <div x-show="individualTab === 'Overview'" class="space-y-5">
+            <div x-show="individualTab === 'Overview'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
 
                 {{-- Personal info grid --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
