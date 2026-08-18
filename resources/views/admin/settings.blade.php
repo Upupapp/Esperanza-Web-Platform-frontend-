@@ -337,10 +337,13 @@
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Requirements</label>
                                 <ul class="space-y-1.5 mb-2">
                                     <template x-for="(req, i) in selected.requirements" :key="i">
-                                        <li class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5">
+                                        <li class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5 transition-colors duration-[160ms] ease-standard focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
                                             <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                                            <span class="flex-1 min-w-0" x-text="req"></span>
-                                            <button type="button" @click="removeRequirement(i)" class="text-slate-300 hover:text-rose-500 shrink-0"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                            <input
+                                                type="text" x-model="selected.requirements[i]"
+                                                class="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm text-slate-600 focus:outline-none focus:ring-0"
+                                            >
+                                            <button type="button" @click="removeRequirement(i)" class="text-slate-300 hover:text-rose-500 shrink-0" title="Remove requirement"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                         </li>
                                     </template>
                                 </ul>
