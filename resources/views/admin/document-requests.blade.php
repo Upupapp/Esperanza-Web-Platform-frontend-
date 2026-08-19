@@ -190,7 +190,7 @@
             },
             statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Ready for Release', 'Released'],
             terminalStatuses: ['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'],
-            // What clicking "Approve & Continue" actually does at each stage — matches the
+            // What clicking the advance button actually does at each stage — matches the
             // Dokyu status flow used by the Esperanza Mobile app: Submitted -> Under
             // Verification -> Waiting Requirements (branch) -> Approved -> Ready for
             // Release -> Released.

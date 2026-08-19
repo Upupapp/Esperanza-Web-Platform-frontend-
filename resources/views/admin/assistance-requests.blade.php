@@ -149,10 +149,10 @@
                 this.$dispatch('toast', { message: req.name + ' rejected.', variant: 'error' });
             },
             statusOrder: ['Submitted', 'Assigned', 'Processing', 'Approved', 'Released', 'Completed'],
-            // Unlike Dokyu, Tulong's flow continues past "Released" to "Completed" —
+            // Unlike Dokyu, Tulong's flow continues past Released to Completed —
             // only Completed (and Rejected/Archived/Cancelled) truly end the case.
             terminalStatuses: ['Rejected', 'Completed', 'Archived', 'Cancelled'],
-            // What clicking "Approve & Continue" actually does at each stage — matches the
+            // What clicking the advance button actually does at each stage — matches the
             // Tulong status flow used by the Esperanza Mobile app: Submitted -> Assigned
             // -> Processing -> Waiting Requirements (branch) -> Approved -> Released ->
             // Completed.
