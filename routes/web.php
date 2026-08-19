@@ -33,6 +33,11 @@ Route::view('/citizen/help', 'citizen.help', ['tab' => 'faqs'])->name('citizen.f
 Route::view('/citizen/help/tutorials', 'citizen.help', ['tab' => 'tutorials'])->name('citizen.tutorials');
 Route::view('/citizen/help/support', 'citizen.help', ['tab' => 'support'])->name('citizen.support');
 
+// Legal — Privacy Policy and Terms & Conditions merged into one page with tabs,
+// same pattern as Help & Support above.
+Route::view('/citizen/legal/privacy-policy', 'citizen.legal', ['tab' => 'privacy'])->name('citizen.privacy-policy');
+Route::view('/citizen/legal/terms', 'citizen.legal', ['tab' => 'terms'])->name('citizen.terms');
+
 // Administrative Portal
 Route::view('/admin/dashboard', 'admin.dashboard')->name('admin.dashboard');
 Route::view('/admin/document-requests', 'admin.document-requests')->name('admin.document-requests');
@@ -50,6 +55,7 @@ Route::view('/admin/constituents/data-quality', 'admin.constituents', ['tab' => 
 Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');
 Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');
 Route::view('/admin/communications/blotter', 'admin.communications', ['tab' => 'blotter'])->name('admin.communications.blotter');
+Route::view('/admin/communications/banners', 'admin.communications', ['tab' => 'banners'])->name('admin.communications.banners');
 Route::view('/admin/announcements', 'admin.communications', ['tab' => 'balita'])->name('admin.announcements');
 
 // Reports & Analytics — merged into one page with tabs.
@@ -68,6 +74,7 @@ Route::view('/admin/internal-forms', 'admin.internal-forms', ['office' => 'hr'])
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');
 Route::view('/admin/settings/branding', 'admin.settings', ['tab' => 'branding'])->name('admin.branding');
 Route::view('/admin/settings/audit-logs', 'admin.settings', ['tab' => 'audit-logs'])->name('admin.audit-logs');
+Route::view('/admin/settings/site-content', 'admin.settings', ['tab' => 'site-content'])->name('admin.settings.site-content');
 
 // Sakuna — Disaster Risk Reduction, Emergency Operations, Evacuation, Relief, and Recovery Management.
 // All sub-routes resolve to the same view with a tab parameter.

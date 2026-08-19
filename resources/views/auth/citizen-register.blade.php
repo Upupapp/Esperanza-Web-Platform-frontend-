@@ -116,7 +116,12 @@
 
                 <label class="flex items-start gap-2.5 text-xs text-slate-500 pt-1">
                     <input type="checkbox" required class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
-                    <x-ui.t fil="Sumasang-ayon ako sa Terms of Service at patakaran sa Data Privacy ng Munisipyo ng Esperanza." en="I agree to the Terms of Service and Data Privacy policy of the Municipality of Esperanza." />
+                    <span x-show="$store.lang.current === 'en'">
+                        I agree to the <a href="{{ route('citizen.terms') }}" target="_blank" class="text-brand-600 hover:underline font-medium">Terms of Service</a> and <a href="{{ route('citizen.privacy-policy') }}" target="_blank" class="text-brand-600 hover:underline font-medium">Data Privacy policy</a> of the Municipality of Esperanza.
+                    </span>
+                    <span x-show="$store.lang.current === 'fil'" x-cloak>
+                        Sumasang-ayon ako sa <a href="{{ route('citizen.terms') }}" target="_blank" class="text-brand-600 hover:underline font-medium">Terms of Service</a> at <a href="{{ route('citizen.privacy-policy') }}" target="_blank" class="text-brand-600 hover:underline font-medium">patakaran sa Data Privacy</a> ng Munisipyo ng Esperanza.
+                    </span>
                 </label>
 
                 <div class="flex items-center gap-2.5">

@@ -100,6 +100,7 @@ $permissionModules = [
             ['key' => 'comm_events', 'name' => 'Events', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'archive']],
             ['key' => 'comm_directory', 'name' => 'Government Directory', 'perms' => ['view', 'create', 'edit', 'delete']],
             ['key' => 'comm_barangay_directory', 'name' => 'Barangay Directory', 'perms' => ['view', 'edit']],
+            ['key' => 'comm_banners', 'name' => 'Banners', 'perms' => ['view', 'create', 'edit', 'delete', 'archive']],
         ],
     ],
     [
@@ -124,6 +125,7 @@ $permissionModules = [
         'submodules' => [
             ['key' => 'set_general', 'name' => 'General Settings', 'perms' => ['view', 'edit']],
             ['key' => 'set_branding', 'name' => 'Municipality Branding', 'perms' => ['view', 'edit']],
+            ['key' => 'set_site_content', 'name' => 'Site Content (Privacy, Terms, Support)', 'perms' => ['view', 'edit']],
         ],
     ],
     [

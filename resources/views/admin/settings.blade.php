@@ -65,6 +65,13 @@
 
     $catalogRoles = collect(config('esperanza_rbac.roles'))->where('key', '!=', 'citizen')->map(fn ($r) => ['key' => $r['key'], 'name' => $r['name']])->values()->all();
 
+    // Site Content — Privacy Policy, Terms & Conditions, and Support info shown
+    // on the Citizen Portal (config/esperanza_site_content.php).
+    $privacyPolicy = config('esperanza_site_content.privacy_policy');
+    $termsConditions = config('esperanza_site_content.terms_conditions');
+    $supportInfo = config('esperanza_site_content.support');
+    $supportIconOptions = ['phone', 'mail', 'map-pin', 'clock', 'life-buoy', 'message-circle', 'facebook', 'globe'];
+
     $tab = $tab ?? 'general';
 @endphp
 
@@ -80,7 +87,7 @@
         <div class="lg:col-span-1">
             <x-ui.card padded="false" class="p-2">
                 <nav class="space-y-0.5">
-                    @foreach(['general' => ['building-2', 'General'], 'notifications' => ['bell', 'Notifications'], 'security' => ['shield', 'Security'], 'branding' => ['palette', 'Branding'], 'service-catalog' => ['layout-list', 'Service Catalog'], 'integrations' => ['plug', 'Integrations'], 'audit-logs' => ['scroll-text', 'Audit Logs']] as $key => [$icon, $label])
+                    @foreach(['general' => ['building-2', 'General'], 'notifications' => ['bell', 'Notifications'], 'security' => ['shield', 'Security'], 'branding' => ['palette', 'Branding'], 'service-catalog' => ['layout-list', 'Service Catalog'], 'site-content' => ['file-text', 'Site Content'], 'integrations' => ['plug', 'Integrations'], 'audit-logs' => ['scroll-text', 'Audit Logs']] as $key => [$icon, $label])
                         <button
                             @click="tab = '{{ $key }}'"
                             class="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors"
@@ -393,6 +400,173 @@
                         <x-ui.button size="sm" icon="check" @click="saveService()">Save Service</x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
+            </div>
+
+            <div
+                x-data="{
+                    contentTab: 'privacy',
+                    previewOpen: false,
+                    privacy: @js($privacyPolicy),
+                    terms: @js($termsConditions),
+                    support: @js($supportInfo),
+                    supportIconOptions: @js($supportIconOptions),
+                    get doc() { return this.contentTab === 'privacy' ? this.privacy : this.terms; },
+                    addSection() {
+                        this.doc.sections.push({ heading: 'New Section', body: '' });
+                    },
+                    removeSection(i) {
+                        this.doc.sections.splice(i, 1);
+                    },
+                    moveSection(i, dir) {
+                        const j = i + dir;
+                        if (j < 0 || j >= this.doc.sections.length) return;
+                        const tmp = this.doc.sections[i];
+                        this.doc.sections[i] = this.doc.sections[j];
+                        this.doc.sections[j] = tmp;
+                    },
+                    saveDoc() {
+                        this.doc.last_updated = new Date().toISOString().slice(0, 10);
+                        this.doc.last_updated_by = this.$store.session.account?.name ?? 'Admin';
+                        this.$dispatch('toast', { message: (this.contentTab === 'privacy' ? 'Privacy Policy' : 'Terms & Conditions') + ' updated — this is a frontend preview, no data is saved.', variant: 'success' });
+                    },
+                    addChannel() {
+                        this.support.channels.push({ key: 'channel_' + Date.now(), icon: 'phone', label: '', label_fil: '', value: '', color: 'text-brand-600 bg-brand-50' });
+                    },
+                    removeChannel(i) { this.support.channels.splice(i, 1); },
+                    saveSupport() {
+                        this.support.last_updated = new Date().toISOString().slice(0, 10);
+                        this.support.last_updated_by = this.$store.session.account?.name ?? 'Admin';
+                        this.$dispatch('toast', { message: 'Support info updated — this is a frontend preview, no data is saved.', variant: 'success' });
+                    },
+                }"
+                x-show="tab === 'site-content'" x-cloak
+            >
+                <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
+                        <button type="button" @click="contentTab = 'privacy'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="contentTab === 'privacy' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>Privacy Policy</button>
+                        <button type="button" @click="contentTab = 'terms'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="contentTab === 'terms' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="file-text" class="w-3.5 h-3.5"></i>Terms &amp; Conditions</button>
+                        <button type="button" @click="contentTab = 'support'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="contentTab === 'support' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="life-buoy" class="w-3.5 h-3.5"></i>Support Info</button>
+                    </div>
+                    <x-ui.button x-show="contentTab !== 'support'" variant="secondary" size="sm" icon="eye" @click="previewOpen = true">Preview as Citizen</x-ui.button>
+                </div>
+
+                <!-- Privacy Policy / Terms & Conditions editor -->
+                <div x-show="contentTab === 'privacy' || contentTab === 'terms'">
+                    <x-ui.card class="mb-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Effective Date</label>
+                                <input type="date" x-model="doc.effective_date" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Last Updated</label>
+                                <p class="text-sm text-slate-500 py-2.5 px-4 rounded-xl bg-slate-50" x-text="doc.last_updated + (doc.last_updated_by ? ' by ' + doc.last_updated_by : '')"></p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Introduction</label>
+                            <textarea rows="3" x-model="doc.intro" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        </div>
+                    </x-ui.card>
+
+                    <div class="space-y-3">
+                        <template x-for="(section, i) in doc.sections" :key="i">
+                            <x-ui.card class="relative">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex flex-col shrink-0 pt-1">
+                                        <button type="button" @click="moveSection(i, -1)" :disabled="i === 0" class="p-1 rounded text-slate-400 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="moveSection(i, 1)" :disabled="i === doc.sections.length - 1" class="p-1 rounded text-slate-400 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                    </div>
+                                    <div class="flex-1 min-w-0 space-y-2.5">
+                                        <input type="text" x-model="section.heading" placeholder="Section heading" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-sm font-semibold text-navy-900 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <textarea rows="3" x-model="section.body" placeholder="Section content" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 leading-relaxed focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                    </div>
+                                    <button type="button" @click="removeSection(i)" title="Remove section" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </x-ui.card>
+                        </template>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4">
+                        <button type="button" @click="addSection()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Section</button>
+                        <x-ui.button size="sm" icon="check" @click="saveDoc()">Save Changes</x-ui.button>
+                    </div>
+                </div>
+
+                <!-- Support Info editor -->
+                <div x-show="contentTab === 'support'" x-cloak>
+                    <x-ui.card class="mb-3.5">
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Support Page Introduction</label>
+                        <textarea rows="2" x-model="support.intro" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Office Hours</label>
+                                <input type="text" x-model="support.office_hours" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Office Hours (Filipino)</label>
+                                <input type="text" x-model="support.office_hours_fil" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            </div>
+                        </div>
+                    </x-ui.card>
+
+                    <div class="space-y-3">
+                        <template x-for="(ch, i) in support.channels" :key="ch.key">
+                            <x-ui.card>
+                                <div class="flex items-start gap-3">
+                                    <div class="w-24 shrink-0">
+                                        <label class="block text-[10px] font-medium text-slate-500 mb-1">Icon</label>
+                                        <select x-model="ch.icon" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-2 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                            <template x-for="opt in supportIconOptions" :key="opt"><option :value="opt" x-text="opt"></option></template>
+                                        </select>
+                                    </div>
+                                    <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-1">Label</label>
+                                            <input type="text" x-model="ch.label" placeholder="e.g. Call the ICT Office" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-1">Value</label>
+                                            <input type="text" x-model="ch.value" placeholder="e.g. (056) 333-1099" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="removeChannel(i)" title="Remove channel" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 mt-4"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </x-ui.card>
+                        </template>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4">
+                        <button type="button" @click="addChannel()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Contact Channel</button>
+                        <x-ui.button size="sm" icon="check" @click="saveSupport()">Save Changes</x-ui.button>
+                    </div>
+                </div>
+
+                <!-- Citizen preview -->
+                <div x-data="{ get open() { return previewOpen }, set open(v) { previewOpen = v } }">
+                    <x-ui.modal :bare="true" maxWidth="lg">
+                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+                            <h3 class="text-sm font-semibold text-navy-900" x-text="contentTab === 'privacy' ? 'Preview — Privacy Policy' : 'Preview — Terms &amp; Conditions'"></h3>
+                            <button @click="previewOpen = false" class="text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="p-5 max-h-[65vh] overflow-y-auto scrollbar-thin">
+                            <h2 class="text-base font-bold text-navy-900" x-text="doc.title"></h2>
+                            <p class="text-xs text-slate-400 mt-0.5 mb-4" x-text="'Effective ' + doc.effective_date + ' · Last updated ' + doc.last_updated"></p>
+                            <p class="text-sm text-slate-600 leading-relaxed pb-4 border-b border-slate-100" x-text="doc.intro"></p>
+                            <div class="space-y-4 mt-4">
+                                <template x-for="section in doc.sections" :key="section.heading">
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-navy-900 mb-1" x-text="section.heading"></h3>
+                                        <p class="text-xs text-slate-600 leading-relaxed" x-text="section.body"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-100 bg-slate-50/60 shrink-0">
+                            <x-ui.button size="sm" @click="previewOpen = false">Close Preview</x-ui.button>
+                        </div>
+                    </x-ui.modal>
+                </div>
             </div>
 
             <div x-show="tab === 'integrations'" x-cloak>

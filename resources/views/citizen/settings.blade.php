@@ -130,13 +130,21 @@
                             />
                         </p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm" class="mt-4" x-bind:disabled="requestingData" @click="requestData()">
-                        <span class="inline-flex items-center gap-1.5">
-                            <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="requestingData" x-cloak></i>
-                            <i data-lucide="download" class="w-3.5 h-3.5" x-show="!requestingData"></i>
-                            <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Requesting…' : 'Hinihiling…') : ($store.lang.current === 'en' ? 'Request My Data' : 'Hilingin ang Aking Datos')"></span>
-                        </span>
-                    </x-ui.button>
+                    <div class="flex flex-wrap items-center gap-2.5 mt-4">
+                        <x-ui.button variant="secondary" size="sm" x-bind:disabled="requestingData" @click="requestData()">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="requestingData" x-cloak></i>
+                                <i data-lucide="download" class="w-3.5 h-3.5" x-show="!requestingData"></i>
+                                <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Requesting…' : 'Hinihiling…') : ($store.lang.current === 'en' ? 'Request My Data' : 'Hilingin ang Aking Datos')"></span>
+                            </span>
+                        </x-ui.button>
+                        <x-ui.button variant="ghost" size="sm" :href="route('citizen.privacy-policy')" icon="shield-check">
+                            <x-ui.t fil="Buong Patakaran sa Privacy" en="View Full Privacy Policy" />
+                        </x-ui.button>
+                        <x-ui.button variant="ghost" size="sm" :href="route('citizen.terms')" icon="file-text">
+                            <x-ui.t fil="Mga Tuntunin at Kundisyon" en="Terms &amp; Conditions" />
+                        </x-ui.button>
+                    </div>
                 </x-ui.card>
             </div>
 

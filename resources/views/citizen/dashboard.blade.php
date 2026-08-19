@@ -41,6 +41,24 @@
 
     // Sampling: treated as true so the birthday greeting can be previewed on login.
     $isBirthdayToday = true;
+
+    // Promotional banners — admin-managed via Communications > Banners.
+    // Only Approved banners within their active date range reach citizens.
+    $today = now()->toDateString();
+    $banners = collect(config('esperanza_site_content.banners'))
+        ->filter(fn ($b) => $b['status'] === 'Approved' && $b['start_date'] <= $today && $b['end_date'] >= $today)
+        ->sortBy('order')
+        ->values()
+        ->map(fn ($b) => [
+            'id' => $b['id'],
+            'title' => $b['title'],
+            'subtitle' => $b['subtitle'],
+            'image_url' => asset('images/esperanza/' . $b['image']),
+            'cta_label' => $b['cta_label'],
+            'cta_url' => route($b['cta_route']),
+            'theme' => $b['theme'],
+        ])
+        ->all();
 @endphp
 
 <x-layouts.citizen
@@ -194,6 +212,8 @@
                     </a>
                 </div>
             </div>
+
+            <x-citizen.banner-carousel :banners="$banners" />
 
             @php
                 $introFil = 'Ang <strong>Dokyu</strong> ay para sa paghingi ng mga dokumento ng munisipyo (clearance, ID, permit). Ang <strong>Tulong</strong> ay para sa pag-apply sa mga programang ayuda. Parehong simple ang hakbang: pumili, punan ang detalye, magbayad kung kailangan, pagkatapos i-review at i-submit — masusubaybayan mo anumang oras mula sa dashboard na ito.';

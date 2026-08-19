@@ -84,6 +84,29 @@
         ['ref' => 'BLT-2026-0019', 'barangay' => 'Masbaranon', 'date' => 'May 12, 2026', 'type' => 'Domestic Dispute', 'details' => 'Away mag-asawa na-report ng kapitbahay. Pinuntahan ng Barangay Tanod, pinayapa ang magkabilang panig, walang isinampang reklamo.', 'reportedBy' => 'Barangay Secretary', 'status' => 'Closed'],
     ];
 
+    // Banners — citizen dashboard promotional carousel, managed here and
+    // consumed by citizen/dashboard.blade.php (config/esperanza_site_content.php).
+    $banners = config('esperanza_site_content.banners');
+    $bannerThemes = [
+        'from-gold-500 to-orange-600' => 'Gold → Orange',
+        'from-brand-600 to-navy-800' => 'Brand Blue → Navy',
+        'from-emerald-600 to-teal-700' => 'Emerald → Teal',
+        'from-cyan-700 to-navy-900' => 'Cyan → Navy',
+        'from-purple-600 to-navy-800' => 'Purple → Navy',
+        'from-rose-600 to-navy-900' => 'Rose → Navy',
+    ];
+    $bannerCtaRoutes = [
+        'citizen.dashboard' => 'Dashboard',
+        'citizen.document-requests' => 'Dokyu (Document Requests)',
+        'citizen.assistance-requests' => 'Tulong (Assistance Requests)',
+        'citizen.announcements' => 'Balita (Announcements)',
+        'citizen.events' => 'Events',
+        'citizen.directory' => 'Government Directory',
+    ];
+    $bannerImages = collect(['esperanza_festival.jpg','rectangle_cityhall.jpg','esperanza_community1.jpg','rectangle_ocean.jpg','esperanza-rock.jpg','esperanza-aerial.jpg','esperanza-boats.jpg','esperanza_people.jpg','rectangle_beach.jpg','rectangle_sunset.jpg'])
+        ->map(fn ($f) => ['name' => $f, 'category' => 'IMG'])
+        ->all();
+
     $tab = $tab ?? 'balita';
 @endphp
 
@@ -163,6 +186,76 @@
             newEventBarangay: '{{ $barangays[0]['name'] ?? '' }}',
             newEventAttachment: null,
 
+            // Banners — citizen dashboard promotional carousel (Add/Edit/Delete +
+            // Draft -> Pending Review -> Approved -> Archived workflow, same
+            // universal status vocabulary as everywhere else in this admin).
+            banners: @js($banners),
+            bannerThemes: @js($bannerThemes),
+            bannerCtaRoutes: @js($bannerCtaRoutes),
+            bannerImages: @js($bannerImages),
+            bannerSearch: '',
+            bannerStatusFilter: 'All',
+            bannerModalOpen: false,
+            bannerFormMode: 'add',
+            bannerForm: { id: null, title: '', subtitle: '', image: '', cta_label: '', cta_route: 'citizen.dashboard', theme: 'from-brand-600 to-navy-800', status: 'Draft', start_date: '', end_date: '', order: 1 },
+            get filteredBanners() {
+                return this.banners
+                    .filter(b =>
+                        (this.bannerStatusFilter === 'All' || b.status === this.bannerStatusFilter) &&
+                        (this.bannerSearch === '' || b.title.toLowerCase().includes(this.bannerSearch.toLowerCase()))
+                    )
+                    .slice()
+                    .sort((a, c) => a.order - c.order);
+            },
+            openAddBanner() {
+                this.bannerForm = { id: null, title: '', subtitle: '', image: '', cta_label: '', cta_route: 'citizen.dashboard', theme: 'from-brand-600 to-navy-800', status: 'Draft', start_date: '', end_date: '', order: this.banners.length + 1 };
+                this.bannerFormMode = 'add';
+                this.bannerModalOpen = true;
+            },
+            openEditBanner(b) {
+                this.bannerForm = { ...b };
+                this.bannerFormMode = 'edit';
+                this.bannerModalOpen = true;
+            },
+            saveBanner() {
+                if (!this.bannerForm.title.trim() || !this.bannerForm.image) return;
+                if (this.bannerFormMode === 'add') {
+                    this.bannerForm.id = 'BNR-2026-' + String(Math.floor(100 + Math.random() * 900));
+                    this.bannerForm.created_by = this.$store.session.account?.name ?? 'Admin';
+                    this.bannerForm.last_updated = new Date().toISOString().slice(0, 10);
+                    this.banners.push({ ...this.bannerForm });
+                    this.$dispatch('toast', { message: 'Banner created — this is a frontend preview, no data is saved.', variant: 'success' });
+                } else {
+                    this.bannerForm.last_updated = new Date().toISOString().slice(0, 10);
+                    const idx = this.banners.findIndex(x => x.id === this.bannerForm.id);
+                    if (idx !== -1) this.banners[idx] = { ...this.bannerForm };
+                    this.$dispatch('toast', { message: 'Banner updated — this is a frontend preview, no data is saved.', variant: 'success' });
+                }
+                this.bannerModalOpen = false;
+            },
+            deleteBannerTarget: null,
+            confirmDeleteBanner(b) { this.deleteBannerTarget = b; },
+            deleteBanner() {
+                this.banners = this.banners.filter(x => x.id !== this.deleteBannerTarget.id);
+                this.$dispatch('toast', { message: 'Banner deleted — this is a frontend preview, no data is saved.', variant: 'error' });
+                this.deleteBannerTarget = null;
+            },
+            setBannerStatus(b, status) {
+                b.status = status;
+                b.last_updated = new Date().toISOString().slice(0, 10);
+                this.$dispatch('toast', { message: 'Banner status set to ' + status + '.', variant: 'success' });
+            },
+            moveBanner(b, dir) {
+                const list = this.banners.slice().sort((a, c) => a.order - c.order);
+                const idx = list.findIndex(x => x.id === b.id);
+                const swapIdx = idx + dir;
+                if (swapIdx < 0 || swapIdx >= list.length) return;
+                const tmp = list[idx].order;
+                list[idx].order = list[swapIdx].order;
+                list[swapIdx].order = tmp;
+            },
+            showBannerMediaPicker: false,
+
             // Community Posts: same filter treatment as Balita
             communityStatus: 'All',
             communityScope: 'All',
@@ -215,6 +308,7 @@
 
         <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4 overflow-x-auto">
             <button @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
+            <button @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
             <button @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
                 <i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts
                 <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" :class="tab === 'community' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'" x-show="communityPosts.filter(p => p.status === 'Pending Review').length > 0" x-text="communityPosts.filter(p => p.status === 'Pending Review').length"></span>
@@ -649,6 +743,197 @@
                     <x-slot:footer>
                         <x-ui.button variant="danger" size="sm" @click="selectedEvent.status = 'Draft'; open = false; $dispatch('toast', { message: 'Sent back to draft for revisions.', variant: 'error' })">Request Changes</x-ui.button>
                         <x-ui.button size="sm" icon="check" @click="selectedEvent.status = 'Approved'; open = false; $dispatch('toast', { message: 'Event approved and published.', variant: 'success' })">Approve & Publish</x-ui.button>
+                    </x-slot:footer>
+                </x-ui.modal>
+            </div>
+        </div>
+
+        <!-- Banners -->
+        <div x-show="tab === 'banners'" x-data="{ open: false }" x-cloak x-init="$nextTick(() => window.renderIcons?.())">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <x-ui.stat-card label="Total Banners" value="{{ count($banners) }}" valueBind="banners.length" icon="gallery-horizontal" color="brand" :delay="0" />
+                <x-ui.stat-card label="Live on Dashboard" value="{{ collect($banners)->where('status', 'Approved')->count() }}" valueBind="banners.filter(b => b.status === 'Approved').length" icon="eye" color="green" sublabel="Status = Approved" :delay="40" />
+                <x-ui.stat-card label="Pending Review" value="{{ collect($banners)->where('status', 'Pending Review')->count() }}" valueBind="banners.filter(b => b.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="80" />
+                <x-ui.stat-card label="Drafts" value="{{ collect($banners)->where('status', 'Draft')->count() }}" valueBind="banners.filter(b => b.status === 'Draft').length" icon="pencil-line" color="purple" :delay="120" />
+            </div>
+
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input type="text" x-model="bannerSearch" placeholder="Search banner titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    </div>
+                    <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
+                    <x-ui.button @click="openAddBanner()" icon="plus" size="sm" class="shrink-0">New Banner</x-ui.button>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                        <template x-for="s in ['All','Draft','Pending Review','Approved','Archived']" :key="s">
+                            <button
+                                type="button" @click="bannerStatusFilter = s"
+                                class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
+                                :class="bannerStatusFilter === s ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                                x-text="s"
+                            ></button>
+                        </template>
+                    </div>
+                    <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredBanners.length + ' of ' + banners.length + ' banners'"></p>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-400 mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i>Banners are shown to citizens in this order, top to bottom. Use the arrows to reorder.</p>
+
+            <div class="space-y-3">
+                <template x-for="(b, idx) in filteredBanners" :key="b.id">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard flex flex-col sm:flex-row">
+                        <div class="relative w-full sm:w-56 h-32 sm:h-auto shrink-0 bg-gradient-to-br" :class="b.theme">
+                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + b.image" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" onerror="this.style.display='none'">
+                            <div class="absolute inset-0 flex flex-col justify-end p-3">
+                                <p class="text-white font-semibold text-xs leading-snug line-clamp-2" x-text="b.title"></p>
+                            </div>
+                        </div>
+                        <div class="flex-1 p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <x-ui.badge status="Draft" x-show="b.status === 'Draft'" />
+                                    <x-ui.badge status="Pending Review" x-show="b.status === 'Pending Review'" x-cloak />
+                                    <x-ui.badge status="Approved" x-show="b.status === 'Approved'" x-cloak />
+                                    <x-ui.badge status="Archived" x-show="b.status === 'Archived'" x-cloak />
+                                    <span class="text-[10px] text-slate-400 font-mono" x-text="b.id"></span>
+                                </div>
+                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="b.title"></p>
+                                <p class="text-xs text-slate-400 mt-0.5 truncate" x-text="b.subtitle"></p>
+                                <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i><span x-text="b.start_date + ' – ' + b.end_date"></span>
+                                    <span class="text-slate-300">·</span>
+                                    <i data-lucide="mouse-pointer-click" class="w-3 h-3"></i><span x-text="b.cta_label || 'No CTA'"></span>
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0 self-start sm:self-center">
+                                <div class="flex flex-col mr-1">
+                                    <button type="button" @click="moveBanner(b, -1)" :disabled="idx === 0" class="p-1 rounded text-slate-400 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                    <button type="button" @click="moveBanner(b, 1)" :disabled="idx === filteredBanners.length - 1" class="p-1 rounded text-slate-400 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                </div>
+                                <button type="button" x-show="b.status !== 'Approved'" @click="setBannerStatus(b, 'Approved')" title="Approve & publish to dashboard" class="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>
+                                <button type="button" x-show="b.status === 'Approved'" @click="setBannerStatus(b, 'Archived')" title="Archive (remove from dashboard)" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="archive" class="w-4 h-4"></i></button>
+                                <button type="button" @click="openEditBanner(b)" title="Edit banner" class="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                <button type="button" @click="confirmDeleteBanner(b)" title="Delete banner" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filteredBanners.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="gallery-horizontal" class="w-7 h-7"></i></span>
+                    <p class="text-sm font-medium text-slate-600">No banners match these filters.</p>
+                </div>
+            </div>
+
+            <!-- Add/Edit Banner -->
+            <div x-data="{ get open() { return bannerModalOpen }, set open(v) { bannerModalOpen = v } }">
+            <x-ui.modal :bare="true" maxWidth="lg">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                    <h3 class="text-sm font-semibold text-navy-900" x-text="bannerFormMode === 'add' ? 'New Banner' : 'Edit Banner'"></h3>
+                    <button @click="bannerModalOpen = false" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Title <span class="text-rose-500">*</span></label>
+                        <input type="text" x-model="bannerForm.title" placeholder="e.g. Fiesta ng Esperanza 2026" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Subtitle</label>
+                        <textarea rows="2" x-model="bannerForm.subtitle" placeholder="Short supporting line shown under the title" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-medium text-slate-700">Banner Image <span class="text-rose-500">*</span></label>
+                        </div>
+                        <div x-show="!bannerForm.image">
+                            <button
+                                type="button" @click="showBannerMediaPicker = !showBannerMediaPicker"
+                                class="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed py-5 text-xs font-medium transition-all duration-[160ms] ease-standard"
+                                :class="showBannerMediaPicker ? 'border-brand-300 bg-brand-50/50 text-brand-600' : 'border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-slate-500 hover:text-brand-600'"
+                            >
+                                <i data-lucide="image-plus" class="w-5 h-5"></i>
+                                <span>Choose Image</span>
+                            </button>
+                        </div>
+                        <div x-show="bannerForm.image" x-cloak class="relative rounded-xl overflow-hidden h-28 bg-gradient-to-br" :class="bannerForm.theme">
+                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + bannerForm.image" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" onerror="this.style.display='none'">
+                            <button type="button" @click="bannerForm.image = ''" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-navy-950/50 hover:bg-navy-950/70 text-white flex items-center justify-center transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                        <div x-show="showBannerMediaPicker" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
+                            <x-ui.file-picker
+                                files="bannerImages"
+                                onSelect="bannerForm.image = file.name; showBannerMediaPicker = false"
+                                uploadAction="bannerForm.image = 'New upload.jpg'; showBannerMediaPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
+                                :columns="3"
+                                :bilingual="false"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Overlay Color</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <template x-for="(label, key) in bannerThemes" :key="key">
+                                <button
+                                    type="button" @click="bannerForm.theme = key"
+                                    class="h-9 rounded-lg bg-gradient-to-br transition-all duration-[160ms] ease-standard ring-2 ring-offset-1"
+                                    :class="[key, bannerForm.theme === key ? 'ring-brand-400' : 'ring-transparent']"
+                                    :title="label"
+                                ></button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Start Date</label>
+                            <input type="date" x-model="bannerForm.start_date" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">End Date</label>
+                            <input type="date" x-model="bannerForm.end_date" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Button Label</label>
+                            <input type="text" x-model="bannerForm.cta_label" placeholder="e.g. View Schedule" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Links To</label>
+                            <select x-model="bannerForm.cta_route" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <template x-for="(label, key) in bannerCtaRoutes" :key="key">
+                                    <option :value="key" x-text="label"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100">
+                    <x-ui.button variant="secondary" size="sm" @click="bannerForm.status = 'Draft'; saveBanner()">Save as Draft</x-ui.button>
+                    <x-ui.button size="sm" icon="check" @click="bannerForm.status = 'Pending Review'; saveBanner()">Submit for Review</x-ui.button>
+                </div>
+            </x-ui.modal>
+            </div>
+
+            <!-- Delete confirmation -->
+            <div x-data="{ get open() { return deleteBannerTarget !== null }, set open(v) { if (!v) deleteBannerTarget = null } }">
+                <x-ui.modal title="Delete Banner?" maxWidth="sm">
+                    <template x-if="deleteBannerTarget">
+                        <p class="text-sm text-slate-600">
+                            Are you sure you want to delete <strong class="text-navy-900" x-text="deleteBannerTarget.title"></strong>?
+                            This will remove it from the citizen dashboard immediately. This action cannot be undone.
+                        </p>
+                    </template>
+                    <x-slot:footer>
+                        <x-ui.button variant="secondary" size="sm" @click="deleteBannerTarget = null">Cancel</x-ui.button>
+                        <x-ui.button variant="danger" size="sm" icon="trash-2" @click="deleteBanner()">Delete Banner</x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
             </div>

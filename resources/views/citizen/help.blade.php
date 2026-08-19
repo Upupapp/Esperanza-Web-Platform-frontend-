@@ -22,11 +22,12 @@
         ['title' => 'Managing Notifications & Announcements', 'duration' => '2:47', 'category' => 'Account', 'icon' => 'bell', 'views' => 143],
     ];
 
-    $channels = [
-        ['icon' => 'phone', 'label' => 'Call the ICT Office', 'labelFil' => 'Tawagan ang ICT Office', 'value' => '(056) 333-1099', 'color' => 'text-brand-600 bg-brand-50'],
-        ['icon' => 'mail', 'label' => 'Email Support', 'labelFil' => 'Mag-email sa Suporta', 'value' => 'support@esperanza.gov.ph', 'color' => 'text-purple-600 bg-purple-50'],
-        ['icon' => 'map-pin', 'label' => 'Visit Us', 'labelFil' => 'Bisitahin Kami', 'value' => 'Municipal Hall, Brgy. Poblacion, Esperanza', 'color' => 'text-emerald-600 bg-emerald-50'],
-    ];
+    // Support channels and office hours are admin-managed via
+    // Settings > Site Content > Support Info (config/esperanza_site_content.php).
+    $supportInfo = config('esperanza_site_content.support');
+    $channels = collect($supportInfo['channels'])->map(fn ($c) => [
+        'icon' => $c['icon'], 'label' => $c['label'], 'labelFil' => $c['label_fil'], 'value' => $c['value'], 'color' => $c['color'],
+    ])->all();
 
     $ticketCategories = ['Account & Login', 'Dokyu', 'Tulong', 'Technical Issue', 'Other'];
 
@@ -351,7 +352,7 @@
 
                 <x-ui.card class="bg-slate-50/60">
                     <p class="text-xs text-slate-500 flex items-center gap-1.5 mb-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i><x-ui.t fil="Oras ng Opisina" en="Office Hours" /></p>
-                    <p class="text-sm text-slate-700 font-medium"><x-ui.t fil="Lunes – Biyernes, 8:00 AM – 5:00 PM" en="Monday – Friday, 8:00 AM – 5:00 PM" /></p>
+                    <p class="text-sm text-slate-700 font-medium"><x-ui.t :fil="$supportInfo['office_hours_fil']" :en="$supportInfo['office_hours']" /></p>
                 </x-ui.card>
             </div>
         </div>
