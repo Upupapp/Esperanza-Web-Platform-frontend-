@@ -29,16 +29,16 @@
                     <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Resident
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">
                         Barangay / Sitio
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">
                         Household
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Verification
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">
                         Profile
                     </th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
@@ -127,7 +127,7 @@
                         </td>
 
                         {{-- Barangay / Sitio --}}
-                        <td class="px-4 py-3 hidden sm:table-cell">
+                        <td class="px-4 py-3 hidden xl:table-cell">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium text-slate-800 truncate" x-text="'Brgy. ' + r.barangay"></p>
                                 <p class="text-xs text-slate-400 mt-0.5 truncate" x-text="r.sitio ? 'Sitio ' + r.sitio : '—'"></p>
@@ -135,7 +135,7 @@
                         </td>
 
                         {{-- Household / Family --}}
-                        <td class="px-4 py-3 hidden md:table-cell">
+                        <td class="px-4 py-3 hidden 2xl:table-cell">
                             <div class="min-w-0">
                                 <p class="text-xs text-slate-600 font-medium">
                                     HH: <span class="text-slate-800 font-semibold" x-text="r.household_id || '—'"></span>
@@ -151,7 +151,7 @@
                         </td>
 
                         {{-- Verification badge --}}
-                        <td class="px-4 py-3 hidden lg:table-cell">
+                        <td class="px-4 py-3">
                             <span
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                                 :class="verificationBadge(r.verification).class"
@@ -179,7 +179,7 @@
                         </td>
 
                         {{-- Profile completion --}}
-                        <td class="px-4 py-3 hidden lg:table-cell">
+                        <td class="px-4 py-3 hidden 2xl:table-cell">
                             <div class="flex items-center gap-2">
                                 <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div

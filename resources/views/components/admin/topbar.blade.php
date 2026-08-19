@@ -64,7 +64,7 @@
                 </div>
                 <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-slate-50">
                     @foreach($notifications as $n)
-                        <a href="#" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+                        <a href="#" @click.prevent="$dispatch('toast', { message: 'Notification detail is a frontend preview.', variant: 'info' })" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
                             <span class="w-9 h-9 rounded-lg {{ $n['color'] }} flex items-center justify-center shrink-0">
                                 <i data-lucide="{{ $n['icon'] }}" class="w-4 h-4"></i>
                             </span>
@@ -115,7 +115,7 @@
                         <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + $store.session.account?.scope"></span>
                     </span>
                 </div>
-                <a href="#" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <a href="#" @click.prevent="$dispatch('toast', { message: 'Personnel profile page is a frontend preview.', variant: 'info' })" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>My Profile
                 </a>
                 <a href="{{ route('admin.settings') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">

@@ -2,7 +2,7 @@
     $barangays = config('esperanza.barangays');
     $requests = [
         ['ref' => 'AR-2026-0151', 'citizen' => 'Elmer Bantillo', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 9, 2026', 'status' => 'Pending Review'],
-        ['ref' => 'AR-2026-0148', 'citizen' => 'Angelica Fajardo', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Rizal', 'submitted' => 'Jul 6, 2026', 'status' => 'Assigned'],
+        ['ref' => 'AR-2026-0195', 'citizen' => 'Angelica Fajardo', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Rizal', 'submitted' => 'Jul 6, 2026', 'status' => 'Assigned'],
         ['ref' => 'AR-2026-0142', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jun 28, 2026', 'status' => 'Approved'],
         ['ref' => 'AR-2026-0098', 'citizen' => 'Rodrigo Palma', 'type' => 'Educational Assistance', 'office' => "Mayor's Office", 'barangay' => 'Domorog', 'submitted' => 'May 20, 2026', 'status' => 'Released'],
         ['ref' => 'AR-2026-0061', 'citizen' => 'Teresita Salazar', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Agoho', 'submitted' => 'Apr 2, 2026', 'status' => 'Completed'],
@@ -38,7 +38,7 @@
         'Solo Parent Cash Assistance' => ['category' => 'Social Protection', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
     ];
     $assignedByRef = [
-        'AR-2026-0148' => 'Corazon Villareal', 'AR-2026-0142' => 'Corazon Villareal',
+        'AR-2026-0195' => 'Corazon Villareal', 'AR-2026-0142' => 'Corazon Villareal',
     ];
     foreach ($requests as &$r) {
         $r = array_merge($r, $tulongClassification[$r['type']] ?? ['category' => 'Social Protection', 'office' => $r['office'], 'level' => 'Municipal']);
