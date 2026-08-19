@@ -213,7 +213,10 @@
                 </div>
             </div>
 
-            <x-citizen.banner-carousel :banners="$banners" />
+            {{-- Promotional banner carousel — intentionally not shown on the citizen
+                 dashboard for now. Admin management (Communications > Banners) stays
+                 fully functional; re-enable display here when ready:
+                 <x-citizen.banner-carousel :banners="$banners" /> --}}
 
             @php
                 $introFil = 'Ang <strong>Dokyu</strong> ay para sa paghingi ng mga dokumento ng munisipyo (clearance, ID, permit). Ang <strong>Tulong</strong> ay para sa pag-apply sa mga programang ayuda. Parehong simple ang hakbang: pumili, punan ang detalye, magbayad kung kailangan, pagkatapos i-review at i-submit — masusubaybayan mo anumang oras mula sa dashboard na ito.';
