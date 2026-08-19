@@ -442,12 +442,16 @@
                                 class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             <option value="">All Tags</option>
                             <option value="senior">Senior Citizen</option>
+                            <option value="osca">OSCA Member</option>
                             <option value="pwd">PWD</option>
                             <option value="4ps">4Ps Beneficiary</option>
                             <option value="solo_parent">Solo Parent</option>
                             <option value="youth">Youth</option>
                             <option value="child">Child</option>
+                            <option value="infant">Infant</option>
                             <option value="osy">Out-of-School Youth</option>
+                            <option value="farmer">Farmer</option>
+                            <option value="high_risk">High Risk</option>
                         </select>
                     </div>
                     <button x-show="search||barangayFilter||verificationFilter||tagFilter" @click="clearFilters()"

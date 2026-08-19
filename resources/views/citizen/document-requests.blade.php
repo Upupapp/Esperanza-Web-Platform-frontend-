@@ -447,6 +447,16 @@
                             if (i === -1) { list.push(option); } else { list.splice(i, 1); }
                             this.formData[fieldKey] = list;
                         },
+                        computeAge(dateStr) {
+                            if (!dateStr) return null;
+                            const dob = new Date(dateStr);
+                            if (isNaN(dob)) return null;
+                            const today = new Date();
+                            let age = today.getFullYear() - dob.getFullYear();
+                            const monthDiff = today.getMonth() - dob.getMonth();
+                            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+                            return age;
+                        },
                         applicant: { firstName: '', lastName: '', address: '', mobile: '', email: '' },
                         seedApplicant() {
                             const a = this.$store.citizenSession.account;
@@ -741,6 +751,12 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     <template x-for="f in (docs[selectedDoc]?.fields || [])" :key="f.key">
                                         <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2 lg:col-span-3' : ''">
+                                            <template x-if="f.type === 'derived_age'">
+                                                <div x-init="$watch(() => formData[f.derived_from], v => formData[f.key] = computeAge(v)); formData[f.key] = computeAge(formData[f.derived_from])">
+                                                    <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label"></label>
+                                                    <div class="w-full rounded-xl border border-slate-200 bg-slate-100/70 py-2.5 px-4 text-sm text-slate-500" x-text="(formData[f.key] ?? null) !== null ? formData[f.key] + ' years old' : 'Set birthdate first'"></div>
+                                                </div>
+                                            </template>
                                             <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date'">
                                                 <div>
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>

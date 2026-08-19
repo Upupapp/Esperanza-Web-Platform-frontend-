@@ -70,6 +70,8 @@
                         <option>Married</option>
                         <option>Widowed</option>
                         <option>Separated</option>
+                        <option>Annulled</option>
+                        <option>Live-in</option>
                     </select>
                 </div>
 

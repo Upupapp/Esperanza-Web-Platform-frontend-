@@ -226,9 +226,9 @@
         <div x-show="view === 'requests'">
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Requests" value="1,284" icon="file-text" color="brand" trend="+8.4%" sublabel="This month" :delay="0" />
-            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="63" icon="inbox" color="orange" sublabel="Review or verification" :delay="40" />
-            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="41" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Requests" value="{{ count($requests) }}" valueBind="requests.length" icon="file-text" color="brand" sublabel="All statuses" :delay="0" />
+            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or verification" :delay="40" />
+            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="{{ collect($requests)->where('status', 'Ready for Release')->count() }}" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
             <x-ui.stat-card :href="route('admin.analytics')" label="Avg. Processing Time" value="2.4 days" icon="timer" color="purple" trendDirection="down" trend="-0.6 days" sublabel="Within RA 11032 limits" :delay="120" />
         </div>
 
