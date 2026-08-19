@@ -17,7 +17,7 @@
         ]],
         ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'barangay' => 'Poblacion', 'submitted' => 'Jul 3, 2026', 'status' => 'Ready for Release'],
         ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Iligan', 'submitted' => 'Jun 29, 2026', 'status' => 'Approved'],
-        ['ref' => 'DR-2026-2098', 'citizen' => 'Teresita Salazar', 'type' => 'Senior Citizen ID', 'office' => 'OSCA', 'barangay' => 'Agoho', 'submitted' => 'Jun 22, 2026', 'status' => 'Processing'],
+        ['ref' => 'DR-2026-2098', 'citizen' => 'Teresita Salazar', 'type' => 'Senior Citizen ID', 'office' => 'OSCA', 'barangay' => 'Agoho', 'submitted' => 'Jun 22, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-1998', 'citizen' => 'Josefina Marbella', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Jun 14, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-1872', 'citizen' => 'Alvin Dagohoy', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'barangay' => 'Domorog', 'submitted' => 'May 30, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-1655', 'citizen' => 'Rosemarie Tan', 'type' => 'Business Permit Renewal', 'office' => 'BPLO', 'barangay' => 'Baras', 'submitted' => 'May 12, 2026', 'status' => 'Rejected', 'remarks' => 'Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached.', 'requirements' => [
@@ -85,7 +85,7 @@
     unset($r);
 
     $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Ready for Release', 'done' => 'Completed'];
-    $actionStatuses = ['Pending Review', 'Under Verification', 'Waiting Requirements', 'Processing'];
+    $actionStatuses = ['Pending Review', 'Under Verification', 'Waiting Requirements'];
     $doneStatuses = ['Completed', 'Released'];
 @endphp
 
@@ -151,7 +151,7 @@
             },
             clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; },
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Waiting Requirements': 1, 'Processing': 1, 'Approved': 2, 'Ready for Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
+                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Waiting Requirements': 1, 'Approved': 2, 'Ready for Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
             reject() {
@@ -188,13 +188,30 @@
                 }
                 this.$dispatch('toast', { message: req.name + ' rejected.', variant: 'error' });
             },
+            statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Ready for Release', 'Released'],
+            terminalStatuses: ['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'],
+            // What clicking "Approve & Continue" actually does at each stage — matches the
+            // Dokyu status flow used by the Esperanza Mobile app: Submitted -> Under
+            // Verification -> Waiting Requirements (branch) -> Approved -> Ready for
+            // Release -> Released.
+            stageActionLabels: {
+                'Submitted': 'Begin Verification',
+                'Pending Review': 'Begin Verification',
+                'Under Verification': 'Approve Request',
+                'Waiting Requirements': 'Approve Request',
+                'Approved': 'Mark Ready for Release',
+                'Ready for Release': 'Release to Citizen',
+            },
+            get nextStageLabel() {
+                if (!this.selected) return '';
+                return this.stageActionLabels[this.selected.status] ?? 'Approve & Continue';
+            },
             approve() {
                 if (this.processing) return;
                 this.processing = true;
                 setTimeout(() => {
-                    const order = ['Submitted', 'Under Verification', 'Approved', 'Ready for Release', 'Released'];
-                    const next = Math.min(this.stepIndex(this.selected.status) + 1, order.length - 1);
-                    this.selected.status = order[next];
+                    const next = Math.min(this.stepIndex(this.selected.status) + 1, this.statusOrder.length - 1);
+                    this.selected.status = this.statusOrder[next];
                     this.processing = false;
                     this.open = false;
                     this.$dispatch('toast', { message: this.selected.ref + ' moved to next stage: ' + this.selected.status + '.', variant: 'success' });
@@ -530,19 +547,26 @@
             </template>
 
             <x-slot:footer>
-                <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
-                    <span class="inline-flex items-center gap-1.5">
-                        <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
-                        <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>
-                    </span>
-                </x-ui.button>
-                <x-ui.button size="sm" x-bind:disabled="processing" @click="approve()">
-                    <span class="inline-flex items-center gap-1.5">
-                        <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
-                        <i data-lucide="check" class="w-3.5 h-3.5" x-show="!processing"></i>
-                        <span x-text="processing ? 'Processing…' : 'Approve & Continue'"></span>
-                    </span>
-                </x-ui.button>
+                <p class="text-xs text-slate-400 flex-1 flex items-center gap-1.5" x-show="selected && terminalStatuses.includes(selected.status)" x-cloak>
+                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>This request is finalized — no further status changes.
+                </p>
+                <template x-if="selected && !terminalStatuses.includes(selected.status)">
+                    <div class="flex items-center gap-2.5">
+                        <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                                <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>
+                            </span>
+                        </x-ui.button>
+                        <x-ui.button size="sm" x-bind:disabled="processing" @click="approve()">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="!processing"></i>
+                                <span x-text="processing ? 'Saving…' : nextStageLabel"></span>
+                            </span>
+                        </x-ui.button>
+                    </div>
+                </template>
             </x-slot:footer>
         </x-ui.modal>
 

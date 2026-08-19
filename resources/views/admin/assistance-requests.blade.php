@@ -6,7 +6,7 @@
         ['ref' => 'AR-2026-0142', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jun 28, 2026', 'status' => 'Approved'],
         ['ref' => 'AR-2026-0098', 'citizen' => 'Rodrigo Palma', 'type' => 'Educational Assistance', 'office' => "Mayor's Office", 'barangay' => 'Domorog', 'submitted' => 'May 20, 2026', 'status' => 'Released'],
         ['ref' => 'AR-2026-0061', 'citizen' => 'Teresita Salazar', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Agoho', 'submitted' => 'Apr 2, 2026', 'status' => 'Completed'],
-        ['ref' => 'AR-2026-0044', 'citizen' => 'Michael Bacus', 'type' => 'Food / Relief Assistance', 'office' => 'MSWDO', 'barangay' => 'Iligan', 'submitted' => 'Mar 18, 2026', 'status' => 'Completed'],
+        ['ref' => 'AR-2026-0044', 'citizen' => 'Michael Bacus', 'type' => 'Food / Relief Assistance', 'office' => 'MSWDO', 'barangay' => 'Iligan', 'submitted' => 'Mar 18, 2026', 'status' => 'Processing'],
         ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'type' => 'Social Pension (Indigent Senior)', 'office' => 'OSCA', 'barangay' => 'Baras', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0022', 'citizen' => 'Rosemarie Tan', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Jan 28, 2026', 'status' => 'Waiting Requirements', 'requirements' => [
             ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'Rosemarie-SoloParentID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
@@ -111,7 +111,7 @@
             },
             clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; },
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Assigned': 1, 'Waiting Requirements': 1, 'Processing': 1, 'Approved': 2, 'Released': 3, 'Completed': 4, 'Rejected': 0 };
+                const map = { 'Submitted': 0, 'Pending Review': 0, 'Assigned': 1, 'Processing': 2, 'Waiting Requirements': 2, 'Approved': 3, 'Released': 4, 'Completed': 5, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
             reject() {
@@ -148,13 +148,33 @@
                 }
                 this.$dispatch('toast', { message: req.name + ' rejected.', variant: 'error' });
             },
+            statusOrder: ['Submitted', 'Assigned', 'Processing', 'Approved', 'Released', 'Completed'],
+            // Unlike Dokyu, Tulong's flow continues past "Released" to "Completed" —
+            // only Completed (and Rejected/Archived/Cancelled) truly end the case.
+            terminalStatuses: ['Rejected', 'Completed', 'Archived', 'Cancelled'],
+            // What clicking "Approve & Continue" actually does at each stage — matches the
+            // Tulong status flow used by the Esperanza Mobile app: Submitted -> Assigned
+            // -> Processing -> Waiting Requirements (branch) -> Approved -> Released ->
+            // Completed.
+            stageActionLabels: {
+                'Submitted': 'Assign to Office',
+                'Pending Review': 'Assign to Office',
+                'Assigned': 'Start Processing',
+                'Processing': 'Approve Request',
+                'Waiting Requirements': 'Approve Request',
+                'Approved': 'Release to Citizen',
+                'Released': 'Mark Completed',
+            },
+            get nextStageLabel() {
+                if (!this.selected) return '';
+                return this.stageActionLabels[this.selected.status] ?? 'Approve & Continue';
+            },
             approve() {
                 if (this.processing) return;
                 this.processing = true;
                 setTimeout(() => {
-                    const order = ['Submitted', 'Assigned', 'Approved', 'Released', 'Completed'];
-                    const next = Math.min(this.stepIndex(this.selected.status) + 1, order.length - 1);
-                    this.selected.status = order[next];
+                    const next = Math.min(this.stepIndex(this.selected.status) + 1, this.statusOrder.length - 1);
+                    this.selected.status = this.statusOrder[next];
                     this.processing = false;
                     this.open = false;
                     this.$dispatch('toast', { message: this.selected.ref + ' moved to next stage: ' + this.selected.status + '.', variant: 'success' });
@@ -305,7 +325,7 @@
                     <p class="text-xs text-slate-400 mb-4 font-mono" x-text="selected.ref"></p>
 
                     <div class="flex items-center mb-6 px-1">
-                        @foreach(['Submitted', 'Assigned', 'Approved', 'Released', 'Completed'] as $i => $step)
+                        @foreach(['Submitted', 'Assigned', 'Processing', 'Approved', 'Released', 'Completed'] as $i => $step)
                             <div class="flex-1 flex items-center">
                                 <div class="flex flex-col items-center gap-2 text-center">
                                     <span
@@ -475,19 +495,26 @@
             </template>
 
             <x-slot:footer>
-                <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
-                    <span class="inline-flex items-center gap-1.5">
-                        <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
-                        <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>
-                    </span>
-                </x-ui.button>
-                <x-ui.button size="sm" x-bind:disabled="processing" @click="approve()">
-                    <span class="inline-flex items-center gap-1.5">
-                        <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
-                        <i data-lucide="check" class="w-3.5 h-3.5" x-show="!processing"></i>
-                        <span x-text="processing ? 'Processing…' : 'Approve & Continue'"></span>
-                    </span>
-                </x-ui.button>
+                <p class="text-xs text-slate-400 flex-1 flex items-center gap-1.5" x-show="selected && terminalStatuses.includes(selected.status)" x-cloak>
+                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>This case is finalized — no further status changes.
+                </p>
+                <template x-if="selected && !terminalStatuses.includes(selected.status)">
+                    <div class="flex items-center gap-2.5">
+                        <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                                <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>
+                            </span>
+                        </x-ui.button>
+                        <x-ui.button size="sm" x-bind:disabled="processing" @click="approve()">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="!processing"></i>
+                                <span x-text="processing ? 'Saving…' : nextStageLabel"></span>
+                            </span>
+                        </x-ui.button>
+                    </div>
+                </template>
             </x-slot:footer>
         </x-ui.modal>
 
