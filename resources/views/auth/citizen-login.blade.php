@@ -124,7 +124,7 @@
                             <input type="checkbox" class="rounded border-slate-300 text-brand-600 focus:ring-brand-200">
                             <x-ui.t fil="Tandaan ako" en="Remember me" />
                         </label>
-                        <a href="#" class="text-sm text-brand-600 hover:underline"><x-ui.t fil="Nakalimutan ang password?" en="Forgot password?" /></a>
+                        <a href="#" @click.prevent="$dispatch('toast', { message: 'Password reset is a frontend preview — contact the ICT Office to reset your account.', variant: 'info' })" class="text-sm text-brand-600 hover:underline"><x-ui.t fil="Nakalimutan ang password?" en="Forgot password?" /></a>
                     </div>
                 </div>
 
