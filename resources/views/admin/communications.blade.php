@@ -764,7 +764,7 @@
         <!-- Municipal offices -->
         <div x-show="tab === 'offices'" x-cloak>
             <div class="flex items-center justify-end mb-3">
-                <x-ui.button icon="plus" size="sm">Add Office</x-ui.button>
+                <x-ui.button icon="plus" size="sm" @click="$dispatch('toast', { message: 'Add Office is a frontend preview — no data is saved.', variant: 'info' })">Add Office</x-ui.button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 @foreach($offices as $office)
@@ -781,7 +781,7 @@
                             <p class="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><i data-lucide="phone" class="w-3 h-3 shrink-0"></i>{{ $office['contact'] }}</p>
                             <p class="text-xs text-slate-400 flex items-center gap-1.5 truncate"><i data-lucide="mail" class="w-3 h-3 shrink-0"></i>{{ $office['email'] }}</p>
                         </div>
-                        <button class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 border-t border-slate-100 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
+                        <button @click="$dispatch('toast', { message: 'Editing offices is a frontend preview — no data is saved.', variant: 'info' })" class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 border-t border-slate-100 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                     </div>
                 @endforeach
             </div>

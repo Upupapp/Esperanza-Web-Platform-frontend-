@@ -148,7 +148,7 @@
                         <p class="text-sm font-medium text-navy-900">Two-Factor Authentication</p>
                         <p class="text-xs text-slate-400 mt-0.5">Require 2FA for all personnel accounts.</p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm">Enforce for All</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" @click="$dispatch('toast', { message: '2FA enforcement is a frontend preview — no data is saved.', variant: 'info' })">Enforce for All</x-ui.button>
                 </x-ui.card>
                 <x-ui.card class="flex items-center justify-between gap-4">
                     <div>
@@ -171,7 +171,7 @@
                         <div>
                             <p class="text-sm text-slate-600">esperanza-seal.png</p>
                             <p class="text-xs text-slate-400 mt-0.5">512×512px · PNG · Used across both portals</p>
-                            <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5">Replace Seal</x-ui.button>
+                            <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5" @click="$dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })">Replace Seal</x-ui.button>
                         </div>
                     </div>
                 </x-ui.card>
@@ -196,7 +196,7 @@
                         <p class="text-sm font-medium text-navy-900">Municipality Information</p>
                         <p class="text-xs text-slate-400 mt-0.5">{{ config('esperanza.municipality') }}, {{ config('esperanza.province') }} · {{ config('esperanza.region') }} · {{ count(config('esperanza.barangays')) }} barangays</p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm" icon="pencil">Edit Information</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" icon="pencil" @click="$dispatch('toast', { message: 'Editing municipality information is a frontend preview — no data is saved.', variant: 'info' })">Edit Information</x-ui.button>
                 </x-ui.card>
             </div>
 

@@ -15,11 +15,7 @@
         programs: []
     },
     programOptions: ['4Ps (Pantawid Pamilyang Pilipino Program)', 'OSCA (Senior Citizen)', 'PWD Assistance', 'Solo Parent Welfare', 'Other Government Assistance'],
-    barangayOptions: [
-        'Bagong Silang','Batuan','Bayabas','Buenaflor','Buenavista','Calpi','Centro Poblacion',
-        'Cogon','Dao','Esperanza','Gatbo','Jupi','Lanipga','Libtong','Lourdes','Mabuhay',
-        'Mapale','Matagabong','Milagrosa','Poblacion Norte','Poblacion Sur','Salvacion','Tinago'
-    ],
+    barangayOptions: @js(config('esperanza.barangays')),
     get canProceed() {
         if (addFamilyStep === 1) {
             return this.form.surname.trim() !== '' && this.form.family_type !== '' && this.form.barangay !== ''

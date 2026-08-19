@@ -54,27 +54,22 @@
                 {{-- ── Empty state ── --}}
                 <template x-if="filteredIndividuals.length === 0">
                     <tr>
-                        <td colspan="7" class="py-16">
-                            <div class="flex flex-col items-center gap-3 text-center px-8">
-                                <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                    <i data-lucide="users" class="w-7 h-7"></i>
-                                </div>
-                                <div>
-                                    <p class="font-semibold text-navy-900 text-base">No residents found</p>
-                                    <p class="text-sm text-slate-500 mt-0.5">
-                                        Try adjusting your search filters, or add a new resident record.
-                                    </p>
-                                </div>
-                                <template x-if="can('individuals','create')">
+                        <td colspan="7" class="py-16 px-4 text-center">
+                            <x-ui.empty-state
+                                icon="users"
+                                title="No residents found"
+                                description="Try adjusting your search filters, or add a new resident record."
+                            >
+                                <template x-if="can('const_resident','create')">
                                     <button
                                         @click="showAddIndividual = true"
-                                        class="mt-1 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+                                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
                                     >
                                         <i data-lucide="user-plus" class="w-4 h-4"></i>
                                         Add Resident
                                     </button>
                                 </template>
-                            </div>
+                            </x-ui.empty-state>
                         </td>
                     </tr>
                 </template>

@@ -27,11 +27,7 @@
         'DSWD Financial Assistance',
         'Other Government Assistance'
     ],
-    barangayOptions: [
-        'Bagong Silang','Batuan','Bayabas','Buenaflor','Buenavista','Calpi','Centro Poblacion',
-        'Cogon','Dao','Esperanza','Gatbo','Jupi','Lanipga','Libtong','Lourdes','Mabuhay',
-        'Mapale','Matagabong','Milagrosa','Poblacion Norte','Poblacion Sur','Salvacion','Tinago'
-    ],
+    barangayOptions: @js(config('esperanza.barangays')),
     hazardZoneOptions: [
         'Zone 1 (Safe)',
         'Zone 2 (Moderate Risk)',

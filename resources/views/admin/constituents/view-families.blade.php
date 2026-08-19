@@ -41,7 +41,7 @@
                         <x-ui.empty-state
                             icon="users-round"
                             title="No families found"
-                            subtitle="Try adjusting your search or filters, or add a new family record."
+                            description="Try adjusting your search or filters, or add a new family record."
                         />
                     </td>
                 </tr>

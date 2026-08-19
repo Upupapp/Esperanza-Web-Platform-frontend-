@@ -42,7 +42,7 @@
                         <x-ui.empty-state
                             icon="house"
                             title="No households found"
-                            subtitle="Try adjusting your search or filters, or register a new household."
+                            description="Try adjusting your search or filters, or register a new household."
                         />
                     </td>
                 </tr>

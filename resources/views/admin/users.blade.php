@@ -118,7 +118,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
+                                <button @click="$dispatch('toast', { message: 'Personnel actions are a frontend preview.', variant: 'info' })" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
                             </td>
                         </tr>
                     </template>
@@ -465,51 +465,49 @@
             </div>
 
             <x-ui.table>
-                <table class="min-w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/60">
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Role</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Dokyu / Tulong Grant</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Scope</th>
-                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assign</th>
-                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Review</th>
-                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Approve</th>
-                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reject</th>
-                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Release</th>
-                            <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reports</th>
+                <thead>
+                    <tr class="border-b border-slate-100 bg-slate-50/60">
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Role</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Dokyu / Tulong Grant</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Scope</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assign</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Review</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Approve</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reject</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Release</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reports</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @php
+                        $matrixRows = [
+                            ['role' => 'Super Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
+                            ['role' => 'Municipal Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
+                            ['role' => 'Department Head', 'grant' => 'View + Edit + Review/Approve/Reject/Release', 'scope' => 'Own office', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
+                            ['role' => 'Department Staff', 'grant' => 'View + Edit (process)', 'scope' => 'Own office', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
+                            ['role' => 'Front Desk Officer', 'grant' => 'View + Edit (intake only)', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
+                            ['role' => 'Records Officer', 'grant' => 'View + Edit, Civil Registry only', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => true],
+                            ['role' => 'Barangay Secretary', 'grant' => 'View + Edit + Review/Approve/Release, Barangay Certificates only', 'scope' => 'Own barangay', 'assign' => false, 'review' => true, 'approve' => true, 'reject' => false, 'release' => true, 'reports' => false],
+                            ['role' => 'Citizen', 'grant' => 'Own requests only', 'scope' => 'Own records only', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
+                        ];
+                    @endphp
+                    @foreach($matrixRows as $row)
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="px-4 py-3 font-medium text-navy-900 whitespace-nowrap">{{ $row['role'] }}</td>
+                            <td class="px-4 py-3 text-slate-500 max-w-xs hidden 2xl:table-cell">{{ $row['grant'] }}</td>
+                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell">{{ $row['scope'] }}</td>
+                            @foreach(['assign', 'review', 'approve', 'reject', 'release', 'reports'] as $action)
+                                <td class="px-4 py-3 text-center">
+                                    @if($row[$action])
+                                        <i data-lucide="check" class="w-4 h-4 text-emerald-500 inline-block"></i>
+                                    @else
+                                        <span class="text-slate-300">&mdash;</span>
+                                    @endif
+                                </td>
+                            @endforeach
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @php
-                            $matrixRows = [
-                                ['role' => 'Super Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
-                                ['role' => 'Municipal Administrator', 'grant' => 'Full', 'scope' => 'Municipality-wide', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
-                                ['role' => 'Department Head', 'grant' => 'View + Edit + Review/Approve/Reject/Release', 'scope' => 'Own office', 'assign' => true, 'review' => true, 'approve' => true, 'reject' => true, 'release' => true, 'reports' => true],
-                                ['role' => 'Department Staff', 'grant' => 'View + Edit (process)', 'scope' => 'Own office', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
-                                ['role' => 'Front Desk Officer', 'grant' => 'View + Edit (intake only)', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
-                                ['role' => 'Records Officer', 'grant' => 'View + Edit, Civil Registry only', 'scope' => 'Municipality-wide', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => true],
-                                ['role' => 'Barangay Secretary', 'grant' => 'View + Edit + Review/Approve/Release, Barangay Certificates only', 'scope' => 'Own barangay', 'assign' => false, 'review' => true, 'approve' => true, 'reject' => false, 'release' => true, 'reports' => false],
-                                ['role' => 'Citizen', 'grant' => 'Own requests only', 'scope' => 'Own records only', 'assign' => false, 'review' => false, 'approve' => false, 'reject' => false, 'release' => false, 'reports' => false],
-                            ];
-                        @endphp
-                        @foreach($matrixRows as $row)
-                            <tr class="hover:bg-slate-50/70 transition-colors">
-                                <td class="px-4 py-3 font-medium text-navy-900 whitespace-nowrap">{{ $row['role'] }}</td>
-                                <td class="px-4 py-3 text-slate-500 max-w-xs hidden 2xl:table-cell">{{ $row['grant'] }}</td>
-                                <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell">{{ $row['scope'] }}</td>
-                                @foreach(['assign', 'review', 'approve', 'reject', 'release', 'reports'] as $action)
-                                    <td class="px-4 py-3 text-center">
-                                        @if($row[$action])
-                                            <i data-lucide="check" class="w-4 h-4 text-emerald-500 inline-block"></i>
-                                        @else
-                                            <span class="text-slate-300">&mdash;</span>
-                                        @endif
-                                    </td>
-                                @endforeach
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                    @endforeach
+                </tbody>
             </x-ui.table>
 
             <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4">

@@ -319,7 +319,7 @@
                 <h1 class="text-lg font-bold text-navy-900">Constituent Registry</h1>
                 <p class="text-xs text-slate-400 mt-0.5">Municipality of Esperanza · 20 barangays · <span x-text="isMunicipalScope?'Municipality-wide view':'Brgy. '+$store.session.account?.scope+' view'"></span></p>
             </div>
-            <div class="flex items-center gap-2 relative">
+            <div class="flex items-center gap-2 relative" x-show="can('const_resident','create') || can('const_family','create') || can('const_household','create')">
                 <button @click="showAddMenu=!showAddMenu" @click.outside="showAddMenu=false"
                         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-200 transition-all">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Record
@@ -327,15 +327,15 @@
                 </button>
                 <div x-show="showAddMenu" x-transition.origin.top.right x-cloak
                      class="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl border border-slate-200 shadow-lg z-30 overflow-hidden">
-                    <button @click="addIndividualStep=1;showAddIndividual=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
+                    <button x-show="can('const_resident','create')" @click="addIndividualStep=1;showAddIndividual=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
                         <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New Resident
                     </button>
-                    <button @click="addFamilyStep=1;showAddFamily=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
+                    <button x-show="can('const_family','create')" @click="addFamilyStep=1;showAddFamily=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
                         <i data-lucide="users" class="w-3.5 h-3.5 text-purple-500"></i>New Family
                     </button>
-                    <button @click="addHouseholdStep=1;showAddHousehold=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
+                    <button x-show="can('const_household','create')" @click="addHouseholdStep=1;showAddHousehold=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
                         <i data-lucide="house" class="w-3.5 h-3.5 text-emerald-500"></i>New Household
                     </button>

@@ -49,7 +49,7 @@
             return this.form.tags.includes(tag);
         },
     }"
-    @modal-closed.window="if (!showAddIndividual) resetForm()"
+    x-init="$watch('open', v => { if (!v) resetForm(); })"
 >
     <x-ui.modal maxWidth="2xl" :fullscreen="true">
 
@@ -356,26 +356,9 @@
                             required
                         >
                             <option value="" disabled selected>Select barangay</option>
-                            <option value="Poblacion">Poblacion</option>
-                            <option value="Masbaranon">Masbaranon</option>
-                            <option value="Baras">Baras</option>
-                            <option value="Iligan">Iligan</option>
-                            <option value="Santiago">Santiago</option>
-                            <option value="Magsaysay">Magsaysay</option>
-                            <option value="Domorog">Domorog</option>
-                            <option value="San Roque">San Roque</option>
-                            <option value="Rizal">Rizal</option>
-                            <option value="Libertad">Libertad</option>
-                            <option value="Guadalupe">Guadalupe</option>
-                            <option value="Potingbato">Potingbato</option>
-                            <option value="Villa">Villa</option>
-                            <option value="Agoho">Agoho</option>
-                            <option value="Sorosimbajan">Sorosimbajan</option>
-                            <option value="Labrador">Labrador</option>
-                            <option value="Almero">Almero</option>
-                            <option value="Tunga">Tunga</option>
-                            <option value="Labangtaytay">Labangtaytay</option>
-                            <option value="Tawad">Tawad</option>
+                            @foreach(config('esperanza.barangays') as $brgy)
+                                <option value="{{ $brgy }}">{{ $brgy }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>

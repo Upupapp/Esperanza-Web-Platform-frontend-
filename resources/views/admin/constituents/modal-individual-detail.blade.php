@@ -1080,21 +1080,21 @@
                 <button
                     @click="$dispatch('toast', {message: 'Edit resident — connect to edit modal.', variant: 'info'})"
                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                    x-show="can('individuals','update')"
+                    x-show="can('const_resident','edit')"
                 >
                     <i data-lucide="pencil" class="w-4 h-4"></i>
                     Edit
                 </button>
 
                 {{-- Lifecycle dropdown --}}
-                <div class="relative" x-data="{ lopen: false }" x-show="can('individuals','manage_lifecycle')">
+                <div class="relative" x-data="{ lopen: false }" x-show="can('const_resident','edit')">
                     <button
                         @click="lopen = !lopen"
                         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-navy-900 text-white text-sm font-medium hover:bg-navy-800 transition-colors"
                     >
                         <i data-lucide="settings-2" class="w-4 h-4"></i>
                         Lifecycle
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 ml-0.5" :class="lopen ? 'rotate-180' : ''" class="transition-transform"></i>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 ml-0.5 transition-transform" :class="lopen ? 'rotate-180' : ''"></i>
                     </button>
 
                     <div

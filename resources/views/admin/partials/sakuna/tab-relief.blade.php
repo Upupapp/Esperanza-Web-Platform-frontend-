@@ -8,7 +8,7 @@
             <p class="text-sm text-slate-500 mt-0.5">Inventory management, relief requests, distributions, and donation tracking.</p>
         </div>
         <button
-            onclick="window.toast?.('Relief logistics report exported.', 'success')"
+            @click="$dispatch('toast', { message: 'Relief logistics report exported.', variant: 'success' })"
             class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm self-start sm:self-auto">
             <i data-lucide="download" class="w-4 h-4"></i>
             Export
@@ -21,7 +21,7 @@
         <button
             @click="reliefSubtab = '{{ $key }}'"
             :class="reliefSubtab === '{{ $key }}'
-                ? 'bg-brand-blue text-white shadow-sm'
+                ? 'bg-brand-600 text-white shadow-sm'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
             class="px-4 py-2 rounded-full text-sm font-medium transition-all">
             {{ $label }}
@@ -67,11 +67,11 @@
                     type="text"
                     x-model="inventorySearch"
                     placeholder="Search by name or code…"
-                    class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue bg-white">
+                    class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600 bg-white">
             </div>
             <select
                 x-model="inventoryCategoryFilter"
-                class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                 <option value="">All Categories</option>
                 <option value="Food">Food</option>
                 <option value="Water">Water</option>
@@ -189,7 +189,7 @@
                                     </button>
                                     <button
                                         @click="$dispatch('toast', { message: 'Items reserved from {{ $item['name'] }}.', variant: 'success' })"
-                                        class="p-1.5 text-brand-blue hover:bg-blue-50 rounded-lg transition-colors" title="Reserve">
+                                        class="p-1.5 text-brand-600 hover:bg-blue-50 rounded-lg transition-colors" title="Reserve">
                                         <i data-lucide="lock" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
@@ -210,7 +210,7 @@
             <h3 class="text-base font-semibold text-navy-900">Relief Requests</h3>
             <button
                 @click="showRequestModal = true"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-sm font-medium hover:bg-brand-blue/90 transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 Create Request
             </button>
@@ -472,7 +472,7 @@
             <h3 class="text-base font-semibold text-navy-900">Beneficiary Distribution</h3>
             <button
                 @click="showDistModal = true; distHouseholdSearch = ''; distPackageType = ''; isDuplicate = false; supervisorConfirmed = false"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-sm font-medium hover:bg-brand-blue/90 transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 Record Distribution
             </button>
@@ -566,7 +566,7 @@
                             x-model="distHouseholdSearch"
                             @input="isDuplicate = distHouseholdSearch.toLowerCase().includes('rodrigo panganiban') && distPackageType === 'Family Food Pack'; supervisorConfirmed = false"
                             placeholder="Type household head name…"
-                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue">
+                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600">
                         <p class="text-xs text-slate-400 mt-1">Type to search from registered evacuee households (DIST-001 – DIST-010).</p>
                     </div>
 
@@ -576,7 +576,7 @@
                             <select
                                 x-model="distPackageType"
                                 @change="isDuplicate = distHouseholdSearch.toLowerCase().includes('rodrigo panganiban') && distPackageType === 'Family Food Pack'; supervisorConfirmed = false"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option value="">Select package…</option>
                                 <option>Family Food Pack</option>
                                 <option>Hygiene Kit</option>
@@ -587,7 +587,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Verification Method</label>
-                            <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                            <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option>QR Scan</option>
                                 <option>ID Scan</option>
                                 <option>Manual</option>
@@ -598,7 +598,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Distribution Center</label>
-                            <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                            <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 @foreach($centers as $center)
                                 <option value="{{ $center['id'] }}">{{ $center['name'] }}</option>
                                 @endforeach
@@ -606,7 +606,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Distributing Officer</label>
-                            <input type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
 
@@ -624,7 +624,7 @@
                     <button @click="showDistModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                     <button
                         :disabled="isDuplicate && !supervisorConfirmed"
-                        :class="(isDuplicate && !supervisorConfirmed) ? 'opacity-40 cursor-not-allowed bg-brand-blue text-white' : 'bg-brand-blue text-white hover:bg-brand-blue/90'"
+                        :class="(isDuplicate && !supervisorConfirmed) ? 'opacity-40 cursor-not-allowed bg-brand-600 text-white' : 'bg-brand-600 text-white hover:bg-brand-600/90'"
                         @click="if(!(isDuplicate && !supervisorConfirmed)){ $dispatch('toast', { message: 'Distribution DIST-011 recorded for ' + (distHouseholdSearch || 'household') + '.', variant: 'success' }); showDistModal = false }"
                         class="px-5 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
                         <i data-lucide="check" class="w-4 h-4 inline-block mr-1"></i>
@@ -646,7 +646,7 @@
             <h3 class="text-base font-semibold text-navy-900">Donation Records</h3>
             <button
                 @click="showDonationModal = true"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-sm font-medium hover:bg-brand-blue/90 transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 Record Donation
             </button>
@@ -718,39 +718,39 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Donor Name / Organization</label>
-                            <input type="text" placeholder="e.g. SM Foundation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="text" placeholder="e.g. SM Foundation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date Received</label>
-                            <input type="date" value="{{ date('Y-m-d') }}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="date" value="{{ date('Y-m-d') }}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Items / Description</label>
-                            <input type="text" placeholder="e.g. Canned goods, Bottled water" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="text" placeholder="e.g. Canned goods, Bottled water" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quantity</label>
-                            <input type="text" placeholder="e.g. 500 cans / 200 bottles" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="text" placeholder="e.g. 500 cans / 200 bottles" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Estimated Value (₱)</label>
-                            <input type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Received By</label>
-                            <input type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Notes / Remarks</label>
-                        <textarea rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 resize-none"></textarea>
+                        <textarea rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                     </div>
                 </div>
                 <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
                     <button @click="showDonationModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                     <button
                         @click="$dispatch('toast', { message: 'Donation DON-006 recorded successfully.', variant: 'success' }); showDonationModal = false"
-                        class="px-5 py-2 bg-brand-blue text-white rounded-xl text-sm font-semibold hover:bg-brand-blue/90 transition-colors shadow-sm">
+                        class="px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm">
                         Save Donation
                     </button>
                 </div>
@@ -781,7 +781,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Item Name</label>
-                        <select x-model="stockInItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                        <select x-model="stockInItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option value="">Select item…</option>
                             @foreach($inventory as $item)
                             <option value="{{ $item['name'] }}" @if(isset($selectedInventoryItem) && $selectedInventoryItem && $item['code'] === ($selectedInventoryItem['code'] ?? '')) selected @endif>
@@ -792,27 +792,27 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quantity</label>
-                        <input type="number" min="1" x-model="stockInQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="number" min="1" x-model="stockInQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Batch / Lot Number</label>
-                        <input type="text" x-model="stockInBatch" placeholder="e.g. LOT-2026-0715" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="text" x-model="stockInBatch" placeholder="e.g. LOT-2026-0715" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Source / Donor</label>
-                        <input type="text" x-model="stockInSource" placeholder="e.g. DSWD Masbate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="text" x-model="stockInSource" placeholder="e.g. DSWD Masbate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Received By</label>
-                        <input type="text" x-model="stockInBy" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="text" x-model="stockInBy" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date Received</label>
-                        <input type="date" x-model="stockInDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="date" x-model="stockInDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Condition</label>
-                        <select x-model="stockInCondition" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                        <select x-model="stockInCondition" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option>Good</option>
                             <option>Fair</option>
                             <option>Poor</option>
@@ -821,7 +821,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Notes</label>
-                    <textarea x-model="stockInNotes" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 resize-none"></textarea>
+                    <textarea x-model="stockInNotes" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
@@ -859,7 +859,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Item</label>
-                        <select x-model="stockOutItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                        <select x-model="stockOutItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option value="">Select item…</option>
                             @foreach($inventory as $item)
                             <option value="{{ $item['name'] }}" @if(isset($selectedInventoryItem) && $selectedInventoryItem && $item['code'] === ($selectedInventoryItem['code'] ?? '')) selected @endif>
@@ -870,7 +870,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quantity to Release</label>
-                        <input type="number" min="1" x-model="stockOutQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="number" min="1" x-model="stockOutQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         <div x-show="stockOutQty > 999 && stockOutItem === ''" class="mt-1.5 flex items-center gap-1.5 text-xs text-amber-600">
                             <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>
                             Requested quantity exceeds available stock.
@@ -878,7 +878,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Purpose</label>
-                        <select x-model="stockOutPurpose" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                        <select x-model="stockOutPurpose" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option value="">Select purpose…</option>
                             <option>Relief Distribution</option>
                             <option>Evacuation Center Supply</option>
@@ -888,16 +888,16 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Destination / Beneficiary</label>
-                        <input type="text" x-model="stockOutDest" placeholder="e.g. Masbaranon EC" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="text" x-model="stockOutDest" placeholder="e.g. Masbaranon EC" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Authorized By</label>
-                        <input type="text" x-model="stockOutBy" placeholder="Authorizing officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="text" x-model="stockOutBy" placeholder="Authorizing officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Remarks</label>
-                    <textarea x-model="stockOutRemarks" rows="2" placeholder="Additional remarks…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 resize-none"></textarea>
+                    <textarea x-model="stockOutRemarks" rows="2" placeholder="Additional remarks…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
@@ -934,7 +934,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Requesting Entity</label>
-                    <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                    <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                         <option value="">Select center or barangay…</option>
                         <optgroup label="Evacuation Centers">
                             @foreach($centers as $center)
@@ -955,20 +955,20 @@
                     <div class="space-y-2">
                         <template x-for="i in reqItemCount" :key="i">
                             <div class="flex gap-2 items-center">
-                                <select class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                                <select class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                     <option value="">Select item…</option>
                                     @foreach($inventory as $item)
                                     <option value="{{ $item['code'] }}">{{ $item['name'] }}</option>
                                     @endforeach
                                 </select>
-                                <input type="number" min="1" placeholder="Qty" class="w-24 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                                <input type="number" min="1" placeholder="Qty" class="w-24 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                             </div>
                         </template>
                     </div>
                     <button
                         x-show="reqItemCount < 5"
                         @click="reqItemCount++"
-                        class="mt-2 text-xs text-brand-blue hover:underline flex items-center gap-1">
+                        class="mt-2 text-xs text-brand-600 hover:underline flex items-center gap-1">
                         <i data-lucide="plus" class="w-3 h-3"></i>
                         Add Another Item
                     </button>
@@ -977,11 +977,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Beneficiary Count</label>
-                        <input type="number" min="0" x-model="reqBeneficiaries" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="number" min="0" x-model="reqBeneficiaries" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Priority</label>
-                        <select x-model="reqPriority" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                        <select x-model="reqPriority" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option>Normal</option>
                             <option>High</option>
                             <option>Urgent</option>
@@ -990,18 +990,18 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Reason / Justification</label>
-                    <textarea x-model="reqReason" rows="2" placeholder="Describe the need…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 resize-none"></textarea>
+                    <textarea x-model="reqReason" rows="2" placeholder="Describe the need…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Requested By</label>
-                    <input type="text" x-model="reqBy" placeholder="Name and designation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                    <input type="text" x-model="reqBy" placeholder="Name and designation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                 </div>
             </div>
             <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
                 <button @click="showRequestModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                 <button
                     @click="$dispatch('toast', { message: 'Relief request REQ-007 submitted for approval.', variant: 'success' }); showRequestModal = false"
-                    class="px-5 py-2 bg-brand-blue text-white rounded-xl text-sm font-semibold hover:bg-brand-blue/90 transition-colors shadow-sm">
+                    class="px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm">
                     Submit Request
                 </button>
             </div>

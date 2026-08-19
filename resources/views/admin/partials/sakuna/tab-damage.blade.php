@@ -10,7 +10,7 @@
         <div class="flex items-center gap-2 self-start sm:self-auto">
             <button
                 @click="showCreateAssessment = true"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-sm font-medium hover:bg-brand-blue/90 transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 New Assessment
             </button>
@@ -65,11 +65,11 @@
                 type="text"
                 x-model="damageSearch"
                 placeholder="Search by ID or barangay…"
-                class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue bg-white">
+                class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600 bg-white">
         </div>
         <select
             x-model="damageTypeFilter"
-            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
             <option value="">All Types</option>
             <option>Initial Rapid Assessment</option>
             <option>Barangay Damage Assessment</option>
@@ -82,7 +82,7 @@
         </select>
         <select
             x-model="damageStatusFilter"
-            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
             <option value="">All Statuses</option>
             <option>Draft</option>
             <option>Submitted</option>
@@ -95,7 +95,7 @@
         </select>
         <select
             x-model="damageBarangayFilter"
-            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
             <option value="">All Barangays</option>
             @foreach($barangays as $brgy)
             <option value="{{ $brgy }}">{{ $brgy }}</option>
@@ -181,7 +181,7 @@
                             <div class="flex items-center gap-1">
                                 <button
                                     @click="selectedAssessment = {{ json_encode($a) }}; showAssessmentDetail = true"
-                                    class="p-1.5 text-brand-blue hover:bg-blue-50 rounded-lg transition-colors" title="View">
+                                    class="p-1.5 text-brand-600 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                                     <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                                 </button>
                                 @if($isEditable)
@@ -235,7 +235,7 @@
     <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
         <div class="p-5 border-b border-slate-100">
             <div class="flex items-center gap-2">
-                <i data-lucide="chart-column" class="w-5 h-5 text-brand-blue"></i>
+                <i data-lucide="chart-column" class="w-5 h-5 text-brand-600"></i>
                 <h3 class="text-base font-bold text-navy-900">Municipal Consolidated Summary — SWM-2026-07</h3>
             </div>
             <p class="text-xs text-slate-500 mt-1">Estimates subject to validation. Assessment coverage: 8 of 20 barangays.</p>
@@ -317,7 +317,7 @@
                 @foreach([['population','Population'],['housing','Housing'],['infrastructure','Infrastructure'],['agriculture','Agriculture'],['needs','Needs'],['financial','Financial'],['certification','Certification']] as [$tabKey,$tabLabel])
                 <button
                     @click="assessTab = '{{ $tabKey }}'"
-                    :class="assessTab === '{{ $tabKey }}' ? 'bg-brand-blue text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                    :class="assessTab === '{{ $tabKey }}' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
                     class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
                     {{ $tabLabel }}
                 </button>
@@ -539,14 +539,14 @@
                     {{-- Validator --}}
                     <div class="bg-slate-50 rounded-xl p-4 space-y-2">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Validator</p>
-                        <input type="text" placeholder="Validator name" value="MDRRMO Officer Salinas" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="text" placeholder="Validator name" value="MDRRMO Officer Salinas" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         <p class="text-xs text-slate-500">Municipal DRRM Officer</p>
                         <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">Pending Validation</span>
                     </div>
                     {{-- Approving Officer --}}
                     <div class="bg-slate-50 rounded-xl p-4 space-y-2">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Approving Officer</p>
-                        <input type="text" placeholder="Officer name" value="Mayor Reyes" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                        <input type="text" placeholder="Officer name" value="Mayor Reyes" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         <p class="text-xs text-slate-500">Local Chief Executive</p>
                         <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Awaiting</span>
                     </div>
@@ -558,7 +558,7 @@
                         <h5 class="text-sm font-semibold text-navy-900">Attachments</h5>
                         <button
                             @click="$dispatch('toast', { message: 'Attachment upload dialog opened.', variant: 'info' })"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-blue text-white rounded-lg text-xs font-medium hover:bg-brand-blue/90 transition-colors">
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-medium hover:bg-brand-600/90 transition-colors">
                             <i data-lucide="upload" class="w-3.5 h-3.5"></i>
                             Add Attachment
                         </button>
@@ -580,7 +580,7 @@
                             <div class="flex items-center gap-1">
                                 <button
                                     @click="$dispatch('toast', { message: 'Opening {{ $fname }}...', variant: 'info' })"
-                                    class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-brand-blue hover:bg-blue-50 transition-colors">
+                                    class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-brand-600 hover:bg-blue-50 transition-colors">
                                     View
                                 </button>
                                 <button
@@ -707,17 +707,17 @@
                 <template x-for="(label, idx) in daStepLabels" :key="idx">
                     <div class="flex-1 flex flex-col items-center">
                         <div class="flex items-center w-full">
-                            <div class="flex-1 h-0.5" :class="daStep > idx + 1 ? 'bg-brand-blue' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
+                            <div class="flex-1 h-0.5" :class="daStep > idx + 1 ? 'bg-brand-600' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
                             <div
                                 class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
-                                :class="daStep >= idx + 1 ? 'border-brand-blue bg-brand-blue text-white' : 'border-slate-200 bg-white text-slate-400'"
+                                :class="daStep >= idx + 1 ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-400'"
                             >
                                 <template x-if="daStep > idx + 1"><i data-lucide="check" class="w-3 h-3"></i></template>
                                 <template x-if="daStep <= idx + 1"><span x-text="idx + 1"></span></template>
                             </div>
-                            <div class="flex-1 h-0.5" :class="[daStep > idx + 1 ? 'bg-brand-blue' : 'bg-slate-200', idx === daStepLabels.length - 1 ? '!bg-transparent' : '']"></div>
+                            <div class="flex-1 h-0.5" :class="[daStep > idx + 1 ? 'bg-brand-600' : 'bg-slate-200', idx === daStepLabels.length - 1 ? '!bg-transparent' : '']"></div>
                         </div>
-                        <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="daStep === idx + 1 ? 'text-brand-blue' : daStep > idx + 1 ? 'text-brand-blue/70' : 'text-slate-400'" x-text="label"></span>
+                        <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="daStep === idx + 1 ? 'text-brand-600' : daStep > idx + 1 ? 'text-brand-600/70' : 'text-slate-400'" x-text="label"></span>
                     </div>
                 </template>
             </nav>
@@ -729,7 +729,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assessment Type</label>
-                            <select x-model="newType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                            <select x-model="newType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option value="">Select type…</option>
                                 <option>Initial Rapid Assessment</option>
                                 <option>Barangay Damage Assessment</option>
@@ -743,7 +743,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Incident</label>
-                            <select x-model="newIncident" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                            <select x-model="newIncident" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option value="">Select incident…</option>
                                 @foreach($incidents as $incident)
                                 <option value="{{ $incident['id'] }}">{{ $incident['id'] }} — {{ $incident['type'] }} ({{ $incident['barangay'] }})</option>
@@ -752,7 +752,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Barangay</label>
-                            <select x-model="newBarangay" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 bg-white">
+                            <select x-model="newBarangay" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option value="">Select barangay…</option>
                                 @foreach($barangays as $brgy)
                                 <option value="{{ $brgy }}">{{ $brgy }}</option>
@@ -761,15 +761,15 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assessment Date</label>
-                            <input type="date" x-model="newDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="date" x-model="newDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assessor Name</label>
-                            <input type="text" x-model="newAssessor" placeholder="Full name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="text" x-model="newAssessor" placeholder="Full name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Office / Designation</label>
-                            <input type="text" x-model="newOffice" placeholder="e.g. Barangay DRRM Officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="text" x-model="newOffice" placeholder="e.g. Barangay DRRM Officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
                 </div>
@@ -788,7 +788,7 @@
                         ] as [$model, $label])
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ $label }}</label>
-                            <input type="number" min="0" x-model="{{ $model }}" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="number" min="0" x-model="{{ $model }}" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         @endforeach
                     </div>
@@ -799,19 +799,19 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Partially Damaged</label>
-                            <input type="number" min="0" x-model="housingPartial" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="number" min="0" x-model="housingPartial" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Totally Damaged</label>
-                            <input type="number" min="0" x-model="housingTotal" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="number" min="0" x-model="housingTotal" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Unsafe for Occupancy</label>
-                            <input type="number" min="0" x-model="housingUnsafe" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="number" min="0" x-model="housingUnsafe" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Est. Housing Damage (₱)</label>
-                            <input type="number" min="0" x-model="housingEstimate" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                            <input type="number" min="0" x-model="housingEstimate" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
                 </div>
@@ -832,13 +832,13 @@
                         ] as [$check, $amt, $label])
                         <div class="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
                             <label class="flex items-center gap-2 w-44 flex-shrink-0 cursor-pointer">
-                                <input type="checkbox" x-model="{{ $check }}" class="rounded text-brand-blue">
+                                <input type="checkbox" x-model="{{ $check }}" class="rounded text-brand-600">
                                 <span class="text-sm text-slate-700">{{ $label }}</span>
                             </label>
                             <div x-show="{{ $check }}" x-cloak class="flex-1">
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₱</span>
-                                    <input type="number" min="0" x-model="{{ $amt }}" placeholder="0" class="w-full pl-7 pr-3 py-1.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+                                    <input type="number" min="0" x-model="{{ $amt }}" placeholder="0" class="w-full pl-7 pr-3 py-1.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                                 </div>
                             </div>
                             <div x-show="!{{ $check }}" class="flex-1 text-xs text-slate-400">Check to enter damage amount</div>
@@ -906,12 +906,12 @@
                 <span class="text-xs text-slate-400 mx-1" x-text="'Step ' + daStep + ' of ' + daStepLabels.length"></span>
                 <button
                     @click="daStep++; $nextTick(() => window.renderIcons?.())" x-show="daStep < daStepLabels.length"
-                    class="inline-flex items-center gap-1.5 px-5 py-2 bg-brand-blue text-white rounded-xl text-sm font-semibold hover:bg-brand-blue/90 transition-colors shadow-sm ml-auto">
+                    class="inline-flex items-center gap-1.5 px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm ml-auto">
                     Next<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                 </button>
                 <button
                     @click="$dispatch('toast', { message: 'Assessment submitted for validation.', variant: 'success' }); showCreateAssessment = false" x-show="daStep >= daStepLabels.length"
-                    class="px-5 py-2 bg-brand-blue text-white rounded-xl text-sm font-semibold hover:bg-brand-blue/90 transition-colors shadow-sm ml-auto">
+                    class="px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm ml-auto">
                     <i data-lucide="send" class="w-4 h-4 inline-block mr-1"></i>
                     Submit for Validation
                 </button>

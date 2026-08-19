@@ -122,7 +122,7 @@
                             <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">{{ $r['generated'] }}</td>
                             <td class="px-4 py-3"><span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{{ $r['format'] }}</span></td>
                             <td class="px-4 py-3 text-right">
-                                <button class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="download" class="w-4 h-4"></i></button>
+                                <button @click="$dispatch('toast', { message: 'Report download is a frontend preview — no file is generated.', variant: 'info' })" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="download" class="w-4 h-4"></i></button>
                             </td>
                         </tr>
                     @endforeach

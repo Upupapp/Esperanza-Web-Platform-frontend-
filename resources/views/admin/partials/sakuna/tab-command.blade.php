@@ -314,7 +314,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         @foreach ($topIncidents as $inc)
-                            <tr class="hover:bg-slate-50/60 transition-colors group">
+                            <tr x-show="$store.session.inScope('{{ $inc['barangay'] }}')" class="hover:bg-slate-50/60 transition-colors group">
                                 <td class="px-4 py-3">
                                     <span class="text-xs font-mono text-slate-500">{{ substr($inc['id'], -4) }}</span>
                                 </td>
