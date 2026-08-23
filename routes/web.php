@@ -51,6 +51,9 @@ Route::view('/admin/constituents/households', 'admin.constituents', ['tab' => 'r
 Route::view('/admin/constituents/profiling', 'admin.constituents', ['tab' => 'profiling'])->name('admin.resident-profiling');
 Route::view('/admin/constituents/data-quality', 'admin.constituents', ['tab' => 'data-quality'])->name('admin.constituents.data-quality');
 
+// Papeles — citizen document repository, browsed Barangay -> Individual -> Documents.
+Route::view('/admin/papeles', 'admin.papeles')->name('admin.papeles');
+
 // Communications — Balita (announcements) and Directory merged into one page with tabs.
 Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');
 Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');

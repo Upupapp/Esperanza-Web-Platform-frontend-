@@ -11,6 +11,8 @@
         'Processing' => ['bg-brand-50 text-brand-700 ring-brand-200', 'bg-brand-500'],
         'Waiting Requirements' => ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
         'Approved' => ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
+        'Verified' => ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
+        'Unverified' => ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
         'Rejected' => ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
         'Ready for Release' => ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
         'Released' => ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],

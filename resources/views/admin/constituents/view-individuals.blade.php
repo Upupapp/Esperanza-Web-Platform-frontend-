@@ -89,8 +89,8 @@
                                     {{-- Sex indicator dot --}}
                                     <span
                                         class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center text-white"
-                                        :class="r.sex === 'F' ? 'bg-pink-400' : 'bg-blue-400'"
-                                        :title="r.sex === 'F' ? 'Female' : 'Male'"
+                                        :class="r.sex === 'Female' ? 'bg-pink-400' : 'bg-blue-400'"
+                                        :title="r.sex || '—'"
                                     ></span>
                                 </div>
                                 <div class="min-w-0 flex-1">
@@ -101,6 +101,8 @@
                                     <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
                                         <span x-text="'ID: ' + r.id"></span>
                                         <i x-show="r.citizen_account_id" data-lucide="smartphone" class="w-3 h-3 text-brand-500" title="Linked to Citizen Portal account"></i>
+                                        <i x-show="r.citizen_account?.identity_check?.face_match === 'Mismatch'" data-lucide="triangle-alert" class="w-3 h-3 text-rose-500" title="Face-match flagged — selfie doesn't match uploaded ID"></i>
+                                        <i x-show="(r.identity_flags || []).length" data-lucide="shield-alert" class="w-3 h-3 text-amber-500" title="Identity review recommended — see profile for details"></i>
                                     </p>
                                     {{-- Tag chips --}}
                                     <div class="flex flex-wrap gap-1 mt-1.5">

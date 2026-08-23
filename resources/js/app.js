@@ -25,7 +25,22 @@ document.addEventListener('alpine:init', () => {
     // access and Municipal/Barangay scope. No session -> fail-open (unrestricted
     // preview), since this is a design demo, not a real security boundary.
     Alpine.store('session', {
-        account: JSON.parse(localStorage.getItem('esperanza_session') || 'null'),
+        // Re-derive moduleKeys/permissions from the current RBAC config on every
+        // load instead of trusting whatever was frozen into localStorage at
+        // login time — otherwise a newly added module (e.g. Papeles) stays
+        // invisible to already-logged-in sessions until they manually log out
+        // and back in.
+        account: (() => {
+            const stored = JSON.parse(localStorage.getItem('esperanza_session') || 'null');
+            if (stored && window.__ESPERANZA_RBAC_ACCOUNTS__) {
+                const fresh = window.__ESPERANZA_RBAC_ACCOUNTS__.find((a) => a.id === stored.id);
+                if (fresh) {
+                    stored.moduleKeys = fresh.moduleKeys;
+                    stored.permissions = fresh.permissions;
+                }
+            }
+            return stored;
+        })(),
         login(account) {
             this.account = account;
             localStorage.setItem('esperanza_session', JSON.stringify(account));

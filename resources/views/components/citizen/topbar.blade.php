@@ -30,6 +30,18 @@
 @endphp
 
 @php
+    // A citizen typically has more than one valid ID on file (e.g. PhilSys
+    // plus a Voter's ID) — same {type, masked} shape as the admin side's
+    // per-resident verified_ids, so "My IDs" reads as the same concept from
+    // both sides, not a different format invented for the citizen view.
+    $myIds = [
+        ['type' => 'PhilSys National ID', 'masked' => '•••• •••• 4821', 'status' => 'Verified'],
+        ['type' => "Driver's License (LTO)", 'masked' => '•••• •••• 1203', 'status' => 'Verified'],
+        ['type' => "Voter's ID", 'masked' => '•••• •••• 9087', 'status' => 'Unverified'],
+    ];
+@endphp
+
+@php
     $notifications = [
         ['icon' => 'cake', 'color' => 'text-gold-700 bg-gold-50', 'title' => 'Happy Birthday, Maria Fe! 🎉', 'body' => 'The Municipality of Esperanza wishes you a wonderful birthday!', 'time' => 'Today', 'pinned' => true, 'popup' => 'show-birthday-popup'],
         ['icon' => 'circle-check', 'color' => 'text-emerald-600 bg-emerald-50', 'title' => 'Barangay Clearance is ready for release', 'body' => 'Claim it at the Poblacion barangay hall.', 'time' => '18 min ago', 'pinned' => false, 'popup' => null],
@@ -75,12 +87,74 @@
                 <p class="text-xs text-slate-400 truncate" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
             @endif
         </div>
+
     </div>
 
     <div class="flex items-center gap-1.5 lg:gap-2.5">
         <div class="hidden xl:flex items-center gap-1.5 font-mono text-xs text-slate-400 tabular-nums px-2.5 py-1.5 rounded-xl bg-slate-100/70">
             <i data-lucide="clock" class="w-3.5 h-3.5"></i>
             <span x-text="time"></span>
+        </div>
+
+        {{-- My IDs — grouped with the other quick-access panels (notifications,
+             profile) on the right, matching their icon-button styling, instead
+             of sitting apart next to the page title. --}}
+        <div class="relative" x-data="dropdown" @click.outside="close">
+            <button @click="toggle" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors" :title="$store.lang.current === 'en' ? 'My IDs' : 'Aking mga ID'">
+                <i data-lucide="id-card" class="w-5 h-5"></i>
+                <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" x-show="{{ collect($myIds)->contains(fn ($d) => $d['status'] !== 'Verified') ? 'true' : 'false' }}"></span>
+            </button>
+
+            <div
+                x-data="{ idFilter: 'all', myIds: @js($myIds), get filteredIds() { return this.idFilter === 'all' ? this.myIds : this.myIds.filter(d => d.status === this.idFilter); } }"
+                x-show="open"
+                x-transition:enter="transition duration-[200ms] ease-emphasized"
+                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                x-cloak
+                class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right"
+            >
+                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Aking mga ID" en="My IDs" /></p>
+                    <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full" x-text="filteredIds.length"></span>
+                </div>
+                <div class="flex items-center gap-1 px-4 py-2 border-b border-slate-100 bg-slate-50/60">
+                    <button type="button" @click="idFilter = 'all'" class="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors" :class="idFilter === 'all' ? 'bg-white text-navy-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'">
+                        <x-ui.t fil="Lahat" en="All" />
+                    </button>
+                    <button type="button" @click="idFilter = 'Verified'" class="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors" :class="idFilter === 'Verified' ? 'bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-200' : 'text-slate-500 hover:text-slate-700'">
+                        <x-ui.t fil="Verified" en="Verified" />
+                    </button>
+                    <button type="button" @click="idFilter = 'Unverified'" class="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors" :class="idFilter === 'Unverified' ? 'bg-white text-amber-700 shadow-sm ring-1 ring-amber-200' : 'text-slate-500 hover:text-slate-700'">
+                        <x-ui.t fil="Unverified" en="Unverified" />
+                    </button>
+                </div>
+                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-slate-50">
+                    <template x-for="idDoc in filteredIds" :key="idDoc.type">
+                        <div class="flex items-center gap-3 px-4 py-3">
+                            <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="id-card" class="w-4 h-4"></i></span>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-medium text-slate-700 truncate" x-text="idDoc.type"></p>
+                                <p class="text-xs font-mono text-slate-400" x-text="idDoc.masked"></p>
+                            </div>
+                            <span
+                                class="inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap shrink-0"
+                                :class="idDoc.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-amber-200'"
+                            >
+                                <span class="w-1.5 h-1.5 rounded-full" :class="idDoc.status === 'Verified' ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+                                <span x-text="idDoc.status"></span>
+                            </span>
+                        </div>
+                    </template>
+                    <div class="flex flex-col items-center text-center py-8" x-show="filteredIds.length === 0">
+                        <span class="w-11 h-11 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="id-card" class="w-5 h-5"></i></span>
+                        <p class="text-xs text-slate-400"><x-ui.t fil="Walang ID sa filter na ito." en="No IDs match this filter." /></p>
+                    </div>
+                </div>
+                <a href="{{ route('citizen.profile') }}" class="block text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                    <x-ui.t fil="Pamahalaan ang mga ID sa Profile" en="Manage IDs in Profile" />
+                </a>
+            </div>
         </div>
 
         <div class="hidden md:block relative" @click.outside="searchOpen = false">

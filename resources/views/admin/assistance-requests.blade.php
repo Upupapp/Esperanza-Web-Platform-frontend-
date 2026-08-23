@@ -24,6 +24,18 @@
             ['key' => 'req_funeral_contract', 'name' => 'Funeral contract or bill', 'file' => 'Funeral-Contract.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
             ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certificate of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
+        // Reconciled 1:1 with the same residents' Constituent Profile records
+        // (same ref numbers) so "Open in Tulong" from a profile always lands on
+        // real, matching data instead of an empty search result.
+        ['ref' => 'AR-2026-0117', 'citizen' => 'Marites Gonzales Ferrer', 'type' => 'Seed & Fertilizer Assistance', 'office' => 'Department of Agriculture', 'barangay' => 'Agoho', 'submitted' => 'Mar 3, 2026', 'status' => 'Completed'],
+        ['ref' => 'AR-2026-0163', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'May 18, 2026', 'status' => 'Completed'],
+        ['ref' => 'AR-2026-0209', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Jul 20, 2026', 'status' => 'Processing'],
+        ['ref' => 'AR-2026-0159', 'citizen' => 'Ferdinand Ramos Hilario', 'type' => 'Livelihood Assistance (Tools & Equipment)', 'office' => 'MSWDO', 'barangay' => 'Libertad', 'submitted' => 'May 28, 2026', 'status' => 'Completed'],
+        ['ref' => 'AR-2026-0148', 'citizen' => 'Analiza Bautista Ibarra', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'barangay' => 'Magsaysay', 'submitted' => 'Jun 2, 2026', 'status' => 'Processing'],
+        ['ref' => 'AR-2026-0182', 'citizen' => 'Danilo Aquino Lazaro', 'type' => 'Agricultural Damage Assistance', 'office' => 'Department of Agriculture', 'barangay' => 'Potingbato', 'submitted' => 'Jun 25, 2026', 'status' => 'Approved'],
+        ['ref' => 'AR-2026-0171', 'citizen' => 'Precious Domingo Manalo', 'type' => 'Educational Assistance', 'office' => "Mayor's Office", 'barangay' => 'Rizal', 'submitted' => 'Jul 2, 2026', 'status' => 'Assigned'],
+        ['ref' => 'AR-2026-0210', 'citizen' => 'Liezel Navarro Quimson', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Tawad', 'submitted' => 'Jul 5, 2026', 'status' => 'Waiting Requirements'],
+        ['ref' => 'AR-2026-0203', 'citizen' => 'Cherry Ann Villaflor Sarmiento', 'type' => 'Educational Assistance (Continuing Studies)', 'office' => "Mayor's Office", 'barangay' => 'Villa', 'submitted' => 'Jun 12, 2026', 'status' => 'Pending Review'],
     ];
 
     // Classification lookup for the mock request rows above, per the Dokyu &
@@ -40,9 +52,54 @@
     $assignedByRef = [
         'AR-2026-0195' => 'Corazon Villareal', 'AR-2026-0142' => 'Corazon Villareal',
     ];
+    // Same reasoning as Dokyu — every case needs to open as a complete,
+    // filled-in record, not just a status row. Rows without hand-authored
+    // purpose/requirements get realistic ones synthesized from their
+    // category below.
+    $purposeByCategory = [
+        'Medical & Health' => 'Financial assistance for medical treatment / hospitalization expenses',
+        'Burial & Bereavement' => 'Financial assistance for burial and funeral expenses of a deceased family member',
+        'Education' => 'Educational assistance to support continuing studies',
+        'Financial Assistance' => 'Financial assistance for basic family needs',
+        'Food & Relief' => 'Relief assistance following hardship or calamity',
+        'Social Protection' => 'Social protection assistance benefit application',
+    ];
+    $defaultRequirementsByCategory = [
+        'Medical & Health' => ['Medical Certificate / Hospital Bill', 'Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
+        'Burial & Bereavement' => ['Death Certificate', 'Valid ID of Claimant', 'Proof of Relationship to the Deceased'],
+        'Education' => ['Certificate of Enrollment', 'Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
+        'Financial Assistance' => ['Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
+        'Food & Relief' => ['Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
+        'Social Protection' => ['Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
+    ];
+    $synthesizeRequirements = function (array $names, string $status, ?string $remarks, string $citizenFirst) {
+        $total = count($names);
+        return collect($names)->map(function ($name, $i) use ($status, $remarks, $citizenFirst, $total) {
+            $slug = str($name)->slug('-');
+            $file = "{$citizenFirst}-{$slug}.jpg";
+            $reqStatus = 'Approved';
+            $rejectReason = null; $reqRemarks = null;
+            if ($status === 'Rejected' && $i === 0) {
+                $reqStatus = 'Rejected'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
+            } elseif (in_array($status, ['Submitted', 'Pending Review'], true)) {
+                $reqStatus = 'Pending Review'; $file = null;
+            } elseif ($status === 'Waiting Requirements' && $i === $total - 1) {
+                $reqStatus = 'Pending Review'; $file = null;
+            }
+            return [
+                'key' => 'req_' . $slug, 'name' => $name, 'file' => $file, 'status' => $reqStatus,
+                'reject_reason' => $rejectReason, 'remarks' => $reqRemarks, 'versions' => [],
+            ];
+        })->all();
+    };
     foreach ($requests as &$r) {
         $r = array_merge($r, $tulongClassification[$r['type']] ?? ['category' => 'Social Protection', 'office' => $r['office'], 'level' => 'Municipal']);
         $r['assigned'] = $assignedByRef[$r['ref']] ?? null;
+        $r['purpose'] = $r['purpose'] ?? ($purposeByCategory[$r['category']] ?? 'Social protection assistance benefit application');
+        if (!isset($r['requirements'])) {
+            $names = $defaultRequirementsByCategory[$r['category']] ?? ['Valid Government-Issued ID'];
+            $r['requirements'] = $synthesizeRequirements($names, $r['status'], $r['remarks'] ?? null, explode(' ', $r['citizen'])[0]);
+        }
     }
     unset($r);
 
@@ -69,6 +126,28 @@
             requests: @js($requests),
             actionStatuses: @js($actionStatuses),
             releaseStatuses: @js($releaseStatuses),
+            returnToProfile: null,
+            // Arrived from a resident's profile via Open in Tulong — pre-filter to
+            // their name and surface a way back to exactly where they came from.
+            init() {
+                const params = new URLSearchParams(window.location.search);
+                const ref = params.get('ref');
+                const citizen = params.get('citizen');
+                if (ref || citizen) {
+                    this.search = ref || citizen;
+                    this.tab = 'all';
+                }
+                const stored = sessionStorage.getItem('returnToProfile');
+                if (stored) {
+                    try { this.returnToProfile = JSON.parse(stored); } catch (e) { this.returnToProfile = null; }
+                    sessionStorage.removeItem('returnToProfile');
+                }
+            },
+            backToProfile() {
+                if (!this.returnToProfile) return;
+                sessionStorage.setItem('reopenResident', JSON.stringify(this.returnToProfile));
+                window.location.href = '/admin/constituents';
+            },
             get categories() { return [...new Set(this.requests.map(r => r.category))].sort(); },
             get offices() { return [...new Set(this.requests.map(r => r.office))].sort(); },
             get isMunicipalScope() {
@@ -189,6 +268,23 @@
         </div>
 
         <div x-show="$store.session.can('tulong')" x-cloak>
+
+        {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
+        <div
+            x-show="returnToProfile" x-cloak
+            class="flex items-center justify-between gap-3 mb-4 px-4 py-2.5 rounded-xl bg-brand-50 border border-brand-100"
+        >
+            <p class="text-xs text-brand-700">
+                Showing Tulong requests for <span class="font-semibold" x-text="returnToProfile?.name"></span>.
+            </p>
+            <button
+                type="button"
+                @click="backToProfile()"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline shrink-0"
+            >
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Profile
+            </button>
+        </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Active Cases" value="417" icon="hand-heart" color="purple" :delay="0" />
@@ -419,9 +515,11 @@
                         >Assign to me</x-ui.button>
                     </div>
 
+                    <x-admin.request-form-review />
+
                     <div class="mt-4" x-show="(selected.requirements || []).length">
                         <div class="flex items-center justify-between mb-2">
-                            <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Requirements</p>
+                            <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Submitted Documents</p>
                             <p class="text-[11px] text-slate-400" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
                         </div>
                         <div class="space-y-2">
@@ -429,7 +527,12 @@
                                 <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-slate-200': req.status === 'Pending Review' }">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2.5 min-w-0">
-                                            <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                                            <span
+                                                class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                                :class="req.file ? (req.file.toLowerCase().endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500') : 'bg-slate-100 text-slate-300'"
+                                            >
+                                                <i :data-lucide="req.file ? (req.file.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image') : 'file-x'" class="w-4 h-4"></i>
+                                            </span>
                                             <div class="min-w-0">
                                                 <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
                                                 <p class="text-[11px] text-slate-400 truncate" x-text="req.file || 'Not yet submitted'"></p>

@@ -66,6 +66,17 @@
                                 <i data-lucide="shield-check" class="w-3 h-3"></i>
                                 <span x-text="verificationBadge(selectedHousehold?.verification).label"></span>
                             </span>
+                            {{-- Verifying here (after actually reviewing the household's
+                                 members and details below) rather than from the list row,
+                                 where nothing has been reviewed yet. --}}
+                            <button
+                                type="button"
+                                x-show="selectedHousehold?.verification !== 'Verified' && can('const_citizen_verification','verify')"
+                                @click="verifyHousehold(selectedHousehold)"
+                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100 ring-1 ring-emerald-300/30 hover:bg-emerald-400/30 transition-colors"
+                            >
+                                <i data-lucide="check" class="w-3 h-3"></i> Mark as Verified
+                            </button>
                         </div>
 
                         <h2 class="text-xl font-bold text-white leading-tight truncate" x-text="selectedHousehold?.label"></h2>
@@ -261,7 +272,17 @@
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50/40 cursor-pointer transition-colors"
                                     @click="openIndividual(r)"
                                 >
-                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                    <span class="relative shrink-0">
+                                        <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                        <span
+                                            x-show="r.citizen_account?.identity_check?.face_match === 'Mismatch' || (r.identity_flags || []).length"
+                                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white flex items-center justify-center"
+                                            :class="r.citizen_account?.identity_check?.face_match === 'Mismatch' ? 'bg-rose-500' : 'bg-amber-500'"
+                                            title="Identity review recommended — see profile for details"
+                                        >
+                                            <i data-lucide="triangle-alert" class="w-2 h-2 text-white"></i>
+                                        </span>
+                                    </span>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
                                         <div class="flex items-center gap-2 mt-0.5">

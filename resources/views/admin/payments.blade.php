@@ -261,6 +261,24 @@
                         </div>
                     </div>
 
+                    <!-- Jumps to the same request in Dokyu/Tulong to see the full
+                         submitted application and documents behind this invoice —
+                         a payment record on its own is only half the story. -->
+                    <button
+                        type="button"
+                        @click="window.location.href = (payments[selected].type === 'Dokyu' ? '/admin/document-requests' : '/admin/assistance-requests') + '?ref=' + encodeURIComponent(payments[selected].ref)"
+                        class="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/30 transition-colors p-3 mb-5 group"
+                    >
+                        <span class="flex items-center gap-2.5 text-left">
+                            <span class="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-brand-100 text-slate-500 group-hover:text-brand-600 flex items-center justify-center shrink-0 transition-colors"><i data-lucide="file-text" class="w-4 h-4"></i></span>
+                            <span class="min-w-0">
+                                <span class="block text-xs font-semibold text-navy-900">View Full Application</span>
+                                <span class="block text-[11px] text-slate-400">Submitted form and documents in <span x-text="payments[selected].type"></span></span>
+                            </span>
+                        </span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all shrink-0"></i>
+                    </button>
+
                     <!-- Read-only receipt view for rows with a receipt already -->
                     <div class="rounded-xl border border-slate-200 p-3 mb-2 flex items-center justify-between gap-3" x-show="payments[selected].receipt">
                         <div class="flex items-center gap-2.5 min-w-0">

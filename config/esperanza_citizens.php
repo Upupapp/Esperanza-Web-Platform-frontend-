@@ -30,8 +30,13 @@
 // them as true for every account here is a safe, justified inference —
 // just not a literal mobile data field.
 
-return [
-    'accounts' => [
+// identityCheck models the LGU verification officer's manual comparison of
+// the onboarding selfie against the uploaded ID photo — separate from the
+// wizard's own idUploaded/faceVerified completion flags above, which only
+// mean "the resident finished those steps," not "a human confirmed they
+// match." 'Not Reviewed' is the default for anything still awaiting staff
+// action; 'Match' / 'Mismatch' are the two possible verification outcomes.
+$accounts = [
         [
             'id' => 'ESP-RES-2024-1102',
             'firstName' => 'Ronaldo',
@@ -179,9 +184,11 @@ return [
             'civilStatus' => 'Single',
             'occupation' => 'Farmer',
             'residentSince' => 2019,
-            'profileCompleteness' => 35,
+            // registeredAt is his FIRST registration attempt — must precede the
+            // rejected attempts below it, not his latest Aug 13 resubmission.
+            'profileCompleteness' => 68,
             'status' => 'Pending Review',
-            'registeredAt' => 'August 13, 2026',
+            'registeredAt' => 'June 18, 2026',
             'idUploaded' => true,
             'faceVerified' => true,
             'termsAccepted' => true,
@@ -472,5 +479,333 @@ return [
             'faceVerified' => true,
             'termsAccepted' => true,
         ],
+        [
+            'id' => 'ESP-RES-2024-1370',
+            'firstName' => 'Maria Fe',
+            'lastName' => 'Bacaltos',
+            'fullName' => 'Maria Fe A. Bacaltos',
+            'email' => 'mariafe.bacaltos@email.com',
+            'mobile' => '0917 342 8810',
+            'barangay' => 'Poblacion',
+            'purok' => 'Purok 2',
+            'address' => 'Purok 2, Barangay Poblacion, Esperanza, Masbate',
+            'birthdate' => 'August 14, 1963',
+            'sex' => 'Female',
+            'civilStatus' => 'Widowed',
+            'occupation' => 'Sari-sari Store Owner',
+            'residentSince' => 2024,
+            'profileCompleteness' => 94,
+            'status' => 'Approved',
+            'registeredAt' => 'January 15, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1381',
+            'firstName' => 'Jose',
+            'lastName' => 'Bacaltos Jr.',
+            'fullName' => 'Jose A. Bacaltos Jr.',
+            'email' => 'jose.bacaltos@email.com',
+            'mobile' => '0917 342 8811',
+            'barangay' => 'Poblacion',
+            'purok' => 'Purok 2',
+            'address' => 'Purok 2, Barangay Poblacion, Esperanza, Masbate',
+            'birthdate' => 'November 7, 1996',
+            'sex' => 'Male',
+            'civilStatus' => 'Single',
+            'occupation' => 'Construction Worker',
+            'residentSince' => 2024,
+            'profileCompleteness' => 88,
+            'status' => 'Approved',
+            'registeredAt' => 'January 15, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1392',
+            'firstName' => 'Anna Marie',
+            'lastName' => 'Bacaltos',
+            'fullName' => 'Anna Marie A. Bacaltos',
+            'email' => 'annamarie.bacaltos@email.com',
+            'mobile' => '0917 342 8812',
+            'barangay' => 'Poblacion',
+            'purok' => 'Purok 2',
+            'address' => 'Purok 2, Barangay Poblacion, Esperanza, Masbate',
+            'birthdate' => 'April 22, 1999',
+            'sex' => 'Female',
+            'civilStatus' => 'Single',
+            'occupation' => 'Student (College)',
+            'residentSince' => 2024,
+            'profileCompleteness' => 82,
+            'status' => 'Approved',
+            'registeredAt' => 'January 15, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1405',
+            'firstName' => 'Carlos',
+            'lastName' => 'Villanueva',
+            'fullName' => 'Carlos T. Villanueva',
+            'email' => 'carlos.villanueva@email.com',
+            'mobile' => '0918 445 6672',
+            'barangay' => 'Poblacion',
+            'purok' => 'Purok 2',
+            'address' => 'Purok 2, Barangay Poblacion, Esperanza, Masbate',
+            'birthdate' => 'June 3, 1979',
+            'sex' => 'Male',
+            'civilStatus' => 'Married',
+            'occupation' => 'Tricycle Driver',
+            'residentSince' => 2024,
+            'profileCompleteness' => 90,
+            'status' => 'Approved',
+            'registeredAt' => 'January 15, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1418',
+            'firstName' => 'Teresita',
+            'lastName' => 'Villanueva',
+            'fullName' => 'Teresita B. Villanueva',
+            'email' => 'teresita.villanueva@email.com',
+            'mobile' => '0918 445 6673',
+            'barangay' => 'Poblacion',
+            'purok' => 'Purok 2',
+            'address' => 'Purok 2, Barangay Poblacion, Esperanza, Masbate',
+            'birthdate' => 'December 19, 1982',
+            'sex' => 'Female',
+            'civilStatus' => 'Married',
+            'occupation' => 'Laundrywoman',
+            'residentSince' => 2024,
+            'profileCompleteness' => 85,
+            'status' => 'Approved',
+            'registeredAt' => 'January 15, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1427',
+            'firstName' => 'Eduardo',
+            'lastName' => 'Santos',
+            'fullName' => 'Eduardo T. Santos',
+            'email' => 'eduardo.santos@email.com',
+            'mobile' => '0928 512 4401',
+            'barangay' => 'Masbaranon',
+            'purok' => 'Sitio Malbog',
+            'address' => 'Sitio Malbog, Barangay Masbaranon, Esperanza, Masbate',
+            'birthdate' => 'May 28, 1986',
+            'sex' => 'Male',
+            'civilStatus' => 'Married',
+            'occupation' => 'Farmer',
+            'residentSince' => 2024,
+            'profileCompleteness' => 88,
+            'status' => 'Approved',
+            'registeredAt' => 'March 8, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1436',
+            'firstName' => 'Consuelo',
+            'lastName' => 'Santos',
+            'fullName' => 'Consuelo L. Santos',
+            'email' => 'consuelo.santos@email.com',
+            'mobile' => '0928 512 4402',
+            'barangay' => 'Masbaranon',
+            'purok' => 'Sitio Malbog',
+            'address' => 'Sitio Malbog, Barangay Masbaranon, Esperanza, Masbate',
+            'birthdate' => 'February 14, 1989',
+            'sex' => 'Female',
+            'civilStatus' => 'Married',
+            'occupation' => 'Farmer / Housewife',
+            'residentSince' => 2024,
+            'profileCompleteness' => 82,
+            'status' => 'Approved',
+            'registeredAt' => 'March 8, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1445',
+            'firstName' => 'Rosario',
+            'lastName' => 'Dela Cruz',
+            'fullName' => 'Rosario P. Dela Cruz',
+            'email' => 'rosario.delacruz@email.com',
+            'mobile' => '0927 441 0082',
+            'barangay' => 'Baras',
+            'purok' => 'Purok 1',
+            'address' => 'Purok 1, Barangay Baras, Esperanza, Masbate',
+            'birthdate' => 'October 11, 1962',
+            'sex' => 'Female',
+            'civilStatus' => 'Married',
+            'occupation' => 'Housewife (Retired)',
+            'residentSince' => 2024,
+            'profileCompleteness' => 91,
+            'status' => 'Approved',
+            'registeredAt' => 'February 20, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1458',
+            'firstName' => 'Ramon',
+            'lastName' => 'Dela Cruz',
+            'fullName' => 'Ramon C. Dela Cruz',
+            'email' => 'ramon.delacruz@email.com',
+            'mobile' => '0927 441 0083',
+            'barangay' => 'Baras',
+            'purok' => 'Purok 1',
+            'address' => 'Purok 1, Barangay Baras, Esperanza, Masbate',
+            'birthdate' => 'July 22, 1959',
+            'sex' => 'Male',
+            'civilStatus' => 'Married',
+            'occupation' => 'Retired (Fisherman)',
+            'residentSince' => 2024,
+            'profileCompleteness' => 88,
+            'status' => 'Approved',
+            'registeredAt' => 'February 20, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1467',
+            'firstName' => 'Bernardo',
+            'lastName' => 'Dela Cruz',
+            'fullName' => 'Bernardo R. Dela Cruz',
+            'email' => 'bernardo.delacruz@email.com',
+            'mobile' => '0927 441 0085',
+            'barangay' => 'Baras',
+            'purok' => 'Purok 1',
+            'address' => 'Purok 1, Barangay Baras, Esperanza, Masbate',
+            'birthdate' => 'April 18, 1991',
+            'sex' => 'Male',
+            'civilStatus' => 'Single',
+            'occupation' => 'Self-employed (Home-based)',
+            'residentSince' => 2024,
+            'profileCompleteness' => 75,
+            'status' => 'Approved',
+            'registeredAt' => 'February 20, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1478',
+            'firstName' => 'Lourdes',
+            'lastName' => 'Dela Cruz-Umali',
+            'fullName' => 'Lourdes D. Dela Cruz-Umali',
+            'email' => 'lourdes.umali@email.com',
+            'mobile' => '0916 830 2200',
+            'barangay' => 'Baras',
+            'purok' => 'Purok 1',
+            'address' => 'Purok 1, Barangay Baras, Esperanza, Masbate',
+            'birthdate' => 'September 1, 1994',
+            'sex' => 'Female',
+            'civilStatus' => 'Married',
+            'occupation' => 'Teacher (Private School)',
+            'residentSince' => 2024,
+            'profileCompleteness' => 82,
+            'status' => 'Approved',
+            'registeredAt' => 'April 10, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+        [
+            'id' => 'ESP-RES-2024-1489',
+            'firstName' => 'Grace',
+            'lastName' => 'Flores',
+            'fullName' => 'Grace E. Flores',
+            'email' => 'grace.flores@email.com',
+            'mobile' => '0922 301 6605',
+            'barangay' => 'Magsaysay',
+            'purok' => 'Purok 3',
+            'address' => 'Purok 3, Barangay Magsaysay, Esperanza, Masbate',
+            'birthdate' => 'April 6, 1990',
+            'sex' => 'Female',
+            'civilStatus' => 'Separated',
+            'occupation' => 'Laundrywoman',
+            'residentSince' => 2024,
+            'profileCompleteness' => 84,
+            'status' => 'Approved',
+            'registeredAt' => 'September 3, 2024',
+            'idUploaded' => true,
+            'faceVerified' => true,
+            'termsAccepted' => true,
+        ],
+];
+
+// Special-cased identity check outcomes — everyone else defaults to a
+// same-day automatic 'Match' once their status moves past Pending Review.
+$identityChecks = [
+    // Rejected specifically because the selfie didn't match the ID photo.
+    'ESP-RES-2024-1311' => [
+        'faceMatch' => 'Mismatch',
+        'remarks' => "Selfie capture doesn't clearly match the submitted ID photo — face angle obscured and lighting inconsistent with the ID. Resident advised to resubmit a clear, well-lit selfie alongside a current, unexpired ID.",
+        'reviewedBy' => 'Imelda R. Santos (Verification Officer)',
+        'reviewedAt' => 'July 22, 2026',
     ],
+    // Still in the LGU's review queue — not yet compared by a verification officer.
+    'ESP-RES-2024-1010' => ['faceMatch' => 'Not Reviewed', 'remarks' => null, 'reviewedBy' => null, 'reviewedAt' => null],
+    'ESP-RES-2024-1332' => ['faceMatch' => 'Not Reviewed', 'remarks' => null, 'reviewedBy' => null, 'reviewedAt' => null],
+    'ESP-RES-2024-1102' => ['faceMatch' => 'Not Reviewed', 'remarks' => null, 'reviewedBy' => null, 'reviewedAt' => null],
+];
+foreach ($accounts as &$account) {
+    $account['identityCheck'] = $identityChecks[$account['id']] ?? [
+        'faceMatch' => in_array($account['status'], ['Pending Review', 'Under Verification'], true) ? 'Not Reviewed' : 'Match',
+        'remarks' => null,
+        'reviewedBy' => null,
+        'reviewedAt' => $account['registeredAt'],
+    ];
+}
+unset($account);
+
+// The one account rejected over an identity mismatch also carries the
+// reason as its registration-rejection remark, so both surfaces agree.
+$rejectRemarksById = [
+    'ESP-RES-2024-1311' => "Selfie does not match the submitted ID photo — face verification failed. Resident must resubmit a clear, well-lit selfie together with an unexpired valid ID.",
+];
+foreach ($accounts as &$account) {
+    if (isset($rejectRemarksById[$account['id']])) {
+        $account['rejectRemarks'] = $rejectRemarksById[$account['id']];
+    }
+}
+unset($account);
+
+// Verified government IDs on file — only meaningful once the wizard's own ID
+// step is done, and only shown to admins once an officer has actually
+// approved the registration (an unapproved ID upload isn't "verified" yet).
+// Most residents have more than one valid ID on file (common in practice —
+// e.g. PhilSys plus a Voter's ID), so each account carries 1-3, cycling
+// through common Philippine ID types for realistic variety; masked numbers
+// are derived from the account ID so they stay deterministic.
+$idTypeOptions = ['PhilSys National ID', "Driver's License (LTO)", 'UMID', "Voter's ID", 'Philippine Passport', 'Postal ID', 'PRC ID'];
+foreach ($accounts as $i => &$account) {
+    $last4 = substr(preg_replace('/\D/', '', $account['id']), -4);
+    $idCount = 1 + ($i % 3);
+    $account['verifiedIds'] = collect(range(0, $idCount - 1))->map(function ($j) use ($idTypeOptions, $i, $last4) {
+        $idx = ($i + $j) % count($idTypeOptions);
+        return [
+            'type' => $idTypeOptions[$idx],
+            'masked' => '•••• •••• ' . str_pad((string) (((int) $last4 + $j * 17) % 10000), 4, '0', STR_PAD_LEFT),
+        ];
+    })->all();
+    // A mobile number was required and OTP-confirmed during the mobile
+    // wizard's Contact & Security step for every account that has one on file.
+    $account['mobileVerified'] = !empty($account['mobile']);
+}
+unset($account);
+
+return [
+    'accounts' => $accounts,
 ];

@@ -76,7 +76,7 @@
 @endphp
 
 <x-layouts.admin title="Settings" subtitle="Platform preferences and configuration." active="settings">
-    <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up">
+    <div x-data="{ tab: '{{ $tab }}', can(sub, perm) { return this.$store.session.canPerm ? this.$store.session.canPerm(sub, perm) : true; } }" class="animate-fade-up">
 
         <div x-show="!$store.session.can('settings')" x-cloak>
             <x-admin.access-restricted module="System Settings" icon="settings" />
@@ -406,6 +406,8 @@
                 x-data="{
                     contentTab: 'privacy',
                     previewOpen: false,
+                    expandedSection: 0,
+                    openIconPicker: null,
                     privacy: @js($privacyPolicy),
                     terms: @js($termsConditions),
                     support: @js($supportInfo),
@@ -413,9 +415,11 @@
                     get doc() { return this.contentTab === 'privacy' ? this.privacy : this.terms; },
                     addSection() {
                         this.doc.sections.push({ heading: 'New Section', body: '' });
+                        this.expandedSection = this.doc.sections.length - 1;
                     },
                     removeSection(i) {
                         this.doc.sections.splice(i, 1);
+                        this.expandedSection = null;
                     },
                     moveSection(i, dir) {
                         const j = i + dir;
@@ -423,6 +427,8 @@
                         const tmp = this.doc.sections[i];
                         this.doc.sections[i] = this.doc.sections[j];
                         this.doc.sections[j] = tmp;
+                        if (this.expandedSection === i) this.expandedSection = j;
+                        else if (this.expandedSection === j) this.expandedSection = i;
                     },
                     saveDoc() {
                         this.doc.last_updated = new Date().toISOString().slice(0, 10);
@@ -450,44 +456,92 @@
                     <x-ui.button x-show="contentTab !== 'support'" variant="secondary" size="sm" icon="eye" @click="previewOpen = true">Preview as Citizen</x-ui.button>
                 </div>
 
+                {{-- Editing gate — Site Content ships to every citizen on the portal,
+                     so only Super Administrator and Municipal Administrator (the
+                     only roles granted 'set_site_content' edit in config/esperanza_rbac.php)
+                     can change it. Everyone else with view access sees the same
+                     content, fields disabled, with this notice explaining why. --}}
+                <div
+                    x-show="!can('set_site_content','edit')"
+                    class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
+                >
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-slate-500">
+                        <span class="font-semibold text-slate-600">View only.</span>
+                        Site Content is published straight to the Citizen Portal, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can edit it.
+                    </p>
+                </div>
+
                 <!-- Privacy Policy / Terms & Conditions editor -->
                 <div x-show="contentTab === 'privacy' || contentTab === 'terms'">
                     <x-ui.card class="mb-3.5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Effective Date</label>
-                                <input type="date" x-model="doc.effective_date" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <input type="date" x-model="doc.effective_date" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Last Updated</label>
-                                <p class="text-sm text-slate-500 py-2.5 px-4 rounded-xl bg-slate-50" x-text="doc.last_updated + (doc.last_updated_by ? ' by ' + doc.last_updated_by : '')"></p>
+                                <p class="text-sm text-slate-500 py-2.5 px-4 rounded-xl bg-slate-50 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i><span x-text="doc.last_updated + (doc.last_updated_by ? ' by ' + doc.last_updated_by : '')"></span></p>
                             </div>
                         </div>
                         <div class="mt-4">
                             <label class="block text-xs font-medium text-slate-700 mb-1">Introduction</label>
-                            <textarea rows="3" x-model="doc.intro" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <p class="text-[11px] text-slate-400 mb-1.5">The opening paragraph citizens read before the numbered sections below.</p>
+                            <textarea rows="3" x-model="doc.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 leading-relaxed focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
                         </div>
                     </x-ui.card>
 
-                    <div class="space-y-3">
+                    {{-- Document outline — one section open at a time instead of every
+                         section's fields sitting open in an identical stack, so the
+                         list scans like a table of contents and editing has a clear
+                         "this one, right now" focus. --}}
+                    <div class="rounded-2xl border border-slate-100 bg-white shadow-card divide-y divide-slate-100 overflow-hidden">
                         <template x-for="(section, i) in doc.sections" :key="i">
-                            <x-ui.card class="relative">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex flex-col shrink-0 pt-1">
-                                        <button type="button" @click="moveSection(i, -1)" :disabled="i === 0" class="p-1 rounded text-slate-400 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
-                                        <button type="button" @click="moveSection(i, 1)" :disabled="i === doc.sections.length - 1" class="p-1 rounded text-slate-400 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                            <div>
+                                <div
+                                    class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50/70 transition-colors"
+                                    @click="expandedSection = expandedSection === i ? null : i"
+                                >
+                                    <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-400 text-[11px] font-bold flex items-center justify-center shrink-0" x-text="i + 1"></span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-navy-900 truncate" x-text="section.heading || 'Untitled section'"></p>
+                                        <p class="text-xs text-slate-400 truncate" x-show="expandedSection !== i" x-text="section.body || 'No content yet'"></p>
                                     </div>
-                                    <div class="flex-1 min-w-0 space-y-2.5">
-                                        <input type="text" x-model="section.heading" placeholder="Section heading" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-sm font-semibold text-navy-900 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                        <textarea rows="3" x-model="section.body" placeholder="Section content" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 leading-relaxed focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                    <div class="flex items-center gap-0.5 shrink-0" x-show="can('set_site_content','edit')" @click.stop>
+                                        <button type="button" @click="moveSection(i, -1)" :disabled="i === 0" title="Move up" class="p-1.5 rounded-lg text-slate-400 hover:text-navy-700 hover:bg-slate-100 disabled:opacity-25 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="moveSection(i, 1)" :disabled="i === doc.sections.length - 1" title="Move down" class="p-1.5 rounded-lg text-slate-400 hover:text-navy-700 hover:bg-slate-100 disabled:opacity-25 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="removeSection(i)" title="Remove section" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                                     </div>
-                                    <button type="button" @click="removeSection(i)" title="Remove section" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300 shrink-0 transition-transform duration-[160ms] ease-standard" :class="expandedSection === i && 'rotate-180'"></i>
                                 </div>
-                            </x-ui.card>
+                                <div
+                                    x-show="expandedSection === i" x-cloak
+                                    x-transition:enter="transition duration-[200ms] ease-emphasized"
+                                    x-transition:enter-start="opacity-0 -translate-y-1"
+                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                    class="px-4 pb-4 bg-slate-50/40"
+                                >
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-1">Section Heading</label>
+                                    <input
+                                        type="text" x-model="section.heading" placeholder="Section heading" :disabled="!can('set_site_content','edit')"
+                                        class="w-full bg-transparent border-0 border-b-2 border-slate-200 px-0.5 py-1.5 text-base font-bold text-navy-900 placeholder:text-slate-300 placeholder:font-normal focus:border-brand-400 outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-4">Section Content</label>
+                                    <textarea
+                                        rows="5" x-model="section.body" placeholder="Write what citizens need to know in this section…" :disabled="!can('set_site_content','edit')"
+                                        class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 leading-relaxed focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+                                    ></textarea>
+                                    <p class="text-[11px] text-slate-400 mt-1.5" x-text="(section.body || '').length + ' characters'"></p>
+                                </div>
+                            </div>
                         </template>
+                        <div class="px-4 py-8 text-center" x-show="doc.sections.length === 0">
+                            <p class="text-xs text-slate-400">No sections yet.</p>
+                        </div>
                     </div>
 
-                    <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center justify-between mt-4" x-show="can('set_site_content','edit')">
                         <button type="button" @click="addSection()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Section</button>
                         <x-ui.button size="sm" icon="check" @click="saveDoc()">Save Changes</x-ui.button>
                     </div>
@@ -497,46 +551,63 @@
                 <div x-show="contentTab === 'support'" x-cloak>
                     <x-ui.card class="mb-3.5">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Support Page Introduction</label>
-                        <textarea rows="2" x-model="support.intro" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <textarea rows="2" x-model="support.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Office Hours</label>
-                                <input type="text" x-model="support.office_hours" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <input type="text" x-model="support.office_hours" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Office Hours (Filipino)</label>
-                                <input type="text" x-model="support.office_hours_fil" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <input type="text" x-model="support.office_hours_fil" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                         </div>
                     </x-ui.card>
 
-                    <div class="space-y-3">
+                    <div class="space-y-2.5">
                         <template x-for="(ch, i) in support.channels" :key="ch.key">
-                            <x-ui.card>
-                                <div class="flex items-start gap-3">
-                                    <div class="w-24 shrink-0">
-                                        <label class="block text-[10px] font-medium text-slate-500 mb-1">Icon</label>
-                                        <select x-model="ch.icon" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-2 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                            <template x-for="opt in supportIconOptions" :key="opt"><option :value="opt" x-text="opt"></option></template>
-                                        </select>
+                            <div class="rounded-2xl border border-slate-100 bg-white shadow-card p-3.5 flex items-center gap-3" x-data="{ iconOpen: false }">
+                                {{-- Icon picker — a visible glyph the admin recognizes instead
+                                     of a bare text dropdown of icon names. --}}
+                                <div class="relative shrink-0">
+                                    <button
+                                        type="button" @click="iconOpen = !iconOpen" :disabled="!can('set_site_content','edit')"
+                                        class="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:border-brand-300 hover:text-brand-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:border-slate-200 disabled:hover:text-slate-500"
+                                    >
+                                        <i :data-lucide="ch.icon" class="w-5 h-5"></i>
+                                    </button>
+                                    <div
+                                        x-show="iconOpen" x-cloak @click.outside="iconOpen = false"
+                                        x-transition:enter="transition duration-[160ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                                        class="absolute z-20 top-full left-0 mt-1.5 w-44 rounded-xl bg-white border border-slate-200 shadow-card-hover p-1.5 grid grid-cols-4 gap-1"
+                                    >
+                                        <template x-for="opt in supportIconOptions" :key="opt">
+                                            <button
+                                                type="button" @click="ch.icon = opt; iconOpen = false; $nextTick(() => window.renderIcons?.())" :title="opt"
+                                                class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                                                :class="ch.icon === opt ? 'bg-brand-50 text-brand-600 ring-1 ring-brand-200' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'"
+                                            >
+                                                <i :data-lucide="opt" class="w-4 h-4"></i>
+                                            </button>
+                                        </template>
                                     </div>
-                                    <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                        <div>
-                                            <label class="block text-[10px] font-medium text-slate-500 mb-1">Label</label>
-                                            <input type="text" x-model="ch.label" placeholder="e.g. Call the ICT Office" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-medium text-slate-500 mb-1">Value</label>
-                                            <input type="text" x-model="ch.value" placeholder="e.g. (056) 333-1099" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                        </div>
-                                    </div>
-                                    <button type="button" @click="removeChannel(i)" title="Remove channel" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 mt-4"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
-                            </x-ui.card>
+                                <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label class="block text-[10px] font-medium text-slate-500 mb-1">Label</label>
+                                        <input type="text" x-model="ch.label" placeholder="e.g. Call the ICT Office" :disabled="!can('set_site_content','edit')" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-medium text-slate-500 mb-1">Value</label>
+                                        <input type="text" x-model="ch.value" placeholder="e.g. (056) 333-1099" :disabled="!can('set_site_content','edit')" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                    </div>
+                                </div>
+                                <button type="button" @click="removeChannel(i)" x-show="can('set_site_content','edit')" title="Remove channel" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
                         </template>
                     </div>
 
-                    <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center justify-between mt-4" x-show="can('set_site_content','edit')">
                         <button type="button" @click="addChannel()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Contact Channel</button>
                         <x-ui.button size="sm" icon="check" @click="saveSupport()">Save Changes</x-ui.button>
                     </div>

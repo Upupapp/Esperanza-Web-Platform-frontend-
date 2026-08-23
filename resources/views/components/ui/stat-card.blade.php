@@ -21,6 +21,7 @@
         'orange' => 'bg-orange-50 text-orange-600',
         'red' => 'bg-rose-50 text-rose-600',
         'gold' => 'bg-gold-50 text-gold-700',
+        'slate' => 'bg-slate-100 text-slate-500',
     ];
     $iconClasses = $colorMap[$color] ?? $colorMap['brand'];
     $tag = $href ? 'a' : 'div';

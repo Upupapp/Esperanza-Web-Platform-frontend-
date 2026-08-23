@@ -4,15 +4,15 @@
     $individuals     = collect($data['individuals'])->map(function ($ind) use ($citizenAccounts) {
         if (!empty($ind['citizen_account_id']) && $citizenAccounts->has($ind['citizen_account_id'])) {
             $acct = $citizenAccounts->get($ind['citizen_account_id']);
-            // Access tier mirrors Esperanza-Mobile's 3-tier model: only an
-            // 'Approved' status grants Verified (full Dokyu/Tulong access);
+            // Access tier mirrors Esperanza-Mobile's 3-tier model: only a
+            // 'Verified' status grants Verified (full Dokyu/Tulong access);
             // every other status (Pending Review, Under Verification,
             // Rejected, Draft) is Unverified.
             $ind['citizen_account'] = [
                 'id'                   => $acct['id'],
                 'email'                => $acct['email'],
                 'mobile'               => $acct['mobile'],
-                'status'               => $acct['status'],
+                'status'               => $acct['status'] === 'Approved' ? 'Verified' : $acct['status'],
                 'access_level'         => $acct['status'] === 'Approved' ? 'Verified' : 'Unverified',
                 'resident_since'       => $acct['residentSince'],
                 'registered_at'        => $acct['registeredAt'],
@@ -20,6 +20,22 @@
                 'face_verified'        => $acct['faceVerified'],
                 'terms_accepted'       => $acct['termsAccepted'],
                 'profile_completeness' => $acct['profileCompleteness'],
+                // The photo shown on this resident's profile is the selfie
+                // captured during onboarding — only available once both the
+                // ID upload and face-verification wizard steps are done.
+                'photo_captured'       => (bool) ($acct['idUploaded'] && $acct['faceVerified']),
+                'reject_remarks'       => $acct['rejectRemarks'] ?? null,
+                'identity_check'       => [
+                    'face_match'  => $acct['identityCheck']['faceMatch']  ?? 'Not Reviewed',
+                    'remarks'     => $acct['identityCheck']['remarks']    ?? null,
+                    'reviewed_by' => $acct['identityCheck']['reviewedBy'] ?? null,
+                    'reviewed_at' => $acct['identityCheck']['reviewedAt'] ?? null,
+                ],
+                'mobile_verified'      => $acct['mobileVerified'] ?? false,
+                // Only meaningful once an officer has actually approved the
+                // registration — an unapproved ID upload isn't "verified" yet.
+                // A resident may have more than one valid ID on file.
+                'verified_ids'         => $acct['status'] === 'Approved' ? ($acct['verifiedIds'] ?? []) : [],
             ];
         }
         return $ind;
@@ -46,6 +62,18 @@
         qualityIssues:  @js($qualityIssues),
         municipalStats: @js($municipalStats),
         barangayStats:  @js($barangayStats),
+        // Landed here via the Back to Profile link from Dokyu/Tulong — reopen
+        // exactly the resident that navigation started from, then forget the flag.
+        init() {
+            const stored = sessionStorage.getItem('reopenResident');
+            if (!stored) return;
+            sessionStorage.removeItem('reopenResident');
+            try {
+                const target = JSON.parse(stored);
+                const person = this.individuals.find(i => i.id === target.id);
+                if (person) this.$nextTick(() => this.openIndividual(person));
+            } catch (e) { /* malformed flag — ignore */ }
+        },
         search:             '',
         barangayFilter:     '',
         verificationFilter: '',
@@ -98,12 +126,21 @@
         cvType: 'Individual',
         cvSearch: '',
         cvStatusFilter: '',
+        cvBarangayFilter: '',
+        cvTagFilter: '',
         rejectAccountRemarks: '',
+        faceMismatchRemarks: '',
+        // Every resident in scope belongs here, not just the ones who signed
+        // up on the Citizen Portal — Individual/Family/Household already show
+        // everyone, so Citizen Verification's Individual list matches that
+        // same total instead of silently dropping non-portal residents.
+        // Residents with no citizen_account render as Not Registered further
+        // down, since there's nothing to approve/reject for them yet.
         get citizenAccountList() {
-            return this.individuals.filter(i => this.$store.session.inScope(i.barangay) && i.citizen_account);
+            return this.individuals.filter(i => this.$store.session.inScope(i.barangay));
         },
         get pendingCitizenVerificationCount() {
-            const indiv = this.citizenAccountList.filter(i => ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length;
+            const indiv = this.citizenAccountList.filter(i => i.citizen_account && ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length;
             const fam = this.cvFamilyList.filter(f => f.verification !== 'Verified').length;
             const hh = this.cvHouseholdList.filter(h => h.verification !== 'Verified').length;
             return indiv + fam + hh;
@@ -111,29 +148,42 @@
         get cvCounts() {
             const list = this.citizenAccountList;
             return {
-                pending: list.filter(i => i.citizen_account.status === 'Pending Review').length,
-                underVerification: list.filter(i => i.citizen_account.status === 'Under Verification').length,
-                approved: list.filter(i => i.citizen_account.status === 'Approved').length,
-                rejected: list.filter(i => i.citizen_account.status === 'Rejected').length,
+                pending: list.filter(i => i.citizen_account?.status === 'Pending Review').length,
+                underVerification: list.filter(i => i.citizen_account?.status === 'Under Verification').length,
+                verified: list.filter(i => i.citizen_account?.status === 'Verified').length,
+                rejected: list.filter(i => i.citizen_account?.status === 'Rejected').length,
+                flagged: list.filter(i => i.citizen_account?.identity_check?.face_match === 'Mismatch' || (i.identity_flags || []).length).length,
+                notRegistered: list.filter(i => !i.citizen_account).length,
             };
         },
         get filteredCitizenAccounts() {
             let list = this.citizenAccountList.filter(i => {
-                if (this.cvStatusFilter && i.citizen_account.status !== this.cvStatusFilter) return false;
+                if (this.cvStatusFilter === 'Flagged') {
+                    if (!(i.citizen_account?.identity_check?.face_match === 'Mismatch' || (i.identity_flags || []).length)) return false;
+                } else if (this.cvStatusFilter === 'Not Registered') {
+                    if (i.citizen_account) return false;
+                } else if (this.cvStatusFilter && i.citizen_account?.status !== this.cvStatusFilter) {
+                    return false;
+                }
+                if (this.cvBarangayFilter && i.barangay !== this.cvBarangayFilter) return false;
+                if (this.cvTagFilter && !(i.tags || []).includes(this.cvTagFilter)) return false;
                 if (this.cvSearch) {
                     const q = this.cvSearch.toLowerCase();
-                    return (i.name || '').toLowerCase().includes(q) || (i.id || '').toLowerCase().includes(q) || (i.barangay || '').toLowerCase().includes(q) || (i.citizen_account.email || '').toLowerCase().includes(q);
+                    return (i.name || '').toLowerCase().includes(q) || (i.id || '').toLowerCase().includes(q) || (i.barangay || '').toLowerCase().includes(q) || (i.citizen_account?.email || '').toLowerCase().includes(q);
                 }
                 return true;
             });
-            const priority = s => ['Pending Review', 'Under Verification'].includes(s) ? 0 : 1;
-            return [...list].sort((a, b) => priority(a.citizen_account.status) - priority(b.citizen_account.status));
+            const priority = i => {
+                if (!i.citizen_account) return 2;
+                return ['Pending Review', 'Under Verification'].includes(i.citizen_account.status) ? 0 : 1;
+            };
+            return [...list].sort((a, b) => priority(a) - priority(b));
         },
         verifyCitizenAccount(i) {
-            i.citizen_account.status = 'Approved';
+            i.citizen_account.status = 'Verified';
             i.citizen_account.access_level = 'Verified';
             delete i.citizen_account.reject_remarks;
-            this.$dispatch('toast', { message: i.name + '\'s citizen account was approved.', variant: 'success' });
+            this.$dispatch('toast', { message: i.name + '\'s citizen account was verified.', variant: 'success' });
         },
         rejectCitizenAccount(i) {
             if (!this.rejectAccountRemarks.trim()) return;
@@ -142,6 +192,77 @@
             i.citizen_account.reject_remarks = this.rejectAccountRemarks.trim();
             this.rejectAccountRemarks = '';
             this.$dispatch('toast', { message: i.name + '\'s citizen account was rejected.', variant: 'error' });
+        },
+        flagFaceMismatch(i) {
+            if (!this.faceMismatchRemarks.trim()) return;
+            i.citizen_account.identity_check.face_match = 'Mismatch';
+            i.citizen_account.identity_check.remarks = this.faceMismatchRemarks.trim();
+            i.citizen_account.identity_check.reviewed_by = this.$store.session.account?.name || 'LGU Verification Staff';
+            i.citizen_account.identity_check.reviewed_at = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            this.faceMismatchRemarks = '';
+            this.$dispatch('toast', { message: 'Face-match flag recorded for ' + i.name + '.', variant: 'warning' });
+        },
+        clearFaceMismatch(i) {
+            i.citizen_account.identity_check.face_match = 'Match';
+            i.citizen_account.identity_check.remarks = null;
+            i.citizen_account.identity_check.reviewed_by = this.$store.session.account?.name || 'LGU Verification Staff';
+            i.citizen_account.identity_check.reviewed_at = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            this.$dispatch('toast', { message: 'Face match confirmed for ' + i.name + '.', variant: 'success' });
+        },
+        // Per-signal review — each onboarding signal (Terms, ID Document,
+        // Face Scan, Mobile Number) can be independently confirmed complete
+        // or rejected once the citizen has actually completed that step,
+        // instead of the whole account only ever moving as one block.
+        reviewSignal(i, signalKey, outcome, remarks) {
+            if (!i.citizen_account.signal_reviews) i.citizen_account.signal_reviews = {};
+            i.citizen_account.signal_reviews[signalKey] = {
+                status: outcome,
+                remarks: remarks || null,
+                reviewed_by: this.$store.session.account?.name || 'LGU Verification Staff',
+                reviewed_at: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            };
+            this.$dispatch('toast', { message: signalKey + ' marked as ' + outcome + '.', variant: outcome === 'Complete' ? 'success' : 'warning' });
+        },
+        // Duplicate Identity Signal resolution — the flag alone never decides
+        // anything; an officer must actually reach the resident first. Two
+        // outcomes only, matching how this is handled in practice:
+        //  1) The resident confirms it's their own second account: it stays
+        //     usable but is permanently blocked from ever becoming Verified,
+        //     since Dokyu/Tulong access must come from their one real Verified
+        //     account instead.
+        //  2) The resident says it isn't theirs: the account is cancelled.
+        //     Flagging it as a suspected impostor account is a separate,
+        //     deliberate admin decision made only after that denial is
+        //     confirmed — never automatic.
+        duplicateResolutionRemarks: '',
+        resolveDuplicateOwner(i, flag) {
+            if (!this.duplicateResolutionRemarks.trim()) return;
+            flag.resolution = 'confirmed_owner';
+            flag.resolution_remarks = this.duplicateResolutionRemarks.trim();
+            flag.resolved_by = this.$store.session.account?.name || 'LGU Verification Staff';
+            flag.resolved_at = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            i.citizen_account.status = 'Rejected';
+            i.citizen_account.access_level = 'Unverified';
+            i.citizen_account.verification_blocked = true;
+            i.citizen_account.verification_blocked_reason = 'Confirmed duplicate of the resident\'s own existing account. This account cannot be verified — Dokyu and Tulong access must come from their original Verified account.';
+            this.duplicateResolutionRemarks = '';
+            this.$dispatch('toast', { message: 'Confirmed as a duplicate — this account is now permanently blocked from verification.', variant: 'warning' });
+        },
+        resolveDuplicateDenied(i, flag) {
+            if (!this.duplicateResolutionRemarks.trim()) return;
+            flag.resolution = 'denied';
+            flag.resolution_remarks = this.duplicateResolutionRemarks.trim();
+            flag.resolved_by = this.$store.session.account?.name || 'LGU Verification Staff';
+            flag.resolved_at = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            flag.flagged_as_impostor = null;
+            i.citizen_account.status = 'Cancelled';
+            i.citizen_account.access_level = 'Unverified';
+            this.duplicateResolutionRemarks = '';
+            this.$dispatch('toast', { message: 'Account cancelled — confirmed not to belong to ' + i.name + '.', variant: 'error' });
+        },
+        setImpostorFlag(i, flag, value) {
+            flag.flagged_as_impostor = value;
+            this.$dispatch('toast', { message: value ? 'Flagged as a suspected impostor account.' : 'Closed without an impostor flag.', variant: value ? 'warning' : 'info' });
         },
         get cvFamilyList() {
             return this.families.filter(f => this.$store.session.inScope(f.barangay));
@@ -173,6 +294,7 @@
         get filteredCvFamilies() {
             let list = this.cvFamilyList.filter(f => {
                 if (this.cvStatusFilter && f.verification !== this.cvStatusFilter) return false;
+                if (this.cvBarangayFilter && f.barangay !== this.cvBarangayFilter) return false;
                 if (this.cvSearch) {
                     const q = this.cvSearch.toLowerCase();
                     return (f.label || '').toLowerCase().includes(q) || (f.id || '').toLowerCase().includes(q) || (f.barangay || '').toLowerCase().includes(q) || (f.head_name || '').toLowerCase().includes(q);
@@ -185,6 +307,7 @@
         get filteredCvHouseholds() {
             let list = this.cvHouseholdList.filter(h => {
                 if (this.cvStatusFilter && h.verification !== this.cvStatusFilter) return false;
+                if (this.cvBarangayFilter && h.barangay !== this.cvBarangayFilter) return false;
                 if (this.cvSearch) {
                     const q = this.cvSearch.toLowerCase();
                     return (h.label || '').toLowerCase().includes(q) || (h.id || '').toLowerCase().includes(q) || (h.barangay || '').toLowerCase().includes(q) || (h.head_name || '').toLowerCase().includes(q);
@@ -245,6 +368,23 @@
             });
         },
         openIndividual(r) { this.selectedIndividual=r; this.individualTab='Overview'; this.rejectAccountRemarks=''; this.showIndividualDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
+        // Real cross-module navigation, not just a sub-tab switch: leaves the
+        // Constituents page entirely, lands on this resident's requests in the
+        // Dokyu/Tulong module, and remembers who to reopen when they come back.
+        goToDokyu(r, ref) {
+            sessionStorage.setItem('returnToProfile', JSON.stringify({ id: r.id, name: r.name }));
+            const q = ref ? 'ref=' + encodeURIComponent(ref) : 'citizen=' + encodeURIComponent(r.name);
+            window.location.href = '/admin/document-requests?' + q;
+        },
+        goToTulong(r, ref) {
+            sessionStorage.setItem('returnToProfile', JSON.stringify({ id: r.id, name: r.name }));
+            const q = ref ? 'ref=' + encodeURIComponent(ref) : 'citizen=' + encodeURIComponent(r.name);
+            window.location.href = '/admin/assistance-requests?' + q;
+        },
+        goToSakuna(r, ref) {
+            sessionStorage.setItem('returnToProfile', JSON.stringify({ id: r.id, name: r.name }));
+            window.location.href = '/admin/sakuna?ref=' + encodeURIComponent(ref);
+        },
         openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.$nextTick(()=>window.renderIcons?.()); },
         openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.$nextTick(()=>window.renderIcons?.()); },
         openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
@@ -263,18 +403,44 @@
         },
         completionColor(pct) { return pct>=90?'bg-emerald-500':pct>=70?'bg-amber-500':'bg-rose-500'; },
         completionTextColor(pct) { return pct>=90?'text-emerald-700':pct>=70?'text-amber-700':'text-rose-700'; },
+        // Real completeness derived from which profile sections are actually
+        // filled in, not the static config seed value — evaluated only over
+        // sections that apply to this resident (e.g. Citizen Portal onboarding
+        // only counts against residents who actually have an account), so a
+        // resident with no portal account isn't unfairly capped below 100%.
+        // Reflects ONLY how far the resident's own signup/onboarding went —
+        // the steps of the Esperanza Mobile registration wizard itself.
+        // Deliberately excludes anything an LGU encoder fills in later
+        // (household/family linkage, verification badge, emergency contact,
+        // Dokyu/Tulong activity) — those are record-keeping, not onboarding.
+        computeProfileCompleteness(ind) {
+            if (!ind) return 0;
+            // No Citizen Portal account -> no onboarding wizard was ever run;
+            // fall back to the barangay-profiling completeness already on file.
+            if (!ind.citizen_account) return ind.profile_pct ?? 0;
+            const acct = ind.citizen_account;
+            const steps = [
+                !!(ind.name && ind.dob && ind.sex && ind.civil_status),      // Personal Information step
+                !!(ind.barangay && ind.sitio && ind.address),                 // Address step
+                !!(ind.contact) && !!acct.mobile_verified,                    // Contact & Security step
+                !!acct.terms_accepted,                                        // Terms & Conditions accepted
+                !!acct.id_uploaded,                                           // Valid ID submitted
+                !!acct.face_verified,                                         // Face / liveness scan captured
+            ];
+            return Math.round((steps.filter(Boolean).length / steps.length) * 100);
+        },
         onboardingStatus(acct) {
             if (!acct) return 'Draft';
             const wizardDone = !!(acct.terms_accepted && acct.id_uploaded && acct.face_verified);
             if (!wizardDone) return 'Draft';
-            if (acct.status === 'Approved') return 'Completed';
+            if (acct.status === 'Verified') return 'Completed';
             if (acct.status === 'Rejected') return 'Rejected';
             return 'Submitted';
         },
         onboardingSteps(acct) {
             if (!acct) return [];
             const wizardDone = !!(acct.terms_accepted && acct.id_uploaded && acct.face_verified);
-            const isApproved = acct.status === 'Approved';
+            const isVerified = acct.status === 'Verified';
             const isRejected = acct.status === 'Rejected';
             return [
                 { label: 'Account Created', done: true },
@@ -284,8 +450,35 @@
                 { label: 'Face Verification Completed', done: !!acct.face_verified },
                 { label: 'Information Reviewed', done: wizardDone },
                 { label: 'Submitted for Verification', done: wizardDone },
-                { label: acct.status || 'Pending Review', done: isApproved, rejected: isRejected, current: wizardDone && !isApproved && !isRejected },
+                { label: acct.status || 'Pending Review', done: isVerified, rejected: isRejected, current: wizardDone && !isVerified && !isRejected },
             ];
+        },
+        // The exact push-notification/in-app text the resident would see on
+        // Esperanza Mobile for their current status — makes the verification
+        // flow tangible to admins instead of an abstract status label.
+        citizenNotificationMessage(acct) {
+            if (!acct) return '';
+            if (acct.status === 'Cancelled') {
+                return 'This account has been cancelled by the LGU. If you believe this is a mistake, please visit your Barangay Hall.';
+            }
+            if (acct.verification_blocked) {
+                return 'This account can\'t be verified — you already have a Verified Esperanza account. Please log in with that account to access Dokyu and Tulong.';
+            }
+            if (acct.status === 'Rejected') {
+                return acct.reject_remarks
+                    ? `Your verification requires correction: ${acct.reject_remarks}`
+                    : 'Your verification requires correction. Please review and resubmit your details.';
+            }
+            if (acct.status === 'Under Verification') return 'Your identity verification is currently being reviewed by the LGU. We will notify you once a decision is made.';
+            if (acct.status === 'Pending Review') return 'Your registration has been submitted and is awaiting LGU review.';
+            if (acct.status === 'Verified') return 'Your identity has been verified. Welcome — you now have full access to Dokyu and Tulong.';
+            return 'Please complete your registration to continue.';
+        },
+        // Maps a Sakuna incident's current status onto the Reported -> Barangay
+        // Intake -> DRRM Review -> Response -> Resolution data path.
+        sakunaStage(status) {
+            const stages = { 'Submitted': 1, 'Validated': 2, 'Dispatched': 3, 'Resolved': 4, 'Closed': 4 };
+            return stages[status] ?? 0;
         },
         exportCSV(rows, filename) {
             if (!rows.length) { this.$dispatch('toast',{message:'No records to export.',variant:'warning'}); return; }
@@ -295,7 +488,7 @@
             a.click(); this.$dispatch('toast',{message:'Exported successfully.',variant:'success'});
         },
         can(sub,perm) { return this.$store.session.canPerm?this.$store.session.canPerm(sub,perm):true; },
-        clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.cvSearch='';this.cvStatusFilter=''; },
+        clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.cvSearch='';this.cvStatusFilter='';this.cvBarangayFilter='';this.cvTagFilter=''; },
     }"
     class="animate-fade-up"
 >

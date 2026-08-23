@@ -81,8 +81,13 @@ $permissionModules = [
             ['key' => 'const_family', 'name' => 'Family Profiles', 'perms' => ['view', 'create', 'edit', 'delete']],
             ['key' => 'const_barangay', 'name' => 'Barangay Profiles', 'perms' => ['view', 'edit', 'export']],
             ['key' => 'const_data_quality', 'name' => 'Data Quality Management', 'perms' => ['view', 'verify', 'assign', 'merge', 'resolve', 'view_sensitive', 'export']],
-            ['key' => 'const_document_storage', 'name' => 'Citizen Document Storage', 'perms' => ['view', 'view_sensitive', 'verify', 'edit', 'export']],
             ['key' => 'const_citizen_verification', 'name' => 'Citizen Account Verification', 'perms' => ['view', 'verify', 'reject']],
+        ],
+    ],
+    [
+        'key' => 'papeles', 'name' => 'Papeles (Document Repository)', 'icon' => 'folder-open',
+        'submodules' => [
+            ['key' => 'papeles_documents', 'name' => 'Citizen Documents', 'perms' => ['view', 'view_sensitive', 'verify', 'edit', 'export']],
         ],
     ],
     [
@@ -197,7 +202,7 @@ $roles = [
         'permissions' => $buildPermissions([
             'dokyu' => 'full', 'tulong' => 'full', 'constituents' => 'full', 'payments' => 'full',
             'communications' => 'full', 'reports' => 'view_export', 'user_management' => 'full', 'settings' => 'full',
-            'sakuna' => 'full',
+            'sakuna' => 'full', 'papeles' => 'full',
         ]),
     ],
     [
@@ -222,7 +227,7 @@ $roles = [
         'desc' => 'First point of contact at the municipal hall — intakes new document and assistance requests and assists walk-in constituents.',
         'permissions' => array_merge(
             $buildPermissions([
-                'dokyu' => 'process', 'tulong' => 'process', 'constituents' => 'process', 'payments' => 'view',
+                'dokyu' => 'process', 'tulong' => 'process', 'constituents' => 'process', 'payments' => 'view', 'papeles' => 'view',
             ]),
             ['const_citizen_verification' => ['view', 'verify', 'reject']]
         ),
@@ -232,7 +237,7 @@ $roles = [
         'color' => 'text-cyan-700 bg-cyan-50', 'users' => 3, 'editable' => true,
         'desc' => 'Maintains resident, household, and barangay records, and prepares official copies of civil registry documents.',
         'permissions' => $buildPermissions([
-            'constituents' => 'full', 'dokyu' => 'process', 'reports' => 'view_export',
+            'constituents' => 'full', 'dokyu' => 'process', 'reports' => 'view_export', 'papeles' => 'full',
         ]),
     ],
     [
@@ -251,7 +256,7 @@ $roles = [
             $buildPermissions(['constituents' => 'view']),
             [
                 'comm_barangay_directory' => ['view', 'edit'],
-                'const_document_storage' => ['view', 'verify'],
+                'papeles_documents' => ['view', 'verify'],
                 'const_citizen_verification' => ['view', 'verify', 'reject'],
                 'brgy_cert_death_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],
                 'brgy_cert_late_registration' => ['view', 'create', 'edit', 'review', 'approve', 'release', 'archive'],

@@ -45,6 +45,7 @@
     <nav class="flex-1 overflow-y-auto scrollbar-dark px-2.5 py-3 space-y-0.5">
         <x-ui.nav-item dense :href="route('admin.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" moduleKey="constituents" />
+        <x-ui.nav-item dense :href="route('admin.papeles')" icon="folder-open" label="Papeles" :active="$active === 'papeles'" moduleKey="papeles" />
         <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badge="18" :active="$active === 'document-requests'" moduleKey="dokyu" />
         <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badge="9" :active="$active === 'assistance-requests'" moduleKey="tulong" />
         <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />

@@ -50,6 +50,15 @@
         ['id' => 'INC-2026-0075', 'type' => 'Agricultural Damage', 'barangay' => 'Guadalupe', 'location' => 'Rice fields, Purok 2 and 4', 'severity' => 'Medium', 'reported' => '2026-07-14 18:00', 'source' => 'Barangay', 'reporter' => 'Farmer Leader Cañete', 'contact' => '09501234567', 'affected' => 45, 'vulnerable' => 0, 'team' => 'DA Extension Team', 'lead' => 'Agri. Technologist Yap', 'status' => 'Assigned', 'elapsed' => '14h 06m', 'description' => 'Approximately 12 hectares of rice fields inundated. Damage assessment requested.'],
         ['id' => 'INC-2026-0074', 'type' => 'Flood', 'barangay' => 'Rizal', 'location' => 'Riverside sitios', 'severity' => 'Medium', 'reported' => '2026-07-14 16:45', 'source' => 'Citizen Mobile App', 'reporter' => 'Multiple Reports', 'contact' => '—', 'affected' => 52, 'vulnerable' => 15, 'team' => 'Barangay DRRM Team', 'lead' => 'Brgy. Captain Buenaventura', 'status' => 'Resolved', 'elapsed' => '6h 41m', 'description' => 'Flooding in riverside sitios, 12 families evacuated to barangay hall. Waters receding.'],
         ['id' => 'INC-2026-0073', 'type' => 'Missing Person', 'barangay' => 'San Roque', 'location' => 'Near irrigation canal', 'severity' => 'Critical', 'reported' => '2026-07-14 15:00', 'source' => 'MDRRMO Hotline', 'reporter' => 'Family Member', 'contact' => '09551234567', 'affected' => 1, 'vulnerable' => 1, 'team' => 'PNP + Rescue Team Alpha', 'lead' => 'PO1 Ramirez', 'status' => 'Dispatched', 'elapsed' => '17h 26m', 'description' => 'Child (10 years old) missing since yesterday afternoon near swollen irrigation canal. Search and rescue ongoing.'],
+        // Reconciled 1:1 with the same residents' Constituent Profile records
+        // (same incident IDs) so "Open in Sakuna" from a profile always lands
+        // on real, matching data — older, already-resolved reports, separate
+        // from the active Southwest Monsoon event above.
+        ['id' => 'INC-2026-0071', 'type' => 'Flash Flood', 'barangay' => 'Domorog', 'location' => 'Sitio Tibaon', 'severity' => 'Medium', 'reported' => '2026-06-03 08:00', 'source' => 'Field Responder', 'reporter' => 'MDRRMO Field Team', 'contact' => '—', 'affected' => 4, 'vulnerable' => 0, 'team' => 'MDRRMO', 'lead' => '—', 'status' => 'Resolved', 'elapsed' => '5h 10m', 'description' => 'MDRRMO field team recorded flash flooding affecting this household after overnight heavy rainfall. Logged as part of the barangay-wide flood assessment, not a citizen-filed report.'],
+        ['id' => 'INC-2026-0068', 'type' => 'Rescue Request', 'barangay' => 'Sorosimbajan', 'location' => 'Purok 2, flooded crossing', 'severity' => 'High', 'reported' => '2026-05-22 09:15', 'source' => 'Citizen Mobile App', 'reporter' => 'Ramil Garcia Pascua', 'contact' => '0906 481 6603', 'affected' => 1, 'vulnerable' => 0, 'team' => 'MDRRMO', 'lead' => '—', 'status' => 'Resolved', 'elapsed' => '1h 40m', 'description' => 'Motorcycle stalled mid-crossing as floodwater rose quickly. Requested rescue through the Citizen Portal; retrieved safely by the MDRRMO response team.'],
+        ['id' => 'INC-2026-0085', 'type' => 'Market Fire (Nearby Stall)', 'barangay' => 'Baras', 'location' => 'Baras Public Market, Stall Row C', 'severity' => 'Low', 'reported' => '2026-06-30 17:30', 'source' => 'Citizen Mobile App', 'reporter' => 'Cristy Pareja Bonghanoy', 'contact' => '0919 502 7734', 'affected' => 1, 'vulnerable' => 0, 'team' => 'BFP Esperanza', 'lead' => '—', 'status' => 'Resolved', 'elapsed' => '2h 05m', 'description' => 'Fire broke out at a neighboring stall around closing time. Stall owner\'s stock was undamaged but had to be evacuated. Reported for the market fire log.'],
+        ['id' => 'INC-2026-0086', 'type' => 'Sea Rescue', 'barangay' => 'Masbaranon', 'location' => 'Coastal waters off Sitio Malbog', 'severity' => 'High', 'reported' => '2026-04-14 10:20', 'source' => 'Citizen Mobile App', 'reporter' => 'Romulo Flores Jacinto', 'contact' => '0928 118 6634', 'affected' => 1, 'vulnerable' => 0, 'team' => 'MDRRMO / PCG Auxiliary', 'lead' => '—', 'status' => 'Resolved', 'elapsed' => '3h 15m', 'description' => 'Boat engine failed roughly 2km offshore during a sudden squall. Requested rescue via the Citizen Portal; towed back safely by MDRRMO/PCG Auxiliary.'],
+        ['id' => 'INC-2026-0087', 'type' => 'Fire Incident (Nearby)', 'barangay' => 'Tawad', 'location' => 'Purok 1, market row', 'severity' => 'Low', 'reported' => '2026-06-30 18:45', 'source' => 'Field Responder', 'reporter' => 'BFP Esperanza', 'contact' => '—', 'affected' => 1, 'vulnerable' => 0, 'team' => 'BFP Esperanza', 'lead' => '—', 'status' => 'Resolved', 'elapsed' => '2h 30m', 'description' => 'BFP Esperanza logged this resident\'s sari-sari store as an affected neighboring property during the market-row fire response, for damage-assessment records.'],
     ];
 
     // ── Evacuation Centers ───────────────────────────────────────────────────
@@ -165,6 +174,28 @@
         selectedPeriod: 'SWM-2026-07',
         selectedBarangay: '',
         ready: false,
+        returnToProfile: null,
+        // Arrived from a resident's profile via Open in Sakuna — land on the
+        // Incidents tab pre-filtered to their exact report, and offer a way
+        // straight back to the profile that started the trip.
+        init() {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref) {
+                this.setTab('incidents');
+                this.incidentSearch = ref;
+            }
+            const stored = sessionStorage.getItem('returnToProfile');
+            if (stored) {
+                try { this.returnToProfile = JSON.parse(stored); } catch (e) { this.returnToProfile = null; }
+                sessionStorage.removeItem('returnToProfile');
+            }
+        },
+        backToProfile() {
+            if (!this.returnToProfile) return;
+            sessionStorage.setItem('reopenResident', JSON.stringify(this.returnToProfile));
+            window.location.href = '/admin/constituents';
+        },
 
         // Incident tab state
         incidentSearch: '',
@@ -436,6 +467,23 @@
                     </button>
                 @endforeach
             </nav>
+        </div>
+
+        {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
+        <div
+            x-show="returnToProfile" x-cloak
+            class="flex items-center justify-between gap-3 mx-5 mt-4 px-4 py-2.5 rounded-xl bg-brand-50 border border-brand-100"
+        >
+            <p class="text-xs text-brand-700">
+                Showing the Sakuna report for <span class="font-semibold" x-text="returnToProfile?.name"></span>.
+            </p>
+            <button
+                type="button"
+                @click="backToProfile()"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 hover:underline shrink-0"
+            >
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Profile
+            </button>
         </div>
 
         {{-- ── Tab Panels ───────────────────────────────────────────────────── --}}
