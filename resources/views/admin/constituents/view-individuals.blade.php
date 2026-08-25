@@ -85,7 +85,10 @@
                         <td class="px-4 py-3">
                             <div class="flex items-start gap-3 min-w-0">
                                 <div class="flex-shrink-0 relative">
-                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 overflow-hidden">
+                                        <img x-show="r.citizen_account?.photo_asset" :src="r.citizen_account?.photo_asset" class="w-full h-full object-cover" :alt="r.name">
+                                        <span x-show="!r.citizen_account?.photo_asset" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
+                                    </div>
                                     {{-- Sex indicator dot --}}
                                     <span
                                         class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center text-white"

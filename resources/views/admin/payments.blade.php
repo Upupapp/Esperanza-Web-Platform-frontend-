@@ -1,14 +1,27 @@
 @php
     $barangays = config('esperanza.barangays');
-    $payments = [
-        ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Cedula (Community Tax Certificate)', 'amount' => '₱32.00', 'method' => null, 'receipt' => null, 'status' => 'Waiting Requirements', 'date' => 'Jul 8, 2026'],
-        ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'barangay' => 'Baras', 'type' => 'Dokyu', 'item' => 'Business Permit (New)', 'amount' => '₱1,250.00', 'method' => 'PayMaya', 'receipt' => 'PayMaya Receipt.png', 'status' => 'Pending Review', 'date' => 'Jul 10, 2026'],
-        ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Barangay Clearance', 'amount' => '₱50.00', 'method' => 'Payment in Center', 'receipt' => 'OR-88214.jpg', 'status' => 'Approved', 'date' => 'Jul 3, 2026'],
-        ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'barangay' => 'Iligan', 'type' => 'Dokyu', 'item' => 'Certificate of Residency', 'amount' => '₱50.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt.jpg', 'status' => 'Approved', 'date' => 'Jun 29, 2026'],
-        ['ref' => 'DR-2026-1655', 'citizen' => 'Rosemarie Tan', 'barangay' => 'Baras', 'type' => 'Dokyu', 'item' => 'Business Permit Renewal', 'amount' => '₱980.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt (blurred).jpg', 'status' => 'Rejected', 'date' => 'May 12, 2026'],
-        ['ref' => 'DR-2026-1490', 'citizen' => 'Michael Bacus', 'barangay' => 'Iligan', 'type' => 'Dokyu', 'item' => 'Real Property Tax Clearance', 'amount' => '₱100.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt 2.jpg', 'status' => 'Approved', 'date' => 'Apr 20, 2026'],
-        ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'barangay' => 'Baras', 'type' => 'Tulong', 'item' => 'Social Pension — Documentary Fee', 'amount' => '₱100.00', 'method' => 'Payment in Center', 'receipt' => 'OR-77031.jpg', 'status' => 'Approved', 'date' => 'Feb 10, 2026'],
-    ];
+    // Shared with admin/papeles.blade.php (which surfaces a citizen's own
+    // receipts as "Resibo" documents) — see config/esperanza_payments.php.
+    $payments = config('esperanza_payments');
+    // Citizen name -> avatar map, built here rather than in a config file —
+    // see config/esperanza_citizen_avatars.php's own header for why a
+    // config file can't safely call config() on another config file from
+    // its own top level (Laravel loads them in filename order during
+    // bootstrap) — so a resident's real picture shows up here too, not
+    // just on their own Constituents profile.
+    $citizenAvatarData = config('esperanza_citizen_avatars');
+    $generatedAvatarFor = function ($acctId) use ($citizenAvatarData) {
+        $bg = $citizenAvatarData['backgrounds'][crc32($acctId) % count($citizenAvatarData['backgrounds'])];
+        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($acctId) . '&backgroundColor=' . $bg;
+    };
+    $citizenAvatars = [];
+    foreach (config('esperanza_constituents')['individuals'] as $ind) {
+        if (empty($ind['citizen_account_id'])) {
+            continue;
+        }
+        $acctId = $ind['citizen_account_id'];
+        $citizenAvatars[$ind['name']] = $citizenAvatarData['photoByAccountId'][$acctId] ?? $generatedAvatarFor($acctId);
+    }
 
     // Classification lookup for the mock payment rows above, keyed by the
     // exact 'item' string -- reuses the same category/office/level values
@@ -23,6 +36,16 @@
         'Business Permit Renewal' => ['category' => 'Business & Permits', 'office' => 'Business Permits & Licensing Office', 'level' => 'Multi-Office'],
         'Real Property Tax Clearance' => ['category' => 'Tax & Property', 'office' => "Municipal Treasurer's Office", 'level' => 'Municipal'],
         'Social Pension — Documentary Fee' => ['category' => 'Social Protection', 'office' => 'Office of Senior Citizens Affairs', 'level' => 'Municipal'],
+        'Barangay Certification (General Purpose)' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Certificate of Live Birth (Certified Copy)' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
+        'Application for Marriage License' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
+        'Certified Copy of Marriage Certificate' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
+        'Delayed Registration of Birth' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
+        'Delayed Registration of Death' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
+        'Barangay Certification for Late Registration of Birth' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Barangay Certification for Registration of Death' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
+        'Pet Registration' => ['category' => 'Other', 'office' => 'Municipal Agriculture Office', 'level' => 'Municipal'],
+        'Locational Clearance' => ['category' => 'Business & Permits', 'office' => 'Municipal Planning & Development Office (MPDO)', 'level' => 'Municipal'],
     ];
     foreach ($payments as &$pmt) {
         $pmt = array_merge($pmt, $paymentsClassification[$pmt['item']] ?? ['category' => 'Other', 'office' => $pmt['type'], 'level' => 'Municipal']);
@@ -60,6 +83,7 @@
             method: null,
             receipt: null,
             showReceiptPicker: false,
+            previewDoc: null,
             processing: false,
             barangays: @js($barangays),
             get categories() { return [...new Set(this.payments.map(p => p.category))].sort(); },
@@ -86,6 +110,14 @@
                 return tabOk && barangayOk && categoryOk && levelOk && searchOk;
             },
             clearAdvancedFilters() { this.levelFilter = ''; this.barangayFilter = ''; },
+            // Arriving from a request's own process modal via "View in
+            // Payments" — pre-filter to exactly that ref, mirroring the same
+            // ?ref= pattern admin/document-requests.blade.php already uses.
+            init() {
+                const params = new URLSearchParams(window.location.search);
+                const ref = params.get('ref');
+                if (ref) this.search = ref;
+            },
             get visibleCount() { return this.payments.filter(p => this.matches(p)).length; },
         }"
         class="animate-fade-up"
@@ -177,12 +209,16 @@
                     <tr
                         x-show="matches(payments[{{ $i }}])" x-cloak
                         class="hover:bg-slate-50/70 transition-colors group cursor-pointer"
-                        @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false"
+                        @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())"
                     >
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false">{{ $p['ref'] }}</td>
-                        <td class="px-4 py-3" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false">
+                        <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">{{ $p['ref'] }}</td>
+                        <td class="px-4 py-3" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0">{{ strtoupper(collect(explode(' ', $p['citizen']))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('')) }}</div>
+                                @if(!empty($citizenAvatars[$p['citizen']]))
+                                    <img src="{{ $citizenAvatars[$p['citizen']] }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" alt="{{ $p['citizen'] }}">
+                                @else
+                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0">{{ strtoupper(collect(explode(' ', $p['citizen']))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('')) }}</div>
+                                @endif
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors">{{ $p['citizen'] }}</p>
                             </div>
                         </td>
@@ -212,7 +248,7 @@
                         </td>
                         <td class="px-4 py-3 text-right" @click.stop>
                             <button
-                                @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false"
+                                @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())"
                                 class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap"
                             >Manage</button>
                         </td>
@@ -234,29 +270,51 @@
                         <span class="text-[11px] font-medium px-2 py-0.5 rounded-full" :class="payments[selected].type === 'Dokyu' ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'" x-text="payments[selected].type"></span>
                     </div>
 
-                    <!-- Invoice -->
-                    <div class="rounded-xl border border-slate-200 overflow-hidden mb-5">
-                        <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
-                            <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Invoice Summary</p>
-                            <span class="text-[10px] font-mono text-slate-400">Municipality of Esperanza</span>
+                    {{-- Invoice — same letterhead + icon-field treatment as the
+                         Submitted Application replica in Dokyu/Tulong, so a
+                         payment record reads as the same kind of official
+                         document instead of a differently-styled one-off. --}}
+                    <div class="rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-5">
+                        <div class="relative bg-gradient-to-br from-navy-900 via-navy-800 to-brand-900 px-4 py-3.5 text-white overflow-hidden">
+                            <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/5 pointer-events-none"></div>
+                            <div class="relative flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-[8px] uppercase tracking-widest text-white/50">Republic of the Philippines · Municipality of Esperanza, Masbate</p>
+                                    <p class="text-xs font-bold uppercase tracking-wide mt-0.5">Invoice Summary</p>
+                                </div>
+                                <span class="inline-flex items-center gap-1 text-[10px] font-medium text-white/70 bg-white/10 rounded-full px-2 py-1 shrink-0">
+                                    <i data-lucide="receipt" class="w-3 h-3"></i> <span x-text="payments[selected].ref"></span>
+                                </span>
+                            </div>
                         </div>
-                        <div class="px-4 py-3.5 text-sm">
-                            <div class="flex items-center justify-between py-1.5">
-                                <span class="text-slate-500">Citizen</span>
-                                <span class="text-slate-700 font-medium" x-text="payments[selected].citizen"></span>
+                        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-white">
+                            <div class="flex items-start gap-2.5">
+                                <span class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
+                                <div class="min-w-0 flex-1">
+                                    <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Citizen</label>
+                                    <p class="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-700 truncate" x-text="payments[selected].citizen"></p>
+                                </div>
                             </div>
-                            <div class="flex items-center justify-between py-1.5">
-                                <span class="text-slate-500">Item</span>
-                                <span class="text-slate-700 font-medium text-right" x-text="payments[selected].item"></span>
+                            <div class="flex items-start gap-2.5">
+                                <span class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="calendar-days" class="w-4 h-4"></i></span>
+                                <div class="min-w-0 flex-1">
+                                    <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Date Invoiced</label>
+                                    <p class="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-700" x-text="payments[selected].date"></p>
+                                </div>
                             </div>
-                            <div class="flex items-center justify-between py-1.5">
-                                <span class="text-slate-500">Date Invoiced</span>
-                                <span class="text-slate-700 font-medium" x-text="payments[selected].date"></span>
+                            <div class="flex items-start gap-2.5 sm:col-span-2">
+                                <span class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></span>
+                                <div class="min-w-0 flex-1">
+                                    <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Item</label>
+                                    <p class="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-700" x-text="payments[selected].item"></p>
+                                </div>
                             </div>
-                            <div class="border-t border-dashed border-slate-200 my-2"></div>
-                            <div class="flex items-center justify-between py-1">
-                                <span class="text-sm font-semibold text-navy-900">Total Due</span>
-                                <span class="text-base font-bold text-brand-700" x-text="payments[selected].amount"></span>
+                            <div class="flex items-start gap-2.5 sm:col-span-2">
+                                <span class="w-8 h-8 rounded-lg bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="wallet" class="w-4 h-4"></i></span>
+                                <div class="min-w-0 flex-1 flex items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/50 px-3 py-2">
+                                    <span class="text-sm font-semibold text-navy-900">Total Due</span>
+                                    <span class="text-base font-bold text-brand-700" x-text="payments[selected].amount"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -279,30 +337,28 @@
                         <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all shrink-0"></i>
                     </button>
 
-                    <!-- Read-only receipt view for rows with a receipt already -->
-                    <div class="rounded-xl border border-slate-200 p-3 mb-2 flex items-center justify-between gap-3" x-show="payments[selected].receipt">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="paperclip" class="w-4 h-4"></i></span>
-                            <div class="min-w-0">
-                                <p class="text-xs font-medium text-slate-700 truncate" x-text="payments[selected].receipt"></p>
-                                <p class="text-[11px] text-slate-400" x-text="'Paid via ' + (payments[selected].method || 'unspecified method')"></p>
-                            </div>
-                        </div>
-                        <button type="button" @click="$dispatch('toast', { message: 'Receipt preview is a frontend mock — no file is stored.', variant: 'info' })" class="text-xs font-medium text-brand-600 hover:underline shrink-0">View</button>
-                    </div>
+                    {{-- Official Payment Receipt — identical design to the receipt
+                         a citizen sees and downloads on the Esperanza Mobile app
+                         (same seal header, PAID pill, field order, and payment-mode
+                         badge colors), so the same transaction reads the same way
+                         on both sides all the way through to this final artifact.
+                         Shared with the Dokyu/Tulong process modals — see
+                         components/admin/payment-receipt.blade.php. --}}
+                    <x-admin.payment-receipt recordExpr="payments[selected]" />
 
                     <!-- Admin: attach receipt on behalf of citizen (Waiting Requirements rows) -->
                     <div x-show="payments[selected].status === 'Waiting Requirements'" x-cloak>
                         <p class="text-sm font-semibold text-navy-900 mb-3 mt-4">Record Payment</p>
                         <p class="text-xs text-slate-400 mb-3">If the citizen paid over-the-counter or you've verified proof of payment, record it here.</p>
                         <div class="space-y-2 mb-4">
-                            <template x-for="m in ['GCash', 'PayMaya', 'Payment in Center']" :key="m">
+                            <template x-for="m in [{ name: 'GCash', icon: 'smartphone' }, { name: 'PayMaya', icon: 'wallet' }, { name: 'Payment in Center', icon: 'building-2' }]" :key="m.name">
                                 <label
                                     class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-[160ms] ease-standard"
-                                    :class="method === m ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
+                                    :class="method === m.name ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                 >
-                                    <input type="radio" name="admin_payment_method" class="text-brand-600 focus:ring-brand-200" :checked="method === m" @change="method = m">
-                                    <span class="text-sm font-medium text-slate-700" x-text="m"></span>
+                                    <input type="radio" name="admin_payment_method" class="text-brand-600 focus:ring-brand-200" :checked="method === m.name" @change="method = m.name">
+                                    <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors" :class="method === m.name ? 'bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-400'"><i :data-lucide="m.icon" class="w-3.5 h-3.5"></i></span>
+                                    <span class="text-sm font-medium text-slate-700" x-text="m.name"></span>
                                 </label>
                             </template>
                         </div>
@@ -329,6 +385,57 @@
                     </div>
                 </div>
             </template>
+
+            {{-- Document viewer lightbox — opened from the "eye" button next to
+                 the uploaded proof of payment above. Fixed to the viewport so
+                 it sits above the whole Payment Details modal. --}}
+            <div
+                x-show="previewDoc"
+                x-cloak
+                x-transition:enter="transition duration-[200ms] ease-emphasized"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition duration-[150ms] ease-exit"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                style="position: fixed; inset: 0; z-index: 95;"
+                class="bg-navy-950/60 backdrop-blur-sm flex items-center justify-center p-4"
+                @click.self="previewDoc = null"
+                @keydown.escape.window="previewDoc = null"
+            >
+                <div
+                    class="w-full max-w-sm bg-white rounded-2xl shadow-float overflow-hidden"
+                    x-transition:enter="transition duration-[200ms] ease-emphasized"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                >
+                    <div class="flex items-center gap-2.5 px-4 py-3 border-b border-slate-100">
+                        <span
+                            class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                            :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'"
+                        ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-3.5 h-3.5"></i></span>
+                        <h3 class="text-sm font-semibold text-navy-900 truncate flex-1" x-text="previewDoc?.name"></h3>
+                        <button type="button" @click="previewDoc = null" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors shrink-0" title="Close">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3">
+                            <span
+                                class="w-14 h-14 rounded-2xl flex items-center justify-center"
+                                :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'"
+                            ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-7 h-7"></i></span>
+                            <p class="text-xs font-medium text-slate-500 px-4 text-center truncate max-w-full" x-text="previewDoc?.file"></p>
+                        </div>
+                        <dl class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between gap-3">
+                                <dt class="text-slate-400 shrink-0">Status</dt>
+                                <dd class="font-medium text-navy-900" x-text="previewDoc?.status"></dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
 
             <x-slot:footer>
                 <template x-if="selected !== null && payments[selected].status === 'Waiting Requirements'">

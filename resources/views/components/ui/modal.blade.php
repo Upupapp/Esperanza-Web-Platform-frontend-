@@ -2,7 +2,7 @@
 
 @php
     // Roughly 1.5x the standard Tailwind max-w scale for each named tier.
-    $widths = ['sm' => 'max-w-xl', 'md' => 'max-w-2xl', 'lg' => 'max-w-3xl', 'xl' => 'max-w-4xl', '2xl' => 'max-w-5xl', '3xl' => 'max-w-6xl'];
+    $widths = ['sm' => 'max-w-xl', 'md' => 'max-w-2xl', 'lg' => 'max-w-3xl', 'xl' => 'max-w-4xl', '2xl' => 'max-w-5xl', '3xl' => 'max-w-6xl', '4xl' => 'max-w-7xl'];
     $w = $widths[$maxWidth] ?? $widths['md'];
 @endphp
 

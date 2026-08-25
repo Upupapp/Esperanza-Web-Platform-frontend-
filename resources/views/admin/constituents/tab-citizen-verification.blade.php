@@ -212,7 +212,10 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
                                     <span class="relative shrink-0">
-                                        <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold text-xs ring-2 ring-white shadow-sm" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
+                                        <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold text-xs ring-2 ring-white shadow-sm overflow-hidden">
+                                            <img x-show="i.citizen_account?.photo_asset" :src="i.citizen_account?.photo_asset" class="w-full h-full object-cover" :alt="i.name">
+                                            <span x-show="!i.citizen_account?.photo_asset" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
+                                        </span>
                                         <span
                                             x-show="i.citizen_account?.identity_check?.face_match === 'Mismatch'"
                                             x-cloak

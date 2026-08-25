@@ -11,14 +11,45 @@
         reviewingSignal: null,
         get currentSignalMeta() {
             const acct = selectedIndividual?.citizen_account;
+            // Distinctive per-signal reviewer guidance — what to actually
+            // check before deciding, not just a bare Confirm/Reject button.
+            // Mirrors the Roles & Permissions reference's own 'Verify'
+            // definition ('confirm a submitted detail or document is
+            // accurate') and the Citizen Account Verification module's
+            // review responsibility, applied per signal rather than as one
+            // blanket account-level judgment call.
             const map = {
-                id_document: { key: 'id_document', label: 'ID Document', icon: 'id-card', completed: acct?.id_uploaded, notCompletedText: 'Citizen has not submitted an ID yet.', completedActionText: 'Submitted', review: acct?.signal_reviews?.id_document },
-                face_scan: { key: 'face_scan', label: 'Face Scan', icon: 'scan-face', completed: acct?.face_verified, notCompletedText: 'Citizen has not completed the face scan yet.', completedActionText: 'Completed', review: acct?.signal_reviews?.face_scan },
-                mobile: { key: 'mobile', label: 'Mobile Number', icon: 'smartphone', completed: acct?.mobile_verified, notCompletedText: 'Citizen has not verified a mobile number yet.', completedActionText: 'Verified', review: acct?.signal_reviews?.mobile },
-                terms: { key: 'terms', label: 'Terms', icon: 'file-check', completed: acct?.terms_accepted, notCompletedText: 'Citizen has not accepted the Terms & Conditions yet.', completedActionText: 'Accepted', review: acct?.signal_reviews?.terms },
-                face_match: { key: 'face_match', label: 'Face Match', icon: 'scan-eye', completed: acct?.photo_captured, review: null },
+                id_document: {
+                    key: 'id_document', label: 'ID Document', icon: 'id-card', completed: acct?.id_uploaded,
+                    notCompletedText: 'Citizen has not submitted an ID yet.', completedActionText: 'Submitted', review: acct?.signal_reviews?.id_document,
+                    adviceIcon: 'search-check',
+                    adviceText: 'Confirm this is a valid, unexpired Philippine government ID (PhilSys, Driver\'s License, UMID, Voter\'s ID, Passport, Postal ID, or PRC ID) and that the printed name matches the resident\'s registered name exactly. Reject if the ID type isn\'t accepted, is expired, or the image is unreadable.',
+                },
+                face_scan: {
+                    key: 'face_scan', label: 'Face Scan', icon: 'scan-face', completed: acct?.face_verified,
+                    notCompletedText: 'Citizen has not completed the face scan yet.', completedActionText: 'Completed', review: acct?.signal_reviews?.face_scan,
+                    adviceIcon: 'video',
+                    adviceText: 'This only confirms the resident completed the live face-scan step during onboarding — not that it matches their ID. Check the capture shows a clear, unobstructed face (not a photo of a photo) before marking it complete; the actual identity comparison happens separately in Face Match below.',
+                },
+                mobile: {
+                    key: 'mobile', label: 'Mobile Number', icon: 'smartphone', completed: acct?.mobile_verified,
+                    notCompletedText: 'Citizen has not verified a mobile number yet.', completedActionText: 'Verified', review: acct?.signal_reviews?.mobile,
+                    adviceIcon: 'shield-check',
+                    adviceText: 'Confirm the mobile number was OTP-verified during onboarding and isn\'t already registered to a different resident. A duplicate or unverifiable number should be rejected so the resident can register the correct one.',
+                },
+                terms: {
+                    key: 'terms', label: 'Terms', icon: 'file-check', completed: acct?.terms_accepted,
+                    notCompletedText: 'Citizen has not accepted the Terms & Conditions yet.', completedActionText: 'Accepted', review: acct?.signal_reviews?.terms,
+                    adviceIcon: 'clipboard-check',
+                    adviceText: 'A procedural check only — confirm the acceptance date falls on or after the resident\'s registration date. This rarely needs rejecting unless the record looks tampered with.',
+                },
+                face_match: {
+                    key: 'face_match', label: 'Face Match', icon: 'scan-eye', completed: acct?.photo_captured, review: null,
+                    adviceIcon: 'scan-eye',
+                    adviceText: 'Compare the submitted ID photo directly against the onboarding selfie — focus on the eyes, nose bridge, and jawline. Lighting and angle differences are expected; a fundamentally different face is not.',
+                },
             };
-            return map[this.reviewingSignal] || { key: null, label: '', icon: 'shield-check', completed: false, review: null };
+            return map[this.reviewingSignal] || { key: null, label: '', icon: 'shield-check', completed: false, review: null, adviceIcon: null, adviceText: null };
         },
     }"
 >
@@ -76,17 +107,23 @@
                                 class="transition-all duration-[600ms] ease-standard"
                             />
                         </svg>
-                        {{-- Avatar inside ring — the onboarding-captured selfie when the
-                             resident has a linked, photo-verified Citizen Portal account;
-                             initials otherwise (no photo was ever captured for them). --}}
+                        {{-- Avatar inside ring — the real seeded portrait when one exists
+                             on file for this resident (ported 1:1 from the Esperanza
+                             Mobile app's own demo photos); the onboarding-captured
+                             selfie placeholder when a photo-verified Citizen Portal
+                             account exists but no real asset is seeded; initials
+                             otherwise (no photo was ever captured for them). --}}
                         <div
                             class="absolute inset-2 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-xl uppercase"
-                            :class="selectedIndividual?.citizen_account?.photo_captured ? 'bg-gradient-to-br from-slate-600 to-slate-900' : 'bg-white/10'"
+                            :class="selectedIndividual?.citizen_account?.photo_asset ? '' : (selectedIndividual?.citizen_account?.photo_captured ? 'bg-gradient-to-br from-slate-600 to-slate-900' : 'bg-white/10')"
                         >
-                            <template x-if="selectedIndividual?.citizen_account?.photo_captured">
+                            <template x-if="selectedIndividual?.citizen_account?.photo_asset">
+                                <img :src="selectedIndividual.citizen_account.photo_asset" class="w-full h-full object-cover" :alt="selectedIndividual?.name">
+                            </template>
+                            <template x-if="!selectedIndividual?.citizen_account?.photo_asset && selectedIndividual?.citizen_account?.photo_captured">
                                 <i data-lucide="user-round" class="w-9 h-9 text-white/60"></i>
                             </template>
-                            <template x-if="!selectedIndividual?.citizen_account?.photo_captured">
+                            <template x-if="!selectedIndividual?.citizen_account?.photo_asset && !selectedIndividual?.citizen_account?.photo_captured">
                                 <span x-text="(selectedIndividual?.name || '').split(' ').map(w=>w[0]).slice(0,2).join('')"></span>
                             </template>
                         </div>
@@ -331,36 +368,36 @@
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Full Name</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="user" class="w-3 h-3"></i>Full Name</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.name || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Date of Birth</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="calendar-days" class="w-3 h-3"></i>Date of Birth</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.dob || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Age</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="cake" class="w-3 h-3"></i>Age</dt>
                             <dd class="text-sm font-semibold text-navy-900">
                                 <span x-text="(selectedIndividual?.age || '—') + (selectedIndividual?.age ? ' years old' : '')"></span>
                             </dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Sex</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="venus-and-mars" class="w-3 h-3"></i>Sex</dt>
                             <dd class="text-sm font-semibold text-navy-900">
                                 <span x-text="selectedIndividual?.sex || '—'"></span>
                             </dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Civil Status</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="heart-handshake" class="w-3 h-3"></i>Civil Status</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.civil_status || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Contact Number</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="phone" class="w-3 h-3"></i>Contact Number</dt>
                             <dd class="text-sm font-semibold text-navy-900">
                                 <a
                                     :href="'tel:' + selectedIndividual?.contact"
@@ -371,22 +408,22 @@
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Email Address</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="mail" class="w-3 h-3"></i>Email Address</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.email || selectedIndividual?.citizen_account?.email || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Occupation</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="briefcase" class="w-3 h-3"></i>Occupation</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.occupation || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Highest Education</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="graduation-cap" class="w-3 h-3"></i>Highest Education</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.education || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Income Range</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="wallet" class="w-3 h-3"></i>Income Range</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.income_range || '—'"></dd>
                         </div>
 
@@ -422,32 +459,32 @@
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Barangay</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="map-pin" class="w-3 h-3"></i>Barangay</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="'Brgy. ' + (selectedIndividual?.barangay || '—')"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Sitio / Purok</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="signpost" class="w-3 h-3"></i>Sitio / Purok</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.sitio || '—'"></dd>
                         </div>
 
                         <div class="sm:col-span-2">
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Full Address</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="home" class="w-3 h-3"></i>Full Address</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.address || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Household ID</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="hash" class="w-3 h-3"></i>Household ID</dt>
                             <dd class="text-sm font-mono font-semibold text-navy-900" x-text="selectedIndividual?.household_id || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Family ID</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="hash" class="w-3 h-3"></i>Family ID</dt>
                             <dd class="text-sm font-mono font-semibold text-navy-900" x-text="selectedIndividual?.family_id || '—'"></dd>
                         </div>
 
                         <div>
-                            <dt class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Relation in Household</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="users" class="w-3 h-3"></i>Relation in Household</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.relation || '—'"></dd>
                         </div>
 
@@ -499,9 +536,10 @@
                      column so both columns carry a closer, more even amount of
                      content instead of everything piling up on the right. Real
                      document tiles sized like a verification-officer review
-                     screen, not a cramped text badge. Placeholder imagery (no
-                     real citizen photo assets exist in this frontend-only
-                     project) styled and captioned honestly. --}}
+                     screen, not a cramped text badge. The first tile shows the
+                     resident's actual scanned ID (ported from the Esperanza
+                     Mobile app's own seeded demo assets) where one exists on
+                     file; every other tile uses styled placeholder imagery. --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4" x-show="selectedIndividual?.citizen_account?.id_uploaded || selectedIndividual?.citizen_account?.face_verified" x-cloak>
                     <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Submitted Onboarding Documents</h3>
                     <div class="flex flex-wrap items-start gap-4">
@@ -509,21 +547,33 @@
                              file; loop when verified (post-approval), otherwise show a
                              single generic placeholder tile for the one step completed. --}}
                         <template x-if="(selectedIndividual?.citizen_account?.verified_ids || []).length" x-cloak>
-                            <template x-for="idDoc in selectedIndividual.citizen_account.verified_ids" :key="idDoc.type">
+                            <template x-for="(idDoc, idIdx) in selectedIndividual.citizen_account.verified_ids" :key="idDoc.type">
                                 <div class="w-52 shrink-0">
                                     <div class="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white">
-                                        <div class="bg-gradient-to-br from-navy-800 to-brand-900 px-3 py-2 text-white">
-                                            <p class="text-[8px] uppercase tracking-widest text-white/50">Republic of the Philippines</p>
-                                            <p class="text-[11px] font-bold truncate" x-text="idDoc.type"></p>
-                                        </div>
-                                        <div class="p-3 flex items-center gap-2.5">
-                                            <div class="w-11 h-14 rounded bg-slate-100 flex items-center justify-center shrink-0">
-                                                <i data-lucide="user-round" class="w-5 h-5 text-slate-300"></i>
+                                        <template x-if="idIdx === 0 && selectedIndividual?.citizen_account?.id_image_asset">
+                                            <div class="relative">
+                                                <img :src="selectedIndividual.citizen_account.id_image_asset" class="w-full h-24 object-cover" :alt="idDoc.type">
+                                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2.5 pt-4 pb-1.5">
+                                                    <p class="text-[10px] font-bold text-white truncate" x-text="idDoc.type"></p>
+                                                </div>
                                             </div>
+                                        </template>
+                                        <template x-if="!(idIdx === 0 && selectedIndividual?.citizen_account?.id_image_asset)">
+                                            <div class="bg-gradient-to-br from-navy-800 to-brand-900 px-3 py-2 text-white">
+                                                <p class="text-[8px] uppercase tracking-widest text-white/50">Republic of the Philippines</p>
+                                                <p class="text-[11px] font-bold truncate" x-text="idDoc.type"></p>
+                                            </div>
+                                        </template>
+                                        <div class="p-3 flex items-center gap-2.5">
+                                            <template x-if="!(idIdx === 0 && selectedIndividual?.citizen_account?.id_image_asset)">
+                                                <div class="w-11 h-14 rounded bg-slate-100 flex items-center justify-center shrink-0">
+                                                    <i data-lucide="user-round" class="w-5 h-5 text-slate-300"></i>
+                                                </div>
+                                            </template>
                                             <div class="min-w-0">
                                                 <p class="text-[9px] text-slate-400 uppercase tracking-wide">ID Number</p>
                                                 <p class="text-xs font-mono font-semibold text-navy-900" x-text="idDoc.masked"></p>
-                                                <p class="text-[10px] text-slate-500 mt-1.5 truncate" x-text="selectedIndividual?.name"></p>
+                                                <p class="text-[10px] text-slate-500 mt-1.5 truncate" x-text="'Issued by ' + issuingOfficeFor(idDoc.type)"></p>
                                             </div>
                                         </div>
                                     </div>
@@ -533,14 +583,31 @@
                         </template>
                         <div class="w-52 shrink-0" x-show="selectedIndividual?.citizen_account?.id_uploaded && !(selectedIndividual?.citizen_account?.verified_ids || []).length">
                             <div class="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white">
-                                <div class="bg-gradient-to-br from-navy-800 to-brand-900 px-3 py-2 text-white">
-                                    <p class="text-[8px] uppercase tracking-widest text-white/50">Republic of the Philippines</p>
-                                    <p class="text-[11px] font-bold truncate">Valid Government ID</p>
-                                </div>
-                                <div class="p-3 flex items-center gap-2.5">
-                                    <div class="w-11 h-14 rounded bg-slate-100 flex items-center justify-center shrink-0">
-                                        <i data-lucide="user-round" class="w-5 h-5 text-slate-300"></i>
+                                {{-- Still shows the real scanned ID (ported from the Esperanza
+                                     Mobile app) when one is on file, even though the account
+                                     isn't Approved yet — submitting an ID and being verified
+                                     are two different facts, same as mobile's own Digital ID
+                                     screen ("Submitted ID Document" vs the verified card). --}}
+                                <template x-if="selectedIndividual?.citizen_account?.id_image_asset">
+                                    <div class="relative">
+                                        <img :src="selectedIndividual.citizen_account.id_image_asset" class="w-full h-24 object-cover" alt="Submitted ID">
+                                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2.5 pt-4 pb-1.5">
+                                            <p class="text-[10px] font-bold text-white truncate">Valid Government ID</p>
+                                        </div>
                                     </div>
+                                </template>
+                                <template x-if="!selectedIndividual?.citizen_account?.id_image_asset">
+                                    <div class="bg-gradient-to-br from-navy-800 to-brand-900 px-3 py-2 text-white">
+                                        <p class="text-[8px] uppercase tracking-widest text-white/50">Republic of the Philippines</p>
+                                        <p class="text-[11px] font-bold truncate">Valid Government ID</p>
+                                    </div>
+                                </template>
+                                <div class="p-3 flex items-center gap-2.5">
+                                    <template x-if="!selectedIndividual?.citizen_account?.id_image_asset">
+                                        <div class="w-11 h-14 rounded bg-slate-100 flex items-center justify-center shrink-0">
+                                            <i data-lucide="user-round" class="w-5 h-5 text-slate-300"></i>
+                                        </div>
+                                    </template>
                                     <div class="min-w-0">
                                         <p class="text-[9px] text-slate-400 uppercase tracking-wide">ID Number</p>
                                         <p class="text-xs font-mono font-semibold text-navy-900">•••• •••• ••••</p>
@@ -767,6 +834,14 @@
                                     :class="selectedIndividual?.citizen_account?.status === 'Rejected' ? 'border-rose-200' : 'border-amber-200'"
                                     x-show="['Pending Review','Under Verification'].includes(selectedIndividual?.citizen_account?.status) && (can('const_citizen_verification','verify') || can('const_citizen_verification','reject'))"
                                 >
+                                    {{-- Final-step guidance — this is the account-level decision,
+                                         distinct from (and downstream of) the 5 per-signal reviews
+                                         above; tells the reviewer what "done" looks like before
+                                         they commit to Verify or Reject. --}}
+                                    <div class="rounded-xl border border-indigo-100 bg-indigo-50/60 p-2.5 mb-3 flex items-start gap-2">
+                                        <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5"></i>
+                                        <p class="text-[11px] text-indigo-800 leading-relaxed">Before deciding, confirm every signal above — ID Document, Face Scan, Mobile Number, Terms, and Face Match — is marked Complete and reviewed. Verify once all signals check out; Reject only for a concrete, specific reason (unreadable ID, mismatched name, face mismatch) so the resident knows exactly what to correct before resubmitting.</p>
+                                    </div>
                                     <div x-show="can('const_citizen_verification','reject')">
                                         <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
                                             Rejection Remarks <span class="normal-case font-normal text-slate-400">— required only if rejecting</span>
@@ -1548,7 +1623,12 @@
             {{-- ── TAB 5: History ── --}}
             <div x-show="individualTab === 'History'" class="space-y-4">
 
-                <div class="bg-white rounded-2xl border border-slate-100 shadow-card divide-y divide-slate-100">
+                {{-- Profile History comes first — the record-level facts
+                     (created/updated/verification/completion), distinct from
+                     the dated cross-system feed below. --}}
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Profile History</h3>
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card divide-y divide-slate-100">
 
                     <div class="p-4 flex items-center gap-4">
                         <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -1626,6 +1706,7 @@
                         </div>
                     </div>
 
+                    </div>
                 </div>
 
                 {{-- Merged chronological activity timeline (account, Dokyu, Tulong, Sakuna events) --}}
@@ -1645,8 +1726,13 @@
                             <div class="space-y-3">
                                 <template x-for="(ev, idx) in individualTimeline" :key="idx">
                                     <div class="flex items-start gap-4 relative">
+                                        {{-- The resident's own barangay seal stands in for the event
+                                             icon when one is on file (ties every entry back to
+                                             "this happened for a resident of Brgy. X"); the colored
+                                             ring still carries the event-type distinction. Falls back
+                                             to the plain icon-circle for barangays with no seal asset. --}}
                                         <div
-                                            class="w-9 h-9 rounded-full bg-white border-2 flex items-center justify-center flex-shrink-0 shadow-sm z-10"
+                                            class="w-9 h-9 rounded-full bg-white border-2 flex items-center justify-center flex-shrink-0 shadow-sm z-10 overflow-hidden"
                                             :class="{
                                                 'border-blue-200': ev.color === 'blue',
                                                 'border-amber-200': ev.color === 'amber',
@@ -1655,7 +1741,14 @@
                                                 'border-orange-200': ev.color === 'orange',
                                             }"
                                         >
+                                            <img
+                                                x-show="barangaySealFor(selectedIndividual?.barangay)"
+                                                :src="barangaySealFor(selectedIndividual?.barangay)"
+                                                class="w-full h-full object-cover"
+                                                :alt="'Brgy. ' + selectedIndividual?.barangay + ' seal'"
+                                            >
                                             <i
+                                                x-show="!barangaySealFor(selectedIndividual?.barangay)"
                                                 :data-lucide="ev.icon"
                                                 class="w-4 h-4"
                                                 :class="{
@@ -1891,24 +1984,48 @@
 
                         <p class="text-xs text-slate-400 italic" x-show="!currentSignalMeta.completed" x-text="currentSignalMeta.notCompletedText"></p>
 
-                        {{-- Action — only once the citizen has actually completed the step. --}}
+                        {{-- Reviewer guidance — distinctive per signal, not a generic
+                             "please verify" line, so this is more than a bare
+                             Confirm/Reject button: it tells the reviewer what to
+                             actually check for THIS signal before deciding. Only
+                             shown while there's still a decision to make — once
+                             reviewed, the outcome above already speaks for itself. --}}
+                        <div
+                            class="rounded-xl border border-indigo-100 bg-indigo-50/60 p-2.5 mb-3 flex items-start gap-2"
+                            x-show="currentSignalMeta.completed && !currentSignalMeta.review"
+                        >
+                            <i :data-lucide="currentSignalMeta.adviceIcon" class="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5"></i>
+                            <p class="text-[11px] text-indigo-800 leading-relaxed" x-text="currentSignalMeta.adviceText"></p>
+                        </div>
+
+                        {{-- Action — only once the citizen has actually completed the
+                             step AND it hasn't already been reviewed. A signal that's
+                             already Complete/Rejected is done — the popup still opens
+                             to show what happened (evidence + "Reviewed by" byline
+                             above), but there's nothing left to confirm or reject, so
+                             the action buttons don't render at all rather than sitting
+                             there uselessly next to an already-final outcome. --}}
                         <div x-show="currentSignalMeta.completed" class="pt-3 border-t border-slate-100">
                             <p class="text-[11px] text-slate-400 mb-1.5" x-show="currentSignalMeta.review && currentSignalMeta.review.status !== 'Not Reviewed'" x-text="'Reviewed by ' + currentSignalMeta.review?.reviewed_by + ' · ' + currentSignalMeta.review?.reviewed_at"></p>
                             <p class="text-[11px] text-rose-600 bg-rose-50 rounded-lg px-2.5 py-2 mb-2" x-show="currentSignalMeta.review?.status === 'Rejected' && currentSignalMeta.review?.remarks" x-text="currentSignalMeta.review?.remarks"></p>
-                            <div class="flex items-center gap-2" x-show="can('const_citizen_verification','verify') && !rejecting">
-                                <x-ui.button size="sm" icon="check" @click="reviewSignal(selectedIndividual, reviewingSignal, 'Complete')">Confirm Complete</x-ui.button>
-                                <x-ui.button size="sm" variant="danger" icon="flag" @click="rejecting = true; rejectRemarks = ''">Reject</x-ui.button>
-                            </div>
-                            <div x-show="rejecting" x-cloak class="space-y-2">
-                                <textarea
-                                    x-model="rejectRemarks" rows="2" :placeholder="'Reason for rejecting ' + currentSignalMeta.label + '…'"
-                                    class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
-                                ></textarea>
-                                <div class="flex items-center gap-2">
-                                    <x-ui.button variant="danger" size="sm" icon="flag" x-bind:disabled="!rejectRemarks.trim()" @click="reviewSignal(selectedIndividual, reviewingSignal, 'Rejected', rejectRemarks); rejecting = false">Confirm Reject</x-ui.button>
-                                    <button type="button" @click="rejecting = false" class="text-xs font-medium text-slate-400 hover:text-slate-600">Cancel</button>
+                            <template x-if="!currentSignalMeta.review">
+                                <div>
+                                    <div class="flex items-center gap-2" x-show="can('const_citizen_verification','verify') && !rejecting">
+                                        <x-ui.button size="sm" icon="check" @click="reviewSignal(selectedIndividual, reviewingSignal, 'Complete')">Confirm Complete</x-ui.button>
+                                        <x-ui.button size="sm" variant="danger" icon="flag" @click="rejecting = true; rejectRemarks = ''">Reject</x-ui.button>
+                                    </div>
+                                    <div x-show="rejecting" x-cloak class="space-y-2">
+                                        <textarea
+                                            x-model="rejectRemarks" rows="2" :placeholder="'Reason for rejecting ' + currentSignalMeta.label + '…'"
+                                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
+                                        ></textarea>
+                                        <div class="flex items-center gap-2">
+                                            <x-ui.button variant="danger" size="sm" icon="flag" x-bind:disabled="!rejectRemarks.trim()" @click="reviewSignal(selectedIndividual, reviewingSignal, 'Rejected', rejectRemarks); rejecting = false">Confirm Reject</x-ui.button>
+                                            <button type="button" @click="rejecting = false" class="text-xs font-medium text-slate-400 hover:text-slate-600">Cancel</button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
                         </div>
                     </div>
                 </template>
@@ -1927,7 +2044,17 @@
                                 <span x-text="selectedIndividual?.citizen_account?.identity_check?.face_match === 'Match' ? 'Confirmed Match' : selectedIndividual?.citizen_account?.identity_check?.face_match === 'Mismatch' ? 'Mismatch Found' : 'Not Reviewed'"></span>
                             </span>
                         </div>
-                        <p class="text-xs text-slate-500 mb-3">Compare the submitted ID photo against the onboarding selfie.</p>
+                        {{-- Reviewer guidance — only while there's still a decision to
+                             make; once Confirmed/Flagged the outcome above already
+                             speaks for itself. Matches the same distinctive-per-signal
+                             advice pattern as the other four signals above. --}}
+                        <div
+                            class="rounded-xl border border-indigo-100 bg-indigo-50/60 p-2.5 mb-3 flex items-start gap-2"
+                            x-show="selectedIndividual?.citizen_account?.identity_check?.face_match === 'Not Reviewed'"
+                        >
+                            <i :data-lucide="currentSignalMeta.adviceIcon" class="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5"></i>
+                            <p class="text-[11px] text-indigo-800 leading-relaxed" x-text="currentSignalMeta.adviceText"></p>
+                        </div>
                         <div class="flex flex-wrap items-start gap-3 mb-3" x-show="selectedIndividual?.citizen_account?.photo_captured">
                             <div class="w-28 shrink-0">
                                 <div class="w-full h-16 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center"><i data-lucide="id-card" class="w-5 h-5 text-slate-300"></i></div>

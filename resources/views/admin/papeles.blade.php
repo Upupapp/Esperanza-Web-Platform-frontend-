@@ -9,6 +9,25 @@
 @php
     $storageBarangays = config('esperanza.barangays');
     $storageIndividuals = config('esperanza_constituents.individuals');
+    // Citizen name -> avatar map, built here rather than in a config file —
+    // see config/esperanza_citizen_avatars.php's own header for why a
+    // config file can't safely call config() on another config file from
+    // its own top level (Laravel loads them in filename order during
+    // bootstrap) — so a resident's real picture shows up here too, not
+    // just on their own Constituents profile.
+    $citizenAvatarData = config('esperanza_citizen_avatars');
+    $generatedAvatarFor = function ($acctId) use ($citizenAvatarData) {
+        $bg = $citizenAvatarData['backgrounds'][crc32($acctId) % count($citizenAvatarData['backgrounds'])];
+        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($acctId) . '&backgroundColor=' . $bg;
+    };
+    $citizenAvatars = [];
+    foreach ($storageIndividuals as $ind) {
+        if (empty($ind['citizen_account_id'])) {
+            continue;
+        }
+        $acctId = $ind['citizen_account_id'];
+        $citizenAvatars[$ind['name']] = $citizenAvatarData['photoByAccountId'][$acctId] ?? $generatedAvatarFor($acctId);
+    }
 
     // Small, realistic pool of supporting-document types citizens commonly
     // have on file, reusing the same category taxonomy Dokyu already uses
@@ -34,13 +53,28 @@
     // with richer constituent data) -- real RES-#### ids from
     // config/esperanza_constituents.php, not invented identities.
     $storageCitizenIds = [
-        'RES-2026-001', 'RES-2026-002', 'RES-2026-010', 'RES-2026-011', 'RES-2026-015', 'RES-2026-016',
-        'RES-2026-023', 'RES-2026-024', 'RES-2026-027', 'RES-2026-028', 'RES-2026-030', 'RES-2026-102',
-        'RES-2026-101', 'RES-2026-103', 'RES-2026-106', 'RES-2026-107', 'RES-2026-108', 'RES-2026-109',
-        'RES-2026-113', 'RES-2026-114', 'RES-2026-115', 'RES-2026-116', 'RES-2026-117', 'RES-2026-118',
-        'RES-2026-119', 'RES-2026-120',
+        'RES-2026-023', 'RES-2026-024', 'RES-2026-028', 'RES-2026-030',
+        'RES-2026-101', 'RES-2026-104', 'RES-2026-106', 'RES-2026-108',
+        'RES-2026-121', 'RES-2026-122', 'RES-2026-123', 'RES-2026-124', 'RES-2026-125',
+        'RES-2026-126', 'RES-2026-127', 'RES-2026-128', 'RES-2026-129', 'RES-2026-130', 'RES-2026-131',
     ];
     $storageIndividualsById = collect($storageIndividuals)->keyBy('id');
+
+    // Real citizen accounts (for actually-verified IDs on file) and real
+    // payment records (for "Resibo") — same source data Constituents and
+    // Payments themselves use, so a citizen's Papeles folder shows what
+    // they actually uploaded/paid instead of a parallel invented set.
+    // Matched on a normalized name (middle initials stripped) rather than
+    // exact equality, since Payments records citizens without a middle
+    // initial (e.g. "Maria Fe Bacaltos") while Constituents carries the
+    // full name ("Maria Fe A. Bacaltos") for the same person.
+    $normalizePersonName = function ($name) {
+        $parts = preg_split('/\s+/', trim($name));
+        $parts = array_filter($parts, fn ($p) => !preg_match('/^[A-Z]\.?$/', $p));
+        return strtolower(implode(' ', $parts));
+    };
+    $citizenAccountsById = collect(config('esperanza_citizens')['accounts'])->keyBy('id');
+    $paymentsByCitizenName = collect(config('esperanza_payments'))->groupBy(fn ($p) => $normalizePersonName($p['citizen']));
 
     $citizenDocuments = [];
     $docSeq = 1;
@@ -61,6 +95,42 @@
                 'file_type' => $tpl['file_type'],
                 'status' => $storageStatuses[($ci + $d) % count($storageStatuses)],
                 'uploaded' => $storageMonths[($ci + $d) % count($storageMonths)] . ' ' . (1 + (($ci * 7 + $d) % 27)) . ', 2026',
+            ];
+        }
+
+        // Real verified IDs — replaces the synthetic pool entirely for this
+        // citizen with what's actually on file for their linked account.
+        $account = !empty($person['citizen_account_id']) ? $citizenAccountsById->get($person['citizen_account_id']) : null;
+        if ($account && $account['status'] === 'Approved' && !empty($account['verifiedIds'])) {
+            foreach ($account['verifiedIds'] as $idDoc) {
+                $citizenDocuments[] = [
+                    'id' => sprintf('CD-%04d', $docSeq++),
+                    'citizen_id' => $citizenId,
+                    'name' => str_replace([' ', '(', ')'], ['-', '', ''], $idDoc['type']) . '.jpg',
+                    'category' => 'Identity / Verification',
+                    'type' => $idDoc['type'],
+                    'file_type' => 'jpg',
+                    'status' => 'Approved',
+                    'uploaded' => $account['registeredAt'] ?? 'Jul 1, 2026',
+                ];
+            }
+        }
+
+        // Real payment receipts ("Resibo") — same records shown in Payments,
+        // matched by citizen name since payments don't carry a resident id.
+        foreach ($paymentsByCitizenName->get($normalizePersonName($person['name']), collect()) as $pmt) {
+            if (empty($pmt['receipt'])) {
+                continue;
+            }
+            $citizenDocuments[] = [
+                'id' => sprintf('CD-%04d', $docSeq++),
+                'citizen_id' => $citizenId,
+                'name' => $pmt['receipt'],
+                'category' => 'Payment Receipt',
+                'type' => 'Resibo — ' . $pmt['item'],
+                'file_type' => str_contains($pmt['receipt'], '.pdf') ? 'pdf' : 'jpg',
+                'status' => $pmt['status'],
+                'uploaded' => $pmt['date'],
             ];
         }
     }
@@ -103,6 +173,7 @@
             docStatusFilter: '',
             folders: @js($barangayFolders),
             individuals: @js($storageIndividuals),
+            citizenAvatars: @js($citizenAvatars),
             documents: @js($citizenDocuments),
             statusStyles: {
                 'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
@@ -241,7 +312,8 @@
                         type="button" @click="openCitizen(c.id)"
                         class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-brand-300 hover:shadow-sm transition-all duration-[220ms] ease-standard"
                     >
-                        <div class="w-10 h-10 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(c.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                        <img x-show="citizenAvatars[c.name]" :src="citizenAvatars[c.name]" class="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" :alt="c.name">
+                        <div x-show="!citizenAvatars[c.name]" class="w-10 h-10 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(c.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-medium text-slate-700 truncate" x-text="c.name"></p>
                             <p class="text-xs text-slate-400 font-mono" x-text="c.id"></p>
@@ -272,7 +344,8 @@
                             <span class="text-white" x-text="selectedCitizen.name"></span>
                         </div>
                         <div class="flex items-center gap-4 relative z-10">
-                            <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center font-bold text-lg uppercase shrink-0" x-text="(selectedCitizen.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('')"></div>
+                            <img x-show="citizenAvatars[selectedCitizen.name]" :src="citizenAvatars[selectedCitizen.name]" class="w-14 h-14 rounded-full object-cover ring-2 ring-white/20 shrink-0" :alt="selectedCitizen.name">
+                            <div x-show="!citizenAvatars[selectedCitizen.name]" class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center font-bold text-lg uppercase shrink-0" x-text="(selectedCitizen.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('')"></div>
                             <div class="min-w-0">
                                 <h2 class="text-xl font-bold leading-tight truncate" x-text="selectedCitizen.name"></h2>
                                 <p class="text-sm text-white/60 mt-0.5">
