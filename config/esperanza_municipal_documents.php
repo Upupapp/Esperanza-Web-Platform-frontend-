@@ -17,6 +17,7 @@ return [
     'documents' => [
         [
             'key' => 'mcro_marriage',
+            'reference_pdf' => asset('documents/reference-forms/certificate-of-marriage.pdf'),
             'name' => 'Certificate of Marriage (Certified Copy / Registration)',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -47,6 +48,7 @@ return [
         ],
         [
             'key' => 'mcro_marriage_license',
+            'reference_pdf' => asset('documents/reference-forms/marriage-license.pdf'),
             'name' => 'Application for Marriage License',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -81,6 +83,7 @@ return [
         ],
         [
             'key' => 'mcro_live_birth',
+            'reference_pdf' => asset('documents/reference-forms/certificate-of-live-birth.pdf'),
             'name' => 'Certificate of Live Birth (Certified Copy / Registration)',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -118,6 +121,7 @@ return [
         ],
         [
             'key' => 'mcro_death',
+            'reference_pdf' => asset('documents/reference-forms/certificate-of-death.pdf'),
             'name' => 'Certificate of Death (Certified Copy / Registration)',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -217,6 +221,7 @@ return [
             // fields (Registration No., Accomplished By, Reporting Unit) are
             // completed by MSWDO staff upon encoding, not by the applicant.
             'key' => 'msw_pwd_id',
+            'reference_pdf' => asset('documents/reference-forms/pwd-id-prpwd.pdf'),
             'name' => 'PWD ID (Person with Disability Registration)',
             'category' => 'Senior Citizen / PWD',
             'office' => 'Municipal Social Welfare & Development Office',
@@ -296,6 +301,135 @@ return [
                 ['key' => 'last_govt_address', 'label' => "Last Government Service — Address", 'type' => 'text'],
                 ['key' => 'last_govt_position', 'label' => 'Last Government Service — Position/Designation', 'type' => 'text'],
             ],
+        ],
+        [
+            // MPDO Locational Clearance — already fully modeled admin-side
+            // (validation guide, service form spec, payment records) but was
+            // missing from the citizen catalog. No official Esperanza-specific
+            // form was supplied for this service (see validation guide
+            // known_gaps); fields below are adapted from a standard CPDO
+            // locational-clearance application, matching what the admin-side
+            // service form spec already defines.
+            'key' => 'locational_clearance',
+            'reference_pdf' => asset('documents/reference-forms/locational-clearance.pdf'),
+            'name' => 'Locational Clearance',
+            'category' => 'Business & Permits',
+            'office' => 'Municipal Planning & Development Office',
+            'office_short' => 'MPDO',
+            'level' => 'Municipal',
+            'title' => 'APPLICATION FOR LOCATIONAL CLEARANCE',
+            'fee' => '₱500.00 and up (based on project)', 'days' => '5-7 working days',
+            'requirements' => [
+                'Lot Title (TCT/OCT) or Tax Declaration',
+                'Barangay Clearance',
+                'Vicinity / Location Map',
+                'Site Development Plan (for new construction)',
+            ],
+            'process' => ['Submit Application', 'Site Evaluation', 'Assessment & Payment', 'Release'],
+            'fields' => [
+                ['key' => 'applicant_type', 'label' => 'Applicant Type', 'type' => 'select', 'options' => ['Individual', 'Corporation', 'Partnership', 'Other']],
+                ['key' => 'authorized_rep_name', 'label' => "Authorized Representative's Name", 'type' => 'text'],
+                ['key' => 'authorized_rep_address', 'label' => "Authorized Representative's Address", 'type' => 'text'],
+                ['key' => 'nature_of_application', 'label' => 'Nature of Application', 'type' => 'select', 'options' => ['New Development', 'Improvement / Renovation', 'Change of Use', 'Other']],
+                ['key' => 'project_title', 'label' => 'Project Title', 'type' => 'text', 'required' => true],
+                ['key' => 'project_location', 'label' => 'Project Location', 'type' => 'text', 'required' => true],
+                ['key' => 'floor_area', 'label' => 'Floor Area (sqm)', 'type' => 'number'],
+                ['key' => 'building_height', 'label' => 'Building Height (m)', 'type' => 'number'],
+                ['key' => 'number_of_storeys', 'label' => 'Number of Storeys', 'type' => 'number'],
+                ['key' => 'lot_area', 'label' => 'Lot Area (sqm)', 'type' => 'number', 'required' => true],
+                ['key' => 'title_number', 'label' => 'TCT / OCT No.', 'type' => 'text', 'required' => true],
+                ['key' => 'right_over_land', 'label' => 'Right Over Land', 'type' => 'select', 'options' => ['Owner', 'Lessee', 'Other']],
+                ['key' => 'zoning_classification', 'label' => 'Land Use / Zoning Classification', 'type' => 'checkbox-group', 'options' => [
+                    'Residential', 'Commercial', 'Industrial', 'Institutional', 'Agricultural', 'Open Space', 'Forestry', 'Other',
+                ]],
+            ],
+        ],
+        [
+            // Relocated from the hardcoded $documentTypes array that used to
+            // sit at the top of citizen/document-requests.blade.php — moved
+            // here so this file is the single source of truth for every
+            // Dokyu fee (see admin Settings > Service Catalog). 'fields' is
+            // deliberately empty: these 6 never had a structured form/
+            // letterhead preview, and the citizen wizard only shows the
+            // preview panel when fields is non-empty, so this keeps their
+            // existing (simple Purpose-only) behavior unchanged.
+            'key' => 'dokyu_cedula',
+            'name' => 'Cedula (Community Tax Certificate)',
+            'category' => 'Tax & Property',
+            'office' => "Municipal Treasurer's Office",
+            'office_short' => "Treasurer's Office",
+            'level' => 'Municipal',
+            'title' => 'CEDULA (COMMUNITY TAX CERTIFICATE)',
+            'fee' => '₱5.00 base + ₱1.00 per ₱1,000 income', 'days' => 'Same day',
+            'requirements' => ['One (1) valid government-issued ID', 'Proof of income or Certificate of Employment (if applicable)'],
+            'process' => ['Submit Request', 'Compute Tax Due', 'Pay Fee', 'Release'],
+            'fields' => [],
+        ],
+        [
+            'key' => 'dokyu_residency',
+            'name' => 'Certificate of Residency',
+            'category' => 'Civil Registry',
+            'office' => 'Office of the Municipal Civil Registrar',
+            'office_short' => 'Civil Registrar',
+            'level' => 'Municipal',
+            'title' => 'CERTIFICATE OF RESIDENCY',
+            'fee' => '₱50.00', 'days' => '1-2 working days',
+            'requirements' => ['One (1) valid government-issued ID', 'Barangay Clearance', 'Proof of residency (utility bill or lease contract)'],
+            'process' => ['Submit Request', 'Verify Residency', 'Approval', 'Release'],
+            'fields' => [],
+        ],
+        [
+            'key' => 'dokyu_indigency',
+            'name' => 'Certificate of Indigency',
+            'category' => 'Social Services',
+            'office' => 'Municipal Social Welfare & Development Office',
+            'office_short' => 'MSWDO',
+            'level' => 'Municipal',
+            'title' => 'CERTIFICATE OF INDIGENCY',
+            'fee' => 'Free', 'days' => '2-3 working days',
+            'requirements' => ['One (1) valid government-issued ID', 'Barangay Certification of Indigency', 'Brief interview / case assessment with MSWDO'],
+            'process' => ['Submit Request', 'MSWDO Interview', 'Case Assessment', 'Release'],
+            'fields' => [],
+        ],
+        [
+            'key' => 'dokyu_business_new',
+            'reference_pdf' => asset('documents/reference-forms/business-permit-form.pdf'),
+            'name' => 'Business Permit (New Application)',
+            'category' => 'Business & Permits',
+            'office' => 'Business Permits & Licensing Office',
+            'office_short' => 'BPLO',
+            'level' => 'Multi-Office',
+            'title' => 'BUSINESS PERMIT (NEW APPLICATION)',
+            'fee' => '₱500.00 and up (based on capital)', 'days' => '7 working days',
+            'requirements' => ['DTI or SEC Registration', 'Barangay Business Clearance', 'Locational / Zoning Clearance', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Cedula (Community Tax Certificate)', 'Lease contract or land title'],
+            'process' => ['Submit Requirements', 'Zoning & Fire Inspection', 'Assessment & Payment', 'Release'],
+            'fields' => [],
+        ],
+        [
+            'key' => 'dokyu_business_renewal',
+            'name' => 'Business Permit Renewal',
+            'category' => 'Business & Permits',
+            'office' => 'Business Permits & Licensing Office',
+            'office_short' => 'BPLO',
+            'level' => 'Multi-Office',
+            'title' => 'BUSINESS PERMIT RENEWAL',
+            'fee' => 'Based on prior year gross receipts', 'days' => '3 working days',
+            'requirements' => ["Previous year's Business Permit and Official Receipt", 'Barangay Clearance (current year)', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Audited Financial Statement or Income Tax Return'],
+            'process' => ['Submit Requirements', 'Verify Prior Permit', 'Assessment & Payment', 'Release'],
+            'fields' => [],
+        ],
+        [
+            'key' => 'dokyu_rpt',
+            'name' => 'Real Property Tax Clearance',
+            'category' => 'Tax & Property',
+            'office' => "Municipal Treasurer's Office",
+            'office_short' => "Treasurer's Office",
+            'level' => 'Municipal',
+            'title' => 'REAL PROPERTY TAX CLEARANCE',
+            'fee' => '₱100.00', 'days' => 'Same day',
+            'requirements' => ['Latest Tax Declaration', 'Official Receipt of last RPT payment', 'One (1) valid government-issued ID'],
+            'process' => ['Submit Request', 'Verify Tax Records', 'Settle Balance (if any)', 'Release'],
+            'fields' => [],
         ],
     ],
 ];

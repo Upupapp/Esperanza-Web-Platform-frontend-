@@ -1,7 +1,7 @@
 @php
     $requests = [
         ['ref' => 'DR-2026-2210', 'type' => 'Cedula (Community Tax Certificate)', 'office' => "Treasurer's Office", 'purpose' => 'Employment requirement', 'submitted' => 'Jul 8, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'purpose' => 'Business permit renewal', 'submitted' => 'Jul 3, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'purpose' => 'Proof of Residency', 'submitted' => 'Jul 3, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'purpose' => 'School enrollment', 'submitted' => 'Jun 14, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-1872', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'May 30, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-1655', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'purpose' => 'Sari-sari store registration', 'submitted' => 'May 12, 2026', 'status' => 'Rejected', 'remarks' => 'Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached.', 'requirements' => [
@@ -16,53 +16,22 @@
             ['key' => 'req_lease', 'name' => 'Lease contract or land title', 'file' => 'Lease-Contract.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-1490', 'type' => 'Real Property Tax Clearance', 'office' => "Treasurer's Office", 'purpose' => 'Lot sale requirement', 'submitted' => 'Apr 20, 2026', 'status' => 'Completed'],
-        ['ref' => 'DR-2026-2201', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Jul 7, 2026', 'status' => 'Waiting Requirements', 'requirements' => [
+        ['ref' => 'DR-2026-2201', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Jul 7, 2026', 'status' => 'Under Review', 'requirements' => [
             ['key' => 'req_valid_id', 'name' => 'One (1) valid government-issued ID', 'file' => 'My-Valid-ID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).', 'versions' => [
-                ['file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jul 7, 2026', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).'],
+            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Flagged for Replacement', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).', 'versions' => [
+                ['file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Flagged for Replacement', 'date' => 'Jul 7, 2026', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).'],
             ]],
             ['key' => 'req_interview', 'name' => 'Brief interview / case assessment with MSWDO', 'file' => 'Interview-Notes.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
     ];
 
-    $documentTypes = [
-        [
-            'key' => 'dokyu_cedula', 'category' => 'Tax & Property',
-            'name' => 'Cedula (Community Tax Certificate)', 'office' => "Municipal Treasurer's Office", 'office_short' => "Treasurer's Office", 'level' => 'Municipal', 'fee' => '₱5.00 base + ₱1.00 per ₱1,000 income', 'days' => 'Same day',
-            'requirements' => ['One (1) valid government-issued ID', 'Proof of income or Certificate of Employment (if applicable)'],
-            'process' => ['Submit Request', 'Compute Tax Due', 'Pay Fee', 'Release'],
-        ],
-        [
-            'key' => 'dokyu_residency', 'category' => 'Civil Registry',
-            'name' => 'Certificate of Residency', 'office' => 'Office of the Municipal Civil Registrar', 'office_short' => 'Civil Registrar', 'level' => 'Municipal', 'fee' => '₱50.00', 'days' => '1-2 working days',
-            'requirements' => ['One (1) valid government-issued ID', 'Barangay Clearance', 'Proof of residency (utility bill or lease contract)'],
-            'process' => ['Submit Request', 'Verify Residency', 'Approval', 'Release'],
-        ],
-        [
-            'key' => 'dokyu_indigency', 'category' => 'Social Services',
-            'name' => 'Certificate of Indigency', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'level' => 'Municipal', 'fee' => 'Free', 'days' => '2-3 working days',
-            'requirements' => ['One (1) valid government-issued ID', 'Barangay Certification of Indigency', 'Brief interview / case assessment with MSWDO'],
-            'process' => ['Submit Request', 'MSWDO Interview', 'Case Assessment', 'Release'],
-        ],
-        [
-            'key' => 'dokyu_business_new', 'category' => 'Business & Permits',
-            'name' => 'Business Permit (New Application)', 'office' => 'Business Permits & Licensing Office', 'office_short' => 'BPLO', 'level' => 'Multi-Office', 'fee' => '₱500.00 and up (based on capital)', 'days' => '7 working days',
-            'requirements' => ['DTI or SEC Registration', 'Barangay Business Clearance', 'Locational / Zoning Clearance', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Cedula (Community Tax Certificate)', 'Lease contract or land title'],
-            'process' => ['Submit Requirements', 'Zoning & Fire Inspection', 'Assessment & Payment', 'Release'],
-        ],
-        [
-            'key' => 'dokyu_business_renewal', 'category' => 'Business & Permits',
-            'name' => 'Business Permit Renewal', 'office' => 'Business Permits & Licensing Office', 'office_short' => 'BPLO', 'level' => 'Multi-Office', 'fee' => 'Based on prior year gross receipts', 'days' => '3 working days',
-            'requirements' => ["Previous year's Business Permit and Official Receipt", 'Barangay Clearance (current year)', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Audited Financial Statement or Income Tax Return'],
-            'process' => ['Submit Requirements', 'Verify Prior Permit', 'Assessment & Payment', 'Release'],
-        ],
-        [
-            'key' => 'dokyu_rpt', 'category' => 'Tax & Property',
-            'name' => 'Real Property Tax Clearance', 'office' => "Municipal Treasurer's Office", 'office_short' => "Treasurer's Office", 'level' => 'Municipal', 'fee' => '₱100.00', 'days' => 'Same day',
-            'requirements' => ['Latest Tax Declaration', 'Official Receipt of last RPT payment', 'One (1) valid government-issued ID'],
-            'process' => ['Submit Request', 'Verify Tax Records', 'Settle Balance (if any)', 'Release'],
-        ],
-    ];
+    // The 6 core municipal Dokyu types (Cedula, Certificate of Residency,
+    // Certificate of Indigency, Business Permit New/Renewal, Real Property
+    // Tax Clearance) now live in config/esperanza_municipal_documents.php
+    // alongside the rest of the municipal catalog, so this file has a single
+    // source of truth for fees (see admin Settings > Service Catalog) —
+    // populated by the foreach below, same as every other municipal document.
+    $documentTypes = [];
 
     // Additional municipal documents (MCRO = Municipal Civil Registrar's
     // Office, and other municipal offices like Agriculture) — these are
@@ -182,12 +151,11 @@
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
                 'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
-                'Assigned': ['bg-purple-50 text-purple-700 ring-purple-200', 'bg-purple-500'],
-                'Processing': ['bg-brand-50 text-brand-700 ring-brand-200', 'bg-brand-500'],
-                'Waiting Requirements': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
                 'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
-                'Ready for Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
+                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
                 'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
                 'Cancelled': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-400'],
@@ -222,31 +190,37 @@
             },
             replaceRequirementFile(req, fileName) {
                 req.versions = req.versions || [];
-                req.versions.push({ file: req.file, status: 'Rejected', date: req._rejectedDate || '', reject_reason: req.reject_reason, remarks: req.remarks });
+                req.versions.push({ file: req.file, status: req.status, date: req._flaggedDate || '', reject_reason: req.reject_reason, remarks: req.remarks });
                 req.file = fileName;
-                req.status = 'Pending Review';
+                req.status = 'Resubmitted';
                 req.reject_reason = null;
                 req.remarks = null;
                 req._showPicker = false;
                 this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Replacement uploaded — awaiting review.' : 'Na-upload ang kapalit — hinihintay ang pagsusuri.', variant: 'success' });
             },
             get canResubmitRequirements() {
-                return this.selectedRequest && (this.selectedRequest.requirements || []).every(r => r.status !== 'Rejected');
+                return this.selectedRequest && (this.selectedRequest.requirements || []).every(r => r.status !== 'Flagged for Replacement');
             },
+            // The SAME request moves Under Review -> Resubmitted here — it
+            // never goes back to Submitted, never resets, and keeps its ref,
+            // original documents, and review remarks (see replaceRequirementFile
+            // above, which preserves the flagged version in req.versions
+            // rather than overwriting it). Mirrors the admin-side
+            // markResubmitted() in admin/document-requests.blade.php.
             resubmitRequirements() {
                 if (this.resubmitting || !this.canResubmitRequirements) return;
                 this.resubmitting = true;
                 setTimeout(() => {
-                    this.selectedRequest.status = 'Submitted';
-                    this.selectedRequest.submitted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    this.selectedRequest.status = 'Resubmitted';
+                    this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     this.resubmitting = false;
                     this.progressOpen = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
                 }, 800);
             },
-            stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Ready for Release', 'Released'],
+            stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Waiting Requirements': 1, 'Processing': 1, 'Approved': 2, 'Ready for Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
+                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
                 return map[status] ?? 0;
             },
             get pickupInfo() {
@@ -267,6 +241,16 @@
                 d.setDate(d.getDate() + addDays);
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
+            // Deep-link landing: a notification click appends ?ref=DR-2026-xxxx
+            // (see citizen/notifications.blade.php) — open that exact
+            // request's tracking modal instead of just landing on the list.
+            init() {
+                this.$store.citizenNotifications.seedFromRequests(this.requests, 'dokyu');
+                const ref = new URLSearchParams(window.location.search).get('ref');
+                if (!ref) return;
+                const match = this.requests.find(r => r.ref === ref);
+                if (match) this.openProgress(match);
+            },
         }"
         class="animate-fade-up"
     >
@@ -280,7 +264,7 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="6" icon="file-text" color="brand" :delay="0" />
             <x-ui.stat-card label="Isinasagawa" labelEn="In Progress" value="1" icon="loader" color="orange" :delay="40" />
-            <x-ui.stat-card label="Handa nang Kunin" labelEn="Ready for Release" value="1" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card label="Handa nang Kunin" labelEn="Mark to Release" value="1" icon="package-check" color="green" :delay="80" />
             <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="3" icon="circle-check" color="purple" :delay="120" />
         </div>
 
@@ -466,8 +450,8 @@
                         },
                         paymentMethods: [
                             { key: 'gcash', label: 'GCash', hint: 'Send to 0917-000-0000', hintFil: 'Ipadala sa 0917-000-0000', icon: 'smartphone' },
-                            { key: 'paymaya', label: 'PayMaya', hint: 'Send to 0918-000-0000', hintFil: 'Ipadala sa 0918-000-0000', icon: 'wallet' },
-                            { key: 'center', label: 'Payment in Center', labelFil: 'Bayad sa Opisina', hint: 'Pay at the Treasurer\'s Office', hintFil: 'Magbayad sa Treasurer\'s Office', icon: 'landmark' },
+                            { key: 'paymaya', label: 'Maya', hint: 'Send to 0918-000-0000', hintFil: 'Ipadala sa 0918-000-0000', icon: 'wallet' },
+                            { key: 'center', label: 'Onsite', labelFil: 'Bayad sa Opisina', hint: 'Pay at the Treasurer\'s Office', hintFil: 'Magbayad sa Treasurer\'s Office', icon: 'landmark' },
                         ],
                         stepLabels: {
                             fil: ['Pumili ng Dokumento', 'Detalye ng Aplikasyon', 'Bayad', 'I-review at I-submit'],
@@ -478,14 +462,20 @@
                         submitRequest() {
                             const doc = this.docs[this.selectedDoc];
                             const purpose = Array.isArray(this.formData.purpose) ? this.formData.purpose.join(', ') : (doc?.name || 'Personal use');
+                            const ref = 'DR-2026-' + Math.floor(1000 + Math.random() * 9000);
                             this.requests.unshift({
-                                ref: 'DR-2026-' + Math.floor(1000 + Math.random() * 9000),
+                                ref,
                                 type: doc?.name || '—',
                                 office: doc?.office || '—',
                                 purpose,
                                 days: doc?.days || '3-5 working days',
                                 submitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                                 status: 'Submitted',
+                            });
+                            this.$store.citizenNotifications.push({
+                                icon: 'file-plus', color: 'brand', portal: 'dokyu', ref,
+                                title: 'Document Request Submitted',
+                                body: (doc?.name || 'Your document request') + ' (' + ref + ') has been submitted and is now Pending Review.',
                             });
                         },
                     }"
@@ -1176,7 +1166,7 @@
                             </div>
                         </div>
 
-                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="['Rejected', 'Waiting Requirements'].includes(selectedRequest.status) && (selectedRequest.requirements || []).length">
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Under Review' && (selectedRequest.requirements || []).length">
                             <div class="flex items-start gap-2.5 px-3.5 py-2.5">
                                 <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
@@ -1186,7 +1176,7 @@
                             </div>
                             <div class="px-3.5 pb-3.5 space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
-                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-slate-200': req.status === 'Pending Review' }">
+                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Pending Review' }">
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
@@ -1197,15 +1187,15 @@
                                             </div>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' }"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
                                             ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
                                         </div>
 
-                                        <div x-show="req.status === 'Rejected'" class="mt-2 pt-2 border-t border-rose-100 text-[11px]">
-                                            <p class="font-semibold text-rose-700" x-text="req.reject_reason"></p>
-                                            <p class="text-rose-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
+                                        <div x-show="req.status === 'Flagged for Replacement'" class="mt-2 pt-2 border-t border-amber-100 text-[11px]">
+                                            <p class="font-semibold text-amber-700" x-text="req.reject_reason"></p>
+                                            <p class="text-amber-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
                                             <button type="button" x-show="!req._showPicker" @click="req._showPicker = true" class="mt-1.5 text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Palitan ang Dokumento" en="Replace Document" /></button>
-                                            <div x-show="req._showPicker" x-cloak x-transition class="mt-2 pt-2 border-t border-rose-100/70">
+                                            <div x-show="req._showPicker" x-cloak x-transition class="mt-2 pt-2 border-t border-amber-100/70">
                                                 <x-ui.file-picker
                                                     files="files"
                                                     onSelect="replaceRequirementFile(req, file.name)"

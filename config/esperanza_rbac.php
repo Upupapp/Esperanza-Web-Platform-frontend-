@@ -131,6 +131,7 @@ $permissionModules = [
             ['key' => 'set_general', 'name' => 'General Settings', 'perms' => ['view', 'edit']],
             ['key' => 'set_branding', 'name' => 'Municipality Branding', 'perms' => ['view', 'edit']],
             ['key' => 'set_site_content', 'name' => 'Site Content (Privacy, Terms, Support)', 'perms' => ['view', 'edit']],
+            ['key' => 'set_service_catalog', 'name' => 'Service Catalog (Dokyu/Tulong Fees & Requirements)', 'perms' => ['view', 'edit']],
         ],
     ],
     [

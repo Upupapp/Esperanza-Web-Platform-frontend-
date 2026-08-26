@@ -108,8 +108,7 @@ are provisioned internally (UI can imply this, no backend needed).
 ## Standard workflows
 
 - **Citizen Registration**: Registration → Verification → Resident Profile → Dashboard
-- **Document Requests**: Citizen (Select Document → Fill Form → Submit) → Admin (Verify → Approve → Prepare → Ready → Released → Completed)
-- **Citizen Assistance**: Citizen (Submit Request) → Admin (Review → Assign → Approve → Release → Completed)
+- **Document Requests / Citizen Assistance (Dokyu & Tulong)**: Citizen (Select Service → Fill Form → Submit) → Admin (Submitted → Under Verification → Approved → Mark to Release → Released), with a correction branch (Under Verification → Under Review → Resubmitted → back into verification) and a terminal Rejected outcome. Both Dokyu and Tulong share this exact process-tab lifecycle — see the Process tab in each admin page for the full transition rules.
 - **Announcements**: Draft → Review → Publish → Archive
 
 ## Universal status system
@@ -117,7 +116,7 @@ are provisioned internally (UI can imply this, no backend needed).
 Reuse exactly these status names everywhere — never invent new ones:
 
 Draft, Submitted, Pending Review, Under Verification, Assigned, Processing,
-Waiting Requirements, Approved, Rejected, Ready for Release, Released,
+Under Review, Resubmitted, Approved, Rejected, Mark to Release, Released,
 Completed, Cancelled, Archived.
 
 ## Component architecture

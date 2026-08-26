@@ -31,7 +31,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4" x-show="cvType === 'Individual'">
         <x-ui.stat-card @click="cvStatusFilter = 'Pending Review'" class="cursor-pointer" label="Pending Review" valueBind="cvCounts.pending" icon="clock" color="orange" :delay="0" />
         <x-ui.stat-card @click="cvStatusFilter = 'Under Verification'" class="cursor-pointer" label="Under Verification" valueBind="cvCounts.underVerification" icon="search" color="brand" :delay="75" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvCounts.verified" icon="badge-check" color="green" :delay="150" />
+        <x-ui.stat-card @click="cvStatusFilter = 'Approved'" class="cursor-pointer" label="Approved" valueBind="cvCounts.verified" icon="badge-check" color="green" :delay="150" />
         <x-ui.stat-card @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvCounts.rejected" icon="circle-x" color="red" :delay="225" />
         <x-ui.stat-card @click="cvStatusFilter = 'Flagged'" class="cursor-pointer" label="Identity Flagged" valueBind="cvCounts.flagged" icon="shield-alert" color="gold" :delay="300" />
         <x-ui.stat-card @click="cvStatusFilter = 'Not Registered'" class="cursor-pointer" label="Not Registered" sublabel="Notified, not yet signed up" valueBind="cvCounts.notRegistered" icon="user-round-x" color="slate" :delay="375" />
@@ -79,7 +79,7 @@
                 >
                     <option value="">All Statuses</option>
                     <template x-if="cvType === 'Individual'">
-                        <template x-for="s in ['Pending Review', 'Under Verification', 'Verified', 'Rejected', 'Flagged', 'Not Registered']" :key="s">
+                        <template x-for="s in ['Pending Review', 'Under Verification', 'Approved', 'Rejected', 'Flagged', 'Not Registered']" :key="s">
                             <option :value="s" x-text="s === 'Flagged' ? 'Identity Flagged' : s"></option>
                         </template>
                     </template>
@@ -256,7 +256,7 @@
                                     x-show="i.citizen_account"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"
                                     :class="{
-                                        'bg-emerald-50 text-emerald-700 ring-emerald-200': i.citizen_account?.status === 'Verified',
+                                        'bg-emerald-50 text-emerald-700 ring-emerald-200': i.citizen_account?.status === 'Approved',
                                         'bg-amber-50 text-amber-700 ring-amber-200': i.citizen_account?.status === 'Pending Review',
                                         'bg-indigo-50 text-indigo-700 ring-indigo-200': i.citizen_account?.status === 'Under Verification',
                                         'bg-rose-50 text-rose-700 ring-rose-200': i.citizen_account?.status === 'Rejected',
@@ -265,7 +265,7 @@
                                     <span
                                         class="w-1.5 h-1.5 rounded-full"
                                         :class="{
-                                            'bg-emerald-500': i.citizen_account?.status === 'Verified',
+                                            'bg-emerald-500': i.citizen_account?.status === 'Approved',
                                             'bg-amber-500': i.citizen_account?.status === 'Pending Review',
                                             'bg-indigo-500': i.citizen_account?.status === 'Under Verification',
                                             'bg-rose-500': i.citizen_account?.status === 'Rejected',

@@ -64,7 +64,7 @@
     $totalCollected = 300.00;
     $paidCount = collect($payments)->where('status', 'Approved')->count();
     $reviewCount = collect($payments)->where('status', 'Pending Review')->count();
-    $unpaidCount = collect($payments)->where('status', 'Waiting Requirements')->count();
+    $unpaidCount = collect($payments)->where('status', 'Under Review')->count();
 @endphp
 
 <x-layouts.admin title="Payments" subtitle="Track Dokyu and Tulong invoices, methods, and attached receipts." active="payments">
@@ -99,7 +99,7 @@
             matches(p) {
                 if (!this.$store.session.inScope(p.barangay)) return false;
                 const tabOk = this.tab === 'all'
-                    || (this.tab === 'unpaid' && p.status === 'Waiting Requirements')
+                    || (this.tab === 'unpaid' && p.status === 'Under Review')
                     || (this.tab === 'review' && p.status === 'Pending Review')
                     || (this.tab === 'paid' && p.status === 'Approved');
                 const barangayOk = this.barangayFilter === '' || p.barangay === this.barangayFilter;
@@ -134,7 +134,7 @@
             <x-ui.stat-card label="Total Collected" value="₱{{ number_format($totalCollected, 2) }}" icon="banknote" color="green" :delay="40" />
             <x-ui.stat-card label="Paid" value="{{ $paidCount }}" valueBind="payments.filter(p => p.status === 'Approved').length" icon="circle-check" color="green" :delay="80" />
             <x-ui.stat-card label="Pending Review" value="{{ $reviewCount }}" valueBind="payments.filter(p => p.status === 'Pending Review').length" icon="clock" color="orange" sublabel="Receipt awaiting verification" :delay="120" />
-            <x-ui.stat-card label="Awaiting Payment" value="{{ $unpaidCount }}" valueBind="payments.filter(p => p.status === 'Waiting Requirements').length" icon="circle-dollar-sign" color="red" :delay="160" />
+            <x-ui.stat-card label="Awaiting Payment" value="{{ $unpaidCount }}" valueBind="payments.filter(p => p.status === 'Under Review').length" icon="circle-dollar-sign" color="red" :delay="160" />
         </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
@@ -241,7 +241,7 @@
                         </td>
                         <td class="px-4 py-3 text-slate-500 hidden xl:table-cell whitespace-nowrap">{{ $p['date'] }}</td>
                         <td class="px-4 py-3">
-                            <x-ui.badge status="Waiting Requirements" x-show="payments[{{ $i }}].status === 'Waiting Requirements'" />
+                            <x-ui.badge status="Under Review" x-show="payments[{{ $i }}].status === 'Under Review'" />
                             <x-ui.badge status="Pending Review" x-show="payments[{{ $i }}].status === 'Pending Review'" x-cloak />
                             <x-ui.badge status="Approved" x-show="payments[{{ $i }}].status === 'Approved'" x-cloak />
                             <x-ui.badge status="Rejected" x-show="payments[{{ $i }}].status === 'Rejected'" x-cloak />
@@ -346,8 +346,8 @@
                          components/admin/payment-receipt.blade.php. --}}
                     <x-admin.payment-receipt recordExpr="payments[selected]" />
 
-                    <!-- Admin: attach receipt on behalf of citizen (Waiting Requirements rows) -->
-                    <div x-show="payments[selected].status === 'Waiting Requirements'" x-cloak>
+                    <!-- Admin: attach receipt on behalf of citizen (Under Review rows) -->
+                    <div x-show="payments[selected].status === 'Under Review'" x-cloak>
                         <p class="text-sm font-semibold text-navy-900 mb-3 mt-4">Record Payment</p>
                         <p class="text-xs text-slate-400 mb-3">If the citizen paid over-the-counter or you've verified proof of payment, record it here.</p>
                         <div class="space-y-2 mb-4">
@@ -438,7 +438,7 @@
             </div>
 
             <x-slot:footer>
-                <template x-if="selected !== null && payments[selected].status === 'Waiting Requirements'">
+                <template x-if="selected !== null && payments[selected].status === 'Under Review'">
                     <x-ui.button
                         size="sm"
                         ::disabled="!method || !receipt || processing"
@@ -468,7 +468,7 @@
                         </x-ui.button>
                     </div>
                 </template>
-                <template x-if="selected !== null && !['Waiting Requirements', 'Pending Review'].includes(payments[selected].status)">
+                <template x-if="selected !== null && !['Under Review', 'Pending Review'].includes(payments[selected].status)">
                     <x-ui.button size="sm" @click="open = false">Close</x-ui.button>
                 </template>
             </x-slot:footer>

@@ -46,7 +46,7 @@
         ['type' => 'Certificate of Employment', 'category' => 'Supporting Documents', 'file_type' => 'docx'],
         ['type' => 'Proof of Income', 'category' => 'Supporting Documents', 'file_type' => 'pdf'],
     ];
-    $storageStatuses = ['Pending Review', 'Under Verification', 'Waiting Requirements', 'Approved', 'Completed', 'Rejected'];
+    $storageStatuses = ['Pending Review', 'Under Verification', 'Under Review', 'Approved', 'Completed', 'Rejected'];
     $storageMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
 
     // One representative citizen per barangay (two for the six barangays
@@ -178,7 +178,7 @@
             statusStyles: {
                 'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
-                'Waiting Requirements': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
                 'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
                 'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
@@ -368,7 +368,7 @@
                                 <div><dt class="text-xs text-slate-400">Barangay</dt><dd class="text-sm font-semibold text-navy-900" x-text="'Brgy. ' + selectedCitizen.barangay"></dd></div>
                                 <div><dt class="text-xs text-slate-400">Verification</dt><dd class="text-sm font-semibold" :class="selectedCitizen.verification === 'Verified' ? 'text-emerald-600' : 'text-slate-500'" x-text="selectedCitizen.verification || '—'"></dd></div>
                                 <div><dt class="text-xs text-slate-400">Document Count</dt><dd class="text-sm font-semibold text-navy-900" x-text="selectedCitizenDocs.length"></dd></div>
-                                <div><dt class="text-xs text-slate-400">Pending Review</dt><dd class="text-sm font-semibold text-amber-600" x-text="selectedCitizenDocs.filter(d => ['Pending Review','Under Verification','Waiting Requirements'].includes(d.status)).length"></dd></div>
+                                <div><dt class="text-xs text-slate-400">Pending Review</dt><dd class="text-sm font-semibold text-amber-600" x-text="selectedCitizenDocs.filter(d => ['Pending Review','Under Verification','Under Review'].includes(d.status)).length"></dd></div>
                             </dl>
                         </div>
 

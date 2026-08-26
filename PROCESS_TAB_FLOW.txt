@@ -1,0 +1,164 @@
+ESPERANZA WEB PLATFORM — ADMIN PROCESS TAB
+Dokyu (Document Requests) & Tulong (Assistance Requests) Workflow
+====================================================================
+
+Both admin/document-requests.blade.php and admin/assistance-requests.blade.php
+implement the exact same request lifecycle. A request is a single record
+(same ref/ID for its entire life) that moves between a fixed set of
+whole-request statuses. Individual submitted documents ("requirements")
+inside a request carry their own, separate per-requirement status, which is
+what actually drives the whole-request status forward.
+
+
+1. WHOLE-REQUEST STATUSES
+--------------------------------------------------------------------
+    Submitted           Citizen submitted; admin has not opened it yet.
+    Under Verification  Admin is actively reviewing documents.
+    Under Review        One or more documents were flagged as wrong/
+                         incomplete; the request is waiting on the citizen.
+    Resubmitted         Citizen resubmitted corrected documents; back in
+                         the admin's queue for another look.
+    Approved            Verification passed; request is being prepared.
+    Mark to Release      Prepared and ready for the citizen to claim.
+    Released            Handed over to the citizen. Terminal.
+    Rejected            Application denied. Terminal.
+
+Rejected and Released are the only two terminal states — nothing moves out
+of them. Every other transition is admin- or citizen-triggered as described
+below.
+
+
+2. THE THREE PATHS
+--------------------------------------------------------------------
+
+  STANDARD APPROVAL PATH
+  Submitted -> Under Verification -> Approved -> Mark to Release -> Released
+
+  CORRECTION / RESUBMISSION PATH (the request never resets, never gets a
+  new ID, and never loses its original documents or review remarks)
+  Submitted -> Under Verification -> Under Review -> Resubmitted
+            -> Approved -> Mark to Release -> Released
+  (Resubmitted -> Under Review is also valid if the correction is still
+  wrong — this loop can repeat as many times as needed.)
+
+  REJECTION PATH
+  Submitted -> Under Verification -> Rejected
+
+
+3. HOW A REQUEST ACTUALLY MOVES: PER-REQUIREMENT FLAGGING
+--------------------------------------------------------------------
+Opening a Submitted request auto-advances it to Under Verification — there
+is no separate "start review" click.
+
+Each submitted document (requirement) inside the request has its own
+status: Pending Review, Approved, Flagged for Replacement, Under
+Verification, Rejected, or Resubmitted. The admin reviews requirements one
+at a time:
+
+    Approve               -> requirement becomes Approved
+    Flag for Replacement  -> requirement becomes Flagged for Replacement
+                              (admin must give a reason + remarks — this is
+                              specific to that one document, e.g. "Barangay
+                              Certificate is expired")
+    Needs Verification    -> requirement becomes Under Verification
+    Reject                -> requirement becomes Rejected
+
+Flagging ANY requirement as "Flagged for Replacement" automatically rolls
+the WHOLE request's status to Under Review — there is no separate
+whole-request-level "needs additional documents" button for this anymore;
+the per-requirement flag IS the mechanism. This keeps the reason tied to
+the exact document that's wrong, rather than a generic whole-request note.
+
+Once a requirement is Flagged for Replacement, an admin action "Mark as
+Resubmitted" simulates the citizen having re-uploaded a corrected file: it
+preserves the old (flagged) file + reason as history (see Section 5), swaps
+in the new file, and sets that requirement's status to Resubmitted. A
+"Citizen replaced this file — compare with the flagged version below."
+note appears on that requirement so it's never confused with a document
+that was simply approved on the first pass.
+
+
+4. WHOLE-REQUEST ACTIONS, BY STATUS
+--------------------------------------------------------------------
+    Submitted            (auto-advances to Under Verification on open)
+
+    Under Verification   Approve            -> Approved
+                          Reject *           -> Rejected (terminal)
+                          (Under Review is reached only via per-
+                           requirement flagging, not a button here)
+
+    Under Review          Mark as Resubmitted -> Resubmitted
+                          Reject *            -> Rejected (terminal)
+                          (the request is waiting on the citizen; Reject
+                          exists here too in case the citizen never
+                          corrects it or the case turns out unsalvageable)
+
+    Resubmitted           Approve             -> Approved
+                          Still Needs Correction -> Under Review (loop)
+
+    Approved               Mark to Release      -> Mark to Release
+
+    Mark to Release        Release to Citizen   -> Released
+                          (blocked until Proof of Release evidence is
+                          captured/uploaded)
+
+    Released / Rejected   Terminal — no actions shown.
+
+  * Reject always requires typed Decision Remarks — the button is disabled
+    until something is entered, and that text is what the citizen sees.
+
+
+5. HISTORY & DATA INTEGRITY
+--------------------------------------------------------------------
+Every requirement keeps a `versions` array. Each time it's flagged or
+resubmitted, the CURRENT file/status/reason is pushed into that array
+before being overwritten — so the original submission and every correction
+attempt remain visible via a "Show version history" toggle. Nothing is
+silently overwritten:
+
+    - Original file/decision reason -> preserved as a version entry
+    - New (resubmitted) file        -> becomes the current file
+    - Ref / request ID              -> never changes
+    - Whole-request remarks         -> preserved and shown when reopening
+                                        a Resubmitted request ("Citizen
+                                        Resubmitted — Original Correction
+                                        Request" banner)
+
+
+6. CITIZEN-SIDE EXPERIENCE
+--------------------------------------------------------------------
+citizen/document-requests.blade.php and citizen/assistance-requests.blade.php
+mirror this exact status vocabulary and stepper (Submitted -> Under
+Verification -> Approved -> Mark to Release -> Released, 5 steps).
+
+When a request is Under Review, the citizen sees an "Application Needs
+Correction" panel listing exactly which requirement(s) are flagged, why,
+and a "Replace Document" action per flagged item. Clicking it uploads a
+replacement and marks that requirement Resubmitted. A "Resubmit
+Application" / "Resubmit Request" button then moves the WHOLE request from
+Under Review to Resubmitted — never back to Submitted, never a new
+request/ref, and the flagged version stays visible in that requirement's
+history.
+
+Rejected is shown as a plain, terminal, informational notice (remarks only)
+— no resubmit action is offered from it, matching the admin side.
+
+
+7. STATUS VALUES DELIBERATELY NOT USED HERE
+--------------------------------------------------------------------
+Processing, Assigned, and Completed are part of the platform's broader
+Universal Status System (CLAUDE.md) but are intentionally NOT used as
+top-level Process tab stages for either Dokyu or Tulong — both services
+share exactly the 8-status flow in Section 1 above. (Tulong previously had
+its own Assigned/Processing/Completed-based flow; it has since been
+unified with Dokyu's.)
+
+
+FILES
+--------------------------------------------------------------------
+  resources/views/admin/document-requests.blade.php     Dokyu admin Process tab
+  resources/views/admin/assistance-requests.blade.php    Tulong admin Process tab
+  resources/views/citizen/document-requests.blade.php    Dokyu citizen view
+  resources/views/citizen/assistance-requests.blade.php  Tulong citizen view
+  config/esperanza_validation_guide.php                  Decision-outcome labels
+  CLAUDE.md                                               Canonical status list

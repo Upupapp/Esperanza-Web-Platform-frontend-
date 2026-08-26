@@ -35,24 +35,33 @@
             // platform-wide); update here as real family info gets added.
             'emergency_name' => $ind['emergency']['name'] ?? null,
             'emergency_contact' => $ind['emergency']['contact'] ?? null,
+            // Same principle, extended to family background + education +
+            // address — most residents don't have these on file yet either,
+            // so they stay null (and the form falls back to the random pool)
+            // until real data is added per resident.
+            'father_name' => $ind['father_name'] ?? null,
+            'mother_name' => $ind['mother_name'] ?? null,
+            'mother_maiden_name' => $ind['mother_maiden_name'] ?? null,
+            'education' => $ind['education'] ?? null,
+            'address' => $ind['address'] ?? null,
         ];
     }
     $requests = [
         ['ref' => 'DR-2026-2231', 'citizen' => 'Perla Dionisio', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 12, 2026', 'status' => 'Pending Review'],
-        ['ref' => 'DR-2026-2228', 'citizen' => 'Romeo Villaflor', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 11, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2228', 'citizen' => 'Romeo Villaflor', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 11, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2225', 'citizen' => 'Cristina Manalo', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 10, 2026', 'status' => 'Under Verification'],
         ['ref' => 'DR-2026-2270', 'citizen' => 'Kevin Ray Dizon', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 9, 2026', 'status' => 'Completed'],
-        ['ref' => 'DR-2026-2217', 'citizen' => 'Bienvenido Rosales', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 9, 2026', 'status' => 'Waiting Requirements'],
+        ['ref' => 'DR-2026-2217', 'citizen' => 'Bienvenido Rosales', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 9, 2026', 'status' => 'Under Review'],
         ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'barangay' => 'Baras', 'submitted' => 'Jul 10, 2026', 'status' => 'Pending Review'],
         ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Cedula', 'office' => "Treasurer's Office", 'barangay' => 'Poblacion', 'submitted' => 'Jul 8, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'DR-2026-2201', 'citizen' => 'Elmer Bantillo', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 7, 2026', 'status' => 'Waiting Requirements', 'requirements' => [
+        ['ref' => 'DR-2026-2201', 'citizen' => 'Elmer Bantillo', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 7, 2026', 'status' => 'Under Review', 'requirements' => [
             ['key' => 'req_valid_id', 'name' => 'One (1) valid government-issued ID', 'file' => 'Elmer-Valid-ID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
             ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).', 'versions' => [
                 ['file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jul 7, 2026', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).'],
             ]],
             ['key' => 'req_interview', 'name' => 'Brief interview / case assessment with MSWDO', 'file' => 'Interview-Notes.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
-        ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'barangay' => 'Poblacion', 'submitted' => 'Jul 3, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'barangay' => 'Poblacion', 'submitted' => 'Jul 3, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Iligan', 'submitted' => 'Jun 29, 2026', 'status' => 'Approved'],
         ['ref' => 'DR-2026-2098', 'citizen' => 'Teresita Salazar', 'type' => 'Senior Citizen ID', 'office' => 'OSCA', 'barangay' => 'Agoho', 'submitted' => 'Jun 22, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-1998', 'citizen' => 'Josefina Marbella', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Jun 14, 2026', 'status' => 'Completed'],
@@ -74,24 +83,24 @@
         // most of the 20 barangay-scoped roles would land on an empty table.
         ['ref' => 'DR-2026-2240', 'citizen' => 'Joel Aranas', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Almero)', 'barangay' => 'Almero', 'submitted' => 'Jul 6, 2026', 'status' => 'Pending Review'],
         ['ref' => 'DR-2026-2271', 'citizen' => 'Lorna Dimaano', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Guadalupe)', 'barangay' => 'Guadalupe', 'submitted' => 'Jul 5, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'DR-2026-2242', 'citizen' => 'Divina Galvez', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labrador)', 'barangay' => 'Labrador', 'submitted' => 'Jul 4, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2242', 'citizen' => 'Divina Galvez', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labrador)', 'barangay' => 'Labrador', 'submitted' => 'Jul 4, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2243', 'citizen' => 'Ferdinand Hilario', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Libertad)', 'barangay' => 'Libertad', 'submitted' => 'Jun 25, 2026', 'status' => 'Completed'],
-        ['ref' => 'DR-2026-2244', 'citizen' => 'Analiza Ibarra', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Magsaysay)', 'barangay' => 'Magsaysay', 'submitted' => 'Jul 2, 2026', 'status' => 'Waiting Requirements'],
+        ['ref' => 'DR-2026-2244', 'citizen' => 'Analiza Ibarra', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Magsaysay)', 'barangay' => 'Magsaysay', 'submitted' => 'Jul 2, 2026', 'status' => 'Under Review'],
         ['ref' => 'DR-2026-2245', 'citizen' => 'Romulo Jacinto', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Masbaranon)', 'barangay' => 'Masbaranon', 'submitted' => 'Jul 8, 2026', 'status' => 'Pending Review'],
         ['ref' => 'DR-2026-2246', 'citizen' => 'Danilo Lazaro', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Potingbato)', 'barangay' => 'Potingbato', 'submitted' => 'Jun 18, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2247', 'citizen' => 'Precious Manalo', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Rizal)', 'barangay' => 'Rizal', 'submitted' => 'Jul 9, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'DR-2026-2272', 'citizen' => 'Ernesto Nierva', 'type' => 'Barangay Certification (Late Registration)', 'office' => 'Barangay Hall (Brgy. San Roque)', 'barangay' => 'San Roque', 'submitted' => 'Jul 6, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2272', 'citizen' => 'Ernesto Nierva', 'type' => 'Barangay Certification (Late Registration)', 'office' => 'Barangay Hall (Brgy. San Roque)', 'barangay' => 'San Roque', 'submitted' => 'Jul 6, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2273', 'citizen' => 'Ramil Pascua', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Sorosimbajan)', 'barangay' => 'Sorosimbajan', 'submitted' => 'Jul 11, 2026', 'status' => 'Pending Review'],
         ['ref' => 'DR-2026-2250', 'citizen' => 'Liezel Quimson', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Tawad)', 'barangay' => 'Tawad', 'submitted' => 'Jun 30, 2026', 'status' => 'Completed'],
-        ['ref' => 'DR-2026-2251', 'citizen' => 'Dante Robles', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Tunga)', 'barangay' => 'Tunga', 'submitted' => 'Jul 7, 2026', 'status' => 'Waiting Requirements'],
-        ['ref' => 'DR-2026-2252', 'citizen' => 'Cherry Ann Sarmiento', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Villa)', 'barangay' => 'Villa', 'submitted' => 'Jul 10, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2251', 'citizen' => 'Dante Robles', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Tunga)', 'barangay' => 'Tunga', 'submitted' => 'Jul 7, 2026', 'status' => 'Under Review'],
+        ['ref' => 'DR-2026-2252', 'citizen' => 'Cherry Ann Sarmiento', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Villa)', 'barangay' => 'Villa', 'submitted' => 'Jul 10, 2026', 'status' => 'Mark to Release'],
         // Reconciled 1:1 with the same residents' Constituent Profile records
         // (same ref numbers) so "Open in Dokyu" from a profile always lands on
         // real, matching data instead of an empty search result.
         ['ref' => 'DR-2026-2241', 'citizen' => 'Ronaldo Panganiban Bautista', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 6, 2026', 'status' => 'Released'],
         ['ref' => 'DR-2026-2288', 'citizen' => 'Joel Villanueva Aranas', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall (Brgy. Almero)', 'barangay' => 'Almero', 'submitted' => 'Jul 22, 2026', 'status' => 'Processing'],
         // Reset to Submitted (rather than their normal Released/Under
-        // Verification/Waiting Requirements progression) so a live demo can
+        // Verification/Under Review progression) so a live demo can
         // walk through "citizen submits on mobile → admin sees and processes
         // it" from a genuinely fresh state — see the same reset on Cristy's
         // Constituent Profile record below and in esperanza_constituents.php.
@@ -194,14 +203,14 @@
             ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2295', 'citizen' => 'Lorna Reyes Dimaano', 'type' => 'Certificate of Widowhood', 'office' => 'Civil Registrar', 'barangay' => 'Guadalupe', 'submitted' => 'Jul 24, 2026', 'status' => 'Approved'],
-        ['ref' => 'DR-2026-2248', 'citizen' => 'Bayani Cruz Espinosa', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Iligan)', 'barangay' => 'Iligan', 'submitted' => 'Jul 9, 2026', 'status' => 'Waiting Requirements'],
+        ['ref' => 'DR-2026-2248', 'citizen' => 'Bayani Cruz Espinosa', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Iligan)', 'barangay' => 'Iligan', 'submitted' => 'Jul 9, 2026', 'status' => 'Under Review'],
         ['ref' => 'DR-2026-2301', 'citizen' => 'Divina Torres Galvez', 'type' => 'Certificate of Good Moral Character', 'office' => 'Barangay Hall (Brgy. Labrador)', 'barangay' => 'Labrador', 'submitted' => 'Jul 8, 2026', 'status' => 'Released'],
         ['ref' => 'DR-2026-2219', 'citizen' => 'Analiza Bautista Ibarra', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Magsaysay', 'submitted' => 'Jun 15, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2309', 'citizen' => 'Grace Mendoza Kalaw', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Poblacion', 'submitted' => 'Jun 30, 2026', 'status' => 'Released'],
         ['ref' => 'DR-2026-2261', 'citizen' => 'Precious Domingo Manalo', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Rizal)', 'barangay' => 'Rizal', 'submitted' => 'Jul 16, 2026', 'status' => 'Pending Review'],
         ['ref' => 'DR-2026-2277', 'citizen' => 'Ernesto Salazar Nierva', 'type' => 'Certificate of Good Moral Character', 'office' => 'Barangay Hall (Brgy. San Roque)', 'barangay' => 'San Roque', 'submitted' => 'Jul 18, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'DR-2026-2313', 'citizen' => 'Josephine Castro Olivar', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Santiago)', 'barangay' => 'Santiago', 'submitted' => 'Jul 20, 2026', 'status' => 'Ready for Release'],
-        ['ref' => 'DR-2026-2249', 'citizen' => 'Dante Marquez Robles', 'type' => 'Barangay Certification (General Purpose)', 'office' => 'Barangay Hall (Brgy. Tunga)', 'barangay' => 'Tunga', 'submitted' => 'Jul 10, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2313', 'citizen' => 'Josephine Castro Olivar', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Santiago)', 'barangay' => 'Santiago', 'submitted' => 'Jul 20, 2026', 'status' => 'Mark to Release'],
+        ['ref' => 'DR-2026-2249', 'citizen' => 'Dante Marquez Robles', 'type' => 'Barangay Certification (General Purpose)', 'office' => 'Barangay Hall (Brgy. Tunga)', 'barangay' => 'Tunga', 'submitted' => 'Jul 10, 2026', 'status' => 'Mark to Release'],
     ];
 
     // Manual Document Validation & Application Decision Guide — maps each
@@ -325,7 +334,7 @@
                 $reqStatus = 'Rejected'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
             } elseif (in_array($status, ['Submitted', 'Pending Review'], true)) {
                 $reqStatus = 'Pending Review';
-            } elseif ($status === 'Waiting Requirements' && $i === $total - 1) {
+            } elseif ($status === 'Under Review' && $i === $total - 1) {
                 $reqStatus = 'Pending Review';
             }
             // A real supplied ID scan (currently only wired up for a couple
@@ -352,7 +361,34 @@
     // ref number -> same answer, every reload) rather than re-randomized —
     // a real backend would simply store what the citizen actually typed.
     $formSpecs = config('esperanza_service_form_specs');
-    $synthesizeFormAnswer = function (array $field, string $ref, string $citizenFirst, string $barangay, ?array $bio = null) {
+    // Every educationalAttainment/highestEducationalAttainment/
+    // educationalAttainmentBeforeTraining field in the form specs uses the
+    // same short bucket list (None/Elementary/High School/Vocational/
+    // College/Post Graduate) — never the Constituents profile's own more
+    // specific wording ("Senior High School Graduate", "College Graduate",
+    // etc.), so an exact-match guard (like the one used for sex/civil
+    // status above) would never fire. This maps a real education value to
+    // whichever bucket it actually belongs in.
+    $resolveEducationOption = function (string $raw, array $options) {
+        $r = strtolower($raw);
+        $buckets = [
+            'post grad' => 'Post Graduate',
+            'vocational' => 'Vocational',
+            'college' => 'College',
+            'senior high' => 'High School',
+            'junior high' => 'High School',
+            'high school' => 'High School',
+            'elementary' => 'Elementary',
+            'no grade' => 'None',
+        ];
+        foreach ($buckets as $needle => $bucket) {
+            if (str_contains($r, $needle) && in_array($bucket, $options, true)) {
+                return $bucket;
+            }
+        }
+        return null;
+    };
+    $synthesizeFormAnswer = function (array $field, string $ref, string $citizenFirst, string $barangay, ?array $bio = null) use ($resolveEducationOption) {
         $seed = crc32($ref . '|' . $field['key']);
         // Fields that describe the citizen themselves must agree with their
         // real Constituents profile wherever we actually know it — an
@@ -376,6 +412,19 @@
             }
             if ($field['key'] === 'emergencyContactNumber' && $field['type'] === 'text' && !empty($bio['emergency_contact'])) {
                 return $bio['emergency_contact'];
+            }
+            if (in_array($field['key'], ['fatherName', 'fatherFullName'], true) && $field['type'] === 'text' && !empty($bio['father_name'])) {
+                return $bio['father_name'];
+            }
+            if ($field['key'] === 'motherName' && $field['type'] === 'text' && !empty($bio['mother_name'])) {
+                return $bio['mother_name'];
+            }
+            if ($field['key'] === 'motherMaidenName' && $field['type'] === 'text' && !empty($bio['mother_maiden_name'])) {
+                return $bio['mother_maiden_name'];
+            }
+            if (in_array($field['key'], ['educationalAttainment', 'highestEducationalAttainment', 'educationalAttainmentBeforeTraining'], true) && $field['type'] === 'select' && !empty($bio['education'])) {
+                $resolved = $resolveEducationOption($bio['education'], $field['options'] ?? []);
+                if ($resolved) return $resolved;
             }
         }
         $textPool = [
@@ -465,8 +514,18 @@
         'Cristy Pareja Bonghanoy' => asset('images/esperanza/residents/cristy-id.png'),
         'Ronaldo Panganiban Bautista' => asset('images/esperanza/residents/ronaldo-id.png'),
     ];
+    // Official reference-form PDF per service, for the "Reference Form" panel
+    // shown once a request reaches Mark to Release (see admin/document-
+    // requests.blade.php's process modal). Not every service has one on
+    // file — those simply resolve to null and the panel shows a fallback.
+    $referencePdfByType = collect(config('esperanza_municipal_documents.documents'))
+        ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
+        ->concat(config('esperanza_tulong_types.types'))
+        ->filter(fn ($d) => !empty($d['reference_pdf']))
+        ->pluck('reference_pdf', 'name');
     foreach ($requests as &$r) {
         $r = array_merge($r, $dokyuClassification[$r['type']] ?? ['category' => 'Other Municipal Services', 'office' => $r['office'], 'level' => 'Municipal']);
+        $r['reference_pdf'] = $referencePdfByType[$r['type']] ?? null;
         $r['assigned'] = $assignedByRef[$r['ref']] ?? null;
         $r['service_guide_key'] = $typeToServiceGuideKey[$r['type']] ?? null;
         $r['purpose'] = $r['purpose'] ?? ($purposeByCategory[$r['category']] ?? 'For general legal/administrative purposes');
@@ -492,8 +551,8 @@
     }
     unset($r);
 
-    $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Ready for Release', 'done' => 'Completed'];
-    $actionStatuses = ['Pending Review', 'Under Verification', 'Waiting Requirements'];
+    $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Mark to Release', 'done' => 'Completed'];
+    $actionStatuses = ['Pending Review', 'Under Verification', 'Under Review', 'Resubmitted'];
     $doneStatuses = ['Completed', 'Released'];
 @endphp
 
@@ -543,6 +602,15 @@
             insertStandardReason(label) {
                 const r = this.standardReasons.find(x => x.label === label);
                 if (r) this.rejectRemarks = r.message;
+            },
+            get flaggedRequirements() {
+                return (this.selected?.requirements || []).filter(r => r.reject_reason || r.remarks);
+            },
+            useRequirementReasons() {
+                if (!this.flaggedRequirements.length) return;
+                this.rejectRemarks = this.flaggedRequirements
+                    .map(r => r.name + ': ' + (r.remarks || r.reject_reason))
+                    .join('\n\n');
             },
             // Full mobile form preview helpers — see
             // components/admin/request-form-review.blade.php.
@@ -648,17 +716,18 @@
                 'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
                 'Processing': ['bg-brand-50 text-brand-700 ring-brand-200', 'bg-brand-500'],
-                'Waiting Requirements': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
                 'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
-                'Ready for Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
+                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
                 'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
             },
             matchesTab(r) {
                 if (this.tab === 'all') return true;
                 if (this.tab === 'action') return this.actionStatuses.includes(r.status);
-                if (this.tab === 'release') return r.status === 'Ready for Release';
+                if (this.tab === 'release') return r.status === 'Mark to Release';
                 if (this.tab === 'done') return this.doneStatuses.includes(r.status);
                 return true;
             },
@@ -678,7 +747,7 @@
             },
             clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; },
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Waiting Requirements': 1, 'Approved': 2, 'Ready for Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
+                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
             // Opening a freshly-submitted request IS starting its review —
@@ -697,6 +766,16 @@
                 this.open = true;
                 this.$nextTick(() => window.renderIcons?.());
             },
+            // Pushes a status-change notification into the citizen's
+            // Notifications list (see $store.citizenNotifications in
+            // resources/js/app.js) — every status transition below calls
+            // this so the citizen sees each processing step, not just the
+            // final outcome.
+            notifyStatus(title, body, icon = 'bell', color = 'brand') {
+                this.$store.citizenNotifications.push({
+                    icon, color, portal: 'dokyu', ref: this.selected.ref, title, body,
+                });
+            },
             reject() {
                 if (this.processing || !this.rejectRemarks.trim()) return;
                 this.processing = true;
@@ -707,6 +786,7 @@
                     this.processing = false;
                     this.persistProgress();
                     this.$dispatch('toast', { message: 'Request ' + this.selected.ref + ' rejected.', variant: 'error' });
+                    this.notifyStatus('Request Rejected', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') was rejected: ' + this.selected.remarks, 'circle-x', 'rose');
                 }, 700);
             },
             rejectReasons: ['Invalid document', 'Incorrect document', 'Unreadable', 'Expired', 'Wrong document', 'Missing information', 'Does not meet requirement', 'Other'],
@@ -717,7 +797,7 @@
             // requirement statuses alone.
             // Distinct advice per actual stage — not just per document-review
             // outcome. Once all requirements clear Approved, the request still
-            // has to move through Approved -> Ready for Release -> Released,
+            // has to move through Approved -> Mark to Release -> Released,
             // and each of those calls for a genuinely different next action
             // (prepare the document, capture Proof of Release, hand it over),
             // so the panel keeps saying something new instead of repeating
@@ -731,19 +811,26 @@
                     return { icon: 'circle-check', tone: 'emerald', title: 'Finalized', message: 'This request is complete — no further action is needed.' };
                 }
                 if (this.selected.status === 'Approved') {
-                    return { icon: 'package-check', tone: 'indigo', title: 'Prepare Document', message: 'Verification is complete. Prepare the requested document, then mark it Ready for Release.' };
+                    return { icon: 'package-check', tone: 'indigo', title: 'Prepare Document', message: 'Verification is complete. Prepare the requested document, then mark it Mark to Release.' };
                 }
-                if (this.selected.status === 'Ready for Release') {
+                if (this.selected.status === 'Mark to Release') {
                     return this.selected.release_evidence
                         ? { icon: 'circle-check', tone: 'emerald', title: 'Ready to Release', message: 'Proof of Release is on file. You can now release this document to the citizen.' }
                         : { icon: 'camera', tone: 'amber', title: 'Awaiting Proof of Release', message: 'Capture or upload Proof of Release (see the panel below) before this can be released to the citizen.' };
                 }
-                // Under Verification / Waiting Requirements — the actual
-                // document-review phase, where the advice reflects whatever
-                // is concretely blocking approval right now.
+                if (this.selected.status === 'Under Review') {
+                    const flagged = (this.selected.requirements || []).filter(r => r.status === 'Flagged for Replacement').length;
+                    return { icon: 'clock', tone: 'amber', title: 'Awaiting Citizen', message: (flagged ? flagged + ' document(s) flagged for replacement — ' : '') + 'this request is waiting for the citizen to resubmit corrected documents.' };
+                }
+                if (this.selected.status === 'Resubmitted') {
+                    return { icon: 'refresh-ccw', tone: 'sky', title: 'Resubmission Received', message: 'The citizen resubmitted corrected documents. Review them below, then approve or request another correction.' };
+                }
+                // Under Verification — the actual document-review phase,
+                // where the advice reflects whatever is concretely blocking
+                // approval right now.
                 const reqs = this.selected.requirements || [];
                 const rejected = reqs.filter(r => r.status === 'Rejected').length;
-                const pending = reqs.filter(r => r.status === 'Pending Review' || r.status === 'Waiting Requirements').length;
+                const pending = reqs.filter(r => r.status === 'Pending Review' || r.status === 'Under Review').length;
                 const underVerif = reqs.filter(r => r.status === 'Under Verification').length;
                 if (rejected > 0) {
                     return { icon: 'file-x', tone: 'rose', title: 'Action Needed', message: rejected + ' of ' + reqs.length + ' document(s) were rejected — the citizen must resubmit before this can proceed.' };
@@ -759,35 +846,61 @@
                 }
                 return { icon: 'info', tone: 'brand', title: 'In Progress', message: 'Review the submitted application and documents below, then choose a decision.' };
             },
-            // The guide's four decision outcomes only govern the document-
-            // validation phase of a request — once Approved, the remaining
-            // stages (Ready for Release, Released) are pure release
-            // logistics, not a document-review decision anymore.
+            // Governs the Decision Remarks textarea — shown whenever any
+            // remarks-requiring action below is actually reachable.
             get inValidationPhase() {
-                return this.selected && !this.terminalStatuses.includes(this.selected.status) && !['Approved', 'Ready for Release', 'Released'].includes(this.selected.status);
+                return this.selected && ['Under Verification', 'Under Review', 'Resubmitted'].includes(this.selected.status);
+            },
+            // Reject is available on the first pass (Under Verification) and
+            // also while a request is sitting Under Review — a citizen who
+            // never corrects, or whose original submission turns out to be
+            // unsalvageable, shouldn't be stuck waiting forever for a
+            // resubmission that may never come.
+            get canReject() {
+                return this.selected && ['Under Verification', 'Under Review'].includes(this.selected.status);
+            },
+            // Needs Additional Documents (whole-request) only applies to
+            // Resubmitted — reviewing a citizen's correction and finding it
+            // still isn't right sends it back to Under Review for another
+            // round. On the FIRST pass (Under Verification), the per-
+            // requirement Flag-for-Replacement action already identifies
+            // exactly which document is wrong and rolls the whole request
+            // into Under Review on its own (see confirmRequirementDecision)
+            // — this generic whole-request version would just duplicate
+            // that. Needs Manual Verification is dropped entirely for the
+            // same reason: the per-requirement Needs-Verification action
+            // already covers it.
+            get canRequestCorrection() {
+                return this.selected && this.selected.status === 'Resubmitted';
+            },
+            // The citizen has no live re-upload flow in this simulation, so
+            // this stands in for the citizen submitting corrected documents
+            // — the Under Review reason/remarks stay visible above (see the
+            // decision-outcome summary card) so the admin can still see why
+            // this was flagged, and any per-requirement history in
+            // req.versions is untouched.
+            markResubmitted() {
+                if (this.processing || this.selected.status !== 'Under Review') return;
+                this.processing = true;
+                setTimeout(() => {
+                    this.selected.status = 'Resubmitted';
+                    this.processing = false;
+                    this.persistProgress();
+                    this.$dispatch('toast', { message: this.selected.ref + ' marked Resubmitted.', variant: 'info' });
+                    this.notifyStatus('Documents Resubmitted', 'Your corrected documents for your ' + this.selected.type + ' request (' + this.selected.ref + ') were received and are back under review.', 'refresh-ccw', 'sky');
+                }, 700);
             },
             needsAdditionalDocuments() {
                 if (this.processing || !this.rejectRemarks.trim()) return;
                 this.processing = true;
                 setTimeout(() => {
-                    this.selected.status = 'Waiting Requirements';
+                    this.selected.status = 'Under Review';
                     this.selected.remarks = this.rejectRemarks.trim();
                     this.rejectRemarks = '';
                     this.processing = false;
                     this.persistProgress();
                     this.$dispatch('toast', { message: this.selected.ref + ' marked Needs Additional Documents.', variant: 'warning' });
-                }, 700);
-            },
-            needsManualVerification() {
-                if (this.processing || !this.rejectRemarks.trim()) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Under Verification';
-                    this.selected.remarks = this.rejectRemarks.trim();
-                    this.rejectRemarks = '';
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: this.selected.ref + ' marked Needs Manual Verification.', variant: 'info' });
+                    this.notifyStatus('Additional Documents Needed', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') needs additional documents: ' + this.selected.remarks, 'file-plus-2', 'amber');
                 }, 700);
             },
             verifyRequirement(req) {
@@ -821,25 +934,43 @@
                 // rejects the whole request — it rolls the request up into
                 // whichever review state that requirement now needs.
                 if (this.selected.status !== 'Rejected') {
-                    this.selected.status = outcome === 'Rejected' ? 'Waiting Requirements' : outcome;
+                    this.selected.status = (outcome === 'Rejected' || outcome === 'Flagged for Replacement') ? 'Under Review' : outcome;
                 }
-                const variant = outcome === 'Rejected' ? 'error' : outcome === 'Waiting Requirements' ? 'warning' : 'info';
+                const variant = outcome === 'Rejected' ? 'error' : outcome === 'Flagged for Replacement' ? 'warning' : 'info';
                 this.persistProgress();
                 this.$dispatch('toast', { message: req.name + ' marked ' + outcome + '.', variant });
             },
-            statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Ready for Release', 'Released'],
+            // The citizen has no live re-upload flow in this simulation, so
+            // this stands in for the citizen submitting a corrected file —
+            // the flagged version stays visible in req.versions (pushed by
+            // confirmRequirementDecision above) so the admin can still see
+            // what was wrong before, per the requirement that a correction
+            // never erases what was flagged.
+            markRequirementResubmitted(req) {
+                const ext = (req.file || '').toLowerCase().endsWith('.pdf') ? '.pdf' : '.jpg';
+                req.file = req.name.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_revised' + ext;
+                req.status = 'Resubmitted';
+                req.reject_reason = null;
+                req.remarks = null;
+                this.persistProgress();
+                this.$dispatch('toast', { message: req.name + ' marked resubmitted.', variant: 'info' });
+            },
+            statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             terminalStatuses: ['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'],
-            // What clicking the advance button actually does at each stage — matches the
-            // Dokyu status flow used by the Esperanza Mobile app: Submitted -> Under
-            // Verification -> Waiting Requirements (branch) -> Approved -> Ready for
-            // Release -> Released.
+            // What clicking the advance button actually does at each stage:
+            // Submitted -> Under Verification -> Approved -> Mark to Release
+            // -> Released, with a correction branch off Under Verification
+            // (Under Review -> Resubmitted, then back into this same
+            // sequence at Approved). Under Review has no entry here on
+            // purpose — see markResubmitted(), the request sits with the
+            // citizen at that point, not something the admin advances.
             stageActionLabels: {
                 'Submitted': 'Begin Verification',
                 'Pending Review': 'Begin Verification',
                 'Under Verification': 'Approve Request',
-                'Waiting Requirements': 'Approve Request',
-                'Approved': 'Mark Ready for Release',
-                'Ready for Release': 'Release to Citizen',
+                'Resubmitted': 'Approve Request',
+                'Approved': 'Mark to Release',
+                'Mark to Release': 'Release to Citizen',
             },
             get nextStageLabel() {
                 if (!this.selected) return '';
@@ -861,8 +992,14 @@
                 this.selected.release_evidence_at = null;
                 this.persistProgress();
             },
+            // Generic advance-to-next-stage action. Deliberately a no-op
+            // while Under Review — that status sits with the citizen, not
+            // the admin, and can only be left via markResubmitted() (see
+            // the footer, which hides this button in that state; this
+            // guard is a second line of defense against an invalid jump
+            // straight from Under Review to Approved).
             approve() {
-                if (this.processing) return;
+                if (this.processing || this.selected.status === 'Under Review') return;
                 this.processing = true;
                 setTimeout(() => {
                     const next = Math.min(this.stepIndex(this.selected.status) + 1, this.statusOrder.length - 1);
@@ -870,6 +1007,15 @@
                     this.processing = false;
                     this.persistProgress();
                     this.$dispatch('toast', { message: this.selected.ref + ' moved to next stage: ' + this.selected.status + '.', variant: 'success' });
+                    const stageNotice = {
+                        'Under Verification': ['Request Under Verification', 'is now being verified.', 'search-check', 'indigo'],
+                        'Approved': ['Request Approved', 'has been approved and is being prepared.', 'package-check', 'emerald'],
+                        'Mark to Release': ['Ready for Release', 'is ready for release! Visit the office to claim it.', 'circle-check', 'teal'],
+                        'Released': ['Request Released', 'has been released. Thank you!', 'check-check', 'cyan'],
+                    }[this.selected.status];
+                    if (stageNotice) {
+                        this.notifyStatus(stageNotice[0], 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') ' + stageNotice[1], stageNotice[2], stageNotice[3]);
+                    }
                 }, 700);
             },
         }"
@@ -916,7 +1062,7 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Requests" value="{{ count($requests) }}" valueBind="requests.length" icon="file-text" color="brand" sublabel="All statuses" :delay="0" />
             <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or verification" :delay="40" />
-            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="{{ collect($requests)->where('status', 'Ready for Release')->count() }}" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Mark to Release" value="{{ collect($requests)->where('status', 'Mark to Release')->count() }}" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
             <x-ui.stat-card :href="route('admin.analytics')" label="Avg. Processing Time" value="2.4 days" icon="timer" color="purple" trendDirection="down" trend="-0.6 days" sublabel="Within RA 11032 limits" :delay="120" />
         </div>
 
@@ -1056,7 +1202,7 @@
                     <div class="sm:w-40 shrink-0">
                         <p class="text-xs text-slate-400 mb-3 font-mono" x-text="selected.ref"></p>
                         <div class="flex flex-col">
-                            @foreach(['Submitted', 'Under Verification', 'Approved', 'Ready for Release', 'Released'] as $i => $step)
+                            @foreach(['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'] as $i => $step)
                                 <div class="flex items-start gap-3">
                                     <div class="flex flex-col items-center shrink-0">
                                         <span
@@ -1160,7 +1306,7 @@
                          has to leave this modal to see how (and whether) this
                          request's fee was settled. Shown for every Dokyu request
                          once a payment method has actually been chosen (not for
-                         a bare "Waiting Requirements" record where nothing's been
+                         a bare "Under Review" record where nothing's been
                          picked yet); the compact summary below always shows the
                          chosen method/amount/status, and the full receipt further
                          down (see x-admin.payment-receipt) only once a receipt
@@ -1195,7 +1341,7 @@
                             </div>
                             <span
                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
-                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': selectedPayment?.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': selectedPayment?.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': selectedPayment?.status === 'Pending Review' || selectedPayment?.status === 'Waiting Requirements' }"
+                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': selectedPayment?.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': selectedPayment?.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': selectedPayment?.status === 'Pending Review' || selectedPayment?.status === 'Under Review' }"
                             ><span x-text="selectedPayment?.status === 'Approved' ? 'Verified' : selectedPayment?.status"></span></span>
                         </div>
                         <x-admin.payment-receipt recordExpr="selectedPayment" />
@@ -1221,7 +1367,7 @@
                         </div>
                         <div class="space-y-2">
                             <template x-for="req in (selected.requirements || [])" :key="req.key">
-                                <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Waiting Requirements', 'border-indigo-200 bg-indigo-50/30': req.status === 'Under Verification', 'border-slate-200': req.status === 'Pending Review' }">
+                                <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Flagged for Replacement', 'border-indigo-200 bg-indigo-50/30': req.status === 'Under Verification', 'border-sky-200 bg-sky-50/30': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Pending Review' }">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2.5 min-w-0">
                                             <span
@@ -1256,14 +1402,15 @@
                                             ><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset whitespace-nowrap"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Waiting Requirements', 'bg-indigo-50 text-indigo-700 ring-indigo-200': req.status === 'Under Verification' }"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Flagged for Replacement', 'bg-indigo-50 text-indigo-700 ring-indigo-200': req.status === 'Under Verification', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
                                             ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
                                         </div>
                                     </div>
 
-                                    <div x-show="['Rejected', 'Waiting Requirements', 'Under Verification'].includes(req.status)" class="mt-2 pt-2 border-t text-[11px]" :class="req.status === 'Rejected' ? 'border-rose-100/70' : req.status === 'Waiting Requirements' ? 'border-amber-100/70' : 'border-indigo-100/70'">
-                                        <p class="font-semibold" :class="req.status === 'Rejected' ? 'text-rose-700' : req.status === 'Waiting Requirements' ? 'text-amber-700' : 'text-indigo-700'" x-text="req.reject_reason"></p>
-                                        <p class="mt-0.5" :class="req.status === 'Rejected' ? 'text-rose-600' : req.status === 'Waiting Requirements' ? 'text-amber-600' : 'text-indigo-600'" x-show="req.remarks" x-text="req.remarks"></p>
+                                    <div x-show="['Rejected', 'Flagged for Replacement', 'Under Verification'].includes(req.status) || (req.status === 'Resubmitted' && (req.versions || []).length)" class="mt-2 pt-2 border-t text-[11px]" :class="req.status === 'Rejected' ? 'border-rose-100/70' : req.status === 'Flagged for Replacement' ? 'border-amber-100/70' : req.status === 'Resubmitted' ? 'border-sky-100/70' : 'border-indigo-100/70'">
+                                        <p class="font-semibold" x-show="req.reject_reason" :class="req.status === 'Rejected' ? 'text-rose-700' : req.status === 'Flagged for Replacement' ? 'text-amber-700' : 'text-indigo-700'" x-text="req.reject_reason"></p>
+                                        <p class="mt-0.5" :class="req.status === 'Rejected' ? 'text-rose-600' : req.status === 'Flagged for Replacement' ? 'text-amber-600' : 'text-indigo-600'" x-show="req.remarks" x-text="req.remarks"></p>
+                                        <p class="font-medium text-sky-700 flex items-center gap-1" x-show="req.status === 'Resubmitted'"><i data-lucide="refresh-ccw" class="w-3 h-3"></i> Citizen replaced this file — compare with the flagged version below.</p>
                                         <button type="button" x-show="(req.versions || []).length" @click="req._showVersions = !req._showVersions" class="mt-1.5 text-slate-400 hover:text-slate-600 transition-colors">
                                             <span x-text="(req._showVersions ? 'Hide' : 'Show') + ' version history (' + req.versions.length + ')'"></span>
                                         </button>
@@ -1277,14 +1424,18 @@
                                     {{-- Four decision outcomes at the requirement level, matching the
                                          Manual Validation Guide exactly: Approve / Needs Additional
                                          Documents / Needs Manual Verification / Reject. --}}
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="req.status === 'Pending Review' && !req._decidingOutcome">
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Pending Review' || req.status === 'Resubmitted') && !req._decidingOutcome">
                                         <button type="button" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
                                         <span class="text-slate-200">·</span>
-                                        <button type="button" @click="startRequirementDecision(req, 'Waiting Requirements')" class="text-[11px] font-medium text-amber-600 hover:underline">Needs More Docs</button>
+                                        <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Under Verification')" class="text-[11px] font-medium text-indigo-600 hover:underline">Needs Verification</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="req.status === 'Flagged for Replacement' && !req._decidingOutcome">
+                                        <button type="button" @click="markRequirementResubmitted(req)" class="text-[11px] font-medium text-sky-600 hover:underline">Mark as Resubmitted</button>
                                     </div>
 
                                     <div x-show="req._decidingOutcome" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
@@ -1299,7 +1450,7 @@
                                             <button
                                                 type="button" x-bind:disabled="!req._reason" @click="confirmRequirementDecision(req)"
                                                 class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none rounded-lg px-2.5 py-1.5 transition-colors"
-                                                :class="req._decidingOutcome === 'Rejected' ? 'bg-rose-600 hover:bg-rose-700' : req._decidingOutcome === 'Waiting Requirements' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'"
+                                                :class="req._decidingOutcome === 'Rejected' ? 'bg-rose-600 hover:bg-rose-700' : req._decidingOutcome === 'Flagged for Replacement' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'"
                                             >Confirm</button>
                                             <button type="button" @click="req._decidingOutcome = null" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Cancel</button>
                                         </div>
@@ -1311,25 +1462,33 @@
 
                     <div
                         class="rounded-xl border px-3.5 py-3 mt-3 flex items-start gap-2.5"
-                        :class="selected.status === 'Rejected' ? 'bg-rose-50 border-rose-100' : selected.status === 'Under Verification' ? 'bg-indigo-50 border-indigo-100' : 'bg-amber-50 border-amber-100'"
-                        x-show="['Rejected', 'Waiting Requirements', 'Under Verification'].includes(selected.status) && selected.remarks"
+                        :class="selected.status === 'Rejected' ? 'bg-rose-50 border-rose-100' : selected.status === 'Under Verification' ? 'bg-indigo-50 border-indigo-100' : selected.status === 'Resubmitted' ? 'bg-sky-50 border-sky-100' : 'bg-amber-50 border-amber-100'"
+                        x-show="['Rejected', 'Under Review', 'Under Verification', 'Resubmitted'].includes(selected.status) && selected.remarks"
                     >
-                        <i :data-lucide="selected.status === 'Rejected' ? 'circle-x' : selected.status === 'Under Verification' ? 'search-check' : 'file-plus-2'" class="w-4 h-4 shrink-0 mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-500' : selected.status === 'Under Verification' ? 'text-indigo-500' : 'text-amber-500'"></i>
+                        <i :data-lucide="selected.status === 'Rejected' ? 'circle-x' : selected.status === 'Under Verification' ? 'search-check' : selected.status === 'Resubmitted' ? 'refresh-ccw' : 'file-plus-2'" class="w-4 h-4 shrink-0 mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-500' : selected.status === 'Under Verification' ? 'text-indigo-500' : selected.status === 'Resubmitted' ? 'text-sky-500' : 'text-amber-500'"></i>
                         <div class="min-w-0">
-                            <p class="text-xs font-semibold" :class="selected.status === 'Rejected' ? 'text-rose-700' : selected.status === 'Under Verification' ? 'text-indigo-700' : 'text-amber-700'" x-text="decisionOutcomes[selected.status]?.label || selected.status"></p>
-                            <p class="text-xs mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-600' : selected.status === 'Under Verification' ? 'text-indigo-600' : 'text-amber-600'" x-text="selected.remarks"></p>
+                            <p class="text-xs font-semibold" :class="selected.status === 'Rejected' ? 'text-rose-700' : selected.status === 'Under Verification' ? 'text-indigo-700' : selected.status === 'Resubmitted' ? 'text-sky-700' : 'text-amber-700'" x-text="selected.status === 'Resubmitted' ? 'Citizen Resubmitted — Original Correction Request' : (decisionOutcomes[selected.status]?.label || selected.status)"></p>
+                            <p class="text-xs mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-600' : selected.status === 'Under Verification' ? 'text-indigo-600' : selected.status === 'Resubmitted' ? 'text-sky-600' : 'text-amber-600'" x-text="selected.remarks"></p>
                         </div>
                     </div>
 
                     <div class="mt-3" x-show="inValidationPhase">
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Decision Remarks <span class="text-slate-400 font-normal">(required for Needs Additional Documents, Needs Manual Verification, or Reject — this is what the citizen will see)</span></label>
-                        <select
-                            @change="insertStandardReason($event.target.value); $event.target.value = ''"
-                            class="w-full mb-1.5 text-xs rounded-xl border border-slate-200 bg-white py-2 px-3 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
-                        >
-                            <option value="">Insert a standard reason…</option>
-                            <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
-                        </select>
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Decision Remarks <span class="text-slate-400 font-normal">(required for Reject, or for sending a resubmission back for another correction — this is what the citizen will see)</span></label>
+                        <p class="text-[11px] text-slate-400 mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <select
+                                @change="insertStandardReason($event.target.value); $event.target.value = ''"
+                                class="flex-1 min-w-0 text-xs rounded-xl border border-slate-200 bg-white py-2 px-3 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                            >
+                                <option value="">Insert a standard reason…</option>
+                                <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
+                            </select>
+                            <button
+                                type="button" x-show="flaggedRequirements.length" x-cloak
+                                @click="useRequirementReasons()"
+                                class="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-xl px-3 py-2 transition-colors whitespace-nowrap"
+                            >Use requirement reasons</button>
+                        </div>
                         <textarea
                             x-model="rejectRemarks" rows="2" placeholder="e.g. Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached."
                             class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
@@ -1383,12 +1542,12 @@
                         {{-- Proof of Release — a photo showing the citizen actually
                              received the document, captured/attached by the admin
                              at handover. Only relevant once the request has reached
-                             Ready for Release; stays visible afterward once captured
+                             Mark to Release; stays visible afterward once captured
                              so Released/Completed requests still show their own
                              proof on reopen. FRONTEND SIMULATION — no real camera
                              access, mirrors the same "simulated attach" pattern
                              already used for payment receipts on the Payments page. --}}
-                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Ready for Release' || selected.release_evidence" x-cloak>
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
                                 <i data-lucide="camera" class="w-3.5 h-3.5"></i> Proof of Release
                             </p>
@@ -1401,7 +1560,7 @@
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <span class="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3 h-3"></i> Captured <span x-text="selected.release_evidence_at"></span></span>
-                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-400 hover:text-rose-500" x-show="selected.status === 'Ready for Release'">Retake</button>
+                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-400 hover:text-rose-500" x-show="selected.status === 'Mark to Release'">Retake</button>
                                     </div>
                                 </div>
                             </template>
@@ -1416,6 +1575,29 @@
                                     <span class="text-[11px] font-medium">Upload Photo</span>
                                 </button>
                             </div>
+                        </div>
+
+                        {{-- Reference Form — the actual official form for this
+                             service, so the admin can check the prepared
+                             document against it before handover. Only shown
+                             once the request reaches Mark to Release, same
+                             visibility condition as Proof of Release above. --}}
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Reference Form
+                                <span x-show="selected.formNo" class="normal-case font-normal text-slate-400" x-text="'— ' + selected.formNo"></span>
+                            </p>
+                            <template x-if="selected.reference_pdf">
+                                <div class="mt-2.5">
+                                    <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50" style="height: 220px;">
+                                        <iframe :src="selected.reference_pdf" class="w-full h-full" title="Reference form preview"></iframe>
+                                    </div>
+                                    <a :href="selected.reference_pdf" target="_blank" rel="noopener" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium inline-flex items-center gap-1 mt-1.5">
+                                        <i data-lucide="external-link" class="w-3 h-3"></i> Open in new tab
+                                    </a>
+                                </div>
+                            </template>
+                            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this service.</p>
                         </div>
                     </div>
                 </div>
@@ -1496,25 +1678,31 @@
                 </p>
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">
                     <div class="flex items-center gap-2 flex-wrap justify-end">
-                        <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
-                            <span class="inline-flex items-center gap-1.5">
-                                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
-                                <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>
-                            </span>
-                        </x-ui.button>
-                        <template x-if="inValidationPhase">
+                        <template x-if="canReject">
+                            <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
+                                    <span x-text="processing ? 'Rejecting…' : 'Reject'"></span>
+                                </span>
+                            </x-ui.button>
+                        </template>
+                        <template x-if="canRequestCorrection">
                             <button
                                 type="button" :disabled="processing || !rejectRemarks.trim()" @click="needsAdditionalDocuments()"
                                 class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-40 disabled:pointer-events-none rounded-xl px-3.5 py-2 transition-colors"
-                            ><i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Needs Additional Documents</button>
+                            ><i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Still Needs Correction</button>
                         </template>
-                        <template x-if="inValidationPhase">
+                        {{-- The request sits with the citizen while Under
+                             Review — the only way out of that state is this
+                             button, standing in for the citizen actually
+                             resubmitting corrected documents. --}}
+                        <template x-if="selected.status === 'Under Review'">
                             <button
-                                type="button" :disabled="processing || !rejectRemarks.trim()" @click="needsManualVerification()"
-                                class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-40 disabled:pointer-events-none rounded-xl px-3.5 py-2 transition-colors"
-                            ><i data-lucide="search-check" class="w-3.5 h-3.5"></i> Needs Manual Verification</button>
+                                type="button" :disabled="processing" @click="markResubmitted()"
+                                class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 disabled:opacity-40 disabled:pointer-events-none rounded-xl px-3.5 py-2 transition-colors"
+                            ><i data-lucide="refresh-ccw" class="w-3.5 h-3.5"></i> Mark as Resubmitted</button>
                         </template>
-                        <x-ui.button size="sm" x-bind:disabled="processing || (selected.status === 'Ready for Release' && !selected.release_evidence)" @click="approve()" x-bind:title="selected.status === 'Ready for Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null">
+                        <x-ui.button size="sm" x-show="selected.status !== 'Under Review'" x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="!processing"></i>

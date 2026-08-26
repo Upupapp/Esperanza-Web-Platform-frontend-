@@ -117,6 +117,92 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
+    // Citizen-facing notifications, persisted to localStorage so a citizen
+    // still sees them after navigating away or reloading (same persistence
+    // approach as $store.citizenSession above — this project has no real
+    // backend, per CLAUDE.md). Dokyu/Tulong submission pushes from
+    // citizen/document-requests.blade.php and citizen/assistance-requests.blade.php;
+    // admin status-change actions (reject, needs more docs, approve, ready
+    // for release, release) push from the matching admin process modals so
+    // the citizen sees each processing step. citizen/notifications.blade.php
+    // reads and displays this list above its static seed notifications.
+    Alpine.store('citizenNotifications', {
+        items: JSON.parse(localStorage.getItem('esperanza_notifications') || '[]'),
+        persist() {
+            localStorage.setItem('esperanza_notifications', JSON.stringify(this.items));
+        },
+        push({ icon, color, title, body, ref, portal }) {
+            this.items.unshift({
+                id: Date.now() + Math.random(),
+                icon, color, title, body, ref, portal,
+                createdAt: new Date().toISOString(),
+                unread: true,
+            });
+            this.items = this.items.slice(0, 50);
+            this.persist();
+        },
+        // Backfills one notification per existing request reflecting its
+        // CURRENT status — without this, a citizen only ever sees a
+        // notification for something that changed status live in their own
+        // browser session; the 50+ pre-seeded historical Dokyu/Tulong mock
+        // requests would otherwise never appear here at all. Idempotent
+        // (keyed by ref, called from citizen/document-requests.blade.php
+        // and citizen/assistance-requests.blade.php's own init()) — safe to
+        // call on every page load, never creates duplicates. Backfilled
+        // items start read (unread: false) since they aren't a new event.
+        seedFromRequests(requests, portal) {
+            const existingRefs = new Set(this.items.map((n) => n.ref));
+            const statusCopy = {
+                'Submitted': ['file-plus', 'brand', (t) => 'Your ' + t + ' request has been submitted and is now Pending Review.'],
+                'Pending Review': ['clock', 'amber', (t) => 'Your ' + t + ' request is pending review.'],
+                'Under Verification': ['search-check', 'indigo', (t) => 'Your ' + t + ' request is now being verified.'],
+                'Under Review': ['file-plus-2', 'amber', (t) => 'Your ' + t + ' request needs additional documents.'],
+                'Assigned': ['send', 'indigo', (t) => 'Your ' + t + ' request has been assigned for processing.'],
+                'Processing': ['loader', 'indigo', (t) => 'Your ' + t + ' request is being processed.'],
+                'Approved': ['package-check', 'emerald', (t) => 'Your ' + t + ' request has been approved.'],
+                'Mark to Release': ['circle-check', 'teal', (t) => 'Your ' + t + ' request is ready for release!'],
+                'Released': ['check-check', 'cyan', (t) => 'Your ' + t + ' request has been released.'],
+                'Completed': ['circle-check', 'emerald', (t) => 'Your ' + t + ' request is complete.'],
+                'Rejected': ['circle-x', 'rose', (t) => 'Your ' + t + ' request was rejected.'],
+                'Cancelled': ['circle-x', 'rose', (t) => 'Your ' + t + ' request was cancelled.'],
+            };
+            const toAdd = [];
+            requests.forEach((r) => {
+                if (!r.ref || existingRefs.has(r.ref)) return;
+                const copy = statusCopy[r.status];
+                if (!copy) return;
+                const [icon, color, bodyFn] = copy;
+                toAdd.push({
+                    id: r.ref, icon, color, portal, ref: r.ref,
+                    title: r.status + ': ' + r.type,
+                    body: bodyFn(r.type) + (r.remarks ? ' ' + r.remarks : ''),
+                    createdAt: new Date().toISOString(),
+                    unread: false,
+                });
+            });
+            if (!toAdd.length) return;
+            this.items = [...this.items, ...toAdd];
+            this.persist();
+        },
+        markRead(id) {
+            const n = this.items.find((i) => i.id === id);
+            if (!n) return;
+            n.unread = false;
+            this.persist();
+        },
+        markAllRead() {
+            this.items.forEach((i) => (i.unread = false));
+            this.persist();
+        },
+        remove(id) {
+            this.items = this.items.filter((i) => i.id !== id);
+            this.persist();
+        },
+        get unreadCount() {
+            return this.items.filter((i) => i.unread).length;
+        },
+    });
+
     // Per-barangay directory (see components/layouts/citizen.blade.php, which
     // injects window.__barangayCatalog from config/esperanza_barangay_documents.php).
     // `.mine` lets any Citizen Portal page show the signed-in resident's own

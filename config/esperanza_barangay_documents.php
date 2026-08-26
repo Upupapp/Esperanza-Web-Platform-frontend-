@@ -78,7 +78,7 @@ $standardDocuments = [
         'level' => 'Barangay',
         'title' => 'BARANGAY BUSINESS CLEARANCE',
         'fee' => '₱100.00', 'days' => 'Same day',
-        'requirements' => ['One (1) valid government-issued ID', 'Right Thumbmark (to be taken at Barangay Hall)'],
+        'requirements' => ['One (1) valid government-issued ID', 'Proof of business location (lease contract or land title)'],
         'process' => ['Submit Request', 'Barangay Verification', 'Pay Fee', 'Release'],
         'fields' => [
             ['key' => 'applicant_name', 'label' => 'Applicant Full Name', 'type' => 'text', 'required' => true],
@@ -159,7 +159,7 @@ $standardDocuments = [
         'level' => 'Barangay',
         'title' => 'BARANGAY CLEARANCE',
         'fee' => '₱30.00', 'days' => 'Same day',
-        'requirements' => ['One (1) valid government-issued ID', 'Right Thumbmark (to be taken at Barangay Hall)'],
+        'requirements' => ['One (1) valid government-issued ID', 'Proof of residency'],
         'process' => ['Submit Request', 'Barangay Verification', 'Pay Fee', 'Certification by Punong Barangay', 'Release'],
         'validity' => 'Valid six (6) months from the date of issuance',
         'fields' => [
@@ -218,6 +218,7 @@ $standardDocuments = [
     ],
     [
         'key' => 'brgy_cert_general',
+        'reference_pdf' => asset('documents/reference-forms/barangay-certification.pdf'),
         'name' => 'Barangay Certification (General Purpose)',
         'category' => 'Barangay Certificates',
         'office' => 'Barangay Office',

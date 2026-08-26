@@ -1,7 +1,7 @@
 @php
     $requests = [
         ['ref' => 'DR-2026-2210', 'type' => 'Cedula (Community Tax Certificate)', 'submitted' => 'Jul 8, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'submitted' => 'Jul 3, 2026', 'status' => 'Ready for Release'],
+        ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'submitted' => 'Jul 3, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'AR-2026-0142', 'type' => 'Medical Assistance', 'submitted' => 'Jun 28, 2026', 'status' => 'Approved'],
         ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'submitted' => 'Jun 14, 2026', 'status' => 'Completed'],
     ];

@@ -27,27 +27,14 @@
     // Service Catalog — configuration view over the Dokyu/Tulong service
     // definitions that already drive the citizen wizards and admin routing
     // (config/esperanza_municipal_documents.php, config/esperanza_barangay_documents.php,
-    // and the Tulong program list in config/esperanza_rbac.php's 'tulong'
-    // module). Reuses those real names/categories/offices rather than
-    // inventing a parallel taxonomy — editing here is a frontend preview
-    // only, same as the rest of this admin's mock CRUD (Roles, Personnel).
-    $tulongCategoryMeta = [
-        'tulong_medical' => ['category' => 'Medical & Health', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'tulong_burial' => ['category' => 'Burial & Bereavement', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'tulong_educational' => ['category' => 'Education', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Multi-Office'],
-        'tulong_financial' => ['category' => 'Financial Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'tulong_food' => ['category' => 'Food & Relief', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Multi-Office'],
-        'tulong_pension' => ['category' => 'Social Protection', 'office' => 'Office of Senior Citizens Affairs', 'level' => 'Municipal'],
-        'tulong_solo_parent' => ['category' => 'Social Protection', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'tulong_erpat' => ['category' => 'Social Protection', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'tulong_tupad' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
-        'tulong_tesda' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
-        'tulong_livelihood_mapping' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
-        'tulong_kabuhayan' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
-        'tulong_business_plan' => ['category' => 'Livelihood & Employment', 'office' => 'Public Employment Service Office', 'level' => 'Municipal'],
-    ];
-    $tulongSubmodules = collect(config('esperanza_rbac.permission_modules'))->firstWhere('key', 'tulong')['submodules'];
-
+    // config/esperanza_tulong_types.php). Reuses those real names/categories/
+    // offices/fees rather than inventing a parallel taxonomy — editing here
+    // is a frontend preview only, same as the rest of this admin's mock CRUD
+    // (Roles, Personnel). Barangay documents are read from Labangtaytay's
+    // copy since every barangay shares the identical standard-document
+    // template (config/esperanza_barangay_documents.php's own header
+    // comment) — editing "the" fee here really does mean editing the one
+    // template every barangay uses, not just Labangtaytay's.
     $serviceCatalog = collect(config('esperanza_municipal_documents.documents'))
         ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
         ->map(fn ($d) => [
@@ -55,10 +42,9 @@
             'fee' => $d['fee'] ?? 'Free', 'days' => $d['days'] ?? '—', 'requirements' => $d['requirements'] ?? [], 'process' => $d['process'] ?? [],
             'service_type' => 'Dokyu', 'active' => true,
         ])
-        ->concat(collect($tulongSubmodules)->map(fn ($s) => [
-            'key' => $s['key'], 'name' => $s['name'],
-            'category' => $tulongCategoryMeta[$s['key']]['category'], 'office' => $tulongCategoryMeta[$s['key']]['office'], 'level' => $tulongCategoryMeta[$s['key']]['level'],
-            'fee' => 'Free', 'days' => '3-5 working days', 'requirements' => ['One (1) valid government-issued ID', 'Barangay Certificate of Indigency'], 'process' => ['Submit Request', 'MSWDO Assessment', 'Approval', 'Release'],
+        ->concat(collect(config('esperanza_tulong_types.types'))->map(fn ($t) => [
+            'key' => $t['key'], 'name' => $t['name'], 'category' => $t['category'], 'office' => $t['office'], 'level' => $t['level'],
+            'fee' => $t['fee'] ?? 'Free', 'days' => $t['days'] ?? '—', 'requirements' => $t['requirements'] ?? [], 'process' => $t['process'] ?? [],
             'service_type' => 'Tulong', 'active' => true,
         ]))
         ->values()->all();
@@ -101,23 +87,45 @@
         </div>
 
         <div class="lg:col-span-3">
-            <div x-show="tab === 'general'">
+            <div
+                x-show="tab === 'general'"
+                x-data="{
+                    municipality: 'Esperanza', province: 'Masbate', region: 'Region V (Bicol Region)', language: 'English',
+                    save() {
+                        if (!can('set_general','edit')) return;
+                        $dispatch('toast', { message: 'General settings saved — frontend preview only, no data is saved.', variant: 'success' });
+                    },
+                }"
+            >
                 <x-ui.card>
                     <h3 class="text-sm font-semibold text-navy-900 mb-4">General Settings</h3>
+
+                    {{-- Same editing gate as Service Catalog / Site Content above. --}}
+                    <div
+                        x-show="!can('set_general','edit')"
+                        class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
+                    >
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                        <p class="text-xs text-slate-500">
+                            <span class="font-semibold text-slate-600">View only.</span>
+                            Only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change general settings.
+                        </p>
+                    </div>
+
                     <div class="space-y-4 max-w-lg">
-                        <x-ui.input name="municipality" label="Municipality Name" value="Esperanza" />
+                        <x-ui.input name="municipality" label="Municipality Name" x-model="municipality" x-bind:disabled="!can('set_general','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                         <div class="grid grid-cols-2 gap-4">
-                            <x-ui.input name="province" label="Province" value="Masbate" />
-                            <x-ui.input name="region" label="Region" value="Region V (Bicol Region)" />
+                            <x-ui.input name="province" label="Province" x-model="province" x-bind:disabled="!can('set_general','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                            <x-ui.input name="region" label="Region" x-model="region" x-bind:disabled="!can('set_general','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5">Default Language</label>
-                            <select class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <select x-model="language" :disabled="!can('set_general','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                                 <option>English</option>
                                 <option>Filipino</option>
                             </select>
                         </div>
-                        <x-ui.button icon="check" @click="$dispatch('toast', { message: 'Settings saved.', variant: 'success' })">Save Changes</x-ui.button>
+                        <x-ui.button icon="check" @click="save()" x-show="can('set_general','edit')">Save Changes</x-ui.button>
                     </div>
                 </x-ui.card>
             </div>
@@ -171,6 +179,18 @@
             </div>
 
             <div x-show="tab === 'branding'" x-cloak class="space-y-4">
+                {{-- Same editing gate as Service Catalog / Site Content / General above. --}}
+                <div
+                    x-show="!can('set_branding','edit')"
+                    class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
+                >
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-slate-500">
+                        <span class="font-semibold text-slate-600">View only.</span>
+                        Branding ships to both portals, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change it.
+                    </p>
+                </div>
+
                 <x-ui.card>
                     <h3 class="text-sm font-semibold text-navy-900 mb-4">Municipal Seal</h3>
                     <div class="flex items-center gap-5">
@@ -178,7 +198,7 @@
                         <div>
                             <p class="text-sm text-slate-600">esperanza-seal.png</p>
                             <p class="text-xs text-slate-400 mt-0.5">512×512px · PNG · Used across both portals</p>
-                            <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5" @click="$dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })">Replace Seal</x-ui.button>
+                            <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5" @click="$dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })" x-show="can('set_branding','edit')">Replace Seal</x-ui.button>
                         </div>
                     </div>
                 </x-ui.card>
@@ -203,7 +223,7 @@
                         <p class="text-sm font-medium text-navy-900">Municipality Information</p>
                         <p class="text-xs text-slate-400 mt-0.5">{{ config('esperanza.municipality') }}, {{ config('esperanza.province') }} · {{ config('esperanza.region') }} · {{ count(config('esperanza.barangays')) }} barangays</p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm" icon="pencil" @click="$dispatch('toast', { message: 'Editing municipality information is a frontend preview — no data is saved.', variant: 'info' })">Edit Information</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" icon="pencil" @click="$dispatch('toast', { message: 'Editing municipality information is a frontend preview — no data is saved.', variant: 'info' })" x-show="can('set_branding','edit')">Edit Information</x-ui.button>
                 </x-ui.card>
             </div>
 
@@ -230,8 +250,8 @@
                         this.reqInput = '';
                         this.open = true;
                     },
-                    addService() {
-                        this.selected = { key: '', name: '', category: '', office: '', level: 'Municipal', fee: 'Free', days: '3-5 working days', requirements: [], process: ['Submit Request', 'Review', 'Approval', 'Release'], roles: [], service_type: this.typeFilter, active: true };
+                    addService(type) {
+                        this.selected = { key: '', name: '', category: '', office: '', level: 'Municipal', fee: 'Free', days: '3-5 working days', requirements: [], process: ['Submit Request', 'Review', 'Approval', 'Release'], roles: [], service_type: type, active: true };
                         this.isNew = true;
                         this.reqInput = '';
                         this.open = true;
@@ -272,9 +292,46 @@
                             <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <input type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                         </div>
-                        <x-ui.button size="sm" icon="plus" @click="addService()">Add Service</x-ui.button>
+                        <div class="relative" x-data="dropdown" @click.outside="close" x-show="can('set_service_catalog','edit')">
+                            <x-ui.button size="sm" icon="plus" @click="toggle">
+                                Add Service
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 -mr-0.5 transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
+                            </x-ui.button>
+                            <div
+                                x-show="open"
+                                x-transition:enter="transition duration-[160ms] ease-emphasized"
+                                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                x-cloak
+                                class="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-float border border-slate-100 overflow-hidden z-20 origin-top-right py-1"
+                            >
+                                <button type="button" @click="addService('Dokyu'); close()" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-700 transition-colors">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i> Dokyu
+                                </button>
+                                <button type="button" @click="addService('Tulong'); close()" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-700 transition-colors">
+                                    <i data-lucide="hand-heart" class="w-4 h-4 text-slate-400"></i> Tulong
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                {{-- Editing gate — same pattern as Site Content above: fees and
+                     requirements here drive what every citizen actually pays and
+                     submits, so only Super Administrator and Municipal
+                     Administrator (the only roles granted 'set_service_catalog'
+                     edit in config/esperanza_rbac.php) can change it. --}}
+                <div
+                    x-show="!can('set_service_catalog','edit')"
+                    class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
+                >
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-slate-500">
+                        <span class="font-semibold text-slate-600">View only.</span>
+                        The Service Catalog controls what every citizen pays and submits for Dokyu and Tulong, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can edit it.
+                    </p>
+                </div>
+
                 <p class="text-xs text-slate-400 mb-3" x-text="filteredServices.length + ' ' + (filteredServices.length === 1 ? 'service' : 'services') + ' in ' + typeFilter"></p>
 
                 <x-ui.table>
@@ -283,6 +340,7 @@
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Service</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Category</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Office</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Fee</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Level</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
                             <th class="px-4 py-2.5"></th>
@@ -297,6 +355,9 @@
                                 </td>
                                 <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="s.category"></td>
                                 <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="s.office"></td>
+                                <td class="px-4 py-3">
+                                    <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="s.fee === 'Free' ? 'bg-slate-100 text-slate-500' : 'bg-gold-50 text-gold-700'" x-text="s.fee"></span>
+                                </td>
                                 <td class="px-4 py-3 hidden sm:table-cell">
                                     <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="{ 'bg-teal-50 text-teal-600': s.level === 'Barangay', 'bg-brand-50 text-brand-600': s.level === 'Municipal', 'bg-purple-50 text-purple-600': s.level === 'Multi-Office' }" x-text="s.level"></span>
                                 </td>
@@ -306,7 +367,7 @@
                                         <span x-text="s.active ? 'Active' : 'Inactive'"></span>
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-right" @click.stop>
+                                <td class="px-4 py-3 text-right" @click.stop x-show="can('set_service_catalog','edit')">
                                     <button @click="editService(s)" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
@@ -322,22 +383,22 @@
                 <x-ui.modal title="Edit Service" titleEn="Edit Service" maxWidth="lg">
                     <template x-if="selected">
                         <div class="space-y-4">
-                            <x-ui.input name="svc_name" label="Service Name" x-model="selected.name" />
+                            <x-ui.input name="svc_name" label="Service Name" x-model="selected.name" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                             <div class="grid grid-cols-2 gap-3">
-                                <x-ui.input name="svc_category" label="Category" x-model="selected.category" />
+                                <x-ui.input name="svc_category" label="Category" x-model="selected.category" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Processing Level</label>
-                                    <select x-model="selected.level" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <select x-model="selected.level" :disabled="!can('set_service_catalog','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                                         <option value="Barangay">Barangay</option>
                                         <option value="Municipal">Municipal</option>
                                         <option value="Multi-Office">Multi-Office</option>
                                     </select>
                                 </div>
                             </div>
-                            <x-ui.input name="svc_office" label="Responsible Office / Department" x-model="selected.office" />
+                            <x-ui.input name="svc_office" label="Responsible Office / Department" x-model="selected.office" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                             <div class="grid grid-cols-2 gap-3">
-                                <x-ui.input name="svc_fee" label="Fee" x-model="selected.fee" />
-                                <x-ui.input name="svc_days" label="Processing Time" x-model="selected.days" />
+                                <x-ui.input name="svc_fee" label="Fee" x-model="selected.fee" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                                <x-ui.input name="svc_days" label="Processing Time" x-model="selected.days" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                             </div>
 
                             <div>
@@ -347,14 +408,14 @@
                                         <li class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5 transition-colors duration-[160ms] ease-standard focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
                                             <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                                             <input
-                                                type="text" x-model="selected.requirements[i]"
-                                                class="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm text-slate-600 focus:outline-none focus:ring-0"
+                                                type="text" x-model="selected.requirements[i]" :disabled="!can('set_service_catalog','edit')"
+                                                class="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm text-slate-600 focus:outline-none focus:ring-0 disabled:opacity-60"
                                             >
-                                            <button type="button" @click="removeRequirement(i)" class="text-slate-300 hover:text-rose-500 shrink-0" title="Remove requirement"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                            <button type="button" @click="removeRequirement(i)" x-show="can('set_service_catalog','edit')" class="text-slate-300 hover:text-rose-500 shrink-0" title="Remove requirement"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                         </li>
                                     </template>
                                 </ul>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2" x-show="can('set_service_catalog','edit')">
                                     <input type="text" x-model="reqInput" @keydown.enter.prevent="addRequirement()" placeholder="Add a requirement..." class="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     <x-ui.button variant="secondary" size="sm" icon="plus" @click="addRequirement()">Add</x-ui.button>
                                 </div>
@@ -374,8 +435,8 @@
                                 <div class="flex flex-wrap gap-1.5">
                                     <template x-for="r in roles" :key="r.key">
                                         <button
-                                            type="button" @click="toggleRole(r.key)"
-                                            class="text-[11px] font-medium rounded-full px-2.5 py-1 border transition-colors"
+                                            type="button" @click="toggleRole(r.key)" :disabled="!can('set_service_catalog','edit')"
+                                            class="text-[11px] font-medium rounded-full px-2.5 py-1 border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                             :class="(selected.roles || []).includes(r.key) ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
                                             x-text="r.name"
                                         ></button>
@@ -383,12 +444,12 @@
                                 </div>
                             </div>
 
-                            <label class="flex items-center justify-between gap-4 py-1 cursor-pointer">
+                            <label class="flex items-center justify-between gap-4 py-1" :class="can('set_service_catalog','edit') ? 'cursor-pointer' : 'cursor-not-allowed'">
                                 <div>
                                     <p class="text-sm font-medium text-slate-700">Active</p>
                                     <p class="text-xs text-slate-400 mt-0.5">Inactive services are hidden from the citizen-facing catalog.</p>
                                 </div>
-                                <button type="button" @click="selected.active = !selected.active" class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative shrink-0" :class="selected.active ? 'bg-brand-600' : 'bg-slate-200'">
+                                <button type="button" @click="selected.active = !selected.active" :disabled="!can('set_service_catalog','edit')" class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative shrink-0 disabled:opacity-60 disabled:cursor-not-allowed" :class="selected.active ? 'bg-brand-600' : 'bg-slate-200'">
                                     <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="selected.active && 'translate-x-4'"></span>
                                 </button>
                             </label>
@@ -396,8 +457,8 @@
                     </template>
 
                     <x-slot:footer>
-                        <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
-                        <x-ui.button size="sm" icon="check" @click="saveService()">Save Service</x-ui.button>
+                        <x-ui.button variant="secondary" size="sm" @click="open = false" x-text="can('set_service_catalog','edit') ? 'Cancel' : 'Close'"></x-ui.button>
+                        <x-ui.button size="sm" icon="check" @click="saveService()" x-show="can('set_service_catalog','edit')">Save Service</x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
             </div>

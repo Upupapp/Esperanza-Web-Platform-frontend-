@@ -21,11 +21,24 @@ return [
             'use_when' => "All mandatory requirements are present; files are readable and relevant; identity/record details are materially consistent; eligibility is met; no unresolved authenticity concern remains.",
             'admin_action' => 'Proceed to the next processing milestone.',
         ],
-        'Waiting Requirements' => [
+        'Under Review' => [
             'label' => 'Needs Additional / Stronger Documents',
             'icon' => 'file-plus-2',
             'use_when' => "The application is potentially valid but a required item is missing, unreadable, expired where validity matters, too weak to prove a fact, or lacks a needed front/back/page/signature/seal.",
             'admin_action' => 'Return to applicant with a specific document request and clear reason.',
+        ],
+        // Requirement-level only — one submitted file/photo is wrong,
+        // mismatched, or unreadable and needs to be swapped out, as opposed
+        // to the whole-application "Under Review" outcome above (which can
+        // mean several things, not just a bad file). Rolls the whole
+        // request up into "Under Review" (see confirmRequirementDecision)
+        // so this stays a requirement-level label only, not a new
+        // whole-request status.
+        'Flagged for Replacement' => [
+            'label' => 'Flag for Replacement',
+            'icon' => 'flag',
+            'use_when' => "The specific file submitted for this requirement is the wrong document, mismatched, unreadable, or otherwise unusable, and the applicant needs to upload a corrected copy.",
+            'admin_action' => 'Flag the exact requirement and reason; the applicant re-uploads and the item returns to review as Resubmitted.',
         ],
         'Under Verification' => [
             'label' => 'Needs Manual Verification',

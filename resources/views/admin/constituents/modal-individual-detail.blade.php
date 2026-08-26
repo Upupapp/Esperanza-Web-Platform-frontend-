@@ -397,6 +397,16 @@
                         </div>
 
                         <div>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="user" class="w-3 h-3"></i>Father's Full Name</dt>
+                            <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.father_name || '—'"></dd>
+                        </div>
+
+                        <div>
+                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="user" class="w-3 h-3"></i>Mother's Maiden Name</dt>
+                            <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.mother_maiden_name || '—'"></dd>
+                        </div>
+
+                        <div>
                             <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="phone" class="w-3 h-3"></i>Contact Number</dt>
                             <dd class="text-sm font-semibold text-navy-900">
                                 <a
@@ -634,6 +644,49 @@
                     </div>
                 </div>
 
+                {{-- Recent Activity — notification-style feed of this
+                     resident's own Dokyu/Tulong submissions, e.g. "Cristy
+                     submitted Barangay Clearance" — pulled straight from
+                     document_requests/assistance_requests already on her
+                     record (see recentActivity() in constituents.blade.php),
+                     so it's always here the moment this tab opens. --}}
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4" x-show="recentActivity(selectedIndividual).length">
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i data-lucide="bell" class="w-4 h-4 text-brand-400"></i>
+                        Recent Activity
+                    </h3>
+                    <div class="divide-y divide-slate-50">
+                        <template x-for="a in recentActivity(selectedIndividual)" :key="a.ref">
+                            <div class="flex items-start gap-3 py-2.5 first:pt-0 last:pb-0">
+                                <span
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                    :class="a.portal === 'Tulong' ? 'bg-purple-50 text-purple-500' : 'bg-brand-50 text-brand-500'"
+                                ><i :data-lucide="a.icon" class="w-3.5 h-3.5"></i></span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm text-navy-900">
+                                        <span class="font-semibold" x-text="selectedIndividual?.name?.split(' ')[0]"></span>
+                                        <span class="text-slate-500"> submitted </span>
+                                        <span class="font-semibold" x-text="a.type"></span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">
+                                        <span class="font-mono" x-text="a.ref"></span>&nbsp;&middot;&nbsp;<span x-text="a.submitted"></span>
+                                    </p>
+                                </div>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0"
+                                    :class="{
+                                        'bg-green-100 text-green-700': ['Released','Completed','Approved','Mark to Release'].includes(a.status),
+                                        'bg-amber-100 text-amber-700': ['Processing','Under Review','Pending Review','Assigned'].includes(a.status),
+                                        'bg-blue-100 text-blue-700': ['Submitted','Under Verification'].includes(a.status),
+                                        'bg-red-100 text-red-700': ['Rejected','Cancelled'].includes(a.status),
+                                    }"
+                                    x-text="a.status"
+                                ></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
                 {{-- Emergency Contact --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
                     <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -863,7 +916,7 @@
                                  congratulations moment mirroring what the resident sees on Mobile. --}}
                             <div
                                 class="rounded-xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-4"
-                                x-show="selectedIndividual?.citizen_account?.status === 'Verified'"
+                                x-show="selectedIndividual?.citizen_account?.status === 'Approved'"
                                 x-cloak
                             >
                                 <div class="flex items-center gap-2 mb-2">
@@ -891,21 +944,21 @@
                                  the citizen currently sees on Mobile for this account. --}}
                             <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
                                 <h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                    <i :data-lucide="selectedIndividual?.citizen_account?.status === 'Verified' ? 'badge-check' : 'smartphone'" class="w-3.5 h-3.5" :class="selectedIndividual?.citizen_account?.status === 'Verified' ? 'text-emerald-500' : 'text-brand-400'"></i>
-                                    <span x-text="selectedIndividual?.citizen_account?.status === 'Verified' ? 'Verified Identity' : 'Account & Onboarding'"></span>
+                                    <i :data-lucide="selectedIndividual?.citizen_account?.status === 'Approved' ? 'badge-check' : 'smartphone'" class="w-3.5 h-3.5" :class="selectedIndividual?.citizen_account?.status === 'Approved' ? 'text-emerald-500' : 'text-brand-400'"></i>
+                                    <span x-text="selectedIndividual?.citizen_account?.status === 'Approved' ? 'Verified Identity' : 'Account & Onboarding'"></span>
                                 </h4>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span
                                         class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                                         :class="{
-                                            'bg-emerald-100 text-emerald-700': selectedIndividual?.citizen_account?.status === 'Verified',
+                                            'bg-emerald-100 text-emerald-700': selectedIndividual?.citizen_account?.status === 'Approved',
                                             'bg-amber-100 text-amber-700': selectedIndividual?.citizen_account?.status === 'Pending Review',
                                             'bg-indigo-100 text-indigo-700': selectedIndividual?.citizen_account?.status === 'Under Verification',
                                             'bg-rose-100 text-rose-700': selectedIndividual?.citizen_account?.status === 'Rejected',
-                                            'bg-slate-100 text-slate-600': !['Verified','Pending Review','Under Verification','Rejected'].includes(selectedIndividual?.citizen_account?.status),
+                                            'bg-slate-100 text-slate-600': !['Approved','Pending Review','Under Verification','Rejected'].includes(selectedIndividual?.citizen_account?.status),
                                         }"
                                     >
-                                        <i data-lucide="shield-check" class="w-3.5 h-3.5" x-show="selectedIndividual?.citizen_account?.status === 'Verified'"></i>
+                                        <i data-lucide="shield-check" class="w-3.5 h-3.5" x-show="selectedIndividual?.citizen_account?.status === 'Approved'"></i>
                                         <span x-text="selectedIndividual?.citizen_account?.status || 'Draft'"></span>
                                     </span>
                                     <span
@@ -928,7 +981,7 @@
                                 {{-- What the citizen sees on Mobile right now — makes the
                                      Pending/Under Verification/Rejected flow tangible instead of
                                      an abstract admin-only status label. --}}
-                                <div class="mt-3.5 pt-3.5 border-t border-slate-100 rounded-lg" x-show="selectedIndividual?.citizen_account?.status !== 'Verified'">
+                                <div class="mt-3.5 pt-3.5 border-t border-slate-100 rounded-lg" x-show="selectedIndividual?.citizen_account?.status !== 'Approved'">
                                     <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                                         <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
                                         What the citizen sees on Mobile
@@ -1082,6 +1135,21 @@
                                         </div>
                                     </template>
                                 </div>
+                            </div>
+
+                            {{-- Digital ID — same flippable card the citizen sees on
+                                 their own Profile page (components/citizen/digital-
+                                 id-card.blade.php), surfaced here too so an admin
+                                 reviewing this resident's onboarding can see the
+                                 credential it results in. Same Cristy-only gate as
+                                 the citizen-facing card — see that component's own
+                                 header comment for why. --}}
+                            <div x-show="selectedIndividual?.id === 'RES-2026-104'" x-cloak class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+                                <h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-1.5 mb-3.5">
+                                    <i data-lucide="badge-check" class="w-3.5 h-3.5 text-gold-500"></i>
+                                    Digital ID
+                                </h4>
+                                <x-citizen.digital-id-card />
                             </div>
 
                 </div>{{-- /citizen_account contents wrapper --}}
@@ -1452,11 +1520,11 @@
                                         <span
                                             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
                                             :class="{
-                                                'bg-green-100 text-green-700': ['Released','Completed','Approved','Ready for Release'].includes(d.status),
-                                                'bg-amber-100 text-amber-700': ['Processing','Waiting Requirements','Pending Review','Assigned'].includes(d.status),
+                                                'bg-green-100 text-green-700': ['Released','Completed','Approved','Mark to Release'].includes(d.status),
+                                                'bg-amber-100 text-amber-700': ['Processing','Under Review','Pending Review','Assigned'].includes(d.status),
                                                 'bg-blue-100 text-blue-700': ['Submitted','Under Verification'].includes(d.status),
                                                 'bg-red-100 text-red-700': ['Rejected','Cancelled'].includes(d.status),
-                                                'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Ready for Release','Processing','Waiting Requirements','Pending Review','Assigned','Submitted','Under Verification','Rejected','Cancelled'].includes(d.status),
+                                                'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Mark to Release','Processing','Under Review','Pending Review','Assigned','Submitted','Under Verification','Rejected','Cancelled'].includes(d.status),
                                             }"
                                             x-text="d.status"
                                         ></span>
@@ -1516,10 +1584,10 @@
                                         class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
                                         :class="{
                                             'bg-green-100 text-green-700': ['Released','Completed','Approved'].includes(a.status),
-                                            'bg-amber-100 text-amber-700': ['Processing','Waiting Requirements','Assigned'].includes(a.status),
+                                            'bg-amber-100 text-amber-700': ['Processing','Under Review','Assigned'].includes(a.status),
                                             'bg-blue-100 text-blue-700': ['Submitted','Pending Review'].includes(a.status),
                                             'bg-red-100 text-red-700': ['Rejected','Cancelled'].includes(a.status),
-                                            'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Processing','Waiting Requirements','Assigned','Submitted','Pending Review','Rejected','Cancelled'].includes(a.status),
+                                            'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Processing','Under Review','Assigned','Submitted','Pending Review','Rejected','Cancelled'].includes(a.status),
                                         }"
                                         x-text="a.status"
                                     ></span>

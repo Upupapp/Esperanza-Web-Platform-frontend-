@@ -6,7 +6,7 @@
 // only ever exists in one place instead of two blade files each keeping
 // their own copy that could drift apart.
 return [
-    ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Cedula (Community Tax Certificate)', 'amount' => '₱32.00', 'method' => null, 'receipt' => null, 'status' => 'Waiting Requirements', 'date' => 'Jul 8, 2026'],
+    ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Cedula (Community Tax Certificate)', 'amount' => '₱32.00', 'method' => null, 'receipt' => null, 'status' => 'Under Review', 'date' => 'Jul 8, 2026'],
     ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'barangay' => 'Baras', 'type' => 'Dokyu', 'item' => 'Business Permit (New)', 'amount' => '₱1,250.00', 'method' => 'PayMaya', 'receipt' => 'PayMaya Receipt.png', 'status' => 'Pending Review', 'date' => 'Jul 10, 2026'],
     ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'barangay' => 'Poblacion', 'type' => 'Dokyu', 'item' => 'Barangay Clearance', 'amount' => '₱50.00', 'method' => 'Payment in Center', 'receipt' => 'OR-88214.jpg', 'status' => 'Approved', 'date' => 'Jul 3, 2026'],
     ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'barangay' => 'Iligan', 'type' => 'Dokyu', 'item' => 'Certificate of Residency', 'amount' => '₱50.00', 'method' => 'GCash', 'receipt' => 'GCash Receipt.jpg', 'status' => 'Approved', 'date' => 'Jun 29, 2026'],

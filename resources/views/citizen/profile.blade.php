@@ -34,6 +34,8 @@
             idTypes: @js($idTypes),
             reset() { this.open = false; this.submitted = false; this.idType = ''; this.idNumber = ''; this.attachment = null; this.showFilePicker = false; },
 
+            showDigitalId: false,
+
             showEditProfile: false,
             savingProfile: false,
             editForm: { firstName: '', lastName: '', mobile: '', occupation: '', address: '' },
@@ -194,6 +196,28 @@
             </div>
 
             <div class="space-y-5">
+                {{-- Digital ID — a wallet for already-issued official credentials,
+                     a different concept from the "Verify ID" flow above (which
+                     submits evidence for LGU review). Currently seeded for
+                     Cristy Bonghanoy only, same as the Esperanza Mobile app's
+                     own Digital ID wallet — see components/citizen/digital-id-
+                     card.blade.php's own header comment. --}}
+                <button
+                    type="button"
+                    x-show="$store.citizenSession.account?.id === 'ESP-RES-2024-1044'" x-cloak
+                    @click="showDigitalId = true"
+                    class="w-full text-left rounded-2xl bg-gradient-to-br from-navy-950 via-navy-900 to-brand-900 border border-navy-800 shadow-card p-4 flex items-center gap-3 hover:shadow-card-hover transition-all duration-[220ms] ease-standard group"
+                >
+                    <div class="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-[220ms] ease-standard">
+                        <i data-lucide="badge-check" class="w-5 h-5 text-gold-300"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-white">Digital ID</p>
+                        <p class="text-[11px] text-white/50">Your Barangay Resident ID, always with you</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-white/40 shrink-0"></i>
+                </button>
+
                 <!-- My Barangay -->
                 <div x-show="$store.barangay.mine" x-cloak class="rounded-2xl bg-gradient-to-br from-brand-50 via-white to-purple-50/60 border border-brand-100 shadow-card p-4">
                     <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="landmark" class="w-3.5 h-3.5"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></p>
@@ -338,6 +362,12 @@
                 ><x-ui.t fil="Isumite para sa Beripikasyon" en="Submit for Verification" /></x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
+
+        <div x-data="{ get open() { return showDigitalId }, set open(v) { showDigitalId = v } }">
+            <x-ui.modal title="Digital ID" titleEn="Digital ID" maxWidth="md">
+                <x-citizen.digital-id-card />
+            </x-ui.modal>
+        </div>
 
         <div x-data="{ get open() { return showEditProfile }, set open(v) { showEditProfile = v } }">
             <x-ui.modal title="I-edit ang Profile" titleEn="Edit Profile" maxWidth="md" :fullscreen="true">

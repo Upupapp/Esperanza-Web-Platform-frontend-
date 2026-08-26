@@ -368,7 +368,18 @@ $individuals = [
     // Flagship demo record — deliberately the most fully-populated profile in
     // the registry (every tab, every section) so the complete Constituent
     // Profile experience can be showcased end-to-end on one resident.
-    ['id'=>'RES-2026-104','citizen_account_id'=>'ESP-RES-2024-1044','name'=>'Cristy Pareja Bonghanoy','sex'=>'Female','age'=>25,'dob'=>'2001-03-15','civil_status'=>'Single','barangay'=>'Baras','sitio'=>'Purok 2','household_id'=>'HH-2026-104','family_id'=>'FAM-2026-104','relation'=>'Head','contact'=>'0919 502 7734','occupation'=>'Student','education'=>'Senior High School Graduate','income_range'=>'None','tags'=>['4ps'],'verification'=>'Verified','profile_pct'=>90,'status'=>'Active','created'=>'2012-01-01','last_updated'=>'2026-07-15',
+    ['id'=>'RES-2026-104','citizen_account_id'=>'ESP-RES-2024-1044','name'=>'Cristy Pareja Bonghanoy','sex'=>'Female','age'=>25,'dob'=>'2001-03-15','civil_status'=>'Single','barangay'=>'Baras','sitio'=>'Purok 2','address'=>'Purok 2, Barangay Baras, Esperanza, Masbate','household_id'=>'HH-2026-104','family_id'=>'FAM-2026-104','relation'=>'Head','contact'=>'0919 502 7734','occupation'=>'Student','education'=>'Senior High School Graduate','income_range'=>'None',
+        // Family background — "Pareja" (Cristy's own middle name) is her
+        // mother's maiden surname per standard Filipino naming convention,
+        // and "Bonghanoy" (her surname) is inherited from her father — so
+        // these are derived from her own already-established full name
+        // rather than invented from nothing. Consumed everywhere a Dokyu/
+        // Tulong form asks for father's/mother's name (see $citizenBio in
+        // admin/document-requests.blade.php and admin/assistance-requests.blade.php)
+        // so every one of her requests shows the same family identity
+        // instead of a different randomly-seeded name per form.
+        'father_name'=>'Ramon Bonghanoy','mother_name'=>'Corazon Bonghanoy','mother_maiden_name'=>'Corazon Pareja',
+        'tags'=>['4ps'],'verification'=>'Verified','profile_pct'=>90,'status'=>'Active','created'=>'2012-01-01','last_updated'=>'2026-07-15',
         'emergency'=>['name'=>'Roberto Pareja','contact'=>'0919 502 7735','relation'=>'Brother'],
         'services'=>[
             ['date'=>'2026-03-22','type'=>'Certificate of Good Moral Character','status'=>'Completed'],

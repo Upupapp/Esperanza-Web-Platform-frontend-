@@ -46,7 +46,7 @@
         ['label' => 'Released', 'value' => 168, 'color' => '#0d9488'],
         ['label' => 'Approved', 'value' => 96, 'color' => '#22c55e'],
         ['label' => 'Processing', 'value' => 104, 'color' => '#2f62f5'],
-        ['label' => 'Waiting Requirements', 'value' => 49, 'color' => '#f97316'],
+        ['label' => 'Under Review', 'value' => 49, 'color' => '#f97316'],
     ];
     $assistStatusTotal = array_sum(array_column($assistStatus, 'value'));
 

@@ -269,7 +269,7 @@
             return {
                 pending: list.filter(i => i.citizen_account?.status === 'Pending Review').length,
                 underVerification: list.filter(i => i.citizen_account?.status === 'Under Verification').length,
-                verified: list.filter(i => i.citizen_account?.status === 'Verified').length,
+                verified: list.filter(i => i.citizen_account?.status === 'Approved').length,
                 rejected: list.filter(i => i.citizen_account?.status === 'Rejected').length,
                 flagged: list.filter(i => i.citizen_account?.identity_check?.face_match === 'Mismatch' || (i.identity_flags || []).length).length,
                 notRegistered: list.filter(i => !i.citizen_account).length,
@@ -299,7 +299,7 @@
             return [...list].sort((a, b) => priority(a) - priority(b));
         },
         verifyCitizenAccount(i) {
-            i.citizen_account.status = 'Verified';
+            i.citizen_account.status = 'Approved';
             i.citizen_account.access_level = 'Verified';
             delete i.citizen_account.reject_remarks;
             this.$dispatch('toast', { message: i.name + '\'s citizen account was verified.', variant: 'success' });
@@ -548,18 +548,33 @@
             ];
             return Math.round((steps.filter(Boolean).length / steps.length) * 100);
         },
+        // Recent Activity feed for the Overview tab — merges this
+        // resident's Dokyu + Tulong request history (already on their
+        // record; no separate mock data to keep in sync) into one
+        // notification-style list, newest first. Server-rendered from the
+        // Constituents record itself, so it's always populated the moment
+        // this modal opens — unlike the citizen-facing Notifications page,
+        // it doesn't depend on a live browser action or page-visit order.
+        recentActivity(ind) {
+            if (!ind) return [];
+            const dokyu = (ind.document_requests || []).map(r => ({ ...r, portal: 'Dokyu', icon: 'file-stack' }));
+            const tulong = (ind.assistance_requests || []).map(r => ({ ...r, portal: 'Tulong', icon: 'hand-heart' }));
+            return [...dokyu, ...tulong]
+                .sort((a, b) => new Date(b.submitted) - new Date(a.submitted))
+                .slice(0, 6);
+        },
         onboardingStatus(acct) {
             if (!acct) return 'Draft';
             const wizardDone = !!(acct.terms_accepted && acct.id_uploaded && acct.face_verified);
             if (!wizardDone) return 'Draft';
-            if (acct.status === 'Verified') return 'Completed';
+            if (acct.status === 'Approved') return 'Completed';
             if (acct.status === 'Rejected') return 'Rejected';
             return 'Submitted';
         },
         onboardingSteps(acct) {
             if (!acct) return [];
             const wizardDone = !!(acct.terms_accepted && acct.id_uploaded && acct.face_verified);
-            const isVerified = acct.status === 'Verified';
+            const isVerified = acct.status === 'Approved';
             const isRejected = acct.status === 'Rejected';
             return [
                 { label: 'Account Created', done: true },
@@ -590,7 +605,7 @@
             }
             if (acct.status === 'Under Verification') return 'Your identity verification is currently being reviewed by the LGU. We will notify you once a decision is made.';
             if (acct.status === 'Pending Review') return 'Your registration has been submitted and is awaiting LGU review.';
-            if (acct.status === 'Verified') return 'Your identity has been verified. Welcome — you now have full access to Dokyu and Tulong.';
+            if (acct.status === 'Approved') return 'Your identity has been verified. Welcome — you now have full access to Dokyu and Tulong.';
             return 'Please complete your registration to continue.';
         },
         // Maps a Sakuna incident's current status onto the Reported -> Barangay

@@ -2,8 +2,8 @@
     $requests = [
         ['ref' => 'AR-2026-0142', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Hospital bill support — Masbate Provincial Hospital', 'submitted' => 'Jun 28, 2026', 'status' => 'Approved'],
         ['ref' => 'AR-2026-0098', 'type' => 'Educational Assistance', 'office' => 'MSWDO', 'purpose' => 'Tuition support for 2 dependents, SY 2026-2027', 'submitted' => 'May 20, 2026', 'status' => 'Released'],
-        ['ref' => 'AR-2026-0061', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Livelihood capital support', 'submitted' => 'Apr 2, 2026', 'status' => 'Processing'],
-        ['ref' => 'AR-2026-0037', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'purpose' => 'Quarterly social pension enrollment', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
+        ['ref' => 'AR-2026-0061', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Livelihood capital support', 'submitted' => 'Apr 2, 2026', 'status' => 'Under Verification'],
+        ['ref' => 'AR-2026-0037', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'purpose' => 'Quarterly social pension enrollment', 'submitted' => 'Feb 10, 2026', 'status' => 'Released'],
         ['ref' => 'AR-2026-0009', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Funeral expenses support', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'requirements' => [
             ['key' => 'req_death_cert', 'name' => 'Death Certificate', 'file' => null, 'status' => 'Rejected', 'reject_reason' => 'Missing information', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'versions' => [
                 ['file' => null, 'status' => 'Rejected', 'date' => 'Jan 8, 2026', 'reject_reason' => 'Missing information', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.'],
@@ -13,315 +13,20 @@
             ['key' => 'req_funeral_contract', 'name' => 'Funeral contract or bill', 'file' => 'Funeral-Contract.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
             ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certificate of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
-        ['ref' => 'AR-2026-0022', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'purpose' => 'Cash grant + goods, per assessment', 'submitted' => 'Jan 28, 2026', 'status' => 'Waiting Requirements', 'requirements' => [
+        ['ref' => 'AR-2026-0022', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'purpose' => 'Cash grant + goods, per assessment', 'submitted' => 'Jan 28, 2026', 'status' => 'Under Review', 'requirements' => [
             ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'My-SoloParentID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
-                ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
+            ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Flagged for Replacement', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
+                ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Flagged for Replacement', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
             ]],
             ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
     ];
 
-    $assistanceTypes = [
-        [
-            'key' => 'tulong_medical', 'category' => 'Medical & Health', 'level' => 'Municipal',
-            'name' => 'Medical Assistance (AICS)', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => '₱1,000 – ₱150,000 per case', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'stethoscope',
-            'desc' => 'Hospital bills, medicines, and treatment support under DSWD\'s Assistance to Individuals in Crisis Situation.',
-            'requirements' => ['One (1) valid government-issued ID', "Medical Abstract or Doctor's prescription", 'Hospital bill or Statement of Account', 'Barangay Certificate of Indigency'],
-            'process' => ['Submit Request', 'MSWDO Assessment', 'Approval', 'Cash / Guarantee Letter Release'],
-        ],
-        [
-            'key' => 'tulong_burial', 'category' => 'Burial & Bereavement', 'level' => 'Municipal',
-            'name' => 'Burial Assistance (AICS)', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Up to ₱5,000', 'fee' => 'Free', 'days' => '2-3 working days', 'icon' => 'flower',
-            'desc' => 'Financial aid for funeral and burial expenses. Must be filed within 15 days from date of death.',
-            'requirements' => ['Death Certificate', 'Valid ID of claimant', 'Proof of relationship to the deceased', 'Funeral contract or bill', 'Barangay Certificate of Indigency'],
-            'process' => ['Submit Request', 'Verify Death Certificate', 'Approval', 'Release'],
-        ],
-        [
-            'key' => 'tulong_educational', 'category' => 'Education', 'level' => 'Multi-Office',
-            'name' => 'Educational Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => "MSWDO / Mayor's Office", 'amount' => 'Tuition + allowance per semester', 'fee' => 'Free', 'days' => '10-15 working days', 'icon' => 'graduation-cap',
-            'desc' => 'Municipal scholarship and school supplies support for indigent students in good academic standing.',
-            'requirements' => ['Certificate of Enrollment', 'Report Card / Form 138 (GWA 80 and above)', 'Certificate of Indigency (family income below ₱120,000/year)', 'Barangay Residency Certificate'],
-            'process' => ['Submit Requirements', 'Scholarship Committee Review', 'Approval', 'Disbursement'],
-        ],
-        [
-            'key' => 'tulong_financial', 'category' => 'Financial Assistance', 'level' => 'Municipal',
-            'name' => 'Financial Assistance (AICS)', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Based on social worker assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'wallet',
-            'desc' => 'Cash assistance for individuals and families in crisis situations.',
-            'requirements' => ['One (1) valid government-issued ID', 'Barangay Certificate of Indigency', 'Brief interview / social case study with MSWDO'],
-            'process' => ['Submit Request', 'Social Case Study', 'Approval', 'Release'],
-        ],
-        [
-            // DSWD Family Assistance Card in Emergencies and Disasters (FACED)
-            'key' => 'tulong_food', 'category' => 'Food & Relief', 'level' => 'Multi-Office',
-            'name' => 'Food / Relief Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO / MDRRMO', 'amount' => 'Relief goods package', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'package',
-            'desc' => 'Food packs and relief goods for families affected by calamities or emergencies.',
-            'requirements' => ['Barangay Certification', 'One (1) valid government-issued ID'],
-            'process' => ['Submit Request', 'Barangay Verification', 'Approval', 'Distribution'],
-            'certTitle' => 'Family Assistance Card in Emergencies and Disasters (FACED)',
-            'certSubtitle' => 'Head of Family details, per DSWD FACED card',
-            'fields' => [
-                ['key' => 'evacuation_center', 'label' => 'Evacuation Center / Site (if applicable)', 'type' => 'text'],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'place_of_birth', 'label' => 'Place of Birth', 'type' => 'text'],
-                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widowed', 'Separated']],
-                ['key' => 'mother_maiden_name', 'label' => "Mother's Maiden Name", 'type' => 'text'],
-                ['key' => 'religion', 'label' => 'Religion', 'type' => 'text'],
-                ['key' => 'monthly_income', 'label' => 'Monthly Family Net Income', 'type' => 'text'],
-                ['key' => 'id_card_presented', 'label' => 'ID Card Presented', 'type' => 'text'],
-                ['key' => 'id_card_number', 'label' => 'ID Card Number', 'type' => 'text'],
-                ['key' => 'contact_alternate', 'label' => 'Alternate Contact Number', 'type' => 'text'],
-                ['key' => 'type_of_vulnerability', 'label' => 'Type of Vulnerability', 'type' => 'checkbox-group', 'allowOther' => true, 'options' => ['4Ps Beneficiary', 'Indigenous Person', 'Person with Disability', 'Senior Citizen', 'Solo Parent']],
-                ['key' => 'ip_ethnicity', 'label' => 'If Indigenous Person, Type of Ethnicity', 'type' => 'text'],
-                ['key' => 'house_ownership', 'label' => 'House Ownership', 'type' => 'select', 'options' => ['Owner', 'Renter', 'Sharer', 'Informal Settler']],
-                ['key' => 'shelter_damage', 'label' => 'Shelter Damage Classification', 'type' => 'select', 'options' => ['None', 'Partially Damaged', 'Totally Damaged']],
-                ['key' => 'bank_ewallet', 'label' => 'Bank / E-Wallet', 'type' => 'text'],
-                ['key' => 'account_name', 'label' => 'Account Name', 'type' => 'text'],
-                ['key' => 'account_type', 'label' => 'Account Type', 'type' => 'text'],
-                ['key' => 'account_number', 'label' => 'Account Number', 'type' => 'text'],
-                ['key' => 'family_members', 'label' => 'Family Members', 'type' => 'table', 'rowIcon' => 'user-round', 'rowLabel' => 'Family Member', 'columns' => [
-                    ['key' => 'name', 'label' => 'Name'],
-                    ['key' => 'relation', 'label' => 'Relation to Head', 'options' => ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Grandchild', 'Other Relative']],
-                    ['key' => 'dob', 'label' => 'Date of Birth', 'type' => 'date'],
-                    ['key' => 'age', 'label' => 'Age', 'type' => 'number'],
-                    ['key' => 'sex', 'label' => 'Sex', 'options' => ['Male', 'Female']],
-                    ['key' => 'education', 'label' => 'Educational Attainment', 'options' => ['None', 'Elementary', 'High School', 'Vocational', 'College', 'Post Graduate']],
-                    ['key' => 'occupation', 'label' => 'Occupation'],
-                    ['key' => 'vulnerability', 'label' => 'Vulnerability', 'options' => ['None', '4Ps Beneficiary', 'Indigenous Person', 'Person with Disability', 'Senior Citizen', 'Solo Parent']],
-                ]],
-            ],
-        ],
-        [
-            'key' => 'tulong_pension', 'category' => 'Social Protection', 'level' => 'Municipal',
-            'name' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'Office of Senior Citizens Affairs', 'office_short' => 'OSCA', 'amount' => '₱1,000/month (₱3,000 per quarter)', 'fee' => '₱100.00', 'days' => '5-7 working days', 'icon' => 'users',
-            'desc' => 'Monthly stipend for indigent senior citizens 60 and above with no pension or regular income.',
-            'requirements' => ['Senior Citizen ID', 'Affidavit of no pension, income, or family support (notarized)', 'Barangay Certification'],
-            'process' => ['Submit Requirements', 'OSCA / DSWD Verification', 'Enrollment', 'Quarterly Release'],
-        ],
-        [
-            // DSWD Application Form for Solo Parent, Annex B (2023), per RA 11861
-            'key' => 'tulong_solo_parent', 'category' => 'Social Protection', 'level' => 'Municipal',
-            'name' => 'Solo Parent Cash Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Cash grant + goods, per assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'heart-handshake',
-            'desc' => 'Support for solo parents under the Expanded Solo Parents Welfare Act (RA 11861).',
-            'requirements' => ['Solo Parent ID', 'PSA Birth Certificate(s) of children', 'Barangay Certification'],
-            'process' => ['Submit Requirements', 'MSWDO Assessment', 'Approval', 'Release'],
-            'certTitle' => 'Application Form for Solo Parent',
-            'certSubtitle' => 'Annex B (2023) — Local Social Welfare and Development Office',
-            'fields' => [
-                ['key' => 'age', 'label' => 'Age', 'type' => 'number'],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'place_of_birth', 'label' => 'Place of Birth', 'type' => 'text'],
-                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widowed', 'Separated', 'Annulled']],
-                ['key' => 'educational_attainment', 'label' => 'Educational Attainment', 'type' => 'text'],
-                ['key' => 'religion', 'label' => 'Religion', 'type' => 'text'],
-                ['key' => 'occupation', 'label' => 'Occupation', 'type' => 'text'],
-                ['key' => 'company_agency', 'label' => 'Company / Agency', 'type' => 'text'],
-                ['key' => 'employment_status', 'label' => 'Employment Status', 'type' => 'select', 'options' => ['Employed', 'Self-employed', 'Not employed']],
-                ['key' => 'monthly_income', 'label' => 'Monthly Income', 'type' => 'text'],
-                ['key' => 'is_pantawid_beneficiary', 'label' => 'Pantawid (4Ps) Beneficiary?', 'type' => 'select', 'options' => ['Yes', 'No']],
-                ['key' => 'is_indigenous_person', 'label' => 'Indigenous Person?', 'type' => 'select', 'options' => ['Yes', 'No']],
-                ['key' => 'is_lgbtq', 'label' => 'LGBTQ+?', 'type' => 'select', 'options' => ['Yes', 'No']],
-                ['key' => 'solo_parent_circumstance', 'label' => 'Circumstance of Being a Solo Parent', 'type' => 'text'],
-                ['key' => 'solo_parent_needs', 'label' => 'Needs / Problems as a Solo Parent', 'type' => 'text'],
-                ['key' => 'emergency_contact_name', 'label' => 'In Case of Emergency — Name', 'type' => 'text'],
-                ['key' => 'emergency_contact_relationship', 'label' => 'In Case of Emergency — Relationship', 'type' => 'text'],
-                ['key' => 'emergency_contact_address', 'label' => 'In Case of Emergency — Address', 'type' => 'text'],
-                ['key' => 'family_composition', 'label' => 'Family Composition', 'type' => 'table', 'rowIcon' => 'user-round', 'rowLabel' => 'Family Member', 'columns' => [
-                    ['key' => 'name', 'label' => 'Name'],
-                    ['key' => 'relationship', 'label' => 'Relationship', 'options' => ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Grandchild', 'Other Relative']],
-                    ['key' => 'age', 'label' => 'Age', 'type' => 'number'],
-                    ['key' => 'birthday', 'label' => 'Birthday', 'type' => 'date'],
-                    ['key' => 'civil_status', 'label' => 'Civil Status', 'options' => ['Single', 'Married', 'Widowed', 'Separated', 'Annulled']],
-                    ['key' => 'educational_attainment', 'label' => 'Educational Attainment', 'options' => ['None', 'Elementary', 'High School', 'Vocational', 'College', 'Post Graduate']],
-                    ['key' => 'occupation', 'label' => 'Occupation'],
-                    ['key' => 'monthly_income', 'label' => 'Monthly Income'],
-                ]],
-            ],
-        ],
-        [
-            // DOLE TUPAD — Tulong Panghanapbuhay sa Ating Disadvantaged/Displaced Workers
-            'key' => 'tulong_tupad', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'name' => 'DOLE TUPAD Emergency Employment', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Minimum wage rate, 10-30 days of work', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'hard-hat',
-            'desc' => 'Short-term emergency employment for displaced, underemployed, or self-employed workers who lost livelihood.',
-            'requirements' => ['One (1) valid government-issued ID', 'Barangay Certification of Residency'],
-            'process' => ['Submit Profile Form', 'MPESO Screening', 'DOLE RO5 Validation', 'Project Deployment'],
-            'certTitle' => 'TUPAD Beneficiary Profile Form',
-            'certSubtitle' => 'TSSD-EFIS03-010, Rev. 02 — Department of Labor and Employment',
-            'fields' => [
-                ['key' => 'nature_of_work', 'label' => 'Nature of Work', 'type' => 'text'],
-                ['key' => 'type_of_workers', 'label' => 'Type of Workers', 'type' => 'select', 'options' => ['Underemployed (Formal Sector)', 'Laid-off / Terminated Workers (Formal Sector)', 'Self-employed with lost livelihood — natural calamities/disasters', 'Self-employed with lost livelihood — economic crisis', 'Self-employed with lost livelihood — armed conflicts', 'Self-employed with lost livelihood — seasonality of work']],
-                ['key' => 'specific_beneficiary_type', 'label' => 'Specific Type of Beneficiary', 'type' => 'select', 'options' => ['Crop Grower', 'Alternative/Small Transport Driver', 'Livestock/Poultry Raiser', 'Fisherfolk', 'Homebased Worker', 'Vendor', 'Laborer', 'PWD', 'Others']],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Separated', 'Widow/Widower', 'Others']],
-                ['key' => 'spouse_name', 'label' => 'Name of Spouse', 'type' => 'text'],
-                ['key' => 'spouse_occupation', 'label' => 'Occupation of Spouse', 'type' => 'text'],
-                ['key' => 'educational_attainment', 'label' => 'Highest Educational Attainment', 'type' => 'select', 'options' => ['Elementary', 'High School', 'College', 'Vocational', 'Others']],
-                ['key' => 'monthly_income', 'label' => 'Monthly Income', 'type' => 'text'],
-                ['key' => 'no_of_dependents', 'label' => 'No. of Dependents', 'type' => 'number'],
-                ['key' => 'skills_training_interest', 'label' => 'Intention to Avail Skills Training After the Project', 'type' => 'select', 'options' => ['Not Interested', 'Interested']],
-                ['key' => 'skills_training_specify', 'label' => 'If Interested, Specify Training', 'type' => 'text'],
-                ['key' => 'dependents', 'label' => "Beneficiary's Dependents (for insurance purposes only)", 'type' => 'table', 'rowIcon' => 'users', 'rowLabel' => 'Dependent', 'columns' => [
-                    ['key' => 'name', 'label' => 'Name'],
-                    ['key' => 'dob', 'label' => 'Date of Birth'],
-                    ['key' => 'age', 'label' => 'Age'],
-                    ['key' => 'relationship', 'label' => 'Relationship to Beneficiary'],
-                ]],
-            ],
-        ],
-        [
-            'key' => 'tulong_tesda', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'name' => 'TESDA Skills Training Registration', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Free training slot (scholarship-based)', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'graduation-cap',
-            'desc' => 'Register for a TESDA technical-vocational training slot through the Municipal Public Employment Service Office.',
-            'requirements' => ['One (1) 1x1 ID picture', 'One (1) valid government-issued ID'],
-            'process' => ['Submit Registration Form', 'MPESO Endorsement to TESDA', 'Enrollment'],
-            'certTitle' => "TESDA Registration Form — Learner's Profile",
-            'certSubtitle' => 'MIS 03-01, ver. 2021 — Technical Education and Skills Development Authority',
-            'fields' => [
-                ['key' => 'email_facebook', 'label' => 'Email Address / Facebook Account', 'type' => 'text'],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Separated/Divorced/Annulled', 'Widow/er', 'Common Law/Live-in']],
-                ['key' => 'employment_status', 'label' => 'Employment Status', 'type' => 'select', 'options' => ['Wage-Employed', 'Underemployed', 'Self-Employed', 'Unemployed']],
-                ['key' => 'birthplace', 'label' => 'Birthplace', 'type' => 'text'],
-                ['key' => 'educational_attainment', 'label' => 'Educational Attainment Before the Training', 'type' => 'select', 'options' => ['No Grade Completed', 'Elementary Undergraduate', 'Elementary Graduate', 'High School Undergraduate', 'High School Graduate', 'Junior High (K-12)', 'Senior High (K-12)', 'Post-Secondary/Tech-Voc Undergraduate', 'Post-Secondary/Tech-Voc Graduate', 'College Undergraduate', 'College Graduate', 'Masteral', 'Doctorate']],
-                ['key' => 'parent_guardian', 'label' => 'Parent / Guardian Name & Address', 'type' => 'text'],
-                ['key' => 'client_classification', 'label' => 'Learner/Trainee Classification', 'type' => 'select', 'options' => ['4Ps Beneficiary', 'Agrarian Reform Beneficiary', 'Balik Probinsya', 'Displaced Workers', 'Farmers and Fishermen', 'Indigenous People & Cultural Communities', 'Industry Workers', 'Out-of-School-Youth', 'OFW Dependent', 'Returning/Repatriated OFW', 'Student', 'TESDA Alumni', 'Uniformed Personnel', 'Victim of Natural Disasters and Calamities', 'Others']],
-                ['key' => 'course_qualification', 'label' => 'Name of Course / Qualification', 'type' => 'text', 'required' => true],
-                ['key' => 'scholarship_package', 'label' => 'Scholarship Package (TWSP, PESFA, STEP, others)', 'type' => 'text'],
-                ['key' => 'privacy_consent', 'label' => 'Privacy Consent and Disclaimer', 'type' => 'select', 'options' => ['Agree', 'Disagree']],
-            ],
-        ],
-        [
-            'key' => 'tulong_livelihood_mapping', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'name' => 'Livelihood Business Mapping', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Self-assessment worksheet — no monetary grant', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'compass',
-            'desc' => 'Rate your business interests and skills to find the most suitable livelihood project before applying for a MPESO livelihood grant.',
-            'requirements' => ['None — self-assessment worksheet'],
-            'process' => ['Applicant Self-Rates Business Interests', 'MPESO Livelihood Focal Reviews', 'Filing'],
-            'certTitle' => 'Pagmamapa ng Negosyo (Business Mapping)',
-            'certSubtitle' => 'TSSD-EFIS02-002, Rev. 01 — Department of Labor and Employment',
-            'fields' => [
-                ['key' => 'business_interests', 'label' => 'Business Interests (rate 1-5 per criterion: Customer Demand, Raw Materials, Skills Level, Revolving Capital, Management Skills)', 'type' => 'table', 'rowIcon' => 'store', 'rowLabel' => 'Business Interest', 'columns' => [
-                    ['key' => 'interest', 'label' => 'Business Interest'],
-                    ['key' => 'customer_demand', 'label' => 'Customer Demand (1-5)'],
-                    ['key' => 'raw_materials', 'label' => 'Raw Materials (1-5)'],
-                    ['key' => 'skills_level', 'label' => 'Skills Level (1-5)'],
-                    ['key' => 'revolving_capital', 'label' => 'Revolving Capital (1-5)'],
-                    ['key' => 'management_skills', 'label' => 'Management Skills (1-5)'],
-                    ['key' => 'total_score', 'label' => 'Total Score'],
-                ]],
-                ['key' => 'most_interested', 'label' => 'Most Interested Livelihood Choice', 'type' => 'text'],
-                ['key' => 'most_capable', 'label' => 'Most Capable Livelihood Choice', 'type' => 'text'],
-                ['key' => 'sustainable_capital', 'label' => 'Livelihood Sustainable with Available Capital', 'type' => 'text'],
-                ['key' => 'chosen_livelihood', 'label' => 'Chosen Livelihood Project', 'type' => 'text', 'required' => true],
-            ],
-        ],
-        [
-            'key' => 'tulong_kabuhayan', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'name' => 'Kabuhayan Program Beneficiary Application', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Livelihood package, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'sprout',
-            'desc' => 'Apply for a DOLE-MPESO livelihood/kabuhayan program grant to start, restore, or grow a small business.',
-            'requirements' => ['One (1) 1x1 ID picture', 'PWD ID (if applicable)'],
-            'process' => ['Submit Profile Form', 'MPESO Screening', 'DOLE Endorsement'],
-            'certTitle' => 'Kabuhayan Program Beneficiary Profile Form',
-            'certSubtitle' => 'TSSD-EFIS02-003, Rev. 07 — Department of Labor and Employment',
-            'fields' => [
-                ['key' => 'project_type', 'label' => 'Type of Project', 'type' => 'select', 'options' => ['Group', 'Individual']],
-                ['key' => 'program_component', 'label' => 'Program Component', 'type' => 'select', 'options' => ['Formation', 'Restoration', 'Enhancement']],
-                ['key' => 'mode_of_implementation', 'label' => 'Mode of Implementation', 'type' => 'select', 'options' => ['Accredited Co-Partner / LGU', 'Direct Administration']],
-                ['key' => 'project_title', 'label' => 'Name / Title of Individual Project', 'type' => 'text', 'required' => true],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'text'],
-                ['key' => 'has_disability', 'label' => 'Have Disability?', 'type' => 'select', 'options' => ['Yes', 'No']],
-                ['key' => 'pwd_id_no', 'label' => 'PWD ID No. (if applicable)', 'type' => 'text'],
-                ['key' => 'type_of_beneficiary', 'label' => 'Type of Beneficiary', 'type' => 'text'],
-                ['key' => 'monthly_income', 'label' => 'Monthly Income', 'type' => 'text'],
-                ['key' => 'no_of_dependents', 'label' => 'No. of Dependents', 'type' => 'number'],
-                ['key' => 'spouse_name', 'label' => 'Name of Spouse', 'type' => 'text'],
-                ['key' => 'spouse_occupation', 'label' => 'Occupation of Spouse', 'type' => 'text'],
-                ['key' => 'educational_attainment', 'label' => 'Highest Educational Attainment', 'type' => 'select', 'options' => ['Elementary', 'High School', 'Vocational', 'College Course']],
-                ['key' => 'related_trainings', 'label' => 'Trainings Attended Relative to the Proposed Project', 'type' => 'text'],
-                ['key' => 'is_4ps_beneficiary', 'label' => 'Pantawid Pamilyang Pilipino Program (4Ps) Beneficiary?', 'type' => 'select', 'options' => ['Oo', 'Hindi']],
-                ['key' => 'gsis_no', 'label' => 'GSIS No.', 'type' => 'text'],
-                ['key' => 'pagibig_no', 'label' => 'Pag-IBIG No.', 'type' => 'text'],
-                ['key' => 'philhealth_no', 'label' => 'PhilHealth No.', 'type' => 'text'],
-                ['key' => 'sss_no', 'label' => 'SSS No.', 'type' => 'text'],
-            ],
-        ],
-        [
-            'key' => 'tulong_business_plan', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'name' => 'Individual Business Plan', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Start-up kit value, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'notebook-pen',
-            'desc' => 'Submit your business plan to support a DOLE livelihood grant application — required alongside the Business Mapping and Beneficiary Profile forms.',
-            'requirements' => ['Completed Livelihood Business Mapping', 'Completed Kabuhayan Program Beneficiary Application'],
-            'process' => ['Submit Business Plan', 'Provincial Livelihood Focal Person Evaluation', 'Approval / Disapproval'],
-            'certTitle' => 'Individual Business Plan',
-            'certSubtitle' => 'TSSD-EFIS02-004, Rev. 05 — Department of Labor and Employment',
-            'fields' => [
-                ['key' => 'project_component', 'label' => 'Project Component', 'type' => 'select', 'options' => ['Formation (new business)', 'Enhancement (existing business)', 'Restoration (lost livelihood)']],
-                ['key' => 'proposed_business', 'label' => 'Proposed Livelihood Project / Business', 'type' => 'text', 'required' => true],
-                ['key' => 'business_type', 'label' => 'Type of Business', 'type' => 'select', 'options' => ['Food Processing/Preservation', 'Selling of Goods', 'Manufacturing & Selling of Products', 'Service', 'Others']],
-                ['key' => 'skills_experience', 'label' => 'Skills / Experience on Chosen Business', 'type' => 'text'],
-                ['key' => 'product_service', 'label' => 'Product / Service Offered', 'type' => 'text'],
-                ['key' => 'target_customers', 'label' => 'Target Customers', 'type' => 'text'],
-                ['key' => 'competitors', 'label' => 'Competitors (who & where)', 'type' => 'text'],
-                ['key' => 'selling_method', 'label' => 'Method of Selling', 'type' => 'select', 'options' => ['Tingi (Retail)', 'Maramihan/Bultuhan (Wholesale)', 'Made-to-Order', 'On-call', 'Pagtayo ng Shop', 'Paglalako', 'Online Selling', 'Others']],
-                ['key' => 'location', 'label' => 'Business Location', 'type' => 'text'],
-                ['key' => 'location_ownership', 'label' => 'Location Ownership', 'type' => 'select', 'options' => ['Owned', 'Rented', 'Shared Use']],
-                ['key' => 'promotion', 'label' => 'Promotion Method', 'type' => 'checkbox-group', 'allowOther' => true, 'options' => ['Karatula/Flyers', 'Diskwento', 'Rekomendasyon ng Iba', 'Others']],
-                ['key' => 'expenses', 'label' => 'Expenses (Revolving Fund)', 'type' => 'table', 'rowIcon' => 'receipt', 'rowLabel' => 'Item', 'columns' => [
-                    ['key' => 'item', 'label' => 'Product/Service'],
-                    ['key' => 'materials', 'label' => 'Needed Materials/Equipment'],
-                    ['key' => 'daily_capital', 'label' => 'Est. Daily Capital'],
-                    ['key' => 'monthly_capital', 'label' => 'Est. Monthly Capital'],
-                ]],
-                ['key' => 'startup_items', 'label' => 'Start-Up Items Requested from DOLE', 'type' => 'table', 'rowIcon' => 'package', 'rowLabel' => 'Item', 'columns' => [
-                    ['key' => 'item', 'label' => 'Item (Raw Materials, Equipment, Tools)'],
-                    ['key' => 'quantity', 'label' => 'Quantity'],
-                    ['key' => 'unit_cost', 'label' => 'Unit Cost'],
-                    ['key' => 'total_cost', 'label' => 'Total Cost'],
-                ]],
-                ['key' => 'monthly_operating_expenses', 'label' => 'Monthly Operating Expenses', 'type' => 'table', 'rowIcon' => 'wallet', 'rowLabel' => 'Expense', 'columns' => [
-                    ['key' => 'item', 'label' => 'Item (Water, Electricity, Rent, Salary)'],
-                    ['key' => 'amount', 'label' => 'Amount (₱)'],
-                ]],
-                ['key' => 'projected_monthly_sales', 'label' => 'Projected Total Sales/Income per Month', 'type' => 'number'],
-                ['key' => 'projected_monthly_expenses', 'label' => 'Projected Total Expenses per Month', 'type' => 'number'],
-                ['key' => 'projected_net_income', 'label' => 'Projected Net Income per Month', 'type' => 'number'],
-                ['key' => 'opportunities', 'label' => 'Opportunities and Benefits in the Business', 'type' => 'text'],
-                ['key' => 'risks', 'label' => 'Risks and Challenges in the Business', 'type' => 'text'],
-            ],
-        ],
-        [
-            // EMPOWERMENT AND RE-AFFIRMATION OF PATERNAL ABILITIES — Esperanza Masbate Federation
-            'key' => 'tulong_erpat', 'category' => 'Social Protection', 'level' => 'Municipal',
-            'name' => 'ERPAT Membership Registration', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Free membership', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'user-round-plus',
-            'desc' => 'Register as a member of the ERPAT (Empowerment and Re-affirmation of Paternal Abilities) Federation of Esperanza, Masbate.',
-            'requirements' => ['One (1) valid government-issued ID'],
-            'process' => ['Accomplish Registration Form', 'MSWD Review', 'Filing with ERPAT Federation'],
-            'certTitle' => 'ERPAT Registration Form',
-            'certSubtitle' => 'Empowerment and Re-affirmation of Paternal Abilities — ERPAT Federation of Esperanza, Masbate',
-            'fields' => [
-                ['key' => 'age', 'label' => 'Age', 'type' => 'number'],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'status', 'label' => 'Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widowed', 'Separated']],
-                ['key' => 'place_of_birth', 'label' => 'Place of Birth', 'type' => 'text'],
-                ['key' => 'occupation', 'label' => 'Occupation', 'type' => 'text'],
-                ['key' => 'religion', 'label' => 'Religion', 'type' => 'text'],
-                ['key' => 'educational_attainment', 'label' => 'Educational Attainment', 'type' => 'select', 'options' => ['Elementary', 'High School', 'Vocational', 'College', 'Others']],
-                ['key' => 'skills_talent', 'label' => 'Skills / Talent', 'type' => 'text'],
-                ['key' => 'hobbies', 'label' => 'Hobbies', 'type' => 'text'],
-                ['key' => 'involvement_community', 'label' => 'Community Involvement', 'type' => 'text'],
-                ['key' => 'family_composition', 'label' => 'Family Composition', 'type' => 'table', 'rowIcon' => 'user-round', 'rowLabel' => 'Family Member', 'columns' => [
-                    ['key' => 'name', 'label' => 'Name'],
-                    ['key' => 'sex', 'label' => 'Sex', 'options' => ['Male', 'Female']],
-                    ['key' => 'relationship', 'label' => 'Relationship', 'options' => ['Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Other Relative']],
-                    ['key' => 'age', 'label' => 'Age', 'type' => 'number'],
-                ]],
-                ['key' => 'seminars_trainings', 'label' => 'Seminars / Trainings Attended', 'type' => 'table', 'rowIcon' => 'graduation-cap', 'rowLabel' => 'Training', 'columns' => [
-                    ['key' => 'title', 'label' => 'Title'],
-                    ['key' => 'date', 'label' => 'Date'],
-                    ['key' => 'organizer', 'label' => 'Organizer'],
-                ]],
-            ],
-        ],
-    ];
+    // Relocated to config/esperanza_tulong_types.php, so this file has a
+    // single source of truth for every Tulong fee (see admin Settings >
+    // Service Catalog) — same mechanism as the Dokyu municipal/barangay
+    // catalogs.
+    $assistanceTypes = config('esperanza_tulong_types.types');
 
     // Attach expected-processing-time onto each seeded request by matching its
     // type against $assistanceTypes, same mechanism as the Dokyu tracker.
@@ -354,18 +59,17 @@
             open: false,
             tab: 'all',
             requests: @js($requests),
-            doneStatuses: ['Completed', 'Released', 'Rejected'],
+            doneStatuses: ['Completed', 'Released', 'Rejected', 'Cancelled', 'Archived'],
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
                 'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
-                'Assigned': ['bg-purple-50 text-purple-700 ring-purple-200', 'bg-purple-500'],
-                'Processing': ['bg-brand-50 text-brand-700 ring-brand-200', 'bg-brand-500'],
-                'Waiting Requirements': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
                 'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
-                'Ready for Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
+                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
                 'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
                 'Cancelled': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-400'],
@@ -385,14 +89,19 @@
             resubmitNote: '',
             resubmitting: false,
             openProgress(r) { this.selectedRequest = r; this.resubmitNote = ''; this.progressOpen = true; },
+            // The SAME case moves Under Review -> Resubmitted here — it
+            // never goes back to Submitted, never resets, and keeps its ref
+            // and review remarks. Mirrors admin-side markResubmitted() in
+            // admin/assistance-requests.blade.php. Used only for cases with
+            // no structured per-requirement list (see resubmitRequirements
+            // below for the requirements-based equivalent).
             resubmitRequest() {
                 if (this.resubmitting || !this.resubmitNote.trim()) return;
                 this.resubmitting = true;
                 setTimeout(() => {
-                    this.selectedRequest.status = 'Submitted';
-                    this.selectedRequest.purpose = this.resubmitNote.trim();
-                    this.selectedRequest.submitted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    delete this.selectedRequest.remarks;
+                    this.selectedRequest.status = 'Resubmitted';
+                    this.selectedRequest.resubmission_note = this.resubmitNote.trim();
+                    this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     this.resubmitting = false;
                     this.progressOpen = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
@@ -400,31 +109,31 @@
             },
             replaceRequirementFile(req, fileName) {
                 req.versions = req.versions || [];
-                req.versions.push({ file: req.file, status: 'Rejected', date: req._rejectedDate || '', reject_reason: req.reject_reason, remarks: req.remarks });
+                req.versions.push({ file: req.file, status: req.status, date: req._flaggedDate || '', reject_reason: req.reject_reason, remarks: req.remarks });
                 req.file = fileName;
-                req.status = 'Pending Review';
+                req.status = 'Resubmitted';
                 req.reject_reason = null;
                 req.remarks = null;
                 req._showPicker = false;
                 this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Replacement uploaded — awaiting review.' : 'Na-upload ang kapalit — hinihintay ang pagsusuri.', variant: 'success' });
             },
             get canResubmitRequirements() {
-                return this.selectedRequest && (this.selectedRequest.requirements || []).every(r => r.status !== 'Rejected');
+                return this.selectedRequest && (this.selectedRequest.requirements || []).every(r => r.status !== 'Flagged for Replacement');
             },
             resubmitRequirements() {
                 if (this.resubmitting || !this.canResubmitRequirements) return;
                 this.resubmitting = true;
                 setTimeout(() => {
-                    this.selectedRequest.status = 'Submitted';
-                    this.selectedRequest.submitted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    this.selectedRequest.status = 'Resubmitted';
+                    this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     this.resubmitting = false;
                     this.progressOpen = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
                 }, 800);
             },
-            stepOrder: ['Submitted', 'Assigned', 'Approved', 'Released'],
+            stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Assigned': 1, 'Waiting Requirements': 1, 'Processing': 1, 'Approved': 2, 'Released': 3, 'Completed': 3, 'Rejected': 0 };
+                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
             get pickupInfo() {
@@ -441,6 +150,16 @@
                 const d = new Date(r.submitted);
                 d.setDate(d.getDate() + addDays);
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            },
+            // Deep-link landing: a notification click appends ?ref=AR-2026-xxxx
+            // (see citizen/notifications.blade.php) — open that exact
+            // request's tracking modal instead of just landing on the list.
+            init() {
+                this.$store.citizenNotifications.seedFromRequests(this.requests, 'tulong');
+                const ref = new URLSearchParams(window.location.search).get('ref');
+                if (!ref) return;
+                const match = this.requests.find(r => r.ref === ref);
+                if (match) this.openProgress(match);
             },
         }"
         class="animate-fade-up"
@@ -544,8 +263,8 @@
                     },
                     paymentMethods: [
                         { key: 'gcash', label: 'GCash', hint: 'Send to 0917-000-0000', hintFil: 'Ipadala sa 0917-000-0000', icon: 'smartphone' },
-                        { key: 'paymaya', label: 'PayMaya', hint: 'Send to 0918-000-0000', hintFil: 'Ipadala sa 0918-000-0000', icon: 'wallet' },
-                        { key: 'center', label: 'Payment in Center', labelFil: 'Bayad sa Opisina', hint: 'Pay at the MSWDO / OSCA office', hintFil: 'Magbayad sa opisina ng MSWDO / OSCA', icon: 'landmark' },
+                        { key: 'paymaya', label: 'Maya', hint: 'Send to 0918-000-0000', hintFil: 'Ipadala sa 0918-000-0000', icon: 'wallet' },
+                        { key: 'center', label: 'Onsite', labelFil: 'Bayad sa Opisina', hint: 'Pay at the MSWDO / OSCA office', hintFil: 'Magbayad sa opisina ng MSWDO / OSCA', icon: 'landmark' },
                     ],
                     stepLabels: {
                         fil: ['Pumili ng Tulong', 'Detalye ng Aplikasyon', 'Bayad', 'I-review at I-submit'],
@@ -555,14 +274,20 @@
                     reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.paymentMethod = null; this.alreadyPaid = false; this.receipt = null; this.showReceiptPicker = false; this.search = ''; this.formData = {}; this.selectedCategory = null; },
                     submitRequest() {
                         const type = this.types[this.selectedType];
+                        const ref = 'AR-2026-' + Math.floor(1000 + Math.random() * 9000);
                         this.requests.unshift({
-                            ref: 'AR-2026-' + Math.floor(1000 + Math.random() * 9000),
+                            ref,
                             type: type?.name || '—',
                             office: type?.office || '—',
                             purpose: type?.name || '—',
                             days: type?.days || '3-5 working days',
                             submitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                             status: 'Submitted',
+                        });
+                        this.$store.citizenNotifications.push({
+                            icon: 'hand-heart', color: 'brand', portal: 'tulong', ref,
+                            title: 'Assistance Request Submitted',
+                            body: (type?.name || 'Your assistance request') + ' (' + ref + ') has been submitted and is now Pending Review.',
                         });
                     },
                 }"
@@ -1217,6 +942,8 @@
                             </template>
                         </div>
 
+                        {{-- Rejected is terminal — informational only, no
+                             resubmit path out of it. --}}
                         <div class="rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Rejected'">
                             <div class="flex items-start gap-2.5">
                                 <i data-lucide="circle-x" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
@@ -1226,13 +953,27 @@
                                     <p class="text-xs text-rose-600 mt-0.5" x-show="!selectedRequest.remarks"><x-ui.t fil="Bisitahin ang opisina para sa detalye." en="Visit the office below for details." /></p>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="mt-3 pt-3 border-t border-rose-100/70" x-show="!(selectedRequest.requirements || []).length">
-                                <label class="block text-xs font-medium text-rose-700 mb-1.5"><x-ui.t fil="Itama at Isumite Muli" en="Correct & Resubmit" /></label>
+                        {{-- Under Review, no structured per-requirement list
+                             — the note-based correction path (see
+                             resubmitRequest(), which moves this SAME case to
+                             Resubmitted rather than resetting it). --}}
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Under Review' && !(selectedRequest.requirements || []).length">
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-amber-700"><x-ui.t fil="Kailangan ng Ayos ang Kahilingan" en="Application Needs Correction" /></p>
+                                    <p class="text-xs text-amber-600 mt-0.5" x-show="selectedRequest.remarks" x-text="selectedRequest.remarks"></p>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 pt-3 border-t border-amber-100/70">
+                                <label class="block text-xs font-medium text-amber-700 mb-1.5"><x-ui.t fil="Itama at Isumite Muli" en="Correct & Resubmit" /></label>
                                 <textarea
                                     x-model="resubmitNote" rows="2"
                                     :placeholder="$store.lang.current === 'en' ? 'Describe what you corrected, or provide the missing requirement...' : 'Ilarawan kung ano ang inayos mo, o ibigay ang kulang na requirement...'"
-                                    class="w-full rounded-xl border border-rose-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
+                                    class="w-full rounded-xl border border-amber-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                                 ></textarea>
                                 <x-ui.button
                                     size="sm" icon="rotate-ccw" class="mt-2.5 w-full justify-center"
@@ -1244,7 +985,7 @@
                             </div>
                         </div>
 
-                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="['Rejected', 'Waiting Requirements'].includes(selectedRequest.status) && (selectedRequest.requirements || []).length">
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Under Review' && (selectedRequest.requirements || []).length">
                             <div class="flex items-start gap-2.5 px-3.5 py-2.5">
                                 <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
@@ -1254,7 +995,7 @@
                             </div>
                             <div class="px-3.5 pb-3.5 space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
-                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-slate-200': req.status === 'Pending Review' }">
+                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Pending Review' }">
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
@@ -1265,13 +1006,13 @@
                                             </div>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' }"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
                                             ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
                                         </div>
 
-                                        <div x-show="req.status === 'Rejected'" class="mt-2 pt-2 border-t border-rose-100 text-[11px]">
-                                            <p class="font-semibold text-rose-700" x-text="req.reject_reason"></p>
-                                            <p class="text-rose-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
+                                        <div x-show="req.status === 'Flagged for Replacement'" class="mt-2 pt-2 border-t border-amber-100 text-[11px]">
+                                            <p class="font-semibold text-amber-700" x-text="req.reject_reason"></p>
+                                            <p class="text-amber-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
                                             <button type="button" x-show="!req._showPicker" @click="req._showPicker = true" class="mt-1.5 text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Palitan ang Dokumento" en="Replace Document" /></button>
                                             <div x-show="req._showPicker" x-cloak x-transition class="mt-2 pt-2 border-t border-rose-100/70">
                                                 <x-ui.file-picker
