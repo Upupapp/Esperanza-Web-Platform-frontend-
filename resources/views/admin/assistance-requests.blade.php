@@ -548,6 +548,13 @@
                     if (saved[r.ref]) Object.assign(r, saved[r.ref]);
                 });
             },
+            // Escape hatch for stale saved progress — see the identical
+            // method's own comment in admin/document-requests.blade.php.
+            resetDemoData() {
+                localStorage.removeItem('esperanza_dokyu_progress');
+                localStorage.removeItem('esperanza_tulong_progress');
+                window.location.href = window.location.pathname;
+            },
             persistProgress() {
                 const data = {};
                 this.requests.forEach((r) => {
@@ -875,6 +882,13 @@
                     :class="showAdvancedFilters || officeFilter || levelFilter || assignedFilter || barangayFilter ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'"
                 >
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
+                </button>
+                <button
+                    type="button" @click="resetDemoData()"
+                    title="Clears saved review progress for every Dokyu/Tulong request in this browser and reloads with the current mock data — use this if a case's status or documents look out of date."
+                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors shrink-0"
+                >
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Demo Data
                 </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
