@@ -9,19 +9,19 @@
         ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'purpose' => 'School enrollment', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-1872', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-1655', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'purpose' => 'Sari-sari store registration', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
-            ['key' => 'req_dti', 'name' => 'DTI or SEC Registration', 'file' => 'DTI-Registration.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_business', 'name' => 'Barangay Business Clearance', 'file' => 'Brgy-Business-Clearance.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_zoning', 'name' => 'Locational / Zoning Clearance', 'file' => 'Zoning-Clearance.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_fsic', 'name' => 'Fire Safety Inspection Certificate (FSIC)', 'file' => 'Fire-Safety-Inspection-Certificate.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_sanitary', 'name' => 'Sanitary Permit', 'file' => 'Sanitary-Permit.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_cedula', 'name' => 'Cedula (Community Tax Certificate)', 'file' => 'Cedula-2026.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_lease', 'name' => 'Lease contract or land title', 'file' => 'Lease-Contract.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_dti', 'name' => 'DTI or SEC Registration', 'file' => 'DTI-Registration.pdf', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_business', 'name' => 'Barangay Business Clearance', 'file' => 'Brgy-Business-Clearance.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_zoning', 'name' => 'Locational / Zoning Clearance', 'file' => 'Zoning-Clearance.pdf', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_fsic', 'name' => 'Fire Safety Inspection Certificate (FSIC)', 'file' => 'Fire-Safety-Inspection-Certificate.pdf', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_sanitary', 'name' => 'Sanitary Permit', 'file' => 'Sanitary-Permit.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_cedula', 'name' => 'Cedula (Community Tax Certificate)', 'file' => 'Cedula-2026.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_lease', 'name' => 'Lease contract or land title', 'file' => 'Lease-Contract.pdf', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-1490', 'type' => 'Real Property Tax Clearance', 'office' => "Treasurer's Office", 'purpose' => 'Lot sale requirement', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2201', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'One (1) valid government-issued ID', 'file' => 'My-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_interview', 'name' => 'Brief interview / case assessment with MSWDO', 'file' => 'Interview-Notes.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_valid_id', 'name' => 'One (1) valid government-issued ID', 'file' => 'My-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_interview', 'name' => 'Brief interview / case assessment with MSWDO', 'file' => 'Interview-Notes.pdf', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
     ];
 
@@ -123,7 +123,7 @@
         ['name' => 'PhilSys National ID.jpg', 'category' => 'IMG', 'type' => 'Valid ID', 'size' => '1.2 MB', 'uploaded' => 'Jul 8, 2026', 'status' => 'Approved'],
         ['name' => 'Barangay Certificate.pdf', 'category' => 'PDF', 'type' => 'Proof of Residency', 'size' => '480 KB', 'uploaded' => 'Jul 3, 2026', 'status' => 'Approved'],
         ['name' => '2x2 ID Photo.jpg', 'category' => 'IMG', 'type' => 'Photo', 'size' => '220 KB', 'uploaded' => 'Jun 14, 2026', 'status' => 'Approved'],
-        ['name' => 'DTI Registration.pdf', 'category' => 'PDF', 'type' => 'Business Document', 'size' => '640 KB', 'uploaded' => 'May 12, 2026', 'status' => 'Pending Review'],
+        ['name' => 'DTI Registration.pdf', 'category' => 'PDF', 'type' => 'Business Document', 'size' => '640 KB', 'uploaded' => 'May 12, 2026', 'status' => 'Submitted'],
         ['name' => 'Affidavit of Loss.docx', 'category' => 'DOCX', 'type' => 'Supporting Document', 'size' => '96 KB', 'uploaded' => 'Apr 20, 2026', 'status' => 'Completed'],
     ];
 
@@ -149,7 +149,6 @@
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
-                'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
                 'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
                 'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
@@ -222,7 +221,7 @@
             },
             stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
+                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
                 return map[status] ?? 0;
             },
             get pickupInfo() {
@@ -477,7 +476,7 @@
                             this.$store.citizenNotifications.push({
                                 icon: 'file-plus', color: 'brand', portal: 'dokyu', ref,
                                 title: 'Document Request Submitted',
-                                body: (doc?.name || 'Your document request') + ' (' + ref + ') has been submitted and is now Pending Review.',
+                                body: (doc?.name || 'Your document request') + ' (' + ref + ') has been submitted and is now Submitted.',
                             });
                             // Same-browser demo only — see adminNotifications'
                             // own comment in resources/js/app.js.
@@ -1186,7 +1185,7 @@
                             </div>
                             <div class="px-3.5 pb-3.5 space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
-                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Pending Review' }">
+                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
@@ -1197,7 +1196,7 @@
                                             </div>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
                                             ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
                                         </div>
 

@@ -18,7 +18,7 @@
             ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Flagged for Replacement', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
                 ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Flagged for Replacement', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
             ]],
-            ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
     ];
 
@@ -63,7 +63,6 @@
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
-                'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
                 'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
                 'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
@@ -136,7 +135,7 @@
             },
             stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
+                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
             get pickupInfo() {
@@ -290,7 +289,7 @@
                         this.$store.citizenNotifications.push({
                             icon: 'hand-heart', color: 'brand', portal: 'tulong', ref,
                             title: 'Assistance Request Submitted',
-                            body: (type?.name || 'Your assistance request') + ' (' + ref + ') has been submitted and is now Pending Review.',
+                            body: (type?.name || 'Your assistance request') + ' (' + ref + ') has been submitted and is now Submitted.',
                         });
                         // Same-browser demo only — see adminNotifications'
                         // own comment in resources/js/app.js.
@@ -1006,7 +1005,7 @@
                             </div>
                             <div class="px-3.5 pb-3.5 space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
-                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Pending Review' }">
+                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
@@ -1017,7 +1016,7 @@
                                             </div>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
                                             ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
                                         </div>
 

@@ -46,7 +46,7 @@
         ['type' => 'Certificate of Employment', 'category' => 'Supporting Documents', 'file_type' => 'docx'],
         ['type' => 'Proof of Income', 'category' => 'Supporting Documents', 'file_type' => 'pdf'],
     ];
-    $storageStatuses = ['Pending Review', 'Under Verification', 'Under Review', 'Approved', 'Completed', 'Rejected'];
+    $storageStatuses = ['Submitted', 'Under Verification', 'Under Review', 'Approved', 'Completed', 'Rejected'];
     $storageMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
 
     // One representative citizen per barangay (two for the six barangays
@@ -176,7 +176,7 @@
             citizenAvatars: @js($citizenAvatars),
             documents: @js($citizenDocuments),
             statusStyles: {
-                'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
+                'Submitted': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
                 'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
@@ -368,7 +368,7 @@
                                 <div><dt class="text-xs text-slate-400">Barangay</dt><dd class="text-sm font-semibold text-navy-900" x-text="'Brgy. ' + selectedCitizen.barangay"></dd></div>
                                 <div><dt class="text-xs text-slate-400">Verification</dt><dd class="text-sm font-semibold" :class="selectedCitizen.verification === 'Verified' ? 'text-emerald-600' : 'text-slate-500'" x-text="selectedCitizen.verification || '—'"></dd></div>
                                 <div><dt class="text-xs text-slate-400">Document Count</dt><dd class="text-sm font-semibold text-navy-900" x-text="selectedCitizenDocs.length"></dd></div>
-                                <div><dt class="text-xs text-slate-400">Pending Review</dt><dd class="text-sm font-semibold text-amber-600" x-text="selectedCitizenDocs.filter(d => ['Pending Review','Under Verification','Under Review'].includes(d.status)).length"></dd></div>
+                                <div><dt class="text-xs text-slate-400">Submitted</dt><dd class="text-sm font-semibold text-amber-600" x-text="selectedCitizenDocs.filter(d => ['Submitted','Under Verification','Under Review'].includes(d.status)).length"></dd></div>
                             </dl>
                         </div>
 
@@ -382,8 +382,8 @@
                                             <p class="text-sm font-medium text-slate-700 truncate" x-text="doc.type"></p>
                                             <p class="text-xs text-slate-400" x-text="doc.category + ' · ' + doc.uploaded"></p>
                                         </div>
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0" :class="(statusStyles[doc.status] || statusStyles['Pending Review'])[0]">
-                                            <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[doc.status] || statusStyles['Pending Review'])[1]"></span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0" :class="(statusStyles[doc.status] || statusStyles['Submitted'])[0]">
+                                            <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[doc.status] || statusStyles['Submitted'])[1]"></span>
                                             <span x-text="doc.status"></span>
                                         </span>
                                         <div class="flex items-center gap-1 shrink-0">
@@ -439,8 +439,8 @@
                             <div><dt class="text-xs text-slate-400">Submitted</dt><dd class="text-sm font-semibold text-navy-900" x-text="previewDoc.uploaded"></dd></div>
                         </dl>
                         <div>
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[previewDoc.status] || statusStyles['Pending Review'])[0]">
-                                <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[previewDoc.status] || statusStyles['Pending Review'])[1]"></span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[previewDoc.status] || statusStyles['Submitted'])[0]">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[previewDoc.status] || statusStyles['Submitted'])[1]"></span>
                                 <span x-text="previewDoc.status"></span>
                             </span>
                         </div>

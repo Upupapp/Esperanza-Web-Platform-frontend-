@@ -676,7 +676,7 @@
                                     class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0"
                                     :class="{
                                         'bg-green-100 text-green-700': ['Released','Completed','Approved','Mark to Release'].includes(a.status),
-                                        'bg-amber-100 text-amber-700': ['Processing','Under Review','Pending Review','Assigned'].includes(a.status),
+                                        'bg-amber-100 text-amber-700': ['Processing','Under Review','Assigned'].includes(a.status),
                                         'bg-blue-100 text-blue-700': ['Submitted','Under Verification'].includes(a.status),
                                         'bg-red-100 text-red-700': ['Rejected','Cancelled'].includes(a.status),
                                     }"
@@ -1521,10 +1521,10 @@
                                             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
                                             :class="{
                                                 'bg-green-100 text-green-700': ['Released','Completed','Approved','Mark to Release'].includes(d.status),
-                                                'bg-amber-100 text-amber-700': ['Processing','Under Review','Pending Review','Assigned'].includes(d.status),
+                                                'bg-amber-100 text-amber-700': ['Processing','Under Review','Assigned'].includes(d.status),
                                                 'bg-blue-100 text-blue-700': ['Submitted','Under Verification'].includes(d.status),
                                                 'bg-red-100 text-red-700': ['Rejected','Cancelled'].includes(d.status),
-                                                'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Mark to Release','Processing','Under Review','Pending Review','Assigned','Submitted','Under Verification','Rejected','Cancelled'].includes(d.status),
+                                                'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Mark to Release','Processing','Under Review','Assigned','Submitted','Under Verification','Rejected','Cancelled'].includes(d.status),
                                             }"
                                             x-text="d.status"
                                         ></span>
@@ -1585,9 +1585,9 @@
                                         :class="{
                                             'bg-green-100 text-green-700': ['Released','Completed','Approved'].includes(a.status),
                                             'bg-amber-100 text-amber-700': ['Processing','Under Review','Assigned'].includes(a.status),
-                                            'bg-blue-100 text-blue-700': ['Submitted','Pending Review'].includes(a.status),
+                                            'bg-blue-100 text-blue-700': a.status === 'Submitted',
                                             'bg-red-100 text-red-700': ['Rejected','Cancelled'].includes(a.status),
-                                            'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Processing','Under Review','Assigned','Submitted','Pending Review','Rejected','Cancelled'].includes(a.status),
+                                            'bg-slate-100 text-slate-600': !['Released','Completed','Approved','Processing','Under Review','Assigned','Submitted','Rejected','Cancelled'].includes(a.status),
                                         }"
                                         x-text="a.status"
                                     ></span>

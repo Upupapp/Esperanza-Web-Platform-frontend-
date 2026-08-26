@@ -47,19 +47,19 @@
         ];
     }
     $requests = [
-        ['ref' => 'DR-2026-2231', 'citizen' => 'Perla Dionisio', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 12, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'DR-2026-2231', 'citizen' => 'Perla Dionisio', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 12, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2228', 'citizen' => 'Romeo Villaflor', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 11, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2225', 'citizen' => 'Cristina Manalo', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 10, 2026', 'status' => 'Under Verification'],
         ['ref' => 'DR-2026-2270', 'citizen' => 'Kevin Ray Dizon', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 9, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2217', 'citizen' => 'Bienvenido Rosales', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 9, 2026', 'status' => 'Under Review'],
-        ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'barangay' => 'Baras', 'submitted' => 'Jul 10, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'DR-2026-2214', 'citizen' => 'Rosemarie Tan', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'barangay' => 'Baras', 'submitted' => 'Jul 10, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2210', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Cedula', 'office' => "Treasurer's Office", 'barangay' => 'Poblacion', 'submitted' => 'Jul 8, 2026', 'status' => 'Under Verification'],
         ['ref' => 'DR-2026-2201', 'citizen' => 'Elmer Bantillo', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 7, 2026', 'status' => 'Under Review', 'requirements' => [
             ['key' => 'req_valid_id', 'name' => 'One (1) valid government-issued ID', 'file' => 'Elmer-Valid-ID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
             ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).', 'versions' => [
                 ['file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jul 7, 2026', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).'],
             ]],
-            ['key' => 'req_interview', 'name' => 'Brief interview / case assessment with MSWDO', 'file' => 'Interview-Notes.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_interview', 'name' => 'Brief interview / case assessment with MSWDO', 'file' => 'Interview-Notes.pdf', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2187', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'barangay' => 'Poblacion', 'submitted' => 'Jul 3, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2154', 'citizen' => 'Corazon Villareal', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Iligan', 'submitted' => 'Jun 29, 2026', 'status' => 'Approved'],
@@ -81,16 +81,16 @@
         // One sample request per remaining barangay so every Barangay Secretary
         // account (BS-004 through BS-020) has something to review — otherwise
         // most of the 20 barangay-scoped roles would land on an empty table.
-        ['ref' => 'DR-2026-2240', 'citizen' => 'Joel Aranas', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Almero)', 'barangay' => 'Almero', 'submitted' => 'Jul 6, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'DR-2026-2240', 'citizen' => 'Joel Aranas', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Almero)', 'barangay' => 'Almero', 'submitted' => 'Jul 6, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2271', 'citizen' => 'Lorna Dimaano', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Guadalupe)', 'barangay' => 'Guadalupe', 'submitted' => 'Jul 5, 2026', 'status' => 'Under Verification'],
         ['ref' => 'DR-2026-2242', 'citizen' => 'Divina Galvez', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labrador)', 'barangay' => 'Labrador', 'submitted' => 'Jul 4, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2243', 'citizen' => 'Ferdinand Hilario', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Libertad)', 'barangay' => 'Libertad', 'submitted' => 'Jun 25, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2244', 'citizen' => 'Analiza Ibarra', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Magsaysay)', 'barangay' => 'Magsaysay', 'submitted' => 'Jul 2, 2026', 'status' => 'Under Review'],
-        ['ref' => 'DR-2026-2245', 'citizen' => 'Romulo Jacinto', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Masbaranon)', 'barangay' => 'Masbaranon', 'submitted' => 'Jul 8, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'DR-2026-2245', 'citizen' => 'Romulo Jacinto', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Masbaranon)', 'barangay' => 'Masbaranon', 'submitted' => 'Jul 8, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2246', 'citizen' => 'Danilo Lazaro', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Potingbato)', 'barangay' => 'Potingbato', 'submitted' => 'Jun 18, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2247', 'citizen' => 'Precious Manalo', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Rizal)', 'barangay' => 'Rizal', 'submitted' => 'Jul 9, 2026', 'status' => 'Under Verification'],
         ['ref' => 'DR-2026-2272', 'citizen' => 'Ernesto Nierva', 'type' => 'Barangay Certification (Late Registration)', 'office' => 'Barangay Hall (Brgy. San Roque)', 'barangay' => 'San Roque', 'submitted' => 'Jul 6, 2026', 'status' => 'Mark to Release'],
-        ['ref' => 'DR-2026-2273', 'citizen' => 'Ramil Pascua', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Sorosimbajan)', 'barangay' => 'Sorosimbajan', 'submitted' => 'Jul 11, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'DR-2026-2273', 'citizen' => 'Ramil Pascua', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Sorosimbajan)', 'barangay' => 'Sorosimbajan', 'submitted' => 'Jul 11, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2250', 'citizen' => 'Liezel Quimson', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Tawad)', 'barangay' => 'Tawad', 'submitted' => 'Jun 30, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2251', 'citizen' => 'Dante Robles', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Tunga)', 'barangay' => 'Tunga', 'submitted' => 'Jul 7, 2026', 'status' => 'Under Review'],
         ['ref' => 'DR-2026-2252', 'citizen' => 'Cherry Ann Sarmiento', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Villa)', 'barangay' => 'Villa', 'submitted' => 'Jul 10, 2026', 'status' => 'Mark to Release'],
@@ -105,13 +105,13 @@
         // it" from a genuinely fresh state — see the same reset on Cristy's
         // Constituent Profile record below and in esperanza_constituents.php.
         ['ref' => 'DR-2026-2233', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'One (1) Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_business_location', 'name' => 'Proof of Business Location (Lease Contract or Land Title)', 'file' => 'Cristy-proof-of-business-location.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_valid_id', 'name' => 'One (1) Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_business_location', 'name' => 'Proof of Business Location (Lease Contract or Land Title)', 'file' => 'Cristy-proof-of-business-location.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         // Paid via GCash (see config/esperanza_payments.php) — advanced past
         ['ref' => 'DR-2026-2255', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'One (1) Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_proof_residency', 'name' => 'Proof of Residency', 'file' => 'Cristy-proof-of-residency.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_valid_id', 'name' => 'One (1) Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_proof_residency', 'name' => 'Proof of Residency', 'file' => 'Cristy-proof-of-residency.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2312', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Certification (General Purpose)', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For submission as a requirement for a local government transaction'],
         // Full-catalog demo set — one submission per remaining Dokyu service
@@ -126,94 +126,94 @@
         // in her profile for that scenario and it isn't appropriate to
         // fabricate one just for catalog completeness.
         ['ref' => 'DR-2026-2350', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Cedula', 'office' => "Treasurer's Office", 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For submission as a government transaction requirement', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_income_basis', 'name' => 'Proof of Income / Certificate of Employment', 'file' => 'Cristy-proof-of-income-certificate-of-employment.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_assessment', 'name' => "Treasurer's Assessment & Payment", 'file' => 'Cristy-treasurer-s-assessment-payment.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_identity', 'name' => 'Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_income_basis', 'name' => 'Proof of Income / Certificate of Employment', 'file' => 'Cristy-proof-of-income-certificate-of-employment.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_assessment', 'name' => "Treasurer's Assessment & Payment", 'file' => 'Cristy-treasurer-s-assessment-payment.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2331', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Certificate of Residency', 'office' => 'Office of the Municipal Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For submission to a requesting government agency', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_brgy_clearance', 'name' => 'Barangay Clearance', 'file' => 'Cristy-barangay-clearance.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_proof_residency', 'name' => 'Proof of Residency (Utility Bill / Lease Contract)', 'file' => 'Cristy-proof-of-residency-utility-bill-lease-contract.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_valid_id', 'name' => 'Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_brgy_clearance', 'name' => 'Barangay Clearance', 'file' => 'Cristy-barangay-clearance.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_proof_residency', 'name' => 'Proof of Residency (Utility Bill / Lease Contract)', 'file' => 'Cristy-proof-of-residency-utility-bill-lease-contract.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2332', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For scholarship and financial assistance application requirement', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Indigency Certification', 'file' => 'Cristy-barangay-indigency-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_interview', 'name' => 'MSWDO Interview / Case Assessment', 'file' => 'Cristy-mswdo-interview-case-assessment.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_valid_id', 'name' => 'Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Indigency Certification', 'file' => 'Cristy-barangay-indigency-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_interview', 'name' => 'MSWDO Interview / Case Assessment', 'file' => 'Cristy-mswdo-interview-case-assessment.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2333', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'New business permit application', 'requirements' => [
-            ['key' => 'req_dti', 'name' => 'DTI or SEC Registration', 'file' => 'Cristy-dti-or-sec-registration.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_business', 'name' => 'Barangay Business Clearance', 'file' => 'Cristy-barangay-business-clearance.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_zoning', 'name' => 'Locational / Zoning Clearance', 'file' => 'Cristy-locational-zoning-clearance.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_sanitary', 'name' => 'Sanitary Permit', 'file' => 'Cristy-sanitary-permit.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_cedula', 'name' => 'Cedula', 'file' => 'Cristy-cedula.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_dti', 'name' => 'DTI or SEC Registration', 'file' => 'Cristy-dti-or-sec-registration.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_business', 'name' => 'Barangay Business Clearance', 'file' => 'Cristy-barangay-business-clearance.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_zoning', 'name' => 'Locational / Zoning Clearance', 'file' => 'Cristy-locational-zoning-clearance.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_sanitary', 'name' => 'Sanitary Permit', 'file' => 'Cristy-sanitary-permit.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_cedula', 'name' => 'Cedula', 'file' => 'Cristy-cedula.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2334', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Real Property Tax Clearance', 'office' => "Treasurer's Office", 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Real property tax clearance for a property transaction', 'requirements' => [
-            ['key' => 'req_tax_dec', 'name' => 'Tax Declaration', 'file' => 'Cristy-tax-declaration.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_rpt_receipt', 'name' => 'Last RPT Official Receipt', 'file' => 'Cristy-last-rpt-official-receipt.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_identity_authority', 'name' => 'Identity / Authority over Property', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_tax_dec', 'name' => 'Tax Declaration', 'file' => 'Cristy-tax-declaration.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_rpt_receipt', 'name' => 'Last RPT Official Receipt', 'file' => 'Cristy-last-rpt-official-receipt.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_identity_authority', 'name' => 'Identity / Authority over Property', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
         ]],
         ['ref' => 'DR-2026-2335', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Certificate of Live Birth (Certified Copy)', 'office' => 'Office of the Municipal Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For submission as a scholarship and school enrollment requirement', 'requirements' => [
-            ['key' => 'req_requester_id', 'name' => 'Requester ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_record_details', 'name' => 'Record-Locating Details', 'file' => 'Cristy-record-locating-details.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_requester_id', 'name' => 'Requester ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_record_details', 'name' => 'Record-Locating Details', 'file' => 'Cristy-record-locating-details.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2336', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For local job application requirement', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Identity / Birth Record', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_residency', 'name' => 'Barangay Residency', 'file' => 'Cristy-barangay-residency.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_first_time', 'name' => 'First-Time Status Declaration', 'file' => 'Cristy-first-time-status-declaration.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_identity', 'name' => 'Identity / Birth Record', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_residency', 'name' => 'Barangay Residency', 'file' => 'Cristy-barangay-residency.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_first_time', 'name' => 'First-Time Status Declaration', 'file' => 'Cristy-first-time-status-declaration.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2337', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Application for Marriage License', 'office' => 'Office of the Municipal Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Application for marriage license', 'requirements' => [
-            ['key' => 'req_psa_birth_both', 'name' => 'PSA Birth Certificates (Both Parties)', 'file' => 'Cristy-psa-birth-certificates-both-parties.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_cedula_both', 'name' => 'Cedula of Both Parties', 'file' => 'Cristy-cedula-of-both-parties.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_cenomar', 'name' => 'CENOMAR', 'file' => 'Cristy-cenomar.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_photos', 'name' => 'Photos / Identity Consistency', 'file' => 'Cristy-photos-identity-consistency.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_psa_birth_both', 'name' => 'PSA Birth Certificates (Both Parties)', 'file' => 'Cristy-psa-birth-certificates-both-parties.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_cedula_both', 'name' => 'Cedula of Both Parties', 'file' => 'Cristy-cedula-of-both-parties.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_cenomar', 'name' => 'CENOMAR', 'file' => 'Cristy-cenomar.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_photos', 'name' => 'Photos / Identity Consistency', 'file' => 'Cristy-photos-identity-consistency.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2338', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Certified Copy of Marriage Certificate', 'office' => 'Office of the Municipal Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For submission as proof of civil status', 'requirements' => [
-            ['key' => 'req_requester_id', 'name' => 'Requester ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_record_details', 'name' => 'Marriage Record Details', 'file' => 'Cristy-marriage-record-details.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_requester_id', 'name' => 'Requester ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_record_details', 'name' => 'Marriage Record Details', 'file' => 'Cristy-marriage-record-details.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2339', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Delayed Registration of Birth', 'office' => 'Office of the Municipal Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Delayed registration of birth', 'requirements' => [
-            ['key' => 'req_non_registration', 'name' => 'PSA Non-Registration Certification', 'file' => 'Cristy-psa-non-registration-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_late_reg', 'name' => 'Barangay Late-Registration Certification', 'file' => 'Cristy-barangay-late-registration-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_supporting_records', 'name' => 'Supporting Early-Life Records', 'file' => 'Cristy-supporting-early-life-records.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_affidavit', 'name' => 'Affidavit of Two Disinterested Persons', 'file' => 'Cristy-affidavit-of-two-disinterested-persons.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_non_registration', 'name' => 'PSA Non-Registration Certification', 'file' => 'Cristy-psa-non-registration-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_late_reg', 'name' => 'Barangay Late-Registration Certification', 'file' => 'Cristy-barangay-late-registration-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_supporting_records', 'name' => 'Supporting Early-Life Records', 'file' => 'Cristy-supporting-early-life-records.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_affidavit', 'name' => 'Affidavit of Two Disinterested Persons', 'file' => 'Cristy-affidavit-of-two-disinterested-persons.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2340', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Delayed Registration of Death', 'office' => 'Office of the Municipal Civil Registrar', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => "Delayed registration of a deceased grandparent's death for civil registry purposes", 'requirements' => [
-            ['key' => 'req_non_registration', 'name' => 'PSA Non-Registration Certification', 'file' => 'Cristy-psa-non-registration-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_death_reg', 'name' => 'Barangay Death-Registration Certification', 'file' => 'Cristy-barangay-death-registration-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_medical_records', 'name' => 'Medical / Death Records', 'file' => 'Cristy-medical-death-records.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_affidavit', 'name' => 'Affidavit of Two Disinterested Persons', 'file' => 'Cristy-affidavit-of-two-disinterested-persons.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_non_registration', 'name' => 'PSA Non-Registration Certification', 'file' => 'Cristy-psa-non-registration-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_death_reg', 'name' => 'Barangay Death-Registration Certification', 'file' => 'Cristy-barangay-death-registration-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_medical_records', 'name' => 'Medical / Death Records', 'file' => 'Cristy-medical-death-records.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_affidavit', 'name' => 'Affidavit of Two Disinterested Persons', 'file' => 'Cristy-affidavit-of-two-disinterested-persons.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2341', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Certification (Late Registration)', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => "Supporting certification for a family member's late birth registration", 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'Valid ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_birth_corroboration', 'name' => 'Birth Corroboration (Baptismal / School Record)', 'file' => 'Cristy-birth-corroboration-baptismal-school-record.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_verification', 'name' => 'Barangay Knowledge / Verification', 'file' => 'Cristy-barangay-knowledge-verification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_valid_id', 'name' => 'Valid ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_birth_corroboration', 'name' => 'Birth Corroboration (Baptismal / School Record)', 'file' => 'Cristy-birth-corroboration-baptismal-school-record.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_verification', 'name' => 'Barangay Knowledge / Verification', 'file' => 'Cristy-barangay-knowledge-verification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2342', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => "Barangay-level supporting certification for a deceased grandparent's death registration", 'requirements' => [
-            ['key' => 'req_claimant_id', 'name' => 'Claimant ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_relationship', 'name' => 'Relationship Proof', 'file' => 'Cristy-relationship-proof.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_verification', 'name' => 'Barangay Verification', 'file' => 'Cristy-barangay-verification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_claimant_id', 'name' => 'Claimant ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_relationship', 'name' => 'Relationship Proof', 'file' => 'Cristy-relationship-proof.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_verification', 'name' => 'Barangay Verification', 'file' => 'Cristy-barangay-verification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2343', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Pet Registration', 'office' => 'Municipal Agriculture Office', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Registration of household pet dog for the municipal pet registry', 'requirements' => [
-            ['key' => 'req_owner_id', 'name' => 'Owner ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_rabies_vaccination', 'name' => 'Rabies Vaccination Proof', 'file' => 'Cristy-rabies-vaccination-proof.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_pet_details', 'name' => 'Pet Details', 'file' => 'Cristy-pet-details.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_owner_id', 'name' => 'Owner ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_rabies_vaccination', 'name' => 'Rabies Vaccination Proof', 'file' => 'Cristy-rabies-vaccination-proof.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_pet_details', 'name' => 'Pet Details', 'file' => 'Cristy-pet-details.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2344', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Locational Clearance', 'office' => 'Municipal Planning & Development Office (MPDO)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Locational clearance for a proposed structure', 'requirements' => [
-            ['key' => 'req_property_right', 'name' => 'Property Right', 'file' => 'Cristy-property-right.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_clearance', 'name' => 'Barangay Clearance', 'file' => 'Cristy-barangay-clearance.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_vicinity_map', 'name' => 'Location / Vicinity Map', 'file' => 'Cristy-location-vicinity-map.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_property_right', 'name' => 'Property Right', 'file' => 'Cristy-property-right.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_clearance', 'name' => 'Barangay Clearance', 'file' => 'Cristy-barangay-clearance.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_vicinity_map', 'name' => 'Location / Vicinity Map', 'file' => 'Cristy-location-vicinity-map.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2345', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Senior Citizen ID', 'office' => 'OSCA', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Senior Citizen ID / OSCA membership application', 'requirements' => [
-            ['key' => 'req_age_dob', 'name' => 'Age / Date of Birth Proof', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_photo', 'name' => 'Recent ID Photo', 'file' => 'Cristy-recent-id-photo.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_age_dob', 'name' => 'Age / Date of Birth Proof', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_photo', 'name' => 'Recent ID Photo', 'file' => 'Cristy-recent-id-photo.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'DR-2026-2295', 'citizen' => 'Lorna Reyes Dimaano', 'type' => 'Certificate of Widowhood', 'office' => 'Civil Registrar', 'barangay' => 'Guadalupe', 'submitted' => 'Jul 24, 2026', 'status' => 'Approved'],
         ['ref' => 'DR-2026-2248', 'citizen' => 'Bayani Cruz Espinosa', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Iligan)', 'barangay' => 'Iligan', 'submitted' => 'Jul 9, 2026', 'status' => 'Under Review'],
         ['ref' => 'DR-2026-2301', 'citizen' => 'Divina Torres Galvez', 'type' => 'Certificate of Good Moral Character', 'office' => 'Barangay Hall (Brgy. Labrador)', 'barangay' => 'Labrador', 'submitted' => 'Jul 8, 2026', 'status' => 'Released'],
         ['ref' => 'DR-2026-2219', 'citizen' => 'Analiza Bautista Ibarra', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Magsaysay', 'submitted' => 'Jun 15, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2309', 'citizen' => 'Grace Mendoza Kalaw', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'barangay' => 'Poblacion', 'submitted' => 'Jun 30, 2026', 'status' => 'Released'],
-        ['ref' => 'DR-2026-2261', 'citizen' => 'Precious Domingo Manalo', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Rizal)', 'barangay' => 'Rizal', 'submitted' => 'Jul 16, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'DR-2026-2261', 'citizen' => 'Precious Domingo Manalo', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Rizal)', 'barangay' => 'Rizal', 'submitted' => 'Jul 16, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2277', 'citizen' => 'Ernesto Salazar Nierva', 'type' => 'Certificate of Good Moral Character', 'office' => 'Barangay Hall (Brgy. San Roque)', 'barangay' => 'San Roque', 'submitted' => 'Jul 18, 2026', 'status' => 'Under Verification'],
         ['ref' => 'DR-2026-2313', 'citizen' => 'Josephine Castro Olivar', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Santiago)', 'barangay' => 'Santiago', 'submitted' => 'Jul 20, 2026', 'status' => 'Mark to Release'],
         ['ref' => 'DR-2026-2249', 'citizen' => 'Dante Marquez Robles', 'type' => 'Barangay Certification (General Purpose)', 'office' => 'Barangay Hall (Brgy. Tunga)', 'barangay' => 'Tunga', 'submitted' => 'Jul 10, 2026', 'status' => 'Mark to Release'],
@@ -344,12 +344,12 @@
                 // vocabulary, so the checklist stays consistent with the
                 // rest of the request-correction flow.
                 $reqStatus = 'Flagged for Replacement'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
-            } elseif (in_array($status, ['Submitted', 'Pending Review', 'Under Verification'], true)) {
+            } elseif (in_array($status, ['Submitted', 'Under Verification'], true)) {
                 // Under Verification is the whole point of the review queue
                 // — nothing has been decided on any requirement yet, so
                 // Approve / Flag for Replacement / Reject need to actually
                 // be available here, not silently pre-approved.
-                $reqStatus = 'Pending Review';
+                $reqStatus = 'Submitted';
             }
             // A real supplied ID scan (currently only wired up for a couple
             // of residents with an actual photo/ID pair on file, e.g.
@@ -566,7 +566,7 @@
     unset($r);
 
     $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Mark to Release', 'done' => 'Completed'];
-    $actionStatuses = ['Pending Review', 'Under Verification', 'Under Review', 'Resubmitted'];
+    $actionStatuses = ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted'];
     $doneStatuses = ['Completed', 'Released'];
 @endphp
 
@@ -683,6 +683,9 @@
                     const match = this.requests.find(r => r.ref === ref);
                     if (match) this.$nextTick(() => this.openRequest(match));
                 }
+                // Closing the process modal is the signal that time has
+                // passed in this simulation — see resolvePendingResubmissions.
+                this.$watch('open', (isOpen) => { if (!isOpen) this.resolvePendingResubmissions(); });
             },
             // Verification is a resumable flow, not a single sitting — an
             // admin who closes the tab mid-review (or mid-multi-step
@@ -740,7 +743,6 @@
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
-                'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
                 'Processing': ['bg-brand-50 text-brand-700 ring-brand-200', 'bg-brand-500'],
                 'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
@@ -773,16 +775,16 @@
             },
             clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; },
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
+                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
             // Opening a freshly-submitted request IS starting its review —
             // no separate 'Begin Verification' click first. A brand-new
-            // Submitted/Pending Review request auto-advances to Under
-            // Verification the moment an admin actually opens it; anything
-            // already past that stays exactly where it is.
+            // Submitted request auto-advances to Under Verification the
+            // moment an admin actually opens it; anything already past
+            // that stays exactly where it is.
             openRequest(r) {
-                if (['Submitted', 'Pending Review'].includes(r.status)) {
+                if (r.status === 'Submitted') {
                     r.status = this.statusOrder[this.stepIndex(r.status) + 1];
                     this.persistProgress();
                 }
@@ -857,7 +859,7 @@
                 // approval right now.
                 const reqs = this.selected.requirements || [];
                 const rejected = reqs.filter(r => r.status === 'Rejected').length;
-                const pending = reqs.filter(r => r.status === 'Pending Review' || r.status === 'Under Review').length;
+                const pending = reqs.filter(r => r.status === 'Submitted' || r.status === 'Under Review').length;
                 if (rejected > 0) {
                     return { icon: 'file-x', tone: 'rose', title: 'Action Needed', message: rejected + ' of ' + reqs.length + ' document(s) were rejected — the citizen must resubmit before this can proceed.' };
                 }
@@ -893,6 +895,12 @@
                 req._reason = '';
                 req._remarks = '';
             },
+            // Flagging a requirement stays flagged while this modal is open
+            // — the citizen resubmitting only happens once you leave (see
+            // resolvePendingResubmissions, fired by the open-state watcher
+            // in init()). Without that delay, flagging and the citizen
+            // fixing it would appear to happen in the same instant, which
+            // reads as if the citizen were watching the admin's screen.
             confirmRequirementDecision(req) {
                 if (!req._reason) return;
                 const outcome = req._decidingOutcome;
@@ -901,6 +909,7 @@
                 req.status = outcome;
                 req.reject_reason = req._reason;
                 req.remarks = req._remarks || '';
+                req._pendingResubmit = outcome === 'Flagged for Replacement';
                 req._decidingOutcome = null;
                 req._reason = '';
                 req._remarks = '';
@@ -914,25 +923,31 @@
                 this.persistProgress();
                 this.$dispatch('toast', { message: req.name + ' marked ' + outcome + '.', variant });
             },
-            // The citizen has no live re-upload flow in this simulation, so
-            // this stands in for the citizen submitting a corrected file —
-            // the flagged version stays visible in req.versions (pushed by
-            // confirmRequirementDecision above) so the admin can still see
-            // what was wrong before, per the requirement that a correction
-            // never erases what was flagged.
-            markRequirementResubmitted(req) {
-                const ext = (req.file || '').toLowerCase().endsWith('.pdf') ? '.pdf' : '.jpg';
-                req.file = req.name.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_revised' + ext;
-                req.status = 'Resubmitted';
-                req.reject_reason = null;
-                req.remarks = null;
-                this.persistProgress();
-                this.$dispatch('toast', { message: req.name + ' marked resubmitted.', variant: 'info' });
-                this.$store.adminNotifications.push({
-                    icon: 'refresh-ccw', color: 'sky', portal: 'dokyu', ref: this.selected.ref,
-                    title: this.selected.citizen + ' Resubmitted ' + req.name,
-                    body: this.selected.citizen + ' replaced ' + req.name + ' for the ' + this.selected.type + ' request (' + this.selected.ref + ').',
+            // Resolves any requirement flagged during this viewing into
+            // Resubmitted — called when the process modal closes (see the
+            // $watch('open', ...) in init()), so the citizen's correction
+            // only becomes visible on the NEXT time this request is opened,
+            // not instantly while the admin is still looking at it.
+            resolvePendingResubmissions() {
+                if (!this.selected) return;
+                const request = this.selected;
+                let changed = false;
+                (request.requirements || []).forEach((req) => {
+                    if (!req._pendingResubmit) return;
+                    changed = true;
+                    const ext = (req.file || '').toLowerCase().endsWith('.pdf') ? '.pdf' : '.jpg';
+                    req.file = req.name.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_revised' + ext;
+                    req.status = 'Resubmitted';
+                    req.reject_reason = null;
+                    req.remarks = null;
+                    req._pendingResubmit = false;
+                    this.$store.adminNotifications.push({
+                        icon: 'refresh-ccw', color: 'sky', portal: 'dokyu', ref: request.ref,
+                        title: request.citizen + ' Resubmitted ' + req.name,
+                        body: request.citizen + ' replaced ' + req.name + ' for the ' + request.type + ' request (' + request.ref + ').',
+                    });
                 });
+                if (changed) this.persistProgress();
             },
             statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             terminalStatuses: ['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'],
@@ -945,7 +960,6 @@
             // whole request directly, no separate resubmitted hold state).
             stageActionLabels: {
                 'Submitted': 'Begin Verification',
-                'Pending Review': 'Begin Verification',
                 'Under Verification': 'Approve Request',
                 'Under Review': 'Approve Request',
                 'Approved': 'Mark to Release',
@@ -972,10 +986,10 @@
                 this.persistProgress();
             },
             // Generic advance-to-next-stage action. From Under Review this
-            // approves the request directly — once the admin has checked
+            // approves the request directly — once the admin has approved
             // every resubmitted requirement at the per-requirement level
-            // (Flag for Replacement -> Mark as Resubmitted -> Approve),
-            // there is no further whole-request gate to pass.
+            // (see confirmRequirementDecision), there is no further
+            // whole-request gate to pass.
             approve() {
                 if (this.processing) return;
                 this.processing = true;
@@ -1326,7 +1340,7 @@
                             </div>
                             <span
                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
-                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': selectedPayment?.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': selectedPayment?.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': selectedPayment?.status === 'Pending Review' || selectedPayment?.status === 'Under Review' }"
+                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': selectedPayment?.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': selectedPayment?.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': selectedPayment?.status === 'Submitted' || selectedPayment?.status === 'Under Review' }"
                             ><span x-text="selectedPayment?.status === 'Approved' ? 'Verified' : selectedPayment?.status"></span></span>
                         </div>
                         <x-admin.payment-receipt recordExpr="selectedPayment" />
@@ -1341,7 +1355,7 @@
                         </div>
                         <div class="space-y-2">
                             <template x-for="req in (selected.requirements || [])" :key="req.key">
-                                <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Flagged for Replacement', 'border-sky-200 bg-sky-50/30': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Pending Review' }">
+                                <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Flagged for Replacement', 'border-sky-200 bg-sky-50/30': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2.5 min-w-0">
                                             <span
@@ -1376,7 +1390,7 @@
                                             ><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset whitespace-nowrap"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
                                             ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
                                         </div>
                                     </div>
@@ -1399,16 +1413,12 @@
                                          Flag for Replacement / Reject. No separate "needs verification"
                                          action — reviewing a requirement here already IS the
                                          verification step. --}}
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Pending Review' || req.status === 'Resubmitted') && !req._decidingOutcome">
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome">
                                         <button type="button" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
-                                    </div>
-
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="req.status === 'Flagged for Replacement' && !req._decidingOutcome">
-                                        <button type="button" @click="markRequirementResubmitted(req)" class="text-[11px] font-medium text-sky-600 hover:underline">Mark as Resubmitted</button>
                                     </div>
 
                                     <div x-show="req._decidingOutcome" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">

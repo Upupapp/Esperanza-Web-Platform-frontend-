@@ -1,7 +1,6 @@
 @php
     $statuses = [
         ['name' => 'Submitted', 'desc' => 'We received your request. It is now in the queue.'],
-        ['name' => 'Pending Review', 'desc' => 'Staff are checking your details and requirements.'],
         ['name' => 'Under Verification', 'desc' => "We're verifying your documents or eligibility."],
         ['name' => 'Under Review', 'desc' => 'One or more documents need correction — check what to fix and resubmit.'],
         ['name' => 'Resubmitted', 'desc' => 'We received your corrected documents and are reviewing them again.'],

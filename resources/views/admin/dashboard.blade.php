@@ -37,7 +37,7 @@
     $docStatus = [
         ['label' => 'Completed', 'value' => 612, 'color' => '#22c55e'],
         ['label' => 'Processing', 'value' => 348, 'color' => '#2f62f5'],
-        ['label' => 'Pending Review', 'value' => 254, 'color' => '#f59e0b'],
+        ['label' => 'Submitted', 'value' => 254, 'color' => '#f59e0b'],
         ['label' => 'Rejected', 'value' => 70, 'color' => '#f43f5e'],
     ];
     $docStatusTotal = array_sum(array_column($docStatus, 'value'));

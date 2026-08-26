@@ -41,7 +41,7 @@
         ];
     }
     $requests = [
-        ['ref' => 'AR-2026-0151', 'citizen' => 'Elmer Bantillo', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 9, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'AR-2026-0151', 'citizen' => 'Elmer Bantillo', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 9, 2026', 'status' => 'Submitted'],
         ['ref' => 'AR-2026-0195', 'citizen' => 'Angelica Fajardo', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Rizal', 'submitted' => 'Jul 6, 2026', 'status' => 'Under Verification'],
         ['ref' => 'AR-2026-0142', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jun 28, 2026', 'status' => 'Approved'],
         ['ref' => 'AR-2026-0098', 'citizen' => 'Rodrigo Palma', 'type' => 'Educational Assistance', 'office' => "Mayor's Office", 'barangay' => 'Domorog', 'submitted' => 'May 20, 2026', 'status' => 'Released'],
@@ -53,7 +53,7 @@
             ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
                 ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
             ]],
-            ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert-Baras.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert-Baras.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0009', 'citizen' => 'Ferdinand Cortez', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'requirements' => [
             ['key' => 'req_death_cert', 'name' => 'Death Certificate', 'file' => null, 'status' => 'Rejected', 'reject_reason' => 'Missing information', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'versions' => [
@@ -82,58 +82,58 @@
         // Pension, no dependent children for Solo Parent, no documented
         // disability for PWD, a fatherhood-only program for ERPAT).
         ['ref' => 'AR-2026-0230', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Financial assistance for dental treatment expenses', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_medical_need', 'name' => 'Medical Need (Abstract / Prescription)', 'file' => 'Cristy-medical-need-abstract-prescription.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_financial_obligation', 'name' => 'Financial Obligation (Hospital Bill / SOA)', 'file' => 'Cristy-financial-obligation-hospital-bill-soa.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_indigency', 'name' => 'Indigency (Barangay Certificate)', 'file' => 'Cristy-indigency-barangay-certificate.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_valid_id', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_medical_need', 'name' => 'Medical Need (Abstract / Prescription)', 'file' => 'Cristy-medical-need-abstract-prescription.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_financial_obligation', 'name' => 'Financial Obligation (Hospital Bill / SOA)', 'file' => 'Cristy-financial-obligation-hospital-bill-soa.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_indigency', 'name' => 'Indigency (Barangay Certificate)', 'file' => 'Cristy-indigency-barangay-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0231', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Burial assistance for a deceased grandparent', 'requirements' => [
-            ['key' => 'req_death_cert', 'name' => 'Death Certificate', 'file' => 'Cristy-death-certificate.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_claimant_id', 'name' => 'Claimant ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_relationship', 'name' => 'Relationship to Deceased', 'file' => 'Cristy-relationship-to-deceased.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_indigency', 'name' => 'Indigency (Barangay Certificate)', 'file' => 'Cristy-indigency-barangay-certificate.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_death_cert', 'name' => 'Death Certificate', 'file' => 'Cristy-death-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_claimant_id', 'name' => 'Claimant ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_relationship', 'name' => 'Relationship to Deceased', 'file' => 'Cristy-relationship-to-deceased.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_indigency', 'name' => 'Indigency (Barangay Certificate)', 'file' => 'Cristy-indigency-barangay-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0232', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Food / Relief Assistance', 'office' => 'MDRRMO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Relief assistance following recent heavy rains affecting the household', 'requirements' => [
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_affected_status', 'name' => 'Affected / Eligible Status', 'file' => 'Cristy-affected-eligible-status.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_affected_status', 'name' => 'Affected / Eligible Status', 'file' => 'Cristy-affected-eligible-status.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0233', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Social pension benefit application', 'requirements' => [
-            ['key' => 'req_senior_status', 'name' => 'Senior Citizen Status', 'file' => 'Cristy-senior-citizen-status.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_declaration', 'name' => 'No Pension / Income / Support Declaration', 'file' => 'Cristy-no-pension-income-support-declaration.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_senior_status', 'name' => 'Senior Citizen Status', 'file' => 'Cristy-senior-citizen-status.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_declaration', 'name' => 'No Pension / Income / Support Declaration', 'file' => 'Cristy-no-pension-income-support-declaration.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0234', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Solo parent cash assistance application', 'requirements' => [
-            ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'Cristy-solo-parent-id.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_children_records', 'name' => "Children's Civil Records", 'file' => 'Cristy-children-s-civil-records.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'Cristy-solo-parent-id.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_children_records', 'name' => "Children's Civil Records", 'file' => 'Cristy-children-s-civil-records.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0235', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'PWD Registration (PRPWD)', 'office' => 'PDAO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'PWD ID / PRPWD registration application', 'requirements' => [
-            ['key' => 'req_disability_evidence', 'name' => 'Disability Evidence (Medical Certificate)', 'file' => 'Cristy-disability-evidence-medical-certificate.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_photo', 'name' => '1x1 Photo', 'file' => 'Cristy-1x1-photo.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_disability_evidence', 'name' => 'Disability Evidence (Medical Certificate)', 'file' => 'Cristy-disability-evidence-medical-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_photo', 'name' => '1x1 Photo', 'file' => 'Cristy-1x1-photo.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0236', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'TUPAD Emergency Employment', 'office' => 'MPESO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Application for short-term emergency employment during school break', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_residency', 'name' => 'Barangay Certification of Residency', 'file' => 'Cristy-barangay-certification-of-residency.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_indigency', 'name' => 'Indigency (if applicable)', 'file' => 'Cristy-indigency-if-applicable.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_residency', 'name' => 'Barangay Certification of Residency', 'file' => 'Cristy-barangay-certification-of-residency.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_indigency', 'name' => 'Indigency (if applicable)', 'file' => 'Cristy-indigency-if-applicable.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0237', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'TESDA Skills Training Registration', 'office' => 'MPESO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Registration for Bookkeeping NC III skills training program', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Identity / Birth Record', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_photo', 'name' => '2x2 Photo', 'file' => 'Cristy-2x2-photo.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_training_profile', 'name' => 'Training Profile', 'file' => 'Cristy-training-profile.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_identity', 'name' => 'Identity / Birth Record', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_photo', 'name' => '2x2 Photo', 'file' => 'Cristy-2x2-photo.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_training_profile', 'name' => 'Training Profile', 'file' => 'Cristy-training-profile.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0238', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'ERPAT Program Registration', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'ERPAT program registration', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_program_profile', 'name' => 'Program Profile', 'file' => 'Cristy-program-profile.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_program_profile', 'name' => 'Program Profile', 'file' => 'Cristy-program-profile.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
         ['ref' => 'AR-2026-0159', 'citizen' => 'Ferdinand Ramos Hilario', 'type' => 'Livelihood Assistance (Tools & Equipment)', 'office' => 'MSWDO', 'barangay' => 'Libertad', 'submitted' => 'May 28, 2026', 'status' => 'Released'],
         ['ref' => 'AR-2026-0148', 'citizen' => 'Analiza Bautista Ibarra', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'barangay' => 'Magsaysay', 'submitted' => 'Jun 2, 2026', 'status' => 'Under Verification'],
         ['ref' => 'AR-2026-0182', 'citizen' => 'Danilo Aquino Lazaro', 'type' => 'Agricultural Damage Assistance', 'office' => 'Department of Agriculture', 'barangay' => 'Potingbato', 'submitted' => 'Jun 25, 2026', 'status' => 'Approved'],
         ['ref' => 'AR-2026-0171', 'citizen' => 'Precious Domingo Manalo', 'type' => 'Educational Assistance', 'office' => "Mayor's Office", 'barangay' => 'Rizal', 'submitted' => 'Jul 2, 2026', 'status' => 'Under Verification'],
         ['ref' => 'AR-2026-0210', 'citizen' => 'Liezel Navarro Quimson', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Tawad', 'submitted' => 'Jul 5, 2026', 'status' => 'Under Review'],
-        ['ref' => 'AR-2026-0203', 'citizen' => 'Cherry Ann Villaflor Sarmiento', 'type' => 'Educational Assistance (Continuing Studies)', 'office' => "Mayor's Office", 'barangay' => 'Villa', 'submitted' => 'Jun 12, 2026', 'status' => 'Pending Review'],
+        ['ref' => 'AR-2026-0203', 'citizen' => 'Cherry Ann Villaflor Sarmiento', 'type' => 'Educational Assistance (Continuing Studies)', 'office' => "Mayor's Office", 'barangay' => 'Villa', 'submitted' => 'Jun 12, 2026', 'status' => 'Submitted'],
     ];
 
     // Manual Document Validation & Application Decision Guide — maps each
@@ -230,12 +230,12 @@
                 // vocabulary, so the checklist stays consistent with the
                 // rest of the case-correction flow.
                 $reqStatus = 'Flagged for Replacement'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
-            } elseif (in_array($status, ['Submitted', 'Pending Review', 'Under Verification'], true)) {
+            } elseif (in_array($status, ['Submitted', 'Under Verification'], true)) {
                 // Under Verification is the whole point of the review queue
                 // — nothing has been decided on any requirement yet, so
                 // Approve / Flag for Replacement / Reject need to actually
                 // be available here, not silently pre-approved.
-                $reqStatus = 'Pending Review';
+                $reqStatus = 'Submitted';
             }
             $previewAsset = null;
             if ($idPreviewAsset && in_array($name, $idRequirementNames, true)) {
@@ -429,7 +429,7 @@
     unset($r);
 
     $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Mark to Release', 'done' => 'Released'];
-    $actionStatuses = ['Pending Review', 'Under Verification', 'Under Review', 'Resubmitted'];
+    $actionStatuses = ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted'];
 @endphp
 
 <x-layouts.admin title="Tulong" subtitle="Review and manage citizen assistance requests." active="assistance-requests">
@@ -538,6 +538,9 @@
                     const match = this.requests.find(r => r.ref === ref);
                     if (match) this.$nextTick(() => this.openRequest(match));
                 }
+                // Closing the process modal is the signal that time has
+                // passed in this simulation — see resolvePendingResubmissions.
+                this.$watch('open', (isOpen) => { if (!isOpen) this.resolvePendingResubmissions(); });
             },
             // Resumable verification flow — see the identical pair of
             // methods' own comment in admin/document-requests.blade.php.
@@ -581,7 +584,6 @@
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
-                'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
                 'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
@@ -613,16 +615,16 @@
             },
             clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; },
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Pending Review': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
+                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
             // Opening a freshly-submitted case IS starting its review — no
             // separate 'Begin Verification' click first. A brand-new
-            // Submitted/Pending Review case auto-advances to Under
-            // Verification the moment an admin actually opens it; anything
-            // already past that stays exactly where it is.
+            // Submitted case auto-advances to Under Verification the
+            // moment an admin actually opens it; anything already past
+            // that stays exactly where it is.
             openRequest(r) {
-                if (['Submitted', 'Pending Review'].includes(r.status)) {
+                if (r.status === 'Submitted') {
                     r.status = this.statusOrder[this.stepIndex(r.status) + 1];
                     this.persistProgress();
                 }
@@ -672,6 +674,12 @@
                 req._reason = '';
                 req._remarks = '';
             },
+            // Flagging a requirement stays flagged while this modal is open
+            // — the citizen resubmitting only happens once you leave (see
+            // resolvePendingResubmissions, fired by the open-state watcher
+            // in init()). Without that delay, flagging and the citizen
+            // fixing it would appear to happen in the same instant, which
+            // reads as if the citizen were watching the admin's screen.
             confirmRequirementDecision(req) {
                 if (!req._reason) return;
                 const outcome = req._decidingOutcome;
@@ -680,6 +688,7 @@
                 req.status = outcome;
                 req.reject_reason = req._reason;
                 req.remarks = req._remarks || '';
+                req._pendingResubmit = outcome === 'Flagged for Replacement';
                 req._decidingOutcome = null;
                 req._reason = '';
                 req._remarks = '';
@@ -693,25 +702,31 @@
                 this.persistProgress();
                 this.$dispatch('toast', { message: req.name + ' marked ' + outcome + '.', variant });
             },
-            // The citizen has no live re-upload flow in this simulation, so
-            // this stands in for the citizen submitting a corrected file —
-            // the flagged version stays visible in req.versions (pushed by
-            // confirmRequirementDecision above) so the admin can still see
-            // what was wrong before, per the requirement that a correction
-            // never erases what was flagged.
-            markRequirementResubmitted(req) {
-                const ext = (req.file || '').toLowerCase().endsWith('.pdf') ? '.pdf' : '.jpg';
-                req.file = req.name.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_revised' + ext;
-                req.status = 'Resubmitted';
-                req.reject_reason = null;
-                req.remarks = null;
-                this.persistProgress();
-                this.$dispatch('toast', { message: req.name + ' marked resubmitted.', variant: 'info' });
-                this.$store.adminNotifications.push({
-                    icon: 'refresh-ccw', color: 'sky', portal: 'tulong', ref: this.selected.ref,
-                    title: this.selected.citizen + ' Resubmitted ' + req.name,
-                    body: this.selected.citizen + ' replaced ' + req.name + ' for the ' + this.selected.type + ' request (' + this.selected.ref + ').',
+            // Resolves any requirement flagged during this viewing into
+            // Resubmitted — called when the process modal closes (see the
+            // $watch('open', ...) in init()), so the citizen's correction
+            // only becomes visible on the NEXT time this case is opened,
+            // not instantly while the admin is still looking at it.
+            resolvePendingResubmissions() {
+                if (!this.selected) return;
+                const request = this.selected;
+                let changed = false;
+                (request.requirements || []).forEach((req) => {
+                    if (!req._pendingResubmit) return;
+                    changed = true;
+                    const ext = (req.file || '').toLowerCase().endsWith('.pdf') ? '.pdf' : '.jpg';
+                    req.file = req.name.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_revised' + ext;
+                    req.status = 'Resubmitted';
+                    req.reject_reason = null;
+                    req.remarks = null;
+                    req._pendingResubmit = false;
+                    this.$store.adminNotifications.push({
+                        icon: 'refresh-ccw', color: 'sky', portal: 'tulong', ref: request.ref,
+                        title: request.citizen + ' Resubmitted ' + req.name,
+                        body: request.citizen + ' replaced ' + req.name + ' for the ' + request.type + ' request (' + request.ref + ').',
+                    });
                 });
+                if (changed) this.persistProgress();
             },
             // Plain-language read on what to do next, shown in the System
             // Advice panel beside the stepper — mirrors the Esperanza Mobile
@@ -750,7 +765,7 @@
                 // approval right now.
                 const reqs = this.selected.requirements || [];
                 const rejected = reqs.filter(r => r.status === 'Rejected').length;
-                const pending = reqs.filter(r => r.status === 'Pending Review' || r.status === 'Under Review').length;
+                const pending = reqs.filter(r => r.status === 'Submitted' || r.status === 'Under Review').length;
                 if (rejected > 0) {
                     return { icon: 'file-x', tone: 'rose', title: 'Action Needed', message: rejected + ' of ' + reqs.length + ' document(s) were rejected — the citizen must resubmit before this can proceed.' };
                 }
@@ -786,7 +801,6 @@
             // whole-case hold state to pass through.
             stageActionLabels: {
                 'Submitted': 'Begin Verification',
-                'Pending Review': 'Begin Verification',
                 'Under Verification': 'Approve Request',
                 'Under Review': 'Approve Request',
                 'Approved': 'Mark to Release',
@@ -1115,7 +1129,7 @@
                         </div>
                         <div class="space-y-2">
                             <template x-for="req in (selected.requirements || [])" :key="req.key">
-                                <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Flagged for Replacement', 'border-sky-200 bg-sky-50/30': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Pending Review' }">
+                                <div class="rounded-xl border p-3" :class="{ 'border-emerald-200 bg-emerald-50/30': req.status === 'Approved', 'border-rose-200 bg-rose-50/30': req.status === 'Rejected', 'border-amber-200 bg-amber-50/30': req.status === 'Flagged for Replacement', 'border-sky-200 bg-sky-50/30': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2.5 min-w-0">
                                             <span
@@ -1150,7 +1164,7 @@
                                             ><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset whitespace-nowrap"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Pending Review' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
                                             ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
                                         </div>
                                     </div>
@@ -1173,16 +1187,12 @@
                                          Flag for Replacement / Reject. No separate "needs verification"
                                          action — reviewing a requirement here already IS the
                                          verification step. --}}
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Pending Review' || req.status === 'Resubmitted') && !req._decidingOutcome">
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome">
                                         <button type="button" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
-                                    </div>
-
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="req.status === 'Flagged for Replacement' && !req._decidingOutcome">
-                                        <button type="button" @click="markRequirementResubmitted(req)" class="text-[11px] font-medium text-sky-600 hover:underline">Mark as Resubmitted</button>
                                     </div>
 
                                     <div x-show="req._decidingOutcome" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
