@@ -10,22 +10,29 @@ inside a request carry their own, separate per-requirement status, which is
 what actually drives the whole-request status forward.
 
 
-1. WHOLE-REQUEST STATUSES
+1. WHOLE-REQUEST STATUSES (admin side)
 --------------------------------------------------------------------
     Submitted           Citizen submitted; admin has not opened it yet.
     Under Verification  Admin is actively reviewing documents.
     Under Review        One or more documents were flagged as wrong/
                          incomplete; the request is waiting on the citizen.
-    Resubmitted         Citizen resubmitted corrected documents; back in
-                         the admin's queue for another look.
     Approved            Verification passed; request is being prepared.
     Mark to Release      Prepared and ready for the citizen to claim.
     Released            Handed over to the citizen. Terminal.
     Rejected            Application denied. Terminal.
 
 Rejected and Released are the only two terminal states — nothing moves out
-of them. Every other transition is admin- or citizen-triggered as described
-below.
+of them. Every other transition is admin-triggered as described below.
+
+Note: there is no separate whole-request "Resubmitted" hold state on the
+admin side anymore. Once every flagged requirement has been checked and
+approved at the per-requirement level (Section 3), the request can be
+approved directly from Under Review — an admin who already reviewed the
+corrected documents one by one doesn't need a second "acknowledge the
+resubmission" click before approving. (The citizen portal still shows the
+citizen their own request as "Resubmitted" the moment they send a
+correction — see Section 6 — that's a real, meaningful state for them,
+just not a separate gate the admin has to click through.)
 
 
 2. THE THREE PATHS
@@ -34,15 +41,17 @@ below.
   STANDARD APPROVAL PATH
   Submitted -> Under Verification -> Approved -> Mark to Release -> Released
 
-  CORRECTION / RESUBMISSION PATH (the request never resets, never gets a
-  new ID, and never loses its original documents or review remarks)
-  Submitted -> Under Verification -> Under Review -> Resubmitted
-            -> Approved -> Mark to Release -> Released
-  (Resubmitted -> Under Review is also valid if the correction is still
-  wrong — this loop can repeat as many times as needed.)
+  CORRECTION PATH (the request never resets, never gets a new ID, and
+  never loses its original documents or review remarks)
+  Submitted -> Under Verification -> Under Review -> Approved
+            -> Mark to Release -> Released
+  (If a resubmitted document still isn't right, the admin can flag it again
+  at the per-requirement level, which keeps the request in/returns it to
+  Under Review — this loop can repeat as many times as needed.)
 
   REJECTION PATH
   Submitted -> Under Verification -> Rejected
+  (also reachable directly from Under Review — see Section 4)
 
 
 3. HOW A REQUEST ACTUALLY MOVES: PER-REQUIREMENT FLAGGING
@@ -64,11 +73,11 @@ Resubmitted. The admin reviews requirements one at a time:
 There is no separate "needs verification" outcome at this level — reviewing
 a requirement here already IS the verification step.
 
-Flagging ANY requirement as "Flagged for Replacement" automatically rolls
-the WHOLE request's status to Under Review — there is no separate
-whole-request-level "needs additional documents" button for this anymore;
-the per-requirement flag IS the mechanism. This keeps the reason tied to
-the exact document that's wrong, rather than a generic whole-request note.
+Flagging ANY requirement as Flagged for Replacement automatically rolls the
+WHOLE request's status to Under Review — there is no separate
+whole-request-level "needs additional documents" button for this; the
+per-requirement flag IS the mechanism. This keeps the reason tied to the
+exact document that's wrong, rather than a generic whole-request note.
 
 Once a requirement is Flagged for Replacement, an admin action "Mark as
 Resubmitted" simulates the citizen having re-uploaded a corrected file: it
@@ -76,7 +85,12 @@ preserves the old (flagged) file + reason as history (see Section 5), swaps
 in the new file, and sets that requirement's status to Resubmitted. A
 "Citizen replaced this file — compare with the flagged version below."
 note appears on that requirement so it's never confused with a document
-that was simply approved on the first pass.
+that was simply approved on the first pass. The admin then reviews that
+resubmitted file the same way as any other Pending Review item — Approve /
+Flag for Replacement / Reject.
+
+Once every requirement is clear (no items still Flagged for Replacement),
+the whole request is approvable directly — see Section 4.
 
 
 4. WHOLE-REQUEST ACTIONS, BY STATUS
@@ -88,14 +102,15 @@ that was simply approved on the first pass.
                           (Under Review is reached only via per-
                            requirement flagging, not a button here)
 
-    Under Review          Mark as Resubmitted -> Resubmitted
+    Under Review          Approve            -> Approved
                           Reject *            -> Rejected (terminal)
-                          (the request is waiting on the citizen; Reject
-                          exists here too in case the citizen never
-                          corrects it or the case turns out unsalvageable)
-
-    Resubmitted           Approve             -> Approved
-                          Still Needs Correction -> Under Review (loop)
+                          (this is the SAME advance button as Under
+                          Verification — clicking it here means the admin
+                          has already checked every resubmitted
+                          requirement below and is ready to approve; Reject
+                          also stays available here in case the citizen
+                          never corrects it or the case turns out
+                          unsalvageable)
 
     Approved               Mark to Release      -> Mark to Release
 
@@ -121,9 +136,9 @@ silently overwritten:
     - New (resubmitted) file        -> becomes the current file
     - Ref / request ID              -> never changes
     - Whole-request remarks         -> preserved and shown when reopening
-                                        a Resubmitted request ("Citizen
-                                        Resubmitted — Original Correction
-                                        Request" banner)
+                                        an Under Review request, so the
+                                        admin can always see why it was
+                                        flagged in the first place
 
 
 6. CITIZEN-SIDE EXPERIENCE
@@ -137,7 +152,8 @@ Correction" panel listing exactly which requirement(s) are flagged, why,
 and a "Replace Document" action per flagged item. Clicking it uploads a
 replacement and marks that requirement Resubmitted. A "Resubmit
 Application" / "Resubmit Request" button then moves the WHOLE request from
-Under Review to Resubmitted — never back to Submitted, never a new
+Under Review to Resubmitted (a real, citizen-facing "I sent my correction,
+awaiting review" state) — never back to Submitted, never a new
 request/ref, and the flagged version stays visible in that requirement's
 history.
 
@@ -150,9 +166,9 @@ Rejected is shown as a plain, terminal, informational notice (remarks only)
 Processing, Assigned, and Completed are part of the platform's broader
 Universal Status System (CLAUDE.md) but are intentionally NOT used as
 top-level Process tab stages for either Dokyu or Tulong — both services
-share exactly the 8-status flow in Section 1 above. (Tulong previously had
-its own Assigned/Processing/Completed-based flow; it has since been
-unified with Dokyu's.)
+share exactly the 7-status admin flow in Section 1 above. (Tulong
+previously had its own Assigned/Processing/Completed-based flow; it has
+since been unified with Dokyu's.)
 
 
 FILES

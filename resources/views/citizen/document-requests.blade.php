@@ -205,8 +205,10 @@
             // never goes back to Submitted, never resets, and keeps its ref,
             // original documents, and review remarks (see replaceRequirementFile
             // above, which preserves the flagged version in req.versions
-            // rather than overwriting it). Mirrors the admin-side
-            // markResubmitted() in admin/document-requests.blade.php.
+            // rather than overwriting it). On the admin side there's no
+            // matching mark-resubmitted click needed — once flagged
+            // requirements are checked and approved, the whole request can
+            // be approved directly (see admin/document-requests.blade.php).
             resubmitRequirements() {
                 if (this.resubmitting || !this.canResubmitRequirements) return;
                 this.resubmitting = true;

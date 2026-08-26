@@ -91,10 +91,13 @@
             openProgress(r) { this.selectedRequest = r; this.resubmitNote = ''; this.progressOpen = true; },
             // The SAME case moves Under Review -> Resubmitted here — it
             // never goes back to Submitted, never resets, and keeps its ref
-            // and review remarks. Mirrors admin-side markResubmitted() in
-            // admin/assistance-requests.blade.php. Used only for cases with
-            // no structured per-requirement list (see resubmitRequirements
-            // below for the requirements-based equivalent).
+            // and review remarks. On the admin side there's no matching
+            // mark-resubmitted click needed — once flagged requirements
+            // are checked and approved, the whole case can be approved
+            // directly (see admin/assistance-requests.blade.php). Used only
+            // for cases with no structured per-requirement list (see
+            // resubmitRequirements below for the requirements-based
+            // equivalent).
             resubmitRequest() {
                 if (this.resubmitting || !this.resubmitNote.trim()) return;
                 this.resubmitting = true;

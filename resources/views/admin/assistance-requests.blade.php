@@ -569,7 +569,6 @@
                 'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
                 'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
-                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
                 'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
                 'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
@@ -720,10 +719,11 @@
                 }
                 if (this.selected.status === 'Under Review') {
                     const flagged = (this.selected.requirements || []).filter(r => r.status === 'Flagged for Replacement').length;
+                    const resubmitted = (this.selected.requirements || []).filter(r => r.status === 'Resubmitted').length;
+                    if (flagged === 0 && resubmitted > 0) {
+                        return { icon: 'circle-check', tone: 'sky', title: 'Ready to Approve', message: 'The citizen resubmitted corrected documents and everything now checks out. You can approve this case directly.' };
+                    }
                     return { icon: 'clock', tone: 'amber', title: 'Awaiting Citizen', message: (flagged ? flagged + ' document(s) flagged for replacement — ' : '') + 'this case is waiting for the citizen to resubmit corrected documents.' };
-                }
-                if (this.selected.status === 'Resubmitted') {
-                    return { icon: 'refresh-ccw', tone: 'sky', title: 'Resubmission Received', message: 'The citizen resubmitted corrected documents. Review them below, then approve or request another correction.' };
                 }
                 // Under Verification — the actual document-review phase,
                 // where the advice reflects whatever is concretely blocking
@@ -746,11 +746,6 @@
                 }
                 return { icon: 'info', tone: 'brand', title: 'In Progress', message: 'Review the submitted application and documents below, then choose a decision.' };
             },
-            // Governs the Decision Remarks textarea — shown whenever any
-            // remarks-requiring action below is actually reachable.
-            get inValidationPhase() {
-                return this.selected && ['Under Verification', 'Under Review', 'Resubmitted'].includes(this.selected.status);
-            },
             // Reject is available on the first pass (Under Verification) and
             // also while a case is sitting Under Review — a citizen who
             // never corrects, or whose original submission turns out to be
@@ -758,46 +753,6 @@
             // resubmission that may never come.
             get canReject() {
                 return this.selected && ['Under Verification', 'Under Review'].includes(this.selected.status);
-            },
-            // Needs Additional Documents (whole-case) only applies to
-            // Resubmitted — reviewing a citizen's correction and finding it
-            // still is not right sends it back to Under Review for another
-            // round. On the FIRST pass (Under Verification), the per-
-            // requirement Flag-for-Replacement action already identifies
-            // exactly which document is wrong and rolls the whole case into
-            // Under Review on its own (see confirmRequirementDecision) —
-            // this generic whole-case version would just duplicate that.
-            // Needs Manual Verification is dropped entirely for the same
-            // reason: the per-requirement Needs-Verification action already
-            // covers it.
-            get canRequestCorrection() {
-                return this.selected && this.selected.status === 'Resubmitted';
-            },
-            // The citizen has no live re-upload flow in this simulation, so
-            // this stands in for the citizen submitting corrected documents.
-            markResubmitted() {
-                if (this.processing || this.selected.status !== 'Under Review') return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Resubmitted';
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: this.selected.ref + ' marked Resubmitted.', variant: 'info' });
-                    this.notifyStatus('Documents Resubmitted', 'Your corrected documents for your ' + this.selected.type + ' request (' + this.selected.ref + ') were received and are back under review.', 'refresh-ccw', 'sky');
-                }, 700);
-            },
-            needsAdditionalDocuments() {
-                if (this.processing || !this.rejectRemarks.trim()) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Under Review';
-                    this.selected.remarks = this.rejectRemarks.trim();
-                    this.rejectRemarks = '';
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: this.selected.ref + ' marked Needs Additional Documents.', variant: 'warning' });
-                    this.notifyStatus('Additional Documents Needed', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') needs additional documents: ' + this.selected.remarks, 'file-plus-2', 'amber');
-                }, 700);
             },
             // Tulong now shares Dokyu's exact process-tab lifecycle: Submitted
             // -> Under Verification -> Approved -> Mark to Release -> Released,
@@ -809,14 +764,15 @@
             statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             terminalStatuses: ['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'],
             // What clicking the advance button actually does at each stage.
-            // Under Review has no entry here on purpose — see
-            // markResubmitted(), the case sits with the citizen at that
-            // point, not something the admin advances.
+            // From Under Review, this button approves the case directly —
+            // once every flagged requirement has been resubmitted and
+            // approved at the per-requirement level, there is no further
+            // whole-case hold state to pass through.
             stageActionLabels: {
                 'Submitted': 'Begin Verification',
                 'Pending Review': 'Begin Verification',
                 'Under Verification': 'Approve Request',
-                'Resubmitted': 'Approve Request',
+                'Under Review': 'Approve Request',
                 'Approved': 'Mark to Release',
                 'Mark to Release': 'Release to Citizen',
             },
@@ -837,11 +793,10 @@
                 this.selected.release_evidence_at = null;
                 this.persistProgress();
             },
-            // Generic advance-to-next-stage action. Deliberately a no-op
-            // while Under Review — that status sits with the citizen, not
-            // the admin, and can only be left via markResubmitted().
+            // Generic advance-to-next-stage action. From Under Review this
+            // approves the case directly — see stageActionLabels above.
             approve() {
-                if (this.processing || this.selected.status === 'Under Review') return;
+                if (this.processing) return;
                 this.processing = true;
                 setTimeout(() => {
                     const next = Math.min(this.stepIndex(this.selected.status) + 1, this.statusOrder.length - 1);
@@ -1242,18 +1197,18 @@
 
                     <div
                         class="rounded-xl border px-3.5 py-3 mt-3 flex items-start gap-2.5"
-                        :class="selected.status === 'Rejected' ? 'bg-rose-50 border-rose-100' : selected.status === 'Under Verification' ? 'bg-indigo-50 border-indigo-100' : selected.status === 'Resubmitted' ? 'bg-sky-50 border-sky-100' : 'bg-amber-50 border-amber-100'"
-                        x-show="['Rejected', 'Under Review', 'Under Verification', 'Resubmitted'].includes(selected.status) && selected.remarks"
+                        :class="selected.status === 'Rejected' ? 'bg-rose-50 border-rose-100' : selected.status === 'Under Verification' ? 'bg-indigo-50 border-indigo-100' : 'bg-amber-50 border-amber-100'"
+                        x-show="['Rejected', 'Under Review', 'Under Verification'].includes(selected.status) && selected.remarks"
                     >
-                        <i :data-lucide="selected.status === 'Rejected' ? 'circle-x' : selected.status === 'Under Verification' ? 'search-check' : selected.status === 'Resubmitted' ? 'refresh-ccw' : 'file-plus-2'" class="w-4 h-4 shrink-0 mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-500' : selected.status === 'Under Verification' ? 'text-indigo-500' : selected.status === 'Resubmitted' ? 'text-sky-500' : 'text-amber-500'"></i>
+                        <i :data-lucide="selected.status === 'Rejected' ? 'circle-x' : selected.status === 'Under Verification' ? 'search-check' : 'file-plus-2'" class="w-4 h-4 shrink-0 mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-500' : selected.status === 'Under Verification' ? 'text-indigo-500' : 'text-amber-500'"></i>
                         <div class="min-w-0">
-                            <p class="text-xs font-semibold" :class="selected.status === 'Rejected' ? 'text-rose-700' : selected.status === 'Under Verification' ? 'text-indigo-700' : selected.status === 'Resubmitted' ? 'text-sky-700' : 'text-amber-700'" x-text="selected.status === 'Resubmitted' ? 'Citizen Resubmitted — Original Correction Request' : (decisionOutcomes[selected.status]?.label || selected.status)"></p>
-                            <p class="text-xs mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-600' : selected.status === 'Under Verification' ? 'text-indigo-600' : selected.status === 'Resubmitted' ? 'text-sky-600' : 'text-amber-600'" x-text="selected.remarks"></p>
+                            <p class="text-xs font-semibold" :class="selected.status === 'Rejected' ? 'text-rose-700' : selected.status === 'Under Verification' ? 'text-indigo-700' : 'text-amber-700'" x-text="decisionOutcomes[selected.status]?.label || selected.status"></p>
+                            <p class="text-xs mt-0.5" :class="selected.status === 'Rejected' ? 'text-rose-600' : selected.status === 'Under Verification' ? 'text-indigo-600' : 'text-amber-600'" x-text="selected.remarks"></p>
                         </div>
                     </div>
 
-                    <div class="mt-3" x-show="inValidationPhase">
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Decision Remarks <span class="text-slate-400 font-normal">(required for Reject, or for sending a resubmission back for another correction — this is what the citizen will see)</span></label>
+                    <div class="mt-3" x-show="canReject">
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Decision Remarks <span class="text-slate-400 font-normal">(required for Reject — this is what the citizen will see)</span></label>
                         <p class="text-[11px] text-slate-400 mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
                         <div class="flex items-center gap-2 mb-1.5">
                             <select
@@ -1460,23 +1415,7 @@
                                 </span>
                             </x-ui.button>
                         </template>
-                        <template x-if="canRequestCorrection">
-                            <button
-                                type="button" :disabled="processing || !rejectRemarks.trim()" @click="needsAdditionalDocuments()"
-                                class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-40 disabled:pointer-events-none rounded-xl px-3.5 py-2 transition-colors"
-                            ><i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Still Needs Correction</button>
-                        </template>
-                        {{-- The case sits with the citizen while Under
-                             Review — the only way out of that state is this
-                             button, standing in for the citizen actually
-                             resubmitting corrected documents. --}}
-                        <template x-if="selected.status === 'Under Review'">
-                            <button
-                                type="button" :disabled="processing" @click="markResubmitted()"
-                                class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 disabled:opacity-40 disabled:pointer-events-none rounded-xl px-3.5 py-2 transition-colors"
-                            ><i data-lucide="refresh-ccw" class="w-3.5 h-3.5"></i> Mark as Resubmitted</button>
-                        </template>
-                        <x-ui.button size="sm" x-show="selected.status !== 'Under Review'" x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null">
+                        <x-ui.button size="sm" x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="!processing"></i>
