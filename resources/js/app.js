@@ -203,6 +203,63 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
+    // Admin-facing counterpart to citizenNotifications above — same shape,
+    // same localStorage persistence, but for events an LGU staff member
+    // needs to know about (a citizen submitted something, a citizen
+    // resubmitted a corrected document) rather than events a citizen needs
+    // to know about. Since this project has no real backend, this only
+    // actually notifies the admin when viewed in the same browser as the
+    // citizen action that triggered it (shared localStorage) — see
+    // components/admin/topbar.blade.php for where this renders, and
+    // citizen/document-requests.blade.php's submitRequest() /
+    // admin/document-requests.blade.php's markRequirementResubmitted() for
+    // where it's pushed to.
+    Alpine.store('adminNotifications', {
+        items: JSON.parse(localStorage.getItem('esperanza_admin_notifications') || '[]'),
+        persist() {
+            localStorage.setItem('esperanza_admin_notifications', JSON.stringify(this.items));
+        },
+        push({ icon, color, title, body, ref, portal }) {
+            this.items.unshift({
+                id: Date.now() + Math.random(),
+                icon, color, title, body, ref, portal,
+                createdAt: new Date().toISOString(),
+                unread: true,
+            });
+            this.items = this.items.slice(0, 50);
+            this.persist();
+        },
+        // One-time seed so the flagship demo scenario (Cristy's Barangay
+        // Clearance) has a real notification to click through on a fresh
+        // browser, without needing to actually submit it live first.
+        // Idempotent — keyed by ref, safe to call on every page load.
+        seedDefaults() {
+            if (this.items.some((n) => n.ref === 'DR-2026-2255')) return;
+            this.items.push({
+                id: 'seed-DR-2026-2255',
+                icon: 'file-text', color: 'brand', portal: 'dokyu', ref: 'DR-2026-2255',
+                title: 'Cristy Submitted Barangay Clearance',
+                body: 'Cristy Pareja Bonghanoy submitted a Barangay Clearance request (DR-2026-2255).',
+                createdAt: new Date().toISOString(),
+                unread: true,
+            });
+            this.persist();
+        },
+        markRead(id) {
+            const n = this.items.find((i) => i.id === id);
+            if (!n) return;
+            n.unread = false;
+            this.persist();
+        },
+        markAllRead() {
+            this.items.forEach((i) => (i.unread = false));
+            this.persist();
+        },
+        get unreadCount() {
+            return this.items.filter((i) => i.unread).length;
+        },
+    });
+
     // Per-barangay directory (see components/layouts/citizen.blade.php, which
     // injects window.__barangayCatalog from config/esperanza_barangay_documents.php).
     // `.mine` lets any Citizen Portal page show the signed-in resident's own

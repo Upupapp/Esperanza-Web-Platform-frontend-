@@ -106,7 +106,10 @@
         // Constituent Profile record below and in esperanza_constituents.php.
         ['ref' => 'DR-2026-2233', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         // Paid via GCash (see config/esperanza_payments.php) — advanced past
-        ['ref' => 'DR-2026-2255', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-2255', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
+            ['key' => 'req_valid_id', 'name' => 'One (1) Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_proof_residency', 'name' => 'Proof of Residency', 'file' => 'Cristy-proof-of-residency.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+        ]],
         ['ref' => 'DR-2026-2312', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Certification (General Purpose)', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'For submission as a requirement for a local government transaction'],
         // Full-catalog demo set — one submission per remaining Dokyu service
         // type (see config/esperanza_validation_guide.php) on Cristy's own
@@ -669,6 +672,12 @@
                     sessionStorage.removeItem('returnToProfile');
                 }
                 this.restoreProgress();
+                // Arriving from a notification (see components/admin/topbar.blade.php)
+                // — jump straight into that exact request, not just the filtered list.
+                if (ref) {
+                    const match = this.requests.find(r => r.ref === ref);
+                    if (match) this.$nextTick(() => this.openRequest(match));
+                }
             },
             // Verification is a resumable flow, not a single sitting — an
             // admin who closes the tab mid-review (or mid-multi-step
@@ -905,6 +914,11 @@
                 req.remarks = null;
                 this.persistProgress();
                 this.$dispatch('toast', { message: req.name + ' marked resubmitted.', variant: 'info' });
+                this.$store.adminNotifications.push({
+                    icon: 'refresh-ccw', color: 'sky', portal: 'dokyu', ref: this.selected.ref,
+                    title: this.selected.citizen + ' Resubmitted ' + req.name,
+                    body: this.selected.citizen + ' replaced ' + req.name + ' for the ' + this.selected.type + ' request (' + this.selected.ref + ').',
+                });
             },
             statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             terminalStatuses: ['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'],

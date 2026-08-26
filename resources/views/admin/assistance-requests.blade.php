@@ -530,6 +530,12 @@
                     sessionStorage.removeItem('returnToProfile');
                 }
                 this.restoreProgress();
+                // Arriving from a notification (see components/admin/topbar.blade.php)
+                // — jump straight into that exact request, not just the filtered list.
+                if (ref) {
+                    const match = this.requests.find(r => r.ref === ref);
+                    if (match) this.$nextTick(() => this.openRequest(match));
+                }
             },
             // Resumable verification flow — see the identical pair of
             // methods' own comment in admin/document-requests.blade.php.
@@ -692,6 +698,11 @@
                 req.remarks = null;
                 this.persistProgress();
                 this.$dispatch('toast', { message: req.name + ' marked resubmitted.', variant: 'info' });
+                this.$store.adminNotifications.push({
+                    icon: 'refresh-ccw', color: 'sky', portal: 'tulong', ref: this.selected.ref,
+                    title: this.selected.citizen + ' Resubmitted ' + req.name,
+                    body: this.selected.citizen + ' replaced ' + req.name + ' for the ' + this.selected.type + ' request (' + this.selected.ref + ').',
+                });
             },
             // Plain-language read on what to do next, shown in the System
             // Advice panel beside the stepper — mirrors the Esperanza Mobile

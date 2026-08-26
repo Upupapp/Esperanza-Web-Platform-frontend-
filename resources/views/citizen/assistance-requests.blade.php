@@ -292,6 +292,14 @@
                             title: 'Assistance Request Submitted',
                             body: (type?.name || 'Your assistance request') + ' (' + ref + ') has been submitted and is now Pending Review.',
                         });
+                        // Same-browser demo only — see adminNotifications'
+                        // own comment in resources/js/app.js.
+                        const citizenName = [this.applicant.firstName, this.applicant.lastName].filter(Boolean).join(' ') || 'A citizen';
+                        this.$store.adminNotifications.push({
+                            icon: 'hand-heart', color: 'brand', portal: 'tulong', ref,
+                            title: citizenName + ' Submitted ' + (type?.name || 'a Tulong request'),
+                            body: citizenName + ' submitted a ' + (type?.name || 'assistance') + ' request (' + ref + ').',
+                        });
                     },
                 }"
                 x-init="seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant())"

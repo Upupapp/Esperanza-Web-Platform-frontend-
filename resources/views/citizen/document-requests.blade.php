@@ -479,6 +479,14 @@
                                 title: 'Document Request Submitted',
                                 body: (doc?.name || 'Your document request') + ' (' + ref + ') has been submitted and is now Pending Review.',
                             });
+                            // Same-browser demo only — see adminNotifications'
+                            // own comment in resources/js/app.js.
+                            const citizenName = [this.applicant.firstName, this.applicant.lastName].filter(Boolean).join(' ') || 'A citizen';
+                            this.$store.adminNotifications.push({
+                                icon: 'file-text', color: 'brand', portal: 'dokyu', ref,
+                                title: citizenName + ' Submitted ' + (doc?.name || 'a Dokyu request'),
+                                body: citizenName + ' submitted a ' + (doc?.name || 'document') + ' request (' + ref + ').',
+                            });
                         },
                     }"
                     x-init="catalogTab = myBarangayInfo ? 'barangay' : 'municipal'; seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant())"
