@@ -1,26 +1,26 @@
 @php
+    // All of Cristy's own Dokyu requests are seeded fresh as Submitted —
+    // a clean baseline to walk through the Process tab workflow end to end
+    // (Submitted -> open -> Under Verification -> ... ) rather than
+    // starting from a mix of already-resolved statuses.
     $requests = [
-        ['ref' => 'DR-2026-2210', 'type' => 'Cedula (Community Tax Certificate)', 'office' => "Treasurer's Office", 'purpose' => 'Employment requirement', 'submitted' => 'Jul 8, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'purpose' => 'Proof of Residency', 'submitted' => 'Jul 3, 2026', 'status' => 'Mark to Release'],
-        ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'purpose' => 'School enrollment', 'submitted' => 'Jun 14, 2026', 'status' => 'Completed'],
-        ['ref' => 'DR-2026-1872', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'May 30, 2026', 'status' => 'Completed'],
-        ['ref' => 'DR-2026-1655', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'purpose' => 'Sari-sari store registration', 'submitted' => 'May 12, 2026', 'status' => 'Rejected', 'remarks' => 'Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached.', 'requirements' => [
-            ['key' => 'req_dti', 'name' => 'DTI or SEC Registration', 'file' => 'DTI-Registration.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_business', 'name' => 'Barangay Business Clearance', 'file' => 'Brgy-Business-Clearance.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_zoning', 'name' => 'Locational / Zoning Clearance', 'file' => 'Zoning-Clearance.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_fsic', 'name' => 'Fire Safety Inspection Certificate (FSIC)', 'file' => null, 'status' => 'Rejected', 'reject_reason' => 'Missing information', 'remarks' => 'Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached.', 'versions' => [
-                ['file' => null, 'status' => 'Rejected', 'date' => 'May 12, 2026', 'reject_reason' => 'Missing information', 'remarks' => 'Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached.'],
-            ]],
-            ['key' => 'req_sanitary', 'name' => 'Sanitary Permit', 'file' => 'Sanitary-Permit.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_cedula', 'name' => 'Cedula (Community Tax Certificate)', 'file' => 'Cedula-2026.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_lease', 'name' => 'Lease contract or land title', 'file' => 'Lease-Contract.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+        ['ref' => 'DR-2026-2210', 'type' => 'Cedula (Community Tax Certificate)', 'office' => "Treasurer's Office", 'purpose' => 'Employment requirement', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'purpose' => 'Proof of Residency', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'purpose' => 'School enrollment', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-1872', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-1655', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'purpose' => 'Sari-sari store registration', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
+            ['key' => 'req_dti', 'name' => 'DTI or SEC Registration', 'file' => 'DTI-Registration.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_business', 'name' => 'Barangay Business Clearance', 'file' => 'Brgy-Business-Clearance.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_zoning', 'name' => 'Locational / Zoning Clearance', 'file' => 'Zoning-Clearance.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_fsic', 'name' => 'Fire Safety Inspection Certificate (FSIC)', 'file' => 'Fire-Safety-Inspection-Certificate.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_sanitary', 'name' => 'Sanitary Permit', 'file' => 'Sanitary-Permit.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_cedula', 'name' => 'Cedula (Community Tax Certificate)', 'file' => 'Cedula-2026.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_lease', 'name' => 'Lease contract or land title', 'file' => 'Lease-Contract.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
-        ['ref' => 'DR-2026-1490', 'type' => 'Real Property Tax Clearance', 'office' => "Treasurer's Office", 'purpose' => 'Lot sale requirement', 'submitted' => 'Apr 20, 2026', 'status' => 'Completed'],
-        ['ref' => 'DR-2026-2201', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Jul 7, 2026', 'status' => 'Under Review', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'One (1) valid government-issued ID', 'file' => 'My-Valid-ID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Flagged for Replacement', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).', 'versions' => [
-                ['file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Flagged for Replacement', 'date' => 'Jul 7, 2026', 'reject_reason' => 'Expired', 'remarks' => 'Please upload a current barangay certification (issued within the last 30 days).'],
-            ]],
+        ['ref' => 'DR-2026-1490', 'type' => 'Real Property Tax Clearance', 'office' => "Treasurer's Office", 'purpose' => 'Lot sale requirement', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-2201', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
+            ['key' => 'req_valid_id', 'name' => 'One (1) valid government-issued ID', 'file' => 'My-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certification of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
             ['key' => 'req_interview', 'name' => 'Brief interview / case assessment with MSWDO', 'file' => 'Interview-Notes.pdf', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
     ];
