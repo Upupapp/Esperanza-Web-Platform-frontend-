@@ -51,17 +51,18 @@ Opening a Submitted request auto-advances it to Under Verification — there
 is no separate "start review" click.
 
 Each submitted document (requirement) inside the request has its own
-status: Pending Review, Approved, Flagged for Replacement, Under
-Verification, Rejected, or Resubmitted. The admin reviews requirements one
-at a time:
+status: Pending Review, Approved, Flagged for Replacement, Rejected, or
+Resubmitted. The admin reviews requirements one at a time:
 
     Approve               -> requirement becomes Approved
     Flag for Replacement  -> requirement becomes Flagged for Replacement
                               (admin must give a reason + remarks — this is
                               specific to that one document, e.g. "Barangay
                               Certificate is expired")
-    Needs Verification    -> requirement becomes Under Verification
     Reject                -> requirement becomes Rejected
+
+There is no separate "needs verification" outcome at this level — reviewing
+a requirement here already IS the verification step.
 
 Flagging ANY requirement as "Flagged for Replacement" automatically rolls
 the WHOLE request's status to Under Review — there is no separate
