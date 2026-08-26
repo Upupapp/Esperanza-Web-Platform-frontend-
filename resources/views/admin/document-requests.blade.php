@@ -104,7 +104,10 @@
         // walk through "citizen submits on mobile → admin sees and processes
         // it" from a genuinely fresh state — see the same reset on Cristy's
         // Constituent Profile record below and in esperanza_constituents.php.
-        ['ref' => 'DR-2026-2233', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-2233', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
+            ['key' => 'req_valid_id', 'name' => 'One (1) Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
+            ['key' => 'req_business_location', 'name' => 'Proof of Business Location (Lease Contract or Land Title)', 'file' => 'Cristy-proof-of-business-location.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
+        ]],
         // Paid via GCash (see config/esperanza_payments.php) — advanced past
         ['ref' => 'DR-2026-2255', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall (Brgy. Baras)', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
             ['key' => 'req_valid_id', 'name' => 'One (1) Valid Government-Issued ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Pending Review', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
@@ -335,9 +338,17 @@
             $rejectReason = null; $reqRemarks = null;
             if ($status === 'Rejected' && $i === 0) {
                 $reqStatus = 'Rejected'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
-            } elseif (in_array($status, ['Submitted', 'Pending Review'], true)) {
-                $reqStatus = 'Pending Review';
             } elseif ($status === 'Under Review' && $i === $total - 1) {
+                // The specific document standing in the way of approval —
+                // matches the per-requirement "Flag for Replacement"
+                // vocabulary, so the checklist stays consistent with the
+                // rest of the request-correction flow.
+                $reqStatus = 'Flagged for Replacement'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
+            } elseif (in_array($status, ['Submitted', 'Pending Review', 'Under Verification'], true)) {
+                // Under Verification is the whole point of the review queue
+                // — nothing has been decided on any requirement yet, so
+                // Approve / Flag for Replacement / Reject need to actually
+                // be available here, not silently pre-approved.
                 $reqStatus = 'Pending Review';
             }
             // A real supplied ID scan (currently only wired up for a couple
@@ -580,18 +591,12 @@
             citizenAvatars: @js($citizenAvatars),
             actionStatuses: @js($actionStatuses),
             doneStatuses: @js($doneStatuses),
-            // Manual Document Validation & Application Decision Guide data —
-            // see config/esperanza_validation_guide.php for the source.
-            serviceGuides: @js($validationGuide['services']),
             paymentByRef: @js($paymentByRef),
             get selectedPayment() {
                 return this.selected?.ref ? this.paymentByRef[this.selected.ref] : null;
             },
             standardReasons: @js($validationGuide['standard_reasons']),
             decisionOutcomes: @js($validationGuide['decision_outcomes']),
-            get selectedServiceGuide() {
-                return this.selected?.service_guide_key ? this.serviceGuides[this.selected.service_guide_key] : null;
-            },
             // Evidence Strength Hierarchy (guide section 1.2) — a light
             // keyword heuristic since this is mock/reference data, not a
             // real document classifier.
@@ -840,15 +845,11 @@
                 const reqs = this.selected.requirements || [];
                 const rejected = reqs.filter(r => r.status === 'Rejected').length;
                 const pending = reqs.filter(r => r.status === 'Pending Review' || r.status === 'Under Review').length;
-                const underVerif = reqs.filter(r => r.status === 'Under Verification').length;
                 if (rejected > 0) {
                     return { icon: 'file-x', tone: 'rose', title: 'Action Needed', message: rejected + ' of ' + reqs.length + ' document(s) were rejected — the citizen must resubmit before this can proceed.' };
                 }
                 if (pending > 0) {
                     return { icon: 'clock', tone: 'amber', title: 'Awaiting Review', message: pending + ' of ' + reqs.length + ' document(s) still need review before this can be approved.' };
-                }
-                if (underVerif > 0) {
-                    return { icon: 'search-check', tone: 'indigo', title: 'Manual Verification', message: underVerif + ' document(s) are flagged for manual verification with the issuing office or supervisor.' };
                 }
                 if (reqs.length && reqs.every(r => r.status === 'Approved')) {
                     return { icon: 'circle-check', tone: 'emerald', title: 'Ready to Approve', message: 'All submitted documents are verified and complete. You can proceed to the next stage.' };
@@ -1312,17 +1313,6 @@
                     </div>
 
                     <x-admin.request-form-review />
-
-                    <x-admin.validation-guide-panel
-                        group="Dokyu"
-                        :universalChecklist="$validationGuide['universal_checklist']"
-                        :evidenceHierarchy="$validationGuide['evidence_hierarchy']"
-                        :mismatchRule="$validationGuide['mismatch_rule']"
-                        :decisionTree="$validationGuide['decision_tree']"
-                        :generalChecklist="$validationGuide['dokyu_general_checklist']"
-                        :adminReviewChecklist="$validationGuide['admin_review_checklist']"
-                        :knownGaps="$validationGuide['known_gaps']"
-                    />
 
                     <div class="mt-4" x-show="(selected.requirements || []).length">
                         <div class="flex items-center justify-between mb-2">
