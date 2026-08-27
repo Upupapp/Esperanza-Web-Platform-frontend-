@@ -19,8 +19,7 @@
      actual printed one does (see the Signatures section below). Content
      that genuinely needs more than one page's worth of space still grows
      past 297mm rather than being clipped. --}}
-<div class="rounded-2xl border-2 border-slate-200 bg-white p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col" style="font-family: Georgia, 'Times New Roman', serif; width: min(210mm, 100%); container-type: inline-size; min-height: 141.43cqw;">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,theme(colors.slate.100),transparent_70%)] opacity-40 pointer-events-none"></div>
+<div class="doc-paper rounded-2xl border border-slate-200 bg-white shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10" style="font-family: Georgia, 'Times New Roman', serif;">
 
     <!-- Letterhead -->
     <div class="relative flex items-center justify-between gap-3 mb-4">
@@ -29,9 +28,9 @@
                 <i data-lucide="landmark" class="w-6 h-6"></i>
             </div>
             <img
-                :src="{{ $seal }} ? '{{ rtrim(asset(''), '/') }}/' + {{ $seal }} : ''"
-                x-show="{{ $seal }}" onerror="this.style.display='none'" alt="Barangay Seal"
-                class="relative w-16 h-16 rounded-full object-cover border-2 border-gold-400"
+                :src="{{ $seal }} ? '{{ rtrim(asset(''), '/') }}/' + {{ $seal }} : '{{ asset('images/esperanza/esperanza-seal.png') }}'"
+                alt="Official Seal"
+                class="relative w-16 h-16 rounded-full object-contain bg-white border border-slate-200 p-0.5"
             >
         </div>
         <div class="text-center flex-1 min-w-0">
@@ -44,11 +43,11 @@
             <div class="absolute inset-0 rounded-full bg-slate-50 border-2 border-gold-400 flex items-center justify-center text-slate-300">
                 <i data-lucide="shield" class="w-6 h-6"></i>
             </div>
-            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="relative w-16 h-16 rounded-full object-cover border-2 border-gold-400">
+            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="relative w-16 h-16 rounded-full object-contain bg-white border border-slate-200 p-0.5">
         </div>
     </div>
 
-    <div class="relative text-center mb-5">
+    <div class="relative border-t border-slate-300 pt-4 text-center mb-5">
         <h3 class="text-lg font-bold text-navy-900 uppercase tracking-wide underline decoration-2 underline-offset-4" x-text="{{ $title }}"></h3>
         <p class="text-xs font-medium text-slate-500 mt-1" x-show="{{ $subtitle }}" x-text="{{ $subtitle }}"></p>
     </div>

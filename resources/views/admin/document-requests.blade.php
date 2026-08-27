@@ -21,7 +21,9 @@
             continue;
         }
         $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = $citizenAvatarData['photoByAccountId'][$acctId] ?? $generatedAvatarFor($acctId);
+        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
+            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
+            : $generatedAvatarFor($acctId);
         $citizenBio[$ind['name']] = [
             'dob' => $ind['dob'] ?? null,
             'age' => $ind['age'] ?? null,
@@ -563,7 +565,8 @@
         ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
         ->concat(config('esperanza_tulong_types.types'))
         ->filter(fn ($d) => !empty($d['reference_pdf']))
-        ->pluck('reference_pdf', 'name');
+        ->pluck('reference_pdf', 'name')
+        ->map(fn ($path) => asset($path));
     foreach ($requests as &$r) {
         $r = array_merge($r, $dokyuClassification[$r['type']] ?? ['category' => 'Other Municipal Services', 'office' => $r['office'], 'level' => 'Municipal']);
         $r['reference_pdf'] = $referencePdfByType[$r['type']] ?? null;
@@ -714,19 +717,32 @@
                 document.body.classList.add('dp-printing');
                 window.print();
             },
-            downloadDocument() {
-                if (!window.html2pdf) return;
+            async downloadDocument() {
                 const el = document.getElementById('dp-print-area');
                 if (!el) return;
+                if (!window.html2pdf) {
+                    this.$dispatch('toast', { message: 'PDF generator is still loading. Please try again.', variant: 'warning' });
+                    return;
+                }
                 const citizenName = (this.selected?.citizen || 'Citizen').replace(/[^a-z0-9]+/gi, '-');
                 const docName = (this.resolvedDocument?.certTitle || this.selected?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
                 document.body.classList.add('dp-printing');
-                window.html2pdf().set({
-                    margin: 10,
-                    filename: 'Esperanza-' + docName + '-' + citizenName + '.pdf',
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                }).from(el).save().then(() => document.body.classList.remove('dp-printing'));
+                await this.$nextTick();
+                try {
+                    await window.html2pdf().set({
+                        margin: 0,
+                        filename: 'Esperanza-' + docName + '-' + citizenName + '.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
+                    }).from(el).save();
+                } catch (error) {
+                    console.error('Prepared document PDF download failed:', error);
+                    this.$dispatch('toast', { message: 'Unable to download the PDF. Please try Print and choose Save as PDF.', variant: 'danger' });
+                } finally {
+                    document.body.classList.remove('dp-printing');
+                }
             },
             requests: @js($requests),
             citizenAvatars: @js($citizenAvatars),

@@ -308,24 +308,47 @@
 }
 
 /*
-  Document print isolation — toggled by printDocument() in
-  citizen/document-requests.blade.php right before window.print(). Hides
-  every bit of Web Platform chrome (sidebar, topbar, modal backdrop/footer,
-  the whole app shell) so only the generated Dokyu itself reaches paper,
-  scoped to whichever element carries #dp-print-area at print time.
+  Generated Dokyu print / PDF layout.
+  The printable sheet itself is a full A4 canvas. Browser print margins are
+  disabled here because the document component already owns its internal
+  paper padding. This avoids the old 297mm sheet + @page margins overflow
+  that split a one-page certificate across multiple sheets.
 */
 @media print {
-    body.dp-printing > * {
-        visibility: hidden;
+    @page {
+        size: A4 portrait;
+        margin: 0;
     }
+
+    html, body {
+        width: 210mm !important;
+        min-width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    body.dp-printing > * {
+        visibility: hidden !important;
+    }
+
     body.dp-printing #dp-print-area,
     body.dp-printing #dp-print-area * {
-        visibility: visible;
+        visibility: visible !important;
     }
-    /* The print area sits inside the modal's fixed/centered/max-height/
-       overflow-clipped dialog card — break every ancestor out of those
-       constraints so a document taller than the on-screen modal still
-       prints in full instead of being clipped at the modal's edge. */
+
+    /* Pull the prepared document out of the modal/app layout and anchor it
+       directly to the first printable page. The previous visibility-only
+       approach left the hidden dashboard taking up physical print space,
+       which is why Chrome preview showed a blank first sheet. */
+    body.dp-printing #dp-print-area {
+        position: absolute !important;
+        inset: 0 auto auto 0 !important;
+        width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     body.dp-printing *:has(#dp-print-area) {
         position: static !important;
         inset: auto !important;
@@ -338,38 +361,42 @@
         box-shadow: none !important;
         background: transparent !important;
     }
-    body.dp-printing #dp-print-area {
-        width: 100%;
-        margin: 0;
-        padding: 0;
+
+    body.dp-printing .doc-paper {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        padding: 16mm 18mm 14mm !important;
+        break-inside: avoid-page !important;
+        page-break-inside: avoid !important;
+    }
+
+    body.dp-printing .doc-paper:last-child {
+        page-break-after: auto !important;
     }
 }
 
-/*
-  Unscoped from @media print (unlike the rules above, which only matter for
-  on-screen layout during an actual print) because html2pdf's html2canvas
-  capture does not evaluate print media queries — downloadDocument() also
-  toggles body.dp-printing around the capture, specifically so this rule
-  hides the ref/status badge from the downloaded PDF too. Without this, the
-  small on-screen-only badge above the certificate (ref number + status
-  pill) would end up baked into the "final document" file, which is exactly
-  the request-summary-chrome-leaking-into-the-document problem this
-  feature is meant to avoid.
-*/
+/* html2pdf captures screen styles rather than @media print, so this class
+   is also used while generating a download. */
 body.dp-printing .dp-no-print {
     display: none !important;
 }
 
-/*
-  A4 is the standard for every generated Dokyu (matches the A4 sizing
-  already set on the on-screen preview components — see
-  components/citizen/barangay-certificate-preview.blade.php and
-  municipal-request-preview.blade.php — and html2pdf's own jsPDF format:
-  'a4' in the downloadDocument() methods, so preview/print/download agree
-  on one page size). A real page margin — not edge-to-edge, not so wide it
-  eats into the content — comparable to a standard formal-document margin.
-*/
-@page {
-    size: A4;
-    margin: 20mm 18mm;
+/* Shared paper sizing. The internal padding is part of the 210x297mm page
+   (border-box), so preview, browser print, and downloaded PDF agree. */
+.doc-paper {
+    box-sizing: border-box;
+    width: min(210mm, 100%);
+    min-height: 297mm;
 }
+
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+

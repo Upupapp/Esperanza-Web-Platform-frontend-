@@ -325,20 +325,28 @@
                 document.body.classList.add('dp-printing');
                 window.print();
             },
-            downloadDocument() {
-                if (!window.html2pdf) return;
+            async downloadDocument() {
                 const el = document.getElementById('dp-print-area');
-                if (!el) return;
+                if (!el || !window.html2pdf) return;
                 const account = this.$store.citizenSession.account;
                 const citizenName = [account?.firstName, account?.lastName].filter(Boolean).join('-') || 'Citizen';
                 const docName = (this.resolvedDocument?.certTitle || this.selectedRequest?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
                 document.body.classList.add('dp-printing');
-                window.html2pdf().set({
-                    margin: 10,
-                    filename: 'Esperanza-' + docName + '-' + citizenName.replace(/[^a-z0-9-]+/gi, '') + '.pdf',
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                }).from(el).save().then(() => document.body.classList.remove('dp-printing'));
+                await this.$nextTick();
+                try {
+                    await window.html2pdf().set({
+                        margin: 0,
+                        filename: 'Esperanza-' + docName + '-' + citizenName.replace(/[^a-z0-9-]+/gi, '') + '.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
+                    }).from(el).save();
+                } catch (error) {
+                    console.error('Citizen document PDF download failed:', error);
+                } finally {
+                    document.body.classList.remove('dp-printing');
+                }
             },
             // Deep-link landing: a notification click appends ?ref=DR-2026-xxxx
             // (see citizen/notifications.blade.php) — open that exact
