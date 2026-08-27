@@ -123,10 +123,18 @@
         ['ref' => 'DR-2026-2250', 'citizen' => 'Liezel Quimson', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Tawad)', 'barangay' => 'Tawad', 'submitted' => 'Jun 30, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2251', 'citizen' => 'Dante Robles', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Tunga)', 'barangay' => 'Tunga', 'submitted' => 'Jul 7, 2026', 'status' => 'Under Review'],
         ['ref' => 'DR-2026-2252', 'citizen' => 'Cherry Ann Sarmiento', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Villa)', 'barangay' => 'Villa', 'submitted' => 'Jul 10, 2026', 'status' => 'Mark to Release'],
-        // Reconciled 1:1 with the same residents' Constituent Profile records
-        // (same ref numbers) so "Open in Dokyu" from a profile always lands on
-        // real, matching data instead of an empty search result.
-        ['ref' => 'DR-2026-2241', 'citizen' => 'Ronaldo Panganiban Bautista', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 6, 2026', 'status' => 'Released'],
+        // Reconciled 1:1 with the same resident's Constituent Profile record
+        // (same ref number) so "Open in Dokyu" from a profile always lands on
+        // real, matching data instead of an empty search result. Ronaldo
+        // Panganiban Bautista's own DR-2026-2241 (Barangay Residency) was
+        // deliberately removed from here: his citizen account (ESP-RES-2024-1102,
+        // config/esperanza_citizens.php) is 'Pending Review', which the mobile
+        // app's own access-tier rule (CitizenSessionService.accessLevel) maps
+        // to Unverified — and an Unverified account cannot reach the Dokyu tab
+        // to submit a request at all. The account itself, and its Constituent
+        // Profile record, are kept — only the request that could never have
+        // legitimately existed was removed (see esperanza_constituents.php's
+        // matching RES-2026-101 record, whose document_requests is now empty).
         ['ref' => 'DR-2026-2288', 'citizen' => 'Joel Villanueva Aranas', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall (Brgy. Almero)', 'barangay' => 'Almero', 'submitted' => 'Jul 22, 2026', 'status' => 'Processing'],
         // Reset to Submitted (rather than their normal Released/Under
         // Verification/Under Review progression) so a live demo can
@@ -618,6 +626,61 @@
             rejectRemarks: '',
             previewDoc: null,
             docPreviewOpen: false,
+            // Edit Document rich-text editor state for the Prepared Document
+            // modal below — see resources/js/dokyu-editor.js for the shared
+            // engine and document-editor-toolbar/document-editor-background-panel
+            // .blade.php for the UI. The first time a request is edited, the
+            // CURRENT resolved output of whichever docKey template rendered it
+            // (barangay-certificate-preview.blade.php / municipal-request-preview
+            // .blade.php) is captured into selected.customDocumentHtml — a
+            // plain, self-contained HTML string the admin can then freely edit
+            // via contenteditable, independent of that template's own Alpine
+            // bindings. Once set, the Prepared Document modal renders that
+            // captured/edited HTML instead of re-invoking the template
+            // component, for every future view (see the previewType-branching
+            // template below) — this is what lets one generic editor work
+            // across every Dokyu paper's own particular layout rather than
+            // needing per-docKey editing logic.
+            editingDocument: false,
+            documentEditBackup: null,
+            backgroundEditBackup: null,
+            // Which editor side panel is open (null, background, spacing, or
+            // seals) — only one at a time, toggled from the toolbar.
+            activePanel: null,
+            // Currently selected block for the Spacing panel below — a plain
+            // DOM element reference (findSelectableBlock() in dokyu-editor.js),
+            // not itself reactive; sectionSpacing mirrors its current inline
+            // margin-top/margin-bottom/line-height so the panel's inputs have
+            // something reactive to bind to.
+            selectedSectionEl: null,
+            hoveredSectionEl: null,
+            sectionSpacing: { before: 0, after: 0, lineHeight: 1.0, canMoveUp: false, canMoveDown: false },
+            // Free vertical offset (transform:translateY) mirroring
+            // selectedSectionEl's own inline transform — a different
+            // mechanism from sectionSpacing above, see setVerticalOffset()
+            // in dokyu-editor.js for why margin alone cannot reliably
+            // reposition a block pinned by margin-top:auto.
+            sectionOffsetY: 0,
+            // A small, drag-independent horizontal nudge (see setHorizontalOffset()
+            // in dokyu-editor.js) — dragging itself stays vertical-only, this is
+            // just the Position & Spacing panel's own X +/- control.
+            sectionOffsetX: 0,
+            isDraggingSection: false,
+            documentOverflow: false,
+            // Floating Position & Spacing inspector (document-editor-spacing-panel
+            // .blade.php) — a UI-window drag, unrelated to document-section
+            // dragging above; position resets to this default every time
+            // editing starts fresh (not persisted beyond the current session).
+            spacingPanelPos: { x: 32, y: 88 },
+            spacingPanelCollapsed: false,
+            sealOffsets: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 } },
+            // Viewer zoom (document-editor-zoom-controls.blade.php) — a
+            // display-only setting, reset to 100 every time View Document
+            // opens (see the View Document button below); see
+            // resources/js/dokyu-editor.js for why this never affects the
+            // real document, print, PDF, or the overflow check.
+            zoomLevel: 100,
+            defaultWatermarkSrc: @js(asset('images/esperanza/esperanza-seal.png')),
             barangayCatalog: @js($barangayCatalog),
             docTypeLookup: @js(config('esperanza_document_type_lookup')),
             // Mirrors citizen/document-requests.blade.php's own resolvedDocument/
@@ -637,6 +700,14 @@
                 }
                 const meta = this.docTypeLookup[r.type];
                 if (!meta) return null;
+                // Synthesized once per request, then cached onto the request
+                // itself (r.formSnapshot) so admin edits to individual fields
+                // survive this getter re-running on every reactive read —
+                // without this, editing a field would appear to work for one
+                // tick and then silently reset, since a plain (un-memoized)
+                // getter rebuilds a brand-new snapshot object from scratch on
+                // every single access.
+                if (!r.formSnapshot) {
                 const snapshot = {};
                 if (meta.nameField) snapshot[meta.nameField] = r.citizen || '';
                 if (meta.purposeField) snapshot[meta.purposeField] = meta.purposeIsArray ? (r.purpose ? [r.purpose] : []) : (r.purpose || '');
@@ -707,17 +778,647 @@
                         snapshot.age = String(age);
                     }
                 }
-                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot, barangayOfficials: this.barangayCatalog[r.barangay]?.officials ?? null };
+                r.formSnapshot = snapshot;
+                }
+                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot: r.formSnapshot, barangayOfficials: this.barangayCatalog[r.barangay]?.officials ?? null };
             },
             get documentReady() {
                 const r = this.selected;
                 return !!(r && ['Approved', 'Mark to Release', 'Released'].includes(r.status) && this.resolvedDocument);
             },
+            get defaultBackground() {
+                return { src: this.defaultWatermarkSrc, opacity: 5, size: 'large', position: 'center', paperColor: '#FFFFFF' };
+            },
+            get documentBackground() {
+                return (this.selected && this.selected.background) || this.defaultBackground;
+            },
+            ensureBackground() {
+                if (this.selected && !this.selected.background) {
+                    this.selected.background = { ...this.defaultBackground };
+                }
+            },
+            paperStyle() {
+                return window.DokyuEditor.paperStyle(this.documentBackground);
+            },
+            watermarkStyle() {
+                return window.DokyuEditor.watermarkStyle(this.documentBackground);
+            },
+            startEditingDocument() {
+                const doc = this.resolvedDocument;
+                if (!doc || !this.selected) return;
+                // First time editing this request: freeze the exact output the
+                // template just rendered into a plain HTML string — see this
+                // file's own comment above editingDocument for why.
+                if (!this.selected.customDocumentHtml) {
+                    const contentEl = document.querySelector('#dp-print-area .doc-content');
+                    if (contentEl) {
+                        this.selected.customDocumentHtml = window.DokyuEditor.captureContent(contentEl);
+                    }
+                }
+                this.ensureBackground();
+                this.documentEditBackup = this.selected.customDocumentHtml;
+                this.backgroundEditBackup = JSON.parse(JSON.stringify(this.selected.background));
+                this.editingDocument = true;
+                // Prefer inline style-based formatting (e.g. a span with a
+                // CSS color style) over legacy presentational tags (font
+                // color, b, i) for
+                // everything except fontSize, which always uses the legacy
+                // <font size> mechanism regardless of this setting — see
+                // applyFontSize()'s own comment in dokyu-editor.js.
+                document.execCommand('styleWithCSS', false, true);
+                this.$nextTick(() => {
+                    window.renderIcons?.();
+                    this.refreshOverflowWarning();
+                    this.recomputeZoomSizer();
+                });
+            },
+            cancelDocumentEdits() {
+                if (this.selected) {
+                    this.selected.customDocumentHtml = this.documentEditBackup;
+                    if (this.backgroundEditBackup) this.selected.background = this.backgroundEditBackup;
+                }
+                this.documentEditBackup = null;
+                this.backgroundEditBackup = null;
+                this.editingDocument = false;
+                this.resetEditorUiState();
+                this.$nextTick(() => this.recomputeZoomSizer());
+            },
+            // Shared by Cancel, Save, and modal-close below — the x-html
+            // re-render those trigger replaces .doc-content's DOM entirely,
+            // so any element the Spacing panel was pointing at no longer
+            // exists; clearing it here avoids the panel acting on a detached
+            // node afterward.
+            resetEditorUiState() {
+                // Detach any handle BEFORE nulling the refs below — otherwise
+                // it's orphaned in the live DOM. This matters most when the
+                // modal is simply closed (docPreviewOpen goes false without
+                // an x-html re-render): without this, a stray handle would
+                // stay visible even in plain, non-editing View Document.
+                if (this.selectedSectionEl) this.detachDragHandle(this.selectedSectionEl);
+                if (this.hoveredSectionEl && this.hoveredSectionEl !== this.selectedSectionEl) this.detachDragHandle(this.hoveredSectionEl);
+                this.activePanel = null;
+                this.selectedSectionEl = null;
+                this.hoveredSectionEl = null;
+                this.isDraggingSection = false;
+                this.sectionSpacing = { before: 0, after: 0, lineHeight: 1.0, canMoveUp: false, canMoveDown: false };
+                this.sectionOffsetY = 0;
+                this.sectionOffsetX = 0;
+                this.documentOverflow = false;
+                this.spacingPanelPos = { x: 32, y: 88 };
+                this.spacingPanelCollapsed = false;
+            },
+            // Toolbar controls (document-editor-toolbar.blade.php) — every
+            // command acts on the live browser selection inside .doc-content;
+            // see resources/js/dokyu-editor.js for why saveSelection()/
+            // restoreSelection() exist (the toolbar sits outside the
+            // contenteditable region, so focusing it would otherwise collapse
+            // the selection before the command runs).
+            saveSelection() {
+                window.DokyuEditor.saveSelection(this.$refs.docEditor);
+            },
+            restoreSelection() {
+                window.DokyuEditor.restoreSelection();
+            },
+            execCmd(cmd) {
+                document.execCommand(cmd);
+            },
+            applyFontFamily(family) {
+                this.restoreSelection();
+                document.execCommand('fontName', false, family);
+            },
+            applyFontSize(px) {
+                this.restoreSelection();
+                window.DokyuEditor.applyFontSize(this.$refs.docEditor, px);
+            },
+            applyColor(hex) {
+                this.restoreSelection();
+                document.execCommand('foreColor', false, hex);
+            },
+            resetSelectionFormatting() {
+                this.restoreSelection();
+                document.execCommand('removeFormat');
+            },
+            // Paragraph indentation — Tab/Shift+Tab (handleContentKeydown()
+            // below) and the toolbar's Increase/Decrease Indent buttons both
+            // call these exact same two methods, rather than the toolbar
+            // staying on execCommand('indent')/('outdent') while Tab does
+            // something else; see the shared increaseIndent()/decreaseIndent()
+            // comment in dokyu-editor.js for why margin-left was chosen over
+            // that native command.
+            increaseIndentAtCaret() {
+                const contentEl = this.$refs.docEditor;
+                if (!contentEl) return;
+                const block = window.DokyuEditor.getCurrentBlock(contentEl);
+                if (!block) return;
+                window.DokyuEditor.increaseIndent(block);
+                if (this.selectedSectionEl === block) this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            decreaseIndentAtCaret() {
+                const contentEl = this.$refs.docEditor;
+                if (!contentEl) return;
+                const block = window.DokyuEditor.getCurrentBlock(contentEl);
+                if (!block) return;
+                window.DokyuEditor.decreaseIndent(block);
+                if (this.selectedSectionEl === block) this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            // Bound directly on .doc-content's own keydown (see the modal
+            // template below), which only ever fires while that specific
+            // element is focused — the guard below additionally requires
+            // document.activeElement to BE .doc-content itself (not one of
+            // its children, like a drag handle, which is also focusable),
+            // so this only ever intercepts Tab while genuinely editing text,
+            // never while the caret is merely somewhere in the document
+            // for positioning purposes. Everywhere else on the page (toolbar,
+            // inputs, color pickers, the floating inspector, seal controls)
+            // Tab is never touched at all, since keydown never reaches this
+            // handler from there in the first place.
+            handleContentKeydown(event) {
+                if (event.key !== 'Tab') return;
+                if (document.activeElement !== this.$refs.docEditor) return;
+                event.preventDefault();
+                if (event.shiftKey) this.decreaseIndentAtCaret();
+                else this.increaseIndentAtCaret();
+            },
+            // Section spacing / movement panel (document-editor-spacing-panel.blade.php)
+            // — operates on whatever block the admin last clicked inside
+            // .doc-content (see findSelectableBlock() in dokyu-editor.js);
+            // works identically across every Dokyu paper since it is purely
+            // DOM-generic, never docKey-aware.
+            selectSection(event) {
+                if (!this.editingDocument || !this.$refs.docEditor) return;
+                const block = window.DokyuEditor.findSelectableBlock(event.target, this.$refs.docEditor);
+                if (!block) {
+                    this.deselectSection();
+                    return;
+                }
+                this.selectSectionElement(block);
+            },
+            // Shared by selectSection() above and selectParentSection() below
+            // so both go through identical hover-cleanup/class bookkeeping.
+            selectSectionElement(block) {
+                if (this.selectedSectionEl === block) return;
+                if (this.selectedSectionEl) {
+                    this.selectedSectionEl.classList.remove('doc-section-selected');
+                    if (this.selectedSectionEl !== this.hoveredSectionEl) this.detachDragHandle(this.selectedSectionEl);
+                }
+                if (block === this.hoveredSectionEl) {
+                    block.classList.remove('doc-section-hover');
+                    this.hoveredSectionEl = null;
+                }
+                this.selectedSectionEl = block;
+                block.classList.add('doc-section-selected');
+                this.attachDragHandle(block);
+                this.refreshSectionSpacing();
+            },
+            deselectSection() {
+                if (this.selectedSectionEl) {
+                    this.selectedSectionEl.classList.remove('doc-section-selected');
+                    if (this.selectedSectionEl !== this.hoveredSectionEl) this.detachDragHandle(this.selectedSectionEl);
+                }
+                this.selectedSectionEl = null;
+            },
+            // Whether the current selection is already one of .doc-content's
+            // own direct children (a major section: letterhead, title, body,
+            // signatures, footer, ...) rather than a paragraph nested inside
+            // one of those.
+            get isMajorSection() {
+                return !!(this.selectedSectionEl && this.$refs.docEditor && this.selectedSectionEl.parentElement === this.$refs.docEditor);
+            },
+            // Select Whole Section in the panel — walks up from whatever
+            // nested text block is currently selected to the enclosing major
+            // section, since a click on the text itself always selects the
+            // innermost element (needed so a click still places the text
+            // cursor normally) and would otherwise make the parent
+            // impossible to reach.
+            selectParentSection() {
+                if (!this.selectedSectionEl || !this.$refs.docEditor) return;
+                let el = this.selectedSectionEl;
+                while (el.parentElement && el.parentElement !== this.$refs.docEditor) {
+                    el = el.parentElement;
+                }
+                this.selectSectionElement(el);
+            },
+            // Hover affordance — mirrors selectSection()'s own targeting but
+            // only ever touches one element via JS-computed delegation
+            // (mouseover bubbles, so this re-fires as the pointer crosses
+            // nested descendants; each call recomputes the single nearest
+            // selectable block and swaps the hover class onto only that one)
+            // rather than a plain CSS :hover rule, which would highlight
+            // every ancestor of the pointer at once.
+            hoverSection(event) {
+                if (!this.editingDocument || !this.$refs.docEditor) return;
+                const block = window.DokyuEditor.findSelectableBlock(event.target, this.$refs.docEditor);
+                if (block === this.hoveredSectionEl) return;
+                this.clearHoverSection();
+                if (block && block !== this.selectedSectionEl) {
+                    block.classList.add('doc-section-hover');
+                    this.hoveredSectionEl = block;
+                    this.attachDragHandle(block);
+                }
+            },
+            clearHoverSection() {
+                if (this.hoveredSectionEl) {
+                    this.hoveredSectionEl.classList.remove('doc-section-hover');
+                    if (this.hoveredSectionEl !== this.selectedSectionEl) this.detachDragHandle(this.hoveredSectionEl);
+                }
+                this.hoveredSectionEl = null;
+            },
+            // Drag handle (document-editor-spacing-panel.blade.php's own
+            // comment explains why this is a separate mechanism from
+            // Spacing Before/After) — attached to whatever block-level
+            // element findSelectableBlock() resolved (the same one hover/
+            // click selection already targets), whether that's a major
+            // section (a direct child of .doc-content) or a nested piece
+            // inside one (a specific name/title/label paragraph) — so an
+            // inner block like Punong Barangay can be repositioned
+            // independently of the section it lives in, without making
+            // individual words draggable (findSelectableBlock still only
+            // ever matches whole block-level elements). Stored as a plain
+            // property on the element itself (el.__dragHandle) rather than
+            // a separate registry — the handle's lifetime is exactly tied
+            // to its block's, and this avoids leaking references if a block
+            // is ever removed from the DOM some other way.
+            //
+            // Positioning the handle (position:absolute, left of the block)
+            // requires the block itself to be a positioning context; every
+            // major section already carries the `relative` class, but a
+            // plain nested <p> usually doesn't, so this sets it inline the
+            // first time a handle is attached — inert with no offsets of
+            // its own, so it changes nothing about how the block renders.
+            attachDragHandle(el) {
+                if (!el || el.__dragHandle || !this.$refs.docEditor) return;
+                if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+                const handle = window.DokyuEditor.createDragHandleElement();
+                handle.addEventListener('pointerdown', (event) => this.onDragHandlePointerDown(event, el, handle));
+                handle.addEventListener('keydown', (event) => this.onDragHandleKeyDown(event));
+                el.appendChild(handle);
+                el.__dragHandle = handle;
+            },
+            detachDragHandle(el) {
+                if (el && el.__dragHandle) {
+                    el.__dragHandle.remove();
+                    el.__dragHandle = null;
+                }
+            },
+            // Pointer Events (not mouse-specific handlers) so the same code
+            // path covers mouse, trackpad, and pen/touch where available —
+            // see requirement for touch/pointer support. setPointerCapture
+            // redirects every subsequent pointermove/pointerup to the
+            // handle itself regardless of where the pointer physically ends
+            // up, which is the standard, reliable way to implement a drag
+            // gesture without needing window-level listeners.
+            onDragHandlePointerDown(event, el, handle) {
+                if (!this.editingDocument) return;
+                event.preventDefault();
+                try { handle.setPointerCapture(event.pointerId); } catch (error) { /* not fatal: pointermove/up below still work via normal bubbling if capture is unavailable */ }
+                this.selectSectionElement(el);
+                window.DokyuEditor.startSectionDrag(el, event, this.$refs.docEditor, this.zoomLevel);
+                this.isDraggingSection = true;
+                el.classList.add('doc-section-dragging');
+                const onMove = (moveEvent) => {
+                    const next = window.DokyuEditor.updateSectionDrag(moveEvent);
+                    if (next) {
+                        this.sectionOffsetX = next.x;
+                        this.sectionOffsetY = next.y;
+                    }
+                    this.autoScrollDuringDrag(moveEvent);
+                };
+                const onUp = () => {
+                    handle.removeEventListener('pointermove', onMove);
+                    handle.removeEventListener('pointerup', onUp);
+                    handle.removeEventListener('pointercancel', onUp);
+                    window.DokyuEditor.endSectionDrag();
+                    this.isDraggingSection = false;
+                    el.classList.remove('doc-section-dragging');
+                    this.refreshOverflowWarning();
+                };
+                handle.addEventListener('pointermove', onMove);
+                handle.addEventListener('pointerup', onUp);
+                handle.addEventListener('pointercancel', onUp);
+            },
+            // Fine keyboard nudging after a drag — deliberately scoped to
+            // when the handle itself has DOM focus (a deliberate click/tab
+            // onto it), never globally while a section is merely selected,
+            // so arrow keys keep their normal caret-movement meaning
+            // everywhere else, including while typing in the very same
+            // section's own text.
+            onDragHandleKeyDown(event) {
+                if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+                event.preventDefault();
+                const step = event.shiftKey ? 10 : 1;
+                if (event.key === 'ArrowUp') this.adjustSectionOffsetY(-step);
+                else if (event.key === 'ArrowDown') this.adjustSectionOffsetY(step);
+                else if (event.key === 'ArrowLeft') this.adjustSectionOffsetX(-step);
+                else if (event.key === 'ArrowRight') this.adjustSectionOffsetX(step);
+            },
+            // Auto-scrolls the zoom viewport when dragging near its top/bottom
+            // edge, so a section can be moved farther than what's currently
+            // visible — capped low (12px per pointermove) so it never feels
+            // like it's racing away from the pointer.
+            autoScrollDuringDrag(pointerEvent) {
+                const viewport = this.$refs.zoomViewport;
+                if (!viewport) return;
+                const rect = viewport.getBoundingClientRect();
+                const edgeZone = 40;
+                const maxSpeed = 12;
+                if (pointerEvent.clientY < rect.top + edgeZone) {
+                    viewport.scrollTop -= maxSpeed * ((rect.top + edgeZone - pointerEvent.clientY) / edgeZone);
+                } else if (pointerEvent.clientY > rect.bottom - edgeZone) {
+                    viewport.scrollTop += maxSpeed * ((pointerEvent.clientY - (rect.bottom - edgeZone)) / edgeZone);
+                }
+            },
+            refreshSectionSpacing() {
+                if (!this.selectedSectionEl) return;
+                const spacing = window.DokyuEditor.readSpacing(this.selectedSectionEl);
+                const move = window.DokyuEditor.canMove(this.selectedSectionEl);
+                this.sectionSpacing = { before: spacing.before, after: spacing.after, lineHeight: spacing.lineHeight, canMoveUp: move.up, canMoveDown: move.down };
+                this.sectionOffsetY = window.DokyuEditor.readVerticalOffset(this.selectedSectionEl);
+                this.sectionOffsetX = window.DokyuEditor.readHorizontalOffset(this.selectedSectionEl);
+            },
+            // A short, human-readable hint for the floating panel's own
+            // Selected line — every Dokyu paper has different named
+            // pieces (Punong Barangay, an officiant, a payment table row...)
+            // with no shared data attribute to hang a label off, so this
+            // just previews the block's own text rather than requiring every
+            // template to be annotated by hand for this one purpose. Reads
+            // from a clone with the drag handle stripped out first — the
+            // handle is a child of the very element being labeled, so its
+            // own glyph would otherwise get pulled into textContent too.
+            get selectedSectionLabel() {
+                if (!this.selectedSectionEl) return '';
+                const clone = this.selectedSectionEl.cloneNode(true);
+                clone.querySelectorAll('.doc-drag-handle').forEach((node) => node.remove());
+                const text = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+                if (!text) return this.isMajorSection ? 'Section' : 'Block';
+                return text.length > 42 ? text.slice(0, 42) + '…' : text;
+            },
+            adjustSectionOffsetX(delta) {
+                if (!this.selectedSectionEl) return;
+                this.setSectionOffsetXDirect(this.sectionOffsetX + delta);
+            },
+            setSectionOffsetXDirect(value) {
+                if (!this.selectedSectionEl || !this.$refs.docEditor) return;
+                const bounds = window.DokyuEditor.computeHorizontalBounds(this.selectedSectionEl, this.$refs.docEditor, this.zoomLevel / 100);
+                const clamped = Math.max(bounds.min, Math.min(bounds.max, Math.round(Number(value) || 0)));
+                window.DokyuEditor.setHorizontalOffset(this.selectedSectionEl, clamped);
+                this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            adjustSpacingBefore(delta) {
+                if (!this.selectedSectionEl) return;
+                window.DokyuEditor.setSpacingBefore(this.selectedSectionEl, this.sectionSpacing.before + delta);
+                this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            adjustSpacingAfter(delta) {
+                if (!this.selectedSectionEl) return;
+                window.DokyuEditor.setSpacingAfter(this.selectedSectionEl, this.sectionSpacing.after + delta);
+                this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            adjustLineHeight(step) {
+                if (!this.selectedSectionEl) return;
+                window.DokyuEditor.setLineHeight(this.selectedSectionEl, this.sectionSpacing.lineHeight + step);
+                this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            // Free vertical repositioning — see setVerticalOffset()'s own
+            // comment in dokyu-editor.js for why this exists as a separate
+            // mechanism from Spacing Before/After above. Dragging (see
+            // onDragHandlePointerDown()) is the primary way to use this now;
+            // these numeric/button/keyboard paths are the fine-tuning
+            // fallback, so all of them (including the drag itself) share
+            // the exact same computeOffsetBounds() clamp — a section can
+            // never be pushed out of the printable area through any control.
+            adjustSectionOffsetY(delta) {
+                if (!this.selectedSectionEl) return;
+                this.setSectionOffsetYDirect(this.sectionOffsetY + delta);
+            },
+            setSectionOffsetYDirect(value) {
+                if (!this.selectedSectionEl || !this.$refs.docEditor) return;
+                const bounds = window.DokyuEditor.computeOffsetBounds(this.selectedSectionEl, this.$refs.docEditor, this.zoomLevel / 100);
+                const clamped = Math.max(bounds.min, Math.min(bounds.max, Math.round(Number(value) || 0)));
+                window.DokyuEditor.setVerticalOffset(this.selectedSectionEl, clamped);
+                this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            moveSelectedSection(direction) {
+                if (!this.selectedSectionEl) return;
+                window.DokyuEditor.moveElement(this.selectedSectionEl, direction);
+                this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            resetSectionSpacing() {
+                if (!this.selectedSectionEl) return;
+                this.selectedSectionEl.style.marginTop = '';
+                this.selectedSectionEl.style.marginBottom = '';
+                this.selectedSectionEl.style.lineHeight = '';
+                this.selectedSectionEl.style.transform = '';
+                this.refreshSectionSpacing();
+                this.refreshOverflowWarning();
+            },
+            // Dragging the floating Position & Spacing window itself (by its
+            // title bar) — a plain screen-space UI drag, unrelated to
+            // dragging a document section: no zoom conversion, no A4
+            // boundary clamping, since this window floats above the paper
+            // (position:fixed) and never affects the document at all. Plain
+            // window-level listeners are enough here (no pointer capture
+            // needed) since there's no hit-testing precision to protect.
+            startPanelDrag(event) {
+                if (event.target.closest('button')) return;
+                event.preventDefault();
+                const startX = event.clientX;
+                const startY = event.clientY;
+                const originX = this.spacingPanelPos.x;
+                const originY = this.spacingPanelPos.y;
+                const onMove = (moveEvent) => {
+                    this.spacingPanelPos = { x: originX + (moveEvent.clientX - startX), y: originY + (moveEvent.clientY - startY) };
+                };
+                const onUp = () => {
+                    window.removeEventListener('pointermove', onMove);
+                    window.removeEventListener('pointerup', onUp);
+                };
+                window.addEventListener('pointermove', onMove);
+                window.addEventListener('pointerup', onUp);
+            },
+            refreshOverflowWarning() {
+                const paperEl = document.querySelector('#dp-print-area .doc-paper');
+                this.documentOverflow = window.DokyuEditor.checkOverflow(paperEl);
+            },
+            // Viewer zoom (document-editor-zoom-controls.blade.php) — a pure
+            // display feature; see the header comment on the zoom exports in
+            // resources/js/dokyu-editor.js for why transform:scale() on
+            // .doc-zoom-scale never affects the real document, the overflow
+            // check above, print, or PDF. .doc-zoom-sizer's explicit
+            // width/height (recomputeZoomSizer()) is what makes
+            // .doc-zoom-viewport scrollable to the full scaled size, since a
+            // transformed element never grows its own ancestors' scrollable
+            // area by itself.
+            setZoomLevel(level) {
+                this.zoomLevel = window.DokyuEditor.clampZoom(level);
+                this.$nextTick(() => this.recomputeZoomSizer());
+            },
+            zoomIn() {
+                this.setZoomLevel(window.DokyuEditor.nextZoomLevel(this.zoomLevel, 'in'));
+            },
+            zoomOut() {
+                this.setZoomLevel(window.DokyuEditor.nextZoomLevel(this.zoomLevel, 'out'));
+            },
+            resetZoom() {
+                this.setZoomLevel(100);
+            },
+            fitPage() {
+                const viewportEl = this.$refs.zoomViewport;
+                const scaleEl = this.$refs.zoomScale;
+                if (!viewportEl || !scaleEl) return;
+                this.setZoomLevel(window.DokyuEditor.computeFitZoom(scaleEl, viewportEl.clientWidth, viewportEl.clientHeight));
+            },
+            recomputeZoomSizer() {
+                const scaleEl = this.$refs.zoomScale;
+                const sizerEl = this.$refs.zoomSizer;
+                if (!scaleEl || !sizerEl) return;
+                const size = window.DokyuEditor.computeZoomSizerSize(scaleEl, this.zoomLevel);
+                sizerEl.style.width = size.width + 'px';
+                sizerEl.style.height = size.height + 'px';
+            },
+            handleZoomShortcut(event) {
+                if (!this.docPreviewOpen) return;
+                if (!(event.ctrlKey || event.metaKey)) return;
+                if (event.key === '+' || event.key === '=') {
+                    event.preventDefault();
+                    this.zoomIn();
+                } else if (event.key === '-') {
+                    event.preventDefault();
+                    this.zoomOut();
+                } else if (event.key === '0') {
+                    event.preventDefault();
+                    this.resetZoom();
+                }
+            },
+            // Header seal panel (document-editor-header-seal-panel.blade.php)
+            // — targets the header-seal--left / header-seal--right markers
+            // every template renders (see barangay-certificate-preview.blade.php
+            // / municipal-request-preview.blade.php); municipal papers only
+            // render a left seal, so hasRightSeal() lets the panel hide the
+            // Right Seal block when there is nothing to control.
+            findSealImg(side) {
+                const root = document.querySelector('#dp-print-area .doc-content');
+                return root ? root.querySelector('.header-seal--' + side) : null;
+            },
+            hasRightSeal() {
+                return !!this.findSealImg('right');
+            },
+            refreshSealOffsets() {
+                ['left', 'right'].forEach((side) => {
+                    const img = this.findSealImg(side);
+                    this.sealOffsets[side] = img ? window.DokyuEditor.readSealOffset(img) : { x: 0, y: 0 };
+                });
+            },
+            async handleSealUpload(side, event) {
+                const file = event.target.files && event.target.files[0];
+                event.target.value = '';
+                if (!file) return;
+                const img = this.findSealImg(side);
+                if (!img) return;
+                const result = await window.DokyuEditor.readImageFile(file);
+                if (!result.ok) {
+                    this.$dispatch('toast', { message: result.error, variant: 'danger' });
+                    return;
+                }
+                img.src = result.dataUrl;
+                img.style.display = '';
+            },
+            removeSeal(side) {
+                const img = this.findSealImg(side);
+                if (img) img.style.display = 'none';
+            },
+            restoreSeal(side) {
+                const img = this.findSealImg(side);
+                if (!img) return;
+                img.style.display = '';
+                img.src = img.getAttribute('data-default-src') || img.src;
+                img.style.width = '';
+                img.style.height = '';
+                img.style.transform = '';
+                this.refreshSealOffsets();
+            },
+            setSealSize(side, sizeKey) {
+                const img = this.findSealImg(side);
+                if (img) window.DokyuEditor.applySealSize(img, sizeKey);
+            },
+            adjustSealOffset(side, axis, delta) {
+                const img = this.findSealImg(side);
+                if (!img) return;
+                const current = window.DokyuEditor.readSealOffset(img);
+                const next = { x: current.x, y: current.y };
+                next[axis] = current[axis] + delta;
+                window.DokyuEditor.applySealOffset(img, next.x, next.y);
+                this.refreshSealOffsets();
+            },
+            // Change Background panel (document-editor-background-panel.blade.php)
+            setWatermarkOpacity(v) {
+                this.ensureBackground();
+                this.selected.background.opacity = Number(v);
+            },
+            setWatermarkSize(v) {
+                this.ensureBackground();
+                this.selected.background.size = v;
+            },
+            setWatermarkPosition(v) {
+                this.ensureBackground();
+                this.selected.background.position = v;
+            },
+            setPaperColor(hex) {
+                this.ensureBackground();
+                this.selected.background.paperColor = hex;
+            },
+            resetPaperColor() {
+                this.ensureBackground();
+                this.selected.background.paperColor = '#FFFFFF';
+            },
+            removeWatermark() {
+                this.ensureBackground();
+                this.selected.background.src = null;
+            },
+            restoreDefaultWatermark() {
+                this.ensureBackground();
+                this.selected.background.src = this.defaultWatermarkSrc;
+            },
+            resetBackground() {
+                this.selected.background = { ...this.defaultBackground };
+            },
+            async handleWatermarkUpload(event) {
+                const file = event.target.files && event.target.files[0];
+                event.target.value = '';
+                if (!file) return;
+                const result = await window.DokyuEditor.readImageFile(file);
+                if (!result.ok) {
+                    this.$dispatch('toast', { message: result.error, variant: 'danger' });
+                    return;
+                }
+                this.ensureBackground();
+                this.selected.background.src = result.dataUrl;
+            },
+            saveDocumentEdits() {
+                if (this.$refs.docEditor) {
+                    this.selected.customDocumentHtml = window.DokyuEditor.cleanHtml(this.$refs.docEditor.innerHTML);
+                }
+                this.documentEditBackup = null;
+                this.backgroundEditBackup = null;
+                this.editingDocument = false;
+                this.resetEditorUiState();
+                this.$dispatch('toast', { message: 'Document changes saved.', variant: 'success' });
+                this.$nextTick(() => this.recomputeZoomSizer());
+            },
             printDocument() {
+                if (this.editingDocument) this.saveDocumentEdits();
                 document.body.classList.add('dp-printing');
                 window.print();
             },
             async downloadDocument() {
+                if (this.editingDocument) this.saveDocumentEdits();
                 const el = document.getElementById('dp-print-area');
                 if (!el) return;
                 if (!window.html2pdf) {
@@ -1753,7 +2454,7 @@
                             <template x-if="documentReady">
                                 <div class="mt-2.5">
                                     <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Preview, print, or download the prepared document before handing it over.</p>
-                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="docPreviewOpen = true">View Document</x-ui.button>
+                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="editingDocument = false; documentEditBackup = null; docPreviewOpen = true">View Document</x-ui.button>
                                 </div>
                             </template>
                             <p class="text-[11px] text-slate-400 mt-1 leading-relaxed" x-show="!documentReady">No prepared document on file for this request.</p>
@@ -1863,10 +2564,24 @@
              precisely what the citizen will receive. Same #dp-print-area /
              dp-printing print isolation as the citizen portal (shared rules
              in app.css). --}}
-        <div x-data="{ get open() { return docPreviewOpen }, set open(v) { docPreviewOpen = v } }">
-            <x-ui.modal title="Prepared Document" maxWidth="2xl">
+        <div
+            x-data="{ get open() { return docPreviewOpen }, set open(v) { docPreviewOpen = v; if (!v) { editingDocument = false; documentEditBackup = null; backgroundEditBackup = null; resetEditorUiState(); } else { zoomLevel = 100; $nextTick(() => recomputeZoomSizer()); } } }"
+            @keydown.window="handleZoomShortcut($event)"
+        >
+            <x-ui.modal title="Prepared Document" maxWidth="3xl">
                 <template x-if="selected && documentReady">
                     <div>
+                        <div class="flex items-center justify-between mb-3 dp-no-print" x-show="!editingDocument">
+                            <p class="text-[11px] text-slate-400 leading-relaxed">Review the prepared document below, or edit its wording and formatting before printing or downloading.</p>
+                            <x-ui.button size="sm" variant="secondary" icon="pencil" @click="startEditingDocument()">Edit Document</x-ui.button>
+                        </div>
+
+                        <x-citizen.document-editor-zoom-controls />
+                        <x-citizen.document-editor-toolbar />
+                        <x-citizen.document-editor-background-panel />
+                        <x-citizen.document-editor-spacing-panel />
+                        <x-citizen.document-editor-header-seal-panel />
+
                         <div id="dp-print-area">
                             <div class="flex items-center justify-between mb-4 text-[11px] text-slate-400 dp-no-print">
                                 <span x-text="selected.ref"></span>
@@ -1874,33 +2589,85 @@
                                       :class="selected.status === 'Released' ? 'bg-cyan-50 text-cyan-700 ring-cyan-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'"
                                       x-text="selected.status"></span>
                             </div>
-                            <template x-if="resolvedDocument?.previewType === 'barangay'">
-                                <x-citizen.barangay-certificate-preview
-                                    docKey="resolvedDocument.docKey"
-                                    bind="resolvedDocument.snapshot"
-                                    title="resolvedDocument.certTitle"
-                                    subtitle="resolvedDocument.certSubtitle"
-                                    barangay="selected.barangay"
-                                    seal="null"
-                                    punongBarangay="resolvedDocument.barangayOfficials?.punong_barangay"
-                                    barangaySecretary="resolvedDocument.barangayOfficials?.barangay_secretary"
-                                />
-                            </template>
-                            <template x-if="resolvedDocument?.previewType === 'municipal_request'">
-                                <x-citizen.municipal-request-preview
-                                    docKey="resolvedDocument.docKey"
-                                    bind="resolvedDocument.snapshot"
-                                    title="resolvedDocument.certTitle"
-                                    office="selected.office"
-                                    formNo="selected.formNo"
-                                    officiant="selected.officiant"
-                                    officiantTitle="selected.officiantTitle"
-                                    technician="selected.technician"
-                                    technicianTitle="selected.technicianTitle"
-                                    verifier="selected.verifier"
-                                    verifierTitle="selected.verifierTitle"
-                                />
-                            </template>
+
+                            {{-- Zoom is purely a view affordance — it wraps
+                                 both rendering branches below without
+                                 changing either. doc-zoom-viewport is the
+                                 scrollable window; doc-zoom-sizer's explicit
+                                 width/height (recomputeZoomSizer() in the
+                                 x-data above) reserves exactly the scaled
+                                 paper's footprint so the viewport actually
+                                 has something to scroll; doc-zoom-scale
+                                 carries the transform itself. All three are
+                                 neutralized during print/PDF (see app.css)
+                                 so the exported page is always true,
+                                 unscaled A4. --}}
+                            <div class="doc-zoom-viewport max-h-[60vh]" x-ref="zoomViewport">
+                                <div class="doc-zoom-sizer" x-ref="zoomSizer">
+                                    <div class="doc-zoom-scale" x-ref="zoomScale" :style="'transform: scale(' + (zoomLevel / 100) + ');'">
+                                        {{-- Not yet customized — render the live
+                                             template exactly as before
+                                             (unchanged appearance/behavior). --}}
+                                        <template x-if="!selected.customDocumentHtml">
+                                            <div>
+                                                <template x-if="resolvedDocument?.previewType === 'barangay'">
+                                                    <x-citizen.barangay-certificate-preview
+                                                        docKey="resolvedDocument.docKey"
+                                                        bind="resolvedDocument.snapshot"
+                                                        title="resolvedDocument.certTitle"
+                                                        subtitle="resolvedDocument.certSubtitle"
+                                                        barangay="selected.barangay"
+                                                        seal="null"
+                                                        punongBarangay="resolvedDocument.barangayOfficials?.punong_barangay"
+                                                        barangaySecretary="resolvedDocument.barangayOfficials?.barangay_secretary"
+                                                    />
+                                                </template>
+                                                <template x-if="resolvedDocument?.previewType === 'municipal_request'">
+                                                    <x-citizen.municipal-request-preview
+                                                        docKey="resolvedDocument.docKey"
+                                                        bind="resolvedDocument.snapshot"
+                                                        title="resolvedDocument.certTitle"
+                                                        office="selected.office"
+                                                        formNo="selected.formNo"
+                                                        officiant="selected.officiant"
+                                                        officiantTitle="selected.officiantTitle"
+                                                        technician="selected.technician"
+                                                        technicianTitle="selected.technicianTitle"
+                                                        verifier="selected.verifier"
+                                                        verifierTitle="selected.verifierTitle"
+                                                    />
+                                                </template>
+                                            </div>
+                                        </template>
+
+                                        {{-- Customized (or currently being
+                                             edited) — the frozen/edited HTML
+                                             from startEditingDocument()/
+                                             saveDocumentEdits() above, with
+                                             the watermark rendered as an
+                                             independent sibling layer driven
+                                             by documentBackground so Change
+                                             Background never touches the
+                                             editable text, and vice versa. --}}
+                                        <template x-if="selected.customDocumentHtml">
+                                            <div class="doc-paper rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10" :style="paperStyle()">
+                                                <img class="doc-watermark" alt="" aria-hidden="true" x-show="documentBackground.src" x-cloak :src="documentBackground.src" :style="watermarkStyle()">
+                                                <div
+                                                    class="doc-content relative flex flex-col flex-1"
+                                                    x-ref="docEditor"
+                                                    :contenteditable="editingDocument ? 'true' : 'false'"
+                                                    x-html="selected.customDocumentHtml"
+                                                    @click="selectSection($event)"
+                                                    @mouseover="hoverSection($event)"
+                                                    @mouseleave="clearHoverSection()"
+                                                    @keydown="handleContentKeydown($event)"
+                                                    @input="refreshOverflowWarning(); recomputeZoomSizer()"
+                                                ></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </template>

@@ -313,7 +313,67 @@
   disabled here because the document component already owns its internal
   paper padding. This avoids the old 297mm sheet + @page margins overflow
   that split a one-page certificate across multiple sheets.
+
+  Split into two tiers, both keyed off body.dp-printing (toggled by
+  printDocument()/downloadDocument() in resources/js — see their own
+  comments): a plain, always-applied tier below for anything that must be
+  identical whether the citizen/staff member is printing OR downloading a
+  PDF, and an @media print-only tier further down for things that only
+  make sense for a real, paginated browser print (html2pdf renders through
+  the normal screen pipeline via html2canvas, not @media print, so a rule
+  scoped only inside @media print never reaches the PDF path at all — this
+  is exactly why .dp-no-print has always lived out here rather than inside
+  the media query, and why .doc-paper's own real A4 sizing/padding now does
+  too: leaving it print-only meant a downloaded PDF was still measuring
+  .doc-paper's on-screen, modal-constrained width/Tailwind padding instead
+  of a true 210mm sheet, producing a different-looking result from Print).
 */
+
+/* Every ancestor between body and #dp-print-area (the teleported modal
+   root, its centering wrapper, the dialog card, the scrollable slot
+   container) gets unclipped/untransformed so nothing above constrains or
+   repositions the document — needed for a real print (see the @media
+   print tier) and equally for html2pdf/html2canvas, which measures the
+   live, on-screen box model and would otherwise capture the document
+   clipped to the modal's own max-height/overflow instead of its full
+   natural size. */
+body.dp-printing *:has(#dp-print-area) {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    overflow: visible !important;
+    max-height: none !important;
+    max-width: none !important;
+    height: auto !important;
+    width: auto !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Shared paper sizing — a true, fixed 210x297mm sheet (not the narrower
+   min(210mm, 100%) the on-screen preview uses to fit inside the modal),
+   so preview, browser print, and downloaded PDF all agree once printing
+   starts. The internal padding is part of that same box (border-box). */
+body.dp-printing .doc-paper {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    padding: 16mm 18mm 14mm !important;
+}
+
+/* html2pdf captures screen styles rather than @media print, so this class
+   is also used while generating a download. */
+body.dp-printing .dp-no-print {
+    display: none !important;
+}
+
 @media print {
     @page {
         size: A4 portrait;
@@ -328,19 +388,24 @@
         background: #fff !important;
     }
 
-    body.dp-printing > * {
-        visibility: hidden !important;
-    }
-
-    body.dp-printing #dp-print-area,
-    body.dp-printing #dp-print-area * {
-        visibility: visible !important;
+    /* Removed entirely (display:none), not just hidden (visibility:hidden)
+       — the app shell's sidebar/topbar/main wrapper is a fixed `h-screen`
+       box, and ANY OTHER teleported modal root that isn't the one holding
+       the document. visibility:hidden still reserves that element's own
+       box space in the page flow (an `h-screen` div still measures ~one
+       full page tall even while invisible), which is exactly what forced
+       a spurious extra blank page — the hidden dashboard shell alone was
+       tall enough to spill onto its own second sheet. display:none removes
+       it from layout entirely, so it can never contribute page height.
+       Scoped to @media print only — irrelevant to html2pdf, which only
+       ever walks #dp-print-area's own subtree and never looks at its
+       siblings/ancestors' other children in the first place. */
+    body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area) {
+        display: none !important;
     }
 
     /* Pull the prepared document out of the modal/app layout and anchor it
-       directly to the first printable page. The previous visibility-only
-       approach left the hidden dashboard taking up physical print space,
-       which is why Chrome preview showed a blank first sheet. */
+       directly to the first printable page. */
     body.dp-printing #dp-print-area {
         position: absolute !important;
         inset: 0 auto auto 0 !important;
@@ -349,29 +414,18 @@
         padding: 0 !important;
     }
 
-    body.dp-printing *:has(#dp-print-area) {
-        position: static !important;
-        inset: auto !important;
-        transform: none !important;
-        overflow: visible !important;
-        max-height: none !important;
-        max-width: none !important;
-        height: auto !important;
-        width: auto !important;
-        box-shadow: none !important;
-        background: transparent !important;
+    /* Same reasoning as the top-level rule above, one level down: the
+       modal's own chrome (backdrop overlay, header title bar, footer
+       Print/Download buttons) sits alongside #dp-print-area inside that
+       same ancestor chain, not inside it — remove it from layout
+       entirely rather than merely hiding it, so it can't add stray height
+       either (this is what previously left a small but real leftover
+       sliver of extra flow height on top of the dashboard-shell issue). */
+    body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-print-area) {
+        display: none !important;
     }
 
     body.dp-printing .doc-paper {
-        width: 210mm !important;
-        min-height: 297mm !important;
-        margin: 0 !important;
-        box-sizing: border-box !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        overflow: hidden !important;
-        padding: 16mm 18mm 14mm !important;
         break-inside: avoid-page !important;
         page-break-inside: avoid !important;
     }
@@ -381,18 +435,339 @@
     }
 }
 
-/* html2pdf captures screen styles rather than @media print, so this class
-   is also used while generating a download. */
-body.dp-printing .dp-no-print {
-    display: none !important;
-}
-
-/* Shared paper sizing. The internal padding is part of the 210x297mm page
-   (border-box), so preview, browser print, and downloaded PDF agree. */
+/* Shared paper sizing for the normal (non-printing) preview — the internal
+   padding is part of the 210x297mm page (border-box), so it keeps true A4
+   proportions at every size instead of shrinking to however tall a
+   one-paragraph certificate's own text happens to be. */
 .doc-paper {
     box-sizing: border-box;
     width: min(210mm, 100%);
     min-height: 297mm;
+}
+
+/* Editable blanks on a generated Dokyu paper while Edit Document is active
+   (see doc-field.blade.php) — sized to their own typed content rather than
+   a fixed input width (a wide empty box would look nothing like a filled-in
+   certificate blank), with only a bottom rule so it still reads as "a line
+   on a form" rather than an obvious <input>. field-sizing is a newer CSS
+   property (Chromium 123+, this admin's only supported browser); browsers
+   without it just fall back to min-width, which still works fine. */
+.doc-field-input {
+    field-sizing: content;
+    min-width: 3rem;
+    max-width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dotted #94a3b8;
+    outline: none;
+    font: inherit;
+    color: inherit;
+    padding: 0 2px;
+}
+.doc-field-input:focus {
+    border-bottom-style: solid;
+    border-bottom-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.06);
+    border-radius: 2px 2px 0 0;
+}
+/* Printing/downloading always commits and exits edit mode first (see
+   printDocument()/downloadDocument() in admin/document-requests.blade.php —
+   editing is admin-only, the citizen portal never sets dp-editing state),
+   but this is a defensive backstop — an editable-looking input (dotted
+   rule, focus ring) must never end up on the actual paper either way. */
+body.dp-printing .doc-field-input {
+    display: none !important;
+}
+
+/* "Edit Document" rich-text editor chrome (see document-editor-toolbar.blade.php
+   / document-editor-background-panel.blade.php) — always dp-no-print, so no
+   extra print-specific hiding rule is needed for these beyond the existing
+   .dp-no-print one above. */
+.doc-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #475569;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    line-height: 1;
+}
+.doc-toolbar-btn:hover {
+    background: #e2e8f0;
+}
+.doc-toolbar-select {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.375rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+}
+.doc-toolbar-sep {
+    width: 1px;
+    align-self: stretch;
+    background: #e2e8f0;
+    margin: 0 0.125rem;
+    flex-shrink: 0;
+}
+
+/* The watermark is always a sibling of .doc-content (never a descendant),
+   so a contenteditable text edit can never select/drag/delete it — this is
+   a backstop in case that inline style (set in resources/js/dokyu-editor.js
+   watermarkStyle()) is ever overridden. */
+.doc-watermark {
+    pointer-events: none;
+}
+
+/* .doc-content itself carries no permanent outline while editable — the
+   admin asked for a clean paper by default, matching the final printed
+   look, with feedback appearing only on the specific block being hovered
+   or selected (below). Only the text cursor communicates "this is
+   editable." */
+.doc-content[contenteditable="true"] {
+    cursor: text;
+}
+
+/* Hover/selected affordance for section spacing & positioning
+   (document-editor-spacing-panel.blade.php) — applied to exactly one
+   element at a time via JS delegation on mouseover/click (see
+   hoverSection()/selectSection() in document-requests.blade.php), never
+   via a plain CSS :hover selector: a bare `:hover { outline }` rule would
+   fire on every ancestor of whatever's under the cursor simultaneously
+   (hover state propagates up the whole ancestor chain), which is exactly
+   the "outlines on nearly every block at once" look this replaces. outline
+   (not border) so neither state ever shifts the A4 box model/pagination,
+   and both are suppressed below so print/PDF never shows them. */
+.doc-section-hover {
+    outline: 1px dashed #cbd5e1 !important;
+    outline-offset: 2px;
+}
+.doc-section-selected {
+    outline: 1.5px dashed #3b82f6 !important;
+    outline-offset: 2px;
+}
+body.dp-printing .doc-section-hover,
+body.dp-printing .doc-section-selected {
+    outline: none !important;
+}
+
+/* Active-drag state (document-requests.blade.php onDragHandlePointerDown())
+   — a stronger, solid version of the selected outline plus a soft shadow so
+   a grabbed section reads clearly as "currently being moved," distinct from
+   merely being selected. Suppressed during print/PDF the same way as the
+   hover/selected outlines above; the drag handle itself is already
+   dp-no-print (see createDragHandleElement() in resources/js/dokyu-editor.js). */
+.doc-section-dragging {
+    outline: 1.5px solid #3b82f6 !important;
+    outline-offset: 2px;
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);
+    cursor: grabbing;
+}
+body.dp-printing .doc-section-dragging {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Drag handle — only ever attached to a major section (a direct child of
+   .doc-content; see attachDragHandle() in document-requests.blade.php),
+   never to a nested paragraph, so it's clear only structural blocks are
+   draggable. Floats in the paper's own padding gutter (left: -30px) so it
+   never overlaps the section's own content. contenteditable="false" (set
+   when it's created) keeps its own glyph from being edited as text;
+   touch-action:none stops touch/pen gestures from being hijacked by the
+   browser's default scroll/zoom handling mid-drag (see requirement for
+   pointer/touch support). */
+.doc-drag-handle {
+    position: absolute;
+    top: 50%;
+    left: -30px;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    z-index: 20;
+}
+.doc-drag-handle:hover {
+    background: #2563eb;
+}
+.doc-drag-handle:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
+}
+.doc-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Floating "Position & Spacing" inspector (document-editor-spacing-panel
+   .blade.php) — position:fixed takes it completely out of document flow,
+   so it can never push the A4 paper down or otherwise affect layout, and
+   it sits outside .doc-zoom-scale entirely so paper zoom never resizes it.
+   z-index above the modal's own (90, see components/ui/modal.blade.php) so
+   it floats above the paper as intended. dp-no-print (already on the root
+   element in the Blade file) keeps it out of Print/PDF like every other
+   editor-only piece. Compact by design — no full-width sliders, just a
+   label + a short numeric input + a pair of small +/- buttons per row. */
+.doc-spacing-panel {
+    position: fixed;
+    z-index: 110;
+    width: 300px;
+    max-width: calc(100vw - 32px);
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    overflow: hidden;
+}
+.doc-spacing-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: grab;
+    touch-action: none;
+}
+.doc-spacing-panel-header:active {
+    cursor: grabbing;
+}
+.doc-spacing-panel-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 0.375rem;
+    color: #64748b;
+}
+.doc-spacing-panel-icon-btn:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+.doc-spacing-panel-icon-btn i {
+    transition: transform 120ms ease;
+}
+.doc-spacing-panel-body {
+    padding: 0.625rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.doc-spacing-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.125rem;
+}
+.doc-spacing-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.doc-spacing-input {
+    width: 100%;
+    min-width: 0;
+    font-size: 11px;
+    padding: 0.25rem 0.375rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e2e8f0;
+    text-align: right;
+}
+.doc-spacing-value {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 500;
+    color: #334155;
+}
+.doc-spacing-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-size: 10.5px;
+    line-height: 1;
+    white-space: nowrap;
+}
+.doc-spacing-mini-btn:hover {
+    background: #f1f5f9;
+}
+.doc-spacing-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 0.125rem 0;
+}
+.doc-spacing-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+    border-radius: 0.5rem;
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    padding: 0.5rem 0.625rem;
+    margin-top: 0.5rem;
+}
+
+/* Viewer zoom (document-editor-zoom-controls.blade.php) — a pure display
+   feature, see the header comment on the zoom exports in
+   resources/js/dokyu-editor.js for the full transform/hit-testing
+   reasoning. .doc-zoom-scale carries the actual transform:scale() (set
+   inline, since it changes with the zoom level); .doc-zoom-sizer's inline
+   width/height (also set from JS) reserves exactly that much scrollable
+   space in .doc-zoom-viewport, since a transformed element never expands
+   its own ancestors' scrollable area on its own. Neutralized during
+   print/PDF so the exported page is always the real, unscaled A4 size —
+   .doc-zoom-scale's transform is the only one reset here; a moved section's
+   or a repositioned seal's own transform lives on a different element and
+   is untouched. */
+.doc-zoom-viewport {
+    overflow: auto;
+}
+/* .doc-paper's own width is min(210mm, 100%) — a percentage relative to
+   THIS element. Left at the default auto (fill whatever width
+   .doc-zoom-sizer's own inline style currently sets, which is itself
+   computed FROM this element's offsetWidth in recomputeZoomSizer()), that
+   percentage closes a feedback loop: each zoom change would read a width
+   already skewed by the previous zoom level's sizer, so the paper's real
+   rendered size (and therefore the A4 overflow check, which must stay
+   zoom-independent) would drift with the zoom level instead of staying
+   constant. A fixed 210mm here breaks the loop — min(210mm, 100%) then
+   always resolves to the same 210mm regardless of zoom, so this element's
+   own offsetWidth is a true constant recomputeZoomSizer() can safely scale
+   from every time. */
+.doc-zoom-scale {
+    width: 210mm;
+    transform-origin: top left;
+}
+body.dp-printing .doc-zoom-viewport {
+    overflow: visible !important;
+}
+body.dp-printing .doc-zoom-sizer {
+    width: auto !important;
+    height: auto !important;
+}
+body.dp-printing .doc-zoom-scale {
+    width: auto !important;
+    transform: none !important;
 }
 
 @page {

@@ -218,7 +218,7 @@ $standardDocuments = [
     ],
     [
         'key' => 'brgy_cert_general',
-        'reference_pdf' => asset('documents/reference-forms/barangay-certification.pdf'),
+        'reference_pdf' => 'documents/reference-forms/barangay-certification.pdf',
         'name' => 'Barangay Certification (General Purpose)',
         'category' => 'Barangay Certificates',
         'office' => 'Barangay Office',

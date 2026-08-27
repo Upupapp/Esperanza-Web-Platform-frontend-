@@ -8,16 +8,35 @@
      the same way the value would sit inside the box if the paper form were
      filled out by hand — instead of an external "label: value" summary.
      `docKey` / `bind` / `title` / `office` / etc. are Alpine expression
-     strings since the selected document changes at runtime. --}}
-@props(['docKey', 'bind', 'title', 'office', 'formNo' => null, 'officiant' => null, 'officiantTitle' => null, 'technician' => null, 'technicianTitle' => null, 'verifier' => null, 'verifierTitle' => null])
+     strings since the selected document changes at runtime.
+
+     Editable content: every document-specific value below (`{{ $bind }}.*`)
+     is rendered via <x-citizen.doc-field>, matching barangay-certificate-preview.blade.php's
+     own approach — a plain span/paragraph while viewing, a real text input
+     while `editing` is true, both reading/writing the same snapshot path.
+     `office`, `officiant`/`officiantTitle`, `technician`/`technicianTitle`
+     and `verifier`/`verifierTitle` stay read-only here since they come from
+     the shared request row (`selected.*`), not the per-document snapshot —
+     editing them in place would leak into other parts of the admin UI that
+     read the same object. --}}
+@props(['docKey', 'bind', 'title', 'office', 'formNo' => null, 'officiant' => null, 'officiantTitle' => null, 'technician' => null, 'technicianTitle' => null, 'verifier' => null, 'verifierTitle' => null, 'editing' => 'false'])
 
 {{-- A4 page proportions (210mm × 297mm) — see barangay-certificate-preview.blade.php's
      own header comment for the full reasoning: container-query min-height
      keeps a short request slip a real full-page A4 sheet (signature block
      pushed to the bottom via flex/mt-auto) rather than a text-height box,
      while longer content still grows past 297mm instead of clipping. --}}
-<div class="rounded-2xl border-2 border-slate-200 bg-white p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col" style="font-family: Georgia, 'Times New Roman', serif; width: min(210mm, 100%); container-type: inline-size; min-height: 141.43cqw;">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,theme(colors.slate.100),transparent_70%)] opacity-40 pointer-events-none"></div>
+<div class="doc-paper rounded-2xl border-2 border-slate-200 bg-white p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col" style="font-family: Georgia, 'Times New Roman', serif;">
+    <x-citizen.document-watermark />
+
+    {{-- Everything except the watermark lives inside .doc-content — see
+         barangay-certificate-preview.blade.php's own header comment on
+         this same wrapper for the full reasoning (editor capture target,
+         watermark stays a sibling so it can never be touched by a
+         contenteditable text edit, flex flex-col flex-1 preserves the
+         existing mt-auto "push signatures to the bottom of a full A4
+         page" behavior one level deeper). --}}
+    <div class="doc-content relative flex flex-col flex-1">
 
     <!-- Letterhead -->
     <div class="relative flex items-center gap-3 mb-4">
@@ -25,7 +44,7 @@
             <div class="absolute inset-0 rounded-full bg-slate-50 border-2 border-gold-400 flex items-center justify-center text-slate-300">
                 <i data-lucide="shield" class="w-6 h-6"></i>
             </div>
-            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="relative w-14 h-14 rounded-full object-cover border-2 border-gold-400">
+            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" data-default-src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="header-seal header-seal--left relative w-14 h-14 rounded-full object-cover border-2 border-gold-400">
         </div>
         <div class="min-w-0 flex-1">
             <p class="text-[11px] text-slate-500">Republic of the Philippines · Province of Masbate</p>
@@ -48,31 +67,31 @@
         <!-- Certificate of Marriage: Husband / Wife boxed grid, matching Municipal Form No. 97 -->
         <template x-if="{{ $docKey }} === 'mcro_marriage'">
             <div class="space-y-3">
-                <p class="text-xs"><span class="text-slate-500">Requester:</span> <span class="font-medium" x-text="{{ $bind }}.requester_name || '—'"></span> <span class="text-slate-400">(<span x-text="{{ $bind }}.relationship || '—'"></span>)</span></p>
+                <p class="text-xs"><span class="text-slate-500">Requester:</span> <x-citizen.doc-field :bind="$bind" field="requester_name" fallback="—" class="font-medium" :editing="$editing" /> <span class="text-slate-400">(<x-citizen.doc-field :bind="$bind" field="relationship" fallback="—" :editing="$editing" />)</span></p>
                 <div class="border border-slate-300 rounded-sm overflow-hidden">
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Husband</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.husband_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="husband_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Wife</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.wife_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="wife_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Date of Marriage</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.date_of_marriage || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="date_of_marriage" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Place of Marriage</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.place_of_marriage || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="place_of_marriage" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="px-3 py-2 border-t border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Registration Status</p>
-                        <p class="font-medium" x-text="{{ $bind }}.is_delayed || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="is_delayed" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                     </div>
                 </div>
             </div>
@@ -89,55 +108,55 @@
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Full Name</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.groom_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="groom_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Full Name</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.bride_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="bride_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Date of Birth</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.groom_dob || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="groom_dob" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Date of Birth</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.bride_dob || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="bride_dob" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Citizenship</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.groom_citizenship || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="groom_citizenship" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Citizenship</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.bride_citizenship || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="bride_citizenship" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Residence</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.groom_residence || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="groom_residence" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Residence</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.bride_residence || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="bride_residence" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Civil Status</p>
-                            <p class="font-medium" x-text="{{ $bind }}.groom_civil_status || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="groom_civil_status" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Civil Status</p>
-                            <p class="font-medium" x-text="{{ $bind }}.bride_civil_status || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="bride_civil_status" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                     </div>
                 </div>
-                <p class="text-xs px-1"><span class="text-slate-500">Consent/Advice Given By:</span> <span class="font-medium" x-text="{{ $bind }}.consent_person || '—'"></span></p>
+                <p class="text-xs px-1"><span class="text-slate-500">Consent/Advice Given By:</span> <x-citizen.doc-field :bind="$bind" field="consent_person" fallback="—" class="font-medium" :editing="$editing" /></p>
             </div>
         </template>
 
@@ -148,20 +167,20 @@
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Child</p>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Name</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.child_name || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="child_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Sex</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.sex || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="sex" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Date of Birth</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.date_of_birth || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="date_of_birth" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Place of Birth</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.place_of_birth || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="place_of_birth" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                 </div>
@@ -170,11 +189,11 @@
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Maiden Name</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.mother_maiden_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="mother_maiden_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Citizenship</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.mother_citizenship || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="mother_citizenship" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                 </div>
@@ -183,39 +202,39 @@
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Full Name</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.father_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Citizenship</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.father_citizenship || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="father_citizenship" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-x-4 text-xs px-1">
-                    <p><span class="text-slate-500">Requester:</span> <span class="font-medium" x-text="{{ $bind }}.requester_relationship || '—'"></span></p>
-                    <p><span class="text-slate-500">Status:</span> <span class="font-medium" x-text="{{ $bind }}.is_delayed || '—'"></span></p>
+                    <p><span class="text-slate-500">Requester:</span> <x-citizen.doc-field :bind="$bind" field="requester_relationship" fallback="—" class="font-medium" :editing="$editing" /></p>
+                    <p><span class="text-slate-500">Status:</span> <x-citizen.doc-field :bind="$bind" field="is_delayed" fallback="—" class="font-medium" :editing="$editing" /></p>
                 </div>
 
                 <!-- Muslim Attachment (Municipal Form No. 102, attachment) — only shown once any of its fields are filled -->
                 <div
                     class="border border-slate-300 rounded-sm overflow-hidden"
-                    x-show="{{ $bind }}.ethnicity_father || {{ $bind }}.ethnicity_mother || {{ $bind }}.dob_hijrah"
+                    x-show="{{ $bind }}.ethnicity_father || {{ $bind }}.ethnicity_mother || {{ $bind }}.dob_hijrah || {{ $editing }}"
                     x-cloak
                 >
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Muslim Attachment</p>
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Ethnicity of Father</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.ethnicity_father || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="ethnicity_father" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Ethnicity of Mother</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.ethnicity_mother || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="ethnicity_mother" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="px-3 py-2 border-t border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Date of Birth — Hijrah Calendar</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.dob_hijrah || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="dob_hijrah" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                 </div>
             </div>
@@ -228,56 +247,56 @@
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Deceased</p>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Name</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.deceased_name || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="deceased_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Sex</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.sex || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="sex" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Date of Death</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.date_of_death || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="date_of_death" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Place of Death</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.place_of_death || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="place_of_death" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Date of Birth</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.date_of_birth || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="date_of_birth" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Civil Status</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.civil_status || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="civil_status" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Citizenship</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.citizenship || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="citizenship" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Residence</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.residence || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="residence" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Name of Father</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.father_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Mother's Maiden Name</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.mother_maiden_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="mother_maiden_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-x-4 text-xs px-1">
-                    <p><span class="text-slate-500">Requester:</span> <span class="font-medium" x-text="{{ $bind }}.requester_relationship || '—'"></span></p>
-                    <p><span class="text-slate-500">Status:</span> <span class="font-medium" x-text="{{ $bind }}.is_delayed || '—'"></span></p>
+                    <p><span class="text-slate-500">Requester:</span> <x-citizen.doc-field :bind="$bind" field="requester_relationship" fallback="—" class="font-medium" :editing="$editing" /></p>
+                    <p><span class="text-slate-500">Status:</span> <x-citizen.doc-field :bind="$bind" field="is_delayed" fallback="—" class="font-medium" :editing="$editing" /></p>
                 </div>
             </div>
         </template>
@@ -288,12 +307,12 @@
                 <p class="text-xs text-slate-500">Republic of the Philippines · Municipality of Esperanza</p>
                 <p class="leading-relaxed">
                     That I am the applicant for the delayed registration of
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.registration_type || '_______'"></span> of
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.subject_name || '_______________________'"></span>,
-                    to whom I am the <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.applicant_relationship || '_______'"></span>.
+                    <x-citizen.doc-field :bind="$bind" field="registration_type" fallback="_______" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> of
+                    <x-citizen.doc-field :bind="$bind" field="subject_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
+                    to whom I am the <x-citizen.doc-field :bind="$bind" field="applicant_relationship" fallback="_______" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />.
                 </p>
                 <p class="leading-relaxed">That the reason for the delay in registering this event was
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.reason_for_delay || '_______________________'"></span>.
+                    <x-citizen.doc-field :bind="$bind" field="reason_for_delay" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />.
                 </p>
                 <p class="leading-relaxed">That I am executing this affidavit to attest to the truthfulness of the foregoing statements for all legal intents and purposes.</p>
             </div>
@@ -305,37 +324,37 @@
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Owner Information</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Full Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.owner_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.address || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Phone Number:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.phone || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Email Address:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.email || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Full Name:</span><x-citizen.doc-field :bind="$bind" field="owner_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><x-citizen.doc-field :bind="$bind" field="address" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Phone Number:</span><x-citizen.doc-field :bind="$bind" field="phone" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Email Address:</span><x-citizen.doc-field :bind="$bind" field="email" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Pet Information</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Pet's Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.pet_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Species:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.species || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Breed:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.breed || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Color/Markings:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.color_markings || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Gender:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.gender || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Date of Birth / Age:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.pet_dob || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Microchip Number:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.microchip_number || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Pet's Name:</span><x-citizen.doc-field :bind="$bind" field="pet_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Species:</span><x-citizen.doc-field :bind="$bind" field="species" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Breed:</span><x-citizen.doc-field :bind="$bind" field="breed" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Color/Markings:</span><x-citizen.doc-field :bind="$bind" field="color_markings" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Gender:</span><x-citizen.doc-field :bind="$bind" field="gender" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Date of Birth / Age:</span><x-citizen.doc-field :bind="$bind" field="pet_dob" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Microchip Number:</span><x-citizen.doc-field :bind="$bind" field="microchip_number" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Vaccination &amp; Care</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Last Rabies Vaccination:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.last_rabies_vaccination || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Other Vaccinations:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.other_vaccinations || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Spayed / Neutered:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.spay_neuter || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Last Rabies Vaccination:</span><x-citizen.doc-field :bind="$bind" field="last_rabies_vaccination" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Other Vaccinations:</span><x-citizen.doc-field :bind="$bind" field="other_vaccinations" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Spayed / Neutered:</span><x-citizen.doc-field :bind="$bind" field="spay_neuter" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Emergency Contact</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.emergency_contact_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Phone Number:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.emergency_contact_phone || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Name:</span><x-citizen.doc-field :bind="$bind" field="emergency_contact_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Phone Number:</span><x-citizen.doc-field :bind="$bind" field="emergency_contact_phone" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
             </div>
@@ -347,45 +366,45 @@
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Personal Information</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Full Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.full_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Date of Birth:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.date_of_birth || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Sex:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.sex || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Civil Status:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.civil_status || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Religion:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.religion || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Blood Type:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.blood_type || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Full Name:</span><x-citizen.doc-field :bind="$bind" field="full_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Date of Birth:</span><x-citizen.doc-field :bind="$bind" field="date_of_birth" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Sex:</span><x-citizen.doc-field :bind="$bind" field="sex" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Civil Status:</span><x-citizen.doc-field :bind="$bind" field="civil_status" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Religion:</span><x-citizen.doc-field :bind="$bind" field="religion" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Blood Type:</span><x-citizen.doc-field :bind="$bind" field="blood_type" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Disability Information</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Type of Disability:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="({{ $bind }}.type_of_disability || []).join(', ') || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Cause of Disability:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="({{ $bind }}.cause_of_disability || []).join(', ') || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Type of Disability:</span><x-citizen.doc-field :bind="$bind" field="type_of_disability" transform="array" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Cause of Disability:</span><x-citizen.doc-field :bind="$bind" field="cause_of_disability" transform="array" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Residence &amp; Employment</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.residence_address || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Educational Attainment:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.educational_attainment || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Employment Status:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.employment_status || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Occupation:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.occupation || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><x-citizen.doc-field :bind="$bind" field="residence_address" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Educational Attainment:</span><x-citizen.doc-field :bind="$bind" field="educational_attainment" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Employment Status:</span><x-citizen.doc-field :bind="$bind" field="employment_status" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Occupation:</span><x-citizen.doc-field :bind="$bind" field="occupation" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">ID Reference Numbers</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">SSS No.:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.sss_no || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">GSIS No.:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.gsis_no || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Pag-IBIG No.:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.pagibig_no || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">PhilHealth No.:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.philhealth_no || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">SSS No.:</span><x-citizen.doc-field :bind="$bind" field="sss_no" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">GSIS No.:</span><x-citizen.doc-field :bind="$bind" field="gsis_no" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Pag-IBIG No.:</span><x-citizen.doc-field :bind="$bind" field="pagibig_no" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">PhilHealth No.:</span><x-citizen.doc-field :bind="$bind" field="philhealth_no" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Family Background</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Father's Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.father_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Mother's Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.mother_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Guardian's Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.guardian_name || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Father's Name:</span><x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Mother's Name:</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Guardian's Name:</span><x-citizen.doc-field :bind="$bind" field="guardian_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
             </div>
@@ -396,27 +415,27 @@
             <div class="space-y-4 text-xs">
                 <div>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.full_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Birthdate:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.birthdate || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Birthplace:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.birthplace || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address (Brgy./Sitio):</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.address_purok || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Sex:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.sex || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Age:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.age || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Marital Status:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.marital_status || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Educational Attainment:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.educational_attainment || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Present Occupation:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.present_occupation || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Annual Income:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.annual_income || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Pension:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.pension || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">PhilSys ID No.:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.philsys_id || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Name:</span><x-citizen.doc-field :bind="$bind" field="full_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Birthdate:</span><x-citizen.doc-field :bind="$bind" field="birthdate" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Birthplace:</span><x-citizen.doc-field :bind="$bind" field="birthplace" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address (Brgy./Sitio):</span><x-citizen.doc-field :bind="$bind" field="address_purok" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Sex:</span><x-citizen.doc-field :bind="$bind" field="sex" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Age:</span><x-citizen.doc-field :bind="$bind" field="age" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Marital Status:</span><x-citizen.doc-field :bind="$bind" field="marital_status" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Educational Attainment:</span><x-citizen.doc-field :bind="$bind" field="educational_attainment" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Present Occupation:</span><x-citizen.doc-field :bind="$bind" field="present_occupation" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Annual Income:</span><x-citizen.doc-field :bind="$bind" field="annual_income" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Pension:</span><x-citizen.doc-field :bind="$bind" field="pension" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">PhilSys ID No.:</span><x-citizen.doc-field :bind="$bind" field="philsys_id" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-navy-900 mb-1.5">Last Government Service</p>
                     <ul class="space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Office:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.last_govt_office || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Year:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.last_govt_year || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.last_govt_address || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Position/Designation:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.last_govt_position || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Office:</span><x-citizen.doc-field :bind="$bind" field="last_govt_office" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Year:</span><x-citizen.doc-field :bind="$bind" field="last_govt_year" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><x-citizen.doc-field :bind="$bind" field="last_govt_address" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Position/Designation:</span><x-citizen.doc-field :bind="$bind" field="last_govt_position" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
             </div>
@@ -431,12 +450,12 @@
                 <div class="border border-slate-300 rounded-sm overflow-hidden">
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Taxpayer Information</p>
                     <ul class="p-3 space-y-1.5">
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Full Name:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.full_name || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.address || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Citizenship:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.citizenship || 'Filipino'"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Civil Status:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.civil_status || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Occupation:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.occupation || ' '"></span></li>
-                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Employer / Business:</span><span class="flex-1 font-medium border-b border-dotted border-slate-400" x-text="{{ $bind }}.employer_or_business || ' '"></span></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Full Name:</span><x-citizen.doc-field :bind="$bind" field="full_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Address:</span><x-citizen.doc-field :bind="$bind" field="address" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Citizenship:</span><x-citizen.doc-field :bind="$bind" field="citizenship" fallback="Filipino" class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Civil Status:</span><x-citizen.doc-field :bind="$bind" field="civil_status" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Occupation:</span><x-citizen.doc-field :bind="$bind" field="occupation" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
+                        <li class="flex items-baseline gap-2"><span class="text-slate-500 shrink-0">Employer / Business:</span><x-citizen.doc-field :bind="$bind" field="employer_or_business" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></li>
                     </ul>
                 </div>
                 <div class="border border-slate-300 rounded-sm overflow-hidden">
@@ -444,11 +463,24 @@
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Gross Annual Income / Receipts</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.annual_income || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="annual_income" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Basic Community Tax</p>
                             <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]">₱5.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-slate-300 rounded-sm overflow-hidden" x-show="{{ $bind }}.or_number || {{ $bind }}.amount_paid || {{ $editing }}" x-cloak>
+                    <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Payment Reference</p>
+                    <div class="grid grid-cols-2 divide-x divide-slate-300">
+                        <div class="px-3 py-2">
+                            <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">O.R. Number</p>
+                            <x-citizen.doc-field :bind="$bind" field="or_number" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
+                        </div>
+                        <div class="px-3 py-2">
+                            <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Amount Paid</p>
+                            <x-citizen.doc-field :bind="$bind" field="amount_paid" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                     </div>
                 </div>
@@ -461,14 +493,14 @@
             <div class="space-y-2.5 leading-relaxed">
                 <p class="font-semibold">TO WHOM IT MAY CONCERN:</p>
                 <p>
-                    This is to certify that <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.requester_name || '_______________________'"></span>,
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.age || '___'"></span> years of age,
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="({{ $bind }}.civil_status || '').toLowerCase() || '___'"></span>,
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.citizenship || 'Filipino'"></span> citizen, is a bonafide resident of
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.address || '_______________________'"></span>, Municipality of Esperanza, Province of Masbate,
-                    for <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.years_of_residency || '___'"></span> years.
+                    This is to certify that <x-citizen.doc-field :bind="$bind" field="requester_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
+                    <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years of age,
+                    <x-citizen.doc-field :bind="$bind" field="civil_status" fallback="___" transform="lowercase" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
+                    <x-citizen.doc-field :bind="$bind" field="citizenship" fallback="Filipino" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> citizen, is a bonafide resident of
+                    <x-citizen.doc-field :bind="$bind" field="address" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, Municipality of Esperanza, Province of Masbate,
+                    for <x-citizen.doc-field :bind="$bind" field="years_of_residency" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years.
                 </p>
-                <p>This certification is being issued upon request of the above-named person for <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.purpose || '_______________________'"></span> purposes.</p>
+                <p>This certification is being issued upon request of the above-named person for <x-citizen.doc-field :bind="$bind" field="purpose" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> purposes.</p>
             </div>
         </template>
 
@@ -478,13 +510,13 @@
             <div class="space-y-2.5 leading-relaxed">
                 <p class="font-semibold">TO WHOM IT MAY CONCERN:</p>
                 <p>
-                    This is to certify that <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.requester_name || '_______________________'"></span>,
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.age || '___'"></span> years of age, residing at
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.address || '_______________________'"></span>, belongs to a household of
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.family_size || '___'"></span> member(s) with a monthly household income of
-                    <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.monthly_income || '___'"></span>, and belongs to the indigent sector of this municipality.
+                    This is to certify that <x-citizen.doc-field :bind="$bind" field="requester_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
+                    <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years of age, residing at
+                    <x-citizen.doc-field :bind="$bind" field="address" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, belongs to a household of
+                    <x-citizen.doc-field :bind="$bind" field="family_size" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> member(s) with a monthly household income of
+                    <x-citizen.doc-field :bind="$bind" field="monthly_income" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, and belongs to the indigent sector of this municipality.
                 </p>
-                <p>This certification is being issued upon request of the above-named person for <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.purpose || '_______________________'"></span> purposes.</p>
+                <p>This certification is being issued upon request of the above-named person for <x-citizen.doc-field :bind="$bind" field="purpose" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> purposes.</p>
             </div>
         </template>
 
@@ -499,46 +531,46 @@
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Taxpayer Name</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.applicant_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="applicant_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Type of Business</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.business_type || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="business_type" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="px-3 py-2 border-t border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">DTI / SEC / CDA Registration No.</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.dti_sec_cda_no || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="dti_sec_cda_no" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                 </div>
                 <div class="border border-slate-300 rounded-sm overflow-hidden">
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Business</p>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Business Name</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.business_name || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="business_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Business Address</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.business_address || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="business_address" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Line of Business</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.line_of_business || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="line_of_business" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Contact No.</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.contact_no || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="contact_no" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Capital Investment</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.capital_investment || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="capital_investment" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Total No. of Employees</p>
-                            <p class="font-medium" x-text="{{ $bind }}.total_employees || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="total_employees" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                     </div>
                 </div>
@@ -551,15 +583,15 @@
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Applicant / Business</p>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Taxpayer Name</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.applicant_name || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="applicant_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Business Name</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.business_name || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="business_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="px-3 py-2">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Business Address</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.business_address || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="business_address" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                 </div>
                 <div class="border border-slate-300 rounded-sm overflow-hidden">
@@ -567,21 +599,21 @@
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Previous Permit No.</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.prior_permit_no || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="prior_permit_no" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Official Receipt No.</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.prior_or_no || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="prior_or_no" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Line of Business</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.line_of_business || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="line_of_business" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Prior Year Gross Receipts</p>
-                            <p class="font-medium" x-text="{{ $bind }}.gross_receipts_prior_year || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="gross_receipts_prior_year" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                     </div>
                 </div>
@@ -596,31 +628,31 @@
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Property of Record</p>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Registered Owner</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.owner_name || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="owner_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Tax Declaration No.</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.tax_declaration_no || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="tax_declaration_no" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Property Index No. (PIN)</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.property_index_no || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="property_index_no" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Lot / Block No.</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.lot_block_no || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="lot_block_no" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Assessed Value</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.assessed_value || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="assessed_value" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="px-3 py-2 border-t border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Property Location</p>
-                        <p class="font-medium" x-text="{{ $bind }}.property_location || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="property_location" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                     </div>
                 </div>
                 <p class="text-xs leading-relaxed">This is to certify that the real property described above has no delinquent real property tax as of the date of issuance, per records of this office.</p>
@@ -639,46 +671,46 @@
                     <div class="grid grid-cols-2 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Applicant Type</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.applicant_type || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="applicant_type" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Authorized Representative</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.authorized_rep_name || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="authorized_rep_name" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="px-3 py-2 border-t border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Representative's Address</p>
-                        <p class="font-medium" x-text="{{ $bind }}.authorized_rep_address || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="authorized_rep_address" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                     </div>
                 </div>
                 <div class="border border-slate-300 rounded-sm overflow-hidden">
                     <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Project Description</p>
                     <div class="px-3 py-2 border-b border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Project Title</p>
-                        <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.project_title || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="project_title" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-slate-300 border-b border-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Nature of Application</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.nature_of_application || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="nature_of_application" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Project Location</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.project_location || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="project_location" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Floor Area (sqm)</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.floor_area || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="floor_area" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Height (m)</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.building_height || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="building_height" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">No. of Storeys</p>
-                            <p class="font-medium" x-text="{{ $bind }}.number_of_storeys || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="number_of_storeys" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                     </div>
                 </div>
@@ -687,20 +719,20 @@
                     <div class="grid grid-cols-3 divide-x divide-slate-300">
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Lot Area (sqm)</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.lot_area || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="lot_area" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">TCT / OCT No.</p>
-                            <p class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" x-text="{{ $bind }}.title_number || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="title_number" fallback=" " tag="p" class="font-medium border-b border-slate-300 pb-1 min-h-[1.4rem]" :editing="$editing" />
                         </div>
                         <div class="px-3 py-2">
                             <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Right Over Land</p>
-                            <p class="font-medium" x-text="{{ $bind }}.right_over_land || ' '"></p>
+                            <x-citizen.doc-field :bind="$bind" field="right_over_land" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                     </div>
                     <div class="px-3 py-2 border-t border-slate-300">
                         <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-400">Zoning Classification</p>
-                        <p class="font-medium" x-text="({{ $bind }}.zoning_classification || []).join(', ') || ' '"></p>
+                        <x-citizen.doc-field :bind="$bind" field="zoning_classification" transform="array" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                     </div>
                 </div>
             </div>
@@ -741,5 +773,6 @@
             <i data-lucide="info" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
             <p class="text-[11px] text-slate-500">This is a summary of your request, not the final certificate. The <span x-text="{{ $office }}"></span> will prepare and release the official document upon verification against the civil registry.</p>
         </div>
+    </div>
     </div>
 </div>

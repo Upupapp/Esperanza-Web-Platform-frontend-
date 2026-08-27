@@ -362,7 +362,12 @@ $individuals = [
     // with config/esperanza_citizens.php so each barangay's demo login
     // account is also a real, findable record here in the admin registry.
     ['id'=>'RES-2026-101','citizen_account_id'=>'ESP-RES-2024-1102','name'=>'Ronaldo Panganiban Bautista','sex'=>'Male','age'=>35,'dob'=>'1990-08-22','civil_status'=>'Married','barangay'=>'Labangtaytay','sitio'=>'Purok 2','household_id'=>'HH-2026-101','family_id'=>'FAM-2026-101','relation'=>'Head','contact'=>'0918 224 5567','occupation'=>'Fisherman','education'=>'Elementary Graduate','income_range'=>'Low (₱5,001–₱10,000/mo)','tags'=>[],'verification'=>'Partially Verified','profile_pct'=>78,'status'=>'Active','created'=>'2015-01-01','last_updated'=>'2026-07-08','emergency'=>['name'=>null,'contact'=>null,'relation'=>null],'services'=>[['date'=>'2026-04-18','type'=>"Fisherfolk Registration (FishR) Renewal",'status'=>'Completed']],
-        'document_requests'=>[['ref'=>'DR-2026-2241','type'=>'Barangay Residency','office'=>'Barangay Hall (Brgy. Labangtaytay)','purpose'=>'Employment requirement','submitted'=>'Jul 6, 2026','status'=>'Released']],
+        // His citizen account (ESP-RES-2024-1102) is 'Pending Review', i.e.
+        // Unverified access tier in the mobile app -- Unverified accounts
+        // cannot reach Dokyu/Tulong, so no document/assistance request could
+        // have legitimately existed for him. Previously carried a fabricated
+        // DR-2026-2241 here; removed to match document-requests.blade.php.
+        'document_requests'=>[],
         'assistance_requests'=>[],
         'incident_reports'=>[]],
     // Flagship demo record — deliberately the most fully-populated profile in

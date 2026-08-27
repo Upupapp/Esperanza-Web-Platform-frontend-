@@ -3,6 +3,7 @@ import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
 import { Chart, ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend } from 'chart.js';
 import html2pdf from 'html2pdf.js';
+import * as DokyuEditor from './dokyu-editor';
 
 Chart.register(ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend);
 Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
@@ -13,6 +14,11 @@ window.Chart = Chart;
 // Exposed globally so any page's Alpine markup can call html2pdf() directly
 // (e.g. the citizen Dokyu "Download PDF" button) without a per-page import.
 window.html2pdf = html2pdf;
+// Exposed globally for the same reason — the admin Dokyu "Edit Document"
+// rich-text editor (document-requests.blade.php + document-editor-toolbar/
+// document-editor-background-panel.blade.php) calls these directly from
+// inline Alpine expressions.
+window.DokyuEditor = DokyuEditor;
 // Pairs with the body.dp-printing print-isolation rules in app.css — any
 // page can toggle this class on before window.print() to show only its own
 // #dp-print-area element; this listener is the one place that clears it

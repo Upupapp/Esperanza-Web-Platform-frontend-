@@ -20,22 +20,22 @@
 // together in its own @php block.
 
 $residentPhotoAsset = [
-    'ESP-RES-2024-1102' => asset('images/esperanza/residents/ronaldo-profile.png'),
-    'ESP-RES-2024-1044' => asset('images/esperanza/residents/cristy-profile.png'),
-    'ESP-RES-2026-2101' => asset('images/esperanza/residents/theodoro-profile.png'),
-    'ESP-RES-2025-1001' => asset('images/esperanza/residents/citizen-01-profile.png'),
-    'ESP-RES-2025-1002' => asset('images/esperanza/residents/citizen-02-profile.png'),
-    'ESP-RES-2025-1003' => asset('images/esperanza/residents/citizen-03-profile.png'),
-    'ESP-RES-2025-1004' => asset('images/esperanza/residents/citizen-04-profile.png'),
-    'ESP-RES-2025-1005' => asset('images/esperanza/residents/citizen-05-profile.png'),
-    'ESP-RES-2025-1006' => asset('images/esperanza/residents/citizen-06-profile.png'),
-    'ESP-RES-2025-1007' => asset('images/esperanza/residents/citizen-07-profile.png'),
-    'ESP-RES-2025-1008' => asset('images/esperanza/residents/citizen-08-profile.png'),
-    'ESP-RES-2025-1009' => asset('images/esperanza/residents/citizen-09-profile.png'),
-    'ESP-RES-2025-1010' => asset('images/esperanza/residents/citizen-10-profile.png'),
-    'ESP-RES-2024-1056' => asset('images/esperanza/residents/lorna-profile.jpg'),
-    'ESP-RES-2024-1071' => asset('images/esperanza/residents/divina-profile.jpg'),
-    'ESP-RES-2024-1145' => asset('images/esperanza/residents/analiza-profile.jpg'),
+    'ESP-RES-2024-1102' => 'images/esperanza/residents/ronaldo-profile.png',
+    'ESP-RES-2024-1044' => 'images/esperanza/residents/cristy-profile.png',
+    'ESP-RES-2026-2101' => 'images/esperanza/residents/theodoro-profile.png',
+    'ESP-RES-2025-1001' => 'images/esperanza/residents/citizen-01-profile.png',
+    'ESP-RES-2025-1002' => 'images/esperanza/residents/citizen-02-profile.png',
+    'ESP-RES-2025-1003' => 'images/esperanza/residents/citizen-03-profile.png',
+    'ESP-RES-2025-1004' => 'images/esperanza/residents/citizen-04-profile.png',
+    'ESP-RES-2025-1005' => 'images/esperanza/residents/citizen-05-profile.png',
+    'ESP-RES-2025-1006' => 'images/esperanza/residents/citizen-06-profile.png',
+    'ESP-RES-2025-1007' => 'images/esperanza/residents/citizen-07-profile.png',
+    'ESP-RES-2025-1008' => 'images/esperanza/residents/citizen-08-profile.png',
+    'ESP-RES-2025-1009' => 'images/esperanza/residents/citizen-09-profile.png',
+    'ESP-RES-2025-1010' => 'images/esperanza/residents/citizen-10-profile.png',
+    'ESP-RES-2024-1056' => 'images/esperanza/residents/lorna-profile.jpg',
+    'ESP-RES-2024-1071' => 'images/esperanza/residents/divina-profile.jpg',
+    'ESP-RES-2024-1145' => 'images/esperanza/residents/analiza-profile.jpg',
 ];
 
 $avatarBackgrounds = ['EEF4FF', 'FDF9E7', 'F1F5F9', 'E0F2FE', 'FCE7F3', 'ECFDF5', 'FFF7ED'];

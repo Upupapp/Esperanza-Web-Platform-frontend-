@@ -21,7 +21,9 @@
             continue;
         }
         $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = $citizenAvatarData['photoByAccountId'][$acctId] ?? $generatedAvatarFor($acctId);
+        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
+            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
+            : $generatedAvatarFor($acctId);
         $citizenBio[$ind['name']] = [
             'dob' => $ind['dob'] ?? null,
             'sex' => $ind['sex'] ?? null,
@@ -399,7 +401,8 @@
     // See the identical map's own comment in admin/document-requests.blade.php.
     $referencePdfByType = collect(config('esperanza_tulong_types.types'))
         ->filter(fn ($d) => !empty($d['reference_pdf']))
-        ->pluck('reference_pdf', 'name');
+        ->pluck('reference_pdf', 'name')
+        ->map(fn ($path) => asset($path));
     foreach ($requests as &$r) {
         $r = array_merge($r, $tulongClassification[$r['type']] ?? ['category' => 'Social Protection', 'office' => $r['office'], 'level' => 'Municipal']);
         $r['reference_pdf'] = $referencePdfByType[$r['type']] ?? null;

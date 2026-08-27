@@ -26,7 +26,9 @@
             continue;
         }
         $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = $citizenAvatarData['photoByAccountId'][$acctId] ?? $generatedAvatarFor($acctId);
+        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
+            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
+            : $generatedAvatarFor($acctId);
     }
 
     // Small, realistic pool of supporting-document types citizens commonly

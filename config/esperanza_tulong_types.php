@@ -19,7 +19,7 @@ return [
         ],
         [
             'key' => 'tulong_burial', 'category' => 'Burial & Bereavement', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/burial-assistance.pdf'),
+            'reference_pdf' => 'documents/reference-forms/burial-assistance.pdf',
             'name' => 'Burial Assistance (AICS)', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Up to ₱5,000', 'fee' => 'Free', 'days' => '2-3 working days', 'icon' => 'flower',
             'desc' => 'Financial aid for funeral and burial expenses. Must be filed within 15 days from date of death.',
             'requirements' => ['Death Certificate', 'Valid ID of claimant', 'Proof of relationship to the deceased', 'Funeral contract or bill', 'Barangay Certificate of Indigency'],
@@ -81,7 +81,7 @@ return [
         ],
         [
             'key' => 'tulong_pension', 'category' => 'Social Protection', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/social-pension-intake.pdf'),
+            'reference_pdf' => 'documents/reference-forms/social-pension-intake.pdf',
             'name' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'Office of Senior Citizens Affairs', 'office_short' => 'OSCA', 'amount' => '₱1,000/month (₱3,000 per quarter)', 'fee' => '₱100.00', 'days' => '5-7 working days', 'icon' => 'users',
             'desc' => 'Monthly stipend for indigent senior citizens 60 and above with no pension or regular income.',
             'requirements' => ['Senior Citizen ID', 'Affidavit of no pension, income, or family support (notarized)', 'Barangay Certification'],
@@ -90,7 +90,7 @@ return [
         [
             // DSWD Application Form for Solo Parent, Annex B (2023), per RA 11861
             'key' => 'tulong_solo_parent', 'category' => 'Social Protection', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/solo-parent-application.pdf'),
+            'reference_pdf' => 'documents/reference-forms/solo-parent-application.pdf',
             'name' => 'Solo Parent Cash Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'office_short' => 'MSWDO', 'amount' => 'Cash grant + goods, per assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'heart-handshake',
             'desc' => 'Support for solo parents under the Expanded Solo Parents Welfare Act (RA 11861).',
             'requirements' => ['Solo Parent ID', 'PSA Birth Certificate(s) of children', 'Barangay Certification'],
@@ -131,7 +131,7 @@ return [
         [
             // DOLE TUPAD — Tulong Panghanapbuhay sa Ating Disadvantaged/Displaced Workers
             'key' => 'tulong_tupad', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/tupad-profile-form.pdf'),
+            'reference_pdf' => 'documents/reference-forms/tupad-profile-form.pdf',
             'name' => 'DOLE TUPAD Emergency Employment', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Minimum wage rate, 10-30 days of work', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'hard-hat',
             'desc' => 'Short-term emergency employment for displaced, underemployed, or self-employed workers who lost livelihood.',
             'requirements' => ['One (1) valid government-issued ID', 'Barangay Certification of Residency'],
@@ -161,7 +161,7 @@ return [
         ],
         [
             'key' => 'tulong_tesda', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/tesda-registration.pdf'),
+            'reference_pdf' => 'documents/reference-forms/tesda-registration.pdf',
             'name' => 'TESDA Skills Training Registration', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Free training slot (scholarship-based)', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'graduation-cap',
             'desc' => 'Register for a TESDA technical-vocational training slot through the Municipal Public Employment Service Office.',
             'requirements' => ['One (1) 1x1 ID picture', 'One (1) valid government-issued ID'],
@@ -184,7 +184,7 @@ return [
         ],
         [
             'key' => 'tulong_livelihood_mapping', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/livelihood-business-mapping.pdf'),
+            'reference_pdf' => 'documents/reference-forms/livelihood-business-mapping.pdf',
             'name' => 'Livelihood Business Mapping', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Self-assessment worksheet — no monetary grant', 'fee' => 'Free', 'days' => '1-2 working days', 'icon' => 'compass',
             'desc' => 'Rate your business interests and skills to find the most suitable livelihood project before applying for a MPESO livelihood grant.',
             'requirements' => ['None — self-assessment worksheet'],
@@ -209,7 +209,7 @@ return [
         ],
         [
             'key' => 'tulong_kabuhayan', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/kabuhayan-beneficiary-profile.pdf'),
+            'reference_pdf' => 'documents/reference-forms/kabuhayan-beneficiary-profile.pdf',
             'name' => 'Kabuhayan Program Beneficiary Application', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Livelihood package, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'sprout',
             'desc' => 'Apply for a DOLE-MPESO livelihood/kabuhayan program grant to start, restore, or grow a small business.',
             'requirements' => ['One (1) 1x1 ID picture', 'PWD ID (if applicable)'],
@@ -241,7 +241,7 @@ return [
         ],
         [
             'key' => 'tulong_business_plan', 'category' => 'Employment & Livelihood', 'level' => 'Municipal',
-            'reference_pdf' => asset('documents/reference-forms/individual-business-plan.pdf'),
+            'reference_pdf' => 'documents/reference-forms/individual-business-plan.pdf',
             'name' => 'Individual Business Plan', 'office' => 'Public Employment Service Office', 'office_short' => 'MPESO', 'amount' => 'Start-up kit value, per DOLE assessment', 'fee' => 'Free', 'days' => '3-5 working days', 'icon' => 'notebook-pen',
             'desc' => 'Submit your business plan to support a DOLE livelihood grant application — required alongside the Business Mapping and Beneficiary Profile forms.',
             'requirements' => ['Completed Livelihood Business Mapping', 'Completed Kabuhayan Program Beneficiary Application'],

@@ -19,7 +19,8 @@
     // request-queue avatar), not the ID-scan image used for document
     // verification (cristy-id.png, a different asset for a different
     // purpose — see $idPreviewAssetByCitizen in admin/document-requests.blade.php).
-    $photo = config('esperanza_citizen_avatars.photoByAccountId')[$resident['citizen_account_id']] ?? null;
+    $photoPath = config('esperanza_citizen_avatars.photoByAccountId')[$resident['citizen_account_id']] ?? null;
+    $photo = $photoPath ? asset($photoPath) : null;
 @endphp
 
 <div

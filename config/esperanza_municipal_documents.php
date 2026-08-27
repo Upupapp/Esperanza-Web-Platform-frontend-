@@ -17,7 +17,7 @@ return [
     'documents' => [
         [
             'key' => 'mcro_marriage',
-            'reference_pdf' => asset('documents/reference-forms/certificate-of-marriage.pdf'),
+            'reference_pdf' => 'documents/reference-forms/certificate-of-marriage.pdf',
             'name' => 'Certificate of Marriage (Certified Copy / Registration)',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -48,7 +48,7 @@ return [
         ],
         [
             'key' => 'mcro_marriage_license',
-            'reference_pdf' => asset('documents/reference-forms/marriage-license.pdf'),
+            'reference_pdf' => 'documents/reference-forms/marriage-license.pdf',
             'name' => 'Application for Marriage License',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -83,7 +83,7 @@ return [
         ],
         [
             'key' => 'mcro_live_birth',
-            'reference_pdf' => asset('documents/reference-forms/certificate-of-live-birth.pdf'),
+            'reference_pdf' => 'documents/reference-forms/certificate-of-live-birth.pdf',
             'name' => 'Certificate of Live Birth (Certified Copy / Registration)',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -121,7 +121,7 @@ return [
         ],
         [
             'key' => 'mcro_death',
-            'reference_pdf' => asset('documents/reference-forms/certificate-of-death.pdf'),
+            'reference_pdf' => 'documents/reference-forms/certificate-of-death.pdf',
             'name' => 'Certificate of Death (Certified Copy / Registration)',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
@@ -221,7 +221,7 @@ return [
             // fields (Registration No., Accomplished By, Reporting Unit) are
             // completed by MSWDO staff upon encoding, not by the applicant.
             'key' => 'msw_pwd_id',
-            'reference_pdf' => asset('documents/reference-forms/pwd-id-prpwd.pdf'),
+            'reference_pdf' => 'documents/reference-forms/pwd-id-prpwd.pdf',
             'name' => 'PWD ID (Person with Disability Registration)',
             'category' => 'Senior Citizen / PWD',
             'office' => 'Municipal Social Welfare & Development Office',
@@ -311,7 +311,7 @@ return [
             // locational-clearance application, matching what the admin-side
             // service form spec already defines.
             'key' => 'locational_clearance',
-            'reference_pdf' => asset('documents/reference-forms/locational-clearance.pdf'),
+            'reference_pdf' => 'documents/reference-forms/locational-clearance.pdf',
             'name' => 'Locational Clearance',
             'category' => 'Business & Permits',
             'office' => 'Municipal Planning & Development Office',
@@ -430,7 +430,7 @@ return [
         ],
         [
             'key' => 'dokyu_business_new',
-            'reference_pdf' => asset('documents/reference-forms/business-permit-form.pdf'),
+            'reference_pdf' => 'documents/reference-forms/business-permit-form.pdf',
             'name' => 'Business Permit (New Application)',
             'category' => 'Business & Permits',
             'office' => 'Business Permits & Licensing Office',
