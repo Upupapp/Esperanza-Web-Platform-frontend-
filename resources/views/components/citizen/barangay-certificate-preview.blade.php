@@ -7,7 +7,19 @@
      once. --}}
 @props(['docKey', 'bind', 'title', 'subtitle', 'barangay', 'seal', 'punongBarangay', 'barangaySecretary'])
 
-<div class="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-inner-sm relative overflow-hidden" style="font-family: Georgia, 'Times New Roman', serif;">
+{{-- A4 page proportions (210mm × 297mm) for the on-screen preview, the
+     printed page, and the downloaded PDF alike. Width caps at 210mm and
+     shrinks on narrow viewports via min(); min-height uses a container
+     query (141.4cqw = 297/210 of whatever width actually rendered) so the
+     page keeps true A4 proportions at every size instead of shrinking to
+     however tall a one-paragraph certificate's own text happens to be —
+     a short certificate is a REAL, mostly-blank A4 sheet with its
+     signature anchored near the bottom, not a text-height box, so flex
+     pushes the signature block down to occupy that space the way an
+     actual printed one does (see the Signatures section below). Content
+     that genuinely needs more than one page's worth of space still grows
+     past 297mm rather than being clipped. --}}
+<div class="rounded-2xl border-2 border-slate-200 bg-white p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col" style="font-family: Georgia, 'Times New Roman', serif; width: min(210mm, 100%); container-type: inline-size; min-height: 141.43cqw;">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,theme(colors.slate.100),transparent_70%)] opacity-40 pointer-events-none"></div>
 
     <!-- Letterhead -->
@@ -115,7 +127,7 @@
                     <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.purok || '___'"></span>, Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate.
                 </p>
                 <p>He/She has no pending case/complaint against him/her as per record of this office. He/She has no derogatory record file in this office.</p>
-                <p>This certification is being issued upon the request of aforementioned name for:</p>
+                <p>This certification is being issued by this office upon the request of aforementioned name for:</p>
                 <p class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" x-text="(({{ $bind }}.purpose || []).join(', ') || '_______________________')"></p>
             </div>
         </template>
@@ -147,18 +159,23 @@
             </div>
         </template>
 
-        <!-- Barangay Clearance -->
+        <!-- Barangay Clearance — wording matches Reference_forms/Esperanza File/
+             BRGY.CLEARANCE NEW .docx verbatim (the current form; an older
+             Barangay Villa sample in the same reference set uses different
+             "good moral character / moral turpitude" legacy phrasing that
+             does not appear in the current form and was previously used
+             here in error). -->
         <template x-if="{{ $docKey }} === 'brgy_clearance'">
             <div class="space-y-2.5">
                 <p>
-                    This is to certify that according to the records available to this office,
+                    This is to certify that
                     <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.requester_name || '_______________________'"></span>,
                     <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.age || '___'"></span> years of age, is a
                     <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="({{ $bind }}.residency_type || 'permanent').toLowerCase()"></span> resident of Purok
                     <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="{{ $bind }}.purok || '___'"></span>, Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate.
                 </p>
-                <p>He/She has good moral character and has never been accused nor convicted of any crime involving moral turpitude, violation of Presidential Decrees, Municipal ordinance, and other laws, and is a bonafide resident of this barangay.</p>
-                <p>This CLEARANCE is being issued upon request of the herein interested party for:</p>
+                <p>He/She has no pending case/complaint against his/her as per record of this office. He/She has no derogatory record file in this office.</p>
+                <p>This certification is being issued by this office upon the request of the aforementioned name for:</p>
                 <p class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" x-text="(({{ $bind }}.purpose || []).join(', ') || '_______________________')"></p>
             </div>
         </template>
@@ -242,10 +259,38 @@
         </template>
 
         <p class="text-[11px] text-slate-400 pt-1" x-show="{{ $bind }}.__validity" x-text="{{ $bind }}.__validity"></p>
+
+        {{-- Issuance-date sentence — every one of the "TO WHOM IT MAY
+             CONCERN" reference forms (Clearance, Residency, Indigency,
+             Business Clearance, First Time Jobseeker) closes the
+             certification paragraph with this line immediately before the
+             signature block; it was missing from this component entirely.
+             Wording differs per doc: Clearance/Residency say "Given today",
+             Business Clearance/Indigency/Jobseeker say "Issued this" — both
+             verbatim from their own reference docx. Dated to today, since
+             this is the moment the document is actually being generated. --}}
+        <div x-data="{
+            get issuanceDate() {
+                const d = new Date();
+                const day = d.getDate();
+                const suffix = (day >= 11 && day <= 13) ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] || 'th');
+                return day + suffix + ' day of ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            },
+        }">
+            <p class="pt-1" x-show="['brgy_clearance', 'brgy_residency'].includes({{ $docKey }})">
+                Given today <span x-text="issuanceDate"></span> at Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, Philippines.
+            </p>
+            <p class="pt-1" x-show="['brgy_business_clearance', 'brgy_indigency', 'brgy_first_time_jobseeker'].includes({{ $docKey }})">
+                Issued this <span x-text="issuanceDate"></span> at Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, Philippines.
+            </p>
+        </div>
     </div>
 
-    <!-- Signatures -->
-    <div class="relative flex items-end justify-between mt-8 pt-4">
+    <!-- Signatures — mt-auto (the outer container is now flex flex-col)
+         pushes this whole block, and the "Not Valid without Barangay Seal"
+         footer below it, down to the bottom of the A4-proportioned page
+         regardless of how short the certification text above it is. -->
+    <div class="relative flex items-end justify-between mt-auto pt-4">
         <div class="text-center">
             <div class="w-40 border-b border-slate-400 mb-1"></div>
             <p class="text-[10px] text-slate-500">Signature over Printed Name of the Requester</p>

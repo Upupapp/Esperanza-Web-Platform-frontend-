@@ -2,8 +2,25 @@
     // All of Cristy's own Dokyu requests are seeded fresh as Submitted —
     // a clean baseline to walk through the Process tab workflow end to end
     // (Submitted -> open -> Under Verification -> ... ) rather than
-    // starting from a mix of already-resolved statuses.
+    // starting from a mix of already-resolved statuses. The one exception
+    // is DR-2026-2098 below: the dashboard's own "Mark to Release" stat
+    // card (see the stat-card row further down this file) has always
+    // claimed a count of 1, with nothing behind it — this gives that
+    // number a real request, already carrying the same formSnapshot/docKey
+    // a citizen's own submission captures, so the Track Request modal's
+    // Preview/Download/Print of the actual issued document is demonstrable
+    // without needing devtools to hand-edit a request's status.
     $requests = [
+        ['ref' => 'DR-2026-2098', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'purpose' => 'Proof of Residency, Local Employment', 'submitted' => 'Aug 20, 2026', 'status' => 'Mark to Release',
+            'previewType' => 'barangay', 'docKey' => 'brgy_clearance', 'certTitle' => 'BARANGAY CLEARANCE', 'certSubtitle' => null, 'barangay' => 'Baras',
+            'formSnapshot' => [
+                'requester_name' => 'Cristy Pareja Bonghanoy',
+                'age' => '34',
+                'residency_type' => 'Permanent',
+                'purok' => '3',
+                'purpose' => ['Proof of Residency', 'Local Employment'],
+            ],
+        ],
         ['ref' => 'DR-2026-2210', 'type' => 'Cedula (Community Tax Certificate)', 'office' => "Treasurer's Office", 'purpose' => 'Employment requirement', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'purpose' => 'Proof of Residency', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'purpose' => 'School enrollment', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
@@ -169,7 +186,16 @@
             },
             pickupDirectory: @js($pickupDirectory),
             files: @js($submittedDocs),
+            // Same lookup the New Request wizard uses for its live preview's
+            // letterhead (seal/officials per barangay) — duplicated here (it's
+            // a small array, already computed once server-side) so the Track
+            // Request modal's Document Preview can resolve the SAME letterhead
+            // for an already-submitted request, without needing to share Alpine
+            // scope with the wizard's own separate x-data.
+            barangayCatalog: @js($barangayCatalog),
+            docTypeLookup: @js(config('esperanza_document_type_lookup')),
             progressOpen: false,
+            docPreviewOpen: false,
             selectedRequest: null,
             resubmitNote: '',
             resubmitting: false,
@@ -241,6 +267,78 @@
                 const d = new Date(r.submitted);
                 d.setDate(d.getDate() + addDays);
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            },
+            // The issued document renders from whichever data is actually
+            // available: a request submitted through the wizard carries its
+            // own formSnapshot (docKey/previewType/certTitle all captured at
+            // submit time — see submitRequest()); a request seeded
+            // server-side as pre-resolved demo history (most of the array at
+            // the top of this file) never went through the wizard, so this
+            // falls back to docTypeLookup (config/esperanza_document_type_lookup.php)
+            // to resolve the same docKey/previewType from the request's
+            // plain 'type' string, synthesizing a minimal snapshot from the
+            // citizen's own name so the correct document still renders
+            // instead of dead-ending on a no-document-ready empty state. Only a request
+            // whose type isn't in EITHER source returns null — genuinely no
+            // template exists for it, which the empty state states honestly.
+            get resolvedDocument() {
+                const r = this.selectedRequest;
+                if (!r) return null;
+                if (r.previewType && r.formSnapshot) {
+                    return { previewType: r.previewType, docKey: r.docKey, certTitle: r.certTitle, certSubtitle: r.certSubtitle, snapshot: r.formSnapshot, barangay: r.barangay || this.myBarangay };
+                }
+                const meta = this.docTypeLookup[r.type];
+                if (!meta) return null;
+                const account = this.$store.citizenSession.account;
+                const citizenName = [account?.firstName, account?.lastName].filter(Boolean).join(' ');
+                const snapshot = {};
+                if (meta.nameField) snapshot[meta.nameField] = citizenName;
+                if (meta.purposeField) snapshot[meta.purposeField] = meta.purposeIsArray ? (r.purpose ? [r.purpose] : []) : (r.purpose || '');
+                // The citizen's own account already has address/purok/birthdate/
+                // sex/civilStatus/occupation on file from registration (see
+                // config/esperanza_citizens.php) — merge whichever of those a
+                // docKey's template actually uses instead of leaving them
+                // blank just because this request never had its own
+                // formSnapshot. Never overwrites a field already set above.
+                if (account) {
+                    const purok = (account.purok || '').replace(/^Purok\s+/i, '');
+                    const bioFields = {
+                        age: account.age, date_of_birth: account.birthdate, sex: account.sex,
+                        civil_status: account.civilStatus, citizenship: 'Filipino', occupation: account.occupation,
+                        address: account.address, residence: account.address, purok: purok || null,
+                    };
+                    for (const [key, value] of Object.entries(bioFields)) {
+                        if (!(key in snapshot) && value) snapshot[key] = value;
+                    }
+                }
+                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot, barangay: this.myBarangay };
+            },
+            get documentReady() {
+                const r = this.selectedRequest;
+                return !!(r && ['Approved', 'Mark to Release', 'Released'].includes(r.status) && this.resolvedDocument);
+            },
+            get selectedRequestBarangayInfo() {
+                const b = this.resolvedDocument?.barangay;
+                return b ? (this.barangayCatalog[b] ?? null) : null;
+            },
+            printDocument() {
+                document.body.classList.add('dp-printing');
+                window.print();
+            },
+            downloadDocument() {
+                if (!window.html2pdf) return;
+                const el = document.getElementById('dp-print-area');
+                if (!el) return;
+                const account = this.$store.citizenSession.account;
+                const citizenName = [account?.firstName, account?.lastName].filter(Boolean).join('-') || 'Citizen';
+                const docName = (this.resolvedDocument?.certTitle || this.selectedRequest?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
+                document.body.classList.add('dp-printing');
+                window.html2pdf().set({
+                    margin: 10,
+                    filename: 'Esperanza-' + docName + '-' + citizenName.replace(/[^a-z0-9-]+/gi, '') + '.pdf',
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                }).from(el).save().then(() => document.body.classList.remove('dp-printing'));
             },
             // Deep-link landing: a notification click appends ?ref=DR-2026-xxxx
             // (see citizen/notifications.blade.php) — open that exact
@@ -472,6 +570,25 @@
                                 days: doc?.days || '3-5 working days',
                                 submitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                                 status: 'Submitted',
+                                // Snapshot of exactly what the citizen typed + which template
+                                // rendered it, taken now while formData is still live — this is
+                                // what powers the Preview/Download/Print of the actual issued
+                                // document once the request reaches Approved. A deep clone, not
+                                // a reference, so later edits to the wizard's formData (the next
+                                // request) can never bleed into an already-submitted one.
+                                previewType: doc?.previewType || null,
+                                docKey: doc?.key || null,
+                                certTitle: doc?.certTitle || null,
+                                certSubtitle: doc?.certSubtitle || null,
+                                barangay: doc?.barangay || null,
+                                formNo: doc?.formNo || null,
+                                officiant: doc?.officiant || null,
+                                officiantTitle: doc?.officiantTitle || null,
+                                technician: doc?.technician || null,
+                                technicianTitle: doc?.technicianTitle || null,
+                                verifier: doc?.verifier || null,
+                                verifierTitle: doc?.verifierTitle || null,
+                                formSnapshot: JSON.parse(JSON.stringify(this.formData || {})),
                             });
                             this.$store.citizenNotifications.push({
                                 icon: 'file-plus', color: 'brand', portal: 'dokyu', ref,
@@ -1148,6 +1265,30 @@
                             </template>
                         </div>
 
+                        <!-- Document Ready: Preview / Download / Print, once Approved -->
+                        <div class="rounded-xl bg-emerald-50 border border-emerald-100 mt-5 p-3.5" x-show="['Approved', 'Mark to Release', 'Released'].includes(selectedRequest.status)" x-cloak>
+                            <template x-if="documentReady">
+                                <div>
+                                    <div class="flex items-start gap-2.5">
+                                        <i data-lucide="file-check-2" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-semibold text-emerald-700" x-text="selectedRequest.status === 'Released' ? ($store.lang.current === 'en' ? 'Your document has been released' : 'Naipagkaloob na ang iyong dokumento') : ($store.lang.current === 'en' ? 'Your document is ready' : 'Handa na ang iyong dokumento')"></p>
+                                            <p class="text-xs text-emerald-600 mt-0.5"><x-ui.t fil="Tingnan, i-download, o i-print ang iyong opisyal na kopya." en="Preview, download, or print your official copy." /></p>
+                                        </div>
+                                    </div>
+                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="mt-3 w-full justify-center" @click="docPreviewOpen = true">
+                                        <x-ui.t fil="Tingnan ang Dokumento" en="View Document" />
+                                    </x-ui.button>
+                                </div>
+                            </template>
+                            <template x-if="!documentReady">
+                                <div class="flex items-start gap-2.5">
+                                    <i data-lucide="info" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                                    <p class="text-xs text-emerald-700"><x-ui.t fil="Naaprubahan na ang iyong kahilingan. Hindi available ang online preview para dito — bisitahin ang opisina sa ibaba para kunin ang iyong kopya." en="Your request has been approved. Online preview isn't available for this request — visit the office below to claim your physical copy." /></p>
+                                </div>
+                            </template>
+                        </div>
+
                         <div class="rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Rejected'">
                             <div class="flex items-start gap-2.5">
                                 <i data-lucide="circle-x" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
@@ -1249,6 +1390,65 @@
 
                 <x-slot:footer>
                     <x-ui.button size="sm" @click="progressOpen = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
+                </x-slot:footer>
+            </x-ui.modal>
+        </div>
+
+        <!-- Document Preview: Preview / Download / Print the citizen's actual
+             issued Dokyu, reusing the exact same letterhead components the
+             New Request wizard uses for its live pre-submission preview —
+             here bound to the frozen formSnapshot from submission time
+             instead of the wizard's live formData, so it always reflects
+             what was actually submitted and approved, not the current
+             (possibly since-cleared) wizard state. -->
+        <div x-data="{ get open() { return docPreviewOpen }, set open(v) { docPreviewOpen = v } }">
+            <x-ui.modal title="Ang Iyong Dokumento" titleEn="Your Document" maxWidth="2xl">
+                <template x-if="selectedRequest && documentReady">
+                    <div>
+                        <div id="dp-print-area">
+                            <div class="flex items-center justify-between mb-4 text-[11px] text-slate-400 dp-no-print">
+                                <span x-text="selectedRequest.ref"></span>
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium ring-1 ring-inset"
+                                      :class="selectedRequest.status === 'Released' ? 'bg-cyan-50 text-cyan-700 ring-cyan-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'"
+                                      x-text="selectedRequest.status"></span>
+                            </div>
+                            <template x-if="resolvedDocument?.previewType === 'barangay'">
+                                <x-citizen.barangay-certificate-preview
+                                    docKey="resolvedDocument.docKey"
+                                    bind="resolvedDocument.snapshot"
+                                    title="resolvedDocument.certTitle"
+                                    subtitle="resolvedDocument.certSubtitle"
+                                    barangay="selectedRequestBarangayInfo?.label"
+                                    seal="selectedRequestBarangayInfo?.seal"
+                                    punongBarangay="selectedRequestBarangayInfo?.officials?.punong_barangay"
+                                    barangaySecretary="selectedRequestBarangayInfo?.officials?.barangay_secretary"
+                                />
+                            </template>
+                            <template x-if="resolvedDocument?.previewType === 'municipal_request'">
+                                <x-citizen.municipal-request-preview
+                                    docKey="resolvedDocument.docKey"
+                                    bind="resolvedDocument.snapshot"
+                                    title="resolvedDocument.certTitle"
+                                    office="selectedRequest.office"
+                                    formNo="selectedRequest.formNo"
+                                    officiant="selectedRequest.officiant"
+                                    officiantTitle="selectedRequest.officiantTitle"
+                                    technician="selectedRequest.technician"
+                                    technicianTitle="selectedRequest.technicianTitle"
+                                    verifier="selectedRequest.verifier"
+                                    verifierTitle="selectedRequest.verifierTitle"
+                                />
+                            </template>
+                        </div>
+                        <p class="text-[11px] text-slate-400 text-center mt-4 dp-no-print">
+                            <x-ui.t fil="Frontend na preview lamang — walang tunay na e-signature o QR code na naka-verify." en="Frontend preview only — not digitally signed or QR-verified." />
+                        </p>
+                    </div>
+                </template>
+
+                <x-slot:footer>
+                    <x-ui.button size="sm" variant="secondary" icon="printer" @click="printDocument()"><x-ui.t fil="I-print" en="Print" /></x-ui.button>
+                    <x-ui.button size="sm" icon="download" @click="downloadDocument()"><x-ui.t fil="I-download" en="Download PDF" /></x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
         </div>

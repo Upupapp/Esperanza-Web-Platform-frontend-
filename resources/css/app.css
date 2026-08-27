@@ -306,3 +306,70 @@
         @apply border-0 border-b-2 border-slate-200 rounded-none bg-transparent px-0 focus:ring-0 focus:border-brand-500;
     }
 }
+
+/*
+  Document print isolation — toggled by printDocument() in
+  citizen/document-requests.blade.php right before window.print(). Hides
+  every bit of Web Platform chrome (sidebar, topbar, modal backdrop/footer,
+  the whole app shell) so only the generated Dokyu itself reaches paper,
+  scoped to whichever element carries #dp-print-area at print time.
+*/
+@media print {
+    body.dp-printing > * {
+        visibility: hidden;
+    }
+    body.dp-printing #dp-print-area,
+    body.dp-printing #dp-print-area * {
+        visibility: visible;
+    }
+    /* The print area sits inside the modal's fixed/centered/max-height/
+       overflow-clipped dialog card — break every ancestor out of those
+       constraints so a document taller than the on-screen modal still
+       prints in full instead of being clipped at the modal's edge. */
+    body.dp-printing *:has(#dp-print-area) {
+        position: static !important;
+        inset: auto !important;
+        transform: none !important;
+        overflow: visible !important;
+        max-height: none !important;
+        max-width: none !important;
+        height: auto !important;
+        width: auto !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    body.dp-printing #dp-print-area {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/*
+  Unscoped from @media print (unlike the rules above, which only matter for
+  on-screen layout during an actual print) because html2pdf's html2canvas
+  capture does not evaluate print media queries — downloadDocument() also
+  toggles body.dp-printing around the capture, specifically so this rule
+  hides the ref/status badge from the downloaded PDF too. Without this, the
+  small on-screen-only badge above the certificate (ref number + status
+  pill) would end up baked into the "final document" file, which is exactly
+  the request-summary-chrome-leaking-into-the-document problem this
+  feature is meant to avoid.
+*/
+body.dp-printing .dp-no-print {
+    display: none !important;
+}
+
+/*
+  A4 is the standard for every generated Dokyu (matches the A4 sizing
+  already set on the on-screen preview components — see
+  components/citizen/barangay-certificate-preview.blade.php and
+  municipal-request-preview.blade.php — and html2pdf's own jsPDF format:
+  'a4' in the downloadDocument() methods, so preview/print/download agree
+  on one page size). A real page margin — not edge-to-edge, not so wide it
+  eats into the content — comparable to a standard formal-document margin.
+*/
+@page {
+    size: A4;
+    margin: 20mm 18mm;
+}

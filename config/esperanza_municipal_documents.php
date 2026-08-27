@@ -348,11 +348,25 @@ return [
             // Relocated from the hardcoded $documentTypes array that used to
             // sit at the top of citizen/document-requests.blade.php — moved
             // here so this file is the single source of truth for every
-            // Dokyu fee (see admin Settings > Service Catalog). 'fields' is
-            // deliberately empty: these 6 never had a structured form/
-            // letterhead preview, and the citizen wizard only shows the
-            // preview panel when fields is non-empty, so this keeps their
-            // existing (simple Purpose-only) behavior unchanged.
+            // Dokyu fee (see admin Settings > Service Catalog). These 6 used
+            // to ship with 'fields' => [] (no structured form/letterhead
+            // preview at all) because none of them had a matching source in
+            // Mobile Main's Reference_forms. Populated below instead of left
+            // empty: Cedula and the RPT Clearance follow the community tax
+            // certificate / treasurer's clearance layout mandated nationwide
+            // by the Local Government Code (RA 7160) — not any single other
+            // LGU's own branding, just the format every Philippine treasurer's
+            // office is required to use, re-lettered with Esperanza's own
+            // office. The two Business Permit entries follow the DTI/DILG
+            // Barangay-Business One-Stop-Shop "BPLS Unified Application Form"
+            // (Reference_forms/Placeholders/Dokyu/BUSINESS-PERMIT-FORM.pdf) —
+            // itself a national standard form, not a specific city's own
+            // document. Certificate of Residency/Indigency here are the
+            // MUNICIPAL-office counterparts of the barangay-issued versions
+            // (config/esperanza_barangay_documents.php's brgy_residency /
+            // brgy_indigency) — same content shape, no Reference_forms
+            // source existed at the municipal level, so it mirrors the
+            // barangay one's already-established field set.
             'key' => 'dokyu_cedula',
             'name' => 'Cedula (Community Tax Certificate)',
             'category' => 'Tax & Property',
@@ -363,7 +377,15 @@ return [
             'fee' => '₱5.00 base + ₱1.00 per ₱1,000 income', 'days' => 'Same day',
             'requirements' => ['One (1) valid government-issued ID', 'Proof of income or Certificate of Employment (if applicable)'],
             'process' => ['Submit Request', 'Compute Tax Due', 'Pay Fee', 'Release'],
-            'fields' => [],
+            'fields' => [
+                ['key' => 'full_name', 'label' => 'Full Name', 'type' => 'text', 'required' => true],
+                ['key' => 'address', 'label' => 'Address', 'type' => 'text', 'required' => true],
+                ['key' => 'citizenship', 'label' => 'Citizenship', 'type' => 'text', 'default' => 'Filipino'],
+                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widowed', 'Separated']],
+                ['key' => 'occupation', 'label' => 'Occupation', 'type' => 'text'],
+                ['key' => 'employer_or_business', 'label' => 'Employer / Business Name', 'type' => 'text'],
+                ['key' => 'annual_income', 'label' => 'Gross Annual Income/Receipts (basis for additional tax)', 'type' => 'text'],
+            ],
         ],
         [
             'key' => 'dokyu_residency',
@@ -376,7 +398,15 @@ return [
             'fee' => '₱50.00', 'days' => '1-2 working days',
             'requirements' => ['One (1) valid government-issued ID', 'Barangay Clearance', 'Proof of residency (utility bill or lease contract)'],
             'process' => ['Submit Request', 'Verify Residency', 'Approval', 'Release'],
-            'fields' => [],
+            'fields' => [
+                ['key' => 'requester_name', 'label' => 'Full Name', 'type' => 'text', 'required' => true],
+                ['key' => 'age', 'label' => 'Age', 'type' => 'number'],
+                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widowed', 'Separated']],
+                ['key' => 'citizenship', 'label' => 'Citizenship', 'type' => 'text', 'default' => 'Filipino'],
+                ['key' => 'address', 'label' => 'Complete Address', 'type' => 'text', 'required' => true],
+                ['key' => 'years_of_residency', 'label' => 'Years of Residency', 'type' => 'text'],
+                ['key' => 'purpose', 'label' => 'Purpose', 'type' => 'text', 'required' => true],
+            ],
         ],
         [
             'key' => 'dokyu_indigency',
@@ -389,7 +419,14 @@ return [
             'fee' => 'Free', 'days' => '2-3 working days',
             'requirements' => ['One (1) valid government-issued ID', 'Barangay Certification of Indigency', 'Brief interview / case assessment with MSWDO'],
             'process' => ['Submit Request', 'MSWDO Interview', 'Case Assessment', 'Release'],
-            'fields' => [],
+            'fields' => [
+                ['key' => 'requester_name', 'label' => 'Full Name', 'type' => 'text', 'required' => true],
+                ['key' => 'age', 'label' => 'Age', 'type' => 'number'],
+                ['key' => 'address', 'label' => 'Complete Address', 'type' => 'text', 'required' => true],
+                ['key' => 'family_size', 'label' => 'Number of Household Members', 'type' => 'number'],
+                ['key' => 'monthly_income', 'label' => 'Monthly Household Income', 'type' => 'text'],
+                ['key' => 'purpose', 'label' => 'Purpose', 'type' => 'text', 'required' => true],
+            ],
         ],
         [
             'key' => 'dokyu_business_new',
@@ -403,7 +440,17 @@ return [
             'fee' => '₱500.00 and up (based on capital)', 'days' => '7 working days',
             'requirements' => ['DTI or SEC Registration', 'Barangay Business Clearance', 'Locational / Zoning Clearance', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Cedula (Community Tax Certificate)', 'Lease contract or land title'],
             'process' => ['Submit Requirements', 'Zoning & Fire Inspection', 'Assessment & Payment', 'Release'],
-            'fields' => [],
+            'fields' => [
+                ['key' => 'applicant_name', 'label' => 'Taxpayer / Applicant Full Name', 'type' => 'text', 'required' => true],
+                ['key' => 'business_name', 'label' => 'Business Name', 'type' => 'text', 'required' => true],
+                ['key' => 'business_type', 'label' => 'Type of Business', 'type' => 'select', 'options' => ['Single Proprietorship', 'Partnership', 'Corporation / Cooperative']],
+                ['key' => 'dti_sec_cda_no', 'label' => 'DTI / SEC / CDA Registration No.', 'type' => 'text'],
+                ['key' => 'business_address', 'label' => 'Business Address', 'type' => 'text', 'required' => true],
+                ['key' => 'contact_no', 'label' => 'Contact Number', 'type' => 'text'],
+                ['key' => 'line_of_business', 'label' => 'Line of Business', 'type' => 'text', 'required' => true],
+                ['key' => 'capital_investment', 'label' => 'Capital Investment', 'type' => 'text'],
+                ['key' => 'total_employees', 'label' => 'Total No. of Employees', 'type' => 'text'],
+            ],
         ],
         [
             'key' => 'dokyu_business_renewal',
@@ -416,7 +463,15 @@ return [
             'fee' => 'Based on prior year gross receipts', 'days' => '3 working days',
             'requirements' => ["Previous year's Business Permit and Official Receipt", 'Barangay Clearance (current year)', 'Fire Safety Inspection Certificate (FSIC)', 'Sanitary Permit', 'Audited Financial Statement or Income Tax Return'],
             'process' => ['Submit Requirements', 'Verify Prior Permit', 'Assessment & Payment', 'Release'],
-            'fields' => [],
+            'fields' => [
+                ['key' => 'applicant_name', 'label' => 'Taxpayer / Applicant Full Name', 'type' => 'text', 'required' => true],
+                ['key' => 'business_name', 'label' => 'Business Name', 'type' => 'text', 'required' => true],
+                ['key' => 'business_address', 'label' => 'Business Address', 'type' => 'text', 'required' => true],
+                ['key' => 'prior_permit_no', 'label' => "Previous Year's Business Permit No.", 'type' => 'text'],
+                ['key' => 'prior_or_no', 'label' => 'Official Receipt No.', 'type' => 'text'],
+                ['key' => 'line_of_business', 'label' => 'Line of Business', 'type' => 'text'],
+                ['key' => 'gross_receipts_prior_year', 'label' => "Prior Year's Gross Receipts", 'type' => 'text'],
+            ],
         ],
         [
             'key' => 'dokyu_rpt',
@@ -429,7 +484,14 @@ return [
             'fee' => '₱100.00', 'days' => 'Same day',
             'requirements' => ['Latest Tax Declaration', 'Official Receipt of last RPT payment', 'One (1) valid government-issued ID'],
             'process' => ['Submit Request', 'Verify Tax Records', 'Settle Balance (if any)', 'Release'],
-            'fields' => [],
+            'fields' => [
+                ['key' => 'owner_name', 'label' => 'Registered Owner', 'type' => 'text', 'required' => true],
+                ['key' => 'tax_declaration_no', 'label' => 'Tax Declaration No.', 'type' => 'text', 'required' => true],
+                ['key' => 'property_index_no', 'label' => 'Property Index No. (PIN)', 'type' => 'text'],
+                ['key' => 'lot_block_no', 'label' => 'Lot / Block No.', 'type' => 'text'],
+                ['key' => 'property_location', 'label' => 'Property Location', 'type' => 'text', 'required' => true],
+                ['key' => 'assessed_value', 'label' => 'Assessed Value', 'type' => 'text'],
+            ],
         ],
     ],
 ];

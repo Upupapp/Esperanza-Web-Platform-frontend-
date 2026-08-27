@@ -2,6 +2,7 @@ import './bootstrap';
 import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
 import { Chart, ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend } from 'chart.js';
+import html2pdf from 'html2pdf.js';
 
 Chart.register(ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend);
 Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
@@ -9,6 +10,14 @@ Chart.defaults.color = '#64748b';
 
 window.Alpine = Alpine;
 window.Chart = Chart;
+// Exposed globally so any page's Alpine markup can call html2pdf() directly
+// (e.g. the citizen Dokyu "Download PDF" button) without a per-page import.
+window.html2pdf = html2pdf;
+// Pairs with the body.dp-printing print-isolation rules in app.css — any
+// page can toggle this class on before window.print() to show only its own
+// #dp-print-area element; this listener is the one place that clears it
+// back off afterward, regardless of which page's button triggered print.
+window.addEventListener('afterprint', () => document.body.classList.remove('dp-printing'));
 
 document.addEventListener('alpine:init', () => {
     Alpine.store('lang', {

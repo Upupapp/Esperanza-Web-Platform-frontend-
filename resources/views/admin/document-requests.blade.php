@@ -24,6 +24,7 @@
         $citizenAvatars[$ind['name']] = $citizenAvatarData['photoByAccountId'][$acctId] ?? $generatedAvatarFor($acctId);
         $citizenBio[$ind['name']] = [
             'dob' => $ind['dob'] ?? null,
+            'age' => $ind['age'] ?? null,
             'sex' => $ind['sex'] ?? null,
             'civil_status' => $ind['civil_status'] ?? null,
             'occupation' => $ind['occupation'] ?? null,
@@ -46,9 +47,35 @@
             'address' => $ind['address'] ?? null,
         ];
     }
+    // Same barangayCatalog build as citizen/document-requests.blade.php,
+    // used by the Document panel's fallback resolver to look up real
+    // officials by barangay name for any request that never had
+    // barangayOfficials hand-authored onto it directly.
+    $barangayCatalog = [];
+    foreach (config('esperanza_barangay_documents') as $info) {
+        $barangayCatalog[$info['label']] = ['label' => $info['label'], 'seal' => $info['seal'], 'officials' => $info['officials']];
+    }
     $requests = [
         ['ref' => 'DR-2026-2231', 'citizen' => 'Perla Dionisio', 'type' => 'Barangay Residency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 12, 2026', 'status' => 'Submitted'],
-        ['ref' => 'DR-2026-2228', 'citizen' => 'Romeo Villaflor', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 11, 2026', 'status' => 'Mark to Release'],
+        ['ref' => 'DR-2026-2228', 'citizen' => 'Romeo Villaflor', 'type' => 'Barangay Business Clearance', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 11, 2026', 'status' => 'Mark to Release',
+            // Carries the same formSnapshot/docKey shape a citizen's own
+            // wizard submission captures (see citizen/document-requests.blade.php's
+            // submitRequest()) so the Process tab's own Document panel below
+            // has something real to render — this request was already at
+            // Mark to Release with nothing backing a "prepared document" view,
+            // same gap the citizen-side Preview/Download/Print work found.
+            'previewType' => 'barangay', 'docKey' => 'brgy_business_clearance', 'certTitle' => 'BARANGAY BUSINESS CLEARANCE', 'certSubtitle' => null,
+            'barangayOfficials' => ['punong_barangay' => 'Hon. Jorge C. Bruza', 'barangay_secretary' => 'Jenneth A. Cachila'],
+            'formSnapshot' => [
+                'applicant_name' => 'Romeo Villaflor',
+                'age' => '41',
+                'business_type' => 'Sari-sari Store',
+                'years_operating' => '3',
+                'purok' => '5',
+                'capital_words' => 'Fifty Thousand Pesos',
+                'capital_figures' => '50,000.00',
+            ],
+        ],
         ['ref' => 'DR-2026-2225', 'citizen' => 'Cristina Manalo', 'type' => 'Barangay Indigency', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 10, 2026', 'status' => 'Under Verification'],
         ['ref' => 'DR-2026-2270', 'citizen' => 'Kevin Ray Dizon', 'type' => 'First Time Jobseeker Certificate (RA 11261)', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 9, 2026', 'status' => 'Completed'],
         ['ref' => 'DR-2026-2217', 'citizen' => 'Bienvenido Rosales', 'type' => 'Barangay Certification (Registration of Death)', 'office' => 'Barangay Hall (Brgy. Labangtaytay)', 'barangay' => 'Labangtaytay', 'submitted' => 'Jul 9, 2026', 'status' => 'Under Review'],
@@ -587,8 +614,123 @@
             processing: false,
             rejectRemarks: '',
             previewDoc: null,
+            docPreviewOpen: false,
+            barangayCatalog: @js($barangayCatalog),
+            docTypeLookup: @js(config('esperanza_document_type_lookup')),
+            // Mirrors citizen/document-requests.blade.php's own resolvedDocument/
+            // documentReady/printDocument/downloadDocument — same #dp-print-area /
+            // dp-printing convention (shared print CSS in app.css), so staff can
+            // preview, print, or download the prepared document from the Process
+            // tab itself before handing it over, not just the blank Reference
+            // Form. Falls back to docTypeLookup (config/esperanza_document_type_lookup.php)
+            // for any request that never had a hand-authored formSnapshot — see
+            // that config file's own header comment for why almost none of the
+            // seeded queue does, and what the fallback synthesizes instead.
+            get resolvedDocument() {
+                const r = this.selected;
+                if (!r) return null;
+                if (r.previewType && r.formSnapshot) {
+                    return { previewType: r.previewType, docKey: r.docKey, certTitle: r.certTitle, certSubtitle: r.certSubtitle, snapshot: r.formSnapshot, barangayOfficials: r.barangayOfficials || (this.barangayCatalog[r.barangay]?.officials ?? null) };
+                }
+                const meta = this.docTypeLookup[r.type];
+                if (!meta) return null;
+                const snapshot = {};
+                if (meta.nameField) snapshot[meta.nameField] = r.citizen || '';
+                if (meta.purposeField) snapshot[meta.purposeField] = meta.purposeIsArray ? (r.purpose ? [r.purpose] : []) : (r.purpose || '');
+                // The citizen's real Constituents profile — the overview tab —
+                // already has age/dob/sex/civil status/occupation/parents/
+                // address on file for anyone with a citizen account (see
+                // $citizenBio in this file's own @php block) — merge
+                // whichever of those a docKey's template actually uses
+                // instead of leaving them blank just because this request
+                // never had its own formSnapshot. Never overwrites a field
+                // the name/purpose mapping above already set.
+                const bio = this.citizenBio[r.citizen];
+                if (bio) {
+                    const purokMatch = /Purok\s+([^,]+)/i.exec(bio.address || '');
+                    const bioFields = {
+                        age: bio.age, date_of_birth: bio.dob, sex: bio.sex, civil_status: bio.civil_status,
+                        citizenship: 'Filipino', occupation: bio.occupation, father_name: bio.father_name,
+                        mother_name: bio.mother_name, mother_maiden_name: bio.mother_maiden_name,
+                        address: bio.address, residence: bio.address, purok: purokMatch ? purokMatch[1].trim() : null,
+                    };
+                    for (const [key, value] of Object.entries(bioFields)) {
+                        if (!(key in snapshot) && value) snapshot[key] = value;
+                    }
+                }
+                // Every field the citizen supposedly answered in the mobile
+                // app's own request wizard is already synthesized onto this
+                // request as r.form_steps (see $synthesizeFormAnswer in this
+                // file's own @php block, sourced from config/esperanza_service_form_specs.php
+                // — real Mobile Main formSpecs, not invented). That system
+                // uses the mobile app's own camelCase field keys
+                // (businessNature, capitalAmount, residencyType...); this
+                // document's own fields use snake_case (business_type,
+                // capital_figures, residency_type...) — auto-converted, plus
+                // a short alias list for the handful of keys/values that
+                // don't line up 1:1 after conversion (a business capital
+                // amount figure vs. this doc's separate figures/words split;
+                // mobile's Permanent Resident vs. this doc's plain Permanent).
+                // This is what actually answers the missing-capital-field
+                // report — the field exists, it just wasn't being read.
+                const residencyTypeMap = { 'Permanent Resident': 'Permanent', 'Temporary Resident': 'Temporary', 'Renter / Lessee': 'Renter' };
+                // These docKey fields are always rendered as a joined list
+                // (.join(', ') in the templates) — coerce a single-select
+                // mobile answer into a one-item array so it never crashes
+                // against a template expecting .join() to exist.
+                const arrayFields = ['purpose', 'type_of_disability', 'cause_of_disability', 'zoning_classification'];
+                (r.form_steps || []).forEach(step => (step.fields || []).forEach(f => {
+                    if (f.answer === null || f.answer === undefined || f.answer === '') return;
+                    const key = f.key.replace(/([A-Z])/g, '_$1').toLowerCase();
+                    if (key in snapshot) return;
+                    let value = key === 'residency_type' ? (residencyTypeMap[f.answer] || f.answer) : f.answer;
+                    if (arrayFields.includes(key) && !Array.isArray(value)) value = [value];
+                    snapshot[key] = value;
+                    if (key === 'business_nature') { snapshot.business_type = snapshot.business_type || value; snapshot.line_of_business = snapshot.line_of_business || value; }
+                    if (key === 'capital_amount') { snapshot.capital_figures = snapshot.capital_figures || ('₱' + value); snapshot.capital_investment = snapshot.capital_investment || ('₱' + value); }
+                }));
+                // 'age' is deliberately never a stored answer on the mobile
+                // side (a derivedAge field computes it live from Date of
+                // Birth rather than being independently entered — see
+                // $synthesizeFormAnswer's own derivedAge case) — so derive
+                // it here the same way, whenever a date_of_birth made it
+                // into the snapshot above but age itself didn't.
+                if (!snapshot.age && snapshot.date_of_birth) {
+                    const dob = new Date(snapshot.date_of_birth);
+                    if (!isNaN(dob)) {
+                        const today = new Date();
+                        let age = today.getFullYear() - dob.getFullYear();
+                        if (today.getMonth() < dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) age--;
+                        snapshot.age = String(age);
+                    }
+                }
+                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot, barangayOfficials: this.barangayCatalog[r.barangay]?.officials ?? null };
+            },
+            get documentReady() {
+                const r = this.selected;
+                return !!(r && ['Approved', 'Mark to Release', 'Released'].includes(r.status) && this.resolvedDocument);
+            },
+            printDocument() {
+                document.body.classList.add('dp-printing');
+                window.print();
+            },
+            downloadDocument() {
+                if (!window.html2pdf) return;
+                const el = document.getElementById('dp-print-area');
+                if (!el) return;
+                const citizenName = (this.selected?.citizen || 'Citizen').replace(/[^a-z0-9]+/gi, '-');
+                const docName = (this.resolvedDocument?.certTitle || this.selected?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
+                document.body.classList.add('dp-printing');
+                window.html2pdf().set({
+                    margin: 10,
+                    filename: 'Esperanza-' + docName + '-' + citizenName + '.pdf',
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                }).from(el).save().then(() => document.body.classList.remove('dp-printing'));
+            },
             requests: @js($requests),
             citizenAvatars: @js($citizenAvatars),
+            citizenBio: @js($citizenBio),
             actionStatuses: @js($actionStatuses),
             doneStatuses: @js($doneStatuses),
             paymentByRef: @js($paymentByRef),
@@ -1582,6 +1724,24 @@
                             </template>
                             <p class="text-[11px] text-slate-400 mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this service.</p>
                         </div>
+
+                        {{-- Document — the citizen's own prepared/issued
+                             certificate (not the blank Reference Form above),
+                             so staff can preview, print, or download exactly
+                             what will be handed over. Same visibility window
+                             as Proof of Release / Reference Form. --}}
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="['Approved', 'Mark to Release', 'Released'].includes(selected.status)" x-cloak>
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+                                <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i> Document
+                            </p>
+                            <template x-if="documentReady">
+                                <div class="mt-2.5">
+                                    <p class="text-[11px] text-slate-400 leading-relaxed mb-2">Preview, print, or download the prepared document before handing it over.</p>
+                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="docPreviewOpen = true">View Document</x-ui.button>
+                                </div>
+                            </template>
+                            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed" x-show="!documentReady">No prepared document on file for this request.</p>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -1680,6 +1840,61 @@
                 </template>
             </x-slot:footer>
         </x-ui.modal>
+
+        {{-- Document Preview: reuses the exact same letterhead components the
+             citizen wizard uses for its own live pre-submission preview,
+             bound here to the request's frozen formSnapshot so staff see
+             precisely what the citizen will receive. Same #dp-print-area /
+             dp-printing print isolation as the citizen portal (shared rules
+             in app.css). --}}
+        <div x-data="{ get open() { return docPreviewOpen }, set open(v) { docPreviewOpen = v } }">
+            <x-ui.modal title="Prepared Document" maxWidth="2xl">
+                <template x-if="selected && documentReady">
+                    <div>
+                        <div id="dp-print-area">
+                            <div class="flex items-center justify-between mb-4 text-[11px] text-slate-400 dp-no-print">
+                                <span x-text="selected.ref"></span>
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium ring-1 ring-inset"
+                                      :class="selected.status === 'Released' ? 'bg-cyan-50 text-cyan-700 ring-cyan-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'"
+                                      x-text="selected.status"></span>
+                            </div>
+                            <template x-if="resolvedDocument?.previewType === 'barangay'">
+                                <x-citizen.barangay-certificate-preview
+                                    docKey="resolvedDocument.docKey"
+                                    bind="resolvedDocument.snapshot"
+                                    title="resolvedDocument.certTitle"
+                                    subtitle="resolvedDocument.certSubtitle"
+                                    barangay="selected.barangay"
+                                    seal="null"
+                                    punongBarangay="resolvedDocument.barangayOfficials?.punong_barangay"
+                                    barangaySecretary="resolvedDocument.barangayOfficials?.barangay_secretary"
+                                />
+                            </template>
+                            <template x-if="resolvedDocument?.previewType === 'municipal_request'">
+                                <x-citizen.municipal-request-preview
+                                    docKey="resolvedDocument.docKey"
+                                    bind="resolvedDocument.snapshot"
+                                    title="resolvedDocument.certTitle"
+                                    office="selected.office"
+                                    formNo="selected.formNo"
+                                    officiant="selected.officiant"
+                                    officiantTitle="selected.officiantTitle"
+                                    technician="selected.technician"
+                                    technicianTitle="selected.technicianTitle"
+                                    verifier="selected.verifier"
+                                    verifierTitle="selected.verifierTitle"
+                                />
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <x-slot:footer>
+                    <x-ui.button size="sm" variant="secondary" icon="printer" @click="printDocument()">Print</x-ui.button>
+                    <x-ui.button size="sm" icon="download" @click="downloadDocument()">Download PDF</x-ui.button>
+                </x-slot:footer>
+            </x-ui.modal>
+        </div>
 
         </div>
 
