@@ -482,17 +482,26 @@ body.dp-printing .doc-field-input {
 /* "Edit Document" rich-text editor chrome (see document-editor-toolbar.blade.php
    / document-editor-background-panel.blade.php) — always dp-no-print, so no
    extra print-specific hiding rule is needed for these beyond the existing
-   .dp-no-print one above. */
+   .dp-no-print one above. Sizing here (padding/font-size/min-height) is
+   deliberately a bit more generous than a typical compact toolbar — the
+   intended users include older municipal/barangay staff, and a 12px
+   icon-only button is a genuinely small target to click reliably. This is
+   an accessibility pass on the CONTROLS, not the document itself — the A4
+   paper's own size is untouched; Zoom/Fit Page/Full View (Milestone 3)
+   already cover "I want the document bigger." */
 .doc-toolbar-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
-    padding: 0.375rem 0.5rem;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0.4rem 0.55rem;
     border-radius: 0.5rem;
     border: 1px solid transparent;
     background: transparent;
     color: #475569;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     white-space: nowrap;
     line-height: 1;
 }
@@ -500,8 +509,9 @@ body.dp-printing .doc-field-input {
     background: #e2e8f0;
 }
 .doc-toolbar-select {
-    font-size: 0.75rem;
-    padding: 0.3rem 0.375rem;
+    font-size: 0.8125rem;
+    padding: 0.4rem 0.5rem;
+    min-height: 30px;
     border-radius: 0.5rem;
     border: 1px solid #e2e8f0;
     background: #fff;
@@ -521,6 +531,61 @@ body.dp-printing .doc-field-input {
    watermarkStyle()) is ever overridden. */
 .doc-watermark {
     pointer-events: none;
+}
+
+/* Document Templates (document-editor-template-sidebar.blade.php /
+   applyTemplate() in document-requests.blade.php) — a subtle corner accent
+   approximating each real reference letterhead's own decorative background
+   (a native Word vector shape in the source .docx, not something that can
+   be pulled out as a reusable image file the way the seals were, so it's
+   recreated here in CSS instead of faked as a fabricated raster asset).
+   Painted via .doc-paper's own ::before/::after so they need no extra DOM
+   node, confined to the page by .doc-paper's existing overflow:hidden, and
+   z-index:0 (with .doc-content pinned to z-index:1 below) guarantees they
+   always sit behind the actual document content and watermark regardless
+   of paint-order specifics — this is real document appearance, not editor
+   chrome, so it deliberately is NOT dp-no-print: it belongs in Print/PDF
+   exactly like the seals and watermark do. */
+.doc-content {
+    z-index: 1;
+}
+.doc-paper--tpl-labangtaytay::before,
+.doc-paper--tpl-labangtaytay::after,
+.doc-paper--tpl-villa::before,
+.doc-paper--tpl-villa::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+}
+.doc-paper--tpl-labangtaytay::before {
+    top: 0;
+    right: 0;
+    width: 45%;
+    height: 10%;
+    background: linear-gradient(135deg, transparent 50%, rgba(13, 148, 136, 0.14) 50%);
+}
+.doc-paper--tpl-labangtaytay::after {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1.25%;
+    background: linear-gradient(90deg, #0d9488, #14b8a6);
+    opacity: 0.85;
+}
+.doc-paper--tpl-villa::before {
+    top: 0;
+    right: 0;
+    width: 40%;
+    height: 9%;
+    background: linear-gradient(135deg, transparent 50%, rgba(30, 64, 175, 0.14) 50%);
+}
+.doc-paper--tpl-villa::after {
+    bottom: 0;
+    left: 0;
+    width: 40%;
+    height: 9%;
+    background: linear-gradient(315deg, transparent 50%, rgba(30, 64, 175, 0.14) 50%);
 }
 
 /* .doc-content itself carries no permanent outline while editable — the
@@ -555,6 +620,35 @@ body.dp-printing .doc-section-selected {
     outline: none !important;
 }
 
+/* Applied by reconcileEmptyBlocks() (document-requests.blade.php) to a leaf
+   text block only once it's been observed non-empty and THEN fully cleared
+   by the admin — never to a paragraph Enter just created blank, and never
+   to a container (letterhead row, signature row, a field grid) that merely
+   has empty children, since those never match this class at all (see that
+   method's own comment for the full "how do you tell these apart" story).
+   Zeroes out exactly the box-model contribution a template's own utility
+   classes (space-y-*, mb-*, pt-*, etc.) would otherwise add so a cleared
+   block stops reserving its old height, while staying a real element at
+   its original position — still one click away, still contenteditable —
+   rather than being removed outright. !important beats space-y's own
+   :where() sibling-margin rule regardless of specificity, since :where()
+   is always zero-specificity by definition. */
+.doc-block-collapsed {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+    line-height: 1.2 !important;
+}
+/* Merely hovering a collapsed sliver isn't a meaningful affordance the way
+   hovering real text is — only the stronger "actively selected" outline
+   still shows, so an emptied block doesn't read as a permanent, always-lit
+   blue-ish box while the admin is simply moving the mouse across the page. */
+.doc-block-collapsed.doc-section-hover {
+    outline: none !important;
+}
+
 /* Active-drag state (document-requests.blade.php onDragHandlePointerDown())
    — a stronger, solid version of the selected outline plus a soft shadow so
    a grabbed section reads clearly as "currently being moved," distinct from
@@ -572,6 +666,29 @@ body.dp-printing .doc-section-dragging {
     box-shadow: none !important;
 }
 
+/* Root cause of the "cursor/handle disappears while dragging" bug: the
+   cursor CSS above only takes effect while the pointer is physically over
+   the dragged element itself. A real drag routinely moves the pointer past
+   that element's own edges — dragging fast, dragging near a boundary the
+   section is clamped at (so the section stops following but the pointer
+   keeps going), or dragging toward the modal's own backdrop — and the
+   moment it does, the cursor falls back to whatever's actually underneath:
+   text (.doc-content[contenteditable] below) over the rest of the paper,
+   or the plain arrow over the backdrop/modal chrome. The drag itself never
+   actually breaks (pointer capture — see onDragHandlePointerDown() in
+   document-requests.blade.php — keeps tracking correctly the whole time),
+   but the cursor silently reverting away from the grabbing hand reads as
+   "I lost it." dp-dragging-section is added to <body> for exactly the
+   pointerdown-to-pointerup lifetime of a section drag, forcing the same
+   cursor everywhere on the page regardless of what's underneath, and
+   suppressing text selection so dragging across the editable paper never
+   also highlights a block of text as a side effect. */
+body.dp-dragging-section,
+body.dp-dragging-section * {
+    cursor: grabbing !important;
+    user-select: none !important;
+}
+
 /* Drag handle — only ever attached to a major section (a direct child of
    .doc-content; see attachDragHandle() in document-requests.blade.php),
    never to a nested paragraph, so it's clear only structural blocks are
@@ -584,17 +701,17 @@ body.dp-printing .doc-section-dragging {
 .doc-drag-handle {
     position: absolute;
     top: 50%;
-    left: -30px;
+    left: -32px;
     transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 6px;
     background: #3b82f6;
     color: #fff;
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1;
     cursor: grab;
     user-select: none;
@@ -612,16 +729,24 @@ body.dp-printing .doc-section-dragging {
     cursor: grabbing;
 }
 
-/* Floating "Position & Spacing" inspector (document-editor-spacing-panel
-   .blade.php) — position:fixed takes it completely out of document flow,
+/* Shared floating-inspector chrome for every Dokyu Edit Document palette —
+   Position & Spacing (document-editor-spacing-panel.blade.php), Header
+   Seals (document-editor-header-seal-panel.blade.php), and Background
+   (document-editor-background-panel.blade.php) all use this same class
+   family rather than each rolling its own window, so drag/collapse/close
+   behave identically everywhere and any future floating panel gets them
+   for free. position:fixed takes each one completely out of document flow,
    so it can never push the A4 paper down or otherwise affect layout, and
    it sits outside .doc-zoom-scale entirely so paper zoom never resizes it.
    z-index above the modal's own (90, see components/ui/modal.blade.php) so
    it floats above the paper as intended. dp-no-print (already on the root
-   element in the Blade file) keeps it out of Print/PDF like every other
+   element in each Blade file) keeps it out of Print/PDF like every other
    editor-only piece. Compact by design — no full-width sliders, just a
-   label + a short numeric input + a pair of small +/- buttons per row. */
-.doc-spacing-panel {
+   label + a short numeric input + a pair of small +/- buttons per row
+   (Position & Spacing's own convention; Header Seals/Background keep their
+   existing internal control styling, only the outer window chrome here is
+   shared). */
+.doc-floating-panel {
     position: fixed;
     z-index: 110;
     width: 300px;
@@ -632,7 +757,7 @@ body.dp-printing .doc-section-dragging {
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
     overflow: hidden;
 }
-.doc-spacing-panel-header {
+.doc-floating-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -643,34 +768,34 @@ body.dp-printing .doc-section-dragging {
     cursor: grab;
     touch-action: none;
 }
-.doc-spacing-panel-header:active {
+.doc-floating-panel-header:active {
     cursor: grabbing;
 }
-.doc-spacing-panel-icon-btn {
+.doc-floating-panel-icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 27px;
+    height: 27px;
     border-radius: 0.375rem;
     color: #64748b;
 }
-.doc-spacing-panel-icon-btn:hover {
+.doc-floating-panel-icon-btn:hover {
     background: #e2e8f0;
     color: #334155;
 }
-.doc-spacing-panel-icon-btn i {
+.doc-floating-panel-icon-btn i {
     transition: transform 120ms ease;
 }
-.doc-spacing-panel-body {
+.doc-floating-panel-body {
     padding: 0.625rem;
     max-height: 70vh;
     overflow-y: auto;
 }
 .doc-spacing-label {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 500;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.02em;
     margin-bottom: 0.125rem;
@@ -683,28 +808,31 @@ body.dp-printing .doc-section-dragging {
 .doc-spacing-input {
     width: 100%;
     min-width: 0;
-    font-size: 11px;
-    padding: 0.25rem 0.375rem;
+    min-height: 28px;
+    font-size: 12px;
+    padding: 0.3rem 0.45rem;
     border-radius: 0.375rem;
     border: 1px solid #e2e8f0;
     text-align: right;
 }
 .doc-spacing-value {
     flex: 1;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     color: #334155;
 }
 .doc-spacing-mini-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
-    padding: 0.25rem 0.4rem;
+    min-height: 28px;
+    padding: 0.3rem 0.55rem;
     border-radius: 0.375rem;
     border: 1px solid #e2e8f0;
     background: #fff;
     color: #475569;
-    font-size: 10.5px;
+    font-size: 11.5px;
     line-height: 1;
     white-space: nowrap;
 }
@@ -725,6 +853,56 @@ body.dp-printing .doc-section-dragging {
     border: 1px solid #fef3c7;
     padding: 0.5rem 0.625rem;
     margin-top: 0.5rem;
+}
+
+/* Expanded mode for every floating inspector (Position & Spacing, Header
+   Seals, Background) — an accessibility affordance for older municipal/
+   barangay staff who find the default 300px compact window too small to
+   read comfortably. Deliberately a real layout change (wider panel, larger
+   padding/fonts/controls on the actual elements), never a CSS transform:
+   scale() on the whole panel — a scaled-up panel would still have
+   thumbnail-sized hit targets underneath a magnified image of them, which
+   does nothing for someone who actually has trouble clicking a small
+   button. max-width still applies (inherited from .doc-floating-panel) so
+   it can never overflow a narrow viewport. */
+.doc-floating-panel--expanded {
+    width: 560px;
+}
+.doc-floating-panel--expanded .doc-floating-panel-header span {
+    font-size: 13px;
+}
+.doc-floating-panel--expanded .doc-floating-panel-icon-btn {
+    width: 28px;
+    height: 28px;
+}
+.doc-floating-panel--expanded .doc-floating-panel-body {
+    padding: 1.125rem 1.25rem;
+}
+.doc-floating-panel--expanded .doc-spacing-label {
+    font-size: 12px;
+}
+.doc-floating-panel--expanded .doc-spacing-row {
+    gap: 0.5rem;
+}
+.doc-floating-panel--expanded .doc-spacing-input {
+    font-size: 14px;
+    padding: 0.5rem 0.625rem;
+}
+.doc-floating-panel--expanded .doc-spacing-value {
+    font-size: 14px;
+}
+.doc-floating-panel--expanded .doc-spacing-mini-btn {
+    font-size: 13px;
+    padding: 0.5rem 0.75rem;
+    gap: 0.375rem;
+}
+.doc-floating-panel--expanded .doc-spacing-divider {
+    margin: 0.375rem 0;
+}
+.doc-floating-panel--expanded .doc-toolbar-btn {
+    font-size: 13px;
+    padding: 0.5rem 0.75rem;
+    gap: 0.375rem;
 }
 
 /* Viewer zoom (document-editor-zoom-controls.blade.php) — a pure display

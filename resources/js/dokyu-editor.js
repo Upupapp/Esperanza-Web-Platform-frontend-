@@ -474,26 +474,36 @@ export function checkOverflow(paperEl) {
 // municipal-request-preview.blade.php). Sized/positioned via inline style so
 // the change survives being captured into customDocumentHtml exactly like
 // any other admin edit.
-
+//
+// These operate on the seal's WRAPPER element (.header-seal-wrap--left/right
+// in the templates above), not the <img> inside it. Each seal is really two
+// stacked layers sharing one box: a decorative placeholder circle (visible
+// only once the real seal is removed or fails to load) behind an <img> that's
+// styled to fill 100% of the wrapper. Sizing/moving the wrapper scales and
+// repositions both layers as one unit — sizing/moving the <img> alone left
+// the placeholder both a stale fixed size (the browser's own img max-width
+// reset then let one axis grow past the other, turning "Large" into an
+// oval) and a stale fixed position (so moving the image uncovered the
+// placeholder sitting behind it, looking like a leftover ghost circle).
 export const SEAL_SIZE_PX = { small: 48, medium: 64, large: 80 };
 export const SEAL_OFFSET_MIN = -50;
 export const SEAL_OFFSET_MAX = 50;
 
-export function applySealSize(imgEl, sizeKey) {
+export function applySealSize(wrapperEl, sizeKey) {
     const px = SEAL_SIZE_PX[sizeKey] || SEAL_SIZE_PX.medium;
-    imgEl.style.width = px + 'px';
-    imgEl.style.height = px + 'px';
+    wrapperEl.style.width = px + 'px';
+    wrapperEl.style.height = px + 'px';
 }
 
-export function readSealOffset(imgEl) {
-    const match = /translate\(\s*(-?\d+(?:\.\d+)?)px\s*,\s*(-?\d+(?:\.\d+)?)px\s*\)/.exec(imgEl.style.transform || '');
+export function readSealOffset(wrapperEl) {
+    const match = /translate\(\s*(-?\d+(?:\.\d+)?)px\s*,\s*(-?\d+(?:\.\d+)?)px\s*\)/.exec(wrapperEl.style.transform || '');
     return { x: match ? Number(match[1]) : 0, y: match ? Number(match[2]) : 0 };
 }
 
-export function applySealOffset(imgEl, x, y) {
+export function applySealOffset(wrapperEl, x, y) {
     const cx = clamp(Math.round(x), SEAL_OFFSET_MIN, SEAL_OFFSET_MAX);
     const cy = clamp(Math.round(y), SEAL_OFFSET_MIN, SEAL_OFFSET_MAX);
-    imgEl.style.transform = `translate(${cx}px, ${cy}px)`;
+    wrapperEl.style.transform = `translate(${cx}px, ${cy}px)`;
 }
 
 // Validates and reads an uploaded watermark image as a data URL — kept as
@@ -572,4 +582,149 @@ export function computeFitZoom(scaleEl, viewportWidth, viewportHeight) {
     const availableHeight = Math.max(1, viewportHeight - margin);
     const fit = Math.min(availableWidth / scaleEl.offsetWidth, availableHeight / scaleEl.offsetHeight);
     return clampZoom(fit * 100);
+}
+
+// --- PDF export color sanitization -------------------------------------------
+//
+// html2canvas 1.4.1 (bundled inside html2pdf.js) only understands the color
+// FUNCTIONS rgb/rgba/hsl/hsla (see its own SUPPORTED_COLOR_FUNCTIONS map) —
+// it throws `Attempting to parse an unsupported color function "oklch"` the
+// moment it meets one. Tailwind CSS v4 compiles its entire default palette
+// as oklch(), so every element styled with a Tailwind color class fails
+// Download PDF outright. Two normalization strategies were tried and
+// verified against this browser directly before writing this fix:
+//   1. Canvas 2D's fillStyle getter — commonly cited as "always normalizes
+//      to rgb/hex" — actually echoes oklch() straight back unchanged in
+//      current Chrome (confirmed by direct test), so it cannot be used to
+//      convert the color.
+//   2. A direct OKLCH -> OKLab -> linear sRGB -> sRGB math conversion (the
+//      CSS Color 4 spec's own reference algorithm) does not depend on any
+//      browser color-serialization quirk. Verified pixel-for-pixel
+//      identical against this browser's own rendering of the same oklch
+//      color (rendered a real pixel with each and diffed the RGBA output —
+//      zero delta across multiple sample colors), so it reproduces exactly
+//      what the browser would have painted.
+// sanitizeExportColors() walks a cloned export document (meant to be called
+// from html2canvas's own onclone callback, which hands back the *fully
+// isolated* clone it is about to render — safe to mutate freely without
+// ever touching the live, on-screen page) and rewrites every oklch-based
+// computed color it finds as an equivalent inline rgb()/rgba() style.
+const OKLCH_COLOR_PROPS = [
+    'color',
+    'backgroundColor',
+    'borderTopColor',
+    'borderRightColor',
+    'borderBottomColor',
+    'borderLeftColor',
+    'outlineColor',
+    'textDecorationColor',
+    'caretColor',
+];
+
+// Captures each component's own optional "%" separately (group 2/4/7) so a
+// percentage flag on one component (L is always a percentage in Tailwind's
+// compiled output; C and H never are) is never confused with another's.
+const OKLCH_PATTERN = /oklch\(\s*([\d.]+)(%)?\s+([\d.]+)(%)?\s+([\d.]+)(?:deg)?\s*(?:\/\s*([\d.]+)(%)?\s*)?\)/i;
+
+function oklchToRgbString(value) {
+    const match = OKLCH_PATTERN.exec(value);
+    if (!match) return null;
+    const L = match[2] ? Number(match[1]) / 100 : Number(match[1]);
+    const C = match[4] ? (Number(match[3]) / 100) * 0.4 : Number(match[3]);
+    const H = Number(match[5]);
+    const A = match[6] === undefined ? 1 : match[7] ? Number(match[6]) / 100 : Number(match[6]);
+
+    const h = (H * Math.PI) / 180;
+    const a = C * Math.cos(h);
+    const b = C * Math.sin(h);
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+    const l = l_ ** 3;
+    const m = m_ ** 3;
+    const s = s_ ** 3;
+    let r = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+    let g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+    let bl = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+    const encode = (c) => {
+        c = clamp(c, 0, 1);
+        return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+    };
+    r = Math.round(encode(r) * 255);
+    g = Math.round(encode(g) * 255);
+    bl = Math.round(encode(bl) * 255);
+    return A >= 1 ? `rgb(${r}, ${g}, ${bl})` : `rgba(${r}, ${g}, ${bl}, ${A})`;
+}
+
+const oklchConversionCache = new Map();
+
+function toExportSafeColor(value) {
+    if (!value || !value.includes('oklch')) return null;
+    if (oklchConversionCache.has(value)) return oklchConversionCache.get(value);
+    const converted = oklchToRgbString(value);
+    oklchConversionCache.set(value, converted);
+    return converted;
+}
+
+// Originally written to run inside html2canvas's onclone callback (safe to
+// mutate freely there, since that clone is fully detached from the live
+// page) — direct reproduction showed html2canvas still throws on oklch()
+// even with onclone wired up: it walks the LIVE document first (resolving
+// background/image resources it needs to embed before the clone — and
+// hence onclone — ever exists), so the unsupported color function is hit
+// before onclone gets a chance to run at all.
+//
+// This therefore has to sanitize the real, on-screen DOM instead — briefly
+// swapping each oklch-based computed color for its rgb() equivalent as an
+// inline style, then handing back a restore() that puts every touched
+// property back to its exact prior inline value (blank or not). Two things
+// make this safe to do directly on the live page rather than "damaging the
+// live browser preview styling": every rgb() conversion is mathematically
+// exact (verified pixel-for-pixel identical against this browser's own
+// rendering of the source oklch color), so nothing visibly changes even for
+// the brief moment the override is in place, and the caller always reverts
+// it in a finally block immediately after capture.
+export function sanitizeExportColors(rootEl) {
+    if (!rootEl) return () => {};
+    const doc = rootEl.ownerDocument || document;
+    const win = doc.defaultView || window;
+    const elements = rootEl.nodeType === 1 ? [rootEl, ...rootEl.querySelectorAll('*')] : Array.from(rootEl.querySelectorAll('*'));
+    const restores = [];
+    elements.forEach((el) => {
+        const computed = win.getComputedStyle(el);
+        OKLCH_COLOR_PROPS.forEach((prop) => {
+            const safe = toExportSafeColor(computed[prop]);
+            if (!safe) return;
+            const prior = el.style[prop];
+            el.style[prop] = safe;
+            restores.push(() => { el.style[prop] = prior; });
+        });
+    });
+    return () => restores.forEach((restore) => restore());
+}
+
+// Resolves once every <img> under rootEl has either finished loading or
+// failed — used before handing the document to html2canvas so a
+// still-loading default seal/watermark (or a freshly-uploaded custom one)
+// never gets captured as a blank box. A per-image timeout keeps a single
+// broken/slow asset from blocking Download PDF indefinitely.
+export function waitForImages(rootEl, timeoutMs = 8000) {
+    if (!rootEl) return Promise.resolve();
+    const images = Array.from(rootEl.querySelectorAll('img'));
+    return Promise.all(
+        images.map((img) => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+                const done = () => {
+                    clearTimeout(timer);
+                    img.removeEventListener('load', done);
+                    img.removeEventListener('error', done);
+                    resolve();
+                };
+                const timer = setTimeout(done, timeoutMs);
+                img.addEventListener('load', done);
+                img.addEventListener('error', done);
+            });
+        })
+    );
 }

@@ -16,7 +16,19 @@
      request row (`selected.*`), not the per-document snapshot, and editing
      them in place would leak into other parts of the admin UI that read the
      same object (the request list, citizen info panel, etc). --}}
-@props(['docKey', 'bind', 'title', 'subtitle', 'barangay', 'seal', 'punongBarangay', 'barangaySecretary', 'editing' => 'false'])
+@props([
+    'docKey', 'bind', 'title', 'subtitle', 'barangay', 'seal', 'punongBarangay', 'barangaySecretary', 'editing' => 'false',
+    // Alpine expression evaluating to a {src, opacity, size, position,
+    // paperColor, decorative} object — see document-watermark.blade.php's
+    // header comment for why this exists. Same object gets forwarded to
+    // the watermark component below (it needs src/opacity/size/position;
+    // this element only reads paperColor/decorative), so the default here
+    // has to carry every field either one needs — it reproduces this
+    // element's previous hardcoded white-paper, 5%-Esperanza-mark look
+    // exactly, so a caller that doesn't pass this (the citizen portal)
+    // renders unchanged.
+    'background' => "{ src: '" . asset('images/esperanza/esperanza-seal.png') . "', opacity: 5, size: 'large', position: 'center', paperColor: '#FFFFFF', decorative: null }",
+])
 
 {{-- A4 page proportions (210mm × 297mm) for the on-screen preview, the
      printed page, and the downloaded PDF alike. Width caps at 210mm and
@@ -29,10 +41,21 @@
      pushes the signature block down to occupy that space the way an
      actual printed one does (see the Signatures section below). Content
      that genuinely needs more than one page's worth of space still grows
-     past 297mm rather than being clipped. --}}
-<div class="doc-paper rounded-2xl border border-slate-200 bg-white shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10" style="font-family: Georgia, 'Times New Roman', serif;">
+     past 297mm rather than being clipped.
 
-    <x-citizen.document-watermark />
+     bg-white is gone from the static class list — background-color now
+     always comes from paperStyle() below (defaulting to the exact same
+     #FFFFFF), so a selected graphic template's paper color/decorative
+     corner accents show here too, not only after the first Edit Document
+     click (see document-watermark.blade.php's comment for the full
+     "two divergent render branches" story this closes). --}}
+<div
+    class="doc-paper rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10"
+    :style="window.DokyuEditor.paperStyle({!! $background !!})"
+    :class="({!! $background !!}).decorative ? 'doc-paper--tpl-' + ({!! $background !!}).decorative : ''"
+>
+
+    <x-citizen.document-watermark :background="$background" />
 
     {{-- Everything except the watermark lives inside .doc-content — this is
          the exact subtree the admin's "Edit Document" rich-text editor
@@ -50,7 +73,7 @@
 
     <!-- Letterhead -->
     <div class="relative flex items-center justify-between gap-3 mb-4">
-        <div class="relative w-16 h-16 shrink-0">
+        <div class="header-seal-wrap header-seal-wrap--left relative w-16 h-16 shrink-0">
             <div class="absolute inset-0 rounded-full bg-slate-50 border-2 border-gold-400 flex items-center justify-center text-slate-300">
                 <i data-lucide="landmark" class="w-6 h-6"></i>
             </div>
@@ -58,7 +81,7 @@
                 :src="{{ $seal }} ? '{{ rtrim(asset(''), '/') }}/' + {{ $seal }} : '{{ asset('images/esperanza/esperanza-seal.png') }}'"
                 :data-default-src="{{ $seal }} ? '{{ rtrim(asset(''), '/') }}/' + {{ $seal }} : '{{ asset('images/esperanza/esperanza-seal.png') }}'"
                 alt="Official Seal"
-                class="header-seal header-seal--left relative w-16 h-16 rounded-full object-contain bg-white border border-slate-200 p-0.5"
+                class="header-seal header-seal--left absolute inset-0 w-full h-full rounded-full object-contain bg-white border border-slate-200 p-0.5"
             >
         </div>
         <div class="text-center flex-1 min-w-0">
@@ -67,11 +90,11 @@
             <p class="text-xs text-slate-600">Municipality of Esperanza</p>
             <p class="text-sm font-bold text-navy-900 uppercase tracking-wide">Barangay <span x-text="{{ $barangay }}"></span></p>
         </div>
-        <div class="relative w-16 h-16 shrink-0">
+        <div class="header-seal-wrap header-seal-wrap--right relative w-16 h-16 shrink-0">
             <div class="absolute inset-0 rounded-full bg-slate-50 border-2 border-gold-400 flex items-center justify-center text-slate-300">
                 <i data-lucide="shield" class="w-6 h-6"></i>
             </div>
-            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" data-default-src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="header-seal header-seal--right relative w-16 h-16 rounded-full object-contain bg-white border border-slate-200 p-0.5">
+            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" data-default-src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="header-seal header-seal--right absolute inset-0 w-full h-full rounded-full object-contain bg-white border border-slate-200 p-0.5">
         </div>
     </div>
 

@@ -8,11 +8,32 @@
      none keeps it from intercepting clicks on the fields above it (e.g. the
      editable inputs — see doc-field.blade.php). Prints and appears in the
      downloaded PDF exactly as on screen since it's a plain <img>, not a CSS
-     background-image some print/PDF pipelines drop. --}}
+     background-image some print/PDF pipelines drop.
+
+     `background` is an Alpine expression string (like every other prop on
+     this component tree — see barangay-certificate-preview's own header
+     comment) evaluating to a {src, opacity, size, position} object, so the
+     admin's selected Dokyu template/background state (documentBackground in
+     document-requests.blade.php) drives this exact same img BEFORE the
+     first Edit Document click too — previously this was a second, static,
+     hardcoded copy of the default Esperanza mark that never reflected a
+     chosen barangay template at all, which is what made "View Document" (or
+     a request nobody had edited yet) always show the generic 5%-opacity
+     Esperanza seal instead of the applied template's own watermark: exactly
+     the "top/bottom visible, middle white" symptom, just one layer up from
+     where it looked like a CSS stacking bug. Defaults to the same literal
+     values this element used to hardcode, so any caller that doesn't pass
+     `background` (the citizen portal's own document view, which has no
+     Dokyu editor state at all) renders identically to before. --}}
+@props([
+    'background' => "{ src: '" . asset('images/esperanza/esperanza-seal.png') . "', opacity: 5, size: 'large', position: 'center' }",
+])
 <img
-    src="{{ asset('images/esperanza/esperanza-seal.png') }}"
+    class="doc-watermark"
     alt=""
     aria-hidden="true"
-    class="absolute top-1/2 left-1/2 pointer-events-none select-none"
-    style="width: 68%; max-width: 620px; height: auto; aspect-ratio: 1 / 1; object-fit: contain; transform: translate(-50%, -50%); opacity: 0.05; z-index: 0;"
+    x-show="({!! $background !!}).src"
+    x-cloak
+    :src="({!! $background !!}).src"
+    :style="window.DokyuEditor.watermarkStyle({!! $background !!})"
 >

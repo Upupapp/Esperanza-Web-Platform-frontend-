@@ -1,4 +1,4 @@
-@props(['title' => null, 'titleEn' => null, 'maxWidth' => 'md', 'fullscreen' => false, 'bare' => false])
+@props(['title' => null, 'titleEn' => null, 'maxWidth' => 'md', 'fullscreen' => false, 'bare' => false, 'startCompact' => false])
 
 @php
     // Roughly 1.5x the standard Tailwind max-w scale for each named tier.
@@ -20,9 +20,13 @@
         <div x-show="open" x-transition.opacity @click="open = false" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"></div>
 
         @if($fullscreen)
-            {{-- Defaults to fullscreen; `compact` toggles it down to a centered popup the same size as maxWidth. --}}
+            {{-- Defaults to fullscreen; `compact` toggles it down to a centered popup the same size as maxWidth.
+                 startCompact lets a caller open already-compact instead (e.g. the Dokyu document editor's own
+                 "Full View" button expects the modal to start at its normal size and enlarge only on request) —
+                 every existing caller leaves this false, so nothing about the default fullscreen-first behavior
+                 changes for them. --}}
             <div
-                x-data="{ compact: false }"
+                x-data="{ compact: {{ $startCompact ? 'true' : 'false' }} }"
                 :class="compact
                     ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[88vh] w-[calc(100vw-2rem)] {{ $w }}'
                     : 'fixed inset-3 sm:inset-4'"

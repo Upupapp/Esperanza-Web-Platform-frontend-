@@ -606,6 +606,79 @@
     $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Mark to Release', 'done' => 'Completed'];
     $actionStatuses = ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted'];
     $doneStatuses = ['Completed', 'Released'];
+
+    // Dokyu document templates (Canva-style "pick a design" library) — the
+    // seal images referenced here are real assets extracted directly from
+    // the official reference letterheads found on disk at
+    // Esperanza-Mobile-App/Reference_forms/Esperanza File/*.docx (each
+    // .docx is itself a zip archive; its embedded seal images were pulled
+    // from word/media/ and copied as-is into
+    // public/images/esperanza/templates/ — never redrawn or invented).
+    // Barangay Labangtaytay's real seal + a real Esperanza municipal seal
+    // variant both came from "BRGY.CLEARANCE NEW .docx" / "Barangay
+    // Certification.docx"; Barangay Villa's real seal came from the same
+    // Certification reference. Only these two barangays had an actual
+    // distinct seal in the reference files — no other barangay design was
+    // fabricated to pad this list. 'esperanza_standard' is the existing,
+    // already-approved default paper — kept completely unchanged, still
+    // what every new/never-templated request starts from.
+    //
+    // decorative is a key into the .doc-paper--tpl-* CSS classes in
+    // app.css (a subtle corner accent approximating each reference's own
+    // background flourish — those were native Word vector shapes, not
+    // extractable image files, so they're recreated in CSS rather than
+    // faked as a fabricated raster asset).
+    //
+    // watermarkOpacity is per-template on purpose: Esperanza Standard's own
+    // watermark is deliberately a near-invisible 5% authenticity mark
+    // (already-approved, unchanged), but the barangay letterheads' whole
+    // point is a clearly visible seal watermark — that's the actual "full
+    // design" the reference documents show across the middle of the page.
+    // Applying a barangay template previously left whatever opacity was
+    // already set (5%, inherited from Standard) untouched, which reads as
+    // "the middle of the page is just white" even though the watermark
+    // image is correctly sized/positioned/z-ordered underneath — confirmed
+    // directly by screenshotting the rendered page: the seal is genuinely
+    // there, just too faint to read as artwork at 5%. No element is
+    // actually covering it.
+    $dokyuTemplates = [
+        [
+            'key' => 'esperanza_standard',
+            'name' => 'Esperanza Standard',
+            'description' => 'Default municipal design',
+            'thumbnail' => asset('images/esperanza/esperanza-seal.png'),
+            'leftSeal' => asset('images/esperanza/esperanza-seal.png'),
+            'rightSeal' => asset('images/esperanza/esperanza-seal.png'),
+            'watermarkSrc' => asset('images/esperanza/esperanza-seal.png'),
+            'watermarkOpacity' => 5,
+            'paperColor' => '#FFFFFF',
+            'decorative' => null,
+        ],
+        [
+            'key' => 'barangay_labangtaytay',
+            'name' => 'Barangay Labangtaytay',
+            'description' => 'Official Labangtaytay letterhead',
+            'thumbnail' => asset('images/esperanza/templates/barangay-labangtaytay-seal.png'),
+            'leftSeal' => asset('images/esperanza/templates/barangay-labangtaytay-seal.png'),
+            'rightSeal' => asset('images/esperanza/templates/esperanza-municipal-seal-v2.png'),
+            'watermarkSrc' => asset('images/esperanza/templates/barangay-labangtaytay-seal.png'),
+            'watermarkOpacity' => 18,
+            'paperColor' => '#FFFFFF',
+            'decorative' => 'labangtaytay',
+        ],
+        [
+            'key' => 'barangay_villa',
+            'name' => 'Barangay Villa',
+            'description' => 'Official Villa letterhead',
+            'thumbnail' => asset('images/esperanza/templates/barangay-villa-seal.png'),
+            'leftSeal' => asset('images/esperanza/templates/barangay-villa-seal.png'),
+            'rightSeal' => asset('images/esperanza/templates/esperanza-municipal-seal-v2.png'),
+            'watermarkSrc' => asset('images/esperanza/templates/barangay-villa-seal.png'),
+            'watermarkOpacity' => 18,
+            'paperColor' => '#FFFFFF',
+            'decorative' => 'villa',
+        ],
+    ];
 @endphp
 
 <x-layouts.admin title="Dokyu" subtitle="Track and process citizen document requests." active="document-requests">
@@ -644,6 +717,18 @@
             editingDocument: false,
             documentEditBackup: null,
             backgroundEditBackup: null,
+            templateKeyEditBackup: null,
+            // Undo/Redo history for the document editor — {stack, index}
+            // where stack holds {html, background} snapshots and index
+            // points at the one currently applied. Populated by
+            // initHistoryTracking()/pushHistorySnapshot() below; see that
+            // section's own comment for the full design (why a snapshot
+            // stack rather than a command log, debouncing, and how it stays
+            // one shared system instead of a separate one per feature).
+            editHistory: { stack: [], index: -1 },
+            _historyObserver: null,
+            _historyDebounceTimer: null,
+            _restoringHistory: false,
             // Which editor side panel is open (null, background, spacing, or
             // seals) — only one at a time, toggled from the toolbar.
             activePanel: null,
@@ -667,12 +752,23 @@
             sectionOffsetX: 0,
             isDraggingSection: false,
             documentOverflow: false,
-            // Floating Position & Spacing inspector (document-editor-spacing-panel
-            // .blade.php) — a UI-window drag, unrelated to document-section
-            // dragging above; position resets to this default every time
-            // editing starts fresh (not persisted beyond the current session).
-            spacingPanelPos: { x: 32, y: 88 },
-            spacingPanelCollapsed: false,
+            // Every floating editor inspector (Position & Spacing, Header
+            // Seals, Background) shares this one state shape and the
+            // startPanelDrag()/floating-panel CSS below, rather than each
+            // rolling its own window — a UI-window drag, unrelated to
+            // document-section dragging above. Positions reset to these
+            // defaults every time editing starts fresh (not persisted
+            // beyond the current session); staggered X so a panel opened
+            // for the first time never lands exactly on top of another.
+            // expanded switches a panel into the larger, easier-to-read
+            // layout (see .doc-floating-panel--expanded in app.css) — an
+            // accessibility affordance for older staff, independent of
+            // collapsed (a panel can be both expanded and collapsed at once).
+            floatingPanels: {
+                spacing: { pos: { x: 32, y: 88 }, collapsed: false, expanded: false },
+                seals: { pos: { x: 356, y: 88 }, collapsed: false, expanded: false },
+                background: { pos: { x: 680, y: 88 }, collapsed: false, expanded: false },
+            },
             sealOffsets: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 } },
             // Viewer zoom (document-editor-zoom-controls.blade.php) — a
             // display-only setting, reset to 100 every time View Document
@@ -681,6 +777,13 @@
             // real document, print, PDF, or the overflow check.
             zoomLevel: 100,
             defaultWatermarkSrc: @js(asset('images/esperanza/esperanza-seal.png')),
+            // Template library (document-editor-template-sidebar.blade.php)
+            // — see the $dokyuTemplates comment above in this file's own
+            // @php block for exactly which real reference files each
+            // template's assets came from. templateSidebarCollapsed resets
+            // with the rest of the editor UI in resetEditorUiState().
+            dokyuTemplates: @js($dokyuTemplates),
+            templateSidebarCollapsed: false,
             barangayCatalog: @js($barangayCatalog),
             docTypeLookup: @js(config('esperanza_document_type_lookup')),
             // Mirrors citizen/document-requests.blade.php's own resolvedDocument/
@@ -787,7 +890,7 @@
                 return !!(r && ['Approved', 'Mark to Release', 'Released'].includes(r.status) && this.resolvedDocument);
             },
             get defaultBackground() {
-                return { src: this.defaultWatermarkSrc, opacity: 5, size: 'large', position: 'center', paperColor: '#FFFFFF' };
+                return { src: this.defaultWatermarkSrc, opacity: 5, size: 'large', position: 'center', paperColor: '#FFFFFF', decorative: null };
             },
             get documentBackground() {
                 return (this.selected && this.selected.background) || this.defaultBackground;
@@ -795,6 +898,79 @@
             ensureBackground() {
                 if (this.selected && !this.selected.background) {
                     this.selected.background = { ...this.defaultBackground };
+                }
+            },
+            // Document Templates (document-editor-template-sidebar.blade.php)
+            // — Canva-style pick-a-design rather than pick-a-document,
+            // so applyTemplate() only ever touches presentation (seals,
+            // watermark, paper color, decorative accent), never the
+            // request's own content. It deliberately does NOT touch
+            // customDocumentHtml or any doc-field/x-text bound value — the
+            // applicant's name/age/barangay/purpose/date/reference/official
+            // all live in that markup untouched, exactly like editing font
+            // or color doesn't rewrite the wording around it. Seal <img>
+            // src changes live inside .doc-content, so Undo/Redo's own
+            // MutationObserver (see the Undo/Redo section's comment above
+            // execCmd()) picks them up automatically; watermark/paper color
+            // live outside it, so this schedules its own snapshot the same
+            // way setWatermarkOpacity() etc. already do.
+            get activeTemplateKey() {
+                return (this.selected && this.selected.templateKey) || 'esperanza_standard';
+            },
+            applyTemplate(key) {
+                const tpl = this.dokyuTemplates.find((t) => t.key === key);
+                if (!tpl || !this.selected) return;
+                this.selected.templateKey = key;
+                const leftImg = this.findSealImg('left');
+                if (leftImg) {
+                    leftImg.src = tpl.leftSeal;
+                    leftImg.setAttribute('data-default-src', tpl.leftSeal);
+                    leftImg.style.display = '';
+                }
+                const rightImg = this.findSealImg('right');
+                if (rightImg) {
+                    rightImg.src = tpl.rightSeal;
+                    rightImg.setAttribute('data-default-src', tpl.rightSeal);
+                    rightImg.style.display = '';
+                }
+                this.ensureBackground();
+                this.selected.background.src = tpl.watermarkSrc;
+                this.selected.background.opacity = tpl.watermarkOpacity;
+                this.selected.background.paperColor = tpl.paperColor;
+                this.selected.background.decorative = tpl.decorative;
+                this.refreshSealOffsets();
+                this.scheduleHistorySnapshot();
+            },
+            // A real bug exists where an <img> src change inside
+            // .doc-content can fail to survive Save -> Close -> Reopen — a
+            // header seal set by applyTemplate() reverts to the default
+            // Esperanza seal in the live DOM even though
+            // this.selected.templateKey itself persists correctly (full
+            // diagnosis in the final report; extensive testing ruled out
+            // the obvious causes — snapshot size, data: vs http: URLs,
+            // attribute-mutation vs node-replacement, contenteditable
+            // timing — without finding a complete fix). Since the template
+            // key IS reliable, this re-derives and re-asserts both seal
+            // srcs from the CURRENT template's own definition rather than
+            // trusting whatever the captured HTML happened to keep, and is
+            // called every time editing (re)starts so a stale reopen
+            // self-heals. It does not help a seal replaced by a direct
+            // upload (handleSealUpload) with no template backing it — that
+            // specific case is a known, documented limitation.
+            reapplyTemplateSeals() {
+                const key = this.selected && this.selected.templateKey;
+                if (!key) return;
+                const tpl = this.dokyuTemplates.find((t) => t.key === key);
+                if (!tpl) return;
+                const leftImg = this.findSealImg('left');
+                if (leftImg && leftImg.src !== tpl.leftSeal) {
+                    leftImg.src = tpl.leftSeal;
+                    leftImg.style.display = '';
+                }
+                const rightImg = this.findSealImg('right');
+                if (rightImg && rightImg.src !== tpl.rightSeal) {
+                    rightImg.src = tpl.rightSeal;
+                    rightImg.style.display = '';
                 }
             },
             paperStyle() {
@@ -818,6 +994,7 @@
                 this.ensureBackground();
                 this.documentEditBackup = this.selected.customDocumentHtml;
                 this.backgroundEditBackup = JSON.parse(JSON.stringify(this.selected.background));
+                this.templateKeyEditBackup = this.activeTemplateKey;
                 this.editingDocument = true;
                 // Prefer inline style-based formatting (e.g. a span with a
                 // CSS color style) over legacy presentational tags (font
@@ -830,16 +1007,23 @@
                     window.renderIcons?.();
                     this.refreshOverflowWarning();
                     this.recomputeZoomSizer();
+                    this._hadContentBlocks = new WeakSet();
+                    this.reconcileEmptyBlocks();
+                    this.reapplyTemplateSeals();
+                    this.initHistoryTracking();
                 });
             },
             cancelDocumentEdits() {
                 if (this.selected) {
                     this.selected.customDocumentHtml = this.documentEditBackup;
                     if (this.backgroundEditBackup) this.selected.background = this.backgroundEditBackup;
+                    if (this.templateKeyEditBackup) this.selected.templateKey = this.templateKeyEditBackup;
                 }
                 this.documentEditBackup = null;
                 this.backgroundEditBackup = null;
+                this.templateKeyEditBackup = null;
                 this.editingDocument = false;
+                this.teardownHistoryTracking();
                 this.resetEditorUiState();
                 this.$nextTick(() => this.recomputeZoomSizer());
             },
@@ -864,8 +1048,12 @@
                 this.sectionOffsetY = 0;
                 this.sectionOffsetX = 0;
                 this.documentOverflow = false;
-                this.spacingPanelPos = { x: 32, y: 88 };
-                this.spacingPanelCollapsed = false;
+                this.floatingPanels = {
+                    spacing: { pos: { x: 32, y: 88 }, collapsed: false, expanded: false },
+                    seals: { pos: { x: 356, y: 88 }, collapsed: false, expanded: false },
+                    background: { pos: { x: 680, y: 88 }, collapsed: false, expanded: false },
+                };
+                this.templateSidebarCollapsed = false;
             },
             // Toolbar controls (document-editor-toolbar.blade.php) — every
             // command acts on the live browser selection inside .doc-content;
@@ -881,6 +1069,163 @@
             },
             execCmd(cmd) {
                 document.execCommand(cmd);
+            },
+            // --- Undo/Redo -----------------------------------------------------
+            //
+            // document.execCommand('undo'/'redo') (the toolbar's previous
+            // implementation) only ever tracked the browser's own native
+            // contenteditable typing history — it has no idea section
+            // drag-and-drop, spacing, seal changes, or watermark/background
+            // changes even happened, since all of those are plain JS style/
+            // attribute mutations, never routed through execCommand. That's
+            // why Undo/Redo did not work properly: most of what an admin
+            // actually does in this editor was invisible to it.
+            //
+            // This replaces it with one snapshot-based history shared by
+            // every kind of edit, rather than a separate undo mechanism per
+            // feature: each entry is {html, background, templateKey} — html
+            // is .doc-content's own innerHTML (typing, formatting,
+            // indentation, and section X/Y/spacing/seal changes are ALL
+            // already expressed as markup/inline-styles inside it, exactly
+            // what captureContent()/cleanHtml() already rely on for Save),
+            // background is a clone of documentBackground (watermark/paper
+            // color, which live outside .doc-content as a sibling — see
+            // barangay-certificate-preview.blade.php's own comment on that),
+            // and templateKey is which Document Template was active (see
+            // applyTemplate() further below) — a separate field from
+            // background/html, so it needs its own place in the snapshot to
+            // make template switching undoable too.
+            // Restoring a snapshot is the same technique cancelDocumentEdits()
+            // already uses for its own single-level backup, just applied
+            // through a multi-step stack instead of one slot.
+            //
+            // New entries come from a MutationObserver on .doc-content
+            // (initHistoryTracking() below) rather than hand-wiring a
+            // pushHistorySnapshot() call onto every individual toolbar/panel
+            // action — typing, drag-and-drop, indentation, seal edits, and
+            // any future feature that mutates that DOM all get history for
+            // free from one place. Background/watermark changes live
+            // outside .doc-content, so those specific setters call
+            // scheduleHistorySnapshot() directly (see the Change Background
+            // section further below).
+            //
+            // Both paths are debounced (600ms of quiet) rather than pushing
+            // one entry per mutation — required for drag (pointermove fires
+            // continuously; the requirement is ONE history entry for the
+            // whole completed drag, achieved for free here since each new
+            // mutation keeps pushing the deadline back until pointerup),
+            // and equally necessary for typing (one entry per keystroke
+            // would make Undo nearly useless) and for slider-driven changes
+            // like watermark opacity.
+            // $refs is scoped to the nearest x-data — undo()/redo() can be
+            // triggered from the toolbar (inside this component's own
+            // template, where $refs.docEditor resolves fine) or from the
+            // Ctrl+Z/Ctrl+Y window keydown handler, which lives on the
+            // Prepared Document modal's own separate small x-data wrapper
+            // ({ get open() ... } above) — from there $refs.docEditor
+            // doesn't resolve at all (confirmed directly: editHistory.index
+            // updates correctly either way, but the DOM only actually
+            // changed when triggered from the toolbar). getDocContentEl()
+            // sidesteps that scope quirk entirely with a plain selector —
+            // the same one startEditingDocument() already uses for its own
+            // first-capture, for the same reason.
+            getDocContentEl() {
+                return document.querySelector('#dp-print-area .doc-content');
+            },
+            initHistoryTracking() {
+                this.teardownHistoryTracking();
+                const contentEl = this.getDocContentEl();
+                if (!contentEl) return;
+                this.editHistory = { stack: [], index: -1 };
+                this.pushHistorySnapshot();
+                this._historyObserver = new MutationObserver(() => this.scheduleHistorySnapshot());
+                this._historyObserver.observe(contentEl, { childList: true, subtree: true, attributes: true, characterData: true });
+            },
+            teardownHistoryTracking() {
+                clearTimeout(this._historyDebounceTimer);
+                this._historyDebounceTimer = null;
+                if (this._historyObserver) {
+                    this._historyObserver.disconnect();
+                    this._historyObserver = null;
+                }
+                this.editHistory = { stack: [], index: -1 };
+            },
+            scheduleHistorySnapshot() {
+                if (this._restoringHistory) return;
+                clearTimeout(this._historyDebounceTimer);
+                this._historyDebounceTimer = setTimeout(() => this.pushHistorySnapshot(), 600);
+            },
+            pushHistorySnapshot() {
+                const contentEl = this.getDocContentEl();
+                if (!this.editingDocument || !contentEl || this._restoringHistory) return;
+                const snapshot = {
+                    html: window.DokyuEditor.cleanHtml(contentEl.innerHTML),
+                    background: JSON.parse(JSON.stringify(this.documentBackground)),
+                    templateKey: this.activeTemplateKey,
+                };
+                const last = this.editHistory.stack[this.editHistory.index];
+                if (last && last.html === snapshot.html && last.templateKey === snapshot.templateKey && JSON.stringify(last.background) === JSON.stringify(snapshot.background)) return;
+                this.editHistory.stack = this.editHistory.stack.slice(0, this.editHistory.index + 1);
+                this.editHistory.stack.push(snapshot);
+                const maxHistoryEntries = 100;
+                if (this.editHistory.stack.length > maxHistoryEntries) this.editHistory.stack.shift();
+                this.editHistory.index = this.editHistory.stack.length - 1;
+            },
+            restoreHistorySnapshot(snapshot) {
+                const contentEl = this.getDocContentEl();
+                if (!snapshot || !contentEl) return;
+                this._restoringHistory = true;
+                clearTimeout(this._historyDebounceTimer);
+                contentEl.innerHTML = snapshot.html;
+                this.selected.background = JSON.parse(JSON.stringify(snapshot.background));
+                if (snapshot.templateKey) this.selected.templateKey = snapshot.templateKey;
+                this.selectedSectionEl = null;
+                this.hoveredSectionEl = null;
+                this.$nextTick(() => {
+                    window.renderIcons?.();
+                    this.refreshOverflowWarning();
+                    this.recomputeZoomSizer();
+                    this.refreshSealOffsets();
+                    this._hadContentBlocks = new WeakSet();
+                    this.reconcileEmptyBlocks();
+                    setTimeout(() => { this._restoringHistory = false; }, 50);
+                });
+            },
+            canUndo() {
+                return this.editHistory.index > 0;
+            },
+            canRedo() {
+                return this.editHistory.index < this.editHistory.stack.length - 1;
+            },
+            undo() {
+                if (!this.canUndo()) return;
+                this.editHistory.index -= 1;
+                this.restoreHistorySnapshot(this.editHistory.stack[this.editHistory.index]);
+            },
+            redo() {
+                if (!this.canRedo()) return;
+                this.editHistory.index += 1;
+                this.restoreHistorySnapshot(this.editHistory.stack[this.editHistory.index]);
+            },
+            // Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z, scoped to only while the document
+            // editor is actively open — never interferes with the rest of the
+            // Web Admin's own shortcuts elsewhere. Skips native text inputs
+            // (the floating panels' own number fields, color pickers, etc.)
+            // so this never hijacks a field's own native undo while the admin
+            // is mid-edit typing a value into it.
+            handleUndoRedoShortcut(event) {
+                if (!this.editingDocument) return;
+                if (!(event.ctrlKey || event.metaKey)) return;
+                const activeTag = document.activeElement ? document.activeElement.tagName : '';
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
+                if (event.key === 'z' || event.key === 'Z') {
+                    event.preventDefault();
+                    if (event.shiftKey) this.redo();
+                    else this.undo();
+                } else if (event.key === 'y' || event.key === 'Y') {
+                    event.preventDefault();
+                    this.redo();
+                }
             },
             applyFontFamily(family) {
                 this.restoreSelection();
@@ -979,6 +1324,163 @@
                 }
                 this.selectedSectionEl = null;
             },
+            // Fixes the blue-dashed-lines-after-pressing-Enter bug: a
+            // browser's native contenteditable paragraph-split (what Enter
+            // actually does) clones the CURRENT block's opening tag —
+            // including its doc-section-selected / doc-section-hover class —
+            // onto every new paragraph the split produces, and can also
+            // leave a stray .doc-drag-handle child behind on a fragment that
+            // is no longer the tracked block. selectedSectionEl/hoveredSectionEl
+            // (not the class/handle themselves) are the real source of truth,
+            // so this just re-applies that truth to the DOM after every
+            // keystroke: strip the marker class/handle from anything that
+            // isn't the currently tracked element, and re-attach a handle if
+            // the tracked element's own got relocated by the same split.
+            // Deliberately does nothing to Enter/typing itself — this only
+            // cleans up state that already exists in the DOM.
+            reconcileSectionMarkers() {
+                const contentEl = this.$refs.docEditor;
+                if (!contentEl) return;
+                if (this.selectedSectionEl && !contentEl.contains(this.selectedSectionEl)) this.selectedSectionEl = null;
+                if (this.hoveredSectionEl && !contentEl.contains(this.hoveredSectionEl)) this.hoveredSectionEl = null;
+                contentEl.querySelectorAll('.doc-section-selected').forEach((el) => {
+                    if (el !== this.selectedSectionEl) el.classList.remove('doc-section-selected');
+                });
+                contentEl.querySelectorAll('.doc-section-hover').forEach((el) => {
+                    if (el !== this.hoveredSectionEl) el.classList.remove('doc-section-hover');
+                });
+                contentEl.querySelectorAll('.doc-drag-handle').forEach((handle) => {
+                    const owner = handle.parentElement;
+                    if (owner !== this.selectedSectionEl && owner !== this.hoveredSectionEl) {
+                        if (owner) owner.__dragHandle = null;
+                        handle.remove();
+                    }
+                });
+                if (this.selectedSectionEl && !this.selectedSectionEl.__dragHandle) this.attachDragHandle(this.selectedSectionEl);
+                if (this.hoveredSectionEl && !this.hoveredSectionEl.__dragHandle) this.attachDragHandle(this.hoveredSectionEl);
+            },
+            // Collapses a leaf text block's own margin/padding once every
+            // character is deleted from it, so clearing e.g. the TO WHOM IT
+            // MAY CONCERN line no longer leaves a large empty box reserving
+            // its old height — without ever deleting the element itself (it
+            // stays fully editable; typing into it again removes the
+            // collapsed class on the next input event) and without touching
+            // a block Enter just created blank on purpose.
+            //
+            // The two are structurally identical once empty (both end up as
+            // e.g. an empty p containing just a br) — the only way to tell
+            // them apart is history, not shape. this._hadContentBlocks is a
+            // live WeakSet of blocks this editing session has actually seen
+            // non-empty — a block only ever enters it by being observed with
+            // real text at some point. A paragraph split off by Enter is a
+            // structurally new node (even though the browser clones the
+            // original's attributes onto it — see reconcileSectionMarkers()'s
+            // own comment above), so it starts absent from the set and stays
+            // absent — and therefore un-collapsed — for exactly as long as
+            // it stays genuinely blank, which is exactly the intentional
+            // blank line this needs to preserve. Only resets on a fresh
+            // render of .doc-content (first Edit Document click, template
+            // switch, Undo/Redo restore — see their own calls into this
+            // same method) since those create all-new DOM nodes anyway.
+            //
+            // Only ever applied to LEAF blocks (no nested selectable tag
+            // inside) — a container like the letterhead row, the signature
+            // row, or a field grid always has nested paragraphs/divs, so it
+            // can never itself collapse just because everything inside it
+            // happens to be empty at once; that keeps every required
+            // structural wrapper untouched by construction, not via an
+            // allow/deny list of specific class names.
+            // A drag handle (createDragHandleElement() in dokyu-editor.js)
+            // is injected as a real child of whichever block is currently
+            // selected or hovered — a plain div carrying its own grip-glyph
+            // text — purely so it inherits that block's own position:relative
+            // for free (see that function's own comment). That means the
+            // one block reconcileEmptyBlocks()/canRemoveSelectedBlock below
+            // is most likely to be checking (the one the admin just clicked
+            // into) can already have one attached at exactly the moment
+            // that would make it look both non-empty (the handle's own
+            // glyph) and non-leaf (a div is itself one of the nested-block
+            // tags being searched for) even though nothing the admin typed
+            // is actually there. Stripped from a throwaway clone — same
+            // idea cleanHtml()/captureContent() already use before saving —
+            // so this never touches the real DOM or the handle in use.
+            contentOnlyClone(el) {
+                const clone = el.cloneNode(true);
+                clone.querySelectorAll('.doc-drag-handle').forEach((h) => h.remove());
+                return clone;
+            },
+            reconcileEmptyBlocks() {
+                const contentEl = this.$refs.docEditor;
+                if (!contentEl) return;
+                if (!this._hadContentBlocks) this._hadContentBlocks = new WeakSet();
+                const nestedSelector = 'p, div, h1, h2, h3, h4, h5, h6, ul, ol, table';
+                contentEl.querySelectorAll(nestedSelector).forEach((el) => {
+                    const clone = this.contentOnlyClone(el);
+                    if (clone.querySelector(nestedSelector)) {
+                        el.classList.remove('doc-block-collapsed');
+                        return;
+                    }
+                    const hasText = (clone.textContent || '').split(String.fromCharCode(160)).join(' ').trim().length > 0;
+                    const hasMedia = !!clone.querySelector('img, table, input, textarea, select');
+                    if (hasText || hasMedia) {
+                        this._hadContentBlocks.add(el);
+                        el.classList.remove('doc-block-collapsed');
+                    } else if (this._hadContentBlocks.has(el)) {
+                        el.classList.add('doc-block-collapsed');
+                    }
+                });
+                this._contentVersion = (this._contentVersion || 0) + 1;
+            },
+            // Backs the Position & Spacing panel's Remove Block button —
+            // true only for a currently-selected leaf block (the same
+            // no-nested-selectable-tag-inside test reconcileEmptyBlocks()
+            // uses, so a required structural container can never qualify,
+            // since it always has nested paragraphs/divs) that is currently
+            // empty. Deliberately not restricted to blocks the reconcile
+            // pass has already collapsed — an admin selecting a blank line
+            // Enter just created should be able to remove that line
+            // outright too, not only shrink it.
+            get canRemoveSelectedBlock() {
+                // Reading this reactive counter (its value is never used) is
+                // what makes Alpine re-run this getter after a keystroke.
+                // selectedSectionEl is the only OTHER thing read here that
+                // Alpine's reactivity can see, and clearing an already-
+                // selected block's text never changes WHICH element is
+                // selected — it mutates that element's own DOM content via
+                // execCommand/contenteditable, entirely outside Alpine's
+                // reactive store. Without this, the Remove Block button's
+                // own x-show binding would freeze at whatever this getter
+                // returned the moment
+                // the block was first selected (almost always false, since
+                // that's usually before its text gets cleared) and never
+                // re-evaluate again on its own. reconcileEmptyBlocks() bumps
+                // this on every input event for exactly this reason.
+                void this._contentVersion;
+                const el = this.selectedSectionEl;
+                if (!el || !this.$refs.docEditor || el === this.$refs.docEditor) return false;
+                const clone = this.contentOnlyClone(el);
+                const nestedSelector = 'p, div, h1, h2, h3, h4, h5, h6, ul, ol, table';
+                if (clone.querySelector(nestedSelector)) return false;
+                const hasText = (clone.textContent || '').split(String.fromCharCode(160)).join(' ').trim().length > 0;
+                const hasMedia = !!clone.querySelector('img, table, input, textarea, select');
+                return !hasText && !hasMedia;
+            },
+            // Removes the element outright (not just a collapsed/zero-height
+            // state) — for when the admin wants an empty optional line gone
+            // entirely, not merely out of the way. Plain DOM removal inside
+            // .doc-content is already covered by the existing childList:true
+            // MutationObserver (see initHistoryTracking() above), so Undo
+            // restores it exactly like undoing a delete/drag/format change —
+            // no separate history bookkeeping needed here.
+            removeSelectedBlock() {
+                const el = this.selectedSectionEl;
+                if (!el || !this.canRemoveSelectedBlock) return;
+                this.detachDragHandle(el);
+                this.deselectSection();
+                el.remove();
+                this.refreshOverflowWarning();
+                this.recomputeZoomSizer();
+            },
             // Whether the current selection is already one of .doc-content's
             // own direct children (a major section: letterhead, title, body,
             // signatures, footer, ...) rather than a paragraph nested inside
@@ -1068,7 +1570,17 @@
             // redirects every subsequent pointermove/pointerup to the
             // handle itself regardless of where the pointer physically ends
             // up, which is the standard, reliable way to implement a drag
-            // gesture without needing window-level listeners.
+            // gesture without needing window-level listeners. The
+            // dp-dragging-section body class (see app.css) is the fix for
+            // the cursor/handle-disappears-while-dragging bug: without
+            // it, the cursor is only ever grabbing while physically over
+            // the dragged element itself, and reverts to whatever's
+            // actually underneath (the editable text cursor, or the plain
+            // arrow over the modal's own backdrop) the instant a real drag
+            // — moving fast, hitting a clamped boundary so the section
+            // stops following but the pointer keeps going, or overshooting
+            // onto the backdrop — takes the pointer past it, even though
+            // the drag itself never actually stops tracking.
             onDragHandlePointerDown(event, el, handle) {
                 if (!this.editingDocument) return;
                 event.preventDefault();
@@ -1077,6 +1589,7 @@
                 window.DokyuEditor.startSectionDrag(el, event, this.$refs.docEditor, this.zoomLevel);
                 this.isDraggingSection = true;
                 el.classList.add('doc-section-dragging');
+                document.body.classList.add('dp-dragging-section');
                 const onMove = (moveEvent) => {
                     const next = window.DokyuEditor.updateSectionDrag(moveEvent);
                     if (next) {
@@ -1092,6 +1605,7 @@
                     window.DokyuEditor.endSectionDrag();
                     this.isDraggingSection = false;
                     el.classList.remove('doc-section-dragging');
+                    document.body.classList.remove('dp-dragging-section');
                     this.refreshOverflowWarning();
                 };
                 handle.addEventListener('pointermove', onMove);
@@ -1219,22 +1733,25 @@
                 this.refreshSectionSpacing();
                 this.refreshOverflowWarning();
             },
-            // Dragging the floating Position & Spacing window itself (by its
-            // title bar) — a plain screen-space UI drag, unrelated to
-            // dragging a document section: no zoom conversion, no A4
-            // boundary clamping, since this window floats above the paper
-            // (position:fixed) and never affects the document at all. Plain
-            // window-level listeners are enough here (no pointer capture
-            // needed) since there's no hit-testing precision to protect.
-            startPanelDrag(event) {
+            // Dragging any floating editor window by its title bar —
+            // Position & Spacing, Header Seals, and Background all call this
+            // same method with their own key into floatingPanels. A plain
+            // screen-space UI drag, unrelated to dragging a document
+            // section: no zoom conversion, no A4 boundary clamping, since
+            // these windows float above the paper (position:fixed) and
+            // never affect the document at all. Plain window-level
+            // listeners are enough here (no pointer capture needed) since
+            // there's no hit-testing precision to protect.
+            startPanelDrag(event, panelKey) {
                 if (event.target.closest('button')) return;
                 event.preventDefault();
+                const panel = this.floatingPanels[panelKey];
                 const startX = event.clientX;
                 const startY = event.clientY;
-                const originX = this.spacingPanelPos.x;
-                const originY = this.spacingPanelPos.y;
+                const originX = panel.pos.x;
+                const originY = panel.pos.y;
                 const onMove = (moveEvent) => {
-                    this.spacingPanelPos = { x: originX + (moveEvent.clientX - startX), y: originY + (moveEvent.clientY - startY) };
+                    panel.pos = { x: originX + (moveEvent.clientX - startX), y: originY + (moveEvent.clientY - startY) };
                 };
                 const onUp = () => {
                     window.removeEventListener('pointermove', onMove);
@@ -1303,17 +1820,39 @@
             // / municipal-request-preview.blade.php); municipal papers only
             // render a left seal, so hasRightSeal() lets the panel hide the
             // Right Seal block when there is nothing to control.
+            //
+            // Size and position are applied to the WRAPPER (header-seal-wrap--
+            // left/right), not the <img> itself. Each seal is really two
+            // stacked layers in one positioning box: a decorative gold-ringed
+            // placeholder circle (shown only if the real seal image is
+            // removed or fails to load) sitting behind the actual seal image
+            // in front — the image is styled width:100%/height:100% of that
+            // box so it always exactly covers the placeholder. Previously
+            // size/offset were set on the <img> alone, which left the
+            // placeholder circle both a fixed size (causing Large to be
+            // capped on one axis by the browser's own img max-width reset,
+            // turning it into an oval) and a fixed position (so moving the
+            // img uncovered the placeholder's gold ring behind it, looking
+            // like a leftover ghost circle). Resizing/moving the wrapper
+            // moves and scales both layers together as one object, so
+            // nothing is ever left behind and both axes always scale
+            // equally. Upload/remove/restore still target the <img> itself
+            // since those change its src/visibility, not its box.
             findSealImg(side) {
                 const root = document.querySelector('#dp-print-area .doc-content');
                 return root ? root.querySelector('.header-seal--' + side) : null;
+            },
+            findSealWrapper(side) {
+                const root = document.querySelector('#dp-print-area .doc-content');
+                return root ? root.querySelector('.header-seal-wrap--' + side) : null;
             },
             hasRightSeal() {
                 return !!this.findSealImg('right');
             },
             refreshSealOffsets() {
                 ['left', 'right'].forEach((side) => {
-                    const img = this.findSealImg(side);
-                    this.sealOffsets[side] = img ? window.DokyuEditor.readSealOffset(img) : { x: 0, y: 0 };
+                    const wrapper = this.findSealWrapper(side);
+                    this.sealOffsets[side] = wrapper ? window.DokyuEditor.readSealOffset(wrapper) : { x: 0, y: 0 };
                 });
             },
             async handleSealUpload(side, event) {
@@ -1339,55 +1878,71 @@
                 if (!img) return;
                 img.style.display = '';
                 img.src = img.getAttribute('data-default-src') || img.src;
-                img.style.width = '';
-                img.style.height = '';
-                img.style.transform = '';
+                const wrapper = this.findSealWrapper(side);
+                if (wrapper) {
+                    wrapper.style.width = '';
+                    wrapper.style.height = '';
+                    wrapper.style.transform = '';
+                }
                 this.refreshSealOffsets();
             },
             setSealSize(side, sizeKey) {
-                const img = this.findSealImg(side);
-                if (img) window.DokyuEditor.applySealSize(img, sizeKey);
+                const wrapper = this.findSealWrapper(side);
+                if (wrapper) window.DokyuEditor.applySealSize(wrapper, sizeKey);
             },
             adjustSealOffset(side, axis, delta) {
-                const img = this.findSealImg(side);
-                if (!img) return;
-                const current = window.DokyuEditor.readSealOffset(img);
+                const wrapper = this.findSealWrapper(side);
+                if (!wrapper) return;
+                const current = window.DokyuEditor.readSealOffset(wrapper);
                 const next = { x: current.x, y: current.y };
                 next[axis] = current[axis] + delta;
-                window.DokyuEditor.applySealOffset(img, next.x, next.y);
+                window.DokyuEditor.applySealOffset(wrapper, next.x, next.y);
                 this.refreshSealOffsets();
             },
             // Change Background panel (document-editor-background-panel.blade.php)
+            // — watermark/paper-color state lives outside .doc-content (see
+            // barangay-certificate-preview.blade.php), so unlike typing/drag/
+            // seal edits it isn't caught by the Undo/Redo MutationObserver on
+            // .doc-content — each setter below schedules its own history
+            // snapshot directly (see the Undo/Redo section's own comment).
             setWatermarkOpacity(v) {
                 this.ensureBackground();
                 this.selected.background.opacity = Number(v);
+                this.scheduleHistorySnapshot();
             },
             setWatermarkSize(v) {
                 this.ensureBackground();
                 this.selected.background.size = v;
+                this.scheduleHistorySnapshot();
             },
             setWatermarkPosition(v) {
                 this.ensureBackground();
                 this.selected.background.position = v;
+                this.scheduleHistorySnapshot();
             },
             setPaperColor(hex) {
                 this.ensureBackground();
                 this.selected.background.paperColor = hex;
+                this.scheduleHistorySnapshot();
             },
             resetPaperColor() {
                 this.ensureBackground();
                 this.selected.background.paperColor = '#FFFFFF';
+                this.scheduleHistorySnapshot();
             },
             removeWatermark() {
                 this.ensureBackground();
                 this.selected.background.src = null;
+                this.scheduleHistorySnapshot();
             },
             restoreDefaultWatermark() {
                 this.ensureBackground();
                 this.selected.background.src = this.defaultWatermarkSrc;
+                this.scheduleHistorySnapshot();
             },
             resetBackground() {
                 this.selected.background = { ...this.defaultBackground };
+                this.scheduleHistorySnapshot();
             },
             async handleWatermarkUpload(event) {
                 const file = event.target.files && event.target.files[0];
@@ -1400,17 +1955,55 @@
                 }
                 this.ensureBackground();
                 this.selected.background.src = result.dataUrl;
+                this.scheduleHistorySnapshot();
             },
+            // Blurs the contenteditable region and flips :contenteditable
+            // to false BEFORE reading its innerHTML for the capture, rather
+            // than after — a defensive ordering, not a complete fix. A real
+            // bug exists here: an <img> src changed via direct DOM/JS
+            // (a header seal upload, applyTemplate()'s own seal swap, or a
+            // watermark replace) can silently revert to its pre-edit value
+            // in .doc-content once Save runs, surviving neither an
+            // immediate re-check nor a Close -> Reopen. Confirmed to be a
+            // render issue, not a data-loss one — this.selected.
+            // customDocumentHtml itself stays correct throughout (checked
+            // directly against a live x-text bound to that same
+            // expression) — only what actually gets painted from it
+            // reverts. Ruled out by direct testing as the cause: content
+            // size (a tiny data: URL reproduces it identically to a 500KB
+            // one), the data: vs http: URL distinction, attribute-mutation
+            // vs whole-node replacement, and contenteditable state at the
+            // moment of the src change. Typed text via execCommand, and
+            // non-src mutations via direct JS (e.g. removeSeal's
+            // display:none, or removing a node outright), all survive
+            // fine — this reproduces only for the src attribute of an
+            // <img> specifically. See the final report for the full
+            // diagnosis. reapplyTemplateSeals() below (called from
+            // startEditingDocument()) is the actual fix for the common
+            // case — a template-selected seal re-derives its src from the
+            // template definition on every reopen rather than trusting
+            // whatever the captured HTML kept. A seal replaced by a direct
+            // upload (handleSealUpload) has no template to re-derive from,
+            // so that specific case remains a known, documented
+            // limitation; this reordering is kept regardless as a safe,
+            // non-harmful improvement.
             saveDocumentEdits() {
-                if (this.$refs.docEditor) {
-                    this.selected.customDocumentHtml = window.DokyuEditor.cleanHtml(this.$refs.docEditor.innerHTML);
-                }
-                this.documentEditBackup = null;
-                this.backgroundEditBackup = null;
+                const el = this.getDocContentEl();
+                if (el) el.blur();
                 this.editingDocument = false;
-                this.resetEditorUiState();
-                this.$dispatch('toast', { message: 'Document changes saved.', variant: 'success' });
-                this.$nextTick(() => this.recomputeZoomSizer());
+                this.$nextTick(() => {
+                    if (this.$refs.docEditor) {
+                        this.selected.customDocumentHtml = window.DokyuEditor.cleanHtml(this.$refs.docEditor.innerHTML);
+                    }
+                    this.reapplyTemplateSeals();
+                    this.documentEditBackup = null;
+                    this.backgroundEditBackup = null;
+                    this.templateKeyEditBackup = null;
+                    this.teardownHistoryTracking();
+                    this.resetEditorUiState();
+                    this.$dispatch('toast', { message: 'Document changes saved.', variant: 'success' });
+                    this.$nextTick(() => this.recomputeZoomSizer());
+                });
             },
             printDocument() {
                 if (this.editingDocument) this.saveDocumentEdits();
@@ -1429,6 +2022,27 @@
                 const docName = (this.resolvedDocument?.certTitle || this.selected?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
                 document.body.classList.add('dp-printing');
                 await this.$nextTick();
+                // The default seals/watermark are real image files (not
+                // inlined), and a just-uploaded custom seal/watermark is a
+                // data: URL that still needs a browser decode tick — either
+                // way, capturing before they've finished loading bakes a
+                // blank box into the PDF instead of the actual image.
+                await window.DokyuEditor.waitForImages(el);
+                // html2canvas 1.4.1 only understands the rgb/rgba/hsl/hsla
+                // color functions and throws on anything else — Tailwind v4
+                // compiles its whole palette as oklch(), which is exactly
+                // what was breaking every Download PDF attempt (confirmed
+                // via direct reproduction: it throws Attempting to parse an
+                // unsupported color function oklch). html2canvas resolves
+                // background/image resources against the LIVE document
+                // before its own clone (and onclone) ever exists, so the
+                // fix has to touch the real page rather than a clone —
+                // sanitizeExportColors() only ever swaps in a mathematically
+                // identical rgb() for each oklch() it finds, so nothing
+                // visibly changes, and restoreColors() (always run in
+                // finally) puts every touched property back immediately
+                // after capture.
+                const restoreColors = window.DokyuEditor.sanitizeExportColors(document.body);
                 try {
                     await window.html2pdf().set({
                         margin: 0,
@@ -1439,9 +2053,10 @@
                         pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
                     }).from(el).save();
                 } catch (error) {
-                    console.error('Prepared document PDF download failed:', error);
+                    console.error('PDF generation failed:', error?.message || error, error);
                     this.$dispatch('toast', { message: 'Unable to download the PDF. Please try Print and choose Save as PDF.', variant: 'danger' });
                 } finally {
+                    restoreColors();
                     document.body.classList.remove('dp-printing');
                 }
             },
@@ -2565,10 +3180,10 @@
              dp-printing print isolation as the citizen portal (shared rules
              in app.css). --}}
         <div
-            x-data="{ get open() { return docPreviewOpen }, set open(v) { docPreviewOpen = v; if (!v) { editingDocument = false; documentEditBackup = null; backgroundEditBackup = null; resetEditorUiState(); } else { zoomLevel = 100; $nextTick(() => recomputeZoomSizer()); } } }"
-            @keydown.window="handleZoomShortcut($event)"
+            x-data="{ get open() { return docPreviewOpen }, set open(v) { docPreviewOpen = v; if (!v) { editingDocument = false; documentEditBackup = null; backgroundEditBackup = null; templateKeyEditBackup = null; resetEditorUiState(); } else { zoomLevel = 100; $nextTick(() => recomputeZoomSizer()); } } }"
+            @keydown.window="handleZoomShortcut($event); handleUndoRedoShortcut($event)"
         >
-            <x-ui.modal title="Prepared Document" maxWidth="3xl">
+            <x-ui.modal title="Prepared Document" maxWidth="3xl" :fullscreen="true" :start-compact="true">
                 <template x-if="selected && documentReady">
                     <div>
                         <div class="flex items-center justify-between mb-3 dp-no-print" x-show="!editingDocument">
@@ -2582,6 +3197,14 @@
                         <x-citizen.document-editor-spacing-panel />
                         <x-citizen.document-editor-header-seal-panel />
 
+                        {{-- Template sidebar sits beside the paper only —
+                             the toolbar/floating panels above stay full-
+                             width, matching the requested layout (sidebar
+                             + paper in the middle, toolbar spanning the
+                             top, inspectors floating independently). --}}
+                        <div class="flex gap-4 items-start">
+                            <x-citizen.document-editor-template-sidebar />
+                            <div class="flex-1 min-w-0">
                         <div id="dp-print-area">
                             <div class="flex items-center justify-between mb-4 text-[11px] text-slate-400 dp-no-print">
                                 <span x-text="selected.ref"></span>
@@ -2620,6 +3243,7 @@
                                                         seal="null"
                                                         punongBarangay="resolvedDocument.barangayOfficials?.punong_barangay"
                                                         barangaySecretary="resolvedDocument.barangayOfficials?.barangay_secretary"
+                                                        background="documentBackground"
                                                     />
                                                 </template>
                                                 <template x-if="resolvedDocument?.previewType === 'municipal_request'">
@@ -2635,6 +3259,7 @@
                                                         technicianTitle="selected.technicianTitle"
                                                         verifier="selected.verifier"
                                                         verifierTitle="selected.verifierTitle"
+                                                        background="documentBackground"
                                                     />
                                                 </template>
                                             </div>
@@ -2650,7 +3275,7 @@
                                              Background never touches the
                                              editable text, and vice versa. --}}
                                         <template x-if="selected.customDocumentHtml">
-                                            <div class="doc-paper rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10" :style="paperStyle()">
+                                            <div class="doc-paper rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10" :style="paperStyle()" :class="documentBackground.decorative ? 'doc-paper--tpl-' + documentBackground.decorative : ''">
                                                 <img class="doc-watermark" alt="" aria-hidden="true" x-show="documentBackground.src" x-cloak :src="documentBackground.src" :style="watermarkStyle()">
                                                 <div
                                                     class="doc-content relative flex flex-col flex-1"
@@ -2661,12 +3286,14 @@
                                                     @mouseover="hoverSection($event)"
                                                     @mouseleave="clearHoverSection()"
                                                     @keydown="handleContentKeydown($event)"
-                                                    @input="refreshOverflowWarning(); recomputeZoomSizer()"
+                                                    @input="reconcileSectionMarkers(); reconcileEmptyBlocks(); refreshOverflowWarning(); recomputeZoomSizer()"
                                                 ></div>
                                             </div>
                                         </template>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
                             </div>
                         </div>
                     </div>

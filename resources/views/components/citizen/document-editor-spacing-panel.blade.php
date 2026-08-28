@@ -6,7 +6,11 @@
      zoom scale (see document-editor-zoom-controls.blade.php's own comment
      on .doc-zoom-scale) — its own on-screen size never changes with paper
      zoom. dp-no-print keeps it out of Print/PDF like every other editor
-     chrome piece.
+     chrome piece. Shares its .doc-floating-panel* chrome and
+     floatingPanels/startPanelDrag() state with Header Seals
+     (document-editor-header-seal-panel.blade.php) and Background
+     (document-editor-background-panel.blade.php) — one floating-window
+     pattern, not three separate ones.
 
      Works on whatever block the admin last clicked inside .doc-content —
      a major section (letterhead/title/body/signature row — a direct child
@@ -21,33 +25,39 @@
      Expects the surrounding Alpine scope (document-requests.blade.php) to
      expose: editingDocument, activePanel, selectedSectionEl,
      selectedSectionLabel, isMajorSection, sectionSpacing, sectionOffsetX,
-     sectionOffsetY, documentOverflow, spacingPanelPos, spacingPanelCollapsed,
-     startPanelDrag($event), selectParentSection(), adjustSpacingBefore(px),
-     adjustSpacingAfter(px), adjustLineHeight(step), adjustSectionOffsetX(px),
-     setSectionOffsetXDirect(px), adjustSectionOffsetY(px),
-     setSectionOffsetYDirect(px), moveSelectedSection(direction),
-     resetSectionSpacing(), deselectSection(). --}}
+     sectionOffsetY, documentOverflow, floatingPanels.spacing,
+     startPanelDrag($event, 'spacing'), selectParentSection(),
+     adjustSpacingBefore(px), adjustSpacingAfter(px), adjustLineHeight(step),
+     adjustSectionOffsetX(px), setSectionOffsetXDirect(px),
+     adjustSectionOffsetY(px), setSectionOffsetYDirect(px),
+     moveSelectedSection(direction), resetSectionSpacing(),
+     deselectSection(), canRemoveSelectedBlock, removeSelectedBlock().
+
+     :style takes an object here, not a template-literal string, on
+     purpose — this is the actual reason Close previously failed to stick
+     on a panel that had never been individually toggled yet. x-show hides
+     an element by writing display:none directly onto element.style; a
+     STRING :style binding instead replaces the whole style attribute text
+     every time it re-runs, so whichever of the two directives' effects
+     happens to fire last on a given render wins outright, and there's no
+     ordering guarantee between them. That's exactly why Close appeared to
+     work sometimes and not others depending on what else had touched the
+     panel already. The object form sets/removes individual CSS
+     properties (left/top here) through the CSSStyleDeclaration API
+     instead of overwriting the attribute wholesale, so it can never step
+     on display, however many times it re-runs. --}}
 <div
-    class="doc-spacing-panel dp-no-print"
+    class="doc-floating-panel dp-no-print"
     x-show="editingDocument && activePanel === 'spacing'"
     x-cloak
     x-transition
-    :style="'left:' + spacingPanelPos.x + 'px; top:' + spacingPanelPos.y + 'px;'"
+    :style="{ left: floatingPanels.spacing.pos.x + 'px', top: floatingPanels.spacing.pos.y + 'px' }"
+    :class="floatingPanels.spacing.expanded ? 'doc-floating-panel--expanded' : ''"
 >
-    <div class="doc-spacing-panel-header" @pointerdown="startPanelDrag($event)">
-        <span class="text-[11px] font-semibold text-navy-900 select-none">Position &amp; Spacing</span>
-        <div class="flex items-center gap-0.5">
-            <button type="button" class="doc-spacing-panel-icon-btn" title="Collapse" @click="spacingPanelCollapsed = !spacingPanelCollapsed">
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5" :class="spacingPanelCollapsed ? '-rotate-90' : ''"></i>
-            </button>
-            <button type="button" class="doc-spacing-panel-icon-btn" title="Close" @click="activePanel = null">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>
-            </button>
-        </div>
-    </div>
+    <x-citizen.doc-floating-panel-header title="Position & Spacing" panel-key="spacing" />
 
-    <div x-show="!spacingPanelCollapsed">
-        <div class="doc-spacing-panel-body">
+    <div x-show="!floatingPanels.spacing.collapsed">
+        <div class="doc-floating-panel-body">
             <p class="text-[11px] text-slate-400 leading-relaxed" x-show="!selectedSectionEl">Click any part of the document to select it.</p>
 
             <template x-if="selectedSectionEl">
@@ -117,6 +127,12 @@
                     <div class="flex items-center justify-between pt-0.5">
                         <button type="button" class="doc-spacing-mini-btn" @click="resetSectionSpacing()">Reset Position</button>
                         <button type="button" class="doc-spacing-mini-btn text-slate-400" @click="deselectSection()">Deselect</button>
+                    </div>
+
+                    <div x-show="canRemoveSelectedBlock" x-cloak class="pt-0.5">
+                        <button type="button" class="doc-spacing-mini-btn justify-center w-full text-red-600 border-red-200" @click="removeSelectedBlock()">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i> Remove Block
+                        </button>
                     </div>
                 </div>
             </template>

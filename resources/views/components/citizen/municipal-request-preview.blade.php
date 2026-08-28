@@ -19,15 +19,30 @@
      the shared request row (`selected.*`), not the per-document snapshot —
      editing them in place would leak into other parts of the admin UI that
      read the same object. --}}
-@props(['docKey', 'bind', 'title', 'office', 'formNo' => null, 'officiant' => null, 'officiantTitle' => null, 'technician' => null, 'technicianTitle' => null, 'verifier' => null, 'verifierTitle' => null, 'editing' => 'false'])
+@props([
+    'docKey', 'bind', 'title', 'office', 'formNo' => null, 'officiant' => null, 'officiantTitle' => null, 'technician' => null, 'technicianTitle' => null, 'verifier' => null, 'verifierTitle' => null, 'editing' => 'false',
+    // See barangay-certificate-preview.blade.php's own header comment on
+    // this exact prop — same {src, opacity, size, position, paperColor,
+    // decorative} shape, same default, same reasoning.
+    'background' => "{ src: '" . asset('images/esperanza/esperanza-seal.png') . "', opacity: 5, size: 'large', position: 'center', paperColor: '#FFFFFF', decorative: null }",
+])
 
 {{-- A4 page proportions (210mm × 297mm) — see barangay-certificate-preview.blade.php's
      own header comment for the full reasoning: container-query min-height
      keeps a short request slip a real full-page A4 sheet (signature block
      pushed to the bottom via flex/mt-auto) rather than a text-height box,
-     while longer content still grows past 297mm instead of clipping. --}}
-<div class="doc-paper rounded-2xl border-2 border-slate-200 bg-white p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col" style="font-family: Georgia, 'Times New Roman', serif;">
-    <x-citizen.document-watermark />
+     while longer content still grows past 297mm instead of clipping.
+
+     bg-white removed — see barangay-certificate-preview.blade.php's own
+     comment on this same change for why (paperStyle() below reproduces it
+     by default, but also lets a selected graphic template's paper color/
+     decorative accents show here, pre-first-edit, like everywhere else). --}}
+<div
+    class="doc-paper rounded-2xl border-2 border-slate-200 p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col"
+    :style="window.DokyuEditor.paperStyle({!! $background !!})"
+    :class="({!! $background !!}).decorative ? 'doc-paper--tpl-' + ({!! $background !!}).decorative : ''"
+>
+    <x-citizen.document-watermark :background="$background" />
 
     {{-- Everything except the watermark lives inside .doc-content — see
          barangay-certificate-preview.blade.php's own header comment on
@@ -40,11 +55,11 @@
 
     <!-- Letterhead -->
     <div class="relative flex items-center gap-3 mb-4">
-        <div class="relative w-14 h-14 shrink-0">
+        <div class="header-seal-wrap header-seal-wrap--left relative w-14 h-14 shrink-0">
             <div class="absolute inset-0 rounded-full bg-slate-50 border-2 border-gold-400 flex items-center justify-center text-slate-300">
                 <i data-lucide="shield" class="w-6 h-6"></i>
             </div>
-            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" data-default-src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="header-seal header-seal--left relative w-14 h-14 rounded-full object-cover border-2 border-gold-400">
+            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" data-default-src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="header-seal header-seal--left absolute inset-0 w-full h-full rounded-full object-cover border-2 border-gold-400">
         </div>
         <div class="min-w-0 flex-1">
             <p class="text-[11px] text-slate-500">Republic of the Philippines · Province of Masbate</p>

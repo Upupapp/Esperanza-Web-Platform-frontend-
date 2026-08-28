@@ -8,7 +8,13 @@
 
      Expects the surrounding Alpine scope (document-requests.blade.php) to
      expose: zoomLevel, zoomIn(), zoomOut(), setZoomLevel(level),
-     resetZoom(), fitPage(). --}}
+     resetZoom(), fitPage(). Full View reuses `compact`, the toggle already
+     built into components/ui/modal.blade.php's own `fullscreen` branch
+     (the Prepared Document modal opts in via :fullscreen="true" and
+     :start-compact="true" so it still opens at its normal size) — `compact`
+     lives on that wrapping x-data and is reachable here through Alpine's
+     ordinary scope chain, so this is one shared toggle, not a second,
+     competing one; the modal's own header icon can also flip it. --}}
 <div class="doc-zoom-controls dp-no-print flex items-center gap-1 mb-3">
     <button type="button" class="doc-toolbar-btn border border-slate-200" title="Zoom out" @click="zoomOut()">
         <i data-lucide="minus" class="w-3.5 h-3.5"></i>
@@ -28,5 +34,12 @@
     </button>
     <button type="button" class="doc-toolbar-btn text-slate-500" title="Reset to 100%" x-show="zoomLevel !== 100" @click="resetZoom()">
         Reset Zoom
+    </button>
+    <span class="doc-toolbar-sep"></span>
+    <button type="button" class="doc-toolbar-btn border border-slate-200 font-medium" title="Enlarge the document workspace — more room for editing, not a zoom change" x-show="compact" @click="compact = false">
+        <i data-lucide="expand" class="w-3.5 h-3.5"></i> Full View
+    </button>
+    <button type="button" class="doc-toolbar-btn border border-brand-300 bg-brand-50 text-brand-700 font-medium" title="Return to the normal workspace size" x-show="!compact" x-cloak @click="compact = true">
+        <i data-lucide="shrink" class="w-3.5 h-3.5"></i> Exit Full View
     </button>
 </div>
