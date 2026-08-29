@@ -19,7 +19,15 @@
             <x-admin.topbar :title="$title" :subtitle="$subtitle" />
 
             <main class="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-6">
-                {{ $slot }}
+                {{-- TAB 08: no session -> the portal shows nothing but a way in.
+                     Gated here, once, rather than in each of the admin pages. --}}
+                <div x-show="!$store.session.account" x-cloak>
+                    <x-admin.sign-in-required />
+                </div>
+
+                <div x-show="$store.session.account" x-cloak>
+                    {{ $slot }}
+                </div>
             </main>
         </div>
     </div>

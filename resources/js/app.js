@@ -37,8 +37,16 @@ document.addEventListener('alpine:init', () => {
     // Frontend-only "logged in as this role" simulation for the Administrative
     // Portal (see config/esperanza_rbac.php). No real auth — the account object
     // just persists to localStorage so nav/pages can gate content by module
-    // access and Municipal/Barangay scope. No session -> fail-open (unrestricted
-    // preview), since this is a design demo, not a real security boundary.
+    // access and Municipal/Barangay scope.
+    //
+    // No session -> fail CLOSED (TAB 08). This used to fail open so the design
+    // could be previewed without logging in. That is wrong the moment a real API
+    // exists: it trains every screen to treat "no account" as "allowed", and the
+    // preview is indistinguishable from a genuine unrestricted session.
+    //
+    // What this gating is for: hiding what the user cannot use. It is NOT the
+    // security boundary. The server enforces every permission triple, and a
+    // check here must never be presented as protection.
     Alpine.store('session', {
         // Re-derive moduleKeys/permissions from the current RBAC config on every
         // load instead of trusting whatever was frozen into localStorage at
@@ -65,17 +73,17 @@ document.addEventListener('alpine:init', () => {
             localStorage.removeItem('esperanza_session');
         },
         can(moduleKey) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             return (this.account.moduleKeys || []).includes(moduleKey);
         },
         canPerm(submoduleKey, permission) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             const perms = (this.account.permissions || {})[submoduleKey];
             if (!perms) return false;
             return Array.isArray(perms) ? perms.includes(permission) : perms === '*';
         },
         inScope(barangay) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             if (this.account.scope === 'Municipal') return true;
             return this.account.scope === barangay;
         },
@@ -84,7 +92,7 @@ document.addEventListener('alpine:init', () => {
         // Front Desk, Records Officer, Municipal/Super Admin see across offices
         // (per the Dokyu & Tulong routing plan's role x scope matrix).
         inDeptScope(office) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             if (!['department_head', 'department_staff'].includes(this.account.roleKey)) return true;
             return this.account.dept === office;
         },
@@ -95,7 +103,7 @@ document.addEventListener('alpine:init', () => {
         // get it via the 'full'/'view_export' preset; Information Officer
         // (view-only) and everyone else without the reports module do not.
         canExportReports() {
-            if (!this.account) return true;
+            if (!this.account) return false;
             const perms = this.account.permissions || {};
             return ['rep_population', 'rep_assistance', 'rep_document', 'rep_financial'].some((k) => (perms[k] || []).includes('export'));
         },
