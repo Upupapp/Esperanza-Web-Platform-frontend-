@@ -154,3 +154,13 @@ Never redesign existing patterns unless the user explicitly instructs it.
 Every deliverable: production-ready, enterprise-grade, responsive,
 accessible, beautiful, modern, premium, interactive, modular, scalable,
 backend-ready, frontend-only.
+
+## Deploying — HARD RULE
+
+Every push to `main` follows `DEPLOY_PROTOCOL.md`: sweep remote main, enumerate
+local-only work (including untracked files), test, merge preserving local-only
+items, sweep and test again, then push. A push to `main` deploys this repo via
+Netlify, so the post-merge gate is not a formality.
+
+Open findings live in `FRONTEND_PENDING.md`. The backend work order derived from
+this frontend is `ESPERANZA_BACKEND_MASTER_COMMAND.md`.
