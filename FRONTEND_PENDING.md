@@ -4,6 +4,11 @@ Sweep + test run: 2026-08-29, macOS, clone of `Upupapp/Esperanza-Web-Platform-fr
 HEAD verified: `dd7e0d400a7cd17402ac269a09c6c708f912ff9f` ("Enhance Esperanza Web Admin", 2026-08-28)
 Toolchain: PHP 8.4.23 (Herd), Composer 2.10.1, Node 24.19.0, npm 11.17.0
 
+> **Update 2026-08-29 (this session).** Worked against the Front-End Master
+> Command. Every FIXED row below is covered by an assertion in `scripts/gate.sh`,
+> which runs on every push via `scripts/hooks/pre-push`. See `CERTIFICATION.md`
+> for the TAB 17 verdict and the list of what is still open.
+
 State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 
 ---
@@ -12,15 +17,15 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 
 | ID | Sev | State | Finding |
 | --- | --- | --- | --- |
-| F-001 | P0 | OPEN | `export.php` route map omits 9 live routes — they 404 on the deployed Netlify site |
-| F-002 | P0 | OPEN | `public/documents/` is not copied into `dist/` — every reference-form PDF preview breaks in production |
-| F-003 | P1 | OWNER DECISION | `netlify.toml` publishes a real `APP_KEY` value in a comment, in a public repo |
-| F-004 | P1 | OPEN | `.env.example` ships database session/cache/queue drivers with no sqlite file — a fresh clone 500s on every page |
-| F-005 | P2 | OPEN | Single 1.66 MB JS chunk; `/admin/sakuna` renders 1.59 MB of HTML in one response |
-| F-006 | P2 | OPEN | No real test coverage — 2 untouched Laravel example tests against 57 routes / 98 views |
-| F-007 | P3 | OPEN | `pint --test` fails on 9 files |
-| F-008 | P3 | OPEN | `dist/` is not gitignored — a 53 MB build output can be committed by accident |
-| F-009 | P3 | OPEN | 8 images over 1 MB (largest 2.2 MB) unoptimised; working tree is 130 MB |
+| F-001 | P0 | **FIXED** | `export.php` route map is now DERIVED from `Route::getRoutes()` -- 55/55 routes export; drift gate added |
+| F-002 | P0 | **FIXED** | `public/documents` added to the asset map -- all 16 reference PDFs reach `dist/`; asserted by the drift gate |
+| F-003 | P1 | **PARTIAL / OWNER** | Literal key redacted from `netlify.toml`. It is still in git history and MUST be rotated -- owner action |
+| F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
+| F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 9, enforced by `scripts/hooks/pre-push` |
+| F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
+| F-008 | P3 | **FIXED** | `/dist` is gitignored |
+| F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
 
 ### F-001 — 9 routes are unreachable in the production build (P0)
 

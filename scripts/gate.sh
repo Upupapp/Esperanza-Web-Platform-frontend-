@@ -70,7 +70,12 @@ fi
 # 4. The deploy artifact itself.
 say "static export"
 rm -rf dist
-if "$PHP_BIN" export.php </dev/null >/tmp/esperanza-gate-export.log 2>&1; then
+# export.php bakes APP_URL into ABSOLUTE asset URLs. Export with an explicit one
+# so the assertion below can prove it is honoured: a dist/ pinned to the wrong
+# origin serves pages whose every stylesheet and script 404s, and the site looks
+# like unstyled HTML rather than like a broken build.
+GATE_APP_URL="${APP_URL:-http://gate.invalid}"
+if APP_URL="$GATE_APP_URL" "$PHP_BIN" export.php </dev/null >/tmp/esperanza-gate-export.log 2>&1; then
   pass "static export"
 else
   fail "static export"; tail -25 /tmp/esperanza-gate-export.log
@@ -89,6 +94,13 @@ fi
 
 EMPTY=$(find dist -name '*.html' -size 0 2>/dev/null | wc -l | tr -d ' ')
 [ "$EMPTY" = "0" ] && pass "no zero-byte HTML" || { fail "$EMPTY zero-byte HTML file(s)"; }
+
+STRAY=$(grep -rl "http://localhost/" dist --include='*.html' 2>/dev/null | wc -l | tr -d ' ')
+if [ "$STRAY" = "0" ]; then
+  pass "asset URLs honour APP_URL (no http://localhost left in dist/)"
+else
+  fail "$STRAY page(s) still point at http://localhost - APP_URL was ignored, so every asset 404s"
+fi
 
 PDFS=$(find dist/documents -name '*.pdf' 2>/dev/null | wc -l | tr -d ' ')
 [ "$PDFS" -ge 16 ] && pass "$PDFS reference PDFs in dist/documents" || fail "only $PDFS reference PDFs reached dist/"
