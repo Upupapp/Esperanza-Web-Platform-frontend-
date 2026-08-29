@@ -23,6 +23,11 @@
   BROADCAST_CONNECTION = "log"
   FILESYSTEM_DISK    = "local"
 
+  # Read at BUILD time by Vite for the browser-side API client (TAB 05).
+  # Point this at the real API origin before the first production deploy.
+  VITE_API_BASE_URL  = "/api"
+  VITE_API_TIMEOUT_MS = "15000"
+
 # ── Redirect rules ────────────────────────────────────────────────────────────
 # All known routes have an index.html in dist/; Netlify serves them automatically.
 # The rules below handle the /logout alias and a catch-all 404 fallback.
