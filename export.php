@@ -32,6 +32,14 @@ $kernel->bootstrap();
 
 $routes = esperanza_export_routes($app->make('router')->getRoutes());
 
+// Fail loudly rather than publishing an empty site: an exporter that writes
+// nothing still exits 0 and looks like a successful build.
+if ($routes === []) {
+    fwrite(STDERR, "No routes derived from the router - refusing to publish an empty site.
+");
+    exit(1);
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function copyDir(string $src, string $dst): int
 {
