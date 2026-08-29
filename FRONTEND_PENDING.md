@@ -12,8 +12,8 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 
 | ID | Sev | State | Finding |
 | --- | --- | --- | --- |
-| F-001 | P0 | OPEN | `export.php` route map omits 9 live routes — they 404 on the deployed Netlify site |
-| F-002 | P0 | OPEN | `public/documents/` is not copied into `dist/` — every reference-form PDF preview breaks in production |
+| F-001 | P0 | **CLOSED** | ~~`export.php` route map omits 9 live routes — they 404 on the deployed Netlify site~~ — map now derived from `Route::getRoutes()`; 55/55 exported |
+| F-002 | P0 | **CLOSED** | ~~`public/documents/` is not copied into `dist/`~~ — added to the asset map; 16 PDFs (22 MB) now exported |
 | F-003 | P1 | OWNER DECISION | `netlify.toml` publishes a real `APP_KEY` value in a comment, in a public repo |
 | F-004 | P1 | OPEN | `.env.example` ships database session/cache/queue drivers with no sqlite file — a fresh clone 500s on every page |
 | F-005 | P2 | OPEN | Single 1.66 MB JS chunk; `/admin/sakuna` renders 1.59 MB of HTML in one response |
@@ -200,3 +200,36 @@ sweep needs a backend change.
 - **No browser/JS-runtime testing.** Alpine interactions, Chart.js rendering and
   `html2pdf.js` export were not exercised — server-render only. Anything that
   fails only after hydration is out of this sweep's reach.
+
+
+---
+
+## Closed 2026-08-29 — F-001 and F-002
+
+Both were the same defect: `export.php` kept a hand-maintained `$routes` list
+that had drifted from `routes/web.php`, and a hand-maintained `$assets` list
+that never included `public/documents`.
+
+**Fixed at the class, not the instances.** The route map is now derived from
+`Route::getRoutes()` — parameterised routes and `/up` skipped — so drift is
+structurally impossible rather than merely corrected. `public/documents` was
+added to the asset map.
+
+**Measured after the fix**, on a clean `dist/`:
+
+| Check | Before | After |
+| --- | --- | --- |
+| Pages rendered by `export.php` | 46 | **55** |
+| Routes in the router but not in `dist/` | 9 | **0** |
+| Reference-form PDFs in `dist/documents/` | 0 | **16** (22 MB) |
+| Zero-byte pages | — | 0 |
+
+The nine previously-unreachable routes now render, including
+`/citizen/legal/terms` and `/citizen/legal/privacy-policy` — the pages the
+registration consent checkbox links to — plus `/admin/papeles` and
+`/admin/internal-forms`, both linked from the admin sidebar.
+
+**Still open from this register:** F-003 (APP_KEY rotation, owner decision),
+F-004, F-005, F-006, F-007, F-009. F-006 is the one that matters most next —
+a route-render and export-drift test in CI is what stops this class of defect
+returning, and neither exists yet.

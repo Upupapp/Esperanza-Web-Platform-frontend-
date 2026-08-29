@@ -19,56 +19,33 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 /** @var \Illuminate\Contracts\Http\Kernel $kernel */
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-// ── Route map: URI → dist-relative output path ───────────────────────────────
-$routes = [
-    '/'                                => 'index.html',
-    '/citizen/login'                   => 'citizen/login/index.html',
-    '/citizen/register'                => 'citizen/register/index.html',
-    '/admin/login'                     => 'admin/login/index.html',
-    '/logout'                          => 'logout/index.html',
-    '/citizen/dashboard'               => 'citizen/dashboard/index.html',
-    '/citizen/profile'                 => 'citizen/profile/index.html',
-    '/citizen/document-requests'       => 'citizen/document-requests/index.html',
-    '/citizen/assistance-requests'     => 'citizen/assistance-requests/index.html',
-    '/citizen/notifications'           => 'citizen/notifications/index.html',
-    '/citizen/directory'               => 'citizen/directory/index.html',
-    '/citizen/announcements'           => 'citizen/announcements/index.html',
-    '/citizen/events'                  => 'citizen/events/index.html',
-    '/citizen/settings'                => 'citizen/settings/index.html',
-    '/citizen/help'                    => 'citizen/help/index.html',
-    '/citizen/help/tutorials'          => 'citizen/help/tutorials/index.html',
-    '/citizen/help/support'            => 'citizen/help/support/index.html',
-    '/admin/dashboard'                 => 'admin/dashboard/index.html',
-    '/admin/document-requests'         => 'admin/document-requests/index.html',
-    '/admin/assistance-requests'       => 'admin/assistance-requests/index.html',
-    '/admin/payments'                  => 'admin/payments/index.html',
-    '/admin/constituents'              => 'admin/constituents/index.html',
-    '/admin/constituents/families'     => 'admin/constituents/families/index.html',
-    '/admin/constituents/households'   => 'admin/constituents/households/index.html',
-    '/admin/constituents/profiling'    => 'admin/constituents/profiling/index.html',
-    '/admin/constituents/data-quality' => 'admin/constituents/data-quality/index.html',
-    '/admin/communications'            => 'admin/communications/index.html',
-    '/admin/communications/offices'    => 'admin/communications/offices/index.html',
-    '/admin/announcements'             => 'admin/announcements/index.html',
-    '/admin/reports'                   => 'admin/reports/index.html',
-    '/admin/reports/analytics'         => 'admin/reports/analytics/index.html',
-    '/admin/users'                     => 'admin/users/index.html',
-    '/admin/users/roles'               => 'admin/users/roles/index.html',
-    '/admin/settings'                  => 'admin/settings/index.html',
-    '/admin/settings/branding'         => 'admin/settings/branding/index.html',
-    '/admin/settings/audit-logs'       => 'admin/settings/audit-logs/index.html',
-    // Sakuna module
-    '/admin/sakuna'                    => 'admin/sakuna/index.html',
-    '/admin/sakuna/vulnerability'      => 'admin/sakuna/vulnerability/index.html',
-    '/admin/sakuna/incidents'          => 'admin/sakuna/incidents/index.html',
-    '/admin/sakuna/evacuation-centers' => 'admin/sakuna/evacuation-centers/index.html',
-    '/admin/sakuna/evacuees'           => 'admin/sakuna/evacuees/index.html',
-    '/admin/sakuna/resources'          => 'admin/sakuna/resources/index.html',
-    '/admin/sakuna/relief'             => 'admin/sakuna/relief/index.html',
-    '/admin/sakuna/damage-assessment'  => 'admin/sakuna/damage-assessment/index.html',
-    '/admin/sakuna/alerts'             => 'admin/sakuna/alerts/index.html',
-    '/admin/sakuna/reports'            => 'admin/sakuna/reports/index.html',
-];
+// ── Route map: URI → dist-relative output path ───────────────────────────
+// Derived from the router, never hand-maintained. A hand-written list silently
+// drifts from routes/web.php, and because Netlify serves dist/ as flat files a
+// route missing here is a 404 in production while still returning 200 locally --
+// which is exactly how /admin/papeles, /admin/internal-forms and the Terms and
+// Privacy Policy pages shipped broken. Deriving it makes that drift impossible.
+$kernel->bootstrap();
+
+$routes = [];
+
+foreach ($app->make('router')->getRoutes() as $route) {
+    if (! in_array('GET', $route->methods(), true)) {
+        continue;
+    }
+
+    $uri = '/' . ltrim($route->uri(), '/');
+
+    // Parameterised routes have no single static representation, and /up is
+    // Laravel's health endpoint -- neither belongs in a static export.
+    if (str_contains($uri, '{') || $uri === '/up') {
+        continue;
+    }
+
+    $routes[$uri] = $uri === '/' ? 'index.html' : trim($uri, '/') . '/index.html';
+}
+
+ksort($routes);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function copyDir(string $src, string $dst): int
@@ -142,9 +119,13 @@ foreach ($routes as $uri => $outputPath) {
 echo "\n── Assets ─────────────────────────────────────────────────\n";
 
 $assets = [
-    'public/build'   => 'dist/build',
-    'public/images'  => 'dist/images',
-    'public/fonts'   => 'dist/fonts',
+    'public/build'     => 'dist/build',
+    'public/images'    => 'dist/images',
+    'public/fonts'     => 'dist/fonts',
+    // Reference forms surfaced as an <iframe> preview and a download link on the
+    // admin Dokyu/Tulong pages (config reference_pdf keys). Absent from dist/,
+    // every one of those previews is an empty frame in production.
+    'public/documents' => 'dist/documents',
 ];
 
 foreach ($assets as $src => $dst) {

@@ -205,7 +205,12 @@ passes, and the bundle is code-split.
 
 ## TAB 01 — The two production defects · P0
 
-**These are live. Everything else in this book can wait; these cannot.**
+**CLOSED 2026-08-29.** Both fixed by deriving the export map from
+`Route::getRoutes()` and adding `public/documents` to the asset map: 46 pages
+became 55, router-vs-export drift went from 9 to 0, and 16 reference PDFs now
+reach `dist/`. The record below is kept for the reasoning.
+
+**These were live. Everything else in this book can wait; these could not.**
 
 ### F-001 — nine routes 404 in production
 
