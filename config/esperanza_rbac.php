@@ -167,7 +167,7 @@ $presetLevels = [
 $buildPermissions = function (array $moduleLevels) use ($permissionModules, $presetLevels) {
     $grants = [];
     foreach ($permissionModules as $mod) {
-        if (!isset($moduleLevels[$mod['key']])) {
+        if (! isset($moduleLevels[$mod['key']])) {
             continue;
         }
         $apply = $presetLevels[$moduleLevels[$mod['key']]];
@@ -175,6 +175,7 @@ $buildPermissions = function (array $moduleLevels) use ($permissionModules, $pre
             $grants[$sub['key']] = $apply($sub['perms']);
         }
     }
+
     return $grants;
 };
 
@@ -398,7 +399,7 @@ $accounts = array_map(function ($account) use ($roleByKey, $permissionModules) {
     $account['roleColor'] = $role['color'];
     $account['permissions'] = $role['permissions'];
     $account['moduleKeys'] = collect($permissionModules)
-        ->filter(fn ($mod) => collect($mod['submodules'])->contains(fn ($sub) => !empty($account['permissions'][$sub['key']])))
+        ->filter(fn ($mod) => collect($mod['submodules'])->contains(fn ($sub) => ! empty($account['permissions'][$sub['key']])))
         ->pluck('key')
         ->values()
         ->all();

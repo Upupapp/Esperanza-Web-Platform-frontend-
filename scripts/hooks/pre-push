@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#
+# Runs the gate before every push. There is no CI on this project, so this hook
+# is the only thing standing between a broken tree and a deploy.
+#
+# Enable with:  git config core.hooksPath scripts/hooks
+#
+# Never bypass with --no-verify. If the gate cannot finish here, fix the gate.
+exec "$(dirname "$0")/../gate.sh" </dev/null
