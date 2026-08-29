@@ -2014,8 +2014,11 @@
                 if (this.editingDocument) this.saveDocumentEdits();
                 const el = document.getElementById('dp-print-area');
                 if (!el) return;
-                if (!window.html2pdf) {
-                    this.$dispatch('toast', { message: 'PDF generator is still loading. Please try again.', variant: 'warning' });
+                let html2pdf;
+                try {
+                    html2pdf = await window.loadHtml2Pdf();
+                } catch (e) {
+                    this.$dispatch('toast', { message: 'Could not load the PDF generator. Check your connection and try again.', variant: 'error' });
                     return;
                 }
                 const citizenName = (this.selected?.citizen || 'Citizen').replace(/[^a-z0-9]+/gi, '-');
@@ -2044,7 +2047,7 @@
                 // after capture.
                 const restoreColors = window.DokyuEditor.sanitizeExportColors(document.body);
                 try {
-                    await window.html2pdf().set({
+                    await html2pdf().set({
                         margin: 0,
                         filename: 'Esperanza-' + docName + '-' + citizenName + '.pdf',
                         image: { type: 'jpeg', quality: 0.98 },

@@ -327,14 +327,21 @@
             },
             async downloadDocument() {
                 const el = document.getElementById('dp-print-area');
-                if (!el || !window.html2pdf) return;
+                if (!el) return;
+                let html2pdf;
+                try {
+                    html2pdf = await window.loadHtml2Pdf();
+                } catch (e) {
+                    this.$dispatch('toast', { message: 'Could not load the PDF generator. Check your connection and try again.', variant: 'error' });
+                    return;
+                }
                 const account = this.$store.citizenSession.account;
                 const citizenName = [account?.firstName, account?.lastName].filter(Boolean).join('-') || 'Citizen';
                 const docName = (this.resolvedDocument?.certTitle || this.selectedRequest?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
                 document.body.classList.add('dp-printing');
                 await this.$nextTick();
                 try {
-                    await window.html2pdf().set({
+                    await html2pdf().set({
                         margin: 0,
                         filename: 'Esperanza-' + docName + '-' + citizenName.replace(/[^a-z0-9-]+/gi, '') + '.pdf',
                         image: { type: 'jpeg', quality: 0.98 },

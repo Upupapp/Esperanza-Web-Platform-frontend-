@@ -2,6 +2,25 @@
     use Illuminate\Support\Arr;
     $activeTab = $tab ?? 'command-center';
 
+    // TAB 11: every tab is already its own route and therefore its own HTML
+    // file in the static export. Only the requested tab's partial is rendered
+    // (see the @if guards below) -- previously all 11 shipped on all 11 URLs,
+    // 1.59 MB each. Tab switching is therefore navigation, not Alpine state.
+    $tabRoutes = [
+        'command-center' => 'admin.sakuna',
+        'vulnerability' => 'admin.sakuna.vulnerability',
+        'incidents' => 'admin.sakuna.incidents',
+        'evacuation-centers' => 'admin.sakuna.evacuation-centers',
+        'evacuees' => 'admin.sakuna.evacuees',
+        'resources' => 'admin.sakuna.resources',
+        'relief' => 'admin.sakuna.relief',
+        'damage-assessment' => 'admin.sakuna.damage-assessment',
+        'bdrrmc-forms' => 'admin.sakuna.bdrrmc-forms',
+        'alerts' => 'admin.sakuna.alerts',
+        'reports' => 'admin.sakuna.reports',
+    ];
+    $tabUrls = array_map(fn ($name) => route($name), $tabRoutes);
+
     // ── Operational Context ─────────────────────────────────────────────────
     $periods = [
         ['id' => 'SWM-2026-07', 'label' => 'Southwest Monsoon & Flooding — July 2026', 'active' => true],
@@ -170,6 +189,7 @@
     x-cloak
     x-data="{
         activeTab: '{{ $activeTab }}',
+        tabUrls: @json($tabUrls),
         opStatus: 'Red Alert',
         selectedPeriod: 'SWM-2026-07',
         selectedBarangay: '',
@@ -282,7 +302,19 @@
         reportBarangayFilter: '',
         reportPeriodFilter: 'SWM-2026-07',
 
+        // Only this tab's partial exists in the document now, so switching tabs
+        // is a navigation. The query string is preserved deliberately: arriving
+        // from a resident profile carries ?ref=, and init() re-enters here.
         setTab(tab) {
+            if (tab === this.activeTab) {
+                this.$nextTick(() => window.renderIcons?.());
+                return;
+            }
+            const url = this.tabUrls[tab];
+            if (url) {
+                window.location.href = url + window.location.search;
+                return;
+            }
             this.activeTab = tab;
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -457,14 +489,14 @@
                     ];
                 @endphp
                 @foreach($tabs as $t)
-                    <button
-                        @click="setTab('{{ $t['key'] }}')"
-                        :class="activeTab === '{{ $t['key'] }}' ? 'border-b-2 border-brand-500 text-brand-600 bg-brand-50/40' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/60'"
-                        class="inline-flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors"
+                    <a
+                        href="{{ $tabUrls[$t['key']] }}"
+                        @if($activeTab === $t['key']) aria-current="page" @endif
+                        class="inline-flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors {{ $activeTab === $t['key'] ? 'border-b-2 border-brand-500 text-brand-600 bg-brand-50/40' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/60' }}"
                     >
                         <i data-lucide="{{ $t['icon'] }}" class="w-4 h-4"></i>
                         {{ $t['label'] }}
-                    </button>
+                    </a>
                 @endforeach
             </nav>
         </div>
@@ -490,59 +522,81 @@
         <div class="p-5">
 
             {{-- Command Center --}}
-            <div x-show="activeTab === 'command-center'" x-cloak>
+            @if($activeTab === 'command-center')
+            <div>
                 @include('admin.partials.sakuna.tab-command', ['incidents' => $incidents, 'centers' => $centers, 'resources' => $resources])
             </div>
+            @endif
 
             {{-- Vulnerability --}}
-            <div x-show="activeTab === 'vulnerability'" x-cloak>
+            @if($activeTab === 'vulnerability')
+            <div>
                 @include('admin.partials.sakuna.tab-vulnerability', ['profiles' => $vulnerabilityProfiles, 'barangays' => $barangays])
             </div>
+            @endif
 
             {{-- Incidents --}}
-            <div x-show="activeTab === 'incidents'" x-cloak>
+            @if($activeTab === 'incidents')
+            <div>
                 @include('admin.partials.sakuna.tab-incidents', ['incidents' => $incidents, 'barangays' => $barangays])
             </div>
+            @endif
 
             {{-- Evacuation Centers --}}
-            <div x-show="activeTab === 'evacuation-centers'" x-cloak>
+            @if($activeTab === 'evacuation-centers')
+            <div>
                 @include('admin.partials.sakuna.tab-centers', ['centers' => $centers, 'barangays' => $barangays])
             </div>
+            @endif
 
             {{-- Evacuees --}}
-            <div x-show="activeTab === 'evacuees'" x-cloak>
+            @if($activeTab === 'evacuees')
+            <div>
                 @include('admin.partials.sakuna.tab-evacuees', ['evacuees' => $evacuees, 'centers' => $centers, 'barangays' => $barangays])
             </div>
+            @endif
 
             {{-- Resources --}}
-            <div x-show="activeTab === 'resources'" x-cloak>
+            @if($activeTab === 'resources')
+            <div>
                 @include('admin.partials.sakuna.tab-resources', ['resources' => $resources, 'incidents' => $incidents, 'centers' => $centers])
             </div>
+            @endif
 
             {{-- Relief & Logistics --}}
-            <div x-show="activeTab === 'relief'" x-cloak>
+            @if($activeTab === 'relief')
+            <div>
                 @include('admin.partials.sakuna.tab-relief', ['inventory' => $inventory, 'barangays' => $barangays, 'centers' => $centers])
             </div>
+            @endif
 
             {{-- Damage Assessment --}}
-            <div x-show="activeTab === 'damage-assessment'" x-cloak>
+            @if($activeTab === 'damage-assessment')
+            <div>
                 @include('admin.partials.sakuna.tab-damage', ['assessments' => $assessments, 'barangays' => $barangays, 'incidents' => $incidents])
             </div>
+            @endif
 
             {{-- BDRRMC Forms --}}
-            <div x-show="activeTab === 'bdrrmc-forms'" x-cloak>
+            @if($activeTab === 'bdrrmc-forms')
+            <div>
                 @include('admin.partials.sakuna.tab-bdrrmc-forms')
             </div>
+            @endif
 
             {{-- Alerts --}}
-            <div x-show="activeTab === 'alerts'" x-cloak>
+            @if($activeTab === 'alerts')
+            <div>
                 @include('admin.partials.sakuna.tab-alerts', ['alerts' => $alerts, 'barangays' => $barangays])
             </div>
+            @endif
 
             {{-- Reports --}}
-            <div x-show="activeTab === 'reports'" x-cloak>
+            @if($activeTab === 'reports')
+            <div>
                 @include('admin.partials.sakuna.tab-reports', ['barangays' => $barangays, 'incidents' => $incidents, 'centers' => $centers])
             </div>
+            @endif
 
         </div>
     </div>

@@ -2,13 +2,7 @@ import './bootstrap';
 import api from './api/client';
 import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
-import { Chart, ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend } from 'chart.js';
-import html2pdf from 'html2pdf.js';
 import * as DokyuEditor from './dokyu-editor';
-
-Chart.register(ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend);
-Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
-Chart.defaults.color = '#64748b';
 
 window.Alpine = Alpine;
 // The one HTTP client (resources/js/api/client.js). Exposed globally for the
@@ -16,10 +10,44 @@ window.Alpine = Alpine;
 // directly. Do NOT add a per-page fetch() -- base URL, auth header, request id,
 // timeout, cancellation and the 401/403/422/5xx mapping all live in there.
 window.EsperanzaApi = api;
-window.Chart = Chart;
-// Exposed globally so any page's Alpine markup can call html2pdf() directly
-// (e.g. the citizen Dokyu "Download PDF" button) without a per-page import.
-window.html2pdf = html2pdf;
+// TAB 11: chart.js and html2pdf.js are loaded ON DEMAND, not on every page.
+// They were static imports, so the login screen shipped a charting library and
+// a PDF engine (html2pdf bundles jsPDF and html2canvas) it can never use.
+// Each loader caches its promise, so concurrent callers share one download.
+let chartModulePromise = null;
+
+window.loadChart = () => {
+    if (!chartModulePromise) {
+        chartModulePromise = import('chart.js').then((m) => {
+            m.Chart.register(
+                m.ArcElement, m.DoughnutController, m.LineElement, m.LineController,
+                m.PointElement, m.BarElement, m.BarController, m.LinearScale,
+                m.CategoryScale, m.Filler, m.Tooltip, m.Legend,
+            );
+            m.Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
+            m.Chart.defaults.color = '#64748b';
+            window.Chart = m.Chart;
+
+            return m.Chart;
+        });
+    }
+
+    return chartModulePromise;
+};
+
+let pdfModulePromise = null;
+
+window.loadHtml2Pdf = () => {
+    if (!pdfModulePromise) {
+        pdfModulePromise = import('html2pdf.js').then((m) => {
+            window.html2pdf = m.default;
+
+            return m.default;
+        });
+    }
+
+    return pdfModulePromise;
+};
 // Exposed globally for the same reason — the admin Dokyu "Edit Document"
 // rich-text editor (document-requests.blade.php + document-editor-toolbar/
 // document-editor-background-panel.blade.php) calls these directly from
@@ -323,7 +351,9 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.data('donutChart', (config) => ({
         chart: null,
-        init() {
+        async init() {
+            const Chart = await window.loadChart();
+
             this.chart = new Chart(this.$refs.canvas, {
                 type: 'doughnut',
                 data: {
@@ -347,7 +377,9 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.data('lineChart', (config) => ({
         chart: null,
-        init() {
+        async init() {
+            const Chart = await window.loadChart();
+
             this.chart = new Chart(this.$refs.canvas, {
                 type: 'line',
                 data: {
@@ -381,7 +413,9 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.data('barChart', (config) => ({
         chart: null,
-        init() {
+        async init() {
+            const Chart = await window.loadChart();
+
             this.chart = new Chart(this.$refs.canvas, {
                 type: 'bar',
                 data: {
