@@ -261,6 +261,11 @@ Then TAB 02 makes the drift impossible to reintroduce.
 
 ## TAB 02 — The test harness and CI gate · P0
 
+**CLOSED 2026-08-29.** `RouteRenderTest` and `StaticExportTest` added and
+mutation-tested; `.github/workflows/ci.yml` created (the repo had no CI). Gate 3,
+the bilingual coverage assertion, is still open and belongs with TAB 09. Style is
+in CI but non-blocking until F-007 is fixed.
+
 **Scope.** The suite is `tests/Unit/ExampleTest` asserting `true === true` and
 `tests/Feature/ExampleTest` asserting `/` returns 200. Two tests, 55 routes, 98
 views. TAB 01's defects survived to production because nothing looked.

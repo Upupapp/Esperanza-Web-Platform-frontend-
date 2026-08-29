@@ -17,7 +17,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | OWNER DECISION | `netlify.toml` publishes a real `APP_KEY` value in a comment, in a public repo |
 | F-004 | P1 | OPEN | `.env.example` ships database session/cache/queue drivers with no sqlite file — a fresh clone 500s on every page |
 | F-005 | P2 | OPEN | Single 1.66 MB JS chunk; `/admin/sakuna` renders 1.59 MB of HTML in one response |
-| F-006 | P2 | OPEN | No real test coverage — 2 untouched Laravel example tests against 57 routes / 98 views |
+| F-006 | P2 | **PARTLY CLOSED** | route-render + export-drift gates added and mutation-tested; the CI workflow is written but **not yet pushed** — see below |
 | F-007 | P3 | OPEN | `pint --test` fails on 9 files |
 | F-008 | P3 | OPEN | `dist/` is not gitignored — a 53 MB build output can be committed by accident |
 | F-009 | P3 | OPEN | 8 images over 1 MB (largest 2.2 MB) unoptimised; working tree is 130 MB |
@@ -233,3 +233,62 @@ registration consent checkbox links to — plus `/admin/papeles` and
 F-004, F-005, F-006, F-007, F-009. F-006 is the one that matters most next —
 a route-render and export-drift test in CI is what stops this class of defect
 returning, and neither exists yet.
+
+
+---
+
+## Closed 2026-08-29 — F-006
+
+The suite was the untouched Laravel skeleton: two example tests against 55
+routes and 98 views. It is now a real gate.
+
+**`tests/Feature/RouteRenderTest.php`** walks the router and asserts every page
+route returns 200, is non-empty, and contains none of `Undefined variable`,
+`Undefined array key`, `ErrorException`, `ViewException`,
+`BadMethodCallException` — because Laravel returns 200 with an error partial in
+several of those cases, so status alone is not proof. It reports every broken
+route in one run rather than one per failed build, and it asserts it found at
+least 50 routes so it cannot pass vacuously.
+
+**`tests/Feature/StaticExportTest.php`** guards the deploy artifact: the route
+map must still be derived from `Route::getRoutes()` and contain no hardcoded
+`URI => index.html` pairs (F-001), and every directory under `public/` must
+appear in the exporter's `$assets` map, with an explicit check for
+`public/documents` (F-002).
+
+**`.github/workflows/ci.yml`** — the repo had no CI at all. The workflow runs the
+same sequence Netlify does (composer, npm, **build**, test, `php export.php`)
+and then verifies the artifact: exported page count must equal the router's
+route count, no zero-byte pages, reference PDFs present.
+
+> **BLOCKED — the workflow file is not on `origin` yet.** GitHub refused the
+> push: *"refusing to allow a Personal Access Token to create or update
+> workflow `.github/workflows/ci.yml` without `workflow` scope"*. The file is
+> committed on the local branch `add-ci-workflow`. To land it, either grant the
+> token the `workflow` scope (`gh auth refresh -s workflow`, or edit the PAT in
+> GitHub settings) and merge that branch, or paste the file in through the
+> GitHub web UI. **Until then the tests exist but nothing runs them
+> automatically** — they must be run by hand with `php artisan test`.
+
+### The gates were mutation-tested, not assumed
+
+| Mutation | Result |
+| --- | --- |
+| Reintroduce a hardcoded `'/citizen/login' => ...` pair | **caught** — `route map is derived` fails |
+| Remove `public/documents` from the `$assets` map | **caught** — two tests fail |
+| Add `{{ $undefined }}` to `citizen/events.blade.php` | **caught** — `1 of 55 route(s) failed to render: /citizen/events returned HTTP 500` |
+
+Suite after restoring the tree: **6 passed, 13 assertions, 1.7s.**
+
+### Known limitation
+
+Code style is in CI as `continue-on-error` because `pint --test` fails on 9
+pre-existing files (**F-007**, still open). Run `vendor/bin/pint`, then delete
+that line and style becomes a real gate. It is marked non-blocking deliberately
+rather than reformatting 9 client-owned config files as a side effect of adding
+CI.
+
+**The build step must run before the tests.** `public/build` is gitignored, so a
+fresh checkout has no Vite manifest and every route 500s with "Vite manifest not
+found" — a failure that reads as catastrophic and is not. `RouteRenderTest`
+fails early with that instruction rather than 55 stack traces.
