@@ -287,7 +287,11 @@
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0">
+    x-transition:leave-end="opacity-0"
+        x-trap="showCenterDetail"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCenterDetail = false">
 
     <div x-data="{ centerTab: 'overview' }"
         x-transition:enter="transition duration-[200ms] ease-emphasized"
@@ -669,7 +673,11 @@
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0">
+    x-transition:leave-end="opacity-0"
+        x-trap="showOpenCenterConfirm"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showOpenCenterConfirm = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
@@ -716,7 +724,11 @@
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0">
+    x-transition:leave-end="opacity-0"
+        x-trap="showCloseCenterConfirm"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCloseCenterConfirm = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
@@ -787,7 +799,11 @@
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0">
+    x-transition:leave-end="opacity-0"
+        x-trap="showCreateCenter"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCreateCenter = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"

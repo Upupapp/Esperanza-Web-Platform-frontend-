@@ -292,7 +292,11 @@
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
->
+
+        x-trap="showCreateAlert"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCreateAlert = false; alertComposerStep = 1">
     <div
         class="bg-white rounded-2xl shadow-float w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6"
         x-transition:enter="transition duration-[200ms] ease-emphasized"

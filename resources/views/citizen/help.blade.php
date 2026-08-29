@@ -210,7 +210,11 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="tut in filteredTutorials" :key="tut.i">
-                    <div @click="watchTutorial(tut)" class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard overflow-hidden cursor-pointer">
+                    <div @click="watchTutorial(tut)" class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard overflow-hidden cursor-pointer"
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="watchTutorial(tut)"
+        @keydown.space.prevent="watchTutorial(tut)">
                         <div class="relative h-32 bg-gradient-to-br from-navy-900 to-brand-800 flex items-center justify-center">
                             <div class="w-11 h-11 rounded-full bg-white/15 backdrop-blur flex items-center justify-center group-hover:scale-110 group-hover:bg-white/25 transition-all duration-[220ms] ease-standard">
                                 <i data-lucide="play" class="w-5 h-5 text-white ml-0.5"></i>

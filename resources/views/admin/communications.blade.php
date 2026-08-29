@@ -1158,7 +1158,11 @@
         <!-- Log Blotter Entry Modal -->
         <div x-show="showAddBlotter" x-cloak
             x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm" @click.self="showAddBlotter = false">
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm" @click.self="showAddBlotter = false"
+        x-trap="showAddBlotter"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showAddBlotter = false">
             <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                 class="bg-white rounded-2xl shadow-float w-full max-w-lg">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">

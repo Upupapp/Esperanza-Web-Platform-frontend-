@@ -6,7 +6,11 @@
     x-cloak
     @click="mobileOpen = false"
     class="fixed inset-0 bg-navy-950/60 z-40 lg:hidden"
-></div>
+
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="mobileOpen = false"
+        @keydown.space.prevent="mobileOpen = false"></div>
 
 <aside
     class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-navy-900 text-white shrink-0 w-64 transition-transform duration-[260ms] ease-standard -translate-x-full lg:translate-x-0"

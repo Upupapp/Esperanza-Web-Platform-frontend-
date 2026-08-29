@@ -11,7 +11,11 @@
   # APP_KEY must be set as a secret in the Netlify UI — do NOT put it here.
   # Project configuration → Environment variables → Add variable
   #   Key:   APP_KEY
-  #   Value: base64:kW0IQ9qoy4UBqcDa5FEh0bVWIWDXgXaW7yldE8lAjCg=
+  #   Value: <the APP_KEY -- read it from the Netlify UI or your local .env>
+  #
+  # The literal key used to be reproduced here. It is redacted because this is
+  # a PUBLIC repository (F-003). Redacting does not un-leak it: the value is
+  # still in this file's git history and MUST be rotated.
 
   # Use in-memory drivers — this is a frontend-only static export, no DB needed.
   DB_CONNECTION      = "sqlite"

@@ -183,7 +183,11 @@
         <div x-show="showBarangayProfile" x-cloak
             x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
             class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
-            @click.self="showBarangayProfile = false">
+            @click.self="showBarangayProfile = false"
+        x-trap="showBarangayProfile"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showBarangayProfile = false">
             <div x-show="showBarangayProfile" x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                 class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 

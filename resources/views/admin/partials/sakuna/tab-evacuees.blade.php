@@ -193,7 +193,10 @@
                     "
                     class="hover:bg-slate-50/60 transition-colors cursor-pointer group"
                     @click="selectedEvacuee = {{ json_encode($ev) }}; showEvacueeDetail = true; $nextTick(() => window.renderIcons?.())"
-                >
+                
+        tabindex="0"
+        @keydown.enter.prevent="selectedEvacuee = {{ json_encode($ev) }}; showEvacueeDetail = true; $nextTick(() => window.renderIcons?.())"
+        @keydown.space.prevent="selectedEvacuee = {{ json_encode($ev) }}; showEvacueeDetail = true; $nextTick(() => window.renderIcons?.())">
                     <td class="px-4 py-3 whitespace-nowrap">
                         <span class="font-mono text-xs text-slate-500">{{ $ev['id'] }}</span>
                     </td>
@@ -320,7 +323,11 @@
 <div x-show="showCheckoutConfirm" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-    @click.self="showCheckoutConfirm = false">
+    @click.self="showCheckoutConfirm = false"
+        x-trap="showCheckoutConfirm"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCheckoutConfirm = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
         <div class="flex items-center gap-3 mb-4">
@@ -352,7 +359,11 @@
 <div x-show="showEvacueeDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
-    @click.self="showEvacueeDetail = false">
+    @click.self="showEvacueeDetail = false"
+        x-trap="showEvacueeDetail"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showEvacueeDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
@@ -543,7 +554,11 @@
 <div x-show="showEvacueeReg" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
-    @click.self="showEvacueeReg = false">
+    @click.self="showEvacueeReg = false"
+        x-trap="showEvacueeReg"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showEvacueeReg = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 

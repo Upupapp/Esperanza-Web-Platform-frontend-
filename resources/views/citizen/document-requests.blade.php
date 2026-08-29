@@ -1221,7 +1221,10 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 <template x-for="req in filteredRequests" :key="req.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors cursor-pointer" @click="openProgress(req)">
+                    <tr class="hover:bg-slate-50/70 transition-colors cursor-pointer" @click="openProgress(req)"
+        tabindex="0"
+        @keydown.enter.prevent="openProgress(req)"
+        @keydown.space.prevent="openProgress(req)">
                         <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="req.ref"></td>
                         <td class="px-4 py-3 text-slate-700 font-medium" x-text="req.type"></td>
                         <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="req.office"></td>

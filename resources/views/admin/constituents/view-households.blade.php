@@ -53,7 +53,10 @@
                 <tr
                     class="hover:bg-blue-50/40 cursor-pointer transition-colors group"
                     @click="openHousehold(h)"
-                >
+                
+        tabindex="0"
+        @keydown.enter.prevent="openHousehold(h)"
+        @keydown.space.prevent="openHousehold(h)">
                     {{-- Household label + ID + flood risk badge --}}
                     <td class="px-4 py-3">
                         <div class="flex items-start gap-3">

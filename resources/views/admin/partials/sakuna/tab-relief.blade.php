@@ -550,7 +550,11 @@
             x-show="showDistModal"
             x-cloak
             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-            @click.self="showDistModal = false">
+            @click.self="showDistModal = false"
+        x-trap="showDistModal"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showDistModal = false">
             <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
                 <div class="flex items-center justify-between mb-5">
                     <h3 class="text-base font-bold text-navy-900">Record Distribution</h3>
@@ -706,7 +710,11 @@
             x-show="showDonationModal"
             x-cloak
             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-            @click.self="showDonationModal = false">
+            @click.self="showDonationModal = false"
+        x-trap="showDonationModal"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showDonationModal = false">
             <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
                 <div class="flex items-center justify-between mb-5">
                     <h3 class="text-base font-bold text-navy-900">Record Donation</h3>
@@ -766,7 +774,11 @@
         x-cloak
         x-data="{ stockInQty: 0, stockInItem: '', stockInBatch: '', stockInSource: '', stockInBy: '', stockInDate: '{{ date('Y-m-d') }}', stockInCondition: 'Good', stockInNotes: '' }"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showStockInModal = false">
+        @click.self="showStockInModal = false"
+        x-trap="showStockInModal"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showStockInModal = false">
         <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
             <div class="flex items-center justify-between mb-5">
                 <div>
@@ -844,7 +856,11 @@
         x-cloak
         x-data="{ stockOutQty: 0, stockOutItem: '', stockOutPurpose: '', stockOutDest: '', stockOutBy: '', stockOutRemarks: '' }"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showStockOutModal = false">
+        @click.self="showStockOutModal = false"
+        x-trap="showStockOutModal"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showStockOutModal = false">
         <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
             <div class="flex items-center justify-between mb-5">
                 <div>
@@ -920,7 +936,11 @@
         x-cloak
         x-data="{ reqItemCount: 1, reqBeneficiaries: 0, reqPriority: 'Normal', reqReason: '', reqBy: '' }"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showRequestModal = false">
+        @click.self="showRequestModal = false"
+        x-trap="showRequestModal"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showRequestModal = false">
         <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
             <div class="flex items-center justify-between mb-5">
                 <div>

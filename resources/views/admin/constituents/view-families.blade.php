@@ -52,7 +52,10 @@
                 <tr
                     class="hover:bg-blue-50/40 cursor-pointer transition-colors group"
                     @click="openFamily(f)"
-                >
+                
+        tabindex="0"
+        @keydown.enter.prevent="openFamily(f)"
+        @keydown.space.prevent="openFamily(f)">
                     {{-- Family label + ID + type chip --}}
                     <td class="px-4 py-3">
                         <div class="flex items-start gap-3">

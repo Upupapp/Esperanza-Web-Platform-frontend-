@@ -156,7 +156,10 @@
                         <tr
                             @click="openDQIssue(issue)"
                             class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                        >
+                        
+        tabindex="0"
+        @keydown.enter.prevent="openDQIssue(issue)"
+        @keydown.space.prevent="openDQIssue(issue)">
                             {{-- Issue ID --}}
                             <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell" @click.stop>
                                 <span

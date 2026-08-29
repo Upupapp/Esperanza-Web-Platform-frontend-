@@ -558,7 +558,11 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
     @click.self="showIncidentDetail = false"
     @keydown.escape.window="showIncidentDetail = false"
->
+
+        x-trap="showIncidentDetail"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showIncidentDetail = false">
     <div
         x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95 translate-y-2"

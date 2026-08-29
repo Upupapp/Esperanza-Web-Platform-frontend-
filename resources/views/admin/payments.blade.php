@@ -212,7 +212,10 @@
                         x-show="matches(payments[{{ $i }}])" x-cloak
                         class="hover:bg-slate-50/70 transition-colors group cursor-pointer"
                         @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())"
-                    >
+                    
+        tabindex="0"
+        @keydown.enter.prevent="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())"
+        @keydown.space.prevent="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">
                         <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">{{ $p['ref'] }}</td>
                         <td class="px-4 py-3" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">
                             <div class="flex items-center gap-2.5 min-w-0">

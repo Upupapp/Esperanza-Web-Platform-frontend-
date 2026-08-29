@@ -339,7 +339,11 @@
 <div x-show="showDeployModal" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-    @click.self="showDeployModal = false">
+    @click.self="showDeployModal = false"
+        x-trap="showDeployModal"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showDeployModal = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-xl">
 
@@ -476,7 +480,11 @@
 <div x-show="showResourceDetail" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
-    @click.self="showResourceDetail = false">
+    @click.self="showResourceDetail = false"
+        x-trap="showResourceDetail"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showResourceDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
@@ -653,7 +661,11 @@
 <div x-show="showAddResourceModal" x-cloak
     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-    @click.self="showAddResourceModal = false">
+    @click.self="showAddResourceModal = false"
+        x-trap="showAddResourceModal"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showAddResourceModal = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-xl">
 

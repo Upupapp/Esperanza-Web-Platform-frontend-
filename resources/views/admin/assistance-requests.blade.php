@@ -966,7 +966,10 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 <template x-for="r in filteredRequests" :key="r.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="openRequest(r)">
+                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="openRequest(r)"
+        tabindex="0"
+        @keydown.enter.prevent="openRequest(r)"
+        @keydown.space.prevent="openRequest(r)">
                         <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" x-text="r.ref" @click.stop="openRequest(r)"></td>
                         <td class="px-4 py-3" @click.stop="openRequest(r)">
                             <div class="flex items-center gap-2.5 min-w-0">

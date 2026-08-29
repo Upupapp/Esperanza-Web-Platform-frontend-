@@ -166,7 +166,11 @@
                         x-show="dynamicMatches(n)"
                         @click="goTo(n)"
                         class="group flex items-start gap-3 px-4 py-4 hover:bg-slate-50/70 transition-colors relative cursor-pointer"
-                    >
+                    
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="goTo(n)"
+        @keydown.space.prevent="goTo(n)">
                         <span class="absolute left-2 top-6 w-1.5 h-1.5 rounded-full bg-brand-500" x-show="n.unread"></span>
                         <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="colorClasses[n.color] || colorClasses.brand">
                             <i :data-lucide="n.icon" class="w-4 h-4"></i>
@@ -192,7 +196,11 @@
                         x-show="matches({{ $loop->index }})"
                         @click="{{ $n['clickAction'] }}"
                         class="group flex items-start gap-3 px-4 py-4 hover:bg-slate-50/70 transition-colors relative cursor-pointer"
-                    >
+                    
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="{{ $n['clickAction'] }}"
+        @keydown.space.prevent="{{ $n['clickAction'] }}">
                         <span class="absolute left-2 top-6 w-1.5 h-1.5 rounded-full bg-brand-500" x-show="!isRead({{ $loop->index }})"></span>
                         <span class="w-9 h-9 rounded-lg {{ $n['color'] }} flex items-center justify-center shrink-0">
                             <i data-lucide="{{ $n['icon'] }}" class="w-4 h-4"></i>

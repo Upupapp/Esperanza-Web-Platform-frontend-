@@ -1,6 +1,10 @@
 @props(['text'])
 
-<span x-data="{ show: false }" class="relative inline-flex items-center" @mouseenter="show = true" @mouseleave="show = false" @click="show = !show">
+<span x-data="{ show: false }" class="relative inline-flex items-center" @mouseenter="show = true" @mouseleave="show = false" @click="show = !show"
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="show = !show"
+        @keydown.space.prevent="show = !show">
     {{ $slot }}
     <span
         x-show="show"
