@@ -220,10 +220,49 @@ view (as `admin/constituents.blade.php` still does) means every client
 re-derives it, and two of two got it wrong; read it from the API's
 `access_level` once that is wired.
 
+### Module-local vocabularies — ruled 2026-08-30 (B-018)
+
+The three axes above govern **requests, accounts and records**. They are not the
+only enumerated values in the platform, and "never invent new ones" was never
+meant to forbid a module from having its own vocabulary for its own domain —
+read that way it would make a data-quality queue illegal.
+
+The Constituents module has three, measured from
+`config/esperanza_constituents.php`. They are **closed sets too**: add a value
+here before using it, exactly as with the axes above.
+
+| Vocabulary | Values | Used by |
+| --- | --- | --- |
+| **Record activity** | Active · Under Review | `households[].status`, `families[].status`, `individuals[].status` |
+| **Profiling coverage** | Not Started (Re-visit Required) · In Progress · Needs Follow-up · Complete | `barangayCoverage[].status` |
+| **Issue triage** | Open · In Review · Resolved | `dataQualityIssues[].status`, `individuals[].incident_reports[].status` |
+
+Nested REQUEST rows are not module-local and do use the lifecycle:
+`individuals[].document_requests[].status`, `.assistance_requests[].status` and
+`.services[].status` all draw from the 15.
+
+**Two name collisions to know about, because both look like typos and are not:**
+
+- `In Review` (issue triage) is **not** `Under Review` (request lifecycle). One
+  is a data-quality ticket being worked; the other is a citizen's request needing
+  correction.
+- `Under Review` appears in BOTH the request lifecycle and record activity. On
+  `individuals[].status` it means the record is being checked — currently one
+  resident, RES-2026-031, whose `verification` is `Unverified`. That is
+  coherent, but if a client builds one enum for "status" across both it will
+  merge two unrelated meanings.
+
+None of these values reaches `x-ui.badge`: every badge call site passes a
+literal canonical status, and these render through their own class maps. If one
+is ever routed through the badge it will render with the unknown-status
+treatment and a `data-unknown-status` marker rather than silently borrowing
+Draft's grey — which is the point of that change.
+
 `tests/Feature/StatusVocabularyTest.php` asserts that this list, `x-ui.badge`
-and the actual constituent DATA all agree, and that axes 2 and 3 keep sharing
-exactly `Verified` and `Unverified` — so neither a drift nor a well-meaning
-merge of the two can pass unnoticed.
+and the actual constituent DATA all agree, that axes 2 and 3 keep sharing exactly
+`Verified` and `Unverified`, and that every module-local vocabulary above matches
+the values actually present in the fixtures — so neither a drift, a well-meaning
+merge, nor a quietly invented fourth coverage state can pass unnoticed.
 
 ## Component architecture
 
