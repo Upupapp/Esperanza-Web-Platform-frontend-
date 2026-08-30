@@ -106,7 +106,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (11 tests) → static export → assertions ON dist/
+vite build → pint --test → phpunit (13 tests) → static export → assertions ON dist/
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:
@@ -151,7 +151,7 @@ These are not oversights. The book says they need an answer, not a guess.
 | TAB | State | Note |
 | --- | --- | --- |
 | 01 The two production defects | **DONE** | 46 → 55 routes exported; 16 PDFs reach `dist/` |
-| 02 Test harness and gate | **DONE** (adapted) | 2 → 11 tests. Enforced by a local pre-push hook, not CI — see below |
+| 02 Test harness and gate | **DONE** (adapted) | 2 → 13 tests. Enforced by a local pre-push hook, not CI — see below |
 | 03 Local setup and the `.env` trap | **DONE** | Clean clone verified end to end on the merged tree — 11 tests from a fresh checkout |
 | 04 Lift 167 inline arrays | **NOT DONE** | 166 declarations across 43 views, unchanged |
 | 05 The HTTP layer | **DONE** | Client + error envelope built; no screen consumes it yet |
