@@ -6,47 +6,16 @@
 --}}
 
 @php
-    $levelBorder = [
-        'Information' => 'border-sky-400',
-        'Advisory'    => 'border-teal-400',
-        'Watch'       => 'border-amber-400',
-        'Warning'     => 'border-orange-400',
-        'Critical'    => 'border-rose-500',
-    ];
+    // TAB 04: fixtures live in resources/data/admin/partials/sakuna/tab-alerts.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/admin/partials/sakuna/tab-alerts.php');
+    $levelBorder = $__fixtures['levelBorder'];
 
-    $alertTypes = [
-        'Flood Warning',
-        'Storm Surge Advisory',
-        'Landslide Watch',
-        'Typhoon Advisory',
-        'Earthquake Warning',
-        'Volcanic Activity Advisory',
-        'Tsunami Warning',
-        'Mandatory Evacuation Order',
-        'Pre-Emptive Evacuation Advisory',
-        'Fire Emergency Alert',
-        'Public Health Advisory',
-        'Road and Infrastructure Closure',
-        'Missing Person Alert',
-        'Agricultural Damage Advisory',
-        'Power Interruption Notice',
-        'Water Service Interruption Notice',
-        'Search and Rescue Operation Notice',
-        'All-Clear / Situation Normal',
-    ];
+    $alertTypes = $__fixtures['alertTypes'];
 
     $alertLevels   = ['Information', 'Advisory', 'Watch', 'Warning', 'Critical'];
-    $alertStatuses = ['Draft', 'For Review', 'Approved', 'Scheduled', 'Published', 'Expired', 'Cancelled', 'Archived'];
+    $alertStatuses = $__fixtures['alertStatuses'];
 
-    $targetGroups = [
-        'All Residents',
-        'Evacuation Center Occupants',
-        'Vulnerable Households',
-        'Farmers',
-        'Senior Citizens',
-        'PWD Households',
-        'MDRRMO Personnel',
-    ];
+    $targetGroups = $__fixtures['targetGroups'];
 @endphp
 
 {{-- ══════════════════════════════════════════════════════════════════════════ --}}

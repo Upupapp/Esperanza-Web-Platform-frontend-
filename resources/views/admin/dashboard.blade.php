@@ -22,7 +22,9 @@
         'pending' => $pendingApprovalsTotal,
         'sublabel' => 'Across 20 barangays',
     ];
-    $barangayDashboardStats = [];
+    // TAB 04: fixtures live in resources/data/admin/dashboard.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/admin/dashboard.php');
+    $barangayDashboardStats = $__fixtures['barangayDashboardStats'];
     foreach ($constituentsData['barangayStats'] as $brgy => $stats) {
         $share = ((int) str_replace(',', '', $stats['residents'])) / $totalResidents;
         $barangayDashboardStats[$brgy] = [
@@ -34,49 +36,21 @@
         ];
     }
 
-    $docStatus = [
-        ['label' => 'Completed', 'value' => 612, 'color' => '#22c55e'],
-        ['label' => 'Processing', 'value' => 348, 'color' => '#2f62f5'],
-        ['label' => 'Submitted', 'value' => 254, 'color' => '#f59e0b'],
-        ['label' => 'Rejected', 'value' => 70, 'color' => '#f43f5e'],
-    ];
+    $docStatus = $__fixtures['docStatus'];
     $docStatusTotal = array_sum(array_column($docStatus, 'value'));
 
-    $assistStatus = [
-        ['label' => 'Released', 'value' => 168, 'color' => '#0d9488'],
-        ['label' => 'Approved', 'value' => 96, 'color' => '#22c55e'],
-        ['label' => 'Processing', 'value' => 104, 'color' => '#2f62f5'],
-        ['label' => 'Under Review', 'value' => 49, 'color' => '#f97316'],
-    ];
+    $assistStatus = $__fixtures['assistStatus'];
     $assistStatusTotal = array_sum(array_column($assistStatus, 'value'));
 
-    $barangayRequests = [
-        ['name' => 'Poblacion', 'count' => 182, 'pct' => 78],
-        ['name' => 'Masbaranon', 'count' => 146, 'pct' => 64],
-        ['name' => 'Baras', 'count' => 121, 'pct' => 58],
-        ['name' => 'Domorog', 'count' => 108, 'pct' => 52],
-        ['name' => 'Agoho', 'count' => 97, 'pct' => 46],
-        ['name' => 'Iligan', 'count' => 89, 'pct' => 41],
-    ];
+    $barangayRequests = $__fixtures['barangayRequests'];
 
-    $trendLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-    $trendDocuments = [140, 168, 190, 205, 230, 255, 268];
-    $trendAssistance = [40, 52, 58, 66, 71, 80, 86];
+    $trendLabels = $__fixtures['trendLabels'];
+    $trendDocuments = $__fixtures['trendDocuments'];
+    $trendAssistance = $__fixtures['trendAssistance'];
 
-    $alerts = [
-        ['icon' => 'triangle-alert', 'color' => 'text-rose-600 bg-rose-50', 'title' => '23 document requests pending over 5 days', 'body' => 'Immediate attention required', 'time' => 'Jul 10, 2026', 'link' => 'admin.document-requests'],
-        ['icon' => 'circle-alert', 'color' => 'text-amber-600 bg-amber-50', 'title' => 'Resident profiling in 4 barangays below 60%', 'body' => 'Field verification needed', 'time' => 'Jul 10, 2026', 'link' => 'admin.resident-profiling'],
-        ['icon' => 'file-clock', 'color' => 'text-brand-600 bg-brand-50', 'title' => '9 assistance requests awaiting budget clearance', 'body' => 'Action needed to avoid delays', 'time' => 'Jul 9, 2026', 'link' => 'admin.assistance-requests'],
-        ['icon' => 'circle-check', 'color' => 'text-emerald-600 bg-emerald-50', 'title' => 'Q2 citizen satisfaction survey results are in', 'body' => 'Ready to share with department heads', 'time' => 'Jul 8, 2026', 'link' => 'admin.reports'],
-    ];
+    $alerts = $__fixtures['alerts'];
 
-    $activities = [
-        ['icon' => 'circle-check', 'color' => 'text-emerald-600 bg-emerald-50', 'title' => 'Barangay Clearance released', 'body' => 'Request #DR-2026-1042 — Brgy. Poblacion', 'time' => '12 minutes ago', 'link' => 'admin.document-requests'],
-        ['icon' => 'file-text', 'color' => 'text-brand-600 bg-brand-50', 'title' => 'New document request submitted', 'body' => 'Business Permit — Rosemarie Tan, Brgy. Baras', 'time' => '38 minutes ago', 'link' => 'admin.document-requests'],
-        ['icon' => 'hand-heart', 'color' => 'text-purple-600 bg-purple-50', 'title' => 'Assistance request approved', 'body' => 'Medical Assistance — Rodrigo Palma, Brgy. Domorog', 'time' => '1 hour ago', 'link' => 'admin.assistance-requests'],
-        ['icon' => 'megaphone', 'color' => 'text-gold-700 bg-gold-50', 'title' => 'Announcement published', 'body' => '"Fiesta ng Esperanza 2026" schedule posted', 'time' => '3 hours ago', 'link' => 'admin.communications'],
-        ['icon' => 'user-round-search', 'color' => 'text-indigo-600 bg-indigo-50', 'title' => 'Resident profile updated', 'body' => '12 new records added — Brgy. Masbaranon', 'time' => '5 hours ago', 'link' => 'admin.constituents'],
-    ];
+    $activities = $__fixtures['activities'];
 @endphp
 
 <x-layouts.admin title="Executive Dashboard" subtitle="Overview of citizen services and municipal operations." active="dashboard">

@@ -1,11 +1,7 @@
 @php
-    $notifPrefs = [
-        ['label' => 'Document request updates', 'labelFil' => 'Update sa mga kahilingang dokumento', 'desc' => 'Get notified when a request status changes.', 'descFil' => 'Maaabisuhan ka kapag nagbago ang status ng iyong kahilingan.', 'checked' => true],
-        ['label' => 'Assistance request updates', 'labelFil' => 'Update sa mga kahilingang tulong', 'desc' => 'Get notified about assistance program progress.', 'descFil' => 'Maaabisuhan ka tungkol sa progreso ng iyong tulong.', 'checked' => true],
-        ['label' => 'Municipal announcements', 'labelFil' => 'Mga balita ng munisipyo', 'desc' => 'News and advisories from the municipality.', 'descFil' => 'Balita at abiso mula sa munisipyo.', 'checked' => true],
-        ['label' => 'Event reminders', 'labelFil' => 'Paalala sa mga kaganapan', 'desc' => 'Reminders before events you\'re following.', 'descFil' => 'Paalala bago magsimula ang mga sinusundan mong kaganapan.', 'checked' => false],
-        ['label' => 'SMS notifications', 'labelFil' => 'Abiso sa SMS', 'desc' => 'Receive critical updates via SMS as backup.', 'descFil' => 'Tumanggap ng mahahalagang update sa SMS bilang backup.', 'checked' => false],
-    ];
+    // TAB 04: fixtures live in resources/data/citizen/settings.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/citizen/settings.php');
+    $notifPrefs = $__fixtures['notifPrefs'];
 @endphp
 
 <x-layouts.citizen title="Settings" subtitle="Manage your account preferences." active="settings">

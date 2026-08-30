@@ -1,29 +1,15 @@
 @php
-    $reportTypes = [
-        ['title' => 'Document Requests Summary', 'desc' => 'Volume, processing time, and status breakdown.', 'icon' => 'file-text', 'color' => 'text-brand-600 bg-brand-50'],
-        ['title' => 'Assistance Programs Report', 'desc' => 'Budget utilization and beneficiaries per program.', 'icon' => 'hand-heart', 'color' => 'text-purple-600 bg-purple-50'],
-        ['title' => 'Resident Profiling Coverage', 'desc' => 'Completion rate per barangay.', 'icon' => 'user-round-search', 'color' => 'text-emerald-600 bg-emerald-50'],
-        ['title' => 'Revenue & Fees Collected', 'desc' => 'Document processing fees by month.', 'icon' => 'wallet', 'color' => 'text-gold-700 bg-gold-50'],
-        ['title' => 'Barangay Activity Report', 'desc' => 'Requests and engagement by barangay.', 'icon' => 'map-pin', 'color' => 'text-indigo-600 bg-indigo-50'],
-        ['title' => 'Citizen Satisfaction Survey', 'desc' => 'Quarterly service feedback summary.', 'icon' => 'smile', 'color' => 'text-rose-600 bg-rose-50'],
-        ['title' => 'Internal Forms Submissions', 'desc' => 'Staff form activity across HR, GSO, Agriculture, and MSWD.', 'icon' => 'clipboard-list', 'color' => 'text-indigo-600 bg-indigo-50'],
-        ['title' => 'Sakuna Incident Reports', 'desc' => 'Disaster incident volume, severity, and response status.', 'icon' => 'triangle-alert', 'color' => 'text-orange-600 bg-orange-50'],
-    ];
+    // TAB 04: fixtures live in resources/data/admin/reports.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/admin/reports.php');
+    $reportTypes = $__fixtures['reportTypes'];
 
-    $recent = [
-        ['name' => 'Document Requests Summary — Q2 2026', 'generated' => 'Jul 8, 2026', 'by' => 'Juan Dela Cruz', 'format' => 'PDF'],
-        ['name' => 'Barangay Activity Report — June 2026', 'generated' => 'Jul 2, 2026', 'by' => 'Corazon Villareal', 'format' => 'XLSX'],
-        ['name' => 'Assistance Programs Report — Q2 2026', 'generated' => 'Jun 30, 2026', 'by' => 'Juan Dela Cruz', 'format' => 'PDF'],
-        ['name' => 'Resident Profiling Coverage — May 2026', 'generated' => 'Jun 3, 2026', 'by' => 'Paolo Reyes', 'format' => 'XLSX'],
-        ['name' => 'Internal Forms Submissions — July 2026', 'generated' => 'Jul 11, 2026', 'by' => 'Angeline Mercado', 'format' => 'XLSX'],
-        ['name' => 'Sakuna Incident Reports — SWM-2026-07', 'generated' => 'Jul 15, 2026', 'by' => 'Sgt. Ramiro Dela Vega', 'format' => 'PDF'],
-    ];
+    $recent = $__fixtures['recent'];
 
     // Internal Forms — sourced from the shared config so this stays in sync
     // with the Internal Forms module's own "Recent Submissions" list.
     $internalFormsCfg   = config('esperanza_internal_forms');
     $internalSubmissions = $internalFormsCfg['submissions'];
-    $officeColors = ['MHRMO' => '#2f62f5', 'MGSO' => '#f59e0b', 'Agriculture' => '#22c55e', 'MSWD' => '#a855f7'];
+    $officeColors = $__fixtures['officeColors'];
     $internalOfficeSplit = collect($internalSubmissions)
         ->groupBy('office')
         ->map(fn ($rows, $office) => ['label' => $office, 'value' => $rows->count(), 'color' => $officeColors[$office] ?? '#64748b'])
@@ -31,32 +17,17 @@
 
     // Sakuna incidents — mirrors the current SWM-2026-07 active-period incident
     // log on the Sakuna Command Center (12 incidents), broken down by severity.
-    $incidentSeveritySplit = [
-        ['label' => 'Critical', 'value' => 2, 'color' => '#e11d48'],
-        ['label' => 'High',     'value' => 5, 'color' => '#f97316'],
-        ['label' => 'Medium',   'value' => 4, 'color' => '#f59e0b'],
-        ['label' => 'Low',      'value' => 1, 'color' => '#64748b'],
-    ];
+    $incidentSeveritySplit = $__fixtures['incidentSeveritySplit'];
     $incidentTotal = array_sum(array_column($incidentSeveritySplit, 'value'));
 
-    $trendLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-    $trendDocuments = [140, 168, 190, 205, 230, 255, 268];
-    $trendAssistance = [40, 52, 58, 66, 71, 80, 86];
+    $trendLabels = $__fixtures['trendLabels'];
+    $trendDocuments = $__fixtures['trendDocuments'];
+    $trendAssistance = $__fixtures['trendAssistance'];
 
-    $channelSplit = [
-        ['label' => 'Online Portal', 'value' => 812, 'color' => '#2f62f5'],
-        ['label' => 'Walk-in', 'value' => 348, 'color' => '#f59e0b'],
-        ['label' => 'Barangay-assisted', 'value' => 124, 'color' => '#22c55e'],
-    ];
+    $channelSplit = $__fixtures['channelSplit'];
     $channelTotal = array_sum(array_column($channelSplit, 'value'));
 
-    $topBarangays = [
-        ['name' => 'Poblacion', 'pct' => 92],
-        ['name' => 'Masbaranon', 'pct' => 78],
-        ['name' => 'Baras', 'pct' => 71],
-        ['name' => 'Domorog', 'pct' => 64],
-        ['name' => 'Agoho', 'pct' => 58],
-    ];
+    $topBarangays = $__fixtures['topBarangays'];
 
     $tab = $tab ?? 'reports';
 @endphp

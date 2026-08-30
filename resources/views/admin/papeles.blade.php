@@ -20,30 +20,16 @@
     // where the document maps onto an existing Dokyu category, plus two
     // categories (Identity / Verification, Supporting Documents) for
     // generic attachments that aren't themselves a Dokyu deliverable.
-    $docTypePool = [
-        ['type' => 'Valid ID (PhilSys National ID)', 'category' => 'Identity / Verification', 'file_type' => 'jpg'],
-        ['type' => '2x2 ID Photo', 'category' => 'Identity / Verification', 'file_type' => 'jpg'],
-        ['type' => 'PSA Birth Certificate', 'category' => 'Civil Registry', 'file_type' => 'pdf'],
-        ['type' => 'Marriage Certificate', 'category' => 'Civil Registry', 'file_type' => 'pdf'],
-        ['type' => 'Barangay Certificate of Indigency', 'category' => 'Barangay Certificates', 'file_type' => 'pdf'],
-        ['type' => 'Barangay Residency', 'category' => 'Barangay Certificates', 'file_type' => 'pdf'],
-        ['type' => 'Cedula (Community Tax Certificate)', 'category' => 'Tax & Property', 'file_type' => 'jpg'],
-        ['type' => 'DTI Registration', 'category' => 'Business & Permits', 'file_type' => 'pdf'],
-        ['type' => 'Certificate of Employment', 'category' => 'Supporting Documents', 'file_type' => 'docx'],
-        ['type' => 'Proof of Income', 'category' => 'Supporting Documents', 'file_type' => 'pdf'],
-    ];
-    $storageStatuses = ['Submitted', 'Under Verification', 'Under Review', 'Approved', 'Completed', 'Rejected'];
-    $storageMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+    // TAB 04: fixtures live in resources/data/admin/papeles.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/admin/papeles.php');
+    $docTypePool = $__fixtures['docTypePool'];
+    $storageStatuses = $__fixtures['storageStatuses'];
+    $storageMonths = $__fixtures['storageMonths'];
 
     // One representative citizen per barangay (two for the six barangays
     // with richer constituent data) -- real RES-#### ids from
     // config/esperanza_constituents.php, not invented identities.
-    $storageCitizenIds = [
-        'RES-2026-023', 'RES-2026-024', 'RES-2026-028', 'RES-2026-030',
-        'RES-2026-101', 'RES-2026-104', 'RES-2026-106', 'RES-2026-108',
-        'RES-2026-121', 'RES-2026-122', 'RES-2026-123', 'RES-2026-124', 'RES-2026-125',
-        'RES-2026-126', 'RES-2026-127', 'RES-2026-128', 'RES-2026-129', 'RES-2026-130', 'RES-2026-131',
-    ];
+    $storageCitizenIds = $__fixtures['storageCitizenIds'];
     $storageIndividualsById = collect($storageIndividuals)->keyBy('id');
 
     // Real citizen accounts (for actually-verified IDs on file) and real
@@ -62,7 +48,7 @@
     $citizenAccountsById = collect(config('esperanza_citizens')['accounts'])->keyBy('id');
     $paymentsByCitizenName = collect(config('esperanza_payments'))->groupBy(fn ($p) => $normalizePersonName($p['citizen']));
 
-    $citizenDocuments = [];
+    $citizenDocuments = $__fixtures['citizenDocuments'];
     $docSeq = 1;
     foreach ($storageCitizenIds as $ci => $citizenId) {
         $person = $storageIndividualsById->get($citizenId);
@@ -126,7 +112,7 @@
     // mock documents above), documents/pending counts come from the mock set.
     $storageCitizensByBarangay = collect($storageIndividuals)->groupBy('barangay');
     $storageDocsByCitizen = collect($citizenDocuments)->groupBy('citizen_id');
-    $storageFinalStatuses = ['Approved', 'Completed', 'Rejected', 'Archived'];
+    $storageFinalStatuses = $__fixtures['storageFinalStatuses'];
     $barangayFolders = collect($storageBarangays)->map(function ($brgy) use ($storageCitizensByBarangay, $storageIndividualsById, $storageDocsByCitizen, $storageFinalStatuses) {
         $residents = $storageCitizensByBarangay->get($brgy, collect());
         $docs = $residents->flatMap(fn ($r) => $storageDocsByCitizen->get($r['id'], collect()));
