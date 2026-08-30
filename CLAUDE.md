@@ -192,25 +192,38 @@ collapsing the tier with the lifecycle, one level down — and it is how the
 mobile app ended up degrading `Verified` to `Draft` and locking citizens out of
 Dokyu.
 
-Ruled 2026-08-30. These two were rendered by `x-ui.badge` and used across
-Constituents (`verification` on individuals/families/households) and on citizen
-accounts (`access_level`) while being absent from this list — and the list is
-what every client builds from. The omission has already cost two of them: the
-mobile app built an enum from the 15, had no `Verified`, silently degraded it
-to `Draft` and locked verified citizens out of Dokyu; the backend built its
-`Status::ALL` from the same 15, ended up with no access tier at all, and
-accepted requests from citizens the UI refuses.
+### Why these axes exist
+
+Both verification axes were absent from this list until 2026-08-30, and the list
+is what every other codebase builds its enum from — none of them can see this
+repo's Blade or its fixtures. The omission has already cost two clients:
+
+- the **mobile app** built an enum from the 15, had no `Verified`, silently
+  degraded it to `Draft`, and locked verified citizens out of Dokyu;
+- the **backend** built `Status::ALL` from the same 15, ended up with no access
+  tier at all, and accepted requests from citizens this UI refuses — a client
+  stricter than the server, about who may request a government document.
+
+The two axes were then added as one, which was still wrong: a single
+Verified/Unverified pair cannot describe both `access_level` on an account and
+`verification` on a constituent record, because the record field carries four
+values and the account field two. Splitting them into axes 2 and 3 is the
+correction, and the paragraph above about not collapsing them is the rule that
+came out of it.
 
 **Never set a request's status to `Verified`.** A request that has passed
-verification is `Approved`; `Verified` describes the person or the record.
+verification is `Approved`. `Verified` describes either an ACCOUNT (axis 2, may
+transact) or a RECORD (axis 3, evidence complete) — never a request.
 
 The ACCOUNT tier gates service access. **It is the server's field to own.** Deriving it in a Blade
 view (as `admin/constituents.blade.php` still does) means every client
 re-derives it, and two of two got it wrong; read it from the API's
 `access_level` once that is wired.
 
-`tests/Feature/StatusVocabularyTest.php` asserts this list and
-`x-ui.badge` agree, so they cannot drift apart again.
+`tests/Feature/StatusVocabularyTest.php` asserts that this list, `x-ui.badge`
+and the actual constituent DATA all agree, and that axes 2 and 3 keep sharing
+exactly `Verified` and `Unverified` — so neither a drift nor a well-meaning
+merge of the two can pass unnoticed.
 
 ## Component architecture
 
