@@ -147,11 +147,40 @@ Three deliberate exceptions inside the citizen portal, each recorded in a
 
 ## Universal status system
 
-Reuse exactly these status names everywhere — never invent new ones:
+Reuse exactly these names everywhere — never invent new ones. `x-ui.badge`
+renders all seventeen, and they fall on **two separate axes**. Do not mix them.
+
+**1. Request lifecycle (15).** The state of a Dokyu or Tulong request:
 
 Draft, Submitted, Pending Review, Under Verification, Assigned, Processing,
 Under Review, Resubmitted, Approved, Rejected, Mark to Release, Released,
 Completed, Cancelled, Archived.
+
+**2. Verification tier (2).** The state of an ACCOUNT or a CONSTITUENT RECORD,
+never of a request:
+
+Verified, Unverified.
+
+Ruled 2026-08-30. These two were rendered by `x-ui.badge` and used across
+Constituents (`verification` on individuals/families/households) and on citizen
+accounts (`access_level`) while being absent from this list — and the list is
+what every client builds from. The omission has already cost two of them: the
+mobile app built an enum from the 15, had no `Verified`, silently degraded it
+to `Draft` and locked verified citizens out of Dokyu; the backend built its
+`Status::ALL` from the same 15, ended up with no access tier at all, and
+accepted requests from citizens the UI refuses.
+
+**Never set a request's status to `Verified`.** A request that has passed
+verification is `Approved`; `Verified` describes the person or the record.
+
+The tier gates service access — only a `Verified` account gets full
+Dokyu/Tulong access. **It is the server's field to own.** Deriving it in a Blade
+view (as `admin/constituents.blade.php` still does) means every client
+re-derives it, and two of two got it wrong; read it from the API's
+`access_level` once that is wired.
+
+`tests/Feature/StatusVocabularyTest.php` asserts this list and
+`x-ui.badge` agree, so they cannot drift apart again.
 
 ## Component architecture
 

@@ -28,6 +28,14 @@ $kernel = $app->make(Kernel::class);
 // tests/Feature/ExportManifestTest.php runs the exact same code as the deploy.
 require_once __DIR__.'/build/export_manifest.php';
 
+// Seed the RNG so the export is REPRODUCIBLE. Three views build decorative
+// randomness at render time (confetti in the birthday and fiesta popups,
+// sampling in admin/communications). Unseeded, every build produced different
+// HTML for the same source -- so every deploy rewrote unchanged pages, and
+// "did this change the output?" could not be answered at all.
+// Decorative only: nothing a user reads depends on these numbers.
+mt_srand(20260830);
+
 $kernel->bootstrap();
 
 $routes = esperanza_export_routes($app->make('router')->getRoutes());

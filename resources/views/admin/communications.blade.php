@@ -44,10 +44,28 @@
     $barangaySeals = collect(config('esperanza_barangay_documents'))
         ->mapWithKeys(fn ($info) => [$info['label'] => $info['seal']]);
 
+    // Derived from the barangay NAME, not at random.
+    //
+    // These were collect([...])->random() and rand(), which meant every build
+    // gave each barangay a different captain and a different phone number. In a
+    // static export that is not merely churn: the Government Directory is a
+    // lookup, and a resident checking who their punong barangay is got a
+    // different name on every deploy. Collection::random() uses random_int(),
+    // so it cannot be seeded either -- it has to be derived.
+    //
+    // crc32 of the barangay name keeps the same pools and the same shape while
+    // making each barangay's entry stable for as long as it is called that.
+    $directoryFirstNames = ['Roberto', 'Elena', 'Manuel', 'Fe', 'Domingo', 'Rosario', 'Alfredo', 'Teresita'];
+    $directorySurnames = ['Cruz', 'Santos', 'Reyes', 'Bautista', 'Delos Reyes', 'Villanueva'];
+
     $barangays = collect(config('esperanza.barangays'))->map(fn ($b) => [
         'name' => $b,
-        'captain' => 'Hon. ' . collect(['Roberto','Elena','Manuel','Fe','Domingo','Rosario','Alfredo','Teresita'])->random() . ' ' . collect(['Cruz','Santos','Reyes','Bautista','Delos Reyes','Villanueva'])->random(),
-        'contact' => '0917 ' . rand(100, 999) . ' ' . rand(1000, 9999),
+        'captain' => 'Hon. '
+            . $directoryFirstNames[crc32($b) % count($directoryFirstNames)] . ' '
+            . $directorySurnames[crc32('surname-' . $b) % count($directorySurnames)],
+        'contact' => '0917 '
+            . (100 + (crc32('contact-a-' . $b) % 900)) . ' '
+            . (1000 + (crc32('contact-b-' . $b) % 9000)),
         'email' => 'brgy.' . strtolower(str_replace(' ', '', $b)) . '@esperanza.gov.ph',
         'hall_address' => 'Barangay Hall, Brgy. ' . $b . ', Esperanza, Masbate',
         'seal' => $barangaySeals[$b] ?? null,

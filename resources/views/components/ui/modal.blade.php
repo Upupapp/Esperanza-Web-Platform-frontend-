@@ -7,7 +7,14 @@
 
     // Unique per modal instance so aria-labelledby resolves to THIS dialog's
     // heading. A bare modal has no heading, so it falls back to aria-label.
-    $titleId = 'modal-title-' . uniqid();
+    //
+    // NOT uniqid(). This is a STATIC EXPORT: uniqid() gave every modal a new id
+    // on every build, so each deploy rewrote every page that contains one -- and
+    // it made "does this refactor change the rendered output?" unanswerable.
+    // A per-request counter is unique within a page and identical across builds,
+    // because the render order is deterministic.
+    static $modalSeq = 0;
+    $titleId = 'modal-title-' . (++$modalSeq);
 @endphp
 
 <template x-teleport="body">
