@@ -33,8 +33,20 @@ class StatusVocabularyTest extends TestCase
         'Mark to Release', 'Released', 'Completed', 'Cancelled', 'Archived',
     ];
 
-    /** Axis 2 — the state of an account or a constituent record. Never a request. */
-    private const VERIFICATION_TIER = ['Verified', 'Unverified'];
+    /** Axis 2 — the state of an ACCOUNT. Binary: may transact, or may not. */
+    private const ACCOUNT_TIER = ['Verified', 'Unverified'];
+
+    /** Axis 3 — how well a CONSTITUENT RECORD is evidenced. Never an account. */
+    private const RECORD_LADDER = ['Unverified', 'For Validation', 'Partially Verified', 'Verified'];
+
+    /** Every name the constitution documents, across all three axes. */
+    private function documented(): array
+    {
+        $all = array_unique(array_merge(self::LIFECYCLE, self::ACCOUNT_TIER, self::RECORD_LADDER));
+        sort($all);
+
+        return $all;
+    }
 
     /** @return string[] every label x-ui.badge knows how to render */
     private function badgeLabels(): array
@@ -63,9 +75,7 @@ class StatusVocabularyTest extends TestCase
 
     public function test_badge_and_the_constitution_cover_exactly_the_same_names(): void
     {
-        $documented = array_merge(self::LIFECYCLE, self::VERIFICATION_TIER);
-        sort($documented);
-
+        $documented = $this->documented();
         $rendered = $this->badgeLabels();
 
         $undocumented = array_values(array_diff($rendered, $documented));
@@ -85,21 +95,72 @@ class StatusVocabularyTest extends TestCase
         ));
     }
 
-    public function test_the_two_axes_do_not_overlap(): void
+    public function test_the_lifecycle_does_not_collide_with_either_verification_axis(): void
     {
         $this->assertSame(
             [],
-            array_values(array_intersect(self::LIFECYCLE, self::VERIFICATION_TIER)),
-            'A name cannot be both a request lifecycle status and a verification tier. '
+            array_values(array_intersect(self::LIFECYCLE, self::ACCOUNT_TIER)),
+            'A name cannot be both a request lifecycle status and an account tier. '
             .'A request that passed verification is Approved; Verified describes the person.'
         );
+
+        $this->assertSame(
+            [],
+            array_values(array_intersect(self::LIFECYCLE, self::RECORD_LADDER)),
+            'A name cannot be both a request lifecycle status and a record verification rung.'
+        );
+    }
+
+    public function test_the_account_tier_and_record_ladder_share_words_on_purpose(): void
+    {
+        // These two DO overlap, and that is the point: an account is Verified
+        // when it may transact; a record is Verified when its evidence is
+        // complete. Asserting it keeps a future cleanup from "deduplicating"
+        // them back into one axis.
+        $this->assertSame(
+            ['Unverified', 'Verified'],
+            array_values(array_intersect(self::RECORD_LADDER, self::ACCOUNT_TIER)),
+            'The account tier and the record ladder are expected to share exactly '
+            .'Verified and Unverified. If that changed, one of the axes moved.'
+        );
+
+        $this->assertCount(4, self::RECORD_LADDER, 'The record ladder has four rungs.');
+        $this->assertCount(2, self::ACCOUNT_TIER, 'The account tier is binary.');
+    }
+
+    public function test_every_verification_value_in_the_data_is_in_the_vocabulary(): void
+    {
+        // THE assertion this whole ruling exists for. The list is what every
+        // other codebase builds its enum from, and none of them can see this
+        // repo's data. A value that lives in the fixtures but not in the list
+        // is a value a client will not have a case for.
+        $found = [];
+
+        foreach (['individuals', 'families', 'households'] as $collection) {
+            foreach (config('esperanza_constituents.'.$collection, []) as $row) {
+                if (isset($row['verification'])) {
+                    $found[$row['verification']] = ($found[$row['verification']] ?? 0) + 1;
+                }
+            }
+        }
+
+        $this->assertNotEmpty($found, 'No verification values found — the reader has probably broken.');
+
+        $undocumented = array_diff(array_keys($found), self::RECORD_LADDER);
+
+        $this->assertSame([], array_values($undocumented), sprintf(
+            "The constituent data carries %d verification value(s) that CLAUDE.md's record "
+            ."ladder does not list: %s\nx-ui.badge has no style for them, and every downstream "
+            .'client builds its enum from that list.',
+            count($undocumented), implode(', ', $undocumented)
+        ));
     }
 
     public function test_claude_md_documents_both_axes(): void
     {
         $constitution = file_get_contents(base_path('CLAUDE.md'));
 
-        foreach (array_merge(self::LIFECYCLE, self::VERIFICATION_TIER) as $name) {
+        foreach ($this->documented() as $name) {
             $this->assertStringContainsString(
                 $name,
                 $constitution,
@@ -107,11 +168,13 @@ class StatusVocabularyTest extends TestCase
             );
         }
 
-        $this->assertStringContainsString(
-            'Verification tier',
-            $constitution,
-            'CLAUDE.md no longer separates the verification tier from the request lifecycle. '
-            .'Collapsing them invites a request whose status is "Verified".'
-        );
+        foreach (['Request lifecycle', 'Account access tier', 'Record verification ladder'] as $heading) {
+            $this->assertStringContainsString(
+                $heading,
+                $constitution,
+                "CLAUDE.md no longer documents the \"{$heading}\" axis. Collapsing the axes is how "
+                .'a request ends up with a status of "Verified", or an account with "Partially Verified".'
+            );
+        }
     }
 }

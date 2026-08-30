@@ -148,7 +148,7 @@ Three deliberate exceptions inside the citizen portal, each recorded in a
 ## Universal status system
 
 Reuse exactly these names everywhere — never invent new ones. `x-ui.badge`
-renders all seventeen, and they fall on **two separate axes**. Do not mix them.
+renders all nineteen, and they fall on **three separate axes**. Do not mix them.
 
 **1. Request lifecycle (15).** The state of a Dokyu or Tulong request:
 
@@ -156,10 +156,41 @@ Draft, Submitted, Pending Review, Under Verification, Assigned, Processing,
 Under Review, Resubmitted, Approved, Rejected, Mark to Release, Released,
 Completed, Cancelled, Archived.
 
-**2. Verification tier (2).** The state of an ACCOUNT or a CONSTITUENT RECORD,
-never of a request:
+**2. Account access tier (2).** The state of an ACCOUNT — never of a request,
+and never of a record:
 
 Verified, Unverified.
+
+This is the tier that gates service access: only a `Verified` account gets full
+Dokyu/Tulong access. It is binary on purpose — an account either may transact or
+may not.
+
+**3. Record verification ladder (4).** How well a CONSTITUENT RECORD is
+evidenced — an individual, family or household. Never an account, never a
+request:
+
+Unverified → For Validation → Partially Verified → Verified.
+
+Ruled 2026-08-30 (B-022). Axis 2 previously claimed to cover records as well as
+accounts and listed only two values, while the `verification` field in
+`config/esperanza_constituents.php` carries four:
+
+    Verified 36 · Partially Verified 33 · Unverified 15 · For Validation 3
+
+`Partially Verified` is the second most common value in that file. Neither it
+nor `For Validation` was listed or styled, and `x-ui.badge` resolved an unlisted
+label to **Draft's** styling — so the label read correctly while the colour said
+"inactive". A missing vocabulary entry looked like a styling nit rather than a
+data defect. Both are now styled, and an unlisted status gets a distinct neutral
+treatment plus a `data-unknown-status` marker instead of impersonating Draft.
+
+**Do not collapse axes 2 and 3.** They share two words and mean different
+things: an account is Verified when it may transact; a record is Verified when
+its evidence is complete. A record can be `Partially Verified` while its owner's
+account is plainly `Unverified`. Collapsing them is the same mistake as
+collapsing the tier with the lifecycle, one level down — and it is how the
+mobile app ended up degrading `Verified` to `Draft` and locking citizens out of
+Dokyu.
 
 Ruled 2026-08-30. These two were rendered by `x-ui.badge` and used across
 Constituents (`verification` on individuals/families/households) and on citizen
@@ -173,8 +204,7 @@ accepted requests from citizens the UI refuses.
 **Never set a request's status to `Verified`.** A request that has passed
 verification is `Approved`; `Verified` describes the person or the record.
 
-The tier gates service access — only a `Verified` account gets full
-Dokyu/Tulong access. **It is the server's field to own.** Deriving it in a Blade
+The ACCOUNT tier gates service access. **It is the server's field to own.** Deriving it in a Blade
 view (as `admin/constituents.blade.php` still does) means every client
 re-derives it, and two of two got it wrong; read it from the API's
 `access_level` once that is wired.
