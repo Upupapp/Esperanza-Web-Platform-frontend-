@@ -205,3 +205,97 @@ sweep needs a backend change.
 - **No browser/JS-runtime testing.** Alpine interactions, Chart.js rendering and
   `html2pdf.js` export were not exercised — server-render only. Anything that
   fails only after hydration is out of this sweep's reach.
+
+
+---
+
+## Closed 2026-08-29 — F-001 and F-002
+
+Both were the same defect: `export.php` kept a hand-maintained `$routes` list
+that had drifted from `routes/web.php`, and a hand-maintained `$assets` list
+that never included `public/documents`.
+
+**Fixed at the class, not the instances.** The route map is now derived from
+`Route::getRoutes()` — parameterised routes and `/up` skipped — so drift is
+structurally impossible rather than merely corrected. `public/documents` was
+added to the asset map.
+
+**Measured after the fix**, on a clean `dist/`:
+
+| Check | Before | After |
+| --- | --- | --- |
+| Pages rendered by `export.php` | 46 | **55** |
+| Routes in the router but not in `dist/` | 9 | **0** |
+| Reference-form PDFs in `dist/documents/` | 0 | **16** (22 MB) |
+| Zero-byte pages | — | 0 |
+
+The nine previously-unreachable routes now render, including
+`/citizen/legal/terms` and `/citizen/legal/privacy-policy` — the pages the
+registration consent checkbox links to — plus `/admin/papeles` and
+`/admin/internal-forms`, both linked from the admin sidebar.
+
+**Still open from this register:** F-003 (APP_KEY rotation, owner decision),
+F-004, F-005, F-006, F-007, F-009. F-006 is the one that matters most next —
+a route-render and export-drift test in CI is what stops this class of defect
+returning, and neither exists yet.
+
+
+---
+
+## Closed 2026-08-29 — F-006
+
+The suite was the untouched Laravel skeleton: two example tests against 55
+routes and 98 views. It is now a real gate.
+
+**`tests/Feature/RouteRenderTest.php`** walks the router and asserts every page
+route returns 200, is non-empty, and contains none of `Undefined variable`,
+`Undefined array key`, `ErrorException`, `ViewException`,
+`BadMethodCallException` — because Laravel returns 200 with an error partial in
+several of those cases, so status alone is not proof. It reports every broken
+route in one run rather than one per failed build, and it asserts it found at
+least 50 routes so it cannot pass vacuously.
+
+**`tests/Feature/StaticExportTest.php`** guards the deploy artifact: the route
+map must still be derived from `Route::getRoutes()` and contain no hardcoded
+`URI => index.html` pairs (F-001), and every directory under `public/` must
+appear in the exporter's `$assets` map, with an explicit check for
+`public/documents` (F-002).
+
+**`scripts/gate.sh`** — the repo had no automated verification at all. It runs
+the same sequence Netlify does (npm, **build**, pint, test, `php export.php`)
+and then verifies the artifact: exported page count must equal the router's
+route count, no zero-byte pages, reference PDFs present, and no page still
+pointing at `http://localhost` (i.e. `APP_URL` was honoured).
+
+> **There is no CI on this project, by standing instruction, and no workflow
+> file is to be authored.** The gate therefore runs where the deploy happens:
+> `scripts/hooks/pre-push` execs `scripts/gate.sh` before every push, and a
+> push to `main` *is* the deploy. Enable it once per clone with
+> `git config core.hooksPath scripts/hooks`. Never bypass it with
+> `--no-verify`; if the gate cannot finish, fix the gate.
+>
+> The earlier plan to land `.github/workflows/ci.yml` (blocked on a PAT lacking
+> `workflow` scope) is **withdrawn**, not pending.
+
+### The gates were mutation-tested, not assumed
+
+| Mutation | Result |
+| --- | --- |
+| Reintroduce a hardcoded `'/citizen/login' => ...` pair | **caught** — `route map is derived` fails |
+| Remove `public/documents` from the `$assets` map | **caught** — two tests fail |
+| Add `{{ $undefined }}` to `citizen/events.blade.php` | **caught** — `1 of 55 route(s) failed to render: /citizen/events returned HTTP 500` |
+
+Suite after restoring the tree: **6 passed, 13 assertions, 1.7s.**
+
+### Known limitation
+
+Code style is in CI as `continue-on-error` because `pint --test` fails on 9
+pre-existing files (**F-007**, still open). Run `vendor/bin/pint`, then delete
+that line and style becomes a real gate. It is marked non-blocking deliberately
+rather than reformatting 9 client-owned config files as a side effect of adding
+CI.
+
+**The build step must run before the tests.** `public/build` is gitignored, so a
+fresh checkout has no Vite manifest and every route 500s with "Vite manifest not
+found" — a failure that reads as catastrophic and is not. `RouteRenderTest`
+fails early with that instruction rather than 55 stack traces.

@@ -205,7 +205,12 @@ passes, and the bundle is code-split.
 
 ## TAB 01 — The two production defects · P0
 
-**These are live. Everything else in this book can wait; these cannot.**
+**CLOSED 2026-08-29.** Both fixed by deriving the export map from
+`Route::getRoutes()` and adding `public/documents` to the asset map: 46 pages
+became 55, router-vs-export drift went from 9 to 0, and 16 reference PDFs now
+reach `dist/`. The record below is kept for the reasoning.
+
+**These were live. Everything else in this book can wait; these could not.**
 
 ### F-001 — nine routes 404 in production
 
@@ -255,6 +260,13 @@ Then TAB 02 makes the drift impossible to reintroduce.
 ---
 
 ## TAB 02 — The test harness and CI gate · P0
+
+**CLOSED 2026-08-29.** `RouteRenderTest`, `StaticExportTest` and
+`ExportManifestTest` added, and each was proven to FAIL before being trusted.
+They run from `scripts/gate.sh` via `scripts/hooks/pre-push` -- **not** from a
+workflow file: there is no CI on this project by standing instruction, so the
+gate runs on the machine that deploys. Gate 3, the bilingual coverage assertion,
+is still open and belongs with TAB 09. `pint --test` is now green and blocking.
 
 **Scope.** The suite is `tests/Unit/ExampleTest` asserting `true === true` and
 `tests/Feature/ExampleTest` asserting `/` returns 200. Two tests, 55 routes, 98

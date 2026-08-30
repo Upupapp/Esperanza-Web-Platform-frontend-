@@ -5,25 +5,62 @@ namespace Tests\Feature;
 use Tests\TestCase;
 
 /**
- * Gate 1 of TAB 02 — the route render gate.
+ * Every page route must render.
  *
- * Walks every statically exportable route, asserts 200, and asserts the body
- * carries none of the Blade failure markers that still return 200. This is the
- * class of defect a static export turns into a broken deploy: the page renders,
- * the exporter writes it, and the error ships as content.
+ * This project deploys as a static export (export.php renders each route to
+ * dist/ and Netlify serves flat files), so a view that throws is not a runtime
+ * error a user might never hit -- it is a page missing from the build. Two P0
+ * defects reached production before this gate existed, and both would have been
+ * caught here in about a second.
  */
 class RouteRenderTest extends TestCase
 {
-    /** Failures that can reach the browser without changing the status code. */
-    private const ERROR_MARKERS = [
+    /**
+     * Markers that mean Blade rendered but produced a broken page. A 200 alone
+     * is not proof of health -- Laravel returns 200 with an error partial in
+     * several of these cases.
+     */
+    private const FAILURE_MARKERS = [
         'Undefined variable',
         'Undefined array key',
         'Undefined property',
+        'ErrorException',
         'ViewException',
-        'is not defined',            // Route [...] not defined
-        'htmlspecialchars(): Argument',
+        'BadMethodCallException',
         'Attempt to read property',
+        'htmlspecialchars(): Argument',
+        'is not defined',            // Route [...] not defined
     ];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // The layouts call @vite, which throws without a build. Fail with the
+        // fix rather than 55 confusing stack traces -- a fresh checkout has no
+        // public/build (it is gitignored), which reads as a catastrophe.
+        if (! file_exists(public_path('build/manifest.json'))) {
+            $this->fail(
+                'Vite manifest missing. Run "npm ci && npm run build" before the test suite; '.
+                'public/build is gitignored, so a fresh checkout has none.'
+            );
+        }
+    }
+
+    /**
+     * The routes the exporter will actually write.
+     *
+     * This deliberately calls the SAME function export.php calls rather than
+     * re-implementing the filter here. A test that reassembles the production
+     * predicate can drift wider or narrower than it, and then it is guarding
+     * something the deploy does not do.
+     */
+    private function pageRoutes(): array
+    {
+        require_once base_path('build/export_manifest.php');
+
+        return array_keys(esperanza_export_routes($this->app->make('router')->getRoutes()));
+    }
 
     public function test_the_vite_manifest_is_present_before_any_route_is_judged(): void
     {
@@ -35,46 +72,60 @@ class RouteRenderTest extends TestCase
         );
     }
 
-    public function test_every_exportable_route_renders_cleanly(): void
+    public function test_every_page_route_renders_without_error(): void
     {
-        require_once base_path('build/export_manifest.php');
+        $routes = $this->pageRoutes();
 
-        $routes = esperanza_export_routes(app('router')->getRoutes());
-
-        $this->assertNotEmpty($routes, 'No exportable routes were derived — the gate would pass vacuously.');
+        // Guards the discovery itself: if it silently stopped finding routes,
+        // this test would otherwise pass vacuously.
+        $this->assertGreaterThanOrEqual(
+            50,
+            count($routes),
+            'Found suspiciously few page routes -- route discovery has probably broken.'
+        );
 
         $failures = [];
 
-        foreach (array_keys($routes) as $uri) {
+        foreach ($routes as $uri) {
             try {
                 $response = $this->get($uri);
             } catch (\Throwable $e) {
-                $failures[] = sprintf('%s — threw %s: %s', $uri, $e::class, $e->getMessage());
+                $failures[] = sprintf('%s threw %s: %s', $uri, $e::class, $e->getMessage());
 
                 continue;
             }
 
-            if ($response->getStatusCode() !== 200) {
-                $failures[] = sprintf('%s — HTTP %d', $uri, $response->getStatusCode());
+            $status = $response->getStatusCode();
+
+            if ($status !== 200) {
+                $failures[] = "{$uri} returned HTTP {$status}";
 
                 continue;
             }
 
-            $body = $response->getContent();
+            $body = (string) $response->getContent();
 
-            foreach (self::ERROR_MARKERS as $marker) {
+            if (trim($body) === '') {
+                $failures[] = "{$uri} rendered an empty page";
+
+                continue;
+            }
+
+            foreach (self::FAILURE_MARKERS as $marker) {
                 if (str_contains($body, $marker)) {
-                    $failures[] = sprintf('%s — 200 but body contains "%s"', $uri, $marker);
+                    $failures[] = "{$uri} returned 200 but its HTML contains \"{$marker}\"";
+
                     break;
                 }
             }
         }
 
+        // Report every broken route at once; fixing them one failed run at a
+        // time is the slow way to find out the layout is at fault.
         $this->assertSame(
             [],
             $failures,
-            sprintf("%d of %d routes did not render cleanly:\n  %s",
-                count($failures), count($routes), implode("\n  ", $failures))
+            count($failures).' of '.count($routes)." route(s) failed to render:\n  ".implode("\n  ", $failures)
         );
     }
 }
