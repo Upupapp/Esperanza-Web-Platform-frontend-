@@ -100,12 +100,20 @@ $permissionModules = [
     [
         'key' => 'communications', 'name' => 'Announcements & Directory', 'icon' => 'megaphone',
         'submodules' => [
-            ['key' => 'comm_news', 'name' => 'News & Announcements', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'archive']],
+            // B-011: 'reject' added. The announcement lifecycle is
+            // Draft -> Review -> Publish -> Archive, but with no reject action
+            // declared an announcement under review could never be rejected —
+            // under deny-by-default there was no triple to grant.
+            ['key' => 'comm_news', 'name' => 'News & Announcements', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'reject', 'archive']],
             ['key' => 'comm_community', 'name' => 'Community Posts (Moderation)', 'perms' => ['view', 'review', 'approve', 'reject', 'archive']],
             ['key' => 'comm_events', 'name' => 'Events', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'archive']],
             ['key' => 'comm_directory', 'name' => 'Government Directory', 'perms' => ['view', 'create', 'edit', 'delete']],
             ['key' => 'comm_barangay_directory', 'name' => 'Barangay Directory', 'perms' => ['view', 'edit']],
-            ['key' => 'comm_banners', 'name' => 'Banners', 'perms' => ['view', 'create', 'edit', 'delete', 'archive']],
+            // B-011: 'review' and 'approve' added, bringing Banners in line with
+            // News and Events. Without them a banner could be created and
+            // archived but never published, because publishing goes through
+            // review -> approve and neither action existed to grant.
+            ['key' => 'comm_banners', 'name' => 'Banners', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'archive']],
         ],
     ],
     [
@@ -414,6 +422,11 @@ return [
         'export' => 'Export', 'print' => 'Print', 'archive' => 'Archive',
         'verify' => 'Verify', 'assign' => 'Assign', 'merge' => 'Merge', 'resolve' => 'Resolve', 'view_sensitive' => 'View Sensitive',
         'dispatch' => 'Dispatch', 'escalate' => 'Escalate', 'validate' => 'Validate', 'open' => 'Open',
+        // B-001: 'close' was in use on sakuna_command / sakuna_incidents /
+        // sakuna_centers but never declared here — 27 declared against 28 used.
+        // Harmless in this UI (a missing label), but an undeclared action is
+        // ungrantable server-side, so Sakuna's close verb was unreachable.
+        'close' => 'Close',
         'check_in' => 'Check In', 'transfer' => 'Transfer', 'check_out' => 'Check Out', 'deploy' => 'Deploy',
         'return' => 'Return', 'publish' => 'Publish', 'cancel' => 'Cancel',
     ],
