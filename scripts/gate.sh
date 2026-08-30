@@ -95,6 +95,40 @@ fi
 EMPTY=$(find dist -name '*.html' -size 0 2>/dev/null | wc -l | tr -d ' ')
 [ "$EMPTY" = "0" ] && pass "no zero-byte HTML" || { fail "$EMPTY zero-byte HTML file(s)"; }
 
+# The docs state a TEST COUNT. A PHPUnit test cannot check that without
+# re-running itself, so the check belongs here -- the gate is what produced the
+# number. Three such claims sat stale by 10 before this existed: they were
+# hand-edited each time the suite grew, and nothing ever disagreed with them.
+# The phpunit summary is ANSI-coloured, so escape codes sit between 'Tests:'
+# and the number. Match the contiguous '<n> passed' instead of anchoring on the
+# label.
+ACTUAL_TESTS=$(grep -aoE '[0-9]+ passed' /tmp/esperanza-gate-test.log 2>/dev/null | grep -oE '[0-9]+' | tail -1)
+
+if [ -z "$ACTUAL_TESTS" ]; then
+  fail "could not read the test count out of the phpunit run"
+else
+  COUNT_MISMATCH=0
+
+  check_claim() {
+    # $1 = file, $2 = grep -oE pattern whose match ends in the number
+    stated=$(grep -oE "$2" "$1" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
+    if [ -n "$stated" ] && [ "$stated" != "$ACTUAL_TESTS" ]; then
+      echo "   $1 claims $stated tests; the suite ran $ACTUAL_TESTS"
+      COUNT_MISMATCH=1
+    fi
+  }
+
+  check_claim CERTIFICATION.md "phpunit \(([0-9]+) tests\)"
+  check_claim CERTIFICATION.md "2 . ([0-9]+) tests"
+  check_claim FRONTEND_PENDING.md "2 tests -> ([0-9]+)"
+
+  if [ "$COUNT_MISMATCH" -eq 0 ]; then
+    pass "documented test count matches the run ($ACTUAL_TESTS)"
+  else
+    fail "a document states a test count the suite disagrees with"
+  fi
+fi
+
 STRAY=$(grep -rl "http://localhost/" dist --include='*.html' 2>/dev/null | wc -l | tr -d ' ')
 if [ "$STRAY" = "0" ]; then
   pass "asset URLs honour APP_URL (no http://localhost left in dist/)"

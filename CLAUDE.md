@@ -220,6 +220,13 @@ view (as `admin/constituents.blade.php` still does) means every client
 re-derives it, and two of two got it wrong; read it from the API's
 `access_level` once that is wired.
 
+**Not yet published (checked 2026-08-30).** The backend's constituent payloads
+currently return neither `status` nor `verification` — its `residents()` and
+`households()` responses carry identity and demographic fields only. So the
+instruction above is what to do WHEN the field exists, not something available
+now; `admin/constituents.blade.php` still derives it. Tracked as B-035 on the
+backend, and it is a decision there rather than queued work, so there is no date.
+
 ### Module-local vocabularies — ruled 2026-08-30 (B-018)
 
 The three axes above govern **requests, accounts and records**. They are not the
