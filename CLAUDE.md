@@ -220,12 +220,25 @@ view (as `admin/constituents.blade.php` still does) means every client
 re-derives it, and two of two got it wrong; read it from the API's
 `access_level` once that is wired.
 
-**Not yet published (checked 2026-08-30).** The backend's constituent payloads
-currently return neither `status` nor `verification` — its `residents()` and
-`households()` responses carry identity and demographic fields only. So the
-instruction above is what to do WHEN the field exists, not something available
-now; `admin/constituents.blade.php` still derives it. Tracked as B-035 on the
-backend, and it is a decision there rather than queued work, so there is no date.
+**Now in the contract (verified 2026-08-30, backend `de7b449`).** The backend's
+owner ruled B-035 and published both record axes on
+`GET /api/v1/admin/residents` and `/admin/households`:
+
+    status         Active | Under Review                                    (axis 3a, activity)
+    verification   Unverified | For Validation | Partially Verified | Verified  (axis 3, ladder)
+
+Contract field names, not renamed — the collision with the request lifecycle is
+handled by pinning the closed sets on both sides, which is what axis 3 and
+`ModuleVocabularyTest` do here.
+
+**Still derived in Blade, and that is not yet a defect to fix.** The fields exist
+in the CONTRACT; there is no reachable endpoint for a static export to call
+(`VITE_API_BASE_URL` is still a placeholder, and production is flat files on a
+CDN). So `admin/constituents.blade.php` continues to derive `access_level`, and
+switching it is a one-line change per view — TAB 04 gave each view a single data
+seam — the moment an API is actually deployed. It belongs with TAB 06's adoption,
+for the same reason: wiring a read to an endpoint that does not answer replaces
+working data with a guaranteed failure.
 
 ### Module-local vocabularies — ruled 2026-08-30 (B-018)
 
