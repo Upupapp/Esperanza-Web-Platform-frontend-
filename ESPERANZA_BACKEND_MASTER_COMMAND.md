@@ -34,12 +34,18 @@ paste; work 01–20 if you want a schedule.
    come from the `config/esperanza_*.php` files and are not up for
    redesign. If the backend wants a different shape, that is a change request
    against the frontend, not a silent divergence.
-2. **Fail closed.** The frontend's permission gate is a demo and it
-   **fails open** — `resources/js/app.js` returns `true` from `can()`,
-   `canPerm()`, `inScope()` and `inDeptScope()` when there is no session, by
-   design, because it is a design preview and not a security boundary. Every one
-   of those checks must be re-implemented server-side and must deny by default.
-   Nothing on the client may be trusted.
+2. **Fail closed.** Every permission, geographic-scope and department-scope
+   check must be re-implemented server-side and must deny by default. The
+   client's own gating in `resources/js/app.js` **also fails closed as of
+   TAB 08** — `can()`, `canPerm()`, `inScope()`, `inDeptScope()` and
+   `canExportReports()` all return `false` with no session — but that is
+   defence in depth, not the boundary. Nothing on the client may be trusted
+   either way.
+
+   *(Superseded 2026-08-30. This rule previously described the client as
+   failing OPEN and justified the server rule with that. The instruction was
+   always right; only its justification expired. Do not go looking for a
+   fail-open client gate — there isn't one.)*
 3. **The status vocabulary is fixed and closed.** Fifteen values, listed in
    `CLAUDE.md`, verified in use across the frontend with **zero invented
    values**. The backend may not add a sixteenth.
@@ -379,10 +385,10 @@ and the single most dangerous thing to approximate.
 - Provide the effective-permission read the Users → Permissions screen needs:
   given an account, the resolved triple set.
 
-**Critical.** `resources/js/app.js` states plainly that with no session the
-client-side helpers return `true` — *"No session -> fail-open (unrestricted
-preview), since this is a design demo, not a real security boundary."* Your
-implementation inverts that. No session, no permission, no data.
+**Critical.** No session, no permission, no data. The client's helpers now deny
+by default too (TAB 08), so both sides agree — but agreement is not delegation:
+the server is the only boundary, and it must reach that answer on its own rather
+than trusting anything the client sends.
 
 **Acceptance.** An automated test asserts all 485 triples: each role's granted
 triples succeed and each denied triple returns 403. A barangay-scoped account

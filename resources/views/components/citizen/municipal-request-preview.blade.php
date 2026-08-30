@@ -1,3 +1,10 @@
+{{-- LANGUAGE (TAB 09): this renders an OFFICIAL DOCUMENT, and its wording is
+     the artifact itself, not UI chrome. Philippine LGU certificates and
+     clearances are issued in English and their phrasing is fixed by the
+     issuing office, so the document body is deliberately NOT translated --
+     a bilingual certificate would not match the paper it stands in for.
+     Any surrounding CONTROLS (editor toolbar, zoom, panels) are bilingual;
+     see document-editor-toolbar.blade.php. --}}
 {{-- Municipal document request-slip preview — this represents the CITIZEN'S
      REQUEST, not the final certificate itself (only the Civil Registrar /
      issuing office can produce that, after verifying it against the actual

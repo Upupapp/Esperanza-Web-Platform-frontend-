@@ -16,6 +16,8 @@
     }"
     x-init="start()"
     x-show="banners.length > 0"
+    role="region"
+    :aria-label="$store.lang.current === 'en' ? 'Announcements carousel' : 'Carousel ng mga anunsyo'"
     class="relative rounded-2xl overflow-hidden mb-4 shadow-card group"
     style="aspect-ratio: 21 / 7;"
 >
@@ -49,11 +51,13 @@
     <!-- Arrows (visible on hover, desktop) -->
     <button
         type="button" @click.prevent="prev(); restart()"
+        :aria-label="$store.lang.current === 'en' ? 'Previous banner' : 'Nakaraang banner'"
         x-show="banners.length > 1"
         class="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-navy-950/40 hover:bg-navy-950/60 backdrop-blur text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-[160ms]"
     ><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
     <button
         type="button" @click.prevent="next(); restart()"
+        :aria-label="$store.lang.current === 'en' ? 'Next banner' : 'Susunod na banner'"
         x-show="banners.length > 1"
         class="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-navy-950/40 hover:bg-navy-950/60 backdrop-blur text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-[160ms]"
     ><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
@@ -63,6 +67,8 @@
         <template x-for="(b, i) in banners" :key="'dot-' + b.id">
             <button
                 type="button" @click.prevent="goTo(i)"
+                :aria-label="($store.lang.current === 'en' ? 'Go to banner ' : 'Pumunta sa banner ') + (i + 1)"
+                :aria-current="active === i ? 'true' : 'false'"
                 class="h-1.5 rounded-full transition-all duration-[220ms] ease-standard"
                 :class="active === i ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/60'"
             ></button>

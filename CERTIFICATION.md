@@ -8,7 +8,7 @@ Every number below was measured on this tree, not recalled.
 # VERDICT: **NOT CERTIFIED**
 
 TAB 17 is explicit that a partial pass is NOT CERTIFIED, not a qualified yes.
-**5 of the 10 gates pass. 5 fail.** The named list is below.
+**6 of the 10 gates pass. 4 fail.** The named list is below.
 
 ---
 
@@ -21,7 +21,7 @@ TAB 17 is explicit that a partial pass is NOT CERTIFIED, not a qualified yes.
 | 3 | Every data surface demonstrates loading, empty, error and loaded | **FAIL** |
 | 4 | Every write path submits, shows in-flight state, renders server field errors, cannot double-submit | **FAIL** |
 | 5 | Client permission gating fails closed; no session shows nothing | **PASS** |
-| 6 | Bilingual gate green for citizen-facing strings; admin decision recorded | **FAIL** |
+| 6 | Bilingual gate green for citizen-facing strings; admin decision recorded | **PASS** |
 | 7 | Accessibility: automated audit clean, plus keyboard-only and screen-reader passes | **FAIL** |
 | 8 | Page-weight budget met on every route, measured throttled | **FAIL** |
 | 9 | `pint --test` green | **PASS** |
@@ -41,14 +41,6 @@ specs in `config/esperanza_service_form_specs.php` that TAB 07 wants to render
 from are present and unused. `x-ui.button` gained the `loading` prop this work
 needs, so in-flight disabling is now a property of the button rather than
 something each form must remember — but no write path exists to use it.
-
-**6 — bilingual.** **38 of 99 views** contain any language handling. 16
-citizen-facing views and components have none, and the Administrative Portal has
-no language toggle at all. TAB 09's own first instruction is to get an owner
-ruling on whether the admin portal is bilingual or English-only, because that
-changes the size of the work by roughly 3x. **That ruling has not been given, so
-the work was not guessed at.** The coverage gate (TAB 02 gate 3) is deliberately
-not added yet: it would be red on arrival and tell nobody anything new.
 
 **7 — accessibility.** Measured on the *rendered* DOM across all 55 routes
 (`node scripts/audit.mjs`), which is a much larger denominator than a source
@@ -70,7 +62,29 @@ The defect is *association*, not absence, and the remedy is different work.
 
 ### The two passing gates that are new, and how they were verified
 
-**10 — clean clone.** `.env.example` shipped database session/cache/queue drivers
+**6 — bilingual.** Ruled by the owner on 2026-08-30 and recorded in CLAUDE.md:
+**the Citizen Portal is bilingual, the Administrative Portal is English-only by
+decision.** That scoping matters — a gate run over the whole view tree would
+report 32 admin "failures" that are the owner's settled choice, and a
+permanently red gate gets ignored.
+
+All citizen-facing views now either handle language (`x-ui.t`, or a bound
+`$store.lang` ternary for attributes, which `x-ui.t` cannot do because it
+renders a `<span>`) or carry a `{{-- LANGUAGE (TAB 09) --}}` comment saying why
+they are exempt. Four are exempt on purpose: the two official document previews
+and `doc-field` (a Philippine LGU certificate's wording is the artifact, not UI
+chrome), the Digital ID card *face* (printed labels of a Barangay ID — its
+chrome is bilingual), and `document-watermark` (a decorative `<img>` with no
+text at all).
+
+`tests/Feature/BilingualCoverageTest.php` enforces it, including a guard that
+fails if the scope is ever silently widened to the admin portal.
+
+**Translations are drafted, not signed off.** Every new Filipino string was
+written by Claude and listed in its commit for review before it reaches
+residents.
+
+ `.env.example` shipped database session/cache/queue drivers
 against a sqlite file that is gitignored, so a fresh clone returned HTTP 500 on
 *every* page while the machine that wrote it worked fine (F-004). Now
 `array`/`array`/`sync`, and `artisan migrate` is gone from the composer setup
@@ -106,7 +120,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (13 tests) → static export → assertions ON dist/
+vite build → pint --test → phpunit (16 tests) → static export → assertions ON dist/
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:
@@ -151,14 +165,14 @@ These are not oversights. The book says they need an answer, not a guess.
 | TAB | State | Note |
 | --- | --- | --- |
 | 01 The two production defects | **DONE** | 46 → 55 routes exported; 16 PDFs reach `dist/` |
-| 02 Test harness and gate | **DONE** (adapted) | 2 → 13 tests. Enforced by a local pre-push hook, not CI — see below |
+| 02 Test harness and gate | **DONE** (adapted) | 2 → 16 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below |
 | 03 Local setup and the `.env` trap | **DONE** | Clean clone verified end to end on the merged tree — 11 tests from a fresh checkout |
 | 04 Lift 167 inline arrays | **NOT DONE** | 166 declarations across 43 views, unchanged |
 | 05 The HTTP layer | **DONE** | Client + error envelope built; no screen consumes it yet |
 | 06 Loading, empty, error states | **PARTIAL** | `x-ui.error-state` added; not wired (blocked behind TAB 04) |
 | 07 Real forms and submission | **NOT DONE** | Button loading state added; no write path exists |
 | 08 Session and permission gating | **DONE** | Fails closed; signed-out state added |
-| 09 Bilingual completion | **NOT DONE** | Blocked on the owner ruling |
+| 09 Bilingual completion | **DONE** | Ruled 2026-08-30: citizen bilingual, admin English-only. All citizen views covered; gate added |
 | 10 Accessibility | **PARTIAL** | Modals and keyboard reach done; naming and alt open |
 | 11 Performance | **DONE** | Both measurements improved; no budget agreed (gate 8) |
 | 12 Component discipline | **PARTIAL** | a11y fix reached all 26 hand-rolled modals; consolidation to the component not done |

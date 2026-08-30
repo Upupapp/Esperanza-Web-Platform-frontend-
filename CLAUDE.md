@@ -105,6 +105,40 @@ One entry screen: user chooses **Citizen Login** or **LGU Personnel Login**.
 Citizen registration exists. Admin registration does not — admin accounts
 are provisioned internally (UI can imply this, no backend needed).
 
+## Language — RULED 2026-08-30
+
+**Citizen Portal: bilingual (Filipino + English). Administrative Portal:
+English-only, by decision.**
+
+The language store defaults to `fil`. Every citizen-facing user-visible string
+must exist in both languages, written with the `x-ui.t` component
+(`<x-ui.t fil="..." en="..." />`) so coverage stays greppable and testable.
+`x-ui.t` renders a `<span>`, so attributes — `placeholder`, `title`,
+`aria-label` — use a bound ternary on `$store.lang.current` instead.
+
+The Administrative Portal is English-only **because the owner decided so**, not
+by omission. Do not add a language toggle to the admin topbar, and do not treat
+untranslated admin views as a defect. If that decision is ever revisited, it is
+an owner decision, and this section is where it gets rewritten.
+
+Three deliberate exceptions inside the citizen portal, each recorded in a
+`{{-- LANGUAGE (TAB 09) --}}` comment in the file itself:
+
+- **Official document bodies** (`barangay-certificate-preview`,
+  `municipal-request-preview`, `doc-field`) — the wording is the artifact.
+  Philippine LGU certificates are issued in English and their phrasing is fixed
+  by the issuing office. A bilingual certificate would not match the paper it
+  stands in for. The controls *around* the document are bilingual.
+- **The Digital ID card face** (`digital-id-card`) — "Republic of the
+  Philippines", "Civil Status", "Mother's Maiden Name" are the printed labels of
+  a Barangay ID, part of the credential rather than UI chrome. Its chrome (flip
+  hint, disclaimer, accessible names) IS bilingual.
+- **Proper nouns** — module and event names (Dokyu, Tulong, Balita, Sakuna,
+  Papeles, "Fiesta ng Esperanza 2026"), font names, and the 15 canonical status
+  names, which are a fixed vocabulary and must never be renamed or translated.
+
+`tests/Feature/BilingualCoverageTest.php` enforces this and is part of the gate.
+
 ## Standard workflows
 
 - **Citizen Registration**: Registration → Verification → Resident Profile → Dashboard

@@ -1,3 +1,7 @@
+{{-- LANGUAGE (TAB 09): nothing to translate. This component renders a single
+     decorative <img> with alt="" and aria-hidden="true" and emits no
+     user-visible text in any language. Recorded so its absence from the
+     bilingual coverage count is a decision rather than an omission. --}}
 {{-- Large, centered, low-opacity Esperanza seal watermark — shared by every
      Dokyu paper (barangay-certificate-preview + municipal-request-preview)
      so the treatment stays identical everywhere rather than being

@@ -488,14 +488,17 @@ double-submitted.
 in `Alpine.store('session')` and `Alpine.store('citizenSession')`, persisted to
 `localStorage` under `esperanza_session` and `esperanza_citizen_session`.
 
-**Read the file's own comment before changing anything:**
+**CLOSED 2026-08-30 (TAB 08).** The file used to carry this comment:
 
 > No session -> fail-open (unrestricted preview), since this is a design demo,
 > not a real security boundary.
 
-`can()`, `canPerm()`, `inScope()` and `inDeptScope()` all return `true` when
-there is no account. That was correct for a design preview. **It is wrong the
-moment a real API exists.**
+`can()`, `canPerm()`, `inScope()`, `inDeptScope()` and `canExportReports()`
+returned `true` with no account. That was correct for a design preview and
+wrong the moment a real API exists. **All five now return `false`**, and the
+admin layout shows `x-admin.sign-in-required` rather than a blank shell. The
+quoted comment no longer exists in `app.js` — it is reproduced here only so the
+change is legible to anyone holding an older copy of this book.
 
 **Do.**
 

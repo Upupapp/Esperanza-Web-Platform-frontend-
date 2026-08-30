@@ -10,6 +10,13 @@
      Cristy Bonghanoy only (RES-2026-104), the same "flagship demo resident"
      both platforms already use — see this component's only call site,
      citizen/profile.blade.php, for the gate. --}}
+{{-- LANGUAGE (TAB 09): the CARD FACE stays English in both languages, on
+     purpose. These are the printed labels of a Philippine Barangay ID
+     ("Republic of the Philippines", "Civil Status", "Mother's Maiden Name")
+     and they are part of the credential, not UI chrome -- translating them
+     would render an ID that does not match the physical one it mirrors.
+     The chrome AROUND the card (the flip hint, the simulation disclaimer,
+     the control's accessible name) IS bilingual. --}}
 @php
     $resident = collect(config('esperanza_constituents.individuals'))->firstWhere('id', 'RES-2026-104');
     $baras = config('esperanza_barangay_documents.baras');
@@ -29,13 +36,17 @@
 >
     <p class="text-center text-[11px] text-slate-400 mb-3 flex items-center justify-center gap-1.5">
         <i data-lucide="hand-pointer" class="w-3 h-3"></i>
-        Tap the card to flip
+        <x-ui.t fil="I-tap ang card para baligtarin" en="Tap the card to flip" />
     </p>
 
     <div class="relative [perspective:1600px]">
         <button
             type="button"
             @click="flipped = !flipped"
+            :aria-label="$store.lang.current === 'en'
+                ? (flipped ? 'Show the front of the ID' : 'Show the back of the ID')
+                : (flipped ? 'Ipakita ang harap ng ID' : 'Ipakita ang likod ng ID')"
+            :aria-pressed="flipped"
             class="relative w-full aspect-[1.58/1] rounded-2xl [transform-style:preserve-3d] transition-transform duration-[650ms] ease-[cubic-bezier(0.4,0.1,0.2,1)] shadow-xl"
             :class="flipped && '[transform:rotateY(180deg)]'"
         >
@@ -145,7 +156,7 @@
                             <p class="text-[9.5px] font-semibold text-navy-900 truncate">{{ $baras['officials']['punong_barangay'] ?? '—' }}</p>
                             <p class="text-[7.5px] text-slate-400">Punong Barangay, {{ ucfirst($baras['label'] ?? 'Baras') }}</p>
                         </div>
-                        <p class="text-[7px] text-slate-300 text-right max-w-[110px] leading-tight">Frontend simulation — not a real government-issued ID.</p>
+                        <p class="text-[7px] text-slate-300 text-right max-w-[110px] leading-tight"><x-ui.t fil="Simulation lamang — hindi tunay na ID mula sa pamahalaan." en="Frontend simulation — not a real government-issued ID." /></p>
                     </div>
                 </div>
             </div>
