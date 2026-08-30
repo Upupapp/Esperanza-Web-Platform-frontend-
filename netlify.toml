@@ -8,14 +8,34 @@
   NODE_VERSION   = "20"
   APP_ENV        = "production"
   APP_DEBUG      = "false"
-  # APP_KEY must be set as a secret in the Netlify UI — do NOT put it here.
-  # Project configuration → Environment variables → Add variable
-  #   Key:   APP_KEY
-  #   Value: <the APP_KEY -- read it from the Netlify UI or your local .env>
+  # APP_KEY must be set as a secret in the Netlify UI — never in this file.
+  #   Project configuration → Environment variables → Add variable
+  #   Key:   APP_KEY      Value: <paste from your local .env, never from here>
   #
-  # The literal key used to be reproduced here. It is redacted because this is
-  # a PUBLIC repository (F-003). Redacting does not un-leak it: the value is
-  # still in this file's git history and MUST be rotated.
+  # ── F-003: the old key is PUBLIC. Rotation runbook ────────────────────────
+  # A literal APP_KEY was committed in this comment. It is redacted now, but
+  # redaction does not un-leak it: it remains readable in this file's git
+  # history (commits c8388af and e3e3f04) and this is a public repository.
+  # Rewriting that history is NOT the remedy — it would force-push over every
+  # clone and anyone who cloned already has the value. Rotation is the remedy.
+  #
+  # Done:     the local .env key was rotated 2026-08-30 (`php artisan
+  #           key:generate`), so the leaked value is no longer in local use,
+  #           and it was verified not to be reused by any other local project.
+  # REMAINING, and only a human with Netlify access can do it:
+  #   1. php artisan key:generate      (locally, if you have not already)
+  #   2. copy the new APP_KEY out of .env  — .env is gitignored, keep it so
+  #   3. Netlify → Project configuration → Environment variables → APP_KEY
+  #      → edit → paste the new value → save
+  #   4. trigger a redeploy so the build picks it up
+  #
+  # Blast radius, measured rather than assumed: production is a STATIC EXPORT
+  # (publish = "dist"), so Laravel never runs for a visitor and APP_KEY is used
+  # only at build time to boot the app during export.php. Nothing in this app
+  # encrypts or decrypts anything, and SESSION/CACHE/QUEUE are all in-memory.
+  # So the leaked key protects nothing here — the real risk was reuse of the
+  # same string in another Laravel app, which was checked and did not occur.
+  # Rotate anyway: a published key should never stay in service.
 
   # Use in-memory drivers — this is a frontend-only static export, no DB needed.
   DB_CONNECTION      = "sqlite"

@@ -19,7 +19,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | --- | --- | --- | --- |
 | F-001 | P0 | **FIXED** | `export.php` route map is now DERIVED from `Route::getRoutes()` -- 55/55 routes export; drift gate added |
 | F-002 | P0 | **FIXED** | `public/documents` added to the asset map -- all 16 reference PDFs reach `dist/`; asserted by the drift gate |
-| F-003 | P1 | **PARTIAL / OWNER** | Literal key redacted from `netlify.toml`. It is still in git history and MUST be rotated -- owner action |
+| F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
 | F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 25, enforced by `scripts/hooks/pre-push` |
