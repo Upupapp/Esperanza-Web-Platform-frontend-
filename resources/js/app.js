@@ -1,6 +1,7 @@
 import './bootstrap';
 import api from './api/client';
 import { resource } from './api/resource';
+import { specForm } from './api/form';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons, icons } from 'lucide';
@@ -75,6 +76,11 @@ document.addEventListener('alpine:init', () => {
     // rules it encodes -- chiefly that "empty" is never true until a load has
     // actually resolved, and that a failure never degrades to an empty list.
     Alpine.data('resource', resource);
+
+    // TAB 07: one submission path for every write -- in-flight state, a
+    // double-submit guard, 422 field errors mapped onto the same keys the spec
+    // uses, input preserved on failure, and an unsaved-changes warning.
+    Alpine.data('specForm', specForm);
 
     Alpine.store('lang', {
         current: localStorage.getItem('esperanza_lang') || 'fil',
