@@ -29,18 +29,32 @@ TAB 17 is explicit that a partial pass is NOT CERTIFIED, not a qualified yes.
 
 ### Why each failing gate fails
 
-**3 — four states.** `x-ui.error-state` now exists (there were zero error states
-across 98 views before, because nothing could fail). It is not wired into any
-data surface, and it cannot be meaningfully wired until the views stop declaring
-their own fixtures (TAB 04) and start reading the API client (TAB 05). 22
-skeleton usages and 6 empty states across 98 views is unchanged.
+**3 — four states. The mechanism exists; adoption does not.** `resource()`
+(resources/js/api/resource.js) plus `x-ui.data-panel` give any surface loading /
+empty / error / loaded in one line, and encode the three rules that are easy to
+get wrong: `empty` is never true before a load resolves, a failure never
+degrades to an empty list, and each surface owns its own state so one dead
+endpoint cannot blank a dashboard.
 
-**4 — submission.** Unchanged and unstarted: **3 `<form>` elements against 297
-`<input>` and 366 `x-model` bindings**, and 3 `@submit` handlers. The 25 form
-specs in `config/esperanza_service_form_specs.php` that TAB 07 wants to render
-from are present and unused. `x-ui.button` gained the `loading` prop this work
-needs, so in-flight disabling is now a property of the button rather than
-something each form must remember — but no write path exists to use it.
+No surface calls `load()` yet, and that is deliberate rather than unfinished:
+there is no API, so wiring it today would replace working fixtures with a
+permanent error state — strictly worse than now. The gate stays FAIL because its
+wording is "every data surface demonstrates all four states", and none does.
+
+**4 — submission. The mechanism exists; adoption does not.** `specForm()`
+(resources/js/api/form.js) plus `x-ui.spec-form` render all 25 service specs —
+45 steps, 229 fields, 8 field types — from
+`config/esperanza_service_form_specs.php` rather than by hand. It carries the
+double-submit guard (inside submit(), not just on the button), 422 field errors
+mapped onto the spec's own keys, input preserved on failure, and a dirty-form
+unload warning.
+
+`tests/Feature/SpecFormTest` renders all 25 for real and asserts every field
+reaches the form, every control has a `<label for>`, and every required field
+carries `aria-required`.
+
+Still FAIL because no write path submits: there is no endpoint. Wiring one today
+would replace working mock interactions with a guaranteed failure.
 
 **7 — accessibility.** Measured on the *rendered* DOM across all 55 routes
 (`node scripts/audit.mjs`), which is a much larger denominator than a source
@@ -120,7 +134,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (16 tests) → static export → assertions ON dist/
+vite build → pint --test → phpunit (25 tests) → static export → assertions ON dist/
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:
@@ -138,18 +152,50 @@ the render gate red on both routes that share it.
 
 These are not oversights. The book says they need an answer, not a guess.
 
-1. **Is the Administrative Portal bilingual, or English-only?** English-only by
-   omission today, with no toggle. Changes TAB 09 by ~3x.
-2. **Where does the API live, and what is the CORS posture?** The client assumes
+1. ~~**Is the Administrative Portal bilingual, or English-only?**~~ **RULED
+   2026-08-30: Citizen Portal bilingual, Administrative Portal English-only by
+   decision.** Recorded in CLAUDE.md "Language"; `BilingualCoverageTest`
+   enforces it and fails if the scope is widened to the admin portal.
+   ⚠ The Filipino strings were drafted by Claude and still need a human check
+   before residents read them — listed in commit 549ef08.
+
+2. **Is the verification tier two values or four?** (B-022, raised by the
+   esperanza_backend session and verified here.) CLAUDE.md's Axis 2 lists
+   `Verified` / `Unverified` and names the constituent `verification` field as
+   one of its uses — but that field carries FOUR values in the data:
+
+       Verified 36 · Partially Verified 33 · Unverified 15 · For Validation 3
+
+   `Partially Verified` is the second most common value in the file, and neither
+   it nor `For Validation` is in the list or styled by `x-ui.badge`. Nothing
+   renders `verification` through the badge today, so nothing is broken — but
+   `badge.blade.php` resolves an unlisted label as `?? $styles['Draft']`, so the
+   first person to do the obvious thing gets `Partially Verified` silently
+   rendered as **Draft**. That is the same degradation that locked citizens out
+   of Dokyu on mobile, arriving by a second route and looking like a styling nit.
+
+   The distinction that appears correct: a BINARY account access tier
+   (Verified / Unverified, gates Dokyu/Tulong) versus a FOUR-RUNG record
+   verification ladder (Unverified → For Validation → Partially Verified →
+   Verified, describing how well a record is evidenced). Collapsing them is the
+   same mistake as collapsing the tier with the lifecycle, one level down.
+
+   The data-vs-list gate for this is deliberately NOT written yet: today it
+   would be red on arrival, and a gate that is red from birth either blocks
+   every push or gets suppressed. It lands with the ruling.
+
+3. **Where does the API live, and what is the CORS posture?** The client assumes
    a bearer token in an `Authorization` header. A cookie would need
    `withCredentials` and a preflight budget. Settle before the contract closes.
-3. **Do request drafts stay in `localStorage` or move to the server?** Two keys
-   already persist them.
-4. **What browsers and what minimum device must be supported?** This sets the
+4. **Do request drafts stay in `localStorage` or move to the server?** Two keys
+   already persist them (`esperanza_dokyu_progress`,
+   `esperanza_tulong_progress`). TAB 07's own open question, and it decides
+   whether `specForm()` needs a draft-sync path.
+5. **What browsers and what minimum device must be supported?** This sets the
    page-weight budget in gate 8.
-5. **Is there an accessibility standard to certify against?** WCAG 2.1 AA is the
+6. **Is there an accessibility standard to certify against?** WCAG 2.1 AA is the
    usual public-sector target.
-6. **Citizen Satisfaction Survey** — the admin report exists with no collection
+7. **Citizen Satisfaction Survey** — the admin report exists with no collection
    UI anywhere. Build the survey, or drop the report.
 
 ## Still open, and NOT an owner decision — it is a security action
@@ -165,12 +211,12 @@ These are not oversights. The book says they need an answer, not a guess.
 | TAB | State | Note |
 | --- | --- | --- |
 | 01 The two production defects | **DONE** | 46 → 55 routes exported; 16 PDFs reach `dist/` |
-| 02 Test harness and gate | **DONE** (adapted) | 2 → 16 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below |
+| 02 Test harness and gate | **DONE** (adapted) | 2 → 25 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below |
 | 03 Local setup and the `.env` trap | **DONE** | Clean clone verified end to end on the merged tree — 11 tests from a fresh checkout |
-| 04 Lift 167 inline arrays | **NOT DONE** | 166 declarations across 43 views, unchanged |
+| 04 Lift 167 inline arrays | **DONE** | 136 top-level fixtures → 16; 1,431 lines → 129. 27 data files. Every wave verified byte-identical |
 | 05 The HTTP layer | **DONE** | Client + error envelope built; no screen consumes it yet |
-| 06 Loading, empty, error states | **PARTIAL** | `x-ui.error-state` added; not wired (blocked behind TAB 04) |
-| 07 Real forms and submission | **NOT DONE** | Button loading state added; no write path exists |
+| 06 Loading, empty, error states | **MECHANISM DONE** | `resource()` + `x-ui.data-panel` give any surface all four states. Adoption needs the API |
+| 07 Real forms and submission | **MECHANISM DONE** | `specForm()` + `x-ui.spec-form` render all 25 specs / 229 fields, tested. Adoption needs the API |
 | 08 Session and permission gating | **DONE** | Fails closed; signed-out state added |
 | 09 Bilingual completion | **DONE** | Ruled 2026-08-30: citizen bilingual, admin English-only. All citizen views covered; gate added |
 | 10 Accessibility | **PARTIAL** | Modals and keyboard reach done; naming and alt open |
