@@ -9,21 +9,7 @@
     // its own top level (Laravel loads them in filename order during
     // bootstrap) — so a resident's real picture shows up here too, not
     // just on their own Constituents profile.
-    $citizenAvatarData = config('esperanza_citizen_avatars');
-    $generatedAvatarFor = function ($acctId) use ($citizenAvatarData) {
-        $bg = $citizenAvatarData['backgrounds'][crc32($acctId) % count($citizenAvatarData['backgrounds'])];
-        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($acctId) . '&backgroundColor=' . $bg;
-    };
-    $citizenAvatars = [];
-    foreach (config('esperanza_constituents')['individuals'] as $ind) {
-        if (empty($ind['citizen_account_id'])) {
-            continue;
-        }
-        $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
-            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
-            : $generatedAvatarFor($acctId);
-    }
+    $citizenAvatars = (require base_path('resources/data/citizen-directory.php'))['avatars'];
 
     // Classification lookup for the mock payment rows above, keyed by the
     // exact 'item' string -- reuses the same category/office/level values

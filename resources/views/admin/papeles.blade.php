@@ -9,27 +9,11 @@
 @php
     $storageBarangays = config('esperanza.barangays');
     $storageIndividuals = config('esperanza_constituents.individuals');
-    // Citizen name -> avatar map, built here rather than in a config file —
-    // see config/esperanza_citizen_avatars.php's own header for why a
-    // config file can't safely call config() on another config file from
-    // its own top level (Laravel loads them in filename order during
-    // bootstrap) — so a resident's real picture shows up here too, not
-    // just on their own Constituents profile.
-    $citizenAvatarData = config('esperanza_citizen_avatars');
-    $generatedAvatarFor = function ($acctId) use ($citizenAvatarData) {
-        $bg = $citizenAvatarData['backgrounds'][crc32($acctId) % count($citizenAvatarData['backgrounds'])];
-        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($acctId) . '&backgroundColor=' . $bg;
-    };
-    $citizenAvatars = [];
-    foreach ($storageIndividuals as $ind) {
-        if (empty($ind['citizen_account_id'])) {
-            continue;
-        }
-        $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
-            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
-            : $generatedAvatarFor($acctId);
-    }
+    // Citizen name -> avatar + biographical-fact maps. ONE seam, shared with
+    // the other admin screens that show a resident by name -- see
+    // resources/data/citizen-directory.php, which also explains why this is a
+    // render-time data file rather than a config file.
+    $citizenAvatars = (require base_path('resources/data/citizen-directory.php'))['avatars'];
 
     // Small, realistic pool of supporting-document types citizens commonly
     // have on file, reusing the same category taxonomy Dokyu already uses

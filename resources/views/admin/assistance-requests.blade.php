@@ -1,47 +1,12 @@
 @php
     $barangays = config('esperanza.barangays');
-    // Citizen name -> avatar + biographical-fact maps, built here (not in a
-    // config file — see config/esperanza_citizen_avatars.php's own header
-    // for why: a config file can't safely call config() on another config
-    // file from its own top level, since Laravel loads them in filename
-    // order during bootstrap) so a resident's real picture and real profile
-    // facts (dob/sex/civil status/occupation) are consistent wherever their
-    // name appears — not just their own Constituents profile, and not
-    // re-randomized per document (that was the "Cristy is 25 on her
-    // profile but 53 on her scholarship form" bug).
-    $citizenAvatarData = config('esperanza_citizen_avatars');
-    $generatedAvatarFor = function ($acctId) use ($citizenAvatarData) {
-        $bg = $citizenAvatarData['backgrounds'][crc32($acctId) % count($citizenAvatarData['backgrounds'])];
-        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($acctId) . '&backgroundColor=' . $bg;
-    };
-    $citizenAvatars = [];
-    $citizenBio = [];
-    foreach (config('esperanza_constituents')['individuals'] as $ind) {
-        if (empty($ind['citizen_account_id'])) {
-            continue;
-        }
-        $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
-            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
-            : $generatedAvatarFor($acctId);
-        $citizenBio[$ind['name']] = [
-            'dob' => $ind['dob'] ?? null,
-            'sex' => $ind['sex'] ?? null,
-            'civil_status' => $ind['civil_status'] ?? null,
-            'occupation' => $ind['occupation'] ?? null,
-            // See the identical field's own comment in
-            // admin/document-requests.blade.php — only populated where the
-            // Constituents profile actually has this on file.
-            'emergency_name' => $ind['emergency']['name'] ?? null,
-            'emergency_contact' => $ind['emergency']['contact'] ?? null,
-            // See the identical fields' own comment in admin/document-requests.blade.php.
-            'father_name' => $ind['father_name'] ?? null,
-            'mother_name' => $ind['mother_name'] ?? null,
-            'mother_maiden_name' => $ind['mother_maiden_name'] ?? null,
-            'education' => $ind['education'] ?? null,
-            'address' => $ind['address'] ?? null,
-        ];
-    }
+    // Citizen name -> avatar + biographical-fact maps. ONE seam, shared with
+    // the other admin screens that show a resident by name -- see
+    // resources/data/citizen-directory.php, which also explains why this is a
+    // render-time data file rather than a config file.
+    $citizenDirectory = require base_path('resources/data/citizen-directory.php');
+    $citizenAvatars = $citizenDirectory['avatars'];
+    $citizenBio = $citizenDirectory['bio'];
     $requests = [
         ['ref' => 'AR-2026-0151', 'citizen' => 'Elmer Bantillo', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 9, 2026', 'status' => 'Submitted'],
         ['ref' => 'AR-2026-0195', 'citizen' => 'Angelica Fajardo', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Rizal', 'submitted' => 'Jul 6, 2026', 'status' => 'Under Verification'],
