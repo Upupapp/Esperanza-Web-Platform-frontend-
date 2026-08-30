@@ -106,14 +106,21 @@ $permissionModules = [
             // under deny-by-default there was no triple to grant.
             ['key' => 'comm_news', 'name' => 'News & Announcements', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'reject', 'archive']],
             ['key' => 'comm_community', 'name' => 'Community Posts (Moderation)', 'perms' => ['view', 'review', 'approve', 'reject', 'archive']],
-            ['key' => 'comm_events', 'name' => 'Events', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'archive']],
+            // B-037: 'reject' added. LATENT at time of writing — nothing
+            // transitions an event yet — so this closes the gap before an
+            // events transition endpoint can expose it, rather than after.
+            ['key' => 'comm_events', 'name' => 'Events', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'reject', 'archive']],
             ['key' => 'comm_directory', 'name' => 'Government Directory', 'perms' => ['view', 'create', 'edit', 'delete']],
             ['key' => 'comm_barangay_directory', 'name' => 'Barangay Directory', 'perms' => ['view', 'edit']],
             // B-011: 'review' and 'approve' added, bringing Banners in line with
             // News and Events. Without them a banner could be created and
             // archived but never published, because publishing goes through
             // review -> approve and neither action existed to grant.
-            ['key' => 'comm_banners', 'name' => 'Banners', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'archive']],
+            // B-037: 'reject' added, and this one was LIVE. Banners do go
+            // through the editorial transition, so with reject undeclared it
+            // resolved to `approve` — semantically wrong, though it failed safe
+            // (approve is the stronger permission, so nobody gained authority).
+            ['key' => 'comm_banners', 'name' => 'Banners', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'reject', 'archive']],
         ],
     ],
     [
