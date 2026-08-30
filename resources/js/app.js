@@ -1,5 +1,6 @@
 import './bootstrap';
 import api from './api/client';
+import { resource } from './api/resource';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons, icons } from 'lucide';
@@ -68,6 +69,12 @@ window.addEventListener('afterprint', () => document.body.classList.remove('dp-p
 
 document.addEventListener('alpine:init', () => {
     Alpine.magic('api', () => api);
+
+    // TAB 06: the four states (loading / empty / error / loaded) for any data
+    // surface, in one place. See resources/js/api/resource.js for the three
+    // rules it encodes -- chiefly that "empty" is never true until a load has
+    // actually resolved, and that a failure never degrades to an empty list.
+    Alpine.data('resource', resource);
 
     Alpine.store('lang', {
         current: localStorage.getItem('esperanza_lang') || 'fil',
