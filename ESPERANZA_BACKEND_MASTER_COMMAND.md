@@ -71,8 +71,8 @@ Every figure below was counted from the repo at `dd7e0d4`, not estimated.
 | Blade views | 98 (36,338 lines) | `resources/views/**` |
 | Permission modules | 10 | `esperanza_rbac.permission_modules` |
 | Permission submodules | 77 | same |
-| Permission types | 27 | `esperanza_rbac.permission_types` |
-| Distinct (module, submodule, action) triples | **485** | same |
+| Permission types | 28 | `esperanza_rbac.permission_types` |
+| Distinct (module, submodule, action) triples | **490** | same |
 | Roles | 9 (1 uneditable) | `esperanza_rbac.roles` |
 | Personnel accounts seeded | 33 across 26 departments | `esperanza_rbac.accounts` |
 | Dokyu services | 28 submodules / 25 form specs | `esperanza_rbac`, `esperanza_service_form_specs` |
@@ -115,8 +115,8 @@ files as normative:
 CLAUDE.md                              the project constitution + the 15 canonical statuses
 PROCESS_TAB_FLOW.txt                   the complete Dokyu/Tulong request lifecycle
 config/esperanza.php                   the 20 barangays
-config/esperanza_rbac.php              10 modules, 77 submodules, 27 permission types,
-                                       485 permission triples, 9 roles, 33 accounts
+config/esperanza_rbac.php              10 modules, 77 submodules, 28 permission types,
+                                       490 permission triples, 9 roles, 33 accounts
 config/esperanza_municipal_documents.php   15 document specs: fees, requirements,
                                        process steps, and the exact form fields
 config/esperanza_tulong_types.php      13 assistance programs with amounts and requirements
@@ -149,7 +149,7 @@ resources/js/app.js                    the client-side session/permission model 
    and MFA for any role that can approve, release, or read sensitive data.
 
 3. **RBAC that actually enforces.** Reproduce the full matrix: 10 modules, 77
-   submodules, 27 permission types, 485 triples, 9 roles. Enforce **three
+   submodules, 28 permission types, 490 triples, 9 roles. Enforce **three
    independent scopes** on every request, exactly as the frontend models them:
    *module access*, *geographic scope* (`Municipal` sees all; a barangay account
    sees only its own barangay), and *department scope* (only Department Head and
@@ -218,7 +218,7 @@ resources/js/app.js                    the client-side session/permission model 
 
 **Definition of done:** the frontend runs against the real API with its
 `config/esperanza_*.php` mock files deleted, no field renamed, no status added,
-every one of the 485 permission triples enforced server-side, and an
+every one of the 490 permission triples enforced server-side, and an
 independently-run acceptance suite proving the lifecycle in
 `PROCESS_TAB_FLOW.txt` — including the correction loop and the version history —
 behaves exactly as written.
@@ -231,7 +231,7 @@ behaves exactly as written.
 | 00 | The comprehensive backend command | — | the whole programme |
 | 01 | Foundation, environments, and the API contract | — | M |
 | 02 | Identity, registration, and sessions | 01 | M |
-| 03 | RBAC — 485 triples, 3 scopes, fail closed | 01, 02 | L |
+| 03 | RBAC — 490 triples, 3 scopes, fail closed | 01, 02 | L |
 | 04 | Reference data and the service catalog | 01 | L |
 | 05 | Constituents — residents, families, households | 01–03 | L |
 | 06 | Papeles — the citizen document repository | 03, 05, 09 | M |
@@ -327,7 +327,7 @@ that provisioning is audited.
 
 ---
 
-## TAB 03 — RBAC: 485 triples, three scopes, fail closed
+## TAB 03 — RBAC: 490 triples, three scopes, fail closed
 
 **Scope.** The single most detailed thing the frontend has already specified,
 and the single most dangerous thing to approximate.
@@ -346,7 +346,7 @@ and the single most dangerous thing to approximate.
 | `user_management` | 3 | 10 | view, create, edit, delete, export |
 | `settings` | 4 | 8 | view, edit |
 | `papeles` | 1 | 5 | view, view_sensitive, verify, edit, export |
-| **Total** | **77** | **485** | 27 distinct types |
+| **Total** | **77** | **490** | 28 distinct types |
 
 **The nine roles**, with the user counts the frontend advertises:
 
@@ -390,7 +390,7 @@ by default too (TAB 08), so both sides agree — but agreement is not delegation
 the server is the only boundary, and it must reach that answer on its own rather
 than trusting anything the client sends.
 
-**Acceptance.** An automated test asserts all 485 triples: each role's granted
+**Acceptance.** An automated test asserts all 490 triples: each role's granted
 triples succeed and each denied triple returns 403. A barangay-scoped account
 cannot read another barangay's rows by any parameter. An unauthenticated request
 gets nothing.
@@ -1055,7 +1055,7 @@ the frontend.
    only when its endpoints are live and its screens are verified. Deleting them
    all at once removes the specification while you still need it.
 4. **Run the certification suite:**
-   - all 485 permission triples, allowed and denied;
+   - all 490 permission triples, allowed and denied;
    - all three lifecycle paths including a repeated correction loop, with ref
      stability and version history asserted;
    - fee computation for every rule in TAB 04;

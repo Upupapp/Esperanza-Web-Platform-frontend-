@@ -95,6 +95,64 @@ fi
 EMPTY=$(find dist -name '*.html' -size 0 2>/dev/null | wc -l | tr -d ' ')
 [ "$EMPTY" = "0" ] && pass "no zero-byte HTML" || { fail "$EMPTY zero-byte HTML file(s)"; }
 
+# The Master Commands state RBAC COUNTS by hand -- the triple count alone
+# appears ten times across the two documents, and it went stale within a day
+# of the contract moving with nothing disagreeing with it.
+#
+# Checked by SET MEMBERSHIP, not against the global total. The documents
+# legitimately quote per-module subtotals as well ("Ten submodules, 67
+# permission triples" is Sakuna; "28 submodules" is Dokyu), so a check that
+# compared every number to the grand total produced false failures on correct
+# prose -- which is how a gate earns a reputation for crying wolf and stops
+# being read. A documented number is accepted if it equals ANY real count of
+# that kind; 485 is caught because it is no longer any of them.
+RBAC_SETS=$("$PHP_BIN" -r 'require "vendor/autoload.php"; $a=require "bootstrap/app.php"; $a->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $m=config("esperanza_rbac.permission_modules"); $tr=[]; $su=[]; $gt=0; $gs=0; foreach($m as $x){ $t=0; foreach($x["submodules"] as $y){ $t+=count($y["perms"]); } $tr[]=$t; $su[]=count($x["submodules"]); $gt+=$t; $gs+=count($x["submodules"]); } $tr[]=$gt; $su[]=$gs; echo implode(",",array_unique($tr))."|".implode(",",array_unique($su))."|".count(config("esperanza_rbac.permission_types"))."|".count($m);' 2>/dev/null)
+
+if [ -z "$RBAC_SETS" ]; then
+  fail "could not read the RBAC counts out of config/esperanza_rbac.php"
+else
+  VALID_TRIPLES=",$(echo "$RBAC_SETS" | cut -d"|" -f1),"
+  VALID_SUBS=",$(echo "$RBAC_SETS" | cut -d"|" -f2),"
+  ACT_TYPES=$(echo "$RBAC_SETS" | cut -d"|" -f3)
+  ACT_MODULES=$(echo "$RBAC_SETS" | cut -d"|" -f4)
+  RBAC_MISMATCH=0
+
+  check_in_set() {
+    # $1 = file, $2 = pattern, $3 = ",a,b,c," valid set, $4 = label
+    for n in $(grep -oE "$2" "$1" 2>/dev/null | grep -oE "^[0-9]+"); do
+      case "$3" in
+        *",$n,"*) ;;
+        *) echo "   $1 says $n $4, which matches no module or total in the config"
+           RBAC_MISMATCH=1 ;;
+      esac
+    done
+  }
+
+  check_exact() {
+    for n in $(grep -oE "$2" "$1" 2>/dev/null | grep -oE "^[0-9]+"); do
+      if [ "$n" != "$3" ]; then
+        echo "   $1 says $n $4; config has $3"
+        RBAC_MISMATCH=1
+      fi
+    done
+  }
+
+  for DOC in ESPERANZA_BACKEND_MASTER_COMMAND.md ESPERANZA_FRONTEND_MASTER_COMMAND.md; do
+    [ -f "$DOC" ] || continue
+    check_in_set "$DOC" "[0-9]+ permission triples" "$VALID_TRIPLES" "permission triples"
+    check_in_set "$DOC" "[0-9]+ triples"            "$VALID_TRIPLES" "triples"
+    check_in_set "$DOC" "[0-9]+ submodules"         "$VALID_SUBS"    "submodules"
+    check_exact  "$DOC" "[0-9]+ permission types"   "$ACT_TYPES"     "permission types"
+    check_exact  "$DOC" "[0-9]+ distinct types"     "$ACT_TYPES"     "distinct types"
+  done
+
+  if [ "$RBAC_MISMATCH" -eq 0 ]; then
+    pass "Master Commands match the RBAC config ($ACT_MODULES modules, $ACT_TYPES types)"
+  else
+    fail "a Master Command states an RBAC count the config disagrees with"
+  fi
+fi
+
 # The docs state a TEST COUNT. A PHPUnit test cannot check that without
 # re-running itself, so the check belongs here -- the gate is what produced the
 # number. Three such claims sat stale by 10 before this existed: they were
