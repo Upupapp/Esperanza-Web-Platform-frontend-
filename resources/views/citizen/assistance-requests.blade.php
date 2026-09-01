@@ -1,9 +1,9 @@
 @php
     $requests = [
-        ['ref' => 'AR-2026-0142', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Hospital bill support — Masbate Provincial Hospital', 'submitted' => 'Jun 28, 2026', 'status' => 'Approved'],
-        ['ref' => 'AR-2026-0098', 'type' => 'Educational Assistance', 'office' => 'MSWDO', 'purpose' => 'Tuition support for 2 dependents, SY 2026-2027', 'submitted' => 'May 20, 2026', 'status' => 'Released'],
-        ['ref' => 'AR-2026-0061', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Livelihood capital support', 'submitted' => 'Apr 2, 2026', 'status' => 'Under Verification'],
-        ['ref' => 'AR-2026-0037', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'purpose' => 'Quarterly social pension enrollment', 'submitted' => 'Feb 10, 2026', 'status' => 'Released'],
+        ['ref' => 'AR-2026-0142', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Hospital bill support — Masbate Provincial Hospital', 'submitted' => 'Jun 28, 2026', 'status' => 'Assistance Processing'],
+        ['ref' => 'AR-2026-0098', 'type' => 'Educational Assistance', 'office' => 'MSWDO', 'purpose' => 'Tuition support for 2 dependents, SY 2026-2027', 'submitted' => 'May 20, 2026', 'status' => 'Completed'],
+        ['ref' => 'AR-2026-0061', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Livelihood capital support', 'submitted' => 'Apr 2, 2026', 'status' => 'Initial Screening'],
+        ['ref' => 'AR-2026-0037', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'purpose' => 'Quarterly social pension enrollment', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
         ['ref' => 'AR-2026-0009', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Funeral expenses support', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'requirements' => [
             ['key' => 'req_death_cert', 'name' => 'Death Certificate', 'file' => null, 'status' => 'Rejected', 'reject_reason' => 'Missing information', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'versions' => [
                 ['file' => null, 'status' => 'Rejected', 'date' => 'Jan 8, 2026', 'reject_reason' => 'Missing information', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.'],
@@ -13,7 +13,7 @@
             ['key' => 'req_funeral_contract', 'name' => 'Funeral contract or bill', 'file' => 'Funeral-Contract.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
             ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certificate of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
-        ['ref' => 'AR-2026-0022', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'purpose' => 'Cash grant + goods, per assessment', 'submitted' => 'Jan 28, 2026', 'status' => 'Under Review', 'requirements' => [
+        ['ref' => 'AR-2026-0022', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'purpose' => 'Cash grant + goods, per assessment', 'submitted' => 'Jan 28, 2026', 'status' => 'Needs Requirements', 'requirements' => [
             ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'My-SoloParentID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
             ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Flagged for Replacement', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
                 ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Flagged for Replacement', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
@@ -51,6 +51,13 @@
         ['name' => 'Hospital Bill.pdf', 'category' => 'PDF'],
         ['name' => 'Senior Citizen ID.jpg', 'category' => 'IMG'],
     ];
+
+    // Computed (not hardcoded) so the stat row stays correct as the mock
+    // $requests list above changes — same approach as the admin Tulong page.
+    $totalTulongRequests = count($requests);
+    $tulongProcessingCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Assistance Processing'));
+    $tulongReadyForReleaseCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Ready for Release'));
+    $tulongCompletedCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Completed'));
 @endphp
 
 <x-layouts.citizen title="Tulong" subtitle="Submit and follow up assistance program requests." active="assistance-requests">
@@ -59,20 +66,19 @@
             open: false,
             tab: 'all',
             requests: @js($requests),
-            doneStatuses: ['Completed', 'Released', 'Rejected', 'Cancelled', 'Archived'],
+            doneStatuses: ['Completed', 'Rejected', 'Cancelled'],
             statusStyles: {
-                'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
-                'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
-                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
-                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
-                'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
-                'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
-                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
-                'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
+                'Initial Screening': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
+                'Needs Requirements': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
+                'Assessment': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
+                'For Approval': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
+                'Returned for Reassessment': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Assistance Processing': ['bg-purple-50 text-purple-700 ring-purple-200', 'bg-purple-500'],
+                'Ready for Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
                 'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
+                'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
                 'Cancelled': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-400'],
-                'Archived': ['bg-slate-100 text-slate-400 ring-slate-200', 'bg-slate-300'],
             },
             get filteredRequests() {
                 return this.requests.filter(r => {
@@ -88,20 +94,20 @@
             resubmitNote: '',
             resubmitting: false,
             openProgress(r) { this.selectedRequest = r; this.resubmitNote = ''; this.progressOpen = true; },
-            // The SAME case moves Under Review -> Resubmitted here — it
-            // never goes back to Submitted, never resets, and keeps its ref
-            // and review remarks. On the admin side there's no matching
-            // mark-resubmitted click needed — once flagged requirements
-            // are checked and approved, the whole case can be approved
-            // directly (see admin/assistance-requests.blade.php). Used only
-            // for cases with no structured per-requirement list (see
-            // resubmitRequirements below for the requirements-based
+            // The SAME case moves Needs Requirements -> Initial Screening
+            // here — it never goes back to Submitted, never resets, and
+            // keeps its ref and review remarks. This mirrors the admin
+            // side's resumeScreeningAfterRequirements() (see
+            // admin/assistance-requests.blade.php), which is what a staff
+            // member triggers once the citizen's submission below is seen.
+            // Used only for cases with no structured per-requirement list
+            // (see resubmitRequirements below for the requirements-based
             // equivalent).
             resubmitRequest() {
                 if (this.resubmitting || !this.resubmitNote.trim()) return;
                 this.resubmitting = true;
                 setTimeout(() => {
-                    this.selectedRequest.status = 'Resubmitted';
+                    this.selectedRequest.status = 'Initial Screening';
                     this.selectedRequest.resubmission_note = this.resubmitNote.trim();
                     this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     this.resubmitting = false;
@@ -126,16 +132,24 @@
                 if (this.resubmitting || !this.canResubmitRequirements) return;
                 this.resubmitting = true;
                 setTimeout(() => {
-                    this.selectedRequest.status = 'Resubmitted';
+                    this.selectedRequest.status = 'Initial Screening';
                     this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     this.resubmitting = false;
                     this.progressOpen = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
                 }, 800);
             },
-            stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
+            stepOrder: ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'],
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0 };
+                const map = {
+                    'Submitted': 0,
+                    'Initial Screening': 1, 'Needs Requirements': 1,
+                    'Assessment': 2,
+                    'For Approval': 3, 'Returned for Reassessment': 3,
+                    'Assistance Processing': 4,
+                    'Ready for Release': 5,
+                    'Completed': 6,
+                };
                 return map[status] ?? 0;
             },
             get pickupInfo() {
@@ -175,10 +189,10 @@
         </x-ui.page-intro>
 
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="4" icon="hand-heart" color="purple" :delay="0" />
-            <x-ui.stat-card label="Aprubado" labelEn="Approved" value="1" icon="circle-check" color="green" :delay="40" />
-            <x-ui.stat-card label="Na-release" labelEn="Released" value="1" icon="package-check" color="brand" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="2" icon="badge-check" color="gold" :delay="120" />
+            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" :value="$totalTulongRequests" icon="hand-heart" color="purple" :delay="0" />
+            <x-ui.stat-card label="Isinasagawa" labelEn="Processing" :value="$tulongProcessingCount" icon="loader" color="purple" :delay="40" />
+            <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" :value="$tulongReadyForReleaseCount" icon="package-check" color="brand" :delay="80" />
+            <x-ui.stat-card label="Kumpleto" labelEn="Completed" :value="$tulongCompletedCount" icon="badge-check" color="gold" :delay="120" />
             <x-ui.stat-card label="Natanggap na Ayuda" labelEn="Ayuda Received" value="₱42,500" icon="hand-coins" color="green" sublabel="Kabuuang natanggap na tulong" sublabelEn="Total aid received" :delay="160" />
         </div>
 
@@ -934,7 +948,7 @@
                         <p class="text-xs text-slate-400 mt-0.5" x-text="selectedRequest.purpose"></p>
 
                         <!-- Progress stepper -->
-                        <div class="flex items-center mt-6 mb-2" x-show="selectedRequest.status !== 'Rejected'">
+                        <div class="flex items-center mt-6 mb-2" x-show="selectedRequest.status !== 'Rejected' && selectedRequest.status !== 'Cancelled'">
                             <template x-for="(label, i) in stepOrder" :key="i">
                                 <div class="flex-1 flex items-center">
                                     <div class="flex flex-col items-center gap-1.5 text-center">
@@ -965,11 +979,34 @@
                             </div>
                         </div>
 
-                        {{-- Under Review, no structured per-requirement list
-                             — the note-based correction path (see
+                        <div class="rounded-xl bg-slate-100 border border-slate-200 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Cancelled'">
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="ban" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-slate-600"><x-ui.t fil="Kinansela ang kahilingang ito" en="This request was cancelled" /></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Returned for Reassessment is internal — our own
+                             staff re-checking the recommended amount/package,
+                             not something the citizen needs to fix. Shown as
+                             a plain status note, no resubmission form. --}}
+                        <div class="rounded-xl bg-orange-50 border border-orange-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Returned for Reassessment'">
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4 text-orange-500 shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-orange-700"><x-ui.t fil="Muling sinusuri ang kahilingan" en="Your case is being reassessed" /></p>
+                                    <p class="text-xs text-orange-600 mt-0.5"><x-ui.t fil="Wala kang kailangang gawin ngayon — sinusuri lang muli ng aming tauhan ang detalye." en="No action is needed from you right now — our staff is simply re-checking the details." /></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Needs Requirements, no structured per-requirement
+                             list — the note-based correction path (see
                              resubmitRequest(), which moves this SAME case to
-                             Resubmitted rather than resetting it). --}}
-                        <div class="rounded-xl bg-amber-50 border border-amber-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Under Review' && !(selectedRequest.requirements || []).length">
+                             Initial Screening rather than resetting it). --}}
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Needs Requirements' && !(selectedRequest.requirements || []).length">
                             <div class="flex items-start gap-2.5">
                                 <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
@@ -995,7 +1032,7 @@
                             </div>
                         </div>
 
-                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Under Review' && (selectedRequest.requirements || []).length">
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Needs Requirements' && (selectedRequest.requirements || []).length">
                             <div class="flex items-start gap-2.5 px-3.5 py-2.5">
                                 <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">

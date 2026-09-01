@@ -43,10 +43,10 @@
     $docStatusTotal = array_sum(array_column($docStatus, 'value'));
 
     $assistStatus = [
-        ['label' => 'Released', 'value' => 168, 'color' => '#0d9488'],
-        ['label' => 'Approved', 'value' => 96, 'color' => '#22c55e'],
-        ['label' => 'Processing', 'value' => 104, 'color' => '#2f62f5'],
-        ['label' => 'Under Review', 'value' => 49, 'color' => '#f97316'],
+        ['label' => 'Completed', 'value' => 168, 'color' => '#22c55e'],
+        ['label' => 'Assistance Processing', 'value' => 96, 'color' => '#a855f7'],
+        ['label' => 'Submitted', 'value' => 104, 'color' => '#3b82f6'],
+        ['label' => 'Needs Requirements', 'value' => 49, 'color' => '#f59e0b'],
     ];
     $assistStatusTotal = array_sum(array_column($assistStatus, 'value'));
 

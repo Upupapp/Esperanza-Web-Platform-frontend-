@@ -2,12 +2,27 @@ ESPERANZA WEB PLATFORM — ADMIN PROCESS TAB
 Dokyu (Document Requests) & Tulong (Assistance Requests) Workflow
 ====================================================================
 
-Both admin/document-requests.blade.php and admin/assistance-requests.blade.php
-implement the exact same request lifecycle. A request is a single record
-(same ref/ID for its entire life) that moves between a fixed set of
-whole-request statuses. Individual submitted documents ("requirements")
-inside a request carry their own, separate per-requirement status, which is
-what actually drives the whole-request status forward.
+Dokyu and Tulong used to share one unified request lifecycle (Sections 1-7
+below describe that lifecycle, and it is still exactly what Dokyu runs
+today). Tulong has since been deliberately split off into its own,
+case-management-style lifecycle that better fits a social-welfare case
+(screening -> eligibility assessment -> approval -> disbursement -> release)
+rather than a document-preparation flow — see PART 2 — TULONG at the end of
+this file for the current Tulong design. Nothing in PART 1 describes Tulong
+anymore; where PART 1 previously said "both", it has been corrected below to
+say Dokyu only, since restating a now-false "both" would make this document
+actively misleading to a future reader.
+
+
+PART 1 — DOKYU
+====================================================================
+
+admin/document-requests.blade.php (Dokyu) implements the request lifecycle
+below. A request is a single record (same ref/ID for its entire life) that
+moves between a fixed set of whole-request statuses. Individual submitted
+documents ("requirements") inside a request carry their own, separate
+per-requirement status, which is what actually drives the whole-request
+status forward.
 
 
 1. WHOLE-REQUEST STATUSES (admin side)
@@ -143,9 +158,10 @@ silently overwritten:
 
 6. CITIZEN-SIDE EXPERIENCE
 --------------------------------------------------------------------
-citizen/document-requests.blade.php and citizen/assistance-requests.blade.php
-mirror this exact status vocabulary and stepper (Submitted -> Under
-Verification -> Approved -> Mark to Release -> Released, 5 steps).
+citizen/document-requests.blade.php mirrors this exact status vocabulary and
+stepper (Submitted -> Under Verification -> Approved -> Mark to Release ->
+Released, 5 steps). (citizen/assistance-requests.blade.php — Tulong — now
+has its own, different stepper; see PART 2.)
 
 When a request is Under Review, the citizen sees an "Application Needs
 Correction" panel listing exactly which requirement(s) are flagged, why,
@@ -165,17 +181,176 @@ Rejected is shown as a plain, terminal, informational notice (remarks only)
 --------------------------------------------------------------------
 Processing, Assigned, and Completed are part of the platform's broader
 Universal Status System (CLAUDE.md) but are intentionally NOT used as
-top-level Process tab stages for either Dokyu or Tulong — both services
-share exactly the 7-status admin flow in Section 1 above. (Tulong
-previously had its own Assigned/Processing/Completed-based flow; it has
-since been unified with Dokyu's.)
+top-level Process tab stages for Dokyu — Dokyu uses exactly the 7-status
+flow in Section 1 above. (Tulong is no longer bound by this — see PART 2,
+which deliberately reintroduces its own extended vocabulary, including
+Completed and an Assistance Processing stage.)
 
 
-FILES
+FILES (Dokyu — PART 1)
 --------------------------------------------------------------------
   resources/views/admin/document-requests.blade.php     Dokyu admin Process tab
+  resources/views/citizen/document-requests.blade.php   Dokyu citizen view
+  config/esperanza_validation_guide.php                 Decision-outcome labels
+  CLAUDE.md                                              Canonical status list
+
+
+PART 2 — TULONG
+====================================================================
+
+Tulong (citizen assistance / ayuda requests) is a social-welfare case, not a
+document-preparation request: a case moves through screening, an eligibility
+assessment, an approval decision, and then disbursement/release of the
+approved assistance. It has its own status vocabulary, its own admin Process
+tab layout, and its own citizen-side stepper — none of it shared with Dokyu,
+and none of PART 1 applies here.
+
+
+8. MAIN STAGE SEQUENCE (admin side)
+--------------------------------------------------------------------
+    Submitted               Citizen submitted; admin has not opened it yet.
+    Initial Screening       Admin is checking the submission and requirements.
+    Assessment              A social worker records eligibility findings and
+                             a recommended assistance type/amount or package.
+    For Approval            Assessment submitted; awaiting an approval
+                             decision (may set an approved amount/package
+                             that differs from the recommended one).
+    Assistance Processing   Approved; disbursement/enrollment is being
+                             prepared. Fields shown here branch by the
+                             assistance's `processingKind` (cash, goods,
+                             medical, or registration — see Section 11).
+    Ready for Release       Prepared and scheduled; waiting for the citizen
+                             to claim/receive it. Blocked until Proof of
+                             Release evidence is captured.
+    Completed               Assistance released/received. Terminal. (Not
+                             called "Released" — Completed records who
+                             released it, to whom, the actual amount, and a
+                             reference number, all in one step.)
+
+Rejected, Cancelled, and Completed are the only terminal states.
+
+
+9. SIDE / EXCEPTION STATES (branches off the main line, not steps in it)
+--------------------------------------------------------------------
+    Needs Requirements         Branches off Initial Screening when one or
+                                more requirements are missing/unreadable;
+                                returns to Initial Screening once resolved.
+    Returned for Reassessment  Branches off For Approval when the approver
+                                sends the recommendation back for
+                                re-verification; returns to Assessment.
+    Rejected                   Terminal. Reachable from Initial Screening,
+                                Assessment, or For Approval. Requires a
+                                typed reason.
+    Cancelled                  Terminal. Reachable from Submitted through
+                                Assessment (the citizen or office withdrew
+                                the case before an approval decision was
+                                made). Requires a typed reason.
+
+In the left-hand stepper, a side state renders as a small pill under its
+parent step (e.g. "Needs Requirements" under step 2) rather than as its own
+numbered step — it is a hold on the main line, not a distinct stage.
+
+
+10. WHOLE-CASE ACTIONS, BY STATUS (contextual primary button)
+--------------------------------------------------------------------
+    Submitted                   Start Screening         -> Initial Screening
+    Initial Screening           Proceed to Assessment    -> Assessment
+                                 Request Additional Requirements
+                                                          -> Needs Requirements
+                                 Reject Case *            -> Rejected
+                                 Cancel Case †            -> Cancelled
+    Needs Requirements          Requirements Received    -> Initial Screening
+                                 Cancel Case †            -> Cancelled
+    Assessment                  Submit for Approval      -> For Approval
+                                 (requires eligibility finding recorded)
+                                 Reject Case *            -> Rejected
+                                 Cancel Case †            -> Cancelled
+    For Approval                Approve Assistance       -> Assistance Processing
+                                 Return for Reassessment ‡ -> Returned for Reassessment
+                                 Reject Case *            -> Rejected
+    Returned for Reassessment   Resume Assessment        -> Assessment
+    Assistance Processing       Mark Ready for Release   -> Ready for Release
+    Ready for Release           Confirm Release          -> Completed
+                                 (blocked until Proof of Release captured)
+    Completed / Rejected /      Terminal — no actions shown.
+    Cancelled
+
+  * Reject always requires a typed reason.
+  † Cancel always requires a typed reason.
+  ‡ Return for Reassessment always requires a typed reason (why the
+    recommended amount/package needs re-verification).
+
+
+11. TYPE-SPECIFIC PROCESSING (`processingKind`)
+--------------------------------------------------------------------
+Each entry in config/esperanza_tulong_types.php carries a `processingKind`
+of `cash`, `goods`, `medical`, or `registration`. The Assistance Assessment,
+Approval, Assistance Processing, and Release sections all branch their
+visible fields on this value instead of hardcoding around any one program
+(e.g. Solo Parent Cash Assistance is not special-cased in the Blade file —
+it is simply the `cash` kind, the same as Burial, Educational, Financial,
+and Pension assistance). `medical` gets hospital/provider fields, `goods`
+gets package/quantity/distribution fields, `registration` (the Employment &
+Livelihood enrollment-style programs — TUPAD, TESDA, Livelihood, Kabuhayan,
+Business Plan, ERPAT) gets enrollment-confirmation fields instead of a
+payout, and `cash` gets a release method + amount.
+
+
+12. SOLO PARENT CASH ASSISTANCE — REFERENCE EXAMPLE
+--------------------------------------------------------------------
+The canonical worked example used to verify this flow end-to-end:
+Recommended amount P3,000 -> Approved amount P3,000 (unchanged) -> Release
+Method Cash -> Release Location Esperanza Municipal Hall -> Scheduled
+Release Sept 5, 2026 -> Reference ASSIST-2026-XXXX -> Completed (records
+date released, released-by staff name, recipient, actual amount, and the
+same reference number).
+
+
+13. DATA MODEL ADDITIONS (per request record)
+--------------------------------------------------------------------
+Added lazily as a case advances, mirroring the existing requirements[]/
+release_evidence nested-field convention:
+    screening    { notes, missingRequirements: [] }
+    assessment   { assessedBy, assessmentDate, eligibility, notes,
+                   recommendedAssistance, recommendedAmount,
+                   recommendedPackage }
+    approval     { approvedBy, approvalDate, approvedType, approvedAmount,
+                   approvedPackage, remarks }
+    returnReason, cancelReason
+    processing   { releaseMethod, disbursementMethod, voucherRef, package,
+                   quantity, distributionMethod, coverage, hospitalProvider,
+                   referralDetails, processingNotes }
+    release      { scheduledDate, releaseLocation, reference }
+    completion   { dateReleased, releasedBy, recipient, actualAmount,
+                   actualPackage, reference, remarks }
+    history: []  { stage, date, by, note } — appended on every stage
+                 transition via pushHistory(), shown as a simple frontend
+                 case-history list (no new backend).
+
+persistProgress()/restoreProgress() (localStorage key
+esperanza_tulong_progress, parallel to Dokyu's esperanza_dokyu_progress)
+save and restore every field above the same way they already do
+status/remarks/requirements.
+
+
+14. CITIZEN-SIDE EXPERIENCE
+--------------------------------------------------------------------
+citizen/assistance-requests.blade.php has its own 7-step stepper (Submitted
+-> Initial Screening -> Assessment -> For Approval -> Assistance Processing
+-> Ready for Release -> Completed). Needs Requirements shows the same
+"Application Needs Correction" panel style as Dokyu's Under Review (a
+missing-requirement checklist plus a note-based path), but resubmitting
+returns the case to Initial Screening (not a separate "Resubmitted" status —
+Tulong has no such state). Returned for Reassessment is shown as a plain,
+non-actionable status note, since it is internal staff re-verification, not
+something the citizen needs to fix. Rejected and Cancelled are both shown as
+plain, terminal, informational notices — no resubmit action from either.
+
+
+FILES (Tulong — PART 2)
+--------------------------------------------------------------------
   resources/views/admin/assistance-requests.blade.php    Tulong admin Process tab
-  resources/views/citizen/document-requests.blade.php    Dokyu citizen view
   resources/views/citizen/assistance-requests.blade.php  Tulong citizen view
-  config/esperanza_validation_guide.php                  Decision-outcome labels
-  CLAUDE.md                                               Canonical status list
+  config/esperanza_tulong_types.php                       Types + processingKind
+  CLAUDE.md                                               Documented exception to
+                                                           the Universal status list

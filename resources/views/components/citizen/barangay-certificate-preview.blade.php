@@ -50,11 +50,12 @@
      click (see document-watermark.blade.php's comment for the full
      "two divergent render branches" story this closes). --}}
 <div
-    class="doc-paper rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10"
+    class="doc-paper border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10"
     :style="window.DokyuEditor.paperStyle({!! $background !!})"
     :class="({!! $background !!}).decorative ? 'doc-paper--tpl-' + ({!! $background !!}).decorative : ''"
 >
 
+    <x-citizen.document-template-artwork :background="$background" />
     <x-citizen.document-watermark :background="$background" />
 
     {{-- Everything except the watermark lives inside .doc-content — this is

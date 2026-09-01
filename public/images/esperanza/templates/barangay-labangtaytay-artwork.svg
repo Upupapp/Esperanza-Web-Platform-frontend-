@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297" preserveAspectRatio="none">
+  <!--
+    Official Barangay Labangtaytay full-page letterhead artwork, reproduced
+    from the real reference (Esperanza-Mobile-App/Reference_forms/Esperanza
+    File/BRGY. BUSINESS CLEARANCE .docx, embedded image, pixel-measured with
+    Pillow): a two-tone dark/bright blue triangular corner accent top-right,
+    a fading diagonal grid-line trail beyond it, and the mirrored
+    composition bottom-left. viewBox is exactly the A4 mm coordinate system
+    (210x297) so this fills .doc-paper edge to edge with zero cropping or
+    stretching at any zoom/print DPI. The large center seal watermark is
+    deliberately not part of this file: it stays the existing, separately
+    configurable watermark layer (.doc-watermark), per the Paper/Template/
+    Watermark separation the editor's Background panel depends on.
+  -->
+  <defs>
+    <pattern id="ltt-grid-tr" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(40.9)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#0e86d4" stroke-width="0.6" />
+    </pattern>
+    <pattern id="ltt-grid-bl" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(40.9)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#045c9c" stroke-width="0.6" />
+    </pattern>
+    <linearGradient id="ltt-fade-tr" x1="160" y1="0" x2="210" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="ltt-fade-bl" x1="35" y1="297" x2="0" y2="265" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Top-right: fading diagonal grid trail extending beyond the solid
+       corner triangle. Scaled down from the reference's own measured
+       proportions (which reached to ~61%/28% of the page) to leave a
+       clear safe area above the letterhead text — the reference's own
+       original layout could rely on a typesetter seeing the artwork
+       while placing text; this editor's content position is dynamic
+       (varies per document length), so the accent stays corner-confined
+       enough to never need per-template text repositioning. -->
+  <polygon points="160,0 175,0 210,48 210,32" fill="url(#ltt-grid-tr)" opacity="0.55" />
+  <polygon points="160,0 175,0 210,48 210,32" fill="url(#ltt-fade-tr)" />
+
+  <!-- Top-right: solid two-tone corner triangle (outer bright blue, inner
+       dark navy accent nearer the corner tip). -->
+  <polygon points="210,0 160,0 210,32" fill="#0e86d4" />
+  <polygon points="210,0 195,0 210,12" fill="#003060" />
+
+  <!-- Bottom-left: mirrored composition — this is the corner that actually
+       collided with the signature block in testing (measured: "Released
+       by" sits at ~92% down the page, starting at 5.2% from the left
+       edge; a first pass reaching to 89% still touched it). Reach is
+       trimmed to clear that measured position with real margin. -->
+  <polygon points="35,297 25,297 0,265 0,280" fill="url(#ltt-grid-bl)" opacity="0.55" />
+  <polygon points="35,297 25,297 0,265 0,280" fill="url(#ltt-fade-bl)" />
+  <polygon points="0,297 35,297 0,280" fill="#0e86d4" />
+  <polygon points="0,297 10,297 0,290" fill="#045c9c" />
+</svg>

@@ -38,7 +38,7 @@
      by default, but also lets a selected graphic template's paper color/
      decorative accents show here, pre-first-edit, like everywhere else). --}}
 <div
-    class="doc-paper rounded-2xl border-2 border-slate-200 p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col"
+    class="doc-paper border-2 border-slate-200 p-6 sm:p-10 shadow-inner-sm relative overflow-hidden mx-auto flex flex-col"
     :style="window.DokyuEditor.paperStyle({!! $background !!})"
     :class="({!! $background !!}).decorative ? 'doc-paper--tpl-' + ({!! $background !!}).decorative : ''"
 >

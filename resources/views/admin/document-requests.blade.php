@@ -2048,7 +2048,40 @@
                         margin: 0,
                         filename: 'Esperanza-' + docName + '-' + citizenName + '.pdf',
                         image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+                        html2canvas: {
+                            scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff',
+                            // html2canvas briefly inserts its clone into the
+                            // real document to read accurate computed styles
+                            // before rendering it — Alpine's own global
+                            // MutationObserver picks that insertion up and
+                            // tries to initialize x-data/x-show/etc. on it as
+                            // if it were live markup, throwing (no reactive
+                            // scope exists for an orphan clone: confirmed via
+                            // direct reproduction, a ReferenceError for
+                            // selected/documentBackground/etc. on every
+                            // directive) and, worse, x-show's
+                            // failed expression can leave the element it's
+                            // on hidden — which is why #dp-print-area itself
+                            // (inside the modal's own x-show open wrapper)
+                            // was measuring 0x0 in html2canvas's own clone
+                            // despite being correctly sized on the live page
+                            // the whole time. Every Alpine directive has
+                            // already done its job by the time the clone is
+                            // made — the visual result is fully baked into
+                            // the DOM/computed styles — so the clone needs
+                            // none of them; stripping x-*/:*/@* attributes
+                            // here is the standard fix for this exact class
+                            // of html2canvas + Alpine(/Vue/React) interop bug.
+                            onclone: (clonedDoc) => {
+                                clonedDoc.querySelectorAll('*').forEach((node) => {
+                                    Array.from(node.attributes).forEach((attr) => {
+                                        if (attr.name.startsWith('x-') || attr.name.startsWith(':') || attr.name.startsWith('@')) {
+                                            node.removeAttribute(attr.name);
+                                        }
+                                    });
+                                });
+                            },
+                        },
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
                         pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
                     }).from(el).save();
@@ -3275,7 +3308,8 @@
                                              Background never touches the
                                              editable text, and vice versa. --}}
                                         <template x-if="selected.customDocumentHtml">
-                                            <div class="doc-paper rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10" :style="paperStyle()" :class="documentBackground.decorative ? 'doc-paper--tpl-' + documentBackground.decorative : ''">
+                                            <div class="doc-paper border border-slate-200 shadow-sm relative overflow-hidden mx-auto flex flex-col p-6 sm:p-10" :style="paperStyle()" :class="documentBackground.decorative ? 'doc-paper--tpl-' + documentBackground.decorative : ''">
+                                                <img class="doc-template-artwork" alt="" aria-hidden="true" x-show="documentBackground.decorative === 'labangtaytay'" x-cloak src="{{ asset('images/esperanza/templates/barangay-labangtaytay-artwork.svg') }}">
                                                 <img class="doc-watermark" alt="" aria-hidden="true" x-show="documentBackground.src" x-cloak :src="documentBackground.src" :style="watermarkStyle()">
                                                 <div
                                                     class="doc-content relative flex flex-col flex-1"

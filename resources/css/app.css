@@ -336,7 +336,33 @@
    print tier) and equally for html2pdf/html2canvas, which measures the
    live, on-screen box model and would otherwise capture the document
    clipped to the modal's own max-height/overflow instead of its full
-   natural size. */
+   natural size. translate/scale/rotate are reset alongside transform for
+   the same reason but are NOT covered by transform:none — Tailwind's
+   -translate-x-1/2/-translate-y-1/2 (used by the Full View modal's own
+   centering, top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 in
+   modal.blade.php) compiles to the native CSS `translate` property, a
+   distinct property from `transform` that still applies even once
+   position is forced to static here — confirmed via direct inspection
+   (computed transform: none, computed translate: -50% -50%) after this
+   rule alone left the whole print/PDF output shifted exactly half the
+   modal's own width off the left edge of the page. translate/scale/
+   rotate are declared in their OWN rule below, deliberately kept out of
+   the transform declaration in the block below — the build's CSS
+   minifier collapses translate:none;scale:none;rotate:none;transform:none
+   into a single transform:translate(0)scale(1)rotate(0), which does NOT
+   reset the element's own separately-cascaded native translate property
+   (transform and translate/scale/rotate compose rather than override
+   each other, so the merged shorthand silently stopped fixing anything
+   — confirmed by rebuilding and re-measuring). The minifier also re-merges
+   two back-to-back rules sharing the exact same selector text, so the
+   selector below is deliberately written differently (:is(*) is a no-op
+   that matches identically) purely to stop that merge from reintroducing
+   the same bug. */
+body.dp-printing *:has(#dp-print-area):is(*) {
+    translate: none !important;
+    scale: none !important;
+    rotate: none !important;
+}
 body.dp-printing *:has(#dp-print-area) {
     position: static !important;
     inset: auto !important;
@@ -368,9 +394,53 @@ body.dp-printing .doc-paper {
     padding: 16mm 18mm 14mm !important;
 }
 
+/* #dp-print-area is the exact element html2pdf captures (see
+   downloadDocument() in document-requests.blade.php:
+   document.getElementById('dp-print-area')) — real print gets its own
+   width:210mm inside the @media print tier below since it also needs
+   position:absolute for page anchoring there, but html2canvas never
+   evaluates @media print at all (it measures the live on-screen box
+   model), so without a matching width here it stayed as wide as the
+   whole workspace column, capturing the properly-210mm .doc-paper
+   centered inside a much wider canvas — a correctly-sized page floating
+   in extra blank canvas width, which jsPDF then downscaled to fit A4,
+   shrinking the actual certificate and padding it with white bands
+   instead of filling the page edge to edge. */
+body.dp-printing #dp-print-area {
+    width: 210mm !important;
+    margin: 0 !important;
+}
+
 /* html2pdf captures screen styles rather than @media print, so this class
    is also used while generating a download. */
 body.dp-printing .dp-no-print {
+    display: none !important;
+}
+
+/* The @media print tier below has its own copy of this same rule with a
+   comment claiming it's irrelevant to html2pdf "which only ever walks
+   #dp-print-area's own subtree" — that's true of which PIXELS end up
+   captured, but not of how html2canvas gets there: it still has to lay
+   out the ENTIRE cloned page first to work out where #dp-print-area
+   ends up, and once *:has(#dp-print-area) above forces the teleported
+   modal to position:static, that element is just the LAST child of
+   body in DOM order (Alpine's x-teleport="body" appends it) — back in
+   normal flow, it renders below the full height of the rest of the
+   admin dashboard (sidebar, topbar, the whole page) instead of at the
+   top. Confirmed directly: html2canvas's own debug log reported
+   "element located at 0, 2256" for a page whose real content starts at
+   y:0 — 2256 is roughly the dashboard's own height. Hiding every other
+   top-level body child here, unscoped to @media print, is what actually
+   fixes that for html2canvas; real print already had its own working
+   copy of this rule and is untouched. Its one-level-deeper counterpart
+   (the modal's own toolbar/header/footer chrome, siblings of
+   #dp-print-area inside the modal rather than of the modal itself) had
+   the exact same @media-print-only gap and needs the same unscoped
+   copy, for the same reason. */
+body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area) {
+    display: none !important;
+}
+body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-print-area) {
     display: none !important;
 }
 
@@ -397,9 +467,10 @@ body.dp-printing .dp-no-print {
        a spurious extra blank page — the hidden dashboard shell alone was
        tall enough to spill onto its own second sheet. display:none removes
        it from layout entirely, so it can never contribute page height.
-       Scoped to @media print only — irrelevant to html2pdf, which only
-       ever walks #dp-print-area's own subtree and never looks at its
-       siblings/ancestors' other children in the first place. */
+       This same rule also exists unscoped further up (outside @media
+       print) for html2canvas's benefit — see that copy's own comment for
+       why it turned out to matter there too, contrary to what an earlier
+       version of this comment assumed. */
     body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area) {
         display: none !important;
     }
@@ -443,6 +514,14 @@ body.dp-printing .dp-no-print {
     box-sizing: border-box;
     width: min(210mm, 100%);
     min-height: 297mm;
+    /* Belt-and-suspenders for the one genuine CSS background left on this
+       element — a custom paperColor from the Background panel — since
+       browsers don't print CSS backgrounds by default without this (see
+       the Document Templates comment further below for the full story;
+       this was also the exact reason the old CSS-only decorative corner
+       accents vanished on Print). */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
 }
 
 /* Editable blanks on a generated Dokyu paper while Edit Document is active
@@ -534,58 +613,28 @@ body.dp-printing .doc-field-input {
 }
 
 /* Document Templates (document-editor-template-sidebar.blade.php /
-   applyTemplate() in document-requests.blade.php) — a subtle corner accent
-   approximating each real reference letterhead's own decorative background
-   (a native Word vector shape in the source .docx, not something that can
-   be pulled out as a reusable image file the way the seals were, so it's
-   recreated here in CSS instead of faked as a fabricated raster asset).
-   Painted via .doc-paper's own ::before/::after so they need no extra DOM
-   node, confined to the page by .doc-paper's existing overflow:hidden, and
-   z-index:0 (with .doc-content pinned to z-index:1 below) guarantees they
-   always sit behind the actual document content and watermark regardless
-   of paint-order specifics — this is real document appearance, not editor
-   chrome, so it deliberately is NOT dp-no-print: it belongs in Print/PDF
-   exactly like the seals and watermark do. */
+   applyTemplate() in document-requests.blade.php). Labangtaytay's official
+   letterhead is a real full-page composition (dark/bright blue corner
+   geometry, a diagonal grid-line accent, mirrored top-right/bottom-left) —
+   traced from the actual reference document and rendered as a plain <img>
+   (document-template-artwork.blade.php), not recreated as CSS shapes here.
+   Villa has no real full-page reference available yet, so it deliberately
+   stays plain paper rather than shipping another fabricated approximation.
+   (.doc-paper's own print-color-adjust, set further up in this file,
+   exists only for the one thing here that's still a genuine CSS
+   background — a custom paperColor from the Background panel; this
+   artwork <img> and the watermark <img> don't need it, images always
+   print regardless.) */
 .doc-content {
     z-index: 1;
 }
-.doc-paper--tpl-labangtaytay::before,
-.doc-paper--tpl-labangtaytay::after,
-.doc-paper--tpl-villa::before,
-.doc-paper--tpl-villa::after {
-    content: '';
+.doc-template-artwork {
     position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     z-index: 0;
     pointer-events: none;
-}
-.doc-paper--tpl-labangtaytay::before {
-    top: 0;
-    right: 0;
-    width: 45%;
-    height: 10%;
-    background: linear-gradient(135deg, transparent 50%, rgba(13, 148, 136, 0.14) 50%);
-}
-.doc-paper--tpl-labangtaytay::after {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1.25%;
-    background: linear-gradient(90deg, #0d9488, #14b8a6);
-    opacity: 0.85;
-}
-.doc-paper--tpl-villa::before {
-    top: 0;
-    right: 0;
-    width: 40%;
-    height: 9%;
-    background: linear-gradient(135deg, transparent 50%, rgba(30, 64, 175, 0.14) 50%);
-}
-.doc-paper--tpl-villa::after {
-    bottom: 0;
-    left: 0;
-    width: 40%;
-    height: 9%;
-    background: linear-gradient(315deg, transparent 50%, rgba(30, 64, 175, 0.14) 50%);
 }
 
 /* .doc-content itself carries no permanent outline while editable — the
@@ -917,8 +966,37 @@ body.dp-dragging-section * {
    .doc-zoom-scale's transform is the only one reset here; a moved section's
    or a repositioned seal's own transform lives on a different element and
    is untouched. */
+/* Centers .doc-zoom-sizer (and the paper inside it) like Google Docs —
+   nothing upstream of this ever did: .doc-zoom-scale is a fixed 210mm
+   with no auto-margins, and .doc-zoom-sizer's own width/height are only
+   ever set (recomputeZoomSizer() in document-requests.blade.php) to the
+   scaled paper's own footprint, never the workspace's full width, so
+   .doc-paper's mx-auto had no spare room to center into — everything in
+   this chain defaulted to plain left-aligned block flow. `safe center`
+   (not plain center) is what makes this survive high zoom: it centers
+   whenever the sizer is narrower than the viewport, and automatically
+   falls back to start-alignment — scrollable, nothing clipped off the
+   left — the moment the sizer becomes wider than the viewport, which is
+   exactly "center when possible, scroll when genuinely necessary."
+
+   background-color + padding here are the Google Docs-style neutral
+   workspace behind the page — deliberately on THIS element, not on
+   .doc-paper: .doc-paper's own background comes entirely from
+   paperStyle()/the Paper Color control (see documentBackground.paperColor
+   in dokyu-editor.js), which must stay independent of the editor's own
+   chrome. Padding gives the paper visible breathing room against the
+   gray on every side instead of touching the workspace's own edges,
+   which is what actually makes the page read as "a sheet sitting on a
+   surface" rather than just a color change. Reset to transparent/zero
+   padding under body.dp-printing below — this is editor UI, never part
+   of the exported document. */
 .doc-zoom-viewport {
     overflow: auto;
+    display: flex;
+    justify-content: safe center;
+    align-items: flex-start;
+    background-color: #f1f5f9; /* slate-100 — matches the slate-200 border/slate-50 chrome already used across the toolbar and floating panels */
+    padding: 1rem;
 }
 /* .doc-paper's own width is min(210mm, 100%) — a percentage relative to
    THIS element. Left at the default auto (fill whatever width
@@ -938,6 +1016,25 @@ body.dp-dragging-section * {
 }
 body.dp-printing .doc-zoom-viewport {
     overflow: visible !important;
+    display: block !important;
+    /* max-h-[60vh] (Tailwind) is a separate constraint from overflow —
+       overflow:visible only stops CONTENT from being clipped, it doesn't
+       grow this element's own reported box height past its max-height.
+       Real browser Print never notices because paginated layout doesn't
+       "capture a box," it just keeps flowing content past whatever
+       nominal box size an ancestor has — but html2pdf/html2canvas
+       measures this element's actual bounding box to decide what to
+       capture, so without this it silently captured only the first
+       ~60vh of the document and left the rest out of the downloaded
+       PDF entirely (confirmed via direct measurement: overflow/display
+       were already correctly reset here, but getBoundingClientRect()
+       still reported the pre-print clipped height). */
+    max-height: none !important;
+    /* The gray workspace surface (see the base .doc-zoom-viewport rule
+       above) is editor-only chrome — Print and Download PDF must contain
+       nothing but the paper itself. */
+    background: transparent !important;
+    padding: 0 !important;
 }
 body.dp-printing .doc-zoom-sizer {
     width: auto !important;

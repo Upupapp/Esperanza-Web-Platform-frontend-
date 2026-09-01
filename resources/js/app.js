@@ -180,6 +180,14 @@ document.addEventListener('alpine:init', () => {
                 'Completed': ['circle-check', 'emerald', (t) => 'Your ' + t + ' request is complete.'],
                 'Rejected': ['circle-x', 'rose', (t) => 'Your ' + t + ' request was rejected.'],
                 'Cancelled': ['circle-x', 'rose', (t) => 'Your ' + t + ' request was cancelled.'],
+                // Tulong-only statuses (see admin/assistance-requests.blade.php)
+                'Initial Screening': ['search-check', 'indigo', (t) => 'Your ' + t + ' request is now under initial screening.'],
+                'Needs Requirements': ['file-plus-2', 'amber', (t) => 'Your ' + t + ' request needs additional requirements.'],
+                'Assessment': ['clipboard-check', 'indigo', (t) => 'Your ' + t + ' request is being assessed for eligibility.'],
+                'For Approval': ['send', 'indigo', (t) => 'Your ' + t + ' request has been submitted for approval.'],
+                'Returned for Reassessment': ['rotate-ccw', 'orange', (t) => 'Your ' + t + ' request is being reassessed.'],
+                'Assistance Processing': ['loader', 'purple', (t) => 'Your ' + t + ' assistance is being processed.'],
+                'Ready for Release': ['package-check', 'teal', (t) => 'Your ' + t + ' assistance is ready for release!'],
             };
             const toAdd = [];
             requests.forEach((r) => {

@@ -108,7 +108,8 @@ are provisioned internally (UI can imply this, no backend needed).
 ## Standard workflows
 
 - **Citizen Registration**: Registration → Verification → Resident Profile → Dashboard
-- **Document Requests / Citizen Assistance (Dokyu & Tulong)**: Citizen (Select Service → Fill Form → Submit) → Admin (Submitted → Under Verification → Approved → Mark to Release → Released), with a correction branch (Under Verification → Under Review → Resubmitted → back into verification) and a terminal Rejected outcome. Both Dokyu and Tulong share this exact process-tab lifecycle — see the Process tab in each admin page for the full transition rules.
+- **Document Requests (Dokyu)**: Citizen (Select Service → Fill Form → Submit) → Admin (Submitted → Under Verification → Approved → Mark to Release → Released), with a correction branch (Under Verification → Under Review → Resubmitted → back into verification) and a terminal Rejected outcome — see PROCESS_TAB_FLOW.txt PART 1 for the full transition rules.
+- **Citizen Assistance (Tulong)**: its own case-management lifecycle (Submitted → Initial Screening → Assessment → For Approval → Assistance Processing → Ready for Release → Completed), with Needs Requirements / Returned for Reassessment side states and terminal Rejected/Cancelled outcomes — see PROCESS_TAB_FLOW.txt PART 2 for the full transition rules.
 - **Announcements**: Draft → Review → Publish → Archive
 
 ## Universal status system
@@ -118,6 +119,11 @@ Reuse exactly these status names everywhere — never invent new ones:
 Draft, Submitted, Pending Review, Under Verification, Assigned, Processing,
 Under Review, Resubmitted, Approved, Rejected, Mark to Release, Released,
 Completed, Cancelled, Archived.
+
+Documented exception: Tulong (citizen assistance requests) deliberately runs
+its own extended, case-management-specific status vocabulary instead of this
+list — see PROCESS_TAB_FLOW.txt PART 2 for the full lifecycle and rationale.
+Dokyu and all other services still follow the list above unchanged.
 
 ## Component architecture
 
