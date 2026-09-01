@@ -105,6 +105,40 @@ One entry screen: user chooses **Citizen Login** or **LGU Personnel Login**.
 Citizen registration exists. Admin registration does not — admin accounts
 are provisioned internally (UI can imply this, no backend needed).
 
+## Language — RULED 2026-08-30
+
+**Citizen Portal: bilingual (Filipino + English). Administrative Portal:
+English-only, by decision.**
+
+The language store defaults to `fil`. Every citizen-facing user-visible string
+must exist in both languages, written with the `x-ui.t` component
+(`<x-ui.t fil="..." en="..." />`) so coverage stays greppable and testable.
+`x-ui.t` renders a `<span>`, so attributes — `placeholder`, `title`,
+`aria-label` — use a bound ternary on `$store.lang.current` instead.
+
+The Administrative Portal is English-only **because the owner decided so**, not
+by omission. Do not add a language toggle to the admin topbar, and do not treat
+untranslated admin views as a defect. If that decision is ever revisited, it is
+an owner decision, and this section is where it gets rewritten.
+
+Three deliberate exceptions inside the citizen portal, each recorded in a
+`{{-- LANGUAGE (TAB 09) --}}` comment in the file itself:
+
+- **Official document bodies** (`barangay-certificate-preview`,
+  `municipal-request-preview`, `doc-field`) — the wording is the artifact.
+  Philippine LGU certificates are issued in English and their phrasing is fixed
+  by the issuing office. A bilingual certificate would not match the paper it
+  stands in for. The controls *around* the document are bilingual.
+- **The Digital ID card face** (`digital-id-card`) — "Republic of the
+  Philippines", "Civil Status", "Mother's Maiden Name" are the printed labels of
+  a Barangay ID, part of the credential rather than UI chrome. Its chrome (flip
+  hint, disclaimer, accessible names) IS bilingual.
+- **Proper nouns** — module and event names (Dokyu, Tulong, Balita, Sakuna,
+  Papeles, "Fiesta ng Esperanza 2026"), font names, and the 15 canonical status
+  names, which are a fixed vocabulary and must never be renamed or translated.
+
+`tests/Feature/BilingualCoverageTest.php` enforces this and is part of the gate.
+
 ## Standard workflows
 
 - **Citizen Registration**: Registration → Verification → Resident Profile → Dashboard
@@ -114,16 +148,149 @@ are provisioned internally (UI can imply this, no backend needed).
 
 ## Universal status system
 
-Reuse exactly these status names everywhere — never invent new ones:
+Reuse exactly these names everywhere — never invent new ones. `x-ui.badge`
+renders all nineteen, and they fall on **three separate axes**. Do not mix them.
+
+**1. Request lifecycle (15).** The state of a Dokyu or Tulong request:
 
 Draft, Submitted, Pending Review, Under Verification, Assigned, Processing,
 Under Review, Resubmitted, Approved, Rejected, Mark to Release, Released,
 Completed, Cancelled, Archived.
 
+<<<<<<< HEAD
 Documented exception: Tulong (citizen assistance requests) deliberately runs
 its own extended, case-management-specific status vocabulary instead of this
 list — see PROCESS_TAB_FLOW.txt PART 2 for the full lifecycle and rationale.
 Dokyu and all other services still follow the list above unchanged.
+=======
+**2. Account access tier (2).** The state of an ACCOUNT — never of a request,
+and never of a record:
+
+Verified, Unverified.
+
+This is the tier that gates service access: only a `Verified` account gets full
+Dokyu/Tulong access. It is binary on purpose — an account either may transact or
+may not.
+
+**3. Record verification ladder (4).** How well a CONSTITUENT RECORD is
+evidenced — an individual, family or household. Never an account, never a
+request:
+
+Unverified → For Validation → Partially Verified → Verified.
+
+Ruled 2026-08-30 (B-022). Axis 2 previously claimed to cover records as well as
+accounts and listed only two values, while the `verification` field in
+`config/esperanza_constituents.php` carries four:
+
+    Verified 36 · Partially Verified 33 · Unverified 15 · For Validation 3
+
+`Partially Verified` is the second most common value in that file. Neither it
+nor `For Validation` was listed or styled, and `x-ui.badge` resolved an unlisted
+label to **Draft's** styling — so the label read correctly while the colour said
+"inactive". A missing vocabulary entry looked like a styling nit rather than a
+data defect. Both are now styled, and an unlisted status gets a distinct neutral
+treatment plus a `data-unknown-status` marker instead of impersonating Draft.
+
+**Do not collapse axes 2 and 3.** They share two words and mean different
+things: an account is Verified when it may transact; a record is Verified when
+its evidence is complete. A record can be `Partially Verified` while its owner's
+account is plainly `Unverified`. Collapsing them is the same mistake as
+collapsing the tier with the lifecycle, one level down — and it is how the
+mobile app ended up degrading `Verified` to `Draft` and locking citizens out of
+Dokyu.
+
+### Why these axes exist
+
+Both verification axes were absent from this list until 2026-08-30, and the list
+is what every other codebase builds its enum from — none of them can see this
+repo's Blade or its fixtures. The omission has already cost two clients:
+
+- the **mobile app** built an enum from the 15, had no `Verified`, silently
+  degraded it to `Draft`, and locked verified citizens out of Dokyu;
+- the **backend** built `Status::ALL` from the same 15, ended up with no access
+  tier at all, and accepted requests from citizens this UI refuses — a client
+  stricter than the server, about who may request a government document.
+
+The two axes were then added as one, which was still wrong: a single
+Verified/Unverified pair cannot describe both `access_level` on an account and
+`verification` on a constituent record, because the record field carries four
+values and the account field two. Splitting them into axes 2 and 3 is the
+correction, and the paragraph above about not collapsing them is the rule that
+came out of it.
+
+**Never set a request's status to `Verified`.** A request that has passed
+verification is `Approved`. `Verified` describes either an ACCOUNT (axis 2, may
+transact) or a RECORD (axis 3, evidence complete) — never a request.
+
+The ACCOUNT tier gates service access. **It is the server's field to own.** Deriving it in a Blade
+view (as `admin/constituents.blade.php` still does) means every client
+re-derives it, and two of two got it wrong; read it from the API's
+`access_level` once that is wired.
+
+**Now in the contract (verified 2026-08-30, backend `de7b449`).** The backend's
+owner ruled B-035 and published both record axes on
+`GET /api/v1/admin/residents` and `/admin/households`:
+
+    status         Active | Under Review                                    (axis 3a, activity)
+    verification   Unverified | For Validation | Partially Verified | Verified  (axis 3, ladder)
+
+Contract field names, not renamed — the collision with the request lifecycle is
+handled by pinning the closed sets on both sides, which is what axis 3 and
+`ModuleVocabularyTest` do here.
+
+**Still derived in Blade, and that is not yet a defect to fix.** The fields exist
+in the CONTRACT; there is no reachable endpoint for a static export to call
+(`VITE_API_BASE_URL` is still a placeholder, and production is flat files on a
+CDN). So `admin/constituents.blade.php` continues to derive `access_level`, and
+switching it is a one-line change per view — TAB 04 gave each view a single data
+seam — the moment an API is actually deployed. It belongs with TAB 06's adoption,
+for the same reason: wiring a read to an endpoint that does not answer replaces
+working data with a guaranteed failure.
+
+### Module-local vocabularies — ruled 2026-08-30 (B-018)
+
+The three axes above govern **requests, accounts and records**. They are not the
+only enumerated values in the platform, and "never invent new ones" was never
+meant to forbid a module from having its own vocabulary for its own domain —
+read that way it would make a data-quality queue illegal.
+
+The Constituents module has three, measured from
+`config/esperanza_constituents.php`. They are **closed sets too**: add a value
+here before using it, exactly as with the axes above.
+
+| Vocabulary | Values | Used by |
+| --- | --- | --- |
+| **Record activity** | Active · Under Review | `households[].status`, `families[].status`, `individuals[].status` |
+| **Profiling coverage** | Not Started (Re-visit Required) · In Progress · Needs Follow-up · Complete | `barangayCoverage[].status` |
+| **Issue triage** | Open · In Review · Resolved | `dataQualityIssues[].status`, `individuals[].incident_reports[].status` |
+
+Nested REQUEST rows are not module-local and do use the lifecycle:
+`individuals[].document_requests[].status`, `.assistance_requests[].status` and
+`.services[].status` all draw from the 15.
+
+**Two name collisions to know about, because both look like typos and are not:**
+
+- `In Review` (issue triage) is **not** `Under Review` (request lifecycle). One
+  is a data-quality ticket being worked; the other is a citizen's request needing
+  correction.
+- `Under Review` appears in BOTH the request lifecycle and record activity. On
+  `individuals[].status` it means the record is being checked — currently one
+  resident, RES-2026-031, whose `verification` is `Unverified`. That is
+  coherent, but if a client builds one enum for "status" across both it will
+  merge two unrelated meanings.
+
+None of these values reaches `x-ui.badge`: every badge call site passes a
+literal canonical status, and these render through their own class maps. If one
+is ever routed through the badge it will render with the unknown-status
+treatment and a `data-unknown-status` marker rather than silently borrowing
+Draft's grey — which is the point of that change.
+
+`tests/Feature/StatusVocabularyTest.php` asserts that this list, `x-ui.badge`
+and the actual constituent DATA all agree, that axes 2 and 3 keep sharing exactly
+`Verified` and `Unverified`, and that every module-local vocabulary above matches
+the values actually present in the fixtures — so neither a drift, a well-meaning
+merge, nor a quietly invented fourth coverage state can pass unnoticed.
+>>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 
 ## Component architecture
 
@@ -160,3 +327,13 @@ Never redesign existing patterns unless the user explicitly instructs it.
 Every deliverable: production-ready, enterprise-grade, responsive,
 accessible, beautiful, modern, premium, interactive, modular, scalable,
 backend-ready, frontend-only.
+
+## Deploying — HARD RULE
+
+Every push to `main` follows `DEPLOY_PROTOCOL.md`: sweep remote main, enumerate
+local-only work (including untracked files), test, merge preserving local-only
+items, sweep and test again, then push. A push to `main` deploys this repo via
+Netlify, so the post-merge gate is not a formality.
+
+Open findings live in `FRONTEND_PENDING.md`. The backend work order derived from
+this frontend is `ESPERANZA_BACKEND_MASTER_COMMAND.md`.

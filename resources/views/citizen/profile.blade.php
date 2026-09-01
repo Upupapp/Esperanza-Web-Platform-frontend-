@@ -1,23 +1,13 @@
 @php
-    $household = [
-        ['name' => 'Ramon Bacaltos', 'relation' => 'Spouse', 'age' => 41],
-        ['name' => 'Josiah Bacaltos', 'relation' => 'Son', 'age' => 16],
-        ['name' => 'Andrea Bacaltos', 'relation' => 'Daughter', 'age' => 12],
-    ];
+    // TAB 04: fixtures live in resources/data/citizen/profile.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/citizen/profile.php');
+    $household = $__fixtures['household'];
 
-    $documents = [
-        ['label' => 'Philippine National ID (PhilSys)', 'status' => 'Approved', 'icon' => 'badge-check'],
-        ['label' => 'Proof of Residency — Barangay Certificate', 'status' => 'Approved', 'icon' => 'file-check'],
-        ['label' => "Voter's ID", 'status' => 'Pending Review', 'icon' => 'file-clock'],
-    ];
+    $documents = $__fixtures['documents'];
 
-    $idTypes = ["Voter's ID", "Driver's License", 'Passport', 'PRC ID', 'Senior Citizen ID', 'PWD ID', 'Postal ID', 'Other Valid ID'];
+    $idTypes = $__fixtures['idTypes'];
 
-    $availableFiles = [
-        ['name' => "Voter's ID Scan.jpg", 'category' => 'IMG'],
-        ["name" => "Driver's License Scan.jpg", 'category' => 'IMG'],
-        ['name' => 'Passport Bio Page.pdf', 'category' => 'PDF'],
-    ];
+    $availableFiles = $__fixtures['availableFiles'];
 @endphp
 
 <x-layouts.citizen title="My Profile" subtitle="Manage your resident information and account details." active="profile">

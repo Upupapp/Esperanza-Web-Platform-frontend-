@@ -1,4 +1,5 @@
 @php
+<<<<<<< HEAD
     $requests = [
         ['ref' => 'AR-2026-0142', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'purpose' => 'Hospital bill support — Masbate Provincial Hospital', 'submitted' => 'Jun 28, 2026', 'status' => 'Assistance Processing'],
         ['ref' => 'AR-2026-0098', 'type' => 'Educational Assistance', 'office' => 'MSWDO', 'purpose' => 'Tuition support for 2 dependents, SY 2026-2027', 'submitted' => 'May 20, 2026', 'status' => 'Completed'],
@@ -21,6 +22,11 @@
             ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
         ]],
     ];
+=======
+    // TAB 04: fixtures live in resources/data/citizen/assistance-requests.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/citizen/assistance-requests.php');
+    $requests = $__fixtures['requests'];
+>>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 
     // Relocated to config/esperanza_tulong_types.php, so this file has a
     // single source of truth for every Tulong fee (see admin Settings >
@@ -37,13 +43,9 @@
     unset($r);
 
     // Where to follow up / claim assistance, keyed by office name.
-    $pickupDirectory = [
-        'MSWDO' => ['contact' => '(056) 333-1044', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'OSCA' => ['contact' => '(056) 333-1088', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        "Mayor's Office" => ['contact' => '(056) 333-1021', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'MDRRMO' => ['contact' => '(056) 333-1090', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-    ];
+    $pickupDirectory = $__fixtures['pickupDirectory'];
 
+<<<<<<< HEAD
     $submittedDocs = [
         ['name' => 'PhilSys National ID.jpg', 'category' => 'IMG'],
         ['name' => 'Barangay Certificate of Indigency.pdf', 'category' => 'PDF'],
@@ -58,6 +60,9 @@
     $tulongProcessingCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Assistance Processing'));
     $tulongReadyForReleaseCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Ready for Release'));
     $tulongCompletedCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Completed'));
+=======
+    $submittedDocs = $__fixtures['submittedDocs'];
+>>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 @endphp
 
 <x-layouts.citizen title="Tulong" subtitle="Submit and follow up assistance program requests." active="assistance-requests">
@@ -907,7 +912,10 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 <template x-for="req in filteredRequests" :key="req.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors cursor-pointer" @click="openProgress(req)">
+                    <tr class="hover:bg-slate-50/70 transition-colors cursor-pointer" @click="openProgress(req)"
+        tabindex="0"
+        @keydown.enter.prevent="openProgress(req)"
+        @keydown.space.prevent="openProgress(req)">
                         <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="req.ref"></td>
                         <td class="px-4 py-3 text-slate-700 font-medium" x-text="req.type"></td>
                         <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="req.office"></td>

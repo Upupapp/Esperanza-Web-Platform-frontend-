@@ -1,59 +1,83 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Esperanza Web Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+The LGU digital platform for the **Municipality of Esperanza, Masbate** (Region V
+— Bicol), 20 barangays. Two applications, one codebase:
 
-## About Laravel
+- **Citizen Portal** — residents request documents (Dokyu), apply for assistance
+  (Tulong), read announcements and events, and manage their profile.
+- **Administrative Portal** — LGU personnel process those requests, manage
+  constituents and resident profiling, publish communications, and run the
+  Sakuna disaster-management module.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+There is no public marketing website in this project, and no mobile app.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## The one thing to know before you change anything
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**In production there is no PHP.** `netlify.toml` runs `export.php` at build time
+to render every route to static HTML and publishes `dist/`. The deployed site is
+flat files on a CDN — Laravel never runs for a visitor.
 
-## Learning Laravel
+Three consequences:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+1. Every API call is a browser call. Blade cannot render real data; `@php` arrays
+   are build-time constants baked into the HTML.
+2. CORS and token storage are frontend problems — the static origin and the API
+   origin differ.
+3. A route that works on `artisan serve` still 404s in production if it never
+   reaches `dist/`. The gate in `tests/Feature/ExportManifestTest.php` exists
+   because that already happened once to nine routes.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Getting started
 
-## Laravel Sponsors
+```bash
+git clone <this repo>
+cd esperanza_web_platform
+composer install
+cp .env.example .env
+php artisan key:generate
+npm ci
+npm run build          # required: public/build is gitignored, and without the
+                       # Vite manifest every route 500s
+php artisan serve
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+That is the whole list. `.env.example` ships in-memory drivers
+(`SESSION_DRIVER=array`, `CACHE_STORE=array`, `QUEUE_CONNECTION=sync`) because
+this project has no database — do not point them at a sqlite file.
 
-### Premium Partners
+## The gate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+There is **no CI on this project**. `scripts/gate.sh` is the gate, and it runs
+automatically before every push:
 
-## Contributing
+```bash
+git config core.hooksPath scripts/hooks    # one time, per clone
+bash scripts/gate.sh                       # or run it directly
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+It builds the assets, checks formatting, runs the suite (including the
+route-render and export-drift gates), produces `dist/`, and then asserts against
+`dist/` itself rather than trusting the exporter's own summary. Never bypass it
+with `--no-verify`.
 
-## Code of Conduct
+## Building the deployable site
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+npm run build && php export.php    # writes dist/
+```
 
-## Security Vulnerabilities
+## Documents that govern this repo
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| File | What it is |
+| --- | --- |
+| `CLAUDE.md` | The project constitution. Frontend only — no controllers beyond `Route::view`, no models, no migrations, no business logic, no auth logic, no middleware. |
+| `DEPLOY_PROTOCOL.md` | The required procedure for every push to `main`. A push deploys. |
+| `ESPERANZA_FRONTEND_MASTER_COMMAND.md` | The frontend work programme, TABs 00–17. |
+| `ESPERANZA_BACKEND_MASTER_COMMAND.md` | The backend work order (a separate repo's job). |
+| `FRONTEND_PENDING.md` | The findings register, F-001..F-009. |
+| `PROCESS_TAB_FLOW.txt` | The Dokyu/Tulong request lifecycle. |
 
-## License
+## Stack
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Laravel 12 (routes and views only) · Blade · TailwindCSS 4 · Alpine.js ·
+Chart.js · Lucide · Vite.

@@ -317,7 +317,11 @@
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0">
+    x-transition:leave-end="opacity-0"
+        x-trap="showIncidentDetail"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showIncidentDetail = false">
 
     <div x-data="{ detailTab: 'details', newNote: '' }"
         x-transition:enter="transition duration-[200ms] ease-emphasized"
@@ -599,7 +603,11 @@
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0">
+    x-transition:leave-end="opacity-0"
+        x-trap="showCreateIncident"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCreateIncident = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
@@ -826,7 +834,11 @@
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition duration-[150ms] ease-exit"
     x-transition:leave-start="opacity-100"
-    x-transition:leave-end="opacity-0">
+    x-transition:leave-end="opacity-0"
+        x-trap="showDispatch"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showDispatch = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"

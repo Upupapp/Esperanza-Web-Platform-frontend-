@@ -1,5 +1,6 @@
 @php
     $barangays = config('esperanza.barangays');
+<<<<<<< HEAD
     // Citizen name -> avatar + biographical-fact maps, built here (not in a
     // config file — see config/esperanza_citizen_avatars.php's own header
     // for why: a config file can't safely call config() on another config
@@ -137,6 +138,18 @@
         ['ref' => 'AR-2026-0210', 'citizen' => 'Liezel Navarro Quimson', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Tawad', 'submitted' => 'Jul 5, 2026', 'status' => 'Needs Requirements'],
         ['ref' => 'AR-2026-0203', 'citizen' => 'Cherry Ann Villaflor Sarmiento', 'type' => 'Educational Assistance (Continuing Studies)', 'office' => "Mayor's Office", 'barangay' => 'Villa', 'submitted' => 'Jun 12, 2026', 'status' => 'Submitted'],
     ];
+=======
+    // Citizen name -> avatar + biographical-fact maps. ONE seam, shared with
+    // the other admin screens that show a resident by name -- see
+    // resources/data/citizen-directory.php, which also explains why this is a
+    // render-time data file rather than a config file.
+    $citizenDirectory = require base_path('resources/data/citizen-directory.php');
+    $citizenAvatars = $citizenDirectory['avatars'];
+    $citizenBio = $citizenDirectory['bio'];
+    // TAB 04: fixtures live in resources/data/admin/assistance-requests.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/admin/assistance-requests.php');
+    $requests = $__fixtures['requests'];
+>>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 
     // Manual Document Validation & Application Decision Guide — maps each
     // case's 'type' string to its checklist key in
@@ -146,71 +159,22 @@
     // in the validation-guide panel rather than inventing criteria the
     // guide never specified.
     $validationGuide = config('esperanza_validation_guide');
-    $typeToServiceGuideKey = [
-        'Medical Assistance (AICS)' => 'Medical Assistance (AICS)',
-        'Burial Assistance (AICS)' => 'Burial Assistance (AICS)',
-        'Educational Assistance' => 'Educational Assistance',
-        'Educational Assistance (Continuing Studies)' => 'Educational Assistance',
-        'Financial Assistance (AICS)' => 'Financial Assistance (AICS)',
-        'Food / Relief Assistance' => 'Food / Relief Assistance',
-        'Social Pension (Indigent Senior)' => 'Social Pension (Indigent Senior Citizen)',
-        'Social Pension (Indigent Senior Citizen)' => 'Social Pension (Indigent Senior Citizen)',
-        'Solo Parent Cash Assistance' => 'Solo Parent Cash Assistance',
-        // Guide-only services with no prior app usage — added so Cristy
-        // Bonghanoy's full-catalog demo submissions (every Tulong type,
-        // with real per-type eligibility feedback) each resolve to their
-        // own specific checklist rather than falling back to the general
-        // one. Senior Citizen ID Application (OSCA Membership) is
-        // deliberately not duplicated here — it's already modeled as a
-        // Dokyu service in document-requests.blade.php.
-        'PWD Registration (PRPWD)' => 'PWD Registration (PRPWD)',
-        'TUPAD Emergency Employment' => 'TUPAD Emergency Employment',
-        'TESDA Skills Training Registration' => 'TESDA Skills Training Registration',
-        'ERPAT Program Registration' => 'ERPAT Program Registration',
-    ];
+    $typeToServiceGuideKey = $__fixtures['typeToServiceGuideKey'];
 
     // Classification lookup for the mock request rows above, per the Dokyu &
     // Tulong routing plan -- centralized here rather than hand-edited per row.
-    $tulongClassification = [
-        'Medical Assistance (AICS)' => ['category' => 'Medical & Health', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'Burial Assistance (AICS)' => ['category' => 'Burial & Bereavement', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'Educational Assistance' => ['category' => 'Education', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Multi-Office'],
-        'Financial Assistance (AICS)' => ['category' => 'Financial Assistance', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'Food / Relief Assistance' => ['category' => 'Food & Relief', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Multi-Office'],
-        'Social Pension (Indigent Senior)' => ['category' => 'Social Protection', 'office' => 'Office of Senior Citizens Affairs', 'level' => 'Municipal'],
-        'Solo Parent Cash Assistance' => ['category' => 'Social Protection', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-        'PWD Registration (PRPWD)' => ['category' => 'Social Protection', 'office' => 'Persons with Disability Affairs Office', 'level' => 'Municipal'],
-        'TUPAD Emergency Employment' => ['category' => 'Livelihood & Employment', 'office' => 'Municipal Public Employment Service Office', 'level' => 'Municipal'],
-        'TESDA Skills Training Registration' => ['category' => 'Livelihood & Employment', 'office' => 'Municipal Public Employment Service Office', 'level' => 'Municipal'],
-        'ERPAT Program Registration' => ['category' => 'Social Protection', 'office' => 'Municipal Social Welfare & Development Office', 'level' => 'Municipal'],
-    ];
-    $assignedByRef = [
-        'AR-2026-0195' => 'Corazon Villareal', 'AR-2026-0142' => 'Corazon Villareal',
-    ];
+    $tulongClassification = $__fixtures['tulongClassification'];
+    $assignedByRef = $__fixtures['assignedByRef'];
     // Same reasoning as Dokyu — every case needs to open as a complete,
     // filled-in record, not just a status row. Rows without hand-authored
     // purpose/requirements get realistic ones synthesized from their
     // category below.
-    $purposeByCategory = [
-        'Medical & Health' => 'Financial assistance for medical treatment / hospitalization expenses',
-        'Burial & Bereavement' => 'Financial assistance for burial and funeral expenses of a deceased family member',
-        'Education' => 'Educational assistance to support continuing studies',
-        'Financial Assistance' => 'Financial assistance for basic family needs',
-        'Food & Relief' => 'Relief assistance following hardship or calamity',
-        'Social Protection' => 'Social protection assistance benefit application',
-    ];
-    $defaultRequirementsByCategory = [
-        'Medical & Health' => ['Medical Certificate / Hospital Bill', 'Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
-        'Burial & Bereavement' => ['Death Certificate', 'Valid ID of Claimant', 'Proof of Relationship to the Deceased'],
-        'Education' => ['Certificate of Enrollment', 'Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
-        'Financial Assistance' => ['Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
-        'Food & Relief' => ['Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
-        'Social Protection' => ['Valid Government-Issued ID', 'Barangay Certificate of Indigency'],
-    ];
+    $purposeByCategory = $__fixtures['purposeByCategory'];
+    $defaultRequirementsByCategory = $__fixtures['defaultRequirementsByCategory'];
     // Requirement names that are literally "the citizen's ID" rather than a
     // different supporting document — see the identical list's own comment
     // in admin/document-requests.blade.php.
-    $idRequirementNames = ['Valid Government-Issued ID', 'Valid Government ID', 'Valid ID', 'Requester ID', 'Claimant ID', 'Owner ID', 'Identity / Birth Record', 'Age / Date of Birth Proof', 'Identity'];
+    $idRequirementNames = $__fixtures['idRequirementNames'];
     $synthesizeRequirements = function (array $names, string $status, ?string $remarks, string $citizenFirst, ?string $idPreviewAsset = null) use ($idRequirementNames) {
         $total = count($names);
         return collect($names)->map(function ($name, $i) use ($status, $remarks, $citizenFirst, $total, $idPreviewAsset, $idRequirementNames) {
@@ -394,10 +358,7 @@
         return $spec['alias'] ?? null ? ($formSpecs[$spec['alias']] ?? null) : $spec;
     };
     // See the identical map's own comment in admin/document-requests.blade.php.
-    $idPreviewAssetByCitizen = [
-        'Cristy Pareja Bonghanoy' => asset('images/esperanza/residents/cristy-id.png'),
-        'Ronaldo Panganiban Bautista' => asset('images/esperanza/residents/ronaldo-id.png'),
-    ];
+    $idPreviewAssetByCitizen = $__fixtures['idPreviewAssetByCitizen'];
     // See the identical map's own comment in admin/document-requests.blade.php.
     $referencePdfByType = collect(config('esperanza_tulong_types.types'))
         ->filter(fn ($d) => !empty($d['reference_pdf']))
@@ -431,6 +392,7 @@
     }
     unset($r);
 
+<<<<<<< HEAD
     $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Ready for Release', 'done' => 'Completed'];
     // Tulong's own case-status vocabulary — see PROCESS_TAB_FLOW.txt Part 2
     // for the full spec. Deliberately NOT Dokyu's Submitted/Under
@@ -446,6 +408,10 @@
     // see config/esperanza_tulong_types.php's own header comment on that
     // field) keyed by name for a direct client-side lookup.
     $tulongTypesByName = collect(config('esperanza_tulong_types.types'))->keyBy('name');
+=======
+    $tabs = $__fixtures['tabs'];
+    $actionStatuses = $__fixtures['actionStatuses'];
+>>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 @endphp
 
 <x-layouts.admin title="Tulong" subtitle="Review and manage citizen assistance requests." active="assistance-requests">
@@ -1261,7 +1227,10 @@
             </thead>
             <tbody class="divide-y divide-slate-50">
                 <template x-for="r in filteredRequests" :key="r.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="openRequest(r)">
+                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="openRequest(r)"
+        tabindex="0"
+        @keydown.enter.prevent="openRequest(r)"
+        @keydown.space.prevent="openRequest(r)">
                         <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" x-text="r.ref" @click.stop="openRequest(r)"></td>
                         <td class="px-4 py-3" @click.stop="openRequest(r)">
                             <div class="flex items-center gap-2.5 min-w-0">

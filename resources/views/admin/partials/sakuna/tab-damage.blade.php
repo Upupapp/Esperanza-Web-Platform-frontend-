@@ -295,7 +295,11 @@
         x-cloak
         x-data="{ assessTab: 'population', showApproveConfirm: false }"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showAssessmentDetail = false; showApproveConfirm = false">
+        @click.self="showAssessmentDetail = false; showApproveConfirm = false"
+        x-trap="showAssessmentDetail"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showAssessmentDetail = false; showApproveConfirm = false">
         <div class="bg-white rounded-2xl shadow-float w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
 
             {{-- Modal Header --}}
@@ -689,7 +693,11 @@
         }"
         x-effect="showCreateAssessment && (daStep = 1)"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showCreateAssessment = false">
+        @click.self="showCreateAssessment = false"
+        x-trap="showCreateAssessment"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCreateAssessment = false">
         <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
 
             <div class="flex items-center justify-between mb-5">

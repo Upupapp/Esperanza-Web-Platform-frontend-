@@ -208,7 +208,10 @@
                         </tr>
                     </template>
                     <template x-for="i in filteredCitizenAccounts" :key="i.id">
-                        <tr @click="openIndividual(i)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group">
+                        <tr @click="openIndividual(i)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+        tabindex="0"
+        @keydown.enter.prevent="openIndividual(i)"
+        @keydown.space.prevent="openIndividual(i)">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
                                     <span class="relative shrink-0">
@@ -293,7 +296,11 @@
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
-                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openIndividual(i)" x-show="i.citizen_account && !['Pending Review', 'Under Verification'].includes(i.citizen_account.status)">View</span>
+                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openIndividual(i)" x-show="i.citizen_account && !['Pending Review', 'Under Verification'].includes(i.citizen_account.status)"
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="openIndividual(i)"
+        @keydown.space.prevent="openIndividual(i)">View</span>
                                 {{-- No citizen_account at all — this resident was never
                                      verified because they haven't signed up on the portal.
                                      There is nothing for an officer to approve/reject yet,
@@ -337,7 +344,10 @@
                         </tr>
                     </template>
                     <template x-for="f in filteredCvFamilies" :key="f.id">
-                        <tr @click="openFamily(f)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group">
+                        <tr @click="openFamily(f)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+        tabindex="0"
+        @keydown.enter.prevent="openFamily(f)"
+        @keydown.space.prevent="openFamily(f)">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
                                     <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold shrink-0 text-xs text-blue-700 ring-2 ring-white shadow-sm" x-text="(f.surname || '').substring(0,2).toUpperCase()"></span>
@@ -378,7 +388,11 @@
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
-                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openFamily(f)" x-show="f.verification === 'Verified' || !can('const_citizen_verification', 'verify')">View</span>
+                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openFamily(f)" x-show="f.verification === 'Verified' || !can('const_citizen_verification', 'verify')"
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="openFamily(f)"
+        @keydown.space.prevent="openFamily(f)">View</span>
                             </td>
                         </tr>
                     </template>
@@ -409,7 +423,10 @@
                         </tr>
                     </template>
                     <template x-for="h in filteredCvHouseholds" :key="h.id">
-                        <tr @click="openHousehold(h)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group">
+                        <tr @click="openHousehold(h)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+        tabindex="0"
+        @keydown.enter.prevent="openHousehold(h)"
+        @keydown.space.prevent="openHousehold(h)">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
                                     <span class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm"><i data-lucide="house" class="w-4 h-4 text-indigo-600"></i></span>
@@ -450,7 +467,11 @@
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
-                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openHousehold(h)" x-show="h.verification === 'Verified' || !can('const_citizen_verification', 'verify')">View</span>
+                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openHousehold(h)" x-show="h.verification === 'Verified' || !can('const_citizen_verification', 'verify')"
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="openHousehold(h)"
+        @keydown.space.prevent="openHousehold(h)">View</span>
                             </td>
                         </tr>
                     </template>

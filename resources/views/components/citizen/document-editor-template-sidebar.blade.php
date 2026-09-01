@@ -25,9 +25,11 @@
             class="w-full flex items-center gap-1.5 px-2.5 py-2.5 border-b border-slate-100 text-[11px] font-semibold text-navy-900 hover:bg-slate-50"
             :class="templateSidebarCollapsed ? 'justify-center' : 'justify-between'"
             @click="templateSidebarCollapsed = !templateSidebarCollapsed"
-            title="Templates"
+            :title="$store.lang.current === 'en' ? 'Templates' : 'Mga Template'"
+            :aria-label="$store.lang.current === 'en' ? 'Templates' : 'Mga Template'"
+            :aria-expanded="!templateSidebarCollapsed"
         >
-            <span x-show="!templateSidebarCollapsed">Templates</span>
+            <span x-show="!templateSidebarCollapsed"><x-ui.t fil="Mga Template" en="Templates" /></span>
             <i data-lucide="chevron-left" class="w-3.5 h-3.5 shrink-0 transition-transform" :class="templateSidebarCollapsed ? 'rotate-180' : ''"></i>
         </button>
 
@@ -38,7 +40,9 @@
                     class="w-full text-left rounded-lg border p-2 flex items-center gap-2.5 transition-colors"
                     :class="activeTemplateKey === tpl.key ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:bg-slate-50'"
                     @click="applyTemplate(tpl.key)"
-                    :title="'Use the ' + tpl.name + ' design'"
+                    :title="$store.lang.current === 'en'
+                        ? 'Use the ' + tpl.name + ' design'
+                        : 'Gamitin ang disenyong ' + tpl.name"
                 >
                     <img :src="tpl.thumbnail" :alt="tpl.name + ' seal'" class="w-9 h-9 rounded-full object-contain bg-white border border-slate-200 shrink-0" loading="lazy">
                     <span class="min-w-0 flex-1">

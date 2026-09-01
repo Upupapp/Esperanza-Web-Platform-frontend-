@@ -112,15 +112,15 @@ return [
         'sections' => [
             [
                 'heading' => '1. Information We Collect',
-                'body' => "We collect information you provide directly when you register for an account or use a service, including your full name, date of birth, sex, civil status, contact number, email address, home address, barangay and sitio/purok, and any supporting documents you upload for a Dokyu or Tulong request (such as valid IDs, certificates, or photos). We also collect information generated through your use of the Platform, such as request reference numbers, status history, and timestamps of your submissions.",
+                'body' => 'We collect information you provide directly when you register for an account or use a service, including your full name, date of birth, sex, civil status, contact number, email address, home address, barangay and sitio/purok, and any supporting documents you upload for a Dokyu or Tulong request (such as valid IDs, certificates, or photos). We also collect information generated through your use of the Platform, such as request reference numbers, status history, and timestamps of your submissions.',
             ],
             [
                 'heading' => '2. How We Use Your Information',
-                'body' => "Your information is used solely to process your document and assistance requests, verify your identity and residency, maintain accurate constituent records, respond to support inquiries, and send you notifications about your requests and municipal announcements. We do not use your personal data for commercial advertising, and we do not sell your data to any third party.",
+                'body' => 'Your information is used solely to process your document and assistance requests, verify your identity and residency, maintain accurate constituent records, respond to support inquiries, and send you notifications about your requests and municipal announcements. We do not use your personal data for commercial advertising, and we do not sell your data to any third party.',
             ],
             [
                 'heading' => '3. Data Sharing and Disclosure',
-                'body' => "Your information is shared only with the specific municipal or barangay office relevant to your request (for example, the Office of the Municipal Civil Registrar for civil registry documents, or MSWDO for assistance programs). We may disclose information when required by law, court order, or a lawful request from a government authority. We do not share your data with private third parties for marketing purposes.",
+                'body' => 'Your information is shared only with the specific municipal or barangay office relevant to your request (for example, the Office of the Municipal Civil Registrar for civil registry documents, or MSWDO for assistance programs). We may disclose information when required by law, court order, or a lawful request from a government authority. We do not share your data with private third parties for marketing purposes.',
             ],
             [
                 'heading' => '4. Data Retention',
@@ -128,7 +128,7 @@ return [
             ],
             [
                 'heading' => '5. Your Rights Under the Data Privacy Act',
-                'body' => "As a data subject, you have the right to be informed, the right to access your personal data, the right to object to processing, the right to correct inaccurate data, the right to erasure or blocking under certain conditions, the right to data portability, and the right to file a complaint with the National Privacy Commission. You may exercise these rights by contacting our Data Protection Officer through the Support channels listed on the Platform.",
+                'body' => 'As a data subject, you have the right to be informed, the right to access your personal data, the right to object to processing, the right to correct inaccurate data, the right to erasure or blocking under certain conditions, the right to data portability, and the right to file a complaint with the National Privacy Commission. You may exercise these rights by contacting our Data Protection Officer through the Support channels listed on the Platform.',
             ],
             [
                 'heading' => '6. Data Security',
@@ -136,11 +136,11 @@ return [
             ],
             [
                 'heading' => '7. Children\'s Information',
-                'body' => "Where a resident profile includes information about a minor (for example, as a family member in a household record), such information is collected and processed only for legitimate civil registry and social welfare purposes, with appropriate safeguards, and is never used for any purpose beyond delivering municipal services.",
+                'body' => 'Where a resident profile includes information about a minor (for example, as a family member in a household record), such information is collected and processed only for legitimate civil registry and social welfare purposes, with appropriate safeguards, and is never used for any purpose beyond delivering municipal services.',
             ],
             [
                 'heading' => '8. Changes to This Policy',
-                'body' => "We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. The \"Last Updated\" date at the top of this page indicates when the policy was last revised. Continued use of the Platform after changes take effect constitutes acceptance of the revised policy.",
+                'body' => 'We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. The "Last Updated" date at the top of this page indicates when the policy was last revised. Continued use of the Platform after changes take effect constitutes acceptance of the revised policy.',
             ],
             [
                 'heading' => '9. Contact Us',
@@ -162,15 +162,15 @@ return [
         'sections' => [
             [
                 'heading' => '1. Acceptance of Terms',
-                'body' => "By registering for a Citizen Portal account or otherwise accessing the Platform, you confirm that you have read, understood, and agree to these Terms and our Privacy Policy. If you do not agree, please do not use the Platform.",
+                'body' => 'By registering for a Citizen Portal account or otherwise accessing the Platform, you confirm that you have read, understood, and agree to these Terms and our Privacy Policy. If you do not agree, please do not use the Platform.',
             ],
             [
                 'heading' => '2. Eligibility and Account Registration',
-                'body' => "The Platform is intended for residents of the Municipality of Esperanza, Masbate. You must provide accurate, current, and complete information during registration and keep your account information updated. You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account.",
+                'body' => 'The Platform is intended for residents of the Municipality of Esperanza, Masbate. You must provide accurate, current, and complete information during registration and keep your account information updated. You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account.',
             ],
             [
                 'heading' => '3. Use of Services',
-                'body' => "The Platform allows you to submit Dokyu (document) and Tulong (assistance) requests, report incidents through Sakuna, view municipal announcements and events, and communicate with LGU personnel regarding your requests. Services are provided subject to verification, applicable fees, and processing timelines set by the responsible municipal or barangay office.",
+                'body' => 'The Platform allows you to submit Dokyu (document) and Tulong (assistance) requests, report incidents through Sakuna, view municipal announcements and events, and communicate with LGU personnel regarding your requests. Services are provided subject to verification, applicable fees, and processing timelines set by the responsible municipal or barangay office.',
             ],
             [
                 'heading' => '4. User Responsibilities and Prohibited Conduct',
@@ -182,31 +182,31 @@ return [
             ],
             [
                 'heading' => '6. Intellectual Property',
-                'body' => "All content on the Platform — including the Esperanza municipal seal, logos, layouts, and original text — is the property of the Municipality of Esperanza and may not be reproduced or used for commercial purposes without written consent, except as necessary for your own personal use of municipal services.",
+                'body' => 'All content on the Platform — including the Esperanza municipal seal, logos, layouts, and original text — is the property of the Municipality of Esperanza and may not be reproduced or used for commercial purposes without written consent, except as necessary for your own personal use of municipal services.',
             ],
             [
                 'heading' => '7. Service Availability and Limitations',
-                'body' => "We strive to keep the Platform available and accurate, but we do not guarantee uninterrupted access. The Platform may be temporarily unavailable for maintenance, upgrades, or reasons beyond our control. In such cases, citizens may transact in person at the Municipal Hall or their barangay hall.",
+                'body' => 'We strive to keep the Platform available and accurate, but we do not guarantee uninterrupted access. The Platform may be temporarily unavailable for maintenance, upgrades, or reasons beyond our control. In such cases, citizens may transact in person at the Municipal Hall or their barangay hall.',
             ],
             [
                 'heading' => '8. Termination of Access',
-                'body' => "We reserve the right to suspend or terminate your account if we reasonably believe you have violated these Terms, provided false information, or misused the Platform. You may also request the deactivation of your own account at any time through Support.",
+                'body' => 'We reserve the right to suspend or terminate your account if we reasonably believe you have violated these Terms, provided false information, or misused the Platform. You may also request the deactivation of your own account at any time through Support.',
             ],
             [
                 'heading' => '9. Limitation of Liability',
-                'body' => "The Municipality of Esperanza is not liable for delays, errors, or service interruptions arising from circumstances beyond its reasonable control, including but not limited to power outages, internet connectivity issues, natural disasters, or third-party payment gateway failures.",
+                'body' => 'The Municipality of Esperanza is not liable for delays, errors, or service interruptions arising from circumstances beyond its reasonable control, including but not limited to power outages, internet connectivity issues, natural disasters, or third-party payment gateway failures.',
             ],
             [
                 'heading' => '10. Governing Law',
-                'body' => "These Terms are governed by the laws of the Republic of the Philippines, including the Local Government Code, the Data Privacy Act of 2012, and other applicable national and local issuances.",
+                'body' => 'These Terms are governed by the laws of the Republic of the Philippines, including the Local Government Code, the Data Privacy Act of 2012, and other applicable national and local issuances.',
             ],
             [
                 'heading' => '11. Changes to These Terms',
-                'body' => "We may revise these Terms from time to time. Material changes will be reflected by an updated \"Last Updated\" date. Your continued use of the Platform after such changes constitutes your acceptance of the revised Terms.",
+                'body' => 'We may revise these Terms from time to time. Material changes will be reflected by an updated "Last Updated" date. Your continued use of the Platform after such changes constitutes your acceptance of the revised Terms.',
             ],
             [
                 'heading' => '12. Contact Information',
-                'body' => "For questions about these Terms, please contact the ICT Office at (056) 333-1099, support@esperanza.gov.ph, or visit the Municipal Hall, Barangay Poblacion, Esperanza, Masbate.",
+                'body' => 'For questions about these Terms, please contact the ICT Office at (056) 333-1099, support@esperanza.gov.ph, or visit the Municipal Hall, Barangay Poblacion, Esperanza, Masbate.',
             ],
         ],
     ],

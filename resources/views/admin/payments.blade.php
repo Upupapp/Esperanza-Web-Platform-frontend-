@@ -9,58 +9,24 @@
     // its own top level (Laravel loads them in filename order during
     // bootstrap) — so a resident's real picture shows up here too, not
     // just on their own Constituents profile.
-    $citizenAvatarData = config('esperanza_citizen_avatars');
-    $generatedAvatarFor = function ($acctId) use ($citizenAvatarData) {
-        $bg = $citizenAvatarData['backgrounds'][crc32($acctId) % count($citizenAvatarData['backgrounds'])];
-        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($acctId) . '&backgroundColor=' . $bg;
-    };
-    $citizenAvatars = [];
-    foreach (config('esperanza_constituents')['individuals'] as $ind) {
-        if (empty($ind['citizen_account_id'])) {
-            continue;
-        }
-        $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
-            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
-            : $generatedAvatarFor($acctId);
-    }
+    $citizenAvatars = (require base_path('resources/data/citizen-directory.php'))['avatars'];
 
     // Classification lookup for the mock payment rows above, keyed by the
     // exact 'item' string -- reuses the same category/office/level values
     // already established for these services in admin/document-requests.blade.php
     // and admin/assistance-requests.blade.php, per the Dokyu & Tulong
     // routing plan, so Payments stays organized the same way as both.
-    $paymentsClassification = [
-        'Cedula (Community Tax Certificate)' => ['category' => 'Tax & Property', 'office' => "Municipal Treasurer's Office", 'level' => 'Municipal'],
-        'Business Permit (New)' => ['category' => 'Business & Permits', 'office' => 'Business Permits & Licensing Office', 'level' => 'Multi-Office'],
-        'Barangay Clearance' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
-        'Certificate of Residency' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
-        'Business Permit Renewal' => ['category' => 'Business & Permits', 'office' => 'Business Permits & Licensing Office', 'level' => 'Multi-Office'],
-        'Real Property Tax Clearance' => ['category' => 'Tax & Property', 'office' => "Municipal Treasurer's Office", 'level' => 'Municipal'],
-        'Social Pension — Documentary Fee' => ['category' => 'Social Protection', 'office' => 'Office of Senior Citizens Affairs', 'level' => 'Municipal'],
-        'Barangay Certification (General Purpose)' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
-        'Certificate of Live Birth (Certified Copy)' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
-        'Application for Marriage License' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
-        'Certified Copy of Marriage Certificate' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
-        'Delayed Registration of Birth' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
-        'Delayed Registration of Death' => ['category' => 'Civil Registry', 'office' => 'Office of the Municipal Civil Registrar', 'level' => 'Municipal'],
-        'Barangay Certification for Late Registration of Birth' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
-        'Barangay Certification for Registration of Death' => ['category' => 'Barangay Certificates', 'office' => 'Barangay Office', 'level' => 'Barangay'],
-        'Pet Registration' => ['category' => 'Other', 'office' => 'Municipal Agriculture Office', 'level' => 'Municipal'],
-        'Locational Clearance' => ['category' => 'Business & Permits', 'office' => 'Municipal Planning & Development Office (MPDO)', 'level' => 'Municipal'],
-    ];
+    // TAB 04: fixtures live in resources/data/admin/payments.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/admin/payments.php');
+    $paymentsClassification = $__fixtures['paymentsClassification'];
     foreach ($payments as &$pmt) {
         $pmt = array_merge($pmt, $paymentsClassification[$pmt['item']] ?? ['category' => 'Other', 'office' => $pmt['type'], 'level' => 'Municipal']);
     }
     unset($pmt);
 
-    $adminFiles = [
-        ['name' => 'GCash Receipt Scan.jpg', 'category' => 'IMG'],
-        ['name' => 'PayMaya Confirmation.png', 'category' => 'IMG'],
-        ['name' => 'Official Receipt (OR) Scan.pdf', 'category' => 'PDF'],
-    ];
+    $adminFiles = $__fixtures['adminFiles'];
 
-    $tabs = ['all' => 'All', 'unpaid' => 'Awaiting Payment', 'review' => 'Pending Review', 'paid' => 'Paid'];
+    $tabs = $__fixtures['tabs'];
 
     $totalInvoiced = 2562.00;
     $totalCollected = 300.00;
@@ -212,7 +178,10 @@
                         x-show="matches(payments[{{ $i }}])" x-cloak
                         class="hover:bg-slate-50/70 transition-colors group cursor-pointer"
                         @click="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())"
-                    >
+                    
+        tabindex="0"
+        @keydown.enter.prevent="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())"
+        @keydown.space.prevent="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">
                         <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">{{ $p['ref'] }}</td>
                         <td class="px-4 py-3" @click.stop="open = true; selected = {{ $i }}; method = payments[{{ $i }}].method; receipt = payments[{{ $i }}].receipt; showReceiptPicker = false; previewDoc = null; $nextTick(() => window.renderIcons?.())">
                             <div class="flex items-center gap-2.5 min-w-0">

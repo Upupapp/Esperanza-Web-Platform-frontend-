@@ -30,11 +30,9 @@
     $recentPosts = collect($posts)->take(4);
     $trendingPosts = collect($posts)->sortByDesc('likes')->take(3)->values();
 
-    $upcomingEvents = [
-        ['month' => 'Aug', 'day' => '14', 'title' => 'Fiesta ng Esperanza — Opening Program', 'venue' => 'Municipal Plaza'],
-        ['month' => 'Jul', 'day' => '18', 'title' => 'Barangay Poblacion Medical Mission', 'venue' => 'Poblacion Covered Court'],
-        ['month' => 'Jul', 'day' => '25', 'title' => 'Livelihood Skills Training', 'venue' => 'Municipal Hall'],
-    ];
+    // TAB 04: fixtures live in resources/data/citizen/announcements.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/citizen/announcements.php');
+    $upcomingEvents = $__fixtures['upcomingEvents'];
 @endphp
 
 <x-layouts.citizen title="Balita" subtitle="Latest news from the municipality — and your neighbors." active="announcements">

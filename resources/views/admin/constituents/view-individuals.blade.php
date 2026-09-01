@@ -79,7 +79,10 @@
                     <tr
                         class="hover:bg-slate-50/70 transition-colors cursor-pointer group"
                         @click="openIndividual(r)"
-                    >
+                    
+        tabindex="0"
+        @keydown.enter.prevent="openIndividual(r)"
+        @keydown.space.prevent="openIndividual(r)">
 
                         {{-- Resident: avatar + name + ID + tags --}}
                         <td class="px-4 py-3">

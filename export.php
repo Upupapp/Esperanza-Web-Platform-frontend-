@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
+
 /**
  * Esperanza Web Platform — Static HTML Exporter
  *
@@ -9,77 +12,51 @@
  *
  * Usage: php export.php
  */
-
 define('LARAVEL_START', microtime(true));
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__.'/vendor/autoload.php';
 
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 
-/** @var \Illuminate\Contracts\Http\Kernel $kernel */
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+/** @var Kernel $kernel */
+$kernel = $app->make(Kernel::class);
 
-// ── Route map: URI → dist-relative output path ───────────────────────────────
-$routes = [
-    '/'                                => 'index.html',
-    '/citizen/login'                   => 'citizen/login/index.html',
-    '/citizen/register'                => 'citizen/register/index.html',
-    '/admin/login'                     => 'admin/login/index.html',
-    '/logout'                          => 'logout/index.html',
-    '/citizen/dashboard'               => 'citizen/dashboard/index.html',
-    '/citizen/profile'                 => 'citizen/profile/index.html',
-    '/citizen/document-requests'       => 'citizen/document-requests/index.html',
-    '/citizen/assistance-requests'     => 'citizen/assistance-requests/index.html',
-    '/citizen/notifications'           => 'citizen/notifications/index.html',
-    '/citizen/directory'               => 'citizen/directory/index.html',
-    '/citizen/announcements'           => 'citizen/announcements/index.html',
-    '/citizen/events'                  => 'citizen/events/index.html',
-    '/citizen/settings'                => 'citizen/settings/index.html',
-    '/citizen/help'                    => 'citizen/help/index.html',
-    '/citizen/help/tutorials'          => 'citizen/help/tutorials/index.html',
-    '/citizen/help/support'            => 'citizen/help/support/index.html',
-    '/admin/dashboard'                 => 'admin/dashboard/index.html',
-    '/admin/document-requests'         => 'admin/document-requests/index.html',
-    '/admin/assistance-requests'       => 'admin/assistance-requests/index.html',
-    '/admin/payments'                  => 'admin/payments/index.html',
-    '/admin/constituents'              => 'admin/constituents/index.html',
-    '/admin/constituents/families'     => 'admin/constituents/families/index.html',
-    '/admin/constituents/households'   => 'admin/constituents/households/index.html',
-    '/admin/constituents/profiling'    => 'admin/constituents/profiling/index.html',
-    '/admin/constituents/data-quality' => 'admin/constituents/data-quality/index.html',
-    '/admin/communications'            => 'admin/communications/index.html',
-    '/admin/communications/offices'    => 'admin/communications/offices/index.html',
-    '/admin/announcements'             => 'admin/announcements/index.html',
-    '/admin/reports'                   => 'admin/reports/index.html',
-    '/admin/reports/analytics'         => 'admin/reports/analytics/index.html',
-    '/admin/users'                     => 'admin/users/index.html',
-    '/admin/users/roles'               => 'admin/users/roles/index.html',
-    '/admin/settings'                  => 'admin/settings/index.html',
-    '/admin/settings/branding'         => 'admin/settings/branding/index.html',
-    '/admin/settings/audit-logs'       => 'admin/settings/audit-logs/index.html',
-    // Sakuna module
-    '/admin/sakuna'                    => 'admin/sakuna/index.html',
-    '/admin/sakuna/vulnerability'      => 'admin/sakuna/vulnerability/index.html',
-    '/admin/sakuna/incidents'          => 'admin/sakuna/incidents/index.html',
-    '/admin/sakuna/evacuation-centers' => 'admin/sakuna/evacuation-centers/index.html',
-    '/admin/sakuna/evacuees'           => 'admin/sakuna/evacuees/index.html',
-    '/admin/sakuna/resources'          => 'admin/sakuna/resources/index.html',
-    '/admin/sakuna/relief'             => 'admin/sakuna/relief/index.html',
-    '/admin/sakuna/damage-assessment'  => 'admin/sakuna/damage-assessment/index.html',
-    '/admin/sakuna/alerts'             => 'admin/sakuna/alerts/index.html',
-    '/admin/sakuna/reports'            => 'admin/sakuna/reports/index.html',
-];
+// ── Route map: DERIVED from the router, never hand-maintained ────────────
+// F-001: a hand-written list silently drifts from routes/web.php, and every
+// route missing from it 404s in production while still returning 200 locally.
+// The derivation lives in build/export_manifest.php so the drift gate in
+// tests/Feature/ExportManifestTest.php runs the exact same code as the deploy.
+require_once __DIR__.'/build/export_manifest.php';
+
+// Seed the RNG so the export is REPRODUCIBLE. Three views build decorative
+// randomness at render time (confetti in the birthday and fiesta popups,
+// sampling in admin/communications). Unseeded, every build produced different
+// HTML for the same source -- so every deploy rewrote unchanged pages, and
+// "did this change the output?" could not be answered at all.
+// Decorative only: nothing a user reads depends on these numbers.
+mt_srand(20260830);
+
+$kernel->bootstrap();
+
+$routes = esperanza_export_routes($app->make('router')->getRoutes());
+
+// Fail loudly rather than publishing an empty site: an exporter that writes
+// nothing still exits 0 and looks like a successful build.
+if ($routes === []) {
+    fwrite(STDERR, 'No routes derived from the router - refusing to publish an empty site.'.PHP_EOL);
+    exit(1);
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function copyDir(string $src, string $dst): int
 {
-    if (!is_dir($src)) {
+    if (! is_dir($src)) {
         return 0;
     }
     @mkdir($dst, 0777, true);
     $count = 0;
     foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($src, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $item) {
-        $dest = $dst . '/' . substr($item->getPathname(), strlen($src) + 1);
+        $dest = $dst.'/'.substr($item->getPathname(), strlen($src) + 1);
         if ($item->isDir()) {
             @mkdir($dest, 0777, true);
         } else {
@@ -87,16 +64,17 @@ function copyDir(string $src, string $dst): int
             $count++;
         }
     }
+
     return $count;
 }
 
 // ── Detect host from APP_URL ──────────────────────────────────────────────────
-$appUrl  = env('APP_URL', 'http://localhost');
-$parsed  = parse_url($appUrl);
-$host    = $parsed['host'] ?? 'localhost';
+$appUrl = env('APP_URL', 'http://localhost');
+$parsed = parse_url($appUrl);
+$host = $parsed['host'] ?? 'localhost';
 $isHttps = ($parsed['scheme'] ?? 'http') === 'https';
 
-$distDir = __DIR__ . '/dist';
+$distDir = __DIR__.'/dist';
 @mkdir($distDir, 0777, true);
 
 echo "\n── Esperanza Static Exporter ──────────────────────────────\n";
@@ -110,21 +88,21 @@ $fail = 0;
 foreach ($routes as $uri => $outputPath) {
     try {
         $server = [
-            'HTTP_HOST'   => $host,
+            'HTTP_HOST' => $host,
             'SERVER_NAME' => $host,
             'SERVER_PORT' => $isHttps ? '443' : '80',
-            'HTTPS'       => $isHttps ? 'on' : 'off',
+            'HTTPS' => $isHttps ? 'on' : 'off',
         ];
 
-        $request  = Illuminate\Http\Request::create($uri, 'GET', [], [], [], $server);
+        $request = Request::create($uri, 'GET', [], [], [], $server);
         $response = $kernel->handle($request);
-        $html     = $response->getContent();
+        $html = $response->getContent();
 
         if ($response->getStatusCode() >= 400) {
             throw new RuntimeException("HTTP {$response->getStatusCode()}");
         }
 
-        $fullPath = $distDir . '/' . $outputPath;
+        $fullPath = $distDir.'/'.$outputPath;
         @mkdir(dirname($fullPath), 0777, true);
         file_put_contents($fullPath, $html);
 
@@ -141,15 +119,11 @@ foreach ($routes as $uri => $outputPath) {
 // ── Copy public assets ────────────────────────────────────────────────────────
 echo "\n── Assets ─────────────────────────────────────────────────\n";
 
-$assets = [
-    'public/build'   => 'dist/build',
-    'public/images'  => 'dist/images',
-    'public/fonts'   => 'dist/fonts',
-];
+$assets = esperanza_export_assets();
 
 foreach ($assets as $src => $dst) {
-    $srcPath = __DIR__ . '/' . $src;
-    $dstPath = __DIR__ . '/' . $dst;
+    $srcPath = __DIR__.'/'.$src;
+    $dstPath = __DIR__.'/'.$dst;
     if (is_dir($srcPath)) {
         $n = copyDir($srcPath, $dstPath);
         echo "  ✓  {$src}/ → {$dst}/  ({$n} files)\n";
@@ -157,9 +131,9 @@ foreach ($assets as $src => $dst) {
 }
 
 foreach (['favicon.ico', 'robots.txt'] as $file) {
-    $src = __DIR__ . '/public/' . $file;
+    $src = __DIR__.'/public/'.$file;
     if (file_exists($src)) {
-        copy($src, $distDir . '/' . $file);
+        copy($src, $distDir.'/'.$file);
         echo "  ✓  public/{$file}\n";
     }
 }

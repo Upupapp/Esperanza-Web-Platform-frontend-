@@ -278,7 +278,11 @@
                 class="shrink-0 flex items-center gap-2 px-6 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 cursor-pointer hover:bg-amber-100 transition-colors"
                 @click="individualTab = 'Overview'"
                 title="Click to view details in Overview"
-            >
+            
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="individualTab = 'Overview'"
+        @keydown.space.prevent="individualTab = 'Overview'">
                 <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
                 <span class="font-semibold" x-text="flag.type + ':'"></span>
                 <span class="truncate" x-text="flag.recommendation"></span>
@@ -1194,7 +1198,11 @@
                             <div
                                 class="p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/60 transition-colors"
                                 @click="expandedProgram = expandedProgram === tag ? null : tag"
-                            >
+                            
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="expandedProgram = expandedProgram === tag ? null : tag"
+        @keydown.space.prevent="expandedProgram = expandedProgram === tag ? null : tag">
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -1358,7 +1366,11 @@
                                         <div
                                             class="p-4 flex items-start justify-between gap-3 cursor-pointer hover:bg-slate-50/60 transition-colors"
                                             @click="expandedEvent = expandedEvent === idx ? null : idx"
-                                        >
+                                        
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="expandedEvent = expandedEvent === idx ? null : idx"
+        @keydown.space.prevent="expandedEvent = expandedEvent === idx ? null : idx">
                                             <div>
                                                 <p class="text-sm font-semibold text-navy-900" x-text="svc.type"></p>
                                                 <p class="text-xs text-slate-400 mt-0.5" x-text="svc.date"></p>
@@ -1503,7 +1515,11 @@
                                     class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 flex items-start justify-between gap-3 cursor-pointer hover:border-brand-200 hover:shadow-md transition-all group/dokyu"
                                     @click="goToDokyu(selectedIndividual, d.ref)"
                                     title="Open this resident's requests in Dokyu"
-                                >
+                                
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="goToDokyu(selectedIndividual, d.ref)"
+        @keydown.space.prevent="goToDokyu(selectedIndividual, d.ref)">
                                     <div class="min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 group-hover/dokyu:text-brand-700 transition-colors" x-text="d.type"></p>
                                         <p class="text-xs text-slate-400 mt-0.5" x-text="d.office"></p>
@@ -1566,7 +1582,11 @@
                                 class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 flex items-start justify-between gap-3 cursor-pointer hover:border-brand-200 hover:shadow-md transition-all group/tulong"
                                 @click="goToTulong(selectedIndividual, a.ref)"
                                 title="Open this resident's requests in Tulong"
-                            >
+                            
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="goToTulong(selectedIndividual, a.ref)"
+        @keydown.space.prevent="goToTulong(selectedIndividual, a.ref)">
                                 <div class="min-w-0">
                                     <p class="text-sm font-semibold text-navy-900 group-hover/tulong:text-brand-700 transition-colors" x-text="a.type"></p>
                                     <p class="text-xs text-slate-400 mt-0.5" x-text="a.office"></p>
@@ -1628,7 +1648,11 @@
                                 class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 cursor-pointer hover:border-brand-200 hover:shadow-md transition-all group/sakuna"
                                 @click="goToSakuna(selectedIndividual, i.ref)"
                                 title="Open this report in Sakuna"
-                            >
+                            
+        role="button"
+        tabindex="0"
+        @keydown.enter.prevent="goToSakuna(selectedIndividual, i.ref)"
+        @keydown.space.prevent="goToSakuna(selectedIndividual, i.ref)">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
                                         <div class="flex items-center gap-2 flex-wrap">

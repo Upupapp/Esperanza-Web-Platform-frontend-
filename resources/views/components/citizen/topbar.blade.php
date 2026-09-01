@@ -1,30 +1,10 @@
 @props(['title' => 'Dashboard', 'subtitle' => null, 'active' => null])
 
 @php
-    $filTitles = [
-        'dashboard' => 'Home',
-        'document-requests' => 'Dokyu',
-        'assistance-requests' => 'Tulong',
-        'announcements' => 'Balita',
-        'events' => 'Mga Kaganapan',
-        'directory' => 'Direktoryo ng Pamahalaan',
-        'help' => 'Suporta',
-        'profile' => 'Aking Profile',
-        'notifications' => 'Mga Abiso',
-        'settings' => 'Mga Setting',
-    ];
-    $filSubtitles = [
-        'dashboard' => "Narito ang buod ng iyong account.",
-        'document-requests' => 'Humiling at subaybayan ang mga dokumento ng munisipyo online.',
-        'assistance-requests' => 'Magsumite at subaybayan ang mga kahilingan para sa tulong.',
-        'announcements' => 'Pinakabagong balita at abiso mula sa munisipyo.',
-        'events' => 'Mga paparating na kaganapan sa Esperanza.',
-        'directory' => 'Hanapin ang mga opisina at contact ng pamahalaan.',
-        'help' => 'Mga tanong, gabay, at suporta.',
-        'profile' => 'Pamahalaan ang iyong impormasyon bilang residente.',
-        'notifications' => 'Lahat ng update sa iyong account, nasa isang lugar.',
-        'settings' => 'Pamahalaan ang iyong mga kagustuhan sa account.',
-    ];
+    // TAB 04: fixtures live in resources/data/components/citizen/topbar.php so this view stays presentation only.
+    $__fixtures = require base_path('resources/data/components/citizen/topbar.php');
+    $filTitles = $__fixtures['filTitles'];
+    $filSubtitles = $__fixtures['filSubtitles'];
     $filTitle = $filTitles[$active] ?? $title;
     $filSubtitle = $filSubtitles[$active] ?? $subtitle;
 @endphp
@@ -34,21 +14,11 @@
     // plus a Voter's ID) — same {type, masked} shape as the admin side's
     // per-resident verified_ids, so "My IDs" reads as the same concept from
     // both sides, not a different format invented for the citizen view.
-    $myIds = [
-        ['type' => 'PhilSys National ID', 'masked' => '•••• •••• 4821', 'status' => 'Verified'],
-        ['type' => "Driver's License (LTO)", 'masked' => '•••• •••• 1203', 'status' => 'Verified'],
-        ['type' => "Voter's ID", 'masked' => '•••• •••• 9087', 'status' => 'Unverified'],
-    ];
+    $myIds = $__fixtures['myIds'];
 @endphp
 
 @php
-    $notifications = [
-        ['icon' => 'cake', 'color' => 'text-gold-700 bg-gold-50', 'title' => 'Happy Birthday, Maria Fe! 🎉', 'body' => 'The Municipality of Esperanza wishes you a wonderful birthday!', 'time' => 'Today', 'pinned' => true, 'popup' => 'show-birthday-popup'],
-        ['icon' => 'circle-check', 'color' => 'text-emerald-600 bg-emerald-50', 'title' => 'Barangay Clearance is ready for release', 'body' => 'Claim it at the Poblacion barangay hall.', 'time' => '18 min ago', 'pinned' => false, 'popup' => null],
-        ['icon' => 'file-text', 'color' => 'text-brand-600 bg-brand-50', 'title' => 'Cedula request under verification', 'body' => 'Your request #DR-2026-2210 is being reviewed.', 'time' => '2 hours ago', 'pinned' => false, 'popup' => null],
-        ['icon' => 'megaphone', 'color' => 'text-gold-700 bg-gold-50', 'title' => 'New announcement published', 'body' => '"Fiesta ng Esperanza 2026" schedule is now live.', 'time' => 'Yesterday', 'pinned' => false, 'popup' => 'show-fiesta-popup'],
-        ['icon' => 'hand-heart', 'color' => 'text-purple-600 bg-purple-50', 'title' => 'Assistance request approved', 'body' => 'Your medical assistance request was approved.', 'time' => '2 days ago', 'pinned' => false, 'popup' => null],
-    ];
+    $notifications = $__fixtures['notifications'];
 @endphp
 
 <header

@@ -5,6 +5,12 @@
     'icon' => null,
     'iconPosition' => 'left',
     'type' => 'button',
+    // An Alpine expression that is truthy while the action is in flight, e.g.
+    // loading="saving". The component then disables itself, sets aria-busy and
+    // swaps the leading icon for a spinner -- so TAB 07's "disable during
+    // flight and guard against double submission" is a property of the button
+    // rather than something every form remembers to do.
+    'loading' => null,
 ])
 
 @php
@@ -42,9 +48,22 @@
         @endif
     </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->merge(['class' => $classes]) }}>
+    <button
+        type="{{ $type }}"
+        @if($loading)
+            :disabled="{{ $loading }}"
+            :aria-busy="{{ $loading }}"
+        @endif
+        {{ $attributes->merge(['class' => $classes]) }}
+    >
+        @if($loading)
+            <svg x-show="{{ $loading }}" x-cloak class="animate-spin {{ $iconSize }} shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"></path>
+            </svg>
+        @endif
         @if($icon && $iconPosition === 'left')
-            <i data-lucide="{{ $icon }}" class="{{ $iconSize }} shrink-0"></i>
+            <i data-lucide="{{ $icon }}" class="{{ $iconSize }} shrink-0" @if($loading) x-show="!({{ $loading }})" @endif></i>
         @endif
         <span>{{ $slot }}</span>
         @if($icon && $iconPosition === 'right')

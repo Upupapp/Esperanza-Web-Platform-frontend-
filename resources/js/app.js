@@ -1,19 +1,62 @@
 import './bootstrap';
+import api from './api/client';
+import { resource } from './api/resource';
+import { specForm } from './api/form';
 import Alpine from 'alpinejs';
+import focus from '@alpinejs/focus';
 import { createIcons, icons } from 'lucide';
-import { Chart, ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend } from 'chart.js';
-import html2pdf from 'html2pdf.js';
 import * as DokyuEditor from './dokyu-editor';
 
-Chart.register(ArcElement, DoughnutController, LineElement, LineController, PointElement, BarElement, BarController, LinearScale, CategoryScale, Filler, Tooltip, Legend);
-Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
-Chart.defaults.color = '#64748b';
+// x-trap gives modals a real focus trap and, on close, restores focus to the
+// element that opened them. Both are required for a keyboard-only user to get
+// back out of a dialog (TAB 10), and doing it in the plugin rather than by hand
+// keeps Tab/Shift-Tab correct across x-teleport.
+Alpine.plugin(focus);
 
 window.Alpine = Alpine;
-window.Chart = Chart;
-// Exposed globally so any page's Alpine markup can call html2pdf() directly
-// (e.g. the citizen Dokyu "Download PDF" button) without a per-page import.
-window.html2pdf = html2pdf;
+// The one HTTP client (resources/js/api/client.js). Exposed globally for the
+// same reason Chart and html2pdf are: inline Alpine expressions call it
+// directly. Do NOT add a per-page fetch() -- base URL, auth header, request id,
+// timeout, cancellation and the 401/403/422/5xx mapping all live in there.
+window.EsperanzaApi = api;
+// TAB 11: chart.js and html2pdf.js are loaded ON DEMAND, not on every page.
+// They were static imports, so the login screen shipped a charting library and
+// a PDF engine (html2pdf bundles jsPDF and html2canvas) it can never use.
+// Each loader caches its promise, so concurrent callers share one download.
+let chartModulePromise = null;
+
+window.loadChart = () => {
+    if (!chartModulePromise) {
+        chartModulePromise = import('chart.js').then((m) => {
+            m.Chart.register(
+                m.ArcElement, m.DoughnutController, m.LineElement, m.LineController,
+                m.PointElement, m.BarElement, m.BarController, m.LinearScale,
+                m.CategoryScale, m.Filler, m.Tooltip, m.Legend,
+            );
+            m.Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
+            m.Chart.defaults.color = '#64748b';
+            window.Chart = m.Chart;
+
+            return m.Chart;
+        });
+    }
+
+    return chartModulePromise;
+};
+
+let pdfModulePromise = null;
+
+window.loadHtml2Pdf = () => {
+    if (!pdfModulePromise) {
+        pdfModulePromise = import('html2pdf.js').then((m) => {
+            window.html2pdf = m.default;
+
+            return m.default;
+        });
+    }
+
+    return pdfModulePromise;
+};
 // Exposed globally for the same reason — the admin Dokyu "Edit Document"
 // rich-text editor (document-requests.blade.php + document-editor-toolbar/
 // document-editor-background-panel.blade.php) calls these directly from
@@ -26,6 +69,19 @@ window.DokyuEditor = DokyuEditor;
 window.addEventListener('afterprint', () => document.body.classList.remove('dp-printing'));
 
 document.addEventListener('alpine:init', () => {
+    Alpine.magic('api', () => api);
+
+    // TAB 06: the four states (loading / empty / error / loaded) for any data
+    // surface, in one place. See resources/js/api/resource.js for the three
+    // rules it encodes -- chiefly that "empty" is never true until a load has
+    // actually resolved, and that a failure never degrades to an empty list.
+    Alpine.data('resource', resource);
+
+    // TAB 07: one submission path for every write -- in-flight state, a
+    // double-submit guard, 422 field errors mapped onto the same keys the spec
+    // uses, input preserved on failure, and an unsaved-changes warning.
+    Alpine.data('specForm', specForm);
+
     Alpine.store('lang', {
         current: localStorage.getItem('esperanza_lang') || 'fil',
         set(lang) {
@@ -37,8 +93,16 @@ document.addEventListener('alpine:init', () => {
     // Frontend-only "logged in as this role" simulation for the Administrative
     // Portal (see config/esperanza_rbac.php). No real auth — the account object
     // just persists to localStorage so nav/pages can gate content by module
-    // access and Municipal/Barangay scope. No session -> fail-open (unrestricted
-    // preview), since this is a design demo, not a real security boundary.
+    // access and Municipal/Barangay scope.
+    //
+    // No session -> fail CLOSED (TAB 08). This used to fail open so the design
+    // could be previewed without logging in. That is wrong the moment a real API
+    // exists: it trains every screen to treat "no account" as "allowed", and the
+    // preview is indistinguishable from a genuine unrestricted session.
+    //
+    // What this gating is for: hiding what the user cannot use. It is NOT the
+    // security boundary. The server enforces every permission triple, and a
+    // check here must never be presented as protection.
     Alpine.store('session', {
         // Re-derive moduleKeys/permissions from the current RBAC config on every
         // load instead of trusting whatever was frozen into localStorage at
@@ -65,17 +129,17 @@ document.addEventListener('alpine:init', () => {
             localStorage.removeItem('esperanza_session');
         },
         can(moduleKey) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             return (this.account.moduleKeys || []).includes(moduleKey);
         },
         canPerm(submoduleKey, permission) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             const perms = (this.account.permissions || {})[submoduleKey];
             if (!perms) return false;
             return Array.isArray(perms) ? perms.includes(permission) : perms === '*';
         },
         inScope(barangay) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             if (this.account.scope === 'Municipal') return true;
             return this.account.scope === barangay;
         },
@@ -84,7 +148,7 @@ document.addEventListener('alpine:init', () => {
         // Front Desk, Records Officer, Municipal/Super Admin see across offices
         // (per the Dokyu & Tulong routing plan's role x scope matrix).
         inDeptScope(office) {
-            if (!this.account) return true;
+            if (!this.account) return false;
             if (!['department_head', 'department_staff'].includes(this.account.roleKey)) return true;
             return this.account.dept === office;
         },
@@ -95,7 +159,7 @@ document.addEventListener('alpine:init', () => {
         // get it via the 'full'/'view_export' preset; Information Officer
         // (view-only) and everyone else without the reports module do not.
         canExportReports() {
-            if (!this.account) return true;
+            if (!this.account) return false;
             const perms = this.account.permissions || {};
             return ['rep_population', 'rep_assistance', 'rep_document', 'rep_financial'].some((k) => (perms[k] || []).includes('export'));
         },
@@ -315,7 +379,9 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.data('donutChart', (config) => ({
         chart: null,
-        init() {
+        async init() {
+            const Chart = await window.loadChart();
+
             this.chart = new Chart(this.$refs.canvas, {
                 type: 'doughnut',
                 data: {
@@ -339,7 +405,9 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.data('lineChart', (config) => ({
         chart: null,
-        init() {
+        async init() {
+            const Chart = await window.loadChart();
+
             this.chart = new Chart(this.$refs.canvas, {
                 type: 'line',
                 data: {
@@ -373,7 +441,9 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.data('barChart', (config) => ({
         chart: null,
-        init() {
+        async init() {
+            const Chart = await window.loadChart();
+
             this.chart = new Chart(this.$refs.canvas, {
                 type: 'bar',
                 data: {
@@ -499,3 +569,33 @@ renderIcons();
 document.addEventListener('alpine:initialized', () => renderIcons());
 
 Alpine.start();
+
+
+// -- API failure handling, in one place -------------------------------------
+// The client rethrows every failure as an ApiError and emits these two events
+// for the cases no individual page should be deciding on its own.
+
+function toast(message, variant = 'error') {
+    window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
+}
+
+window.addEventListener('api:unauthorized', (event) => {
+    const lang = window.Alpine?.store('lang')?.current || 'fil';
+    api.setToken(null);
+
+    // Drop the simulated session too, so the UI cannot keep showing a signed-in
+    // shell around a token the server has already rejected.
+    window.Alpine?.store('session')?.logout?.();
+    window.Alpine?.store('citizenSession')?.logout?.();
+
+    toast(event.detail.error.localised(lang));
+
+    // Send them to the right door rather than a generic one.
+    const target = window.location.pathname.startsWith('/admin') ? '/admin/login' : '/citizen/login';
+    setTimeout(() => { window.location.href = target; }, 1200);
+});
+
+window.addEventListener('api:forbidden', (event) => {
+    const lang = window.Alpine?.store('lang')?.current || 'fil';
+    toast(event.detail.error.localised(lang));
+});

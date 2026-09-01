@@ -18,13 +18,13 @@ return [
         'Approved' => [
             'label' => 'Approve',
             'icon' => 'check',
-            'use_when' => "All mandatory requirements are present; files are readable and relevant; identity/record details are materially consistent; eligibility is met; no unresolved authenticity concern remains.",
+            'use_when' => 'All mandatory requirements are present; files are readable and relevant; identity/record details are materially consistent; eligibility is met; no unresolved authenticity concern remains.',
             'admin_action' => 'Proceed to the next processing milestone.',
         ],
         'Under Review' => [
             'label' => 'Needs Additional / Stronger Documents',
             'icon' => 'file-plus-2',
-            'use_when' => "The application is potentially valid but a required item is missing, unreadable, expired where validity matters, too weak to prove a fact, or lacks a needed front/back/page/signature/seal.",
+            'use_when' => 'The application is potentially valid but a required item is missing, unreadable, expired where validity matters, too weak to prove a fact, or lacks a needed front/back/page/signature/seal.',
             'admin_action' => 'Return to applicant with a specific document request and clear reason.',
         ],
         // Requirement-level only — one submitted file/photo is wrong,
@@ -37,19 +37,19 @@ return [
         'Flagged for Replacement' => [
             'label' => 'Flag for Replacement',
             'icon' => 'flag',
-            'use_when' => "The specific file submitted for this requirement is the wrong document, mismatched, unreadable, or otherwise unusable, and the applicant needs to upload a corrected copy.",
+            'use_when' => 'The specific file submitted for this requirement is the wrong document, mismatched, unreadable, or otherwise unusable, and the applicant needs to upload a corrected copy.',
             'admin_action' => 'Flag the exact requirement and reason; the applicant re-uploads and the item returns to review as Resubmitted.',
         ],
         'Under Verification' => [
             'label' => 'Needs Manual Verification',
             'icon' => 'search-check',
-            'use_when' => "Documents may be complete, but there is a material mismatch, authenticity concern, conflicting official records, complex eligibility question, or a fact that should be checked against the source office/original registry.",
+            'use_when' => 'Documents may be complete, but there is a material mismatch, authenticity concern, conflicting official records, complex eligibility question, or a fact that should be checked against the source office/original registry.',
             'admin_action' => 'Hold decision; verify with the issuing office, original record, interview/case assessment, or authorized supervisor.',
         ],
         'Rejected' => [
             'label' => 'Reject',
             'icon' => 'x',
-            'use_when' => "Clear ineligibility; wrong/unrelated applicant or service; confirmed fraudulent/altered document; mandatory requirement remains unsatisfied after reasonable opportunity to correct; or the program/service rules clearly prohibit approval.",
+            'use_when' => 'Clear ineligibility; wrong/unrelated applicant or service; confirmed fraudulent/altered document; mandatory requirement remains unsatisfied after reasonable opportunity to correct; or the program/service rules clearly prohibit approval.',
             'admin_action' => 'Record the objective reason. Do not use vague remarks such as "invalid" without explanation.',
         ],
     ],
@@ -85,7 +85,7 @@ return [
     ],
 
     // ── Section 1.3: Mismatch Rule.
-    'mismatch_rule' => "If uploaded documents do not match the Resident Master Profile, do NOT automatically reject. First determine whether the mismatch is minor/correctable (spelling, old address, married name, encoding difference) or material (different person, incompatible DOB, unrelated record). Use Needs Additional Documents or Needs Manual Verification before rejection unless the mismatch clearly proves ineligibility or fraud.",
+    'mismatch_rule' => 'If uploaded documents do not match the Resident Master Profile, do NOT automatically reject. First determine whether the mismatch is minor/correctable (spelling, old address, married name, encoding difference) or material (different person, incompatible DOB, unrelated record). Use Needs Additional Documents or Needs Manual Verification before rejection unless the mismatch clearly proves ineligibility or fraud.',
 
     // ── Section 1.4: Decision Tree.
     'decision_tree' => [
