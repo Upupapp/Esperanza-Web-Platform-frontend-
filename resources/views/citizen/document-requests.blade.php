@@ -645,6 +645,7 @@
                                                 <img
                                                     :src="'{{ rtrim(asset(''), '/') }}/' + myBarangayInfo.seal"
                                                     x-show="myBarangayInfo.seal" onerror="this.style.display='none'"
+                                                    :alt="myBarangayInfo.name ? 'Seal of Barangay ' + myBarangayInfo.name : 'Barangay seal'"
                                                     class="relative w-11 h-11 rounded-full object-cover border-2 border-gold-400"
                                                 >
                                             </div>

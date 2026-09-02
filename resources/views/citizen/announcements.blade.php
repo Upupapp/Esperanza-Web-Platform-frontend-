@@ -150,7 +150,7 @@
                             <!-- Header -->
                             <div class="flex items-center gap-2.5 p-3.5 pb-2.5">
                                 <div class="relative shrink-0" x-data="{ showCard: false }" @mouseenter="showCard = true" @mouseleave="showCard = false">
-                                    <img :src="'{{ asset('images/esperanza/esperanza-seal.png') }}'" x-show="post.official" class="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm cursor-pointer">
+                                    <img :src="'{{ asset('images/esperanza/esperanza-seal.png') }}'" x-show="post.official" alt="Official Municipality of Esperanza post" class="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm cursor-pointer">
                                     <div x-show="!post.official" class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm text-xs cursor-pointer">
                                         <span x-text="post.initials"></span>
                                     </div>
@@ -165,7 +165,7 @@
                                         class="absolute left-0 top-full mt-2 z-20 w-64 bg-white rounded-2xl shadow-float border border-slate-100 p-4"
                                     >
                                         <div class="flex items-center gap-3 mb-3">
-                                            <img :src="'{{ asset('images/esperanza/esperanza-seal.png') }}'" x-show="post.official" class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0">
+                                            <img :src="'{{ asset('images/esperanza/esperanza-seal.png') }}'" x-show="post.official" alt="Official Municipality of Esperanza post" class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0">
                                             <div x-show="!post.official" class="w-12 h-12 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-sm">
                                                 <span x-text="post.initials"></span>
                                             </div>

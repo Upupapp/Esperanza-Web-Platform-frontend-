@@ -362,6 +362,7 @@
                                     <img
                                         :src="'{{ asset('images/esperanza/esperanza-seal.png') }}'"
                                         x-show="post.official"
+                                        alt="Official Municipality of Esperanza post"
                                         class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0"
                                     >
 

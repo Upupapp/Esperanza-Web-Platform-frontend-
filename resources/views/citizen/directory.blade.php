@@ -261,6 +261,7 @@
                                         <img
                                             :src="o.photo ? '{{ rtrim(asset(''), '/') }}/' + o.photo : ''"
                                             onerror="this.style.display='none'"
+                                            :alt="o.name ? 'Photograph of ' + o.name : ''"
                                             class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
                                         >
                                         <div class="min-w-0">

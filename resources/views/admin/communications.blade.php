@@ -477,7 +477,7 @@
                                 <span class="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5 shrink-0" x-text="selectedAnnouncement.category"></span>
                             </div>
                             <p class="text-sm font-semibold text-navy-900 mb-2" x-text="selectedAnnouncement.title"></p>
-                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + selectedAnnouncement.image" class="w-full max-h-64 object-cover rounded-xl mb-3">
+                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + selectedAnnouncement.image" :alt="'Image attached to the announcement: ' + selectedAnnouncement.title" class="w-full max-h-64 object-cover rounded-xl mb-3">
                             <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5 text-xs text-slate-500">
                                 This post is awaiting review before it goes live on the citizen Balita feed. Approving will publish it immediately to its selected audience.
                             </div>
@@ -742,7 +742,7 @@
                 <template x-for="(b, idx) in filteredBanners" :key="b.id">
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard flex flex-col sm:flex-row">
                         <div class="relative w-full sm:w-56 h-32 sm:h-auto shrink-0 bg-gradient-to-br" :class="b.theme">
-                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + b.image" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" onerror="this.style.display='none'">
+                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + b.image" alt="" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" onerror="this.style.display='none'">
                             <div class="absolute inset-0 flex flex-col justify-end p-3">
                                 <p class="text-white font-semibold text-xs leading-snug line-clamp-2" x-text="b.title"></p>
                             </div>
@@ -816,7 +816,7 @@
                             </button>
                         </div>
                         <div x-show="bannerForm.image" x-cloak class="relative rounded-xl overflow-hidden h-28 bg-gradient-to-br" :class="bannerForm.theme">
-                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + bannerForm.image" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" onerror="this.style.display='none'">
+                            <img :src="'{{ rtrim(asset('images/esperanza'), '/') }}/' + bannerForm.image" alt="" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80" onerror="this.style.display='none'">
                             <button type="button" @click="bannerForm.image = ''" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-navy-950/50 hover:bg-navy-950/70 text-white flex items-center justify-center transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                         </div>
                         <div x-show="showBannerMediaPicker" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
@@ -983,7 +983,7 @@
                             </div>
                         </div>
                         <p class="text-sm text-slate-700 leading-relaxed mb-3" x-text="selectedPost.body"></p>
-                        <img :src="'{{ asset('images/esperanza/') }}/' + selectedPost.image" x-show="selectedPost.image" class="w-full max-h-72 object-cover rounded-xl mb-3">
+                        <img :src="'{{ asset('images/esperanza/') }}/' + selectedPost.image" x-show="selectedPost.image" :alt="'Image attached to the post by ' + selectedPost.author" class="w-full max-h-72 object-cover rounded-xl mb-3">
 
                         <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 text-sm text-slate-600 space-y-1.5">
                             <p><span class="text-slate-400">Engagement:</span> <span x-text="selectedPost.likes"></span> likes · <span x-text="selectedPost.comments"></span> comments · <span x-text="selectedPost.shares"></span> shares</p>

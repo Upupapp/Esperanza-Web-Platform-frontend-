@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 36, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 37, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -328,3 +328,51 @@ line is still needed by hand:
 ```sh
 git config core.hooksPath scripts/hooks
 ```
+
+
+---
+
+## 2026-09-03 — TAB 10: images labelled, and a gate to keep them so
+
+Every `<img>` in `resources/views` now carries an `alt`, and
+`tests/Feature/ImageAltTest.php` holds that.
+
+**The measurement had to be fixed before the code could be.** A naive
+`grep '<img[^>]*alt='` reported **49** unlabelled images. The real number was
+**9**. The other 40 were artefacts:
+
+| Cause | Count |
+| --- | --- |
+| Multi-line `<img>` tags the single-line grep could not see | 33 |
+| `<img>` mentioned inside Blade or JS comments — including a comment of mine explaining a decorative image | 7 |
+
+`admin/document-requests.blade.php` alone mentions `<img>` in seven JS comments
+describing the editor. A gate that reported those would have been ignored within
+a week, so `ImageAltTest` strips Blade comments, HTML comments, `<script>`
+blocks and `//` line comments (leaving `://` alone so a URL is never mistaken
+for one) before it scans.
+
+**The nine, and what each was judged to be:**
+
+| File | Decision |
+| --- | --- |
+| `admin/communications` — review-modal image | described; it is the thing being reviewed |
+| `admin/communications` — banner card backdrop | `alt=""`; blended behind the title, which is already text |
+| `admin/communications` — banner form preview | `alt=""`; same |
+| `admin/communications` — moderation-modal image | described by author |
+| `citizen/announcements` ×2, `citizen/dashboard` — Esperanza seal | described; **the seal is the only marker that a post is official** |
+| `citizen/directory` — official's photograph | named from the roster |
+| `citizen/document-requests` — barangay seal | names which barangay's certificate this is |
+
+Mutation-tested: removing one added `alt` fails the gate naming the file and
+line; an image whose only `alt` sits inside a comment still fails.
+
+**Still open on TAB 10** — this closes the `alt` half only. Form-control naming
+is untouched: **496 controls (317 `input`, 136 `select`, 43 `textarea`) against
+9 `<label for>`**. Certification gate 7 stays **FAIL** until that and the
+keyboard-only and screen-reader passes are done.
+
+**`scripts/audit.mjs` could not be run here.** It measures accessible names on
+the rendered DOM, which is the better instrument, but it binds port 80 and so
+needs root: `sudo node scripts/audit.mjs`. The source scan above is a weaker
+substitute chosen knowingly, not a claim of equivalence.

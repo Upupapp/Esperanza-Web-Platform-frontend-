@@ -134,7 +134,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (36 tests) → static export → assertions ON dist/
+vite build → pint --test → phpunit (37 tests) → static export → assertions ON dist/
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:
@@ -211,7 +211,7 @@ These are not oversights. The book says they need an answer, not a guess.
 | TAB | State | Note |
 | --- | --- | --- |
 | 01 The two production defects | **DONE** | 46 → 55 routes exported; 16 PDFs reach `dist/` |
-| 02 Test harness and gate | **DONE** (adapted) | 2 → 36 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below. The 36th asserts the hook is actually *enabled* in the clone, since a clone with it unset is how a broken tree reached main on 2026-09-01 |
+| 02 Test harness and gate | **DONE** (adapted) | 2 → 37 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below. The 36th asserts the hook is actually *enabled* in the clone, since a clone with it unset is how a broken tree reached main on 2026-09-01 |
 | 03 Local setup and the `.env` trap | **DONE** | Clean clone verified end to end on the merged tree — 11 tests from a fresh checkout |
 | 04 Lift 167 inline arrays | **DONE** | 136 top-level fixtures → 16; 1,431 lines → 129. 27 data files. Every wave verified byte-identical |
 | 05 The HTTP layer | **DONE** | Client + error envelope built; no screen consumes it yet |
@@ -219,7 +219,7 @@ These are not oversights. The book says they need an answer, not a guess.
 | 07 Real forms and submission | **MECHANISM DONE** | `specForm()` + `x-ui.spec-form` render all 25 specs / 229 fields, tested. Adoption needs the API |
 | 08 Session and permission gating | **DONE** | Fails closed; signed-out state added |
 | 09 Bilingual completion | **DONE** | Ruled 2026-08-30: citizen bilingual, admin English-only. All citizen views covered; gate added |
-| 10 Accessibility | **PARTIAL** | Modals and keyboard reach done; naming and alt open |
+| 10 Accessibility | **PARTIAL** | Modals and keyboard reach done. **alt closed 2026-09-03**: 9 genuinely unlabelled images fixed and held by `ImageAltTest`. Form-control naming still open — 496 controls, 9 `label for` |
 | 11 Performance | **DONE** | Both measurements improved; no budget agreed (gate 8) |
 | 12 Component discipline | **PARTIAL** | a11y fix reached all 26 hand-rolled modals; consolidation to the component not done |
 | 13 Responsive and the `md:` tier | **DONE** | Hypothesis **disproven** by measurement — zero overflow at 375/768/1024/1440 px |
