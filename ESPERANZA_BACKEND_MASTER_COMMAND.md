@@ -46,9 +46,11 @@ paste; work 01–20 if you want a schedule.
    failing OPEN and justified the server rule with that. The instruction was
    always right; only its justification expired. Do not go looking for a
    fail-open client gate — there isn't one.)*
-3. **The status vocabulary is fixed and closed.** Fifteen values, listed in
-   `CLAUDE.md`, verified in use across the frontend with **zero invented
-   values**. The backend may not add a sixteenth.
+3. **The status vocabulary is closed, and it now has two parts.** Dokyu and
+   every other service use the fifteen values listed in `CLAUDE.md`. **Tulong
+   runs its own separate vocabulary** — a documented exception in `CLAUDE.md`,
+   specified in `PROCESS_TAB_FLOW.txt` PART 2 and detailed in TAB 08. Neither
+   set may be extended, and neither may be used for the other.
 4. **Bilingual is a data requirement, not a view concern.** The UI ships an
    `en`/`fil` language store defaulting to **Filipino**, and citizen
    notifications already carry `en` and `fil` bodies. Any content the backend
@@ -80,7 +82,7 @@ Every figure below was counted from the repo at `dd7e0d4`, not estimated.
 | Tulong programs | 13 | `esperanza_tulong_types` |
 | Internal staff forms | 24 across 4 offices | `esperanza_internal_forms` |
 | Sakuna submodules | 10 (11 tab routes) | `esperanza_rbac`, `routes/web.php` |
-| Canonical statuses | 15, zero invented | `CLAUDE.md`, verified across all views |
+| Status vocabularies | **2** — 15 canonical (Dokyu et al.) + Tulong's own 11 | `CLAUDE.md`, `PROCESS_TAB_FLOW.txt` PARTs 1 and 2 |
 | Standard rejection reasons | 14 | `esperanza_validation_guide.standard_reasons` |
 | Decision outcomes | 5 | same |
 | Evidence hierarchy levels | 4 | same |
@@ -167,7 +169,8 @@ resources/js/app.js                    the client-side session/permission model 
    evaluable rule with a stored, auditable result per request.
 
 5. **The request lifecycle, precisely as specified.** `PROCESS_TAB_FLOW.txt` is
-   not a summary — it is the spec, and Dokyu and Tulong share it exactly.
+   not a summary — it is the spec. **PART 1 is Dokyu only**; Tulong was split off
+into PART 2 and is TAB 08's separate engine.
    Implement all of it: the 7 admin statuses; auto-advance from Submitted to
    Under Verification on first open; per-requirement statuses (Pending Review,
    Approved, Flagged for Replacement, Rejected, Resubmitted); the rule that
@@ -204,7 +207,8 @@ resources/js/app.js                    the client-side session/permission model 
 
 - Do not rename anything the frontend reads. Match `config/esperanza_*.php` keys
   exactly.
-- Do not add a status. The 15 in `CLAUDE.md` are the whole vocabulary.
+- Do not add a status to either vocabulary. `CLAUDE.md`'s fifteen govern Dokyu
+  and everything else; Tulong has its own set (TAB 08). Do not mix them.
   `Processing`, `Assigned` and `Completed` exist in that vocabulary but are
   **deliberately unused** as Dokyu/Tulong stages — leave them unused.
 - Do not trust the client. The frontend's permission helpers fail *open*; yours
@@ -618,32 +622,144 @@ proof refused, and terminal states immovable.
 
 ## TAB 08 — Tulong: the assistance request lifecycle
 
-**Scope.** 13 assistance programs on the *same* lifecycle as Dokyu.
+**Scope.** 13 assistance programs on a lifecycle **of their own**. Build a
+second engine; do not reuse TAB 07's.
 
-`PROCESS_TAB_FLOW.txt` is explicit: Tulong previously had its own
-Assigned/Processing/Completed flow and **has since been unified with Dokyu's**.
-Do not reintroduce a second lifecycle. Build TAB 07 once and apply it here.
+> **This TAB was rewritten on 2026-09-02.** It previously said Tulong shared
+> Dokyu's lifecycle exactly. That is no longer true: the frontend deliberately
+> split Tulong off (`PROCESS_TAB_FLOW.txt` **PART 2 — TULONG**, and a documented
+> exception in `CLAUDE.md`). A backend built to the old text would implement the
+> wrong workflow for every assistance program the municipality runs.
 
-**What is genuinely different:**
+**The reasoning behind the split, which the backend must respect:** Tulong is a
+**social-welfare case**, not a document-preparation request. It moves through
+screening, an eligibility assessment by a social worker, an approval decision
+that may change the amount, and then disbursement — not through verification of
+someone's uploaded paperwork. None of PART 1 applies.
 
-- **Programs carry entitlements, not just fees.** `Medical Assistance (AICS)`
-  ranges to ₱150,000; `Burial Assistance` up to ₱5,000; `Social Pension` is
-  ₱1,000/month; TUPAD pays minimum wage for a fixed number of days; several are
-  goods or training slots rather than cash. Model the award amount as an
-  assessed, audited value.
-- **Eligibility is case-assessed.** MSWDO social workers determine amounts for
-  AICS programs. The backend records the assessment and the assessor; it does
-  not compute the award.
-- **Beneficiary de-duplication matters.** Assistance programs attract repeat and
-  duplicate claims across barangays. Check against the resident master profile
-  (TAB 05) and surface prior awards to the assessor.
+### Main stage sequence (7)
+
+```
+Submitted -> Initial Screening -> Assessment -> For Approval
+          -> Assistance Processing -> Ready for Release -> Completed
+```
+
+| Status | Meaning |
+| --- | --- |
+| `Submitted` | Citizen submitted; admin has not opened it |
+| `Initial Screening` | Admin checking the submission and requirements |
+| `Assessment` | A social worker records eligibility findings and a **recommended** type/amount or package |
+| `For Approval` | Awaiting an approval decision, which **may set an approved amount that differs from the recommended one** |
+| `Assistance Processing` | Approved; disbursement or enrolment being prepared. Fields branch on `processingKind` |
+| `Ready for Release` | Prepared and scheduled. **Blocked until Proof of Release evidence is captured** |
+| `Completed` | Released and received. Terminal — and deliberately **not** called `Released`, because it records who released it, to whom, the actual amount and a reference number in one step |
+
+### Side states — holds on the main line, not stages
+
+| State | Branches off | Returns to |
+| --- | --- | --- |
+| `Needs Requirements` | Initial Screening | Initial Screening, once resolved |
+| `Returned for Reassessment` | For Approval | Assessment |
+| `Rejected` | Initial Screening, Assessment, or For Approval | terminal |
+| `Cancelled` | Submitted through Assessment (citizen or office withdrew before a decision) | terminal |
+
+`Rejected`, `Cancelled` and `Completed` are the only terminal states.
+
+### Transitions, exactly
+
+| From | Action | To |
+| --- | --- | --- |
+| Submitted | Start Screening | Initial Screening |
+| Initial Screening | Proceed to Assessment / Request Additional Requirements / Reject\* / Cancel† | Assessment / Needs Requirements / Rejected / Cancelled |
+| Needs Requirements | Requirements Received / Cancel† | Initial Screening / Cancelled |
+| Assessment | Submit for Approval (**requires an eligibility finding recorded**) / Reject\* / Cancel† | For Approval / Rejected / Cancelled |
+| For Approval | Approve Assistance / Return for Reassessment‡ / Reject\* | Assistance Processing / Returned for Reassessment / Rejected |
+| Returned for Reassessment | Resume Assessment | Assessment |
+| Assistance Processing | Mark Ready for Release | Ready for Release |
+| Ready for Release | Confirm Release (**blocked without Proof of Release**) | Completed |
+
+\* Reject requires a typed reason. † Cancel requires a typed reason.
+‡ Return for Reassessment requires a typed reason — why the recommended
+amount or package needs re-verification.
+
+### `processingKind` — the field that stops per-program special-casing
+
+Every entry in `config/esperanza_tulong_types.php` carries a `processingKind` of
+`cash`, `goods`, `medical` or `registration`. Assessment, Approval, Processing
+and Release all branch their fields on that value rather than on the program
+name:
+
+- **`cash`** — release method and amount (Burial, Educational, Financial,
+  Pension, Solo Parent)
+- **`medical`** — hospital/provider and referral fields
+- **`goods`** — package, quantity, distribution fields
+- **`registration`** — enrolment confirmation instead of a payout (TUPAD, TESDA,
+  Livelihood, Kabuhayan, Business Plan, ERPAT)
+
+**Model this as data on the type, not as branches in code.** The frontend
+explicitly avoided special-casing Solo Parent Cash Assistance; the backend
+should not reintroduce that.
+
+### Record shape — added lazily as a case advances
+
+```
+screening    { notes, missingRequirements: [] }
+assessment   { assessedBy, assessmentDate, eligibility, notes,
+               recommendedAssistance, recommendedAmount, recommendedPackage }
+approval     { approvedBy, approvalDate, approvedType, approvedAmount,
+               approvedPackage, remarks }
+returnReason, cancelReason
+processing   { releaseMethod, disbursementMethod, voucherRef, package,
+               quantity, distributionMethod, coverage, hospitalProvider,
+               referralDetails, processingNotes }
+release      { scheduledDate, releaseLocation, reference }
+completion   { dateReleased, releasedBy, recipient, actualAmount,
+               actualPackage, reference, remarks }
+history: []  { stage, date, by, note } -- appended on every transition
+```
+
+**`recommendedAmount` and `approvedAmount` are separate fields on purpose.** The
+approver may change the figure, and both numbers have to survive for audit —
+collapsing them into one loses the fact that a decision was made.
+
+### Citizen side
+
+A 7-step stepper mirroring the main sequence. `Needs Requirements` shows the
+same correction panel as Dokyu's `Under Review`, but resubmitting returns the
+case to **`Initial Screening`** — Tulong has **no `Resubmitted` state**.
+`Returned for Reassessment` is shown as a plain, non-actionable note, because it
+is internal staff re-verification and not something the citizen can fix.
+`Rejected` and `Cancelled` are both terminal informational notices with no
+resubmit action.
+
+### What is still shared with TAB 07
+
+Requirement uploads and their versioning (TAB 09), notifications (TAB 13),
+payments where a program charges a fee (TAB 11), and the audit trail (TAB 17).
+**The status machine is not shared. Nothing else about the two should be
+copied across.**
+
+### Also required
+
+- **Entitlements, not just fees.** Medical Assistance (AICS) ranges to ₱150,000;
+  Burial up to ₱5,000; Social Pension ₱1,000/month; TUPAD pays minimum wage for
+  a fixed number of days; several programs are goods or training slots.
+- **Eligibility is case-assessed.** MSWDO social workers determine the amount.
+  The backend records the assessment and the assessor; it does not compute the
+  award.
+- **Beneficiary de-duplication.** Assistance attracts repeat and duplicate
+  claims across barangays. Check against the resident master profile (TAB 05)
+  and surface prior awards to the assessor at assessment time.
 - Categories: Medical & Health, Burial & Bereavement, Education, Financial
   Assistance, Food & Relief, Social Protection, Employment & Livelihood.
-- 12 of the 13 have written validation checks in the validation guide; four
-  program families are flagged as needing LGU confirmation (TAB 04).
+- Four program families still need an LGU ruling before their rules are coded
+  (TAB 04).
 
-**Acceptance.** Tulong runs the TAB 07 engine with no forked status code; prior
-awards to the same beneficiary are visible at assessment time.
+**Acceptance.** An acceptance suite walks the full main sequence plus each side
+state and its return path; a reject, cancel or return without a typed reason is
+refused; `Confirm Release` without Proof of Release is refused; an approved
+amount differing from the recommended one is preserved on both fields; and the
+`processingKind` branches are exercised for all four kinds.
 
 ---
 

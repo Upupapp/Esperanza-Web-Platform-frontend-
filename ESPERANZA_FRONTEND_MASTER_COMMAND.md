@@ -164,9 +164,15 @@ unconditionally. The audience is an LGU on mobile data.
   migrations, no business logic, no auth logic, no middleware in this repo.
 - **Do not rename fields, enums or statuses.** The backend contract is being
   written from these exact names. A rename here is a change request there.
-- **The 15 statuses in `CLAUDE.md` are the whole vocabulary.** Do not add a
-  sixteenth, and leave `Processing`, `Assigned` and `Completed` unused in the
-  Dokyu/Tulong flows, as `PROCESS_TAB_FLOW.txt` specifies.
+- **There are two status vocabularies, and neither may be extended.**
+  `CLAUDE.md`'s fifteen govern Dokyu and everything else, with `Processing` and
+  `Assigned` left unused in the Dokyu flow as `PROCESS_TAB_FLOW.txt` PART 1
+  specifies. **Tulong has its own separate set** (PART 2, and a documented
+  exception in `CLAUDE.md`) — `Initial Screening`, `Assessment`, `For Approval`,
+  `Assistance Processing`, `Ready for Release`, `Needs Requirements`,
+  `Returned for Reassessment`, plus `Submitted`, `Completed`, `Rejected` and
+  `Cancelled`. Do not mix the two, and do not use Dokyu's words for a Tulong
+  case.
 - **Never redesign an existing pattern** unless explicitly instructed. This
   work is plumbing and hardening, not a visual refresh.
 - Every push to `main` follows `DEPLOY_PROTOCOL.md`. A push deploys.
