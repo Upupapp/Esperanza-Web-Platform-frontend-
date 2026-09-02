@@ -157,12 +157,11 @@ Draft, Submitted, Pending Review, Under Verification, Assigned, Processing,
 Under Review, Resubmitted, Approved, Rejected, Mark to Release, Released,
 Completed, Cancelled, Archived.
 
-<<<<<<< HEAD
 Documented exception: Tulong (citizen assistance requests) deliberately runs
 its own extended, case-management-specific status vocabulary instead of this
 list — see PROCESS_TAB_FLOW.txt PART 2 for the full lifecycle and rationale.
 Dokyu and all other services still follow the list above unchanged.
-=======
+
 **2. Account access tier (2).** The state of an ACCOUNT — never of a request,
 and never of a record:
 
@@ -290,7 +289,6 @@ and the actual constituent DATA all agree, that axes 2 and 3 keep sharing exactl
 `Verified` and `Unverified`, and that every module-local vocabulary above matches
 the values actually present in the fixtures — so neither a drift, a well-meaning
 merge, nor a quietly invented fourth coverage state can pass unnoticed.
->>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 
 ## Component architecture
 

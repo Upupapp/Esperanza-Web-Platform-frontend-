@@ -1,144 +1,5 @@
 @php
     $barangays = config('esperanza.barangays');
-<<<<<<< HEAD
-    // Citizen name -> avatar + biographical-fact maps, built here (not in a
-    // config file — see config/esperanza_citizen_avatars.php's own header
-    // for why: a config file can't safely call config() on another config
-    // file from its own top level, since Laravel loads them in filename
-    // order during bootstrap) so a resident's real picture and real profile
-    // facts (dob/sex/civil status/occupation) are consistent wherever their
-    // name appears — not just their own Constituents profile, and not
-    // re-randomized per document (that was the "Cristy is 25 on her
-    // profile but 53 on her scholarship form" bug).
-    $citizenAvatarData = config('esperanza_citizen_avatars');
-    $generatedAvatarFor = function ($acctId) use ($citizenAvatarData) {
-        $bg = $citizenAvatarData['backgrounds'][crc32($acctId) % count($citizenAvatarData['backgrounds'])];
-        return 'https://api.dicebear.com/9.x/personas/svg?seed=' . urlencode($acctId) . '&backgroundColor=' . $bg;
-    };
-    $citizenAvatars = [];
-    $citizenBio = [];
-    foreach (config('esperanza_constituents')['individuals'] as $ind) {
-        if (empty($ind['citizen_account_id'])) {
-            continue;
-        }
-        $acctId = $ind['citizen_account_id'];
-        $citizenAvatars[$ind['name']] = isset($citizenAvatarData['photoByAccountId'][$acctId])
-            ? asset($citizenAvatarData['photoByAccountId'][$acctId])
-            : $generatedAvatarFor($acctId);
-        $citizenBio[$ind['name']] = [
-            'dob' => $ind['dob'] ?? null,
-            'sex' => $ind['sex'] ?? null,
-            'civil_status' => $ind['civil_status'] ?? null,
-            'occupation' => $ind['occupation'] ?? null,
-            // See the identical field's own comment in
-            // admin/document-requests.blade.php — only populated where the
-            // Constituents profile actually has this on file.
-            'emergency_name' => $ind['emergency']['name'] ?? null,
-            'emergency_contact' => $ind['emergency']['contact'] ?? null,
-            // See the identical fields' own comment in admin/document-requests.blade.php.
-            'father_name' => $ind['father_name'] ?? null,
-            'mother_name' => $ind['mother_name'] ?? null,
-            'mother_maiden_name' => $ind['mother_maiden_name'] ?? null,
-            'education' => $ind['education'] ?? null,
-            'address' => $ind['address'] ?? null,
-        ];
-    }
-    $requests = [
-        ['ref' => 'AR-2026-0151', 'citizen' => 'Elmer Bantillo', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Santiago', 'submitted' => 'Jul 9, 2026', 'status' => 'Submitted'],
-        ['ref' => 'AR-2026-0195', 'citizen' => 'Angelica Fajardo', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Rizal', 'submitted' => 'Jul 6, 2026', 'status' => 'Initial Screening'],
-        ['ref' => 'AR-2026-0142', 'citizen' => 'Maria Fe Bacaltos', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jun 28, 2026', 'status' => 'Assistance Processing'],
-        ['ref' => 'AR-2026-0098', 'citizen' => 'Rodrigo Palma', 'type' => 'Educational Assistance', 'office' => "Mayor's Office", 'barangay' => 'Domorog', 'submitted' => 'May 20, 2026', 'status' => 'Completed'],
-        ['ref' => 'AR-2026-0061', 'citizen' => 'Teresita Salazar', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Agoho', 'submitted' => 'Apr 2, 2026', 'status' => 'Completed'],
-        ['ref' => 'AR-2026-0044', 'citizen' => 'Michael Bacus', 'type' => 'Food / Relief Assistance', 'office' => 'MSWDO', 'barangay' => 'Iligan', 'submitted' => 'Mar 18, 2026', 'status' => 'Initial Screening'],
-        ['ref' => 'AR-2026-0037', 'citizen' => 'Josefina Marbella', 'type' => 'Social Pension (Indigent Senior)', 'office' => 'OSCA', 'barangay' => 'Baras', 'submitted' => 'Feb 10, 2026', 'status' => 'Completed'],
-        ['ref' => 'AR-2026-0022', 'citizen' => 'Rosemarie Tan', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Jan 28, 2026', 'status' => 'Needs Requirements', 'requirements' => [
-            ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'Rosemarie-SoloParentID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_psa_birth', 'name' => "PSA Birth Certificate(s) of children", 'file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.', 'versions' => [
-                ['file' => 'PSA-Birth-Cert.jpg', 'status' => 'Rejected', 'date' => 'Jan 28, 2026', 'reject_reason' => 'Unreadable', 'remarks' => 'The scanned copy is too blurry to read. Please rescan or take a clearer photo.'],
-            ]],
-            ['key' => 'req_brgy_cert', 'name' => 'Barangay Certification', 'file' => 'Brgy-Cert-Baras.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0009', 'citizen' => 'Ferdinand Cortez', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Poblacion', 'submitted' => 'Jan 8, 2026', 'status' => 'Rejected', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'requirements' => [
-            ['key' => 'req_death_cert', 'name' => 'Death Certificate', 'file' => null, 'status' => 'Rejected', 'reject_reason' => 'Missing information', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.', 'versions' => [
-                ['file' => null, 'status' => 'Rejected', 'date' => 'Jan 8, 2026', 'reject_reason' => 'Missing information', 'remarks' => 'Missing PSA Death Certificate. Please resubmit with a certified copy attached.'],
-            ]],
-            ['key' => 'req_claimant_id', 'name' => 'Valid ID of claimant', 'file' => 'Ferdinand-Valid-ID.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_relationship', 'name' => 'Proof of relationship to the deceased', 'file' => 'Proof-of-Relationship.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_funeral_contract', 'name' => 'Funeral contract or bill', 'file' => 'Funeral-Contract.pdf', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_indigency', 'name' => 'Barangay Certificate of Indigency', 'file' => 'Brgy-Indigency-Cert.jpg', 'status' => 'Approved', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        // Reconciled 1:1 with the same residents' Constituent Profile records
-        // (same ref numbers) so "Open in Tulong" from a profile always lands on
-        // real, matching data instead of an empty search result.
-        ['ref' => 'AR-2026-0117', 'citizen' => 'Marites Gonzales Ferrer', 'type' => 'Seed & Fertilizer Assistance', 'office' => 'Department of Agriculture', 'barangay' => 'Agoho', 'submitted' => 'Mar 3, 2026', 'status' => 'Completed'],
-        ['ref' => 'AR-2026-0163', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'May 18, 2026', 'status' => 'Completed'],
-        // Cristy is now demo'd as an 18-year-old Scholarship applicant, not
-        // a Solo Parent — see her matching reset in
-        // config/esperanza_constituents.php.
-        ['ref' => 'AR-2026-0224', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Educational Assistance', 'office' => "MSWDO / Mayor's Office", 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
-        // Full-catalog demo set — one submission per remaining Tulong
-        // program (see config/esperanza_validation_guide.php) on Cristy's
-        // own account, with real per-type eligibility feedback rather than
-        // a generic "not eligible" — freshly Submitted where her actual
-        // profile plausibly qualifies, and Rejected with the specific
-        // disqualifying reason where it clearly doesn't (age for Social
-        // Pension, no dependent children for Solo Parent, no documented
-        // disability for PWD, a fatherhood-only program for ERPAT).
-        ['ref' => 'AR-2026-0230', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Medical Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Financial assistance for dental treatment expenses', 'requirements' => [
-            ['key' => 'req_valid_id', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_medical_need', 'name' => 'Medical Need (Abstract / Prescription)', 'file' => 'Cristy-medical-need-abstract-prescription.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_financial_obligation', 'name' => 'Financial Obligation (Hospital Bill / SOA)', 'file' => 'Cristy-financial-obligation-hospital-bill-soa.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_indigency', 'name' => 'Indigency (Barangay Certificate)', 'file' => 'Cristy-indigency-barangay-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0231', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Burial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Burial assistance for a deceased grandparent', 'requirements' => [
-            ['key' => 'req_death_cert', 'name' => 'Death Certificate', 'file' => 'Cristy-death-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_claimant_id', 'name' => 'Claimant ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_relationship', 'name' => 'Relationship to Deceased', 'file' => 'Cristy-relationship-to-deceased.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_indigency', 'name' => 'Indigency (Barangay Certificate)', 'file' => 'Cristy-indigency-barangay-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0232', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Food / Relief Assistance', 'office' => 'MDRRMO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Relief assistance following recent heavy rains affecting the household', 'requirements' => [
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_affected_status', 'name' => 'Affected / Eligible Status', 'file' => 'Cristy-affected-eligible-status.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0233', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Social pension benefit application', 'requirements' => [
-            ['key' => 'req_senior_status', 'name' => 'Senior Citizen Status', 'file' => 'Cristy-senior-citizen-status.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_declaration', 'name' => 'No Pension / Income / Support Declaration', 'file' => 'Cristy-no-pension-income-support-declaration.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0234', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'Solo Parent Cash Assistance', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Solo parent cash assistance application', 'requirements' => [
-            ['key' => 'req_solo_parent_id', 'name' => 'Solo Parent ID', 'file' => 'Cristy-solo-parent-id.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_children_records', 'name' => "Children's Civil Records", 'file' => 'Cristy-children-s-civil-records.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0235', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'PWD Registration (PRPWD)', 'office' => 'PDAO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'PWD ID / PRPWD registration application', 'requirements' => [
-            ['key' => 'req_disability_evidence', 'name' => 'Disability Evidence (Medical Certificate)', 'file' => 'Cristy-disability-evidence-medical-certificate.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_photo', 'name' => '1x1 Photo', 'file' => 'Cristy-1x1-photo.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0236', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'TUPAD Emergency Employment', 'office' => 'MPESO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Application for short-term emergency employment during school break', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_residency', 'name' => 'Barangay Certification of Residency', 'file' => 'Cristy-barangay-certification-of-residency.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_indigency', 'name' => 'Indigency (if applicable)', 'file' => 'Cristy-indigency-if-applicable.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0237', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'TESDA Skills Training Registration', 'office' => 'MPESO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'Registration for Bookkeeping NC III skills training program', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Identity / Birth Record', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_photo', 'name' => '2x2 Photo', 'file' => 'Cristy-2x2-photo.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_training_profile', 'name' => 'Training Profile', 'file' => 'Cristy-training-profile.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0238', 'citizen' => 'Cristy Pareja Bonghanoy', 'type' => 'ERPAT Program Registration', 'office' => 'MSWDO', 'barangay' => 'Baras', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'purpose' => 'ERPAT program registration', 'requirements' => [
-            ['key' => 'req_identity', 'name' => 'Valid Government ID', 'file' => 'Cristy-Valid-ID.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => [], 'preview_asset' => asset('images/esperanza/residents/cristy-id.png')],
-            ['key' => 'req_brgy_certification', 'name' => 'Barangay Certification', 'file' => 'Cristy-barangay-certification.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-            ['key' => 'req_program_profile', 'name' => 'Program Profile', 'file' => 'Cristy-program-profile.jpg', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
-        ]],
-        ['ref' => 'AR-2026-0159', 'citizen' => 'Ferdinand Ramos Hilario', 'type' => 'Livelihood Assistance (Tools & Equipment)', 'office' => 'MSWDO', 'barangay' => 'Libertad', 'submitted' => 'May 28, 2026', 'status' => 'Completed'],
-        ['ref' => 'AR-2026-0148', 'citizen' => 'Analiza Bautista Ibarra', 'type' => 'Social Pension (Indigent Senior Citizen)', 'office' => 'OSCA', 'barangay' => 'Magsaysay', 'submitted' => 'Jun 2, 2026', 'status' => 'Initial Screening'],
-        ['ref' => 'AR-2026-0182', 'citizen' => 'Danilo Aquino Lazaro', 'type' => 'Agricultural Damage Assistance', 'office' => 'Department of Agriculture', 'barangay' => 'Potingbato', 'submitted' => 'Jun 25, 2026', 'status' => 'Assistance Processing'],
-        ['ref' => 'AR-2026-0171', 'citizen' => 'Precious Domingo Manalo', 'type' => 'Educational Assistance', 'office' => "Mayor's Office", 'barangay' => 'Rizal', 'submitted' => 'Jul 2, 2026', 'status' => 'Initial Screening'],
-        ['ref' => 'AR-2026-0210', 'citizen' => 'Liezel Navarro Quimson', 'type' => 'Financial Assistance (AICS)', 'office' => 'MSWDO', 'barangay' => 'Tawad', 'submitted' => 'Jul 5, 2026', 'status' => 'Needs Requirements'],
-        ['ref' => 'AR-2026-0203', 'citizen' => 'Cherry Ann Villaflor Sarmiento', 'type' => 'Educational Assistance (Continuing Studies)', 'office' => "Mayor's Office", 'barangay' => 'Villa', 'submitted' => 'Jun 12, 2026', 'status' => 'Submitted'],
-    ];
-=======
     // Citizen name -> avatar + biographical-fact maps. ONE seam, shared with
     // the other admin screens that show a resident by name -- see
     // resources/data/citizen-directory.php, which also explains why this is a
@@ -149,7 +10,6 @@
     // TAB 04: fixtures live in resources/data/admin/assistance-requests.php so this view stays presentation only.
     $__fixtures = require base_path('resources/data/admin/assistance-requests.php');
     $requests = $__fixtures['requests'];
->>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 
     // Manual Document Validation & Application Decision Guide — maps each
     // case's 'type' string to its checklist key in
@@ -392,15 +252,14 @@
     }
     unset($r);
 
-<<<<<<< HEAD
-    $tabs = ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Ready for Release', 'done' => 'Completed'];
+    $tabs = $__fixtures['tabs'];
+    $actionStatuses = $__fixtures['actionStatuses'];
     // Tulong's own case-status vocabulary — see PROCESS_TAB_FLOW.txt Part 2
     // for the full spec. Deliberately NOT Dokyu's Submitted/Under
     // Verification/Approved/Mark to Release/Released — Tulong is a social-
     // welfare case (screening -> eligibility assessment -> approval ->
     // disbursement -> release), not a document-preparation workflow, and
     // this file previously just copied Dokyu's lifecycle wholesale.
-    $actionStatuses = ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Needs Requirements', 'Returned for Reassessment'];
     $allTulongStatuses = ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Needs Requirements', 'Returned for Reassessment', 'Assistance Processing', 'Ready for Release', 'Completed', 'Rejected', 'Cancelled'];
     // Per-type metadata (requirements, process labels, and — new —
     // processingKind, which the Assistance Processing/Release sections use
@@ -408,10 +267,6 @@
     // see config/esperanza_tulong_types.php's own header comment on that
     // field) keyed by name for a direct client-side lookup.
     $tulongTypesByName = collect(config('esperanza_tulong_types.types'))->keyBy('name');
-=======
-    $tabs = $__fixtures['tabs'];
-    $actionStatuses = $__fixtures['actionStatuses'];
->>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
 @endphp
 
 <x-layouts.admin title="Tulong" subtitle="Review and manage citizen assistance requests." active="assistance-requests">

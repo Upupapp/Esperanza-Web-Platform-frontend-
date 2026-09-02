@@ -1,3 +1,8 @@
+{{-- LANGUAGE (TAB 09): exempt. This component renders one decorative <img>
+     with alt="" and aria-hidden="true" and carries no user-visible text at
+     all -- there is nothing here to translate. The empty alt is deliberate
+     and correct for artwork: giving it a label would announce a corner
+     flourish to a screen reader as though it were content. --}}
 {{-- Official full-page template artwork (corner geometric accents etc.) —
      a real per-template design layer, deliberately separate from the
      large center watermark (document-watermark.blade.php) and the small

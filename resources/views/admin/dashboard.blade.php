@@ -39,16 +39,7 @@
     $docStatus = $__fixtures['docStatus'];
     $docStatusTotal = array_sum(array_column($docStatus, 'value'));
 
-<<<<<<< HEAD
-    $assistStatus = [
-        ['label' => 'Completed', 'value' => 168, 'color' => '#22c55e'],
-        ['label' => 'Assistance Processing', 'value' => 96, 'color' => '#a855f7'],
-        ['label' => 'Submitted', 'value' => 104, 'color' => '#3b82f6'],
-        ['label' => 'Needs Requirements', 'value' => 49, 'color' => '#f59e0b'],
-    ];
-=======
     $assistStatus = $__fixtures['assistStatus'];
->>>>>>> bcc851fb6953505a3f94fc1e80d0153c239c06b1
     $assistStatusTotal = array_sum(array_column($assistStatus, 'value'));
 
     $barangayRequests = $__fixtures['barangayRequests'];
