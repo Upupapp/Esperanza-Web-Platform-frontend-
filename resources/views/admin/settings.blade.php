@@ -102,8 +102,8 @@
                             <x-ui.input name="region" label="Region" x-model="region" x-bind:disabled="!can('set_general','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Default Language</label>
-                            <select x-model="language" :disabled="!can('set_general','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5" for="default-language">Default Language</label>
+                            <select id="default-language" x-model="language" :disabled="!can('set_general','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                                 <option>English</option>
                                 <option>Filipino</option>
                             </select>
@@ -273,7 +273,7 @@
                     <div class="flex items-center gap-2">
                         <div class="relative">
                             <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
+                            <input aria-label="Search services" type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                         </div>
                         <div class="relative" x-data="dropdown" @click.outside="close" x-show="can('set_service_catalog','edit')">
                             <x-ui.button size="sm" icon="plus" @click="toggle">
@@ -374,7 +374,7 @@
                                 <x-ui.input name="svc_category" label="Category" x-model="selected.category" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Processing Level</label>
-                                    <select x-model="selected.level" :disabled="!can('set_service_catalog','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                    <select aria-label="Processing Level" x-model="selected.level" :disabled="!can('set_service_catalog','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                                         <option value="Barangay">Barangay</option>
                                         <option value="Municipal">Municipal</option>
                                         <option value="Multi-Office">Multi-Office</option>
@@ -402,7 +402,7 @@
                                     </template>
                                 </ul>
                                 <div class="flex items-center gap-2" x-show="can('set_service_catalog','edit')">
-                                    <input type="text" x-model="reqInput" @keydown.enter.prevent="addRequirement()" placeholder="Add a requirement..." class="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Add a requirement" type="text" x-model="reqInput" @keydown.enter.prevent="addRequirement()" placeholder="Add a requirement..." class="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     <x-ui.button variant="secondary" size="sm" icon="plus" @click="addRequirement()">Add</x-ui.button>
                                 </div>
                             </div>
@@ -524,8 +524,8 @@
                     <x-ui.card class="mb-3.5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Effective Date</label>
-                                <input type="date" x-model="doc.effective_date" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                <label class="block text-xs font-medium text-slate-700 mb-1" for="effective-date-2">Effective Date</label>
+                                <input id="effective-date-2" type="date" x-model="doc.effective_date" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Last Updated</label>
@@ -574,12 +574,12 @@
                                     class="px-4 pb-4 bg-slate-50/40"
                                 >
                                     <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-1">Section Heading</label>
-                                    <input
+                                    <input aria-label="Section Heading"
                                         type="text" x-model="section.heading" placeholder="Section heading" :disabled="!can('set_site_content','edit')"
                                         class="w-full bg-transparent border-0 border-b-2 border-slate-200 px-0.5 py-1.5 text-base font-bold text-navy-900 placeholder:text-slate-300 placeholder:font-normal focus:border-brand-400 outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                     <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-4">Section Content</label>
-                                    <textarea
+                                    <textarea aria-label="Section Content"
                                         rows="5" x-model="section.body" placeholder="Write what citizens need to know in this section…" :disabled="!can('set_site_content','edit')"
                                         class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 leading-relaxed focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none disabled:opacity-60 disabled:cursor-not-allowed"
                                     ></textarea>
@@ -601,16 +601,16 @@
                 <!-- Support Info editor -->
                 <div x-show="contentTab === 'support'" x-cloak>
                     <x-ui.card class="mb-3.5">
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Support Page Introduction</label>
-                        <textarea rows="2" x-model="support.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
+                        <label class="block text-xs font-medium text-slate-700 mb-1" for="support-page-introduction">Support Page Introduction</label>
+                        <textarea id="support-page-introduction" rows="2" x-model="support.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Office Hours</label>
-                                <input type="text" x-model="support.office_hours" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                <label class="block text-xs font-medium text-slate-700 mb-1" for="office-hours">Office Hours</label>
+                                <input id="office-hours" type="text" x-model="support.office_hours" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Office Hours (Filipino)</label>
-                                <input type="text" x-model="support.office_hours_fil" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                <label class="block text-xs font-medium text-slate-700 mb-1" for="office-hours-filipino">Office Hours (Filipino)</label>
+                                <input id="office-hours-filipino" type="text" x-model="support.office_hours_fil" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                         </div>
                     </x-ui.card>
@@ -646,11 +646,11 @@
                                 <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                     <div>
                                         <label class="block text-[10px] font-medium text-slate-500 mb-1">Label</label>
-                                        <input type="text" x-model="ch.label" placeholder="e.g. Call the ICT Office" :disabled="!can('set_site_content','edit')" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                        <input aria-label="Label" type="text" x-model="ch.label" placeholder="e.g. Call the ICT Office" :disabled="!can('set_site_content','edit')" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                                     </div>
                                     <div>
                                         <label class="block text-[10px] font-medium text-slate-500 mb-1">Value</label>
-                                        <input type="text" x-model="ch.value" placeholder="e.g. (056) 333-1099" :disabled="!can('set_site_content','edit')" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                        <input aria-label="Value" type="text" x-model="ch.value" placeholder="e.g. (056) 333-1099" :disabled="!can('set_site_content','edit')" class="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                                     </div>
                                 </div>
                                 <button type="button" @click="removeChannel(i)" x-show="can('set_site_content','edit')" title="Remove channel" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -712,7 +712,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div class="relative">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input type="text" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
+                        <input aria-label="Search actions or personnel" type="text" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                     </div>
                     <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option>All Modules</option>

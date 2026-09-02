@@ -61,7 +61,7 @@
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-[200px]">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input
+            <input aria-label="Search by ID or barangay"
                 type="text"
                 x-model="damageSearch"
                 placeholder="Search by ID or barangay…"
@@ -543,14 +543,14 @@
                     {{-- Validator --}}
                     <div class="bg-slate-50 rounded-xl p-4 space-y-2">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Validator</p>
-                        <input type="text" placeholder="Validator name" value="MDRRMO Officer Salinas" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <input aria-label="Validator name" type="text" placeholder="Validator name" value="MDRRMO Officer Salinas" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         <p class="text-xs text-slate-500">Municipal DRRM Officer</p>
                         <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">Pending Validation</span>
                     </div>
                     {{-- Approving Officer --}}
                     <div class="bg-slate-50 rounded-xl p-4 space-y-2">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Approving Officer</p>
-                        <input type="text" placeholder="Officer name" value="Mayor Reyes" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <input aria-label="Officer name" type="text" placeholder="Officer name" value="Mayor Reyes" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         <p class="text-xs text-slate-500">Local Chief Executive</p>
                         <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Awaiting</span>
                     </div>
@@ -736,8 +736,8 @@
                 <div x-show="daStep === 1">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assessment Type</label>
-                            <select x-model="newType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="assessment-type">Assessment Type</label>
+                            <select id="assessment-type" x-model="newType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option value="">Select type…</option>
                                 <option>Initial Rapid Assessment</option>
                                 <option>Barangay Damage Assessment</option>
@@ -750,8 +750,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Incident</label>
-                            <select x-model="newIncident" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="incident">Incident</label>
+                            <select id="incident" x-model="newIncident" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option value="">Select incident…</option>
                                 @foreach($incidents as $incident)
                                 <option value="{{ $incident['id'] }}">{{ $incident['id'] }} — {{ $incident['type'] }} ({{ $incident['barangay'] }})</option>
@@ -759,8 +759,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Barangay</label>
-                            <select x-model="newBarangay" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="barangay-6">Barangay</label>
+                            <select id="barangay-6" x-model="newBarangay" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option value="">Select barangay…</option>
                                 @foreach($barangays as $brgy)
                                 <option value="{{ $brgy }}">{{ $brgy }}</option>
@@ -768,16 +768,16 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assessment Date</label>
-                            <input type="date" x-model="newDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="assessment-date">Assessment Date</label>
+                            <input id="assessment-date" type="date" x-model="newDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assessor Name</label>
-                            <input type="text" x-model="newAssessor" placeholder="Full name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="assessor-name">Assessor Name</label>
+                            <input id="assessor-name" type="text" x-model="newAssessor" placeholder="Full name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Office / Designation</label>
-                            <input type="text" x-model="newOffice" placeholder="e.g. Barangay DRRM Officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="office-designation">Office / Designation</label>
+                            <input id="office-designation" type="text" x-model="newOffice" placeholder="e.g. Barangay DRRM Officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
                 </div>
@@ -796,7 +796,7 @@
                         ] as [$model, $label])
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ $label }}</label>
-                            <input type="number" min="0" x-model="{{ $model }}" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <input aria-label="{{ $label }}" type="number" min="0" x-model="{{ $model }}" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         @endforeach
                     </div>
@@ -806,20 +806,20 @@
                 <div x-show="daStep === 3">
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Partially Damaged</label>
-                            <input type="number" min="0" x-model="housingPartial" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="partially-damaged">Partially Damaged</label>
+                            <input id="partially-damaged" type="number" min="0" x-model="housingPartial" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Totally Damaged</label>
-                            <input type="number" min="0" x-model="housingTotal" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="totally-damaged">Totally Damaged</label>
+                            <input id="totally-damaged" type="number" min="0" x-model="housingTotal" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Unsafe for Occupancy</label>
-                            <input type="number" min="0" x-model="housingUnsafe" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="unsafe-for-occupancy">Unsafe for Occupancy</label>
+                            <input id="unsafe-for-occupancy" type="number" min="0" x-model="housingUnsafe" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Est. Housing Damage (₱)</label>
-                            <input type="number" min="0" x-model="housingEstimate" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="est-housing-damage">Est. Housing Damage (₱)</label>
+                            <input id="est-housing-damage" type="number" min="0" x-model="housingEstimate" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
                 </div>

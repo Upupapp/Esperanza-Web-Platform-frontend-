@@ -427,7 +427,7 @@
                                             <div x-show="replyingTo[post.id] === ci" x-cloak x-transition class="flex items-center gap-2 mt-2">
                                                 <div class="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[9px]">MB</div>
                                                 <div class="flex-1 relative">
-                                                    <input
+                                                    <input aria-label="$store.lang.current === 'en' ? 'Write a reply...' : 'Sumagot...'"
                                                         type="text"
                                                         x-model="replyText[post.id]"
                                                         @keydown.enter="submitReply(post, ci)"

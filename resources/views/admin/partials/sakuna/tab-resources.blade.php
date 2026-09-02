@@ -144,7 +144,7 @@
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-48">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
-            <input type="text" x-model="resourceSearch" placeholder="Search by name or ID…"
+            <input aria-label="Search by name or ID" type="text" x-model="resourceSearch" placeholder="Search by name or ID…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
         <select x-model="resourceCategoryFilter"
@@ -394,8 +394,8 @@
 
             {{-- Incident selector --}}
             <div x-show="deployAssignTo === 'incident'">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Active Incident</label>
-                <select x-model="deployIncident" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="active-incident">Active Incident</label>
+                <select id="active-incident" x-model="deployIncident" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                     <option value="">— Select incident —</option>
                     @foreach($incidents as $inc)
                         @if(!in_array($inc['status'], ['Resolved', 'Closed']))
@@ -407,8 +407,8 @@
 
             {{-- Center selector --}}
             <div x-show="deployAssignTo === 'center'">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Evacuation Center</label>
-                <select x-model="deployCenter" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="evacuation-center">Evacuation Center</label>
+                <select id="evacuation-center" x-model="deployCenter" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                     <option value="">— Select center —</option>
                     @foreach($centers as $c)
                         @if(in_array($c['status'], ['Open', 'Near Capacity']))
@@ -434,22 +434,22 @@
 
             {{-- Personnel --}}
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Assigned Personnel</label>
-                <input type="text" x-model="deployPersonnel" placeholder="e.g. Sgt. Dela Vega + 7 members"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="assigned-personnel">Assigned Personnel</label>
+                <input id="assigned-personnel" type="text" x-model="deployPersonnel" placeholder="e.g. Sgt. Dela Vega + 7 members"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
 
             {{-- Instructions --}}
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Deployment Instructions</label>
-                <textarea x-model="deployInstructions" rows="2" placeholder="Special instructions, route, contact on site…"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="deployment-instructions">Deployment Instructions</label>
+                <textarea id="deployment-instructions" x-model="deployInstructions" rows="2" placeholder="Special instructions, route, contact on site…"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
             </div>
 
             {{-- ETA --}}
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Expected Arrival Time</label>
-                <input type="datetime-local"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="expected-arrival-time-2">Expected Arrival Time</label>
+                <input id="expected-arrival-time-2" type="datetime-local"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
         </div>
@@ -678,13 +678,13 @@
 
         <div class="p-6 grid grid-cols-2 gap-4">
             <div class="col-span-2">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Resource Name</label>
-                <input type="text" placeholder="e.g. MDRRMO Rescue Boat C"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="resource-name">Resource Name</label>
+                <input id="resource-name" type="text" placeholder="e.g. MDRRMO Rescue Boat C"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Category</label>
-                <select class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="category-3">Category</label>
+                <select id="category-3" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                     <option>Response Teams</option>
                     <option>Boats</option>
                     <option>Ambulances</option>
@@ -700,31 +700,31 @@
                 </select>
             </div>
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Office / Agency</label>
-                <input type="text" placeholder="e.g. MDRRMO"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="office-agency">Office / Agency</label>
+                <input id="office-agency" type="text" placeholder="e.g. MDRRMO"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Station / Base</label>
-                <input type="text" placeholder="e.g. MDRRMO Bodega"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="station-base">Station / Base</label>
+                <input id="station-base" type="text" placeholder="e.g. MDRRMO Bodega"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Condition</label>
-                <select class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="condition-2">Condition</label>
+                <select id="condition-2" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                     <option>Good</option>
                     <option>Fair</option>
                     <option>Poor</option>
                 </select>
             </div>
             <div class="col-span-2">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Serial / Plate Number</label>
-                <input type="text" placeholder="e.g. ABC-1234 or SN-00123"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="serial-plate-number">Serial / Plate Number</label>
+                <input id="serial-plate-number" type="text" placeholder="e.g. ABC-1234 or SN-00123"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
             <div class="col-span-2">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Remarks</label>
-                <textarea rows="2" placeholder="Additional notes or special features…"
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="remarks-2">Remarks</label>
+                <textarea id="remarks-2" rows="2" placeholder="Additional notes or special features…"
                     class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
             </div>
         </div>

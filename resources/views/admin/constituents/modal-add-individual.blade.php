@@ -178,10 +178,10 @@
                 {{-- Name row --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="sm:col-span-1">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="first-name">
                             First Name <span class="text-red-500">*</span>
                         </label>
-                        <input
+                        <input id="first-name"
                             type="text"
                             x-model="form.first_name"
                             placeholder="e.g. Maria"
@@ -190,8 +190,8 @@
                         />
                     </div>
                     <div class="sm:col-span-1">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Middle Name</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="middle-name">Middle Name</label>
+                        <input id="middle-name"
                             type="text"
                             x-model="form.middle_name"
                             placeholder="e.g. Santos"
@@ -199,10 +199,10 @@
                         />
                     </div>
                     <div class="sm:col-span-1">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="last-name">
                             Last Name <span class="text-red-500">*</span>
                         </label>
-                        <input
+                        <input id="last-name"
                             type="text"
                             x-model="form.last_name"
                             placeholder="e.g. Reyes"
@@ -215,8 +215,8 @@
                 {{-- Suffix --}}
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Suffix</label>
-                        <select
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="suffix">Suffix</label>
+                        <select id="suffix"
                             x-model="form.suffix"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         >
@@ -266,10 +266,10 @@
                 {{-- DOB & Civil Status --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="date-of-birth">
                             Date of Birth <span class="text-red-500">*</span>
                         </label>
-                        <input
+                        <input id="date-of-birth"
                             type="date"
                             x-model="form.dob"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
@@ -277,10 +277,10 @@
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="civil-status">
                             Civil Status <span class="text-red-500">*</span>
                         </label>
-                        <select
+                        <select id="civil-status"
                             x-model="form.civil_status"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
@@ -304,7 +304,7 @@
                         </label>
                         <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">+63</span>
-                            <input
+                            <input aria-label="9XXXXXXXXX"
                                 type="tel"
                                 x-model="form.contact"
                                 placeholder="9XXXXXXXXX"
@@ -315,11 +315,11 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="email-address-optional">
                             Email Address
                             <span class="text-slate-400 font-normal ml-1">(optional)</span>
                         </label>
-                        <input
+                        <input id="email-address-optional"
                             type="email"
                             x-model="form.email"
                             placeholder="email@example.com"
@@ -347,10 +347,10 @@
                 {{-- Barangay & Sitio --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="barangay-4">
                             Barangay <span class="text-red-500">*</span>
                         </label>
-                        <select
+                        <select id="barangay-4"
                             x-model="form.barangay"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
@@ -362,8 +362,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Sitio / Purok</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="sitio-purok-3">Sitio / Purok</label>
+                        <input id="sitio-purok-3"
                             type="text"
                             x-model="form.sitio"
                             placeholder="e.g. Sitio Malago"
@@ -374,10 +374,10 @@
 
                 {{-- Full Address --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="full-address">
                         Full Address <span class="text-red-500">*</span>
                     </label>
-                    <textarea
+                    <textarea id="full-address"
                         x-model="form.address"
                         placeholder="House No. / Block, Street, Purok, Barangay, Municipality, Province"
                         rows="3"
@@ -395,7 +395,7 @@
                         </label>
                         <div class="relative">
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input
+                            <input aria-label="e.g. HH-2024-001"
                                 type="text"
                                 x-model="form.household_id"
                                 placeholder="e.g. HH-2024-001"
@@ -404,11 +404,11 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="family-id-optional">
                             Family ID
                             <span class="text-slate-400 font-normal ml-1">(optional)</span>
                         </label>
-                        <input
+                        <input id="family-id-optional"
                             type="text"
                             x-model="form.family_id"
                             placeholder="e.g. FAM-2024-001"
@@ -457,8 +457,8 @@
                 {{-- Occupation, Education, Income --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Occupation</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="occupation">Occupation</label>
+                        <input id="occupation"
                             type="text"
                             x-model="form.occupation"
                             placeholder="e.g. Farmer, Teacher"
@@ -466,8 +466,8 @@
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Highest Education</label>
-                        <select
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="highest-education">Highest Education</label>
+                        <select id="highest-education"
                             x-model="form.education"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         >
@@ -486,8 +486,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Monthly Income Range</label>
-                        <select
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="monthly-income-range">Monthly Income Range</label>
+                        <select id="monthly-income-range"
                             x-model="form.income_range"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         >

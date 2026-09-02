@@ -51,7 +51,7 @@
                 <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </span>
-                <input
+                <input aria-label="Search by name, record ID, barangay"
                     type="text"
                     x-model="search"
                     placeholder="Search by name, record ID, barangay…"

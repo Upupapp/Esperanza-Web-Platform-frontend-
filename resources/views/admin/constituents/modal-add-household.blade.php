@@ -121,10 +121,10 @@
                 {{-- Barangay + Sitio --}}
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="barangay-3">
                             Barangay <span class="text-rose-500">*</span>
                         </label>
-                        <select
+                        <select id="barangay-3"
                             x-model="form.barangay"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                         >
@@ -135,8 +135,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Sitio / Purok</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="sitio-purok-2">Sitio / Purok</label>
+                        <input id="sitio-purok-2"
                             type="text"
                             x-model="form.sitio"
                             placeholder="e.g. Sitio Bonbon"
@@ -147,10 +147,10 @@
 
                 {{-- Street address --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="street-address">
                         Street Address <span class="text-rose-500">*</span>
                     </label>
-                    <input
+                    <input id="street-address"
                         type="text"
                         x-model="form.address"
                         placeholder="e.g. Purok 3, Brgy. Esperanza"
@@ -160,10 +160,10 @@
 
                 {{-- Household head --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="household-head-name">
                         Household Head Name <span class="text-rose-500">*</span>
                     </label>
-                    <input
+                    <input id="household-head-name"
                         type="text"
                         x-model="form.head_name"
                         placeholder="Full name of household head"
@@ -274,8 +274,8 @@
 
                 {{-- Hazard zone dropdown --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Hazard Zone Classification</label>
-                    <select
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="hazard-zone-classification">Hazard Zone Classification</label>
+                    <select id="hazard-zone-classification"
                         x-model="form.hazard_zone"
                         class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     >
@@ -367,8 +367,8 @@
 
                 {{-- Notes --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Notes / Remarks</label>
-                    <textarea
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="notes-remarks-2">Notes / Remarks</label>
+                    <textarea id="notes-remarks-2"
                         x-model="form.notes"
                         rows="3"
                         placeholder="Any additional observations or notes about this household…"

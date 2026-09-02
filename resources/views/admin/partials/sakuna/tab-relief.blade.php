@@ -63,7 +63,7 @@
         <div class="flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-[200px]">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input
+                <input aria-label="Search by name or code"
                     type="text"
                     x-model="inventorySearch"
                     placeholder="Search by name or code…"
@@ -564,8 +564,8 @@
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Household Head Search</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="household-head-search">Household Head Search</label>
+                        <input id="household-head-search"
                             type="text"
                             x-model="distHouseholdSearch"
                             @input="isDuplicate = distHouseholdSearch.toLowerCase().includes('rodrigo panganiban') && distPackageType === 'Family Food Pack'; supervisorConfirmed = false"
@@ -576,8 +576,8 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Package Type</label>
-                            <select
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="package-type">Package Type</label>
+                            <select id="package-type"
                                 x-model="distPackageType"
                                 @change="isDuplicate = distHouseholdSearch.toLowerCase().includes('rodrigo panganiban') && distPackageType === 'Family Food Pack'; supervisorConfirmed = false"
                                 class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
@@ -590,8 +590,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Verification Method</label>
-                            <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="verification-method">Verification Method</label>
+                            <select id="verification-method" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 <option>QR Scan</option>
                                 <option>ID Scan</option>
                                 <option>Manual</option>
@@ -601,16 +601,16 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Distribution Center</label>
-                            <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="distribution-center">Distribution Center</label>
+                            <select id="distribution-center" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                                 @foreach($centers as $center)
                                 <option value="{{ $center['id'] }}">{{ $center['name'] }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Distributing Officer</label>
-                            <input type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="distributing-officer">Distributing Officer</label>
+                            <input id="distributing-officer" type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
 
@@ -725,33 +725,33 @@
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Donor Name / Organization</label>
-                            <input type="text" placeholder="e.g. SM Foundation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="donor-name-organization">Donor Name / Organization</label>
+                            <input id="donor-name-organization" type="text" placeholder="e.g. SM Foundation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date Received</label>
-                            <input type="date" value="{{ date('Y-m-d') }}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="date-received">Date Received</label>
+                            <input id="date-received" type="date" value="{{ date('Y-m-d') }}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Items / Description</label>
-                            <input type="text" placeholder="e.g. Canned goods, Bottled water" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="items-description">Items / Description</label>
+                            <input id="items-description" type="text" placeholder="e.g. Canned goods, Bottled water" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quantity</label>
-                            <input type="text" placeholder="e.g. 500 cans / 200 bottles" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="quantity">Quantity</label>
+                            <input id="quantity" type="text" placeholder="e.g. 500 cans / 200 bottles" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Estimated Value (₱)</label>
-                            <input type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="estimated-value">Estimated Value (₱)</label>
+                            <input id="estimated-value" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Received By</label>
-                            <input type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="received-by">Received By</label>
+                            <input id="received-by" type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Notes / Remarks</label>
-                        <textarea rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="notes-remarks-3">Notes / Remarks</label>
+                        <textarea id="notes-remarks-3" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                     </div>
                 </div>
                 <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
@@ -792,8 +792,8 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Item Name</label>
-                        <select x-model="stockInItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="item-name">Item Name</label>
+                        <select id="item-name" x-model="stockInItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option value="">Select item…</option>
                             @foreach($inventory as $item)
                             <option value="{{ $item['name'] }}" @if(isset($selectedInventoryItem) && $selectedInventoryItem && $item['code'] === ($selectedInventoryItem['code'] ?? '')) selected @endif>
@@ -803,28 +803,28 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quantity</label>
-                        <input type="number" min="1" x-model="stockInQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="quantity-2">Quantity</label>
+                        <input id="quantity-2" type="number" min="1" x-model="stockInQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Batch / Lot Number</label>
-                        <input type="text" x-model="stockInBatch" placeholder="e.g. LOT-2026-0715" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="batch-lot-number">Batch / Lot Number</label>
+                        <input id="batch-lot-number" type="text" x-model="stockInBatch" placeholder="e.g. LOT-2026-0715" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Source / Donor</label>
-                        <input type="text" x-model="stockInSource" placeholder="e.g. DSWD Masbate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="source-donor">Source / Donor</label>
+                        <input id="source-donor" type="text" x-model="stockInSource" placeholder="e.g. DSWD Masbate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Received By</label>
-                        <input type="text" x-model="stockInBy" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="received-by-2">Received By</label>
+                        <input id="received-by-2" type="text" x-model="stockInBy" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date Received</label>
-                        <input type="date" x-model="stockInDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="date-received-2">Date Received</label>
+                        <input id="date-received-2" type="date" x-model="stockInDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Condition</label>
-                        <select x-model="stockInCondition" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="condition">Condition</label>
+                        <select id="condition" x-model="stockInCondition" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option>Good</option>
                             <option>Fair</option>
                             <option>Poor</option>
@@ -832,8 +832,8 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Notes</label>
-                    <textarea x-model="stockInNotes" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="notes">Notes</label>
+                    <textarea id="notes" x-model="stockInNotes" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
@@ -874,8 +874,8 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Item</label>
-                        <select x-model="stockOutItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="item">Item</label>
+                        <select id="item" x-model="stockOutItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option value="">Select item…</option>
                             @foreach($inventory as $item)
                             <option value="{{ $item['name'] }}" @if(isset($selectedInventoryItem) && $selectedInventoryItem && $item['code'] === ($selectedInventoryItem['code'] ?? '')) selected @endif>
@@ -885,16 +885,16 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quantity to Release</label>
-                        <input type="number" min="1" x-model="stockOutQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="quantity-to-release">Quantity to Release</label>
+                        <input id="quantity-to-release" type="number" min="1" x-model="stockOutQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                         <div x-show="stockOutQty > 999 && stockOutItem === ''" class="mt-1.5 flex items-center gap-1.5 text-xs text-amber-600">
                             <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>
                             Requested quantity exceeds available stock.
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Purpose</label>
-                        <select x-model="stockOutPurpose" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="purpose">Purpose</label>
+                        <select id="purpose" x-model="stockOutPurpose" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option value="">Select purpose…</option>
                             <option>Relief Distribution</option>
                             <option>Evacuation Center Supply</option>
@@ -903,17 +903,17 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Destination / Beneficiary</label>
-                        <input type="text" x-model="stockOutDest" placeholder="e.g. Masbaranon EC" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="destination-beneficiary">Destination / Beneficiary</label>
+                        <input id="destination-beneficiary" type="text" x-model="stockOutDest" placeholder="e.g. Masbaranon EC" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Authorized By</label>
-                        <input type="text" x-model="stockOutBy" placeholder="Authorizing officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="authorized-by">Authorized By</label>
+                        <input id="authorized-by" type="text" x-model="stockOutBy" placeholder="Authorizing officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Remarks</label>
-                    <textarea x-model="stockOutRemarks" rows="2" placeholder="Additional remarks…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="remarks">Remarks</label>
+                    <textarea id="remarks" x-model="stockOutRemarks" rows="2" placeholder="Additional remarks…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
@@ -953,8 +953,8 @@
             </div>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Requesting Entity</label>
-                    <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="requesting-entity">Requesting Entity</label>
+                    <select id="requesting-entity" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                         <option value="">Select center or barangay…</option>
                         <optgroup label="Evacuation Centers">
                             @foreach($centers as $center)
@@ -981,7 +981,7 @@
                                     <option value="{{ $item['code'] }}">{{ $item['name'] }}</option>
                                     @endforeach
                                 </select>
-                                <input type="number" min="1" placeholder="Qty" class="w-24 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                                <input aria-label="Qty" type="number" min="1" placeholder="Qty" class="w-24 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                             </div>
                         </template>
                     </div>
@@ -996,12 +996,12 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Beneficiary Count</label>
-                        <input type="number" min="0" x-model="reqBeneficiaries" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="beneficiary-count">Beneficiary Count</label>
+                        <input id="beneficiary-count" type="number" min="0" x-model="reqBeneficiaries" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Priority</label>
-                        <select x-model="reqPriority" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="priority">Priority</label>
+                        <select id="priority" x-model="reqPriority" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
                             <option>Normal</option>
                             <option>High</option>
                             <option>Urgent</option>
@@ -1009,12 +1009,12 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Reason / Justification</label>
-                    <textarea x-model="reqReason" rows="2" placeholder="Describe the need…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="reason-justification">Reason / Justification</label>
+                    <textarea id="reason-justification" x-model="reqReason" rows="2" placeholder="Describe the need…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Requested By</label>
-                    <input type="text" x-model="reqBy" placeholder="Name and designation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="requested-by">Requested By</label>
+                    <input id="requested-by" type="text" x-model="reqBy" placeholder="Name and designation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
                 </div>
             </div>
             <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">

@@ -80,7 +80,7 @@
 <div class="flex flex-wrap gap-2 items-center">
     <div class="relative">
         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-        <input type="text" x-model="incidentSearch"
+        <input aria-label="Search by ID, type, or barangay" type="text" x-model="incidentSearch"
             placeholder="Search by ID, type, or barangay..."
             class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-64 transition-colors">
     </div>
@@ -544,8 +544,8 @@
                 <p class="text-sm text-slate-700">Coordinate with BFP for water rescue support. Confirm ambulance standby at LGU compound. Alert RHU nurse on duty for potential trauma cases.</p>
             </div>
             <div class="border-t border-slate-100 pt-4">
-                <label class="block text-xs font-medium text-slate-600 mb-1.5">Add a Note</label>
-                <textarea x-model="newNote" rows="3"
+                <label class="block text-xs font-medium text-slate-600 mb-1.5" for="add-a-note">Add a Note</label>
+                <textarea id="add-a-note" x-model="newNote" rows="3"
                     placeholder="Enter your note or update..."
                     class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none transition-colors"></textarea>
                 <button @click="if(newNote.trim()){ toast('Note added.', 'success'); newNote=''; } else { toast('Note cannot be empty.', 'error'); }"
@@ -658,8 +658,8 @@
             <div x-show="incStep === 1" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Incident Type --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Incident Type <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-type-2">Incident Type <span class="text-rose-500">*</span></label>
+                    <select id="incident-type-2" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select type...</option>
                         <option>Flood</option>
                         <option>Landslide</option>
@@ -685,8 +685,8 @@
                 </div>
                 {{-- Barangay --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Barangay <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="barangay-7">Barangay <span class="text-rose-500">*</span></label>
+                    <select id="barangay-7" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select barangay...</option>
                         @foreach($barangays as $brgy)
                             <option>{{ $brgy }}</option>
@@ -695,20 +695,20 @@
                 </div>
                 {{-- Sitio / Exact Location --}}
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Sitio / Exact Location</label>
-                    <input type="text" placeholder="e.g. Near the old bridge, Sitio Lawod"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="sitio-exact-location">Sitio / Exact Location</label>
+                    <input id="sitio-exact-location" type="text" placeholder="e.g. Near the old bridge, Sitio Lawod"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Date and Time --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Date & Time of Incident <span class="text-rose-500">*</span></label>
-                    <input type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="date-time-of-incident">Date & Time of Incident <span class="text-rose-500">*</span></label>
+                    <input id="date-time-of-incident" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Severity --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Severity <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="severity">Severity <span class="text-rose-500">*</span></label>
+                    <select id="severity" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select severity...</option>
                         <option>Critical</option>
                         <option>High</option>
@@ -718,8 +718,8 @@
                 </div>
                 {{-- Description --}}
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Description <span class="text-rose-500">*</span></label>
-                    <textarea rows="4" placeholder="Describe the incident in detail — nature, current situation, immediate danger, etc."
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="description">Description <span class="text-rose-500">*</span></label>
+                    <textarea id="description" rows="4" placeholder="Describe the incident in detail — nature, current situation, immediate danger, etc."
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none transition-colors"></textarea>
                 </div>
             </div>
@@ -729,14 +729,14 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {{-- People Affected --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1.5">People Affected (est.)</label>
-                        <input type="number" min="0" placeholder="0"
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5" for="people-affected-est">People Affected (est.)</label>
+                        <input id="people-affected-est" type="number" min="0" placeholder="0"
                             class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                     </div>
                     {{-- Persons Needing Rescue --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Persons Needing Rescue</label>
-                        <input type="number" min="0" placeholder="0"
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5" for="persons-needing-rescue">Persons Needing Rescue</label>
+                        <input id="persons-needing-rescue" type="number" min="0" placeholder="0"
                             class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                     </div>
                 </div>
@@ -772,20 +772,20 @@
             <div x-show="incStep === 3" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Reporter Name --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Reporter Name <span class="text-rose-500">*</span></label>
-                    <input type="text" placeholder="Full name of reporter"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="reporter-name">Reporter Name <span class="text-rose-500">*</span></label>
+                    <input id="reporter-name" type="text" placeholder="Full name of reporter"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Contact Number --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Contact Number</label>
-                    <input type="tel" placeholder="09XXXXXXXXX"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="contact-number-2">Contact Number</label>
+                    <input id="contact-number-2" type="tel" placeholder="09XXXXXXXXX"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Source --}}
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Source / Channel <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="source-channel">Source / Channel <span class="text-rose-500">*</span></label>
+                    <select id="source-channel" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select source...</option>
                         <option>Citizen Mobile App</option>
                         <option>Barangay</option>
@@ -867,8 +867,8 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Team --}}
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Assign Team <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="assign-team">Assign Team <span class="text-rose-500">*</span></label>
+                    <select id="assign-team" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select team...</option>
                         <option>Rescue Team Alpha</option>
                         <option>Rescue Team Bravo</option>
@@ -881,14 +881,14 @@
                 </div>
                 {{-- Lead Responder --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Lead Responder</label>
-                    <input type="text" placeholder="Full name"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="lead-responder">Lead Responder</label>
+                    <input id="lead-responder" type="text" placeholder="Full name"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Vehicle --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Vehicle <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="vehicle">Vehicle <span class="text-rose-500">*</span></label>
+                    <select id="vehicle" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select vehicle...</option>
                         <option>MDRRMO Rescue Truck 1</option>
                         <option>MDRRMO Rescue Boat A</option>
@@ -900,14 +900,14 @@
                 </div>
                 {{-- Destination --}}
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Destination / Drop-off Point</label>
-                    <input type="text" placeholder="Enter destination or address"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="destination-drop-off-point">Destination / Drop-off Point</label>
+                    <input id="destination-drop-off-point" type="text" placeholder="Enter destination or address"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Dispatch Priority --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Dispatch Priority <span class="text-rose-500">*</span></label>
-                    <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="dispatch-priority">Dispatch Priority <span class="text-rose-500">*</span></label>
+                    <select id="dispatch-priority" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option>Normal</option>
                         <option>Urgent</option>
                         <option>Emergency</option>
@@ -915,8 +915,8 @@
                 </div>
                 {{-- Expected Arrival --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Expected Arrival (time)</label>
-                    <input type="time" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="expected-arrival-time">Expected Arrival (time)</label>
+                    <input id="expected-arrival-time" type="time" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
             </div>
 
@@ -935,15 +935,15 @@
 
             {{-- Special Instructions --}}
             <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1.5">Special Instructions</label>
-                <textarea rows="3" placeholder="Enter any special instructions for the team..."
+                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="special-instructions">Special Instructions</label>
+                <textarea id="special-instructions" rows="3" placeholder="Enter any special instructions for the team..."
                     class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none transition-colors"></textarea>
             </div>
 
             {{-- Supporting Agency --}}
             <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1.5">Supporting Agency <span class="text-slate-400 font-normal">(optional)</span></label>
-                <input type="text" placeholder="e.g. BFP, PNP, RHU"
+                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="supporting-agency-optional">Supporting Agency <span class="text-slate-400 font-normal">(optional)</span></label>
+                <input id="supporting-agency-optional" type="text" placeholder="e.g. BFP, PNP, RHU"
                     class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
             </div>
         </div>

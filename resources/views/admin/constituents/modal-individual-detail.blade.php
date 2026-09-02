@@ -903,7 +903,7 @@
                                         <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
                                             Rejection Remarks <span class="normal-case font-normal text-slate-400">— required only if rejecting</span>
                                         </label>
-                                        <textarea
+                                        <textarea aria-label="Rejection Remarks — required only if rejecting"
                                             x-model="rejectAccountRemarks" rows="4" placeholder="e.g. ID photo unreadable, name doesn't match uploaded ID, selfie doesn't clearly show the face..."
                                             class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                                         ></textarea>
@@ -2107,7 +2107,7 @@
                                         <x-ui.button size="sm" variant="danger" icon="flag" @click="rejecting = true; rejectRemarks = ''">Reject</x-ui.button>
                                     </div>
                                     <div x-show="rejecting" x-cloak class="space-y-2">
-                                        <textarea
+                                        <textarea aria-label="'Reason for rejecting ' + currentSignalMeta.label + '…'"
                                             x-model="rejectRemarks" rows="2" :placeholder="'Reason for rejecting ' + currentSignalMeta.label + '…'"
                                             class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                                         ></textarea>

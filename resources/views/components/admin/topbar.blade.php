@@ -25,7 +25,7 @@
 
         <div class="hidden md:flex items-center relative">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"></i>
-            <input
+            <input aria-label="Search residents, requests, barangays"
                 type="text"
                 placeholder="Search residents, requests, barangays..."
                 class="w-52 lg:w-72 pl-10 pr-4 py-2 text-sm rounded-xl bg-slate-100/80 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"

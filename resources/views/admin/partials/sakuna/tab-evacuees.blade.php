@@ -124,7 +124,7 @@
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-48">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
-            <input type="text" x-model="evacueeSearch" placeholder="Search by name or ID…"
+            <input aria-label="Search by name or ID" type="text" x-model="evacueeSearch" placeholder="Search by name or ID…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
         <select x-model="evCenterFilter"
@@ -604,7 +604,7 @@
             <div x-show="evacueeRegStep === 1" class="space-y-4">
                 <div class="relative">
                     <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
-                    <input type="text" x-model="regStep1Search" placeholder="Search resident by name or ID…"
+                    <input aria-label="Search resident by name or ID" type="text" x-model="regStep1Search" placeholder="Search resident by name or ID…"
                         class="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                 </div>
                 <div class="space-y-2">
@@ -645,8 +645,8 @@
             {{-- Step 2: Select Members --}}
             <div x-show="evacueeRegStep === 2" class="space-y-4">
                 <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <label class="text-sm font-medium text-slate-700">Select all present members</label>
-                    <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                    <label class="text-sm font-medium text-slate-700" for="select-all-present-members">Select all present members</label>
+                    <input id="select-all-present-members" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
                 </div>
                 <div class="space-y-2">
                     @foreach([
@@ -679,8 +679,8 @@
                     @endforeach
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Additional Notes</label>
-                    <textarea rows="3" placeholder="Describe specific needs or conditions…"
+                    <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="additional-notes">Additional Notes</label>
+                    <textarea id="additional-notes" rows="3" placeholder="Describe specific needs or conditions…"
                         class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
                 </div>
             </div>
@@ -692,8 +692,8 @@
                     <p class="text-xs text-amber-700">Household ESP-2021-045123 is not currently checked in at any center.</p>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Select Evacuation Center</label>
-                    <select class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="select-evacuation-center">Select Evacuation Center</label>
+                    <select id="select-evacuation-center" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                         <option value="">— Choose center —</option>
                         @foreach($centers as $c)
                             @if(in_array($c['status'], ['Open', 'Near Capacity']))
@@ -703,8 +703,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Zone / Room Assignment</label>
-                    <select class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="zone-room-assignment">Zone / Room Assignment</label>
+                    <select id="zone-room-assignment" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                         <option value="">— Choose zone —</option>
                         <option>Zone A</option>
                         <option>Zone B</option>

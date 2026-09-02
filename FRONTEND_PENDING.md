@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 37, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 39, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -376,3 +376,43 @@ keyboard-only and screen-reader passes are done.
 the rendered DOM, which is the better instrument, but it binds port 80 and so
 needs root: `sudo node scripts/audit.mjs`. The source scan above is a weaker
 substitute chosen knowingly, not a claim of equivalence.
+
+
+---
+
+## 2026-09-03 — TAB 10: form controls named, 413 → 161
+
+**494 controls needed an accessible name; 413 had none.** 252 now do.
+
+The fix was applied by markup shape, not uniformly, because the right mechanism
+differs:
+
+| Shape | Count | Fix | Why this one |
+| --- | --- | --- | --- |
+| `<label>Text</label>` then a control, **outside** an Alpine loop | 151 | `for`/`id` pair | proper association, and the visible label becomes clickable |
+| Same shape **inside** `<template x-for>` | 55 | `aria-label` | a static `id` inside a loop renders many times — duplicate ids are a worse defect than the one being fixed |
+| Placeholder only, no adjacent label | 46 | `aria-label` from the placeholder | **a placeholder is not a name**: it vanishes on focus and assistive tech treats it differently |
+
+Verified: every changed view parses, all 55 routes still render, and the three
+ids that appear twice repo-wide (`password`, `barangay`, `dp-print-area`) sit on
+**different pages**, so no page has a collision.
+
+### Held by a ratchet, not a clean assertion
+
+`tests/Feature/ControlNameTest.php` asserts the unnamed count never exceeds
+**161**. A gate that fails on the day it lands is a gate someone disables, so
+this one starts where reality is and may only be lowered. A second test asserts
+the ceiling is not left slack — if the real count falls 25 below it, the suite
+tells you to tighten the constant, so the ratchet cannot quietly stop ratcheting.
+
+Mutation-tested: adding one unlabelled input fails with
+*"Controls with no accessible name rose to 162 (ceiling 161) of 495"*.
+
+### What remains, and why it is not mechanical
+
+**66 of the 161 are in `admin/partials/sakuna/tab-bdrrmc-forms.blade.php`** —
+controls laid out as printed-form grids with no adjacent label text to derive a
+name from. Naming them means reading the BDRRMC forms and deciding what each
+cell is; a script would invent names, which is worse than none. Certification
+gate 7 stays **FAIL** until these, the keyboard-only pass and the screen-reader
+pass are done.

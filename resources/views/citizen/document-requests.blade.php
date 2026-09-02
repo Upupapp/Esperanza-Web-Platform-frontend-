@@ -826,7 +826,7 @@
                             <!-- Full-width: generic purpose OR structured fields (barangay documents) — sits below the two-column grid so it isn't squeezed beside the sticky Request Summary -->
                             <div class="mb-6" x-show="!(docs[selectedDoc]?.fields?.length)">
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Layunin" en="Purpose" /></label>
-                                <textarea rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                <textarea aria-label="e.g. Employment requirement" rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                             </div>
 
                             <div class="mb-6" x-show="docs[selectedDoc]?.fields?.length" x-cloak>
@@ -871,7 +871,7 @@
                                                         </template>
                                                     </div>
                                                     <div class="mt-2" x-show="f.allowOther">
-                                                        <input type="text" x-model="otherPurposeText[f.key]" placeholder="Others (please specify)" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                        <input aria-label="Others (please specify)" type="text" x-model="otherPurposeText[f.key]" placeholder="Others (please specify)" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                     </div>
                                                 </div>
                                             </template>

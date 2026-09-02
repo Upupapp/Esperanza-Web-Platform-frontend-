@@ -996,7 +996,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <input aria-label="Search reference or citizen" type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
                 <select x-model="categoryFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
                     <option value="">All Categories</option>
@@ -1343,7 +1343,7 @@
                                             <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
                                             <template x-for="reason in rejectReasons" :key="reason"><option :value="reason" x-text="reason"></option></template>
                                         </select>
-                                        <textarea x-model="req._remarks" rows="2" placeholder="Remarks for the citizen (optional)..." class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                                        <textarea aria-label="Remarks for the citizen (optional)" x-model="req._remarks" rows="2" placeholder="Remarks for the citizen (optional)..." class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                                         <div class="flex items-center gap-2">
                                             <button
                                                 type="button" x-bind:disabled="!req._reason" @click="confirmRequirementDecision(req)"
@@ -1403,7 +1403,7 @@
                             <div class="space-y-3">
                                 <div>
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Assessment Result</label>
-                                    <select x-model="selected.assessment.eligibility" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <select aria-label="Assessment Result" x-model="selected.assessment.eligibility" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                         <option value="">Select a result…</option>
                                         <option value="Eligible — Recommend Approval">Eligible — Recommend Approval</option>
                                         <option value="Needs Further Assessment">Needs Further Assessment</option>
@@ -1412,19 +1412,19 @@
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Social Worker Assessment Notes</label>
-                                    <textarea x-model="selected.assessment.notes" @change="persistProgress()" rows="2" placeholder="Eligibility findings, household circumstances, etc." class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                                    <textarea aria-label="Social Worker Assessment Notes" x-model="selected.assessment.notes" @change="persistProgress()" rows="2" placeholder="Eligibility findings, household circumstances, etc." class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Recommended Assistance</label>
-                                    <input type="text" x-model="selected.assessment.recommendedAssistance" @change="persistProgress()" :placeholder="selected.type" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Recommended Assistance" type="text" x-model="selected.assessment.recommendedAssistance" @change="persistProgress()" :placeholder="selected.type" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                                 <div x-show="['cash', 'medical'].includes(processingKind)">
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Recommended Amount (₱)</label>
-                                    <input type="number" min="0" step="0.01" x-model.number="selected.assessment.recommendedAmount" @change="persistProgress()" placeholder="0.00" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Recommended Amount (₱)" type="number" min="0" step="0.01" x-model.number="selected.assessment.recommendedAmount" @change="persistProgress()" placeholder="0.00" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                                 <div x-show="!['cash', 'medical'].includes(processingKind)">
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Recommended Package / Coverage</label>
-                                    <input type="text" x-model="selected.assessment.recommendedPackage" @change="persistProgress()" placeholder="e.g. Relief goods package, Registration slot" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Recommended Package / Coverage" type="text" x-model="selected.assessment.recommendedPackage" @change="persistProgress()" placeholder="e.g. Relief goods package, Registration slot" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                             </div>
                         </template>
@@ -1460,11 +1460,11 @@
                                 <p class="text-[11px] text-slate-500">Adjust the amount/package below only if the approved assistance differs from the social worker's recommendation — otherwise it carries over automatically on Approve.</p>
                                 <div x-show="['cash', 'medical'].includes(processingKind)">
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Approved Amount (₱)</label>
-                                    <input type="number" min="0" step="0.01" x-model.number="selected.approval.approvedAmount" @change="persistProgress()" :placeholder="selected.assessment.recommendedAmount != null ? String(selected.assessment.recommendedAmount) : '0.00'" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Approved Amount (₱)" type="number" min="0" step="0.01" x-model.number="selected.approval.approvedAmount" @change="persistProgress()" :placeholder="selected.assessment.recommendedAmount != null ? String(selected.assessment.recommendedAmount) : '0.00'" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                                 <div x-show="!['cash', 'medical'].includes(processingKind)">
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Approved Package / Coverage</label>
-                                    <input type="text" x-model="selected.approval.approvedPackage" @change="persistProgress()" :placeholder="selected.assessment.recommendedPackage || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Approved Package / Coverage" type="text" x-model="selected.approval.approvedPackage" @change="persistProgress()" :placeholder="selected.assessment.recommendedPackage || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                             </div>
                         </template>
@@ -1483,7 +1483,7 @@
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
                                             <label class="block text-[11px] font-medium text-slate-600 mb-1">Release Method</label>
-                                            <select x-model="selected.processing.releaseMethod" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                            <select aria-label="Release Method" x-model="selected.processing.releaseMethod" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                 <option value="">Select…</option>
                                                 <option value="Cash">Cash</option>
                                                 <option value="Check">Check</option>
@@ -1492,7 +1492,7 @@
                                         </div>
                                         <div>
                                             <label class="block text-[11px] font-medium text-slate-600 mb-1">Voucher / Reference No.</label>
-                                            <input type="text" x-model="selected.processing.voucherRef" @change="persistProgress()" placeholder="ASSIST-2026-XXXX" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                            <input aria-label="Voucher / Reference No." type="text" x-model="selected.processing.voucherRef" @change="persistProgress()" placeholder="ASSIST-2026-XXXX" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                         </div>
                                     </div>
                                 </div>
@@ -1501,15 +1501,15 @@
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
                                         <label class="block text-[11px] font-medium text-slate-600 mb-1">Assistance Package</label>
-                                        <input type="text" x-model="selected.processing.package" @change="persistProgress()" :placeholder="selected.approval.approvedPackage || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <input aria-label="Assistance Package" type="text" x-model="selected.processing.package" @change="persistProgress()" :placeholder="selected.approval.approvedPackage || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     </div>
                                     <div>
                                         <label class="block text-[11px] font-medium text-slate-600 mb-1">Quantity</label>
-                                        <input type="text" x-model="selected.processing.quantity" @change="persistProgress()" placeholder="e.g. 1 relief pack" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <input aria-label="Quantity" type="text" x-model="selected.processing.quantity" @change="persistProgress()" placeholder="e.g. 1 relief pack" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     </div>
                                     <div class="col-span-2">
                                         <label class="block text-[11px] font-medium text-slate-600 mb-1">Distribution Method</label>
-                                        <input type="text" x-model="selected.processing.distributionMethod" @change="persistProgress()" placeholder="e.g. Pickup at Barangay Hall" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <input aria-label="Distribution Method" type="text" x-model="selected.processing.distributionMethod" @change="persistProgress()" placeholder="e.g. Pickup at Barangay Hall" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     </div>
                                 </div>
                             </template>
@@ -1518,11 +1518,11 @@
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
                                             <label class="block text-[11px] font-medium text-slate-600 mb-1">Hospital / Provider</label>
-                                            <input type="text" x-model="selected.processing.hospitalProvider" @change="persistProgress()" placeholder="e.g. Masbate Provincial Hospital" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                            <input aria-label="Hospital / Provider" type="text" x-model="selected.processing.hospitalProvider" @change="persistProgress()" placeholder="e.g. Masbate Provincial Hospital" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                         </div>
                                         <div>
                                             <label class="block text-[11px] font-medium text-slate-600 mb-1">Release Method</label>
-                                            <select x-model="selected.processing.releaseMethod" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                            <select aria-label="Release Method" x-model="selected.processing.releaseMethod" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                 <option value="">Select…</option>
                                                 <option value="Guarantee Letter">Guarantee Letter</option>
                                                 <option value="Cash">Cash</option>
@@ -1532,19 +1532,19 @@
                                     </div>
                                     <div>
                                         <label class="block text-[11px] font-medium text-slate-600 mb-1">Referral / Guarantee Details</label>
-                                        <textarea x-model="selected.processing.referralDetails" @change="persistProgress()" rows="2" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                                        <textarea aria-label="Referral / Guarantee Details" x-model="selected.processing.referralDetails" @change="persistProgress()" rows="2" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                                     </div>
                                 </div>
                             </template>
                             <template x-if="processingKind === 'registration' || processingKind === 'general'">
                                 <div>
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Registration / Enrollment Reference</label>
-                                    <input type="text" x-model="selected.processing.voucherRef" @change="persistProgress()" placeholder="e.g. Enrollment batch / reference no." class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Registration / Enrollment Reference" type="text" x-model="selected.processing.voucherRef" @change="persistProgress()" placeholder="e.g. Enrollment batch / reference no." class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                             </template>
                             <div>
                                 <label class="block text-[11px] font-medium text-slate-600 mb-1">Processing Notes</label>
-                                <textarea x-model="selected.processing.processingNotes" @change="persistProgress()" rows="2" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                                <textarea aria-label="Processing Notes" x-model="selected.processing.processingNotes" @change="persistProgress()" rows="2" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1558,15 +1558,15 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Release Location</label>
-                                    <input type="text" x-model="selected.release.releaseLocation" @change="persistProgress()" placeholder="Esperanza Municipal Hall" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Release Location" type="text" x-model="selected.release.releaseLocation" @change="persistProgress()" placeholder="Esperanza Municipal Hall" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Scheduled Release Date</label>
-                                    <input type="text" x-model="selected.release.scheduledDate" @change="persistProgress()" placeholder="e.g. September 5, 2026" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Scheduled Release Date" type="text" x-model="selected.release.scheduledDate" @change="persistProgress()" placeholder="e.g. September 5, 2026" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                                 <div class="col-span-2">
                                     <label class="block text-[11px] font-medium text-slate-600 mb-1">Reference</label>
-                                    <input type="text" x-model="selected.release.reference" @change="persistProgress()" :placeholder="selected.processing.voucherRef || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <input aria-label="Reference" type="text" x-model="selected.release.reference" @change="persistProgress()" :placeholder="selected.processing.voucherRef || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 </div>
                             </div>
                         </template>
@@ -1611,7 +1611,7 @@
                                 </label>
                             </template>
                         </div>
-                        <input type="text" x-model="missingRequirementOther" placeholder="Other requirement (optional)" class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 mb-2 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <input aria-label="Other requirement (optional)" type="text" x-model="missingRequirementOther" placeholder="Other requirement (optional)" class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 mb-2 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <div class="flex items-center gap-2">
                             <button type="button" @click="requestRequirements()" :disabled="!missingRequirementPicks.length && !missingRequirementOther.trim()" class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none bg-amber-500 hover:bg-amber-600 rounded-lg px-2.5 py-1.5 transition-colors">Confirm Requirements</button>
                             <button type="button" @click="showRequirementsForm = false" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Cancel</button>
@@ -1622,7 +1622,7 @@
                          required before confirming. --}}
                     <div x-ref="returnForm" class="rounded-xl border border-orange-200 p-3.5 mt-3" x-show="showReturnForm" x-cloak>
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Reason for Returning to Assessment <span class="text-slate-400 font-normal">(required)</span></label>
-                        <textarea x-model="returnRemarks" rows="2" placeholder="e.g. Recommended amount needs review against the household's actual income documentation." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                        <textarea aria-label="Reason for Returning to Assessment (required)" x-model="returnRemarks" rows="2" placeholder="e.g. Recommended amount needs review against the household's actual income documentation." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                         <div class="flex items-center gap-2 mt-2">
                             <button type="button" @click="returnForReassessment()" :disabled="!returnRemarks.trim()" class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none bg-orange-500 hover:bg-orange-600 rounded-lg px-2.5 py-1.5 transition-colors">Confirm Return</button>
                             <button type="button" @click="showReturnForm = false" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Cancel</button>
@@ -1632,7 +1632,7 @@
                     {{-- Cancel reason — Milestone 3. --}}
                     <div x-ref="cancelForm" class="rounded-xl border border-slate-300 p-3.5 mt-3" x-show="showCancelForm" x-cloak>
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Cancellation Reason <span class="text-slate-400 font-normal">(required)</span></label>
-                        <textarea x-model="cancelRemarks" rows="2" placeholder="e.g. Citizen requested to withdraw the application." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                        <textarea aria-label="Cancellation Reason (required)" x-model="cancelRemarks" rows="2" placeholder="e.g. Citizen requested to withdraw the application." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                         <div class="flex items-center gap-2 mt-2">
                             <button type="button" @click="cancelCase()" :disabled="!cancelRemarks.trim()" class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none bg-slate-600 hover:bg-slate-700 rounded-lg px-2.5 py-1.5 transition-colors">Confirm Cancel</button>
                             <button type="button" @click="showCancelForm = false" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Keep Case</button>
@@ -1656,7 +1656,7 @@
                                 class="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-xl px-3 py-2 transition-colors whitespace-nowrap"
                             >Use requirement reasons</button>
                         </div>
-                        <textarea
+                        <textarea aria-label="e.g. Does not meet the program's eligibility criteria"
                             x-model="rejectRemarks" rows="2" placeholder="e.g. Does not meet the program's eligibility criteria."
                             class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                         ></textarea>

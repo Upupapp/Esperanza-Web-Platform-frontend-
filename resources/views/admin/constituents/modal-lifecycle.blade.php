@@ -188,10 +188,10 @@
             <div x-show="lifecycleAction === 'Transfer'" class="space-y-4">
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="target-barangay">
                         Target Barangay <span class="text-red-500">*</span>
                     </label>
-                    <select
+                    <select id="target-barangay"
                         x-model="form.target_barangay"
                         class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                         required
@@ -207,10 +207,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="reason-for-transfer">
                         Reason for Transfer <span class="text-red-500">*</span>
                     </label>
-                    <textarea
+                    <textarea id="reason-for-transfer"
                         x-model="form.transfer_reason"
                         placeholder="Briefly state the reason for this transfer (e.g., marriage, employment relocation, family consolidation…)"
                         rows="3"
@@ -221,10 +221,10 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="effective-date">
                             Effective Date <span class="text-red-500">*</span>
                         </label>
-                        <input
+                        <input id="effective-date"
                             type="date"
                             x-model="form.effective_date"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
@@ -232,10 +232,10 @@
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="certifying-officer">
                             Certifying Officer <span class="text-red-500">*</span>
                         </label>
-                        <input
+                        <input id="certifying-officer"
                             type="text"
                             x-model="form.certifying_officer"
                             placeholder="Full name of the barangay officer"
@@ -262,10 +262,10 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="date-of-passing">
                             Date of Passing <span class="text-red-500">*</span>
                         </label>
-                        <input
+                        <input id="date-of-passing"
                             type="date"
                             x-model="form.date_of_passing"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
@@ -273,8 +273,8 @@
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cause of Death</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="cause-of-death">Cause of Death</label>
+                        <input id="cause-of-death"
                             type="text"
                             x-model="form.cause_of_death"
                             placeholder="e.g. Natural causes, illness"
@@ -284,10 +284,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="informant-name">
                         Informant Name <span class="text-red-500">*</span>
                     </label>
-                    <input
+                    <input id="informant-name"
                         type="text"
                         x-model="form.informant_name"
                         placeholder="Name of the person reporting the death"
@@ -297,8 +297,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">PSA Death Certificate Reference No.</label>
-                    <input
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="psa-death-certificate-reference-no">PSA Death Certificate Reference No.</label>
+                    <input id="psa-death-certificate-reference-no"
                         type="text"
                         x-model="form.death_cert_ref"
                         placeholder="e.g. 2024-DC-000123"
@@ -334,10 +334,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="reason-for-archiving">
                         Reason for Archiving <span class="text-red-500">*</span>
                     </label>
-                    <textarea
+                    <textarea id="reason-for-archiving"
                         x-model="form.archive_reason"
                         placeholder="Provide a reason (e.g., resident migrated permanently, duplicate record, data entry error…)"
                         rows="4"

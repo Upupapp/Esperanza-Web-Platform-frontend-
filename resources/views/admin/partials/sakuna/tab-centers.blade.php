@@ -82,7 +82,7 @@
 <div class="flex flex-wrap gap-2 items-center">
     <div class="relative">
         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-        <input type="text" x-model="centerSearch"
+        <input aria-label="Search by name or barangay" type="text" x-model="centerSearch"
             placeholder="Search by name or barangay..."
             class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-60 transition-colors">
     </div>
@@ -854,16 +854,16 @@
             <div x-show="centerStep === 1" class="space-y-4">
                 {{-- Center Name --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Center Name <span class="text-rose-500">*</span></label>
-                    <input type="text" placeholder="e.g. Poblacion Elementary School"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="center-name">Center Name <span class="text-rose-500">*</span></label>
+                    <input id="center-name" type="text" placeholder="e.g. Poblacion Elementary School"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {{-- Barangay --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Barangay <span class="text-rose-500">*</span></label>
-                        <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5" for="barangay-5">Barangay <span class="text-rose-500">*</span></label>
+                        <select id="barangay-5" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                             <option value="">Select barangay...</option>
                             @foreach($barangays as $brgy)
                                 <option>{{ $brgy }}</option>
@@ -872,8 +872,8 @@
                     </div>
                     {{-- Facility Type --}}
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Facility Type <span class="text-rose-500">*</span></label>
-                        <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5" for="facility-type">Facility Type <span class="text-rose-500">*</span></label>
+                        <select id="facility-type" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                             <option value="">Select type...</option>
                             <option>School</option>
                             <option>Barangay Hall</option>
@@ -889,8 +889,8 @@
 
                 {{-- Full Address --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Full Address</label>
-                    <input type="text" placeholder="Street / Sitio, Barangay, Esperanza, Masbate"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="full-address-2">Full Address</label>
+                    <input id="full-address-2" type="text" placeholder="Street / Sitio, Barangay, Esperanza, Masbate"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
             </div>
@@ -900,41 +900,41 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Recommended Capacity --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Recommended Capacity <span class="text-rose-500">*</span></label>
-                    <input type="number" min="0" placeholder="e.g. 200"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="recommended-capacity">Recommended Capacity <span class="text-rose-500">*</span></label>
+                    <input id="recommended-capacity" type="number" min="0" placeholder="e.g. 200"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Max Emergency Capacity --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Max Emergency Capacity</label>
-                    <input type="number" min="0" placeholder="e.g. 250"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="max-emergency-capacity">Max Emergency Capacity</label>
+                    <input id="max-emergency-capacity" type="number" min="0" placeholder="e.g. 250"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Center Manager Name --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Center Manager Name <span class="text-rose-500">*</span></label>
-                    <input type="text" placeholder="Full name"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="center-manager-name">Center Manager Name <span class="text-rose-500">*</span></label>
+                    <input id="center-manager-name" type="text" placeholder="Full name"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 {{-- Contact Number --}}
                 <div>
-                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Contact Number</label>
-                    <input type="tel" placeholder="09XXXXXXXXX"
+                    <label class="block text-xs font-medium text-slate-700 mb-1.5" for="contact-number">Contact Number</label>
+                    <input id="contact-number" type="tel" placeholder="09XXXXXXXXX"
                         class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
             </div>
 
             {{-- Managing Office --}}
             <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1.5">Managing Office</label>
-                <input type="text" placeholder="e.g. MDRRMO, MSWD, DepEd Esperanza"
+                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="managing-office">Managing Office</label>
+                <input id="managing-office" type="text" placeholder="e.g. MDRRMO, MSWD, DepEd Esperanza"
                     class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
             </div>
 
             {{-- Safety Assessment --}}
             <div>
-                <label class="block text-xs font-medium text-slate-700 mb-1.5">Initial Safety Assessment</label>
-                <select class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="initial-safety-assessment">Initial Safety Assessment</label>
+                <select id="initial-safety-assessment" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                     <option>Good</option>
                     <option>Fair</option>
                     <option>Needs Inspection</option>

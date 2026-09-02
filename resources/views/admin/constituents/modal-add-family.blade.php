@@ -92,10 +92,10 @@
 
                 {{-- Surname --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="family-surname">
                         Family Surname <span class="text-rose-500">*</span>
                     </label>
-                    <input
+                    <input id="family-surname"
                         type="text"
                         x-model="form.surname"
                         placeholder="e.g. Santos"
@@ -133,10 +133,10 @@
                 {{-- Barangay + Sitio --}}
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="barangay-2">
                             Barangay <span class="text-rose-500">*</span>
                         </label>
-                        <select
+                        <select id="barangay-2"
                             x-model="form.barangay"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         >
@@ -147,8 +147,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Sitio / Purok</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="sitio-purok">Sitio / Purok</label>
+                        <input id="sitio-purok"
                             type="text"
                             x-model="form.sitio"
                             placeholder="e.g. Sitio Magsaysay"
@@ -160,8 +160,8 @@
                 {{-- Head of Family + Household ID --}}
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Head of Family</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="head-of-family">Head of Family</label>
+                        <input id="head-of-family"
                             type="text"
                             x-model="form.head_name"
                             placeholder="Full name of head"
@@ -169,8 +169,8 @@
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Link to Household ID <span class="text-slate-400 font-normal">(optional)</span></label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="link-to-household-id-optional">Link to Household ID <span class="text-slate-400 font-normal">(optional)</span></label>
+                        <input id="link-to-household-id-optional"
                             type="text"
                             x-model="form.household_id"
                             placeholder="e.g. 1042"
@@ -204,8 +204,8 @@
 
                 {{-- Notes --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Notes / Remarks</label>
-                    <textarea
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="notes-remarks">Notes / Remarks</label>
+                    <textarea id="notes-remarks"
                         x-model="form.notes"
                         rows="4"
                         placeholder="Any additional notes about this family…"

@@ -108,7 +108,7 @@
     {{-- Search --}}
     <div class="relative flex-1 min-w-48">
         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
-        <input
+        <input aria-label="Search by title or ID"
             type="text"
             x-model="alertSearch"
             placeholder="Search by title or ID…"
@@ -313,8 +313,8 @@
             <div class="space-y-4">
                 {{-- Title --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Alert Title <span class="text-rose-500">*</span></label>
-                    <input
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="alert-title">Alert Title <span class="text-rose-500">*</span></label>
+                    <input id="alert-title"
                         type="text"
                         placeholder="e.g. Flood Warning — Masbaranon"
                         class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors"
@@ -324,8 +324,8 @@
                 {{-- Type + Level side by side --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Alert Type <span class="text-rose-500">*</span></label>
-                        <select class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="alert-type">Alert Type <span class="text-rose-500">*</span></label>
+                        <select id="alert-type" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
                             <option value="">Select type…</option>
                             @foreach($alertTypes as $type)
                                 <option value="{{ $type }}">{{ $type }}</option>
@@ -333,8 +333,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Alert Level <span class="text-rose-500">*</span></label>
-                        <select class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="alert-level">Alert Level <span class="text-rose-500">*</span></label>
+                        <select id="alert-level" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
                             <option value="">Select level…</option>
                             @foreach($alertLevels as $level)
                                 <option value="{{ $level }}">{{ $level }}</option>
@@ -345,10 +345,10 @@
 
                 {{-- Message in Filipino --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="message-in-filipino">
                         Message in Filipino <span class="text-rose-500">*</span>
                     </label>
-                    <textarea
+                    <textarea id="message-in-filipino"
                         rows="4"
                         placeholder="Ilagay ang mensahe ng abiso sa Filipino…"
                         class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors resize-y">
@@ -363,7 +363,7 @@
                         Add English version (optional)
                     </summary>
                     <div class="px-4 pb-4 pt-2 border-t border-slate-100">
-                        <textarea
+                        <textarea aria-label="Enter English translation of the alert message"
                             rows="3"
                             placeholder="Enter English translation of the alert message…"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors resize-y">
@@ -373,8 +373,8 @@
 
                 {{-- Recommended Actions --}}
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Recommended Actions</label>
-                    <textarea
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="recommended-actions">Recommended Actions</label>
+                    <textarea id="recommended-actions"
                         rows="2"
                         placeholder="e.g. Lumikas agad patungo sa pinakamalapit na evacuation center. Dalhin ang mga gamit na kailangan."
                         class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors resize-y">
@@ -384,16 +384,16 @@
                 {{-- Issuing Office + Approving Officer --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Issuing Office</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="issuing-office">Issuing Office</label>
+                        <input id="issuing-office"
                             type="text"
                             placeholder="e.g. MDRRMO Esperanza"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors"
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Approving Officer</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="approving-officer">Approving Officer</label>
+                        <input id="approving-officer"
                             type="text"
                             placeholder="e.g. MDRRMO Head R. Salinas"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors"
@@ -495,16 +495,16 @@
                 {{-- Effective + Expiration --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Effective Date &amp; Time</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="effective-date-amp-time">Effective Date &amp; Time</label>
+                        <input id="effective-date-amp-time"
                             type="datetime-local"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors"
                         />
                         <p class="text-xs text-slate-400 mt-1">Leave blank to publish immediately.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Expiration Date &amp; Time</label>
-                        <input
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="expiration-date-amp-time">Expiration Date &amp; Time</label>
+                        <input id="expiration-date-amp-time"
                             type="datetime-local"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors"
                         />

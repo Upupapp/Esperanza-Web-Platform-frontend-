@@ -8,7 +8,7 @@
     @if($search)
         <div class="relative border-b border-slate-100 p-2">
             <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-4.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-            <input
+            <input aria-label="Search files"
                 type="text"
                 x-model="pickerQuery"
                 @if($bilingual)
