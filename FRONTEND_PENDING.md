@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 35, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 36, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -299,3 +299,32 @@ CI.
 fresh checkout has no Vite manifest and every route 500s with "Vite manifest not
 found" — a failure that reads as catastrophic and is not. `RouteRenderTest`
 fails early with that instruction rather than 55 stack traces.
+
+
+---
+
+## 2026-09-03 — the gate is now enabled by setup, not by reading
+
+The pre-push hook was documented in **four** places (README, `CLAUDE.md`,
+`DEPLOY_PROTOCOL.md`, this register) and a clone with it unset still pushed a
+tree carrying unresolved merge-conflict markers to `main` on 2026-09-01,
+breaking three pages. **Documentation was not the missing piece**, so two
+mechanisms replace it:
+
+- **`composer setup` now runs `git config core.hooksPath scripts/hooks`.** A
+  developer following the documented setup gets a live gate without reading
+  anything.
+- **`GateIsRunnableTest` now asserts the hook is *enabled in this clone*,** not
+  merely present and executable. An unconfigured clone turns the suite red with
+  the exact command to fix it.
+
+Mutation-tested: unsetting `core.hooksPath` fails the assertion with
+*"This clone will push without running the gate (core.hooksPath is unset)"*;
+restoring it returns 3 passed / 7 assertions.
+
+**For an existing clone** — including anyone who cloned before today — the one
+line is still needed by hand:
+
+```sh
+git config core.hooksPath scripts/hooks
+```

@@ -70,4 +70,34 @@ class GateIsRunnableTest extends TestCase
             'scripts/hooks/pre-push no longer runs scripts/gate.sh.'
         );
     }
+
+    /**
+     * The gate being present is not the same as the gate being ON.
+     *
+     * scripts/hooks/pre-push only runs if the clone points core.hooksPath at
+     * scripts/hooks, and that is off by default in every fresh clone. On
+     * 2026-09-01 a tree carrying unresolved merge-conflict markers reached main
+     * and broke three pages precisely because a clone had the gate on disk and
+     * nothing invoking it. The instruction was already in the README, CLAUDE.md,
+     * DEPLOY_PROTOCOL.md and FRONTEND_PENDING.md at the time -- documentation
+     * was not the missing piece, so this asserts it instead.
+     */
+    public function test_this_clone_actually_has_the_pre_push_hook_enabled(): void
+    {
+        if (! is_dir(base_path('.git')) && ! is_file(base_path('.git'))) {
+            $this->markTestSkipped('Not a git checkout, so there is no hook path to configure.');
+        }
+
+        $configured = trim((string) shell_exec(
+            'git -C '.escapeshellarg(base_path()).' config core.hooksPath 2>/dev/null'
+        ));
+
+        $this->assertSame('scripts/hooks', $configured, sprintf(
+            "This clone will push without running the gate (core.hooksPath is %s).\n".
+            "Enable it once, here, and the pre-push hook runs scripts/gate.sh on every push:\n\n".
+            "    git config core.hooksPath scripts/hooks\n\n".
+            '`composer setup` now does this for you; an older clone needs the line by hand.',
+            $configured === '' ? 'unset' : "\"{$configured}\""
+        ));
+    }
 }
