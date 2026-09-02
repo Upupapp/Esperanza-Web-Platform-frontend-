@@ -21,6 +21,32 @@ Stated by the project owner on 2026-08-29:
 | 6 | **Push** — only once step 5 is green. | `git push origin main` |
 | 7 | **Report what moved**: the merge base, what arrived from the remote, what was local-only and survived, and the pushed SHA. | — |
 
+## There is no CI here, and none is to be authored
+
+**Owner ruling, confirmed 2026-09-03.** This project runs no GitHub Actions and
+no `.github/workflows/**` file is to be written. The account's Actions credit is
+spent and is not being renewed, so a hosted run costs money that is not there
+*and* produces a red X meaning "no credit" rather than "the code is bad" — which
+poisons the signal every later gate depends on.
+
+**The gate therefore runs where the deploy happens.** A push to `main` *is* the
+deploy, so `scripts/hooks/pre-push` execs `scripts/gate.sh` before every push.
+
+**It is off by default in a fresh clone.** Enable it once, per clone:
+
+```sh
+git config core.hooksPath scripts/hooks
+```
+
+Without that line the gate exists and nothing runs it — which is exactly how a
+tree with unresolved merge-conflict markers reached `main` on 2026-09-01 and
+broke three pages. Check `git config core.hooksPath` before trusting that step 5
+is being enforced for you.
+
+**Never bypass with `--no-verify`.** If the gate cannot finish, fix the gate.
+
+---
+
 ## Why each trap is in here
 
 - **Untracked files are invisible to `git log` and to a merge.** A deliverable
