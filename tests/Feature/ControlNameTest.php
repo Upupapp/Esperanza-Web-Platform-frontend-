@@ -20,12 +20,12 @@ class ControlNameTest extends TestCase
     /**
      * Lower this as controls are named. Never raise it.
      *
-     * 2026-09-03: 413 -> 161. The remainder are concentrated in
-     * admin/partials/sakuna/tab-bdrrmc-forms.blade.php (66), whose controls sit
-     * in printed-form grids with no adjacent label text to derive a name from --
-     * they need a human to say what each field is.
+     * 2026-09-03: 413 -> 161 -> 95. The BDRRMC grids (66) turned out to be
+     * derivable after all: each cell's name is its column header, and the
+     * x-model binding (r.cas_m) independently agrees with it ("Casualty M"),
+     * so two sources had to concur before a name was written.
      */
-    private const CEILING = 161;
+    private const CEILING = 95;
 
     private function strip(string $s): string
     {

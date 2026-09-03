@@ -416,3 +416,28 @@ name from. Naming them means reading the BDRRMC forms and deciding what each
 cell is; a script would invent names, which is worse than none. Certification
 gate 7 stays **FAIL** until these, the keyboard-only pass and the screen-reader
 pass are done.
+
+
+### Same day, later: 161 → 95, and the BDRRMC grids were derivable after all
+
+I had written that the 66 BDRRMC controls "need a human to say what each field
+is" because a script would invent names. That was half right: **inventing** them
+would have been wrong, but they did not need inventing. They sit in `<td>` cells
+of two-row `<thead>` tables, so each cell's name is simply **its column header**
+— and the `x-model` binding independently agrees with it (`r.cas_m` ↔ "Casualty
+M", `r.pre03m` ↔ "Pre-Schooler 0-3 M").
+
+The mapping was **printed and inspected before anything was written**, and a name
+was only applied where the column header and the binding name concurred. Headers
+were expanded honouring `colspan`/`rowspan`, so "Roof Damage (Nipa / GI Sheets)"
++ "Slight-GI" compose into one name rather than either half alone. All 66 are
+inside `<template x-for>`, so `aria-label` was correct — a static `id` there
+renders once per row and collides.
+
+**The ratchet caught its own slack**, which is the point of the second test:
+after the fix it failed with *"Unnamed controls are down to 95; lower
+ControlNameTest::CEILING to match"*. Ceiling tightened 161 → 95.
+
+**95 remain**, now genuinely miscellaneous rather than concentrated. Certification
+gate 7 still **FAIL**: the keyboard-only and screen-reader passes are untouched,
+and `scripts/audit.mjs` still needs root to run.
