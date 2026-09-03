@@ -15,7 +15,8 @@
  *
  *   1. The stylesheet must actually apply. export.php bakes APP_URL into
  *      ABSOLUTE asset URLs and forces port 80/443, so dist/ can only be served
- *      from http://127.0.0.1 (port 80). Served anywhere else every stylesheet
+ *      from the host and port baked in (127.0.0.1:80 by default; set a port in
+ *      APP_URL and AUDIT_PORT to match). Served anywhere else every stylesheet
  *      404s, overflow-x falls back to `visible`, and wide tables inside a
  *      perfectly good overflow-x-auto wrapper get reported as defects. The
  *      style guard below aborts rather than measure raw HTML.
@@ -33,7 +34,11 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(REPO, 'dist');
-const PORT = 80; // not negotiable -- see the header note
+// Must match the port baked into dist/ by export.php. Defaults to 80 (what a
+// portless APP_URL produces, and what needs root); export with a port in
+// APP_URL and pass the same one here to run without elevation:
+//   APP_URL=http://127.0.0.1:8080 php export.php && AUDIT_PORT=8080 node scripts/audit.mjs
+const PORT = Number(process.env.AUDIT_PORT || 80);
 const CDP_PORT = 9333;
 const WIDTH = Number(process.env.AUDIT_WIDTH || 768);
 const HEIGHT = Number(process.env.AUDIT_HEIGHT || 1024);

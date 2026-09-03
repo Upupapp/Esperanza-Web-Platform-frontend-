@@ -73,6 +73,11 @@ $appUrl = env('APP_URL', 'http://localhost');
 $parsed = parse_url($appUrl);
 $host = $parsed['host'] ?? 'localhost';
 $isHttps = ($parsed['scheme'] ?? 'http') === 'https';
+// Honour an explicit port when APP_URL carries one. Production sets no port, so
+// this changes nothing there -- but forcing 80 meant dist/ could only ever be
+// served from a privileged port, which is why scripts/audit.mjs needed root and
+// therefore never ran in an ordinary gate.
+$port = (string) ($parsed['port'] ?? ($isHttps ? 443 : 80));
 
 $distDir = __DIR__.'/dist';
 @mkdir($distDir, 0777, true);
@@ -87,10 +92,15 @@ $fail = 0;
 
 foreach ($routes as $uri => $outputPath) {
     try {
+        // Laravel builds absolute URLs from HTTP_HOST, so a non-default port
+        // has to be in the header itself -- SERVER_PORT alone is ignored and the
+        // port silently vanishes from every asset URL.
+        $hostHeader = $host.(in_array($port, ['80', '443'], true) ? '' : ':'.$port);
+
         $server = [
-            'HTTP_HOST' => $host,
+            'HTTP_HOST' => $hostHeader,
             'SERVER_NAME' => $host,
-            'SERVER_PORT' => $isHttps ? '443' : '80',
+            'SERVER_PORT' => $port,
             'HTTPS' => $isHttps ? 'on' : 'off',
         ];
 

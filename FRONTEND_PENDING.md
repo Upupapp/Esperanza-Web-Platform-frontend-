@@ -441,3 +441,52 @@ ControlNameTest::CEILING to match"*. Ceiling tightened 161 → 95.
 **95 remain**, now genuinely miscellaneous rather than concentrated. Certification
 gate 7 still **FAIL**: the keyboard-only and screen-reader passes are untouched,
 and `scripts/audit.mjs` still needs root to run.
+
+
+---
+
+## 2026-09-03 — the rendered-DOM audit now runs without root
+
+`scripts/audit.mjs` is the better a11y instrument — it measures the DOM after
+Alpine renders — but it could not run in an ordinary gate because `dist/`
+hard-coded port 80 and serving there needs elevation. Two small changes removed
+that, and neither affects production:
+
+- **`export.php` honours an explicit port in `APP_URL`.** It previously forced
+  `SERVER_PORT` to 80/443 regardless. Netlify sets no port, so output there is
+  byte-identical — verified by re-exporting with a portless `APP_URL` and
+  diffing the emitted asset URLs.
+- **The port has to be in `HTTP_HOST`, not just `SERVER_PORT`.** Laravel builds
+  absolute URLs from the host header, so setting `SERVER_PORT` alone made the
+  port vanish silently from every asset URL and the audit's own style guard
+  correctly refused to measure. That guard earned its place.
+- **`scripts/audit.mjs` takes `AUDIT_PORT`** to match.
+
+```sh
+APP_URL=http://127.0.0.1:8080 php export.php && AUDIT_PORT=8080 node scripts/audit.mjs
+```
+
+### First run, measured rather than inferred
+
+```
+viewport 768px -- routes audited: 55 (errors: 0)
+routes with horizontal PAGE overflow: 0
+images without alt: 0 of 797
+form controls with no accessible name: 190 of 1730
+```
+
+**Images: 0 of 797 — independently confirms the `alt` work from the rendered
+side.** The source scan sees 70 `<img>` tags; the browser sees 797 because
+Alpine loops multiply them, so this is a genuinely different measurement
+agreeing with the first.
+
+**Controls: 190 of 1730 rendered instances still unnamed**, against 95 source
+sites — consistent, since one unnamed control inside a loop renders many times.
+The source ratchet (`ControlNameTest`, ceiling 95) remains the fast gate; this is
+the truthful total.
+
+**Horizontal overflow: 0 across all 55 routes** — re-confirms TAB 13.
+
+Not wired into `scripts/gate.sh`: it drives 55 routes through Chrome and would
+add minutes to every push. It is now runnable by anyone, on demand, which was
+the blocker.
