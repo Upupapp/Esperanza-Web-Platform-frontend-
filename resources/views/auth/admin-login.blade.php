@@ -1,4 +1,10 @@
-<x-layouts.guest title="LGU Personnel Login" image="rectangle_cityhall.jpg" fullscreen>
+{{-- The hero was rectangle_cityhall.jpg until 2026-09-03. That photograph is a
+     municipal hall whose facade seal reads "MUNICIPALITY OF ESPERANZA — Agusan
+     del Sur": a different Esperanza, in Caraga, not this one in Masbate. It was
+     the first thing LGU staff saw when signing in. Replaced with scenery that
+     makes no place claim at all; see FRONTEND_PENDING.md and
+     tests/Feature/PlaceIdentityTest.php. --}}
+<x-layouts.guest title="LGU Personnel Login" image="rectangle_sunset.jpg" fullscreen>
     <div
         x-data="{
             accounts: @js(config('esperanza_rbac.accounts')),

@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 39, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 41, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -715,3 +715,44 @@ rather than guessed at.
 
 Gate 7 remains **FAIL**: 19 rendered controls unnamed, the heading-order question
 open, and the listening pass not done.
+
+
+---
+
+## 2026-09-03 — F-022: the sign-in hero showed the wrong province
+
+**Raised by the mobile lane**, which found `rectangle_cityhall.jpg` shows a
+municipal hall whose facade seal reads **"MUNICIPALITY OF ESPERANZA — Agusan del
+Sur"**. This platform is Esperanza, **Masbate** (Region V — Bicol). A different
+municipality, in Caraga, ~700 km away.
+
+They asked whether it was used anywhere prominent on the web side. **It was
+worse here than there.** On mobile it was Balita media and a test now blocks it
+from onboarding. Here it was:
+
+| Where | Verdict |
+| --- | --- |
+| `auth/admin-login.blade.php` — **full-bleed hero of the LGU Personnel sign-in page** | **the wrong province was the first thing municipal staff saw** |
+| `config/esperanza_site_content.php` banner | acceptable — Balita media |
+| `admin/communications.blade.php` banner picker | acceptable — Balita media |
+| `resources/data/admin/communications.php` media library | acceptable — Balita media |
+
+Verified by opening the file, not by taking the report on trust: the seal is
+legible and reads Agusan del Sur. The web and mobile copies are byte-identical.
+
+**Fixed:** the hero is now `rectangle_sunset.jpg` — coastal scenery with no
+seal, signage or building, so it makes **no place claim at all**. That matters:
+swapping one unverified photograph for another risks repeating the defect, and
+none of the remaining photos' provenance has been confirmed.
+
+**Not deleted.** `tests/Feature/PlaceIdentityTest.php` asserts two things: the
+image is never a layout hero, and it is **still present** — the Balita fixtures
+name it, and "fixing" this by deleting the asset would break them. Mutation-
+tested: restoring it as the hero fails the gate with the province named.
+
+**Still unverified:** the provenance of every other photograph in
+`public/images/esperanza/`. `rectangle_masbate.jpg` is the Province of Masbate
+seal (correct), `rectangle_lgu.png` is the vendor's own logo, and the landscape
+photos carry no identifying marks either way. If the client can confirm which
+were taken in Esperanza, Masbate, a hero with a genuine sense of place would be
+better than neutral scenery.
