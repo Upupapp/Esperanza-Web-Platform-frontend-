@@ -698,7 +698,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input x-model="search" type="text"
+                        <input aria-label="Search" x-model="search" type="text"
                                :placeholder="view==='individuals'?'Search residents...':view==='families'?'Search families...':'Search households...'"
                                class="w-52 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                     </div>

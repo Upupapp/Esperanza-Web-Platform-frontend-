@@ -574,3 +574,44 @@ Mutation-tested: lowering the HTML ceiling to 50 KB fails with
 > measurement and from who the users are, but the LGU may want a stricter target
 > (a 2G-era budget would be nearer 150 KB total) or a looser one. Change the
 > three constants at the top of the budget block in `scripts/gate.sh`.
+
+
+### Spec-driven fields named from their own spec, 46 → 9
+
+The last large group were fields rendered from a form spec — `formData[f.key]`
+inside `x-for="f in fields"`. **Their name was already in scope**: every field in
+`esperanza_service_form_specs.php` and `esperanza_internal_forms.php` carries a
+`label` alongside its `key`, and table columns carry one too. So the fix is a
+binding, not a string:
+
+```blade
+:aria-label="f.label"        {{-- and :aria-label="col.label" for table cells --}}
+```
+
+which stays correct when the spec changes. The rest were named from their
+`x-model` (`assignedFilter` → "Assigned filter", `cvSearch` → "Citizen
+verification search"), and a bracketed model names itself by its collection —
+`commentDraft[post.id]` → "Comment draft", never "Id".
+
+**Names that would say nothing were rejected rather than written.** `{{ $amt }}`
+→ "Amt", `selected.requirements[i]` → "Requirements i", `commentDraft[post.id]`
+→ "Id" were all refused by a rule that drops any candidate under four characters
+or ending in a one- or two-letter word. A wrong name is worse than none: it
+sounds authoritative and misleads.
+
+### Where the two instruments stand now
+
+| | start of day | now |
+| --- | --- | --- |
+| Source sites (`ControlNameTest`) | 413 | **9** |
+| Rendered instances (`audit.mjs`) | — | **19 of 1730** |
+| Images without alt (rendered) | 49 claimed / 9 real | **0 of 797** |
+
+**The 9 that remain** are genuinely undecidable from the markup: 6 selects whose
+options are data ("Insert a standard reason…", a timezone list), a damage-total
+input bound to a Blade variable, and two fields inside
+`components/citizen/doc-field.blade.php` whose caller supplies the label. Naming
+them needs a decision, not a script.
+
+Certification gate 7 stays **FAIL** — but now only on the keyboard-only and
+screen-reader passes. The automated half is clean.

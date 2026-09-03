@@ -752,7 +752,7 @@
                                             <label class="block text-[11px] font-semibold text-amber-700 uppercase tracking-wide mb-1.5">
                                                 Resolve This Flag <span class="normal-case font-normal text-amber-600/70">— after contacting the resident</span>
                                             </label>
-                                            <textarea
+                                            <textarea aria-label="Duplicate resolution remarks"
                                                 x-model="duplicateResolutionRemarks" rows="3" placeholder="Notes from resident contact — how they were reached, what they confirmed…"
                                                 class="w-full rounded-xl border border-amber-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                                             ></textarea>
@@ -2185,7 +2185,7 @@
                                 <i data-lucide="check" class="w-3 h-3"></i> Confirm match instead
                             </button>
                             <div x-ref="faceMismatchBox" class="hidden mt-2 space-y-1.5">
-                                <textarea
+                                <textarea aria-label="Face mismatch remarks"
                                     x-model="faceMismatchRemarks" rows="2" placeholder="Describe the mismatch — e.g. face angle unclear, lighting differs from ID photo…"
                                     class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3 text-xs text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                                 ></textarea>

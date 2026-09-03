@@ -130,7 +130,7 @@
         <div class="hidden md:block relative" @click.outside="searchOpen = false">
             <div class="flex items-center relative">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"></i>
-                <input
+                <input aria-label="Search query"
                     type="text"
                     x-model="searchQuery"
                     @focus="searchOpen = true"

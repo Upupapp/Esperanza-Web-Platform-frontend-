@@ -20,12 +20,14 @@ class ControlNameTest extends TestCase
     /**
      * Lower this as controls are named. Never raise it.
      *
-     * 2026-09-03: 413 -> 161 -> 95 -> 46. Each pass required two independent
-     * sources to agree before a name was written: column header vs x-model
-     * binding for the BDRRMC grids, and first-<option> prompt vs x-model for
-     * filter selects ("All Statuses" + statusFilter -> "Status filter").
+     * 2026-09-03: 413 -> 161 -> 95 -> 46 -> 9. Each pass required a real source,
+     * never a guess: column header vs x-model for the BDRRMC grids, first-
+     * <option> prompt vs x-model for filter selects, and for spec-driven fields
+     * the binding itself (:aria-label="f.label"), since the loop already carries
+     * the label the form spec defines. Names that would say nothing to a screen
+     * reader -- "Id", "Amt", a bare index -- were rejected rather than written.
      */
-    private const CEILING = 46;
+    private const CEILING = 9;
 
     private function strip(string $s): string
     {

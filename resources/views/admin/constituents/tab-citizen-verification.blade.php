@@ -61,7 +61,7 @@
                 <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </span>
-                <input
+                <input aria-label="Citizen verification search"
                     type="text"
                     x-model="cvSearch"
                     :placeholder="cvType === 'Individual' ? 'Search by name, resident ID, barangay, or email…' : 'Search by name, ID, barangay, or head…'"

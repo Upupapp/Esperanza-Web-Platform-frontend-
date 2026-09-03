@@ -471,7 +471,7 @@
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-7 h-7 text-[10px] rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
                                     <div class="flex-1 relative">
-                                        <input
+                                        <input aria-label="Comment draft"
                                             type="text"
                                             x-model="commentDraft[post.id]"
                                             @keydown.enter="addComment(post)"

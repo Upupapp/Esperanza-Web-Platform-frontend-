@@ -15,7 +15,7 @@
     </div>
     <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
         {{-- Period selector --}}
-        <select
+        <select aria-label="Report period filter"
             x-model="reportPeriodFilter"
             class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
             <option value="SWM-2026-07">SWM-2026-07 · Southwest Monsoon &amp; Flooding — July 2026</option>

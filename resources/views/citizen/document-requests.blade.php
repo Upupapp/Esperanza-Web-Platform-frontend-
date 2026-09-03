@@ -627,7 +627,7 @@
                                 </div>
                                 <div class="relative flex-1">
                                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                                    <input
+                                    <input aria-label="Search"
                                         type="text" x-model="search"
                                         x-bind:placeholder="$store.lang.current === 'en' ? 'Search documents...' : 'Maghanap ng dokumento...'"
                                         class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
@@ -844,7 +844,7 @@
                                             <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date'">
                                                 <div>
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                    <input
+                                                    <input :aria-label="f.label"
                                                         :type="f.type" x-model="formData[f.key]"
                                                         class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                     >
@@ -853,7 +853,7 @@
                                             <template x-if="f.type === 'select'">
                                                 <div>
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                    <select x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                    <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                         <option value="">—</option>
                                                         <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                     </select>
@@ -1272,7 +1272,7 @@
 
                             <div class="mt-3 pt-3 border-t border-rose-100/70" x-show="!(selectedRequest.requirements || []).length">
                                 <label class="block text-xs font-medium text-rose-700 mb-1.5"><x-ui.t fil="Itama at Isumite Muli" en="Correct & Resubmit" /></label>
-                                <textarea
+                                <textarea aria-label="Resubmit note"
                                     x-model="resubmitNote" rows="2"
                                     :placeholder="$store.lang.current === 'en' ? 'Describe what you corrected, or provide the missing requirement...' : 'Ilarawan kung ano ang inayos mo, o ibigay ang kulang na requirement...'"
                                     class="w-full rounded-xl border border-rose-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard resize-none"

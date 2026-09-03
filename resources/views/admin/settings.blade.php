@@ -393,7 +393,7 @@
                                     <template x-for="(req, i) in selected.requirements" :key="i">
                                         <li class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5 transition-colors duration-[160ms] ease-standard focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
                                             <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                                            <input
+                                            <input aria-label="Requirements"
                                                 type="text" x-model="selected.requirements[i]" :disabled="!can('set_service_catalog','edit')"
                                                 class="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm text-slate-600 focus:outline-none focus:ring-0 disabled:opacity-60"
                                             >
@@ -535,7 +535,7 @@
                         <div class="mt-4">
                             <label class="block text-xs font-medium text-slate-700 mb-1">Introduction</label>
                             <p class="text-[11px] text-slate-400 mb-1.5">The opening paragraph citizens read before the numbered sections below.</p>
-                            <textarea rows="3" x-model="doc.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 leading-relaxed focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
+                            <textarea aria-label="Intro" rows="3" x-model="doc.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 leading-relaxed focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
                         </div>
                     </x-ui.card>
 

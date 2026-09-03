@@ -887,7 +887,7 @@
                     </label>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">₱</span>
-                        <input
+                        <input aria-label="Total damage"
                             type="number"
                             min="0"
                             x-model="totalDamage"
