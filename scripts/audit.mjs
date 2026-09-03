@@ -218,8 +218,31 @@ const PAGE_PROBE = `(() => {
   }
   if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus({ preventScroll: true });
 
+  // -- Screen-reader structure --------------------------------------------------
+  // Not a substitute for listening to the page, but these are the inputs a
+  // screen reader builds its picture from: without them a user cannot tell
+  // where they are, jump to the content, or navigate by heading.
+  const lang = document.documentElement.getAttribute('lang') || '';
+  const title = (document.title || '').trim();
+  const landmarks = {
+    main: document.querySelectorAll('main,[role=main]').length,
+    nav: document.querySelectorAll('nav,[role=navigation]').length,
+    banner: document.querySelectorAll('header,[role=banner]').length,
+  };
+  const headings = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')]
+    .filter((h) => h.getBoundingClientRect().height > 0)
+    .map((h) => parseInt(h.tagName.slice(1), 10));
+  const h1s = headings.filter((l) => l === 1).length;
+  let headingSkips = 0;
+  for (let i = 1; i < headings.length; i++) {
+    if (headings[i] - headings[i - 1] > 1) headingSkips++;
+  }
+  // A toast that is announced nowhere is invisible to a screen reader.
+  const liveRegions = document.querySelectorAll('[aria-live],[role=alert],[role=status]').length;
+
   return { overflow, offenders, imgsNoAlt, imgs: imgs.length, unnamed, controls: controls.length,
-           positiveTabindex, clickNotFocusable, clickOffenders, ghostFocusable, ghostOffenders };
+           positiveTabindex, clickNotFocusable, clickOffenders, ghostFocusable, ghostOffenders,
+           lang, title, landmarks, h1s, headingSkips, liveRegions };
 })()`;
 
 async function main() {
@@ -354,6 +377,27 @@ async function main() {
     for (const o of r.ghostOffenders) console.log('         <' + o + '>');
   }
   console.log('  positive tabindex (breaks natural order): ' + t.positiveTabindex);
+
+  const ok = results.filter((r) => !r.error);
+  const noLang = ok.filter((r) => !r.lang);
+  const noTitle = ok.filter((r) => !r.title);
+  const noMain = ok.filter((r) => r.landmarks.main === 0);
+  const noNav = ok.filter((r) => r.landmarks.nav === 0);
+  const badH1 = ok.filter((r) => r.h1s !== 1);
+  const skips = ok.filter((r) => r.headingSkips > 0);
+  const noLive = ok.filter((r) => r.liveRegions === 0);
+  console.log('screen-reader structure (routes failing, of ' + ok.length + '):');
+  console.log('  no lang on <html>: ' + noLang.length);
+  console.log('  no <title>: ' + noTitle.length);
+  console.log('  no main landmark: ' + noMain.length +
+    (noMain.length ? '  [' + noMain.map((r) => r.uri).join(', ') + ']' : ''));
+  console.log('  no nav landmark: ' + noNav.length +
+    (noNav.length ? '  [' + noNav.map((r) => r.uri).join(', ') + ']' : ''));
+  console.log('  not exactly one <h1>: ' + badH1.length);
+  for (const r of badH1.slice(0, 8)) console.log('      ' + r.h1s + '  ' + r.uri);
+  console.log('  skipped heading levels: ' + skips.length);
+  for (const r of skips.slice(0, 6)) console.log('      ' + r.headingSkips + '  ' + r.uri);
+  console.log('  no live region for announcements: ' + noLive.length);
   const worstKb = results.filter((r) => !r.error && r.clickNotFocusable > 0)
     .sort((a, b) => b.clickNotFocusable - a.clickNotFocusable).slice(0, 8);
   for (const r of worstKb) {

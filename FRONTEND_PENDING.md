@@ -674,3 +674,44 @@ no focus equivalent; they now carry `focus:opacity-100 focus-within:opacity-100`
 Certification gate 7 still **FAIL** — the screen-reader pass is untouched, and
 19 rendered controls remain unnamed — but the keyboard half is now measured
 rather than assumed, and it is clean.
+
+
+### Screen-reader structure, measured (2026-09-03)
+
+A human with VoiceOver is still required for gate 7's listening pass — but the
+*inputs* a screen reader builds its picture from are measurable, and
+`scripts/audit.mjs` now checks them across all 55 routes.
+
+| | before | after |
+| --- | --- | --- |
+| No `lang` on `<html>` | 0 | 0 |
+| No `<title>` | 0 | 0 |
+| **No `main` landmark** | **5** | **0** |
+| **Not exactly one `<h1>`** | **7** | **0** |
+| No live region for announcements | 0 | 0 |
+| No `nav` landmark | 5 | 5 — **by design** |
+| Skipped heading levels | 14 | 11 — **not yet resolved** |
+
+**The 5 missing `main` landmarks were all the auth pages**, which share
+`components/layouts/guest.blade.php`. Without one, a screen-reader user has no
+"skip to content" target. One change to the layout fixed all five.
+
+**The 7 double-`<h1>` pages** were `admin/constituents` (×5 routes, one file) and
+`citizen/legal` (×2). Every other page has exactly one `<h1>` — the topbar page
+title — so the body headings were the anomaly and were demoted to `<h2>`.
+
+**The 5 remaining "no nav landmark" are the auth pages and are correct.** A
+sign-in screen has no navigation; fabricating an empty `<nav>` to satisfy a
+counter would be worse than the finding.
+
+**The 11 skipped heading levels are unresolved and possibly an artefact.** The
+pattern is `h1` (topbar) followed by `h3` with no `h2`, and the `h3`s come from
+`x-ui.modal`, `x-ui.empty-state`, `x-ui.error-state` and `admin.access-
+restricted`. **A dialog's title legitimately restarts the outline** — WCAG's
+heading-order expectation applies to the document flow, not to a dialog's
+contents — so the honest next step is to teach the probe to exclude headings
+inside `[role=dialog]`, not to renumber the markup on a hypothesis. Recorded
+rather than guessed at.
+
+Gate 7 remains **FAIL**: 19 rendered controls unnamed, the heading-order question
+open, and the listening pass not done.

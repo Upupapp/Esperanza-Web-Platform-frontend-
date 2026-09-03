@@ -23,7 +23,7 @@
                 <div class="flex items-start gap-3 mb-1">
                     <span class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="shield-check" class="w-5 h-5"></i></span>
                     <div class="min-w-0">
-                        <h1 class="text-lg font-bold text-navy-900">{{ $privacy['title'] }}</h1>
+                        <h2 class="text-lg font-bold text-navy-900">{{ $privacy['title'] }}</h2>
                         <p class="text-xs text-slate-400 mt-0.5">
                             <x-ui.t fil="Ipinatutupad simula" en="Effective" /> {{ \Carbon\Carbon::parse($privacy['effective_date'])->format('F j, Y') }}
                             &middot; <x-ui.t fil="Huling na-update noong" en="Last updated" /> {{ \Carbon\Carbon::parse($privacy['last_updated'])->format('F j, Y') }}
@@ -49,7 +49,7 @@
                 <div class="flex items-start gap-3 mb-1">
                     <span class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-5 h-5"></i></span>
                     <div class="min-w-0">
-                        <h1 class="text-lg font-bold text-navy-900">{{ $terms['title'] }}</h1>
+                        <h2 class="text-lg font-bold text-navy-900">{{ $terms['title'] }}</h2>
                         <p class="text-xs text-slate-400 mt-0.5">
                             <x-ui.t fil="Ipinatutupad simula" en="Effective" /> {{ \Carbon\Carbon::parse($terms['effective_date'])->format('F j, Y') }}
                             &middot; <x-ui.t fil="Huling na-update noong" en="Last updated" /> {{ \Carbon\Carbon::parse($terms['last_updated'])->format('F j, Y') }}

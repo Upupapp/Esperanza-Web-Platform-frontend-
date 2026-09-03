@@ -53,9 +53,9 @@
             <div class="absolute top-0 right-0 w-[28rem] h-[28rem] bg-brand-100/60 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3"></div>
             <div class="absolute bottom-0 left-0 w-72 h-72 bg-gold-100/50 rounded-full blur-3xl -z-10 -translate-x-1/3 translate-y-1/3"></div>
 
-            <div class="w-full max-w-md animate-fade-up {{ $fullscreen ? 'max-h-full overflow-y-auto scrollbar-thin' : '' }}">
+            <main class="w-full max-w-md animate-fade-up {{ $fullscreen ? 'max-h-full overflow-y-auto scrollbar-thin' : '' }}">
                 {{ $slot }}
-            </div>
+            </main>
         </div>
     </div>
 

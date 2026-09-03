@@ -600,7 +600,7 @@
         {{-- Page header --}}
         <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
             <div>
-                <h1 class="text-lg font-bold text-navy-900">Constituent Registry</h1>
+                <h2 class="text-lg font-bold text-navy-900">Constituent Registry</h2>
                 <p class="text-xs text-slate-400 mt-0.5">Municipality of Esperanza · 20 barangays · <span x-text="isMunicipalScope?'Municipality-wide view':'Brgy. '+$store.session.account?.scope+' view'"></span></p>
             </div>
             <div class="flex items-center gap-2 relative" x-show="can('const_resident','create') || can('const_family','create') || can('const_household','create')">
