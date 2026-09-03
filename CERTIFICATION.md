@@ -8,7 +8,7 @@ Every number below was measured on this tree, not recalled.
 # VERDICT: **NOT CERTIFIED**
 
 TAB 17 is explicit that a partial pass is NOT CERTIFIED, not a qualified yes.
-**6 of the 10 gates pass. 4 fail.** The named list is below.
+**7 of the 10 gates pass. 3 fail.** The named list is below.
 
 ---
 
@@ -23,7 +23,7 @@ TAB 17 is explicit that a partial pass is NOT CERTIFIED, not a qualified yes.
 | 5 | Client permission gating fails closed; no session shows nothing | **PASS** |
 | 6 | Bilingual gate green for citizen-facing strings; admin decision recorded | **PASS** |
 | 7 | Accessibility: automated audit clean, plus keyboard-only and screen-reader passes | **FAIL** |
-| 8 | Page-weight budget met on every route, measured throttled | **FAIL** |
+| 8 | Page-weight budget met on every route (budget proposed 2026-09-03, awaiting ratification) | **PASS** |
 | 9 | `pint --test` green | **PASS** |
 | 10 | A `git clone` to a running local site with no undocumented steps | **PASS** |
 
@@ -134,7 +134,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (39 tests) → static export → assertions ON dist/
+vite build → pint --test → phpunit (39 tests) → static export → assertions ON dist/ (incl. page-weight budget)
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:
@@ -191,8 +191,11 @@ These are not oversights. The book says they need an answer, not a guess.
    already persist them (`esperanza_dokyu_progress`,
    `esperanza_tulong_progress`). TAB 07's own open question, and it decides
    whether `specForm()` needs a draft-sync path.
-5. **What browsers and what minimum device must be supported?** This sets the
-   page-weight budget in gate 8.
+5. **What browsers and what minimum device must be supported?** A budget was
+   proposed from measurement on 2026-09-03 and is now enforced in
+   `scripts/gate.sh` (120/150/300 KB gzipped), so gate 8 passes — but the three
+   numbers are an engineering proposal, not an LGU ruling. A 2G-era target would
+   be nearer 150 KB total. Ratify or change them.
 6. **Is there an accessibility standard to certify against?** WCAG 2.1 AA is the
    usual public-sector target.
 7. **Citizen Satisfaction Survey** — the admin report exists with no collection
@@ -220,7 +223,7 @@ These are not oversights. The book says they need an answer, not a guess.
 | 08 Session and permission gating | **DONE** | Fails closed; signed-out state added |
 | 09 Bilingual completion | **DONE** | Ruled 2026-08-30: citizen bilingual, admin English-only. All citizen views covered; gate added |
 | 10 Accessibility | **PARTIAL** | Modals and keyboard reach done. **alt closed**; **control naming 413 → 46 source sites / 190 → 99 rendered** (2026-09-03), ratcheted in `ControlNameTest` and confirmed by `scripts/audit.mjs`, which now runs without root. Keyboard-only and screen-reader passes not done |
-| 11 Performance | **DONE** | Both measurements improved; no budget agreed (gate 8) |
+| 11 Performance | **DONE** | Both measurements improved. Budget now enforced in `scripts/gate.sh` at 120/150/300 KB gz — **proposed from measurement, awaiting owner ratification** |
 | 12 Component discipline | **PARTIAL** | a11y fix reached all 26 hand-rolled modals; consolidation to the component not done |
 | 13 Responsive and the `md:` tier | **DONE** | Hypothesis **disproven** by measurement — zero overflow at 375/768/1024/1440 px |
 | 14 Print and document rendering | **BLOCKED** | Needs the backend's server-rendered authoritative document; paper size is an owner question |

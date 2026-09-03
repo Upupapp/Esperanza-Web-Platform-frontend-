@@ -527,3 +527,50 @@ become spaces rather than being deleted, so offsets stay aligned.
 
 Ratchet tightened 95 → 46. Certification gate 7 remains **FAIL**: the
 keyboard-only and screen-reader passes are still untouched.
+
+
+---
+
+## 2026-09-03 — a page-weight budget, proposed from measurement
+
+Certification gate 8 was failing only because **no budget had ever been agreed**
+— not because any page was too heavy. A budget nobody sets is a gate that can
+never pass, so here is one derived from what the site actually weighs, now
+enforced in `scripts/gate.sh`.
+
+**Measured first** (55 routes, `APP_URL=https://esperanza.example`):
+
+| | value |
+| --- | --- |
+| Mean HTML per route | 281 KB raw |
+| Heaviest route | 916 KB raw — the `admin/constituents` family |
+| Heaviest route, gzipped | **101 KB** |
+| App JS | 524 KB raw / **137 KB gz** |
+| CSS | 160 KB raw / **24 KB gz** |
+| Chart chunk | 204 KB / 69 KB gz — lazy |
+| html2pdf chunk | 956 KB / 272 KB gz — lazy |
+| Worst-route initial transfer | **262 KB gz** |
+
+**The budget is expressed gzipped**, because that is what crosses the wire:
+Netlify serves `dist/` compressed, and the audience is an LGU and its residents
+on mobile data in Masbate. Raw byte counts would flatter or frighten for no
+reason — 916 KB of HTML is 101 KB on the wire.
+
+| Ceiling | Value | Current worst |
+| --- | --- | --- |
+| HTML per route | 120 KB gz | 101 KB |
+| Initial JS | 150 KB gz | 137 KB |
+| Initial transfer (HTML + CSS + JS) | 300 KB gz | 262 KB |
+
+Set just above today's worst, so a regression bites while the current tree
+passes. **`chart` and `html2pdf` are deliberately excluded** — they are separate
+chunks and must stay lazily loaded; if either is ever folded back into the
+initial bundle, the JS ceiling is what catches it.
+
+Mutation-tested: lowering the HTML ceiling to 50 KB fails with
+*"admin/constituents/index.html is 101KB gz, over the 50KB budget"*.
+
+> **These three numbers are a proposal, not a ruling.** They come from
+> measurement and from who the users are, but the LGU may want a stricter target
+> (a 2G-era budget would be nearer 150 KB total) or a looser one. Change the
+> three constants at the top of the budget block in `scripts/gate.sh`.

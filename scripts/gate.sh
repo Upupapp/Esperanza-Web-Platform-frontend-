@@ -194,6 +194,61 @@ else
   fail "$STRAY page(s) still point at http://localhost - APP_URL was ignored, so every asset 404s"
 fi
 
+# -- Page-weight budget (certification gate 8) -------------------------------
+# These are gzipped, because that is what crosses the wire: Netlify serves
+# dist/ compressed, and the audience is an LGU and its residents on mobile data
+# in Masbate. Measured 2026-09-03, then set just above the worst route so a
+# regression bites while today's tree passes:
+#
+#   worst HTML gz          100 KB   (admin/constituents family)
+#   app JS gz              136 KB
+#   CSS gz                  23 KB
+#   worst initial transfer 259 KB   (HTML + CSS + app JS)
+#
+# chart and html2pdf are deliberately NOT counted: they are separate chunks and
+# must stay lazily loaded. If either ever lands in the initial bundle, the JS
+# ceiling below is what catches it.
+#
+# PROPOSED by measurement, not yet ratified by the owner -- change the three
+# numbers here if the LGU wants a different target.
+MAX_HTML_GZ_KB=120
+MAX_JS_GZ_KB=150
+MAX_INITIAL_GZ_KB=300
+
+gz_kb() { gzip -c "$1" | wc -c | awk '{printf "%d", ($1+1023)/1024}'; }
+
+WORST_HTML=0; WORST_PAGE=""
+while IFS= read -r page; do
+  KB=$(gz_kb "$page")
+  if [ "$KB" -gt "$WORST_HTML" ]; then WORST_HTML=$KB; WORST_PAGE=$page; fi
+done < <(find dist -name index.html)
+
+APP_JS=$(find dist/build/assets -name 'app-*.js' | head -1)
+CSS=$(find dist/build/assets -name 'app-*.css' | head -1)
+JS_KB=0;  [ -n "$APP_JS" ] && JS_KB=$(gz_kb "$APP_JS")
+CSS_KB=0; [ -n "$CSS" ]    && CSS_KB=$(gz_kb "$CSS")
+INITIAL=$((WORST_HTML + JS_KB + CSS_KB))
+
+echo "   worst page ${WORST_HTML}KB gz + js ${JS_KB}KB + css ${CSS_KB}KB = ${INITIAL}KB initial transfer"
+
+if [ "$WORST_HTML" -le "$MAX_HTML_GZ_KB" ]; then
+  pass "heaviest page is ${WORST_HTML}KB gz (budget ${MAX_HTML_GZ_KB}KB)"
+else
+  fail "${WORST_PAGE#dist/} is ${WORST_HTML}KB gz, over the ${MAX_HTML_GZ_KB}KB budget"
+fi
+
+if [ "$JS_KB" -le "$MAX_JS_GZ_KB" ]; then
+  pass "initial JS is ${JS_KB}KB gz (budget ${MAX_JS_GZ_KB}KB)"
+else
+  fail "initial JS is ${JS_KB}KB gz, over the ${MAX_JS_GZ_KB}KB budget -- has a lazy chunk been folded back in?"
+fi
+
+if [ "$INITIAL" -le "$MAX_INITIAL_GZ_KB" ]; then
+  pass "worst-route initial transfer ${INITIAL}KB gz (budget ${MAX_INITIAL_GZ_KB}KB)"
+else
+  fail "worst-route initial transfer ${INITIAL}KB gz, over the ${MAX_INITIAL_GZ_KB}KB budget"
+fi
+
 PDFS=$(find dist/documents -name '*.pdf' 2>/dev/null | wc -l | tr -d ' ')
 [ "$PDFS" -ge 16 ] && pass "$PDFS reference PDFs in dist/documents" || fail "only $PDFS reference PDFs reached dist/"
 
