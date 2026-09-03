@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 41, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 43, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -756,3 +756,49 @@ seal (correct), `rectangle_lgu.png` is the vendor's own logo, and the landscape
 photos carry no identifying marks either way. If the client can confirm which
 were taken in Esperanza, Masbate, a hero with a genuine sense of place would be
 better than neutral scenery.
+
+
+---
+
+## 2026-09-03 — F-023: a missing fee would have rendered as "Free"
+
+**Raised by the mobile lane**, who reported that their `ReceiptType` and
+`ServiceCategory` decoders no longer fall back to `onsite`/`dokyu` — both now
+decode to an explicit unknown rendered as `—`, "because the old defaults stated
+something false about money, and about which service a citizen had filed."
+
+Swept this side for the same class. One match, in the Service Catalog screen:
+
+```php
+'fee'  => $d['fee']  ?? 'Free',   // <- asserts a price
+'days' => $d['days'] ?? '—',      // <- two characters away, correct
+```
+
+An absent amount would have stated, **on a government fee schedule**, that a
+chargeable service costs nothing.
+
+**Latent, not live.** All 40 catalogue entries — 15 municipal, 13 Tulong, 12
+barangay — carry a fee today, so nothing has ever displayed a false price. But
+this screen is meant to become administrable (backend TAB 04), and the first
+service added without a fee would have said it silently. Fixed to `—`.
+
+Two tests, both mutation-tested:
+
+- `a missing fee never defaults to a price` — fails if any `'fee' => … ?? '…'`
+  falls back to anything but `—`. Comments are stripped first, or the gate reads
+  its own explanation as the defect.
+- `every catalogue entry actually carries a fee` — catches the absence at the
+  data level too, so the `—` is a safety net rather than the plan. Removing one
+  fee fails with `tulong: Medical Assistance (AICS)`.
+
+### Related defaults, recorded not fixed
+
+The same sweep found defaults that assert **authorship** rather than money:
+`?? 'Admin'` (`admin/communications`, `admin/settings` ×2), `|| 'Barangay
+Secretary'` (`admin/communications`), `|| 'Staff Member'` and `|| 'an
+administrator'` (`admin/internal-forms`), `?? 'Barangay DRRM Officer'`
+(`sakuna/tab-damage`). Each names a specific actor when the real one is unknown.
+That matters for anything that becomes an audit trail (backend TAB 17), but
+unlike the fee they are display-only today and none is wired to a record of who
+did what. **Not fixed, deliberately — the right fix is knowing the actor, which
+needs the API, not a better default.**

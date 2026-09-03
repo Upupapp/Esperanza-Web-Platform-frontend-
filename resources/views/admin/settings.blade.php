@@ -18,16 +18,24 @@
     // template (config/esperanza_barangay_documents.php's own header
     // comment) — editing "the" fee here really does mean editing the one
     // template every barangay uses, not just Labangtaytay's.
+    // A missing fee renders as "—", never "Free". The default was 'Free' until
+    // 2026-09-03 while `days` two characters away already used "—": an absent
+    // amount would have stated, on a government fee schedule, that a chargeable
+    // service costs nothing. Latent rather than live -- all 40 catalogue entries
+    // carry a fee today -- but this screen is meant to become administrable, and
+    // the first service added without one would have said something false about
+    // money. Raised by the mobile lane, who found the same class in their
+    // ReceiptType/ServiceCategory decoders.
     $serviceCatalog = collect(config('esperanza_municipal_documents.documents'))
         ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
         ->map(fn ($d) => [
             'key' => $d['key'], 'name' => $d['name'], 'category' => $d['category'], 'office' => $d['office'], 'level' => $d['level'],
-            'fee' => $d['fee'] ?? 'Free', 'days' => $d['days'] ?? '—', 'requirements' => $d['requirements'] ?? [], 'process' => $d['process'] ?? [],
+            'fee' => $d['fee'] ?? '—', 'days' => $d['days'] ?? '—', 'requirements' => $d['requirements'] ?? [], 'process' => $d['process'] ?? [],
             'service_type' => 'Dokyu', 'active' => true,
         ])
         ->concat(collect(config('esperanza_tulong_types.types'))->map(fn ($t) => [
             'key' => $t['key'], 'name' => $t['name'], 'category' => $t['category'], 'office' => $t['office'], 'level' => $t['level'],
-            'fee' => $t['fee'] ?? 'Free', 'days' => $t['days'] ?? '—', 'requirements' => $t['requirements'] ?? [], 'process' => $t['process'] ?? [],
+            'fee' => $t['fee'] ?? '—', 'days' => $t['days'] ?? '—', 'requirements' => $t['requirements'] ?? [], 'process' => $t['process'] ?? [],
             'service_type' => 'Tulong', 'active' => true,
         ]))
         ->values()->all();
