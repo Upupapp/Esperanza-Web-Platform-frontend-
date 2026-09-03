@@ -615,3 +615,62 @@ them needs a decision, not a script.
 
 Certification gate 7 stays **FAIL** — but now only on the keyboard-only and
 screen-reader passes. The automated half is clean.
+
+
+---
+
+## 2026-09-03 — keyboard reachability, measured in the browser
+
+`scripts/audit.mjs` now measures three keyboard properties on the rendered DOM,
+which no source scan can see. First run against 55 routes found real defects:
+
+| | first run | after |
+| --- | --- | --- |
+| Visible click targets not in the tab order | **40** | **0** |
+| Focusable but invisible even when focused | **11 real** (33 reported) | **0** |
+| Positive `tabindex` (breaks natural order) | 0 | 0 |
+
+### The 40 came from two components, not 40 places
+
+`x-ui.stat-card` and `x-ui.card` both render a plain `<div>` and merge
+`$attributes`, so a caller passing `@click` produced a card a mouse can activate
+and a keyboard cannot — 28 and 8 call sites respectively. **Both were fixed in
+the component**: when it receives a click handler and has no `href`, it takes
+`tabindex="0"`, `role="button"`, and mirrors the handler onto Enter and Space.
+One edit each, every caller covered.
+
+### What was deliberately NOT made focusable
+
+The first pass would have put `role="button"` on **modal backdrops** — elements
+with `@click.self` that dismiss an overlay, which already carry
+`@keydown.escape.window`. Announcing a full-screen overlay as a button is a
+defect, not a fix. The rule now skips `.self`, `.outside`, `.away`, inline
+`position: fixed; inset: 0` (which a Tailwind-class check misses), anything
+already handling Escape, and `contenteditable` regions — the document editor is
+a text surface, not a button. Twenty elements were skipped on purpose; one span
+("Select all / Clear all" in the permission tree) was a genuine control and was
+fixed.
+
+### Three measurement artefacts, each fixed in the instrument
+
+The reported "focusable but invisible" count was **33**; only **11** were real.
+
+1. **Read at rest.** A control revealed by `focus:opacity-100` is hidden until
+   focused. The probe now **focuses each candidate** before judging it.
+2. **Read mid-transition.** These controls use `transition-opacity`, so
+   `getComputedStyle` immediately after `focus()` still returns ~0. The probe
+   now sets `transition: none` before measuring.
+3. **Read mid-animation.** `animate-fade-up` starts at opacity 0, so cards
+   caught during their entrance looked permanently hidden. Elements with a
+   running `animationName` are now skipped.
+
+The 11 real ones were hover-reveal controls with `group-hover:opacity-100` and
+no focus equivalent; they now carry `focus:opacity-100 focus-within:opacity-100`.
+
+> **A Tailwind class added to a Blade file does not exist until `npm run build`
+> runs.** The fix appeared to do nothing for a full measurement cycle because
+> the utility had not been generated yet.
+
+Certification gate 7 still **FAIL** — the screen-reader pass is untouched, and
+19 rendered controls remain unnamed — but the keyboard half is now measured
+rather than assumed, and it is clean.

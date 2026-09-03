@@ -25,11 +25,24 @@
     ];
     $iconClasses = $colorMap[$color] ?? $colorMap['brand'];
     $tag = $href ? 'a' : 'div';
+
+    // A caller that passes @click without href gets a plain <div>, which a mouse
+    // can activate and a keyboard cannot. 28 call sites do exactly that, so the
+    // fix belongs here rather than at each of them: put the card in the tab
+    // order and mirror the click onto Enter and Space.
+    $clickExpr = $attributes->get('@click') ?? $attributes->get('x-on:click');
+    $needsKeyboard = ! $href && filled($clickExpr);
 @endphp
 
 <{{ $tag }}
     @if($href) href="{{ $href }}" @endif
-    {{ $attributes->merge(['class' => 'group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-3.5 animate-fade-up block' . ($href ? ' cursor-pointer hover:-translate-y-0.5' : '')]) }}
+    {{ $attributes->merge(['class' => 'group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-3.5 animate-fade-up block' . ($href || $needsKeyboard ? ' cursor-pointer hover:-translate-y-0.5' : '')]) }}
+    @if($needsKeyboard)
+        tabindex="0"
+        role="button"
+        @keydown.enter.prevent="{{ $clickExpr }}"
+        @keydown.space.prevent="{{ $clickExpr }}"
+    @endif
     style="animation-delay: {{ $delay }}ms"
 >
     <div class="flex items-start justify-between">

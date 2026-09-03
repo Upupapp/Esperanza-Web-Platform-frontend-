@@ -169,7 +169,7 @@
 
                     {{-- Actions --}}
                     <td class="px-4 py-3" @click.stop>
-                        <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100 focus:opacity-100">
                             <button
                                 @click="openHousehold(h)"
                                 title="View household detail"

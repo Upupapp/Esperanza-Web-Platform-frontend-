@@ -53,13 +53,13 @@
         type="button" @click.prevent="prev(); restart()"
         :aria-label="$store.lang.current === 'en' ? 'Previous banner' : 'Nakaraang banner'"
         x-show="banners.length > 1"
-        class="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-navy-950/40 hover:bg-navy-950/60 backdrop-blur text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-[160ms]"
+        class="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-navy-950/40 hover:bg-navy-950/60 backdrop-blur text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-[160ms] focus-within:opacity-100 focus:opacity-100"
     ><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
     <button
         type="button" @click.prevent="next(); restart()"
         :aria-label="$store.lang.current === 'en' ? 'Next banner' : 'Susunod na banner'"
         x-show="banners.length > 1"
-        class="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-navy-950/40 hover:bg-navy-950/60 backdrop-blur text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-[160ms]"
+        class="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-navy-950/40 hover:bg-navy-950/60 backdrop-blur text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-[160ms] focus-within:opacity-100 focus:opacity-100"
     ><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
 
     <!-- Dots -->

@@ -147,7 +147,79 @@ const PAGE_PROBE = `(() => {
   const imgs = document.querySelectorAll('img');
   let imgsNoAlt = 0;
   for (const im of imgs) if (!im.hasAttribute('alt')) imgsNoAlt++;
-  return { overflow, offenders, imgsNoAlt, imgs: imgs.length, unnamed, controls: controls.length };
+
+  // -- Keyboard reachability ---------------------------------------------------
+  // Attribute selectors for @click need CSS escaping that does not survive being
+  // nested in a template literal, so walk the DOM and use hasAttribute instead.
+  const FOCUSABLE = 'a[href],button,input:not([type=hidden]),select,textarea,' +
+    '[tabindex],summary,audio[controls],video[controls],iframe,area[href],[contenteditable]';
+
+  let positiveTabindex = 0;
+  for (const el of document.querySelectorAll('[tabindex]')) {
+    if (parseInt(el.getAttribute('tabindex'), 10) > 0) positiveTabindex++;
+  }
+
+  // A visible click target the tab order never reaches: a mouse can use it, a
+  // keyboard cannot.
+  let clickNotFocusable = 0;
+  const clickOffenders = [];
+  for (const el of document.querySelectorAll('body *')) {
+    if (!el.hasAttribute('@click') && !el.hasAttribute('x-on:click')) continue;
+    if (el.matches(FOCUSABLE)) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    clickNotFocusable++;
+    if (clickOffenders.length < 3) {
+      const cls = el.className && el.className.toString ? el.className.toString() : '';
+      clickOffenders.push(el.tagName.toLowerCase() + ' ' + cls.slice(0, 60));
+    }
+  }
+
+  // Focusable but invisible: tabbing here makes the focus ring vanish, which
+  // reads to a keyboard user as the page having lost focus altogether.
+  //
+  // Measured by actually focusing the element, not by reading its resting
+  // style. A control revealed with focus:opacity-100 or focus-within is hidden
+  // at rest and perfectly visible once focused -- judging it at rest reports a
+  // correct implementation as a defect.
+  let ghostFocusable = 0;
+  const ghostOffenders = [];
+  const previouslyFocused = document.activeElement;
+  for (const el of document.querySelectorAll(FOCUSABLE)) {
+    if (el.disabled) continue;
+    const ti = el.getAttribute('tabindex');
+    if (ti !== null && parseInt(ti, 10) < 0) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) continue;
+    const rest = getComputedStyle(el);
+    if (rest.visibility !== 'hidden' && rest.opacity !== '0') continue;
+    // An entrance animation (animate-fade-up) starts at opacity 0. Catching an
+    // element mid-animation is a timing artefact, not a defect.
+    if (rest.animationName && rest.animationName !== 'none') continue;
+    let stillHidden = true;
+    const savedTransition = el.style.transition;
+    try {
+      // Suppress the transition first. These controls use transition-opacity,
+      // and getComputedStyle returns the value MID-FADE -- read immediately
+      // after focus() it is still ~0, so a correctly revealing control looks
+      // permanently hidden.
+      el.style.transition = 'none';
+      el.focus({ preventScroll: true });
+      const cs = getComputedStyle(el);
+      stillHidden = cs.visibility === 'hidden' || cs.opacity === '0';
+    } catch (e) { /* not focusable in practice */ }
+    el.style.transition = savedTransition;
+    if (!stillHidden) continue;
+    ghostFocusable++;
+    if (ghostOffenders.length < 3) {
+      const cls = el.className && el.className.toString ? el.className.toString() : '';
+      ghostOffenders.push(el.tagName.toLowerCase() + ' ' + cls.slice(0, 60));
+    }
+  }
+  if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus({ preventScroll: true });
+
+  return { overflow, offenders, imgsNoAlt, imgs: imgs.length, unnamed, controls: controls.length,
+           positiveTabindex, clickNotFocusable, clickOffenders, ghostFocusable, ghostOffenders };
 })()`;
 
 async function main() {
@@ -263,11 +335,31 @@ async function main() {
   const t = results.filter((r) => !r.error).reduce((a, r) => ({
     imgsNoAlt: a.imgsNoAlt + r.imgsNoAlt, imgs: a.imgs + r.imgs,
     unnamed: a.unnamed + r.unnamed, controls: a.controls + r.controls,
-  }), { imgsNoAlt: 0, imgs: 0, unnamed: 0, controls: 0 });
+    positiveTabindex: a.positiveTabindex + r.positiveTabindex,
+    clickNotFocusable: a.clickNotFocusable + r.clickNotFocusable,
+    ghostFocusable: a.ghostFocusable + r.ghostFocusable,
+  }), { imgsNoAlt: 0, imgs: 0, unnamed: 0, controls: 0,
+        positiveTabindex: 0, clickNotFocusable: 0, ghostFocusable: 0 });
 
   console.log('rendered a11y totals:');
   console.log('  images without alt: ' + t.imgsNoAlt + ' of ' + t.imgs);
   console.log('  form controls with no accessible name: ' + t.unnamed + ' of ' + t.controls);
+  console.log('keyboard reachability:');
+  console.log('  visible click targets not in the tab order: ' + t.clickNotFocusable);
+  console.log('  focusable but invisible even when focused: ' + t.ghostFocusable);
+  const worstGhost = results.filter((r) => !r.error && r.ghostFocusable > 0)
+    .sort((a, b) => b.ghostFocusable - a.ghostFocusable).slice(0, 5);
+  for (const r of worstGhost) {
+    console.log('    ' + r.ghostFocusable + '  ' + r.uri);
+    for (const o of r.ghostOffenders) console.log('         <' + o + '>');
+  }
+  console.log('  positive tabindex (breaks natural order): ' + t.positiveTabindex);
+  const worstKb = results.filter((r) => !r.error && r.clickNotFocusable > 0)
+    .sort((a, b) => b.clickNotFocusable - a.clickNotFocusable).slice(0, 8);
+  for (const r of worstKb) {
+    console.log('    ' + r.clickNotFocusable + '  ' + r.uri);
+    for (const o of r.clickOffenders) console.log('         <' + o + '>');
+  }
 
   fs.writeFileSync(path.join(os.tmpdir(), 'esperanza-audit-' + WIDTH + '.json'), JSON.stringify(results, null, 2));
 

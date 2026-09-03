@@ -12,7 +12,7 @@
 
     <div class="mt-7 space-y-4">
         <a href="{{ route('citizen.login') }}" class="group relative flex items-center gap-4 p-5 rounded-2xl border border-slate-200 bg-white hover:border-brand-300 hover:shadow-card-hover transition-all duration-[220ms] ease-standard overflow-hidden animate-fade-up">
-            <div class="absolute inset-0 bg-gradient-to-r from-brand-50/0 via-brand-50/0 to-brand-50/60 opacity-0 group-hover:opacity-100 transition-opacity duration-[220ms] ease-standard"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-brand-50/0 via-brand-50/0 to-brand-50/60 opacity-0 group-hover:opacity-100 transition-opacity duration-[220ms] ease-standard focus-within:opacity-100 focus:opacity-100"></div>
             <div class="relative w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
                 <i data-lucide="user" class="w-6 h-6"></i>
             </div>

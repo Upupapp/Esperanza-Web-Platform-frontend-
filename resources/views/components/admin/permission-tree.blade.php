@@ -82,7 +82,7 @@
                         @click.stop="toggleAllModule(mod)"
                         class="text-[10.5px] font-medium text-brand-600 hover:underline shrink-0 px-1.5"
                         x-text="moduleChecked(mod) === moduleTotal(mod) ? 'Clear all' : 'Select all'"
-                    ></span>
+                     tabindex="0" role="button" @keydown.enter.prevent="toggleAllModule(mod)" @keydown.space.prevent="toggleAllModule(mod)"></span>
                 </button>
 
                 <div

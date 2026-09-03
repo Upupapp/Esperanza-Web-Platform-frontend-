@@ -209,7 +209,7 @@
                                     <button
                                         type="button"
                                         @click.prevent.stop="removed.push({{ $loop->index }})"
-                                        class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5"
+                                        class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
                                     ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                 @endif
                             </div>
