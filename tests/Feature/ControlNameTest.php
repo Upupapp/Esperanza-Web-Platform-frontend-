@@ -20,12 +20,12 @@ class ControlNameTest extends TestCase
     /**
      * Lower this as controls are named. Never raise it.
      *
-     * 2026-09-03: 413 -> 161 -> 95. The BDRRMC grids (66) turned out to be
-     * derivable after all: each cell's name is its column header, and the
-     * x-model binding (r.cas_m) independently agrees with it ("Casualty M"),
-     * so two sources had to concur before a name was written.
+     * 2026-09-03: 413 -> 161 -> 95 -> 46. Each pass required two independent
+     * sources to agree before a name was written: column header vs x-model
+     * binding for the BDRRMC grids, and first-<option> prompt vs x-model for
+     * filter selects ("All Statuses" + statusFilter -> "Status filter").
      */
-    private const CEILING = 95;
+    private const CEILING = 46;
 
     private function strip(string $s): string
     {

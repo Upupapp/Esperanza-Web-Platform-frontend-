@@ -147,14 +147,14 @@
             <input aria-label="Search by name or ID" type="text" x-model="resourceSearch" placeholder="Search by name or ID…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
-        <select x-model="resourceCategoryFilter"
+        <select aria-label="Resource category filter" x-model="resourceCategoryFilter"
             class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Categories</option>
             @foreach(['Response Teams','Vehicles','Ambulances','Rescue Trucks','Boats','Motorcycles','Heavy Equipment','Radios','Generators','Medical Equipment','Rescue Equipment','PPE','Shelters & Tents'] as $cat)
             <option value="{{ $cat }}">{{ $cat }}</option>
             @endforeach
         </select>
-        <select x-model="resourceStatusFilter"
+        <select aria-label="Resource status filter" x-model="resourceStatusFilter"
             class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Statuses</option>
             @foreach(['Available','Standby','Assigned','Deployed','En Route','On Scene','Returning','Dispatched','Under Maintenance'] as $st)

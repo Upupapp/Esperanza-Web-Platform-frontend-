@@ -23,7 +23,7 @@
         </select>
 
         {{-- Barangay selector --}}
-        <select
+        <select aria-label="Report barangay filter"
             x-model="reportBarangayFilter"
             class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
             <option value="">All Barangays</option>

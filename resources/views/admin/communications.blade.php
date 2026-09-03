@@ -293,7 +293,7 @@
                         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Search Balita titles" type="text" x-model="balitaSearch" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select x-model="balitaCategory" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Balita category" x-model="balitaCategory" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Categories</option>
                         <template x-for="c in ['Community','Health','Public Service','Advisory','Livelihood','Governance']" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
@@ -507,7 +507,7 @@
                         <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Search event titles" type="text" x-model="eventsSearch" placeholder="Search event titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select x-model="eventsCategory" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Events category" x-model="eventsCategory" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Categories</option>
                         <template x-for="c in Object.keys(eventCategoryColor)" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
@@ -1068,7 +1068,7 @@
                     <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input aria-label="Search incident type or details" type="text" x-model="blotterSearch" placeholder="Search incident type or details..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
-                <select x-model="blotterBarangayFilter" class="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-brand-300 focus:outline-none transition-colors">
+                <select aria-label="Blotter barangay filter" x-model="blotterBarangayFilter" class="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-brand-300 focus:outline-none transition-colors">
                     <option value="All">All Barangays</option>
                     <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
                 </select>

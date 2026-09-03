@@ -84,7 +84,7 @@
             placeholder="Search by ID, type, or barangay..."
             class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-64 transition-colors">
     </div>
-    <select x-model="incidentTypeFilter"
+    <select aria-label="Incident type filter" x-model="incidentTypeFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Types</option>
         <option>Flood</option>
@@ -108,7 +108,7 @@
         <option>Public Health Emergency</option>
         <option>Other</option>
     </select>
-    <select x-model="incidentSeverityFilter"
+    <select aria-label="Incident severity filter" x-model="incidentSeverityFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Severities</option>
         <option>Critical</option>
@@ -116,7 +116,7 @@
         <option>Medium</option>
         <option>Low</option>
     </select>
-    <select x-model="incidentStatusFilter"
+    <select aria-label="Incident status filter" x-model="incidentStatusFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Statuses</option>
         <option>New</option>
@@ -130,7 +130,7 @@
         <option>Resolved</option>
         <option>Closed</option>
     </select>
-    <select x-model="incidentBarangayFilter"
+    <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Barangays</option>
         @foreach($barangays as $brgy)

@@ -490,3 +490,40 @@ the truthful total.
 Not wired into `scripts/gate.sh`: it drives 55 routes through Chrome and would
 add minutes to every push. It is now runnable by anyone, on demand, which was
 the blocker.
+
+
+### Filter selects named from their prompt option, 95 → 46
+
+The remaining controls were dominated by 70 `<select>` elements with no adjacent
+label. Their name was already on screen: the **first `<option>`** is a prompt
+("All Statuses", "Select a reason…"), and the `x-model` binding agrees with it
+(`statusFilter`). 49 had both sources concurring and were named
+"Status filter", "Citizen verification barangay filter", and so on — the section
+prefix comes from the file (`tab-citizen-verification`) or the binding's leading
+token, so two "Category" selects on one page do not read identically.
+
+**21 selects were left alone** because the two sources did not corroborate —
+`formData[f.key]` with an option of "—" says nothing about what the field is.
+Those need a human, and inventing a name for them would be worse than none.
+
+### A mistake worth recording
+
+The first attempt **corrupted the markup**: offsets were computed on a
+comment-stripped copy and applied to the original, so every insertion landed
+progressively further from its target — `placeholder="Searc aria-label="Category
+filter"h ref`. Caught by inspecting the diff rather than by the suite, which
+would have gone green because the ratchet only counts. Reverted with
+`git checkout` and redone with **length-preserving masking**, where comments
+become spaces rather than being deleted, so offsets stay aligned.
+
+### Both instruments agree
+
+| | before | after |
+| --- | --- | --- |
+| Source sites (`ControlNameTest`) | 95 | **46** |
+| Rendered instances (`scripts/audit.mjs`) | 190 | **99** |
+| Images without alt (rendered) | 0 of 797 | 0 of 797 |
+| Routes with horizontal overflow | 0 | 0 |
+
+Ratchet tightened 95 → 46. Certification gate 7 remains **FAIL**: the
+keyboard-only and screen-reader passes are still untouched.

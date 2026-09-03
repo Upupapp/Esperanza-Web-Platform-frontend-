@@ -127,14 +127,14 @@
             <input aria-label="Search by name or ID" type="text" x-model="evacueeSearch" placeholder="Search by name or ID…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
-        <select x-model="evCenterFilter"
+        <select aria-label="Ev center filter" x-model="evCenterFilter"
             class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Centers</option>
             @foreach($centers as $c)
                 <option value="{{ $c['name'] }}">{{ $c['name'] }}</option>
             @endforeach
         </select>
-        <select x-model="evStatusFilter"
+        <select aria-label="Ev status filter" x-model="evStatusFilter"
             class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Statuses</option>
             <option value="Checked In">Checked In</option>
@@ -143,7 +143,7 @@
             <option value="Returned Home">Returned Home</option>
             <option value="Referred to Hospital">Referred to Hospital</option>
         </select>
-        <select x-model="evHealthFilter"
+        <select aria-label="Ev health flag filter" x-model="evHealthFilter"
             class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Health Flags</option>
             <option value="With Special Needs">With Special Needs</option>

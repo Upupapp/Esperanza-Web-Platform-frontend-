@@ -86,7 +86,7 @@
             placeholder="Search by name or barangay..."
             class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-60 transition-colors">
     </div>
-    <select x-model="centerStatusFilter"
+    <select aria-label="Center status filter" x-model="centerStatusFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Statuses</option>
         <option>Open</option>
@@ -97,7 +97,7 @@
         <option>Closed</option>
         <option>Under Inspection</option>
     </select>
-    <select x-model="centerBarangayFilter"
+    <select aria-label="Center barangay filter" x-model="centerBarangayFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Barangays</option>
         @foreach($barangays as $brgy)

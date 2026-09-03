@@ -67,7 +67,7 @@
                 placeholder="Search by ID or barangay…"
                 class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600 bg-white">
         </div>
-        <select
+        <select aria-label="Damage type filter"
             x-model="damageTypeFilter"
             class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
             <option value="">All Types</option>
@@ -80,7 +80,7 @@
             <option>Evacuation Center Assessment</option>
             <option>Post-Disaster Needs Assessment</option>
         </select>
-        <select
+        <select aria-label="Damage status filter"
             x-model="damageStatusFilter"
             class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
             <option value="">All Statuses</option>
@@ -93,7 +93,7 @@
             <option>Returned for Revision</option>
             <option>Consolidated</option>
         </select>
-        <select
+        <select aria-label="Damage barangay filter"
             x-model="damageBarangayFilter"
             class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
             <option value="">All Barangays</option>

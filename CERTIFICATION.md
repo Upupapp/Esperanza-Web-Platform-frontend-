@@ -219,7 +219,7 @@ These are not oversights. The book says they need an answer, not a guess.
 | 07 Real forms and submission | **MECHANISM DONE** | `specForm()` + `x-ui.spec-form` render all 25 specs / 229 fields, tested. Adoption needs the API |
 | 08 Session and permission gating | **DONE** | Fails closed; signed-out state added |
 | 09 Bilingual completion | **DONE** | Ruled 2026-08-30: citizen bilingual, admin English-only. All citizen views covered; gate added |
-| 10 Accessibility | **PARTIAL** | Modals and keyboard reach done. **alt closed**; **control naming 413 → 95** (2026-09-03), ratcheted in `ControlNameTest`. The BDRRMC grids were named from their column headers, cross-checked against the `x-model` bindings. Keyboard-only and screen-reader passes not done |
+| 10 Accessibility | **PARTIAL** | Modals and keyboard reach done. **alt closed**; **control naming 413 → 46 source sites / 190 → 99 rendered** (2026-09-03), ratcheted in `ControlNameTest` and confirmed by `scripts/audit.mjs`, which now runs without root. Keyboard-only and screen-reader passes not done |
 | 11 Performance | **DONE** | Both measurements improved; no budget agreed (gate 8) |
 | 12 Component discipline | **PARTIAL** | a11y fix reached all 26 hand-rolled modals; consolidation to the component not done |
 | 13 Responsive and the `md:` tier | **DONE** | Hypothesis **disproven** by measurement — zero overflow at 375/768/1024/1440 px |

@@ -64,7 +64,7 @@
                 <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                 </span>
-                <select
+                <select aria-label="Data quality type filter"
                     x-model="dqTypeFilter"
                     class="pl-8 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
@@ -86,7 +86,7 @@
                 <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                 </span>
-                <select
+                <select aria-label="Data quality status filter"
                     x-model="dqStatusFilter"
                     class="pl-8 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >

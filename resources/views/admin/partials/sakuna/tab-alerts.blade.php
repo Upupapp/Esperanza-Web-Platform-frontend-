@@ -117,7 +117,7 @@
     </div>
 
     {{-- Alert Type --}}
-    <select
+    <select aria-label="Alert type filter"
         x-model="alertTypeFilter"
         class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
         <option value="">All Types</option>
@@ -127,7 +127,7 @@
     </select>
 
     {{-- Level --}}
-    <select
+    <select aria-label="Alert level filter"
         x-model="alertLevelFilter"
         class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
         <option value="">All Levels</option>
@@ -137,7 +137,7 @@
     </select>
 
     {{-- Status --}}
-    <select
+    <select aria-label="Alert status filter"
         x-model="alertStatusFilter"
         class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-colors">
         <option value="">All Statuses</option>

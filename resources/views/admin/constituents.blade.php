@@ -702,7 +702,7 @@
                                :placeholder="view==='individuals'?'Search residents...':view==='families'?'Search families...':'Search households...'"
                                class="w-52 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                     </div>
-                    <select x-show="isMunicipalScope" x-model="barangayFilter"
+                    <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter"
                             class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                         <option value="">All Barangays</option>
                         @foreach($barangayOptions as $b)
@@ -714,7 +714,7 @@
                         <i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span>
                     </span>
                     <div x-show="view==='individuals'" class="flex items-center gap-2">
-                        <select x-model="verificationFilter"
+                        <select aria-label="Verification filter" x-model="verificationFilter"
                                 class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             <option value="">All Verification</option>
                             <option>Verified</option>
@@ -722,7 +722,7 @@
                             <option>For Validation</option>
                             <option>Unverified</option>
                         </select>
-                        <select x-model="tagFilter"
+                        <select aria-label="Tag filter" x-model="tagFilter"
                                 class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             <option value="">All Tags</option>
                             <option value="senior">Senior Citizen</option>

@@ -73,7 +73,7 @@
                 <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                 </span>
-                <select
+                <select aria-label="Citizen verification status filter"
                     x-model="cvStatusFilter"
                     class="pl-8 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
@@ -98,7 +98,7 @@
                  filters the Registry sub-tabs already offer, so Citizen
                  Verification isn't the one queue admins can't narrow down. ── --}}
             <div class="relative" x-show="isMunicipalScope">
-                <select
+                <select aria-label="Citizen verification barangay filter"
                     x-model="cvBarangayFilter"
                     class="pl-3 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
@@ -117,7 +117,7 @@
             </span>
 
             <div class="relative" x-show="cvType === 'Individual'" x-cloak>
-                <select
+                <select aria-label="Citizen verification tag filter"
                     x-model="cvTagFilter"
                     class="pl-3 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
