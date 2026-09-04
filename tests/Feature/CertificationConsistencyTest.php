@@ -33,16 +33,17 @@ class CertificationConsistencyTest extends TestCase
         return file_get_contents($path);
     }
 
-    /** @return array{pass:int, fail:int, other:int, total:int} */
+    /** @return array{pass:int, fail:int, other:int, total:int, ids:list<int>} */
     private function tally(string $doc): array
     {
         // Rows of the ten-gate table: "| 3 | ... | **FAIL** |"
         preg_match_all('/^\|\s*(\d+)\s*\|.*?\|\s*\*\*([A-Z ]+)\*\*\s*\|/m', $doc, $rows, PREG_SET_ORDER);
 
-        $tally = ['pass' => 0, 'fail' => 0, 'other' => 0, 'total' => 0];
+        $tally = ['pass' => 0, 'fail' => 0, 'other' => 0, 'total' => 0, 'ids' => []];
 
         foreach ($rows as $row) {
             $tally['total']++;
+            $tally['ids'][] = (int) $row[1];
             $result = trim($row[2]);
 
             if ($result === 'PASS') {
@@ -77,6 +78,47 @@ class CertificationConsistencyTest extends TestCase
             'A gate row is neither **PASS** nor **FAIL**. A gate with a third state is a gate '
             .'that has stopped being a gate — TAB 17 allows no "partially" column.'
         );
+    }
+
+    /**
+     * The gate NUMBERS are load-bearing, not decoration.
+     *
+     * "Gate 7" is cited from FRONTEND_PENDING.md in nine places, from
+     * scripts/gate.sh (the page-weight block names "certification gate 8"), from
+     * ESPERANZA_FRONTEND_MASTER_COMMAND.md and from this document's own prose.
+     * Those references resolve by number and nothing follows them, so a
+     * duplicated or skipped row silently repoints every one of them.
+     *
+     * The three assertions above could not see that: they count rows and read
+     * results, and a table numbered 1..9 with 7 listed twice has ten rows and a
+     * correct tally. Raised by the esperanza-backend lane, whose own register
+     * carried two findings numbered B-040 with the whole gate green — their
+     * parser built a map keyed by id, so the duplicate overwrote rather than
+     * collided. Ours counts instead, so the totals stay right and the identity
+     * problem is what goes unseen. Different failure, same blind spot: an
+     * assertion that reads a projection of the data cannot see what the
+     * projection drops.
+     */
+    public function test_the_gates_are_numbered_one_to_ten_with_no_repeats(): void
+    {
+        $ids = $this->tally($this->document())['ids'];
+
+        $duplicates = array_keys(array_filter(array_count_values($ids), fn ($n) => $n > 1));
+        sort($duplicates);
+
+        $this->assertSame([], $duplicates, sprintf(
+            'Gate number(s) %s appear on more than one row of the table in CERTIFICATION.md. '
+            .'The row count and the tally stay correct when this happens, so nothing else here '
+            .'fails — but every "gate N" reference elsewhere in the repo now points at two rows.',
+            implode(', ', $duplicates)
+        ));
+
+        $this->assertSame(range(1, 10), $ids, sprintf(
+            'The gate table must be numbered 1..10 in order; it reads %s. A skipped or reordered '
+            .'number silently repoints the "gate N" citations in FRONTEND_PENDING.md, '
+            .'scripts/gate.sh and this document.',
+            implode(', ', $ids)
+        ));
     }
 
     public function test_the_stated_count_matches_the_table(): void

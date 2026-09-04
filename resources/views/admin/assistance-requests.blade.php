@@ -260,7 +260,12 @@
     // welfare case (screening -> eligibility assessment -> approval ->
     // disbursement -> release), not a document-preparation workflow, and
     // this file previously just copied Dokyu's lifecycle wholesale.
-    $allTulongStatuses = ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Needs Requirements', 'Returned for Reassessment', 'Assistance Processing', 'Ready for Release', 'Completed', 'Rejected', 'Cancelled'];
+    //
+    // Read from config/esperanza_tulong_lifecycle.php rather than hand-typed
+    // here: config/ is what consuming codebases vendor, and they cannot read
+    // this Blade file. The eleven names lived only here and in a .txt file,
+    // which left the backend lane unable to vendor the vocabulary at all.
+    $allTulongStatuses = config('esperanza_tulong_lifecycle.all');
     // Per-type metadata (requirements, process labels, and — new —
     // processingKind, which the Assistance Processing/Release sections use
     // to decide which fields actually apply to a given assistance type;
