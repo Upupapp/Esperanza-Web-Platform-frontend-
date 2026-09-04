@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 45, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 49, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -864,3 +864,66 @@ and the answer is none.** What remains is `.env` creation, `key:generate`,
 run unattended on every install; the npm steps are not composer's business. The
 `.env` copy alone is idempotent but useless without the key. So `setup` keeps
 them, and the gate is the only thing that moved.
+
+---
+
+## 2026-09-04 — F-025: CERTIFICATION.md argued that a passing gate failed
+
+**Found by applying the backend lane's question** (#0018, their B-042) to this
+repo: not *"is this asserted?"* but **"could this assertion see the failure if it
+happened?"** Their register had carried two findings numbered B-040 with the
+whole gate green, because the parser built a map keyed by id and the duplicate
+overwrote rather than collided. They then checked this repo and cleared it —
+correctly, our `tally()` counts rather than keys, so their exact defect cannot
+occur here. Applying the *question* rather than the instance found two live
+defects the three existing tests could not see.
+
+**1. The gate 8 paragraph was stale prose from when gate 8 failed.**
+`CERTIFICATION.md` line 116 read *"the gate asks for a budget, enforced,
+measured throttled — none of which exists yet"* and *"No budget number has been
+agreed"*. All of that is false and was contradicted three ways in the same
+document: the table row says **PASS**, the block sits under the heading *"The two
+passing gates that are new, and how they were verified"*, and open question 5
+says the budget is enforced *"so gate 8 passes"*. MEASURED at
+`scripts/gate.sh:213-215` — `MAX_HTML_GZ_KB=120`, `MAX_JS_GZ_KB=150`,
+`MAX_INITIAL_GZ_KB=300` are set and enforced.
+
+This is B-023's shape exactly, which this test's own docblock already cites: a
+partial edit flipped the row, the tally and the open question, and left the
+paragraph standing. Rewritten to state what is enforced, and — per the mobile
+lane's caveat in #0007, that one overstated claim must not be swapped for
+another — to keep naming the two things genuinely outstanding: **owner
+ratification of the three numbers**, and the fact that **nothing measures on a
+throttled connection**. Neither is a gate failure.
+
+**2. A cross-reference pointed at the wrong item.** The same paragraph sent the
+reader to *"gate 4 of the open questions"*. Open question **4** is about
+`localStorage` request drafts; the minimum-device question it meant is open
+question **5**. It also called an open question a "gate", the one word in this
+document that already means something else.
+
+**Why nothing caught either:** all three existing tests read the same
+projection — the table's row results and the tally sentence. Prose that
+contradicts the row it explains is invisible to every one of them, and a
+cross-reference is invisible to all software here.
+
+**The guard that was addable.** Prose consistency is not mechanically checkable;
+**row identity is**, and it turned out to matter more than the backend lane
+assumed. Their note said it was *"only worth a line if your table numbers are
+cited from elsewhere"* — MEASURED, they are, from at least twelve places:
+`FRONTEND_PENDING.md` cites "gate 7" nine times, `scripts/gate.sh:197` names
+"certification gate 8", plus `CERTIFICATION.md` and
+`ESPERANZA_FRONTEND_MASTER_COMMAND.md:274`. Every one resolves by number, and
+nothing follows them. So a duplicated or skipped row silently repoints all of
+them while the row count and the tally stay correct.
+
+`test_the_gates_are_numbered_one_to_ten_with_no_repeats` asserts the ids are
+exactly `1..10`, in order, no repeats. **Mutation-tested before being believed:**
+renumbering the gate 8 row to `7` made the new test fail and **left the other
+three passing** — which is the finding restated as evidence, not a claim about
+it. Reverted; full suite 46 passed.
+
+**Not done, and why:** `./vendor/bin/pint --test` could not run in this
+non-interactive session (approval required). The change follows the file's
+existing style but the formatter has not confirmed it. It runs in
+`scripts/gate.sh:63` before any push, so it cannot reach `main` unformatted.

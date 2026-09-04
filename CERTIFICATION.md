@@ -113,8 +113,8 @@ Tests:  11 passed (19 assertions)
 VERDICT: PASS -- clean clone reaches a working site with only the documented steps
 ```
 
-**8 — page weight.** Both measurements improved a lot, but the gate asks for a
-*budget*, enforced, *measured throttled* — none of which exists yet:
+**8 — page weight.** Both measurements improved a lot, and the budget the gate
+asks for now exists and is enforced:
 
 | | Before | After |
 | --- | --- | --- |
@@ -122,9 +122,16 @@ VERDICT: PASS -- clean clone reaches a working site with only the documented ste
 | `/admin/sakuna` per tab URL | 1.59 MB × 11 | **~244 KB × 11** |
 | Sakuna module total | 17.5 MB | **2.68 MB** |
 
-No budget number has been agreed, and nothing measures on a throttled
-connection. Setting the budget is an owner decision (it follows from gate 4 of
-the open questions: what minimum device must be supported).
+A budget was proposed from measurement on 2026-09-03 and is enforced in
+`scripts/gate.sh` (`MAX_HTML_GZ_KB=120`, `MAX_JS_GZ_KB=150`,
+`MAX_INITIAL_GZ_KB=300`, gzipped), set just above the worst route so a
+regression bites while today's tree passes. That is what gate 8 passes on.
+
+Two things are still outstanding, and neither is a gate failure. The three
+numbers are an engineering proposal, not an LGU ruling — ratifying or changing
+them is an owner decision, and it follows from **open question 5**: what minimum
+device must be supported. And nothing measures on a throttled connection; the
+budget is enforced against static gzipped size only.
 
 ---
 
@@ -134,7 +141,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (45 tests) → static export → assertions ON dist/ (incl. page-weight budget)
+vite build → pint --test → phpunit (49 tests) → static export → assertions ON dist/ (incl. page-weight budget)
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:
@@ -214,7 +221,7 @@ These are not oversights. The book says they need an answer, not a guess.
 | TAB | State | Note |
 | --- | --- | --- |
 | 01 The two production defects | **DONE** | 46 → 55 routes exported; 16 PDFs reach `dist/` |
-| 02 Test harness and gate | **DONE** (adapted) | 2 → 45 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below. The 36th asserts the hook is actually *enabled* in the clone, since a clone with it unset is how a broken tree reached main on 2026-09-01 |
+| 02 Test harness and gate | **DONE** (adapted) | 2 → 49 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below. The 36th asserts the hook is actually *enabled* in the clone, since a clone with it unset is how a broken tree reached main on 2026-09-01 |
 | 03 Local setup and the `.env` trap | **DONE** | Clean clone verified end to end on the merged tree — 11 tests from a fresh checkout |
 | 04 Lift 167 inline arrays | **DONE** | 136 top-level fixtures → 16; 1,431 lines → 129. 27 data files. Every wave verified byte-identical |
 | 05 The HTTP layer | **DONE** | Client + error envelope built; no screen consumes it yet |
