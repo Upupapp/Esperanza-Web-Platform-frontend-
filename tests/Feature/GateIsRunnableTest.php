@@ -100,4 +100,56 @@ class GateIsRunnableTest extends TestCase
             $configured === '' ? 'unset' : "\"{$configured}\""
         ));
     }
+
+    /**
+     * The configured hooks path must actually contain a runnable pre-push.
+     *
+     * Checking that core.hooksPath equals "scripts/hooks" catches a clone that
+     * points somewhere else, but not one pointing at a directory with no
+     * pre-push in it — git then runs nothing, silently, exactly as if no hook
+     * were configured. Raised by the backend lane with B-039.
+     */
+    public function test_the_configured_hooks_path_contains_a_runnable_pre_push(): void
+    {
+        if (! is_dir(base_path('.git')) && ! is_file(base_path('.git'))) {
+            $this->markTestSkipped('Not a git checkout.');
+        }
+
+        $configured = trim((string) shell_exec(
+            'git -C '.escapeshellarg(base_path()).' config core.hooksPath 2>/dev/null'
+        ));
+
+        $this->assertNotSame('', $configured, 'core.hooksPath is unset, so no hook runs at all.');
+
+        $hook = base_path($configured.'/pre-push');
+
+        $this->assertFileExists($hook, sprintf(
+            'core.hooksPath points at "%s", which contains no pre-push. git will run nothing '
+            .'and say nothing, which is indistinguishable from a gate that passed.',
+            $configured
+        ));
+
+        $this->assertTrue(
+            is_executable($hook),
+            "{$configured}/pre-push is not executable, so git skips it silently."
+        );
+    }
+
+    /**
+     * Installing the hook must not depend on a command nobody types twice.
+     */
+    public function test_the_hook_installs_from_a_plain_composer_install(): void
+    {
+        $composer = json_decode(file_get_contents(base_path('composer.json')), true);
+        $onInstall = implode(' ', (array) ($composer['scripts']['post-autoload-dump'] ?? []));
+
+        $this->assertStringContainsString(
+            'install-git-hooks.php',
+            $onInstall,
+            'The hook installer is not in post-autoload-dump, so `composer install` -- what every '
+            .'clone actually runs -- leaves the pre-push gate uninstalled.'
+        );
+
+        $this->assertFileExists(base_path('scripts/install-git-hooks.php'));
+    }
 }

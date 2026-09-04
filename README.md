@@ -50,9 +50,14 @@ this project has no database — do not point them at a sqlite file.
 There is **no CI on this project**. `scripts/gate.sh` is the gate, and it runs
 automatically before every push:
 
+`composer install` installs it — the hook is wired from `post-autoload-dump`,
+so a fresh clone gets the gate without anyone reading this section. To run it by
+hand, or to check the wiring:
+
 ```bash
-git config core.hooksPath scripts/hooks    # one time, per clone
-bash scripts/gate.sh                       # or run it directly
+bash scripts/gate.sh                       # run the gate directly
+git config core.hooksPath                  # should print: scripts/hooks
+php scripts/install-git-hooks.php          # re-install; idempotent, never fails a build
 ```
 
 It builds the assets, checks formatting, runs the suite (including the

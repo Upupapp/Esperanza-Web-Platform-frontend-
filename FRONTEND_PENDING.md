@@ -22,7 +22,7 @@ State legend: **BLOCKED** / **OWNER DECISION** / **NOT REACHED** / **OPEN**
 | F-003 | P1 | **PARTIAL / OWNER** | Redacted; local key ROTATED 2026-08-30; not reused elsewhere. Remaining: set the new APP_KEY in the Netlify UI (runbook in `netlify.toml`) |
 | F-004 | P1 | **FIXED** | `.env.example` ships array/array/sync drivers; `artisan migrate` removed from composer setup |
 | F-005 | P2 | **FIXED** | Initial JS 1,665 KB -> 506 KB (chart.js + html2pdf lazy); /admin/sakuna 1.59 MB -> ~244 KB per tab URL |
-| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 43, enforced by `scripts/hooks/pre-push` |
+| F-006 | P2 | **FIXED** | Route-render gate + export-drift gate; 2 tests -> 45, enforced by `scripts/hooks/pre-push` |
 | F-007 | P3 | **FIXED** | `pint --test` green and part of the gate |
 | F-008 | P3 | **FIXED** | `/dist` is gitignored |
 | F-009 | P3 | **PARTIAL** | 7 oversized images 13.6 MB -> 5.8 MB. `public/documents` is still 23 MB -- needs ghostscript/qpdf, not installed |
@@ -802,3 +802,65 @@ That matters for anything that becomes an audit trail (backend TAB 17), but
 unlike the fee they are display-only today and none is wired to a record of who
 did what. **Not fixed, deliberately — the right fix is knowing the actor, which
 needs the API, not a better default.**
+
+
+---
+
+## 2026-09-04 — F-024: the pre-push gate was installed by a command nobody types twice
+
+**Raised by the backend lane over the bus** (#0003, their B-039), and **verified
+here before acting** — the claim was exact.
+
+`git config core.hooksPath scripts/hooks` sat in composer's **`setup`** block
+only. `composer install` — what every clone and every CI-less checkout actually
+runs — executes `post-autoload-dump`, not `setup`, so **an ordinary clone got no
+gate at all**.
+
+**Why it was invisible:** `core.hooksPath` lives in `.git/config`, which is not
+cloned. A missing hook is silent by construction — `git push` succeeds, prints
+nothing unusual, and an absent gate is indistinguishable from a gate that
+passed. This machine's checkout had it set, so the exposure was never here; it
+was the second developer machine, the Windows lane, and every future clone.
+
+**Fixed** by porting the backend lane's design:
+
+- `scripts/install-git-hooks.php`, run from `post-autoload-dump`, so the hook
+  installs on the way to a working checkout.
+- **PHP, not shell**, so the Windows lane runs it.
+- **Never exits non-zero** — failing `composer install` over a git hook is worse
+  than the missing hook.
+- **Refuses to clobber** an existing `core.hooksPath`, reporting it instead:
+  that is someone's decision, not ours to overwrite.
+- Removed from `setup`, which calls `composer install` anyway.
+
+**Two tests, three mutations, each watched failing:**
+
+| Mutation | Caught by |
+| --- | --- |
+| `core.hooksPath` unset (a fresh clone) | *"core.hooksPath is unset, so no hook runs at all"* |
+| set to a directory with no `pre-push` in it | *"points at 'scripts', which contains no pre-push. git will run nothing and say nothing"* |
+| installer removed from `post-autoload-dump` | *"…so `composer install` — what every clone actually runs — leaves the pre-push gate uninstalled"* |
+
+The second matters most: equality with `scripts/hooks` cannot see a right path
+with a missing file. **An installer nobody checks is the same category of hope as
+an instruction nobody follows** — their phrasing, and it is the reason for the
+test rather than just the installer.
+
+`README.md` and `CLAUDE.md` both described it as "one time, per clone"; both now
+say `composer install` does it.
+
+### Their two cleared classes, and their inference
+
+The backend lane also measured two related classes in this repo and cleared
+both — recorded so nobody re-checks: `tests/Unit` has a tracked file (their
+B-038, a declared-but-uncommitted testsuite directory that made PHPUnit exit
+with zero tests, does not apply), and `scripts/hooks/pre-push` is mode `100755`
+in the index (their B-030, git silently skipping a non-executable hook, is
+clear).
+
+**Their inference — which other `setup` lines every clone needs — was checked
+and the answer is none.** What remains is `.env` creation, `key:generate`,
+`npm install` and `npm run build`. `key:generate` writes a secret and must not
+run unattended on every install; the npm steps are not composer's business. The
+`.env` copy alone is idempotent but useless without the key. So `setup` keeps
+them, and the gate is the only thing that moved.

@@ -334,8 +334,11 @@ items, sweep and test again, then push. A push to `main` deploys this repo via
 Netlify, so the post-merge gate is not a formality.
 
 **There is no CI and no workflow file is to be authored** (owner ruling). The
-gate is `scripts/gate.sh`, run by `scripts/hooks/pre-push`. It is off in a fresh
-clone — enable it once with `git config core.hooksPath scripts/hooks`.
+gate is `scripts/gate.sh`, run by `scripts/hooks/pre-push`, installed by
+`composer install` via `post-autoload-dump`. It used to be installed only by
+`composer setup` — a command nobody types after day one — so every ordinary
+clone silently had no gate. `git config core.hooksPath` should print
+`scripts/hooks`.
 
 Open findings live in `FRONTEND_PENDING.md`. The backend work order derived from
 this frontend is `ESPERANZA_BACKEND_MASTER_COMMAND.md`.
