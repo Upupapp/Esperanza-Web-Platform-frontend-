@@ -19,7 +19,7 @@ Stated by the project owner on 2026-08-29:
 | 4 | **Merge remote into local, preserving local-only items.** Merge — never `reset --hard`, never force-push. | `git merge origin/main` |
 | 5 | **Sweep + test again after the merge.** This is the gate that matters; step 3 was only the baseline. | full build + test + a render of every route |
 | 6 | **Push** — only once step 5 is green. | `git push origin main` |
-| 7 | **Report what moved**: the merge base, what arrived from the remote, what was local-only and survived, and the pushed SHA. | — |
+| 7 | **Prove the ref moved, then report what moved**: the merge base, what arrived from the remote, what was local-only and survived, and the pushed SHA — which must be the SHA the *remote* reports, not the one you pushed. Why the push's own output is not evidence: the `git ls-remote` step of `/Users/user/CLAUDE.md`, canonical, not restated here. | `git ls-remote origin refs/heads/main \| cut -f1` compared against `git rev-parse main` — they must be identical. Both the `cut -f1` and the `main` matter; the reasons are in the `git ls-remote` step of `/Users/user/CLAUDE.md`. |
 
 ## There is no CI here, and none is to be authored
 

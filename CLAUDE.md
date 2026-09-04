@@ -330,8 +330,12 @@ backend-ready, frontend-only.
 
 Every push to `main` follows `DEPLOY_PROTOCOL.md`: sweep remote main, enumerate
 local-only work (including untracked files), test, merge preserving local-only
-items, sweep and test again, then push. A push to `main` deploys this repo via
-Netlify, so the post-merge gate is not a formality.
+items, sweep and test again, push, then **prove the ref actually moved** with
+`git ls-remote origin refs/heads/main | cut -f1` compared against `git rev-parse
+main`. Why the first field, why `main` and not `HEAD`, and why no exit code is
+evidence: the `git ls-remote` step of `/Users/user/CLAUDE.md`, which is canonical and is not
+restated here. A push to `main`
+deploys this repo via Netlify, so the post-merge gate is not a formality.
 
 **There is no CI and no workflow file is to be authored** (owner ruling). The
 gate is `scripts/gate.sh`, run by `scripts/hooks/pre-push`, installed by
