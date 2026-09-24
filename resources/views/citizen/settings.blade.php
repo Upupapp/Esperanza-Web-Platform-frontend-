@@ -1,23 +1,45 @@
-@php
-    // TAB 04: fixtures live in resources/data/citizen/settings.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/citizen/settings.php');
-    $notifPrefs = $__fixtures['notifPrefs'];
-@endphp
-
 <x-layouts.citizen title="Settings" subtitle="Manage your account preferences." active="settings">
     <div
         x-data="{
             tab: 'notifications',
+            notifPrefs: [],
+            notifPrefsLoading: true,
             savingPassword: false,
+            passwordForm: { current_password: '', password: '', password_confirmation: '' },
             enabling2fa: false,
             requestingData: false,
-            updatePassword() {
+
+            async init() {
+                this.notifPrefsLoading = true;
+                try {
+                    const result = await $api.get('/citizen/notification-preferences');
+                    this.notifPrefs = result.data?.preferences || [];
+                } catch { this.notifPrefs = []; } finally { this.notifPrefsLoading = false; }
+            },
+            async togglePref(pref) {
+                const next = !pref.in_app;
+                pref.in_app = pref.sms = pref.email = next;
+                try {
+                    await $api.put('/citizen/notification-preferences', {
+                        preferences: this.notifPrefs.map((p) => ({ category: p.category, in_app: p.in_app, sms: p.sms, email: p.email })),
+                    });
+                } catch (err) {
+                    pref.in_app = pref.sms = pref.email = !next;
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not save preference.', variant: 'error' });
+                }
+            },
+            async updatePassword() {
                 if (this.savingPassword) return;
                 this.savingPassword = true;
-                setTimeout(() => {
+                try {
+                    await $api.put('/citizen/password', this.passwordForm);
+                    this.passwordForm = { current_password: '', password: '', password_confirmation: '' };
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Password updated.' : 'Na-update ang password.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not update password.', variant: 'error' });
+                } finally {
                     this.savingPassword = false;
-                    this.$dispatch('toast', { message: 'Password updated — this is a frontend preview, no data is saved.', variant: 'success' });
-                }, 800);
+                }
             },
             enable2fa() {
                 if (this.enabling2fa) return;
@@ -27,13 +49,17 @@
                     this.$dispatch('toast', { message: 'Two-factor authentication setup is a frontend preview — no data is saved.', variant: 'info' });
                 }, 800);
             },
-            requestData() {
+            async requestData() {
                 if (this.requestingData) return;
                 this.requestingData = true;
-                setTimeout(() => {
+                try {
+                    await $api.post('/citizen/data-requests', { kind: 'portability', detail: this.$store.lang.current === 'en' ? 'Citizen requested a copy of their data via Settings > Privacy.' : 'Humiling ang mamamayan ng kopya ng kanilang datos sa pamamagitan ng Settings > Privacy.' });
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Data request received — the LGU will respond by email or mobile.' : 'Natanggap ang hiling sa datos — sasagutin ng LGU sa email o mobile.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not submit request.', variant: 'error' });
+                } finally {
                     this.requestingData = false;
-                    this.$dispatch('toast', { message: 'Data export request received — this is a frontend preview, no file is generated.', variant: 'success' });
-                }, 800);
+                }
             },
         }"
         class="animate-fade-up grid grid-cols-1 lg:grid-cols-4 gap-5"
@@ -60,25 +86,27 @@
                 <x-ui.card>
                     <h3 class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Mga Kagustuhan sa Abiso" en="Notification Preferences" /></h3>
                     <p class="text-xs text-slate-400 mb-4"><x-ui.t fil="Piliin kung anong mga update ang gusto mong matanggap." en="Choose what updates you want to receive." /></p>
-                    <div class="divide-y divide-slate-50" x-data="{}">
-                        @foreach($notifPrefs as $pref)
+                    <div class="divide-y divide-slate-50">
+                        <template x-for="pref in notifPrefs" :key="pref.category">
                             <label class="flex items-center justify-between gap-4 py-3.5 cursor-pointer">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700"><x-ui.t :fil="$pref['labelFil']" :en="$pref['label']" /></p>
-                                    <p class="text-xs text-slate-400 mt-0.5"><x-ui.t :fil="$pref['descFil']" :en="$pref['desc']" /></p>
+                                    <p class="text-sm font-medium text-slate-700" x-text="$store.lang.current === 'en' ? pref.label?.en : (pref.label?.fil || pref.label?.en)"></p>
                                 </div>
-                                <div class="relative shrink-0" x-data="{ on: {{ $pref['checked'] ? 'true' : 'false' }} }">
+                                <div class="relative shrink-0">
                                     <button
-                                        @click="on = !on"
+                                        @click="togglePref(pref)"
                                         type="button"
                                         class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative"
-                                        :class="on ? 'bg-brand-600' : 'bg-slate-200'"
+                                        :class="pref.in_app ? 'bg-brand-600' : 'bg-slate-200'"
                                     >
-                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="on && 'translate-x-4'"></span>
+                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="pref.in_app && 'translate-x-4'"></span>
                                     </button>
                                 </div>
                             </label>
-                        @endforeach
+                        </template>
+                        <p class="py-6 text-center text-xs text-slate-400" x-show="!notifPrefsLoading && !notifPrefs.length">
+                            <x-ui.t fil="Walang mga kagustuhan sa abiso." en="No notification preferences available." />
+                        </p>
                     </div>
                 </x-ui.card>
             </div>
@@ -87,9 +115,9 @@
                 <x-ui.card>
                     <h3 class="text-sm font-semibold text-navy-900 mb-4"><x-ui.t fil="Palitan ang Password" en="Change Password" /></h3>
                     <div class="space-y-4 max-w-md">
-                        <x-ui.input name="current_password" type="password" label="Current Password" icon="lock" placeholder="••••••••" />
-                        <x-ui.input name="new_password" type="password" label="New Password" icon="lock" placeholder="••••••••" />
-                        <x-ui.input name="confirm_password" type="password" label="Confirm New Password" icon="lock" placeholder="••••••••" />
+                        <x-ui.input name="current_password" type="password" label="Current Password" icon="lock" placeholder="••••••••" x-model="passwordForm.current_password" />
+                        <x-ui.input name="new_password" type="password" label="New Password" icon="lock" placeholder="••••••••" x-model="passwordForm.password" />
+                        <x-ui.input name="confirm_password" type="password" label="Confirm New Password" icon="lock" placeholder="••••••••" x-model="passwordForm.password_confirmation" />
                         <x-ui.button x-bind:disabled="savingPassword" @click="updatePassword()">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="savingPassword" x-cloak></i>

@@ -1,30 +1,54 @@
-@php
-    // TAB 04: fixtures live in resources/data/citizen/profile.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/citizen/profile.php');
-    $household = $__fixtures['household'];
-
-    $documents = $__fixtures['documents'];
-
-    $idTypes = $__fixtures['idTypes'];
-
-    $availableFiles = $__fixtures['availableFiles'];
-@endphp
-
 <x-layouts.citizen title="My Profile" subtitle="Manage your resident information and account details." active="profile">
     <div
         x-data="{
             open: false,
+            submitting: false,
             submitted: false,
             idType: '',
-            idNumber: '',
-            attachment: null,
-            showFilePicker: false,
-            verifiedIndex: null,
-            files: @js($availableFiles),
-            idTypes: @js($idTypes),
-            reset() { this.open = false; this.submitted = false; this.idType = ''; this.idNumber = ''; this.attachment = null; this.showFilePicker = false; },
+            idFile: null,
+            idTypes: ['PhilSys National ID', 'Driver\'s License (LTO)', 'Voter\'s ID', 'Passport', 'PRC ID', 'SSS/GSIS ID', 'PWD ID', 'Senior Citizen ID'],
+            reset() { this.open = false; this.submitted = false; this.idType = ''; this.idFile = null; },
+            async submitId() {
+                if (this.submitting || !this.idType || !this.idFile) return;
+                this.submitting = true;
+                try {
+                    const form = new FormData();
+                    form.append('file', this.idFile);
+                    form.append('name', this.idType);
+                    form.append('type', this.idType);
+                    form.append('category', 'Identity / Verification');
+                    await $api.post('/citizen/papeles', form);
+                    this.submitted = true;
+                    await this.loadDocuments();
+                    setTimeout(() => { this.reset(); this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Valid ID submitted for verification.' : 'Naisumite ang valid ID para sa beripikasyon.', variant: 'success' }); }, 1400);
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not submit ID.', variant: 'error' });
+                } finally {
+                    this.submitting = false;
+                }
+            },
 
             showDigitalId: false,
+
+            familyMembers: [],
+            residentProfileLoading: true,
+            documents: [],
+            documentsLoading: true,
+            async loadDocuments() {
+                this.documentsLoading = true;
+                try {
+                    const result = await $api.get('/citizen/papeles');
+                    this.documents = result.data || [];
+                } catch { this.documents = []; } finally { this.documentsLoading = false; }
+            },
+            async init() {
+                this.residentProfileLoading = true;
+                try {
+                    const result = await $api.get('/citizen/resident-profile');
+                    this.familyMembers = result.data?.family?.members || [];
+                } catch { this.familyMembers = []; } finally { this.residentProfileLoading = false; }
+                this.loadDocuments();
+            },
 
             showEditProfile: false,
             savingProfile: false,
@@ -34,24 +58,32 @@
                 this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: a.mobile || '', occupation: a.occupation || '', address: a.address || '' };
                 this.showEditProfile = true;
             },
-            saveProfile() {
+            async saveProfile() {
                 if (this.savingProfile) return;
                 this.savingProfile = true;
-                setTimeout(() => {
-                    const a = this.$store.citizenSession.account;
-                    this.$store.citizenSession.login({
-                        ...a,
-                        firstName: this.editForm.firstName,
-                        lastName: this.editForm.lastName,
-                        fullName: this.editForm.firstName + ' ' + this.editForm.lastName,
-                        mobile: this.editForm.mobile,
-                        occupation: this.editForm.occupation,
-                        address: this.editForm.address,
-                    });
-                    this.savingProfile = false;
+                try {
+                    // Identity fields (first/middle/last name, suffix, birthdate,
+                    // sex, barangay) are locked once the account is Verified (see
+                    // identity_locked below) and PUT /citizen/profile 422s on
+                    // them; occupation and address are always editable.
+                    // Mobile is NOT accepted here at all -- a contact change is
+                    // proven at the new number via POST /citizen/profile/contact
+                    // + /verify, a flow this quick-edit modal does not implement
+                    // (see PRODUCTION_READINESS.md).
+                    const payload = { occupation: this.editForm.occupation, address: this.editForm.address };
+                    if (!this.$store.citizenSession.account?.identityLocked) {
+                        payload.first_name = this.editForm.firstName;
+                        payload.last_name = this.editForm.lastName;
+                    }
+                    await $api.put('/citizen/profile', payload);
+                    await this.$store.citizenSession.refresh();
                     this.showEditProfile = false;
-                    this.$dispatch('toast', { message: 'Profile updated — this is a frontend preview, no data is saved.', variant: 'success' });
-                }, 800);
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Profile updated.' : 'Na-update ang profile.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not update profile.', variant: 'error' });
+                } finally {
+                    this.savingProfile = false;
+                }
             },
         }"
         class="animate-fade-up"
@@ -71,9 +103,11 @@
                 <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-xl font-semibold text-white" x-text="$store.citizenSession.account?.fullName || 'Resident'"></h2>
-                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-100 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-2 py-0.5">
-                            <x-ui.t fil="Verified na Residente" en="Verified Resident" />
-                        </span>
+                        <span
+                            class="inline-flex items-center gap-1 text-[11px] font-medium rounded-full px-2 py-0.5 border"
+                            :class="$store.citizenSession.account?.fullServiceAccess ? 'text-emerald-100 bg-emerald-500/20 border-emerald-400/30' : 'text-amber-100 bg-amber-500/20 border-amber-400/30'"
+                            x-text="$store.citizenSession.account?.fullServiceAccess ? ($store.lang.current === 'en' ? 'Verified Resident' : 'Verified na Residente') : ($store.citizenSession.account?.status || ($store.lang.current === 'en' ? 'Unverified' : 'Hindi Pa Verified'))"
+                        ></span>
                     </div>
                     <p class="text-sm text-white/60 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span class="flex items-center gap-1.5"><i data-lucide="hash" class="w-3.5 h-3.5"></i><span x-text="$store.citizenSession.account?.id"></span></span>
@@ -188,13 +222,12 @@
             <div class="space-y-5">
                 {{-- Digital ID — a wallet for already-issued official credentials,
                      a different concept from the "Verify ID" flow above (which
-                     submits evidence for LGU review). Currently seeded for
-                     Cristy Bonghanoy only, same as the Esperanza Mobile app's
-                     own Digital ID wallet — see components/citizen/digital-id-
-                     card.blade.php's own header comment. --}}
+                     submits evidence for LGU review). Backed by GET /citizen/digital-id
+                     (App\Domain\Identity\DigitalId), available once the account
+                     has full service access. --}}
                 <button
                     type="button"
-                    x-show="$store.citizenSession.account?.id === 'ESP-RES-2024-1044'" x-cloak
+                    x-show="$store.citizenSession.account?.fullServiceAccess" x-cloak
                     @click="showDigitalId = true"
                     class="w-full text-left rounded-2xl bg-gradient-to-br from-navy-950 via-navy-900 to-brand-900 border border-navy-800 shadow-card p-4 flex items-center gap-3 hover:shadow-card-hover transition-all duration-[220ms] ease-standard group"
                 >
@@ -232,20 +265,23 @@
                 <!-- Household -->
                 <x-ui.card padded="false">
                     <div class="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Kasapi ng Sambahayan" en="Household Members" /></h3>
-                        <span class="text-[11px] font-medium text-slate-400">{{ count($household) }}</span>
+                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Kasapi ng Pamilya" en="Family Members" /></h3>
+                        <span class="text-[11px] font-medium text-slate-400" x-text="familyMembers.length"></span>
                     </div>
                     <div class="divide-y divide-slate-50">
-                        @foreach($household as $member)
+                        <template x-for="member in familyMembers" :key="member.ref">
                             <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
-                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0">{{ collect(explode(' ', $member['name']))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}</div>
+                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0" x-text="(member.name || '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('')"></div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-medium text-slate-700 truncate">{{ $member['name'] }}</p>
-                                    <p class="text-xs text-slate-400">{{ $member['age'] }} <x-ui.t fil="taong gulang" en="y/o" /></p>
+                                    <p class="text-sm font-medium text-slate-700 truncate" x-text="member.name"></p>
+                                    <p class="text-xs text-slate-400" x-text="member.dob ? (new Date().getFullYear() - new Date(member.dob).getFullYear()) + ' ' + ($store.lang.current === 'en' ? 'y/o' : 'taong gulang') : ''"></p>
                                 </div>
-                                <span class="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5 shrink-0">{{ $member['relation'] }}</span>
+                                <span class="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5 shrink-0" x-text="member.relation"></span>
                             </div>
-                        @endforeach
+                        </template>
+                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!residentProfileLoading && !familyMembers.length">
+                            <x-ui.t fil="Wala pang resident profile o pamilya sa file." en="No resident profile or family on file yet." />
+                        </p>
                     </div>
                 </x-ui.card>
 
@@ -255,20 +291,18 @@
                         <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="folder-check" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Mga Dokumento sa File" en="Documents on File" /></h3>
                     </div>
                     <div class="divide-y divide-slate-50">
-                        @foreach($documents as $doc)
+                        <template x-for="doc in documents" :key="doc.id">
                             <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
                                 <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                                    <i data-lucide="{{ $doc['icon'] }}" class="w-4 h-4"></i>
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
                                 </span>
-                                <p class="text-sm text-slate-700 min-w-0 truncate flex-1">{{ $doc['label'] }}</p>
-                                @if($doc['status'] === 'Approved')
-                                    <x-ui.badge :status="$doc['status']" class="shrink-0" />
-                                @else
-                                    <x-ui.badge :status="$doc['status']" class="shrink-0" x-show="verifiedIndex !== {{ $loop->index }}" />
-                                    <x-ui.badge status="Under Verification" class="shrink-0" x-show="verifiedIndex === {{ $loop->index }}" x-cloak />
-                                @endif
+                                <p class="text-sm text-slate-700 min-w-0 truncate flex-1" x-text="doc.name"></p>
+                                <x-ui.badge status-bind="doc.status" class="shrink-0" />
                             </div>
-                        @endforeach
+                        </template>
+                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!documentsLoading && !documents.length">
+                            <x-ui.t fil="Wala pang dokumento sa file." en="No documents on file yet." />
+                        </p>
                     </div>
                 </x-ui.card>
             </div>
@@ -304,52 +338,30 @@
                     </select>
                 </div>
 
-                <div class="mb-5">
-                    <x-ui.input name="valid_id_number" label="ID Number" placeholder="e.g. 1234-5678-9012" x-model="idNumber" />
-                </div>
-
                 <p class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Ikabit ang Larawan ng ID" en="Attach ID Photo" /></p>
-                <p class="text-xs text-slate-400 mb-3"><x-ui.t fil="Ikabit mula sa mga file na na-upload mo na, o mag-upload ng bago." en="Attach from your already-uploaded files, or upload a new one." /></p>
+                <p class="text-xs text-slate-400 mb-3"><x-ui.t fil="Malinaw na larawan o scan ng harap ng iyong ID." en="A clear photo or scan of the front of your ID." /></p>
                 <div class="rounded-xl border border-slate-200 p-3">
                     <div class="flex items-center justify-between gap-3">
-                        <p class="text-xs text-slate-600 flex-1"><x-ui.t fil="Malinaw na larawan o scan ng harap ng iyong ID" en="Clear photo or scan of the front of your ID" /></p>
-                        <button
-                            type="button" x-show="!attachment"
-                            @click="showFilePicker = !showFilePicker"
-                            class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap"
-                        ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
-                        <div class="flex items-center gap-1.5 shrink-0" x-show="attachment">
-                            <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
-                                <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="attachment"></span>
-                            </span>
-                            <button type="button" @click="attachment = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                        </div>
-                    </div>
-                    <div x-show="showFilePicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
-                        <x-ui.file-picker
-                            files="files"
-                            onSelect="attachment = file.name; showFilePicker = false"
-                            uploadAction="attachment = 'New upload.jpg'; showFilePicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                            :columns="2"
-                            :search="false"
-                        />
+                        <p class="text-xs text-slate-600 flex-1" x-text="idFile ? idFile.name : ($store.lang.current === 'en' ? 'No file chosen' : 'Walang napiling file')"></p>
+                        <label class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap cursor-pointer">
+                            <x-ui.t fil="Pumili ng File" en="Choose File" />
+                            <input type="file" accept="image/*,.pdf" class="sr-only" @change="idFile = $event.target.files[0] || null">
+                        </label>
                     </div>
                 </div>
             </div>
 
             <x-slot:footer>
-                <x-ui.button variant="secondary" size="sm" x-show="!submitted" @click="reset()"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
+                <x-ui.button variant="secondary" size="sm" x-show="!submitted" x-bind:disabled="submitting" @click="reset()"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
                 <x-ui.button
                     size="sm"
                     x-show="!submitted"
-                    ::disabled="!idType || !attachment"
-                    @click="
-                        let idx = @js(collect($documents)->pluck('label')->all()).indexOf(idType);
-                        verifiedIndex = idx;
-                        submitted = true;
-                        setTimeout(() => { reset(); $dispatch('toast', { message: $store.lang.current === 'en' ? 'Valid ID submitted for verification — this is a frontend preview, no data is saved.' : 'Naisumite ang valid ID para sa beripikasyon — frontend preview lang ito, walang naiimbak na datos.', variant: 'success' }) }, 1400);
-                    "
-                ><x-ui.t fil="Isumite para sa Beripikasyon" en="Submit for Verification" /></x-ui.button>
+                    ::disabled="!idType || !idFile || submitting"
+                    @click="submitId()"
+                >
+                    <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>
+                    <x-ui.t fil="Isumite para sa Beripikasyon" en="Submit for Verification" />
+                </x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
 

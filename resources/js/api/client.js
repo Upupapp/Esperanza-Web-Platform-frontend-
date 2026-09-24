@@ -83,6 +83,19 @@ http.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // A FormData body (real file uploads: citizen/profile.blade.php's ID
+    // verification, papeles, community post images) must NOT carry the
+    // fixed 'application/json' content-type this instance defaults to.
+    // axios's own default transformRequest checks the header first and, if
+    // it is already 'application/json', JSON.stringifies the FormData
+    // instead of sending it as multipart -- which would silently drop the
+    // file. Deleting the header here lets axios/the browser set
+    // 'multipart/form-data; boundary=...' itself, the only thing a
+    // multipart request can correctly carry.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+
     return config;
 });
 

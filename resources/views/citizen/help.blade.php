@@ -1,24 +1,5 @@
 @php
     $tab = $tab ?? 'faqs';
-
-    // TAB 04: fixtures live in resources/data/citizen/help.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/citizen/help.php');
-    $faqs = $__fixtures['faqs'];
-
-    $tutorials = $__fixtures['tutorials'];
-
-    // Support channels and office hours are admin-managed via
-    // Settings > Site Content > Support Info (config/esperanza_site_content.php).
-    $supportInfo = config('esperanza_site_content.support');
-    $channels = collect($supportInfo['channels'])->map(fn ($c) => [
-        'icon' => $c['icon'], 'label' => $c['label'], 'labelFil' => $c['label_fil'], 'value' => $c['value'], 'color' => $c['color'],
-    ])->all();
-
-    $ticketCategories = $__fixtures['ticketCategories'];
-
-    $tickets = $__fixtures['tickets'];
-
-    $availableFiles = $__fixtures['availableFiles'];
 @endphp
 
 <x-layouts.citizen title="Help & Support" subtitle="FAQs, tutorials, and support from the ICT Office." active="help">
@@ -26,8 +7,9 @@
         x-data="{
             tab: '{{ $tab }}',
             open: false,
+            loading: true,
 
-            faqs: @js($faqs),
+            faqs: [],
             faqSearch: '',
             faqCategory: 'all',
             helpful: {},
@@ -42,7 +24,7 @@
                 this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Thanks for your feedback!' : 'Salamat sa iyong feedback!', variant: 'success' });
             },
 
-            tutorials: @js($tutorials),
+            tutorials: [],
             tutorialSearch: '',
             tutorialCategory: 'all',
             watched: [],
@@ -56,31 +38,66 @@
             watchTutorial(t) { this.activeTutorial = t; this.open = true; },
             markWatched(i) { if (!this.watched.includes(i)) this.watched.push(i); },
 
-            tickets: @js($tickets),
-            ticketCategories: @js($ticketCategories),
-            ticketForm: { category: '{{ $ticketCategories[0] }}', subject: '', message: '' },
+            channels: [],
+            officeHours: '', officeHoursFil: '',
+
+            tickets: [],
+            ticketCategories: ['Account & Login', 'Dokyu', 'Tulong', 'Technical Issue', 'App Problem', 'Other'],
+            ticketForm: { category: 'Account & Login', subject: '', message: '' },
             ticketAttachment: null,
             showAttachPicker: false,
-            availableFiles: @js($availableFiles),
+            availableFiles: [],
             submitting: false,
-            submitTicket() {
+
+            async init() {
+                this.ticketForm.category = this.ticketCategories[0];
+                this.loading = true;
+                try {
+                    const [faqs, tutorials, support, tickets] = await Promise.all([
+                        $api.get('/site-content/faqs'),
+                        $api.get('/site-content/tutorials'),
+                        $api.get('/site-content/support'),
+                        $api.get('/citizen/support/tickets').catch(() => ({ data: [] })),
+                    ]);
+                    this.faqs = faqs.data?.sections || [];
+                    this.tutorials = (tutorials.data?.sections || []).map((t) => ({ ...t, views: t.views ?? null }));
+                    this.channels = support.data?.channels || [];
+                    this.officeHours = support.data?.office_hours || '';
+                    this.officeHoursFil = support.data?.office_hours_fil || '';
+                    this.tickets = (tickets.data || []).map((t) => ({
+                        ref: t.ref, subject: t.subject,
+                        status: t.status,
+                        time: t.created_at ? new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+                    }));
+                } catch { /* individual panels below just show empty */ } finally {
+                    this.loading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
+            },
+            async submitTicket() {
                 if (this.submitting || !this.ticketForm.subject || !this.ticketForm.message) return;
                 this.submitting = true;
-                setTimeout(() => {
-                    this.submitting = false;
-                    this.tickets.unshift({
-                        ref: 'TCK-2026-' + Math.floor(1000 + Math.random() * 9000),
+                try {
+                    const result = await $api.post('/citizen/support/tickets', {
+                        category: this.ticketForm.category,
                         subject: this.ticketForm.subject,
-                        status: 'Submitted',
+                        body: this.ticketForm.message,
+                    });
+                    const t = result.data;
+                    this.tickets.unshift({
+                        ref: t.ref, subject: t.subject, status: t.status,
                         time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                     });
                     this.ticketForm = { category: this.ticketCategories[0], subject: '', message: '' };
                     this.ticketAttachment = null;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Support ticket submitted — our team will respond within 24 hours.' : 'Naisumite ang support ticket — sasagutin ng aming team sa loob ng 24 oras.', variant: 'success' });
-                }, 800);
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised($store.lang.current) : 'Could not submit ticket.', variant: 'error' });
+                } finally {
+                    this.submitting = false;
+                }
             },
         }"
-        x-init="$nextTick(() => window.renderIcons?.())"
         class="animate-fade-up"
     >
 
@@ -321,21 +338,19 @@
             </div>
 
             <div class="space-y-3.5">
-                @foreach($channels as $ch)
+                <template x-for="ch in channels" :key="ch.key ?? ch.value">
                     <x-ui.card class="flex items-center gap-3.5">
-                        <span class="w-11 h-11 rounded-xl {{ $ch['color'] }} flex items-center justify-center shrink-0">
-                            <i data-lucide="{{ $ch['icon'] }}" class="w-5 h-5"></i>
-                        </span>
+                        <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="ch.color"><i :data-lucide="ch.icon" class="w-5 h-5"></i></span>
                         <div class="min-w-0">
-                            <p class="text-xs text-slate-400"><x-ui.t :fil="$ch['labelFil']" :en="$ch['label']" /></p>
-                            <p class="text-sm font-medium text-navy-900 truncate">{{ $ch['value'] }}</p>
+                            <p class="text-xs text-slate-400" x-text="$store.lang.current === 'en' ? ch.label : (ch.label_fil || ch.label)"></p>
+                            <p class="text-sm font-medium text-navy-900 truncate" x-text="ch.value"></p>
                         </div>
                     </x-ui.card>
-                @endforeach
+                </template>
 
                 <x-ui.card class="bg-slate-50/60">
                     <p class="text-xs text-slate-500 flex items-center gap-1.5 mb-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i><x-ui.t fil="Oras ng Opisina" en="Office Hours" /></p>
-                    <p class="text-sm text-slate-700 font-medium"><x-ui.t :fil="$supportInfo['office_hours_fil']" :en="$supportInfo['office_hours']" /></p>
+                    <p class="text-sm text-slate-700 font-medium" x-text="$store.lang.current === 'en' ? officeHours : (officeHoursFil || officeHours)"></p>
                 </x-ui.card>
             </div>
         </div>

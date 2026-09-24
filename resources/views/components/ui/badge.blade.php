@@ -1,4 +1,14 @@
-@props(['status' => 'Draft'])
+{{--
+    statusBind: an Alpine expression (e.g. "req.status") for a badge whose
+    status is not known until an API response loads, so it cannot be resolved
+    server-side the way every other call site's plain `status` string is
+    (production-readiness programme, 2026-09-25). Mirrors $styles below in
+    JS rather than reusing PHP's copy, because the two run in different
+    engines; MUST be kept in sync with it by hand -- see
+    tests/Feature/StatusVocabularyTest.php, which asserts against the PHP
+    side and would need the same addition here noted if it grows a JS check.
+--}}
+@props(['status' => 'Draft', 'statusBind' => null])
 
 @php
     // Universal status system — colors are fixed per status name across the whole
@@ -55,7 +65,23 @@
     }
 @endphp
 
-<span {{ $attributes->merge($badgeAttributes) }}>
-    <span class="w-1.5 h-1.5 rounded-full {{ $dot }}"></span>
-    {{ $status }}
-</span>
+@if($statusBind)
+    <span
+        x-data="{
+            styles: @js(collect($styles)->map(fn ($v) => ['classes' => $v[0], 'dot' => $v[1]])),
+            get known() { return Object.prototype.hasOwnProperty.call(this.styles, {{ $statusBind }}); },
+            get style() { return this.known ? this.styles[{{ $statusBind }}] : { classes: 'bg-white text-slate-500 ring-slate-300 border-dashed', dot: 'bg-slate-300' }; },
+        }"
+        {{ $attributes->class(['inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap']) }}
+        :class="style.classes"
+        :data-unknown-status="!known ? {{ $statusBind }} : null"
+    >
+        <span class="w-1.5 h-1.5 rounded-full" :class="style.dot"></span>
+        <span x-text="{{ $statusBind }}"></span>
+    </span>
+@else
+    <span {{ $attributes->merge($badgeAttributes) }}>
+        <span class="w-1.5 h-1.5 rounded-full {{ $dot }}"></span>
+        {{ $status }}
+    </span>
+@endif

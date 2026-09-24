@@ -1,32 +1,54 @@
-@php
-    // TAB 04: fixtures live in resources/data/citizen/directory.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/citizen/directory.php');
-    $offices = $__fixtures['offices'];
-
-    // Real per-barangay officials/seal/contact — same source of truth as the
-    // Dokyu barangay letterhead (config/esperanza_barangay_documents.php), so
-    // a captain's name here always matches what's shown everywhere else.
-    $barangays = collect(config('esperanza_barangay_documents'))->map(fn ($b) => [
-        'name' => $b['label'],
-        'captain' => $b['officials']['punong_barangay'],
-        'secretary' => $b['officials']['barangay_secretary'],
-        'contact' => $b['contact'] ?? null,
-        'seal' => $b['seal'],
-        'history' => $b['history'] ?? null,
-        'officialsRoster' => $b['officialsRoster'] ?? null,
-    ])->sortBy('name')->values();
-@endphp
-
 <x-layouts.citizen title="Government Directory" subtitle="Contact details for municipal and barangay offices." active="directory">
     <div
         x-data="{
             tab: 'offices',
             search: '',
-            offices: @js($offices),
-            barangays: @js($barangays),
+            offices: [],
+            barangays: [],
+            loading: true,
+            failed: false,
             showBarangayProfile: false,
             selectedBarangayProfile: null,
             profileTab: 'history',
+            iconPalette: [
+                { icon: 'landmark', color: 'from-navy-600 to-navy-800' },
+                { icon: 'scale', color: 'from-brand-500 to-brand-700' },
+                { icon: 'heart-pulse', color: 'from-rose-500 to-rose-700' },
+                { icon: 'shield-check', color: 'from-emerald-500 to-emerald-700' },
+                { icon: 'briefcase', color: 'from-purple-500 to-purple-700' },
+                { icon: 'users', color: 'from-amber-500 to-amber-700' },
+            ],
+            async init() {
+                this.loading = true;
+                this.failed = false;
+                try {
+                    const [offices, barangays] = await Promise.all([
+                        $api.get('/directory'),
+                        $api.get('/barangays'),
+                    ]);
+                    this.offices = (offices.data || []).map((o, i) => ({
+                        name: o.office,
+                        head: o.official_name || '',
+                        contact: o.contact || '',
+                        email: o.email || '',
+                        icon: this.iconPalette[i % this.iconPalette.length].icon,
+                        color: this.iconPalette[i % this.iconPalette.length].color,
+                    }));
+                    this.barangays = (barangays.data || []).map((b) => ({
+                        name: b.name,
+                        captain: b.punong_barangay || '',
+                        secretary: b.barangay_secretary || '',
+                        contact: b.contact,
+                        seal: b.seal_path,
+                        history: b.history,
+                        officialsRoster: b.officials_roster,
+                    })).sort((a, b) => a.name.localeCompare(b.name));
+                } catch {
+                    this.failed = true;
+                } finally {
+                    this.loading = false;
+                }
+            },
             openBarangayProfile(b) {
                 this.selectedBarangayProfile = b;
                 this.profileTab = 'history';
@@ -63,11 +85,21 @@
                     </button>
                 </div>
             </div>
-            <p class="text-[11px] text-slate-400" x-text="(tab === 'offices' ? filteredOffices.length + ' ' + ($store.lang.current === 'en' ? 'of ' + offices.length + ' offices' : 'sa ' + offices.length + ' opisina') : filteredBarangays.length + ' ' + ($store.lang.current === 'en' ? 'of ' + barangays.length + ' barangays' : 'sa ' + barangays.length + ' barangay'))"></p>
+            <p class="text-[11px] text-slate-400" x-show="!loading && !failed" x-text="(tab === 'offices' ? filteredOffices.length + ' ' + ($store.lang.current === 'en' ? 'of ' + offices.length + ' offices' : 'sa ' + offices.length + ' opisina') : filteredBarangays.length + ' ' + ($store.lang.current === 'en' ? 'of ' + barangays.length + ' barangays' : 'sa ' + barangays.length + ' barangay'))"></p>
+        </div>
+
+        <div x-show="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <x-ui.skeleton class="h-40 rounded-2xl" />
+            <x-ui.skeleton class="h-40 rounded-2xl opacity-80" />
+            <x-ui.skeleton class="h-40 rounded-2xl opacity-60" />
+        </div>
+
+        <div x-show="failed" x-cloak>
+            <x-ui.error-state messageExpr="($store.lang.current === 'en' ? 'Could not load the directory.' : 'Hindi ma-load ang direktoryo.')" retryExpr="init()" :retryable="true" />
         </div>
 
         <!-- Municipal Offices -->
-        <div x-show="tab === 'offices'">
+        <div x-show="!loading && !failed && tab === 'offices'">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <template x-for="office in filteredOffices" :key="office.name">
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard group">
@@ -99,7 +131,7 @@
         </div>
 
         <!-- Barangays -->
-        <div x-show="tab === 'barangays'" x-cloak>
+        <div x-show="!loading && !failed && tab === 'barangays'" x-cloak>
             <!-- My Barangay -->
             <div x-show="$store.barangay.mine" x-cloak class="rounded-2xl bg-gradient-to-br from-brand-50 via-white to-purple-50/60 border border-brand-100 shadow-card p-4 sm:p-5 mb-4">
                 <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="star" class="w-3.5 h-3.5"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></p>

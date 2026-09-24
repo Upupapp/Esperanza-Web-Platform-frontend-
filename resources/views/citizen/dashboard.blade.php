@@ -1,59 +1,3 @@
-@php
-    // TAB 04: fixtures live in resources/data/citizen/dashboard.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/citizen/dashboard.php');
-    $requests = $__fixtures['requests'];
-
-    // Same source data as the full Balita feed (config/esperanza_balita.php) —
-    // this is a compact, functioning preview, not a separate static snapshot.
-    $initials = fn (string $name) => collect(preg_split('/\s+/', trim($name)))
-        ->filter()
-        ->map(fn ($p) => mb_substr($p, 0, 1))
-        ->take(2)
-        ->implode('');
-
-    $balitaPreview = collect(config('esperanza_balita.posts'))
-        ->take(4)
-        ->values()
-        ->map(function ($post, $i) use ($initials) {
-            return [
-                'id' => $i,
-                'official' => $post['official'],
-                'author' => $post['author'],
-                'initials' => $post['official'] ? 'LGU' : $initials($post['author']),
-                'barangay' => $post['barangay'],
-                'body' => $post['body'],
-                'time' => $post['time'],
-                'likes' => $post['likes'],
-                'liked' => false,
-                'commentCount' => count($post['comments']),
-            ];
-        })
-        ->all();
-
-    $events = $__fixtures['events'];
-
-    // Sampling: treated as true so the birthday greeting can be previewed on login.
-    $isBirthdayToday = true;
-
-    // Promotional banners — admin-managed via Communications > Banners.
-    // Only Approved banners within their active date range reach citizens.
-    $today = now()->toDateString();
-    $banners = collect(config('esperanza_site_content.banners'))
-        ->filter(fn ($b) => $b['status'] === 'Approved' && $b['start_date'] <= $today && $b['end_date'] >= $today)
-        ->sortBy('order')
-        ->values()
-        ->map(fn ($b) => [
-            'id' => $b['id'],
-            'title' => $b['title'],
-            'subtitle' => $b['subtitle'],
-            'image_url' => asset('images/esperanza/' . $b['image']),
-            'cta_label' => $b['cta_label'],
-            'cta_url' => route($b['cta_route']),
-            'theme' => $b['theme'],
-        ])
-        ->all();
-@endphp
-
 <x-layouts.citizen
     title="Dashboard"
     subtitle="Welcome back to your Esperanza Citizen Portal."
@@ -61,16 +5,78 @@
 >
 
     <div
-        x-data='{
+        x-data="{
             ready: false,
-            balitaPreview: @json($balitaPreview),
+            requests: [],
+            balitaPreview: [],
+            events: [],
+            kpi: { dokyu: 0, dokyuReady: 0, tulong: 0, tulongApproved: 0 },
+            isBirthdayToday: false,
 
+            async init() {
+                await Promise.all([this.loadRequests(), this.loadBalita(), this.loadEvents()]);
+                this.checkBirthday();
+                this.$store.citizenNotifications.load();
+                setTimeout(() => (this.ready = true), 250);
+            },
+
+            async loadRequests() {
+                try {
+                    const result = await $api.get('/citizen/requests', { params: { sort: '-submitted_at', per_page: 5 } });
+                    this.requests = result.data || [];
+                    const thisMonth = new Date().toISOString().slice(0, 7);
+                    this.kpi.dokyu = this.requests.filter((r) => r.type === 'dokyu').length;
+                    this.kpi.dokyuReady = this.requests.filter((r) => r.type === 'dokyu' && r.status === 'Mark to Release').length;
+                    this.kpi.tulong = this.requests.filter((r) => r.type === 'tulong').length;
+                    this.kpi.tulongApproved = this.requests.filter((r) => r.type === 'tulong' && r.status === 'Approved' && (r.submitted || '').startsWith(thisMonth)).length;
+                } catch { this.requests = []; }
+            },
+            async loadBalita() {
+                try {
+                    const result = await $api.get('/announcements', { params: { per_page: 4 } });
+                    this.balitaPreview = (result.data || []).map((post, i) => ({
+                        id: post.id ?? i,
+                        official: post.official,
+                        author: post.author,
+                        initials: post.official ? 'LGU' : (post.author || '').split(/\s+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join(''),
+                        barangay: post.barangay,
+                        body: post.body,
+                        time: post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+                        likes: post.likes || 0,
+                        liked: false,
+                        commentCount: post.comments_count || 0,
+                    }));
+                } catch { this.balitaPreview = []; }
+            },
+            async loadEvents() {
+                try {
+                    const month = new Date().toISOString().slice(0, 7);
+                    const result = await $api.get('/events', { params: { month } });
+                    this.events = (result.data || []).slice(0, 3).map((e) => ({
+                        date: e.date ? new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+                        time: e.time || '',
+                        title: e.title || e.name,
+                        venue: e.venue || '',
+                    }));
+                } catch { this.events = []; }
+            },
+            checkBirthday() {
+                const bd = this.$store.citizenSession.account?.birthdate;
+                if (!bd) return;
+                const b = new Date(bd), t = new Date();
+                this.isBirthdayToday = b.getUTCMonth() === t.getMonth() && b.getUTCDate() === t.getDate();
+                if (this.isBirthdayToday && !sessionStorage.getItem('esperanza_birthday_seen')) {
+                    setTimeout(() => {
+                        this.$dispatch('show-birthday-popup');
+                        sessionStorage.setItem('esperanza_birthday_seen', '1');
+                    }, 1400);
+                }
+            },
             toggleBalitaLike(post) {
                 post.liked = !post.liked;
                 post.likes += post.liked ? 1 : -1;
             },
-        }'
-        x-init="setTimeout(() => ready = true, 400)"
+        }"
     >
 
         <!-- Skeleton state -->
@@ -206,11 +212,6 @@
                 </div>
             </div>
 
-            {{-- Promotional banner carousel — intentionally not shown on the citizen
-                 dashboard for now. Admin management (Communications > Banners) stays
-                 fully functional; re-enable display here when ready:
-                 <x-citizen.banner-carousel :banners="$banners" /> --}}
-
             @php
                 $introFil = 'Ang <strong>Dokyu</strong> ay para sa paghingi ng mga dokumento ng munisipyo (clearance, ID, permit). Ang <strong>Tulong</strong> ay para sa pag-apply sa mga programang ayuda. Parehong simple ang hakbang: pumili, punan ang detalye, magbayad kung kailangan, pagkatapos i-review at i-submit — masusubaybayan mo anumang oras mula sa dashboard na ito.';
 
@@ -234,22 +235,20 @@
                 <x-ui.stat-card
                     :href="route('citizen.document-requests')"
                     label="Dokyu"
-                    value="4"
+                    valueBind="kpi.dokyu"
                     icon="file-text"
                     color="brand"
-                    sublabel="1 handa nang kunin"
-                    sublabelEn="1 ready for release"
+                    sublabelBind="kpi.dokyuReady + ($store.lang.current === 'en' ? ' ready for release' : ' handa nang kunin')"
                     :delay="0"
                 />
 
                 <x-ui.stat-card
                     :href="route('citizen.assistance-requests')"
                     label="Tulong"
-                    value="1"
+                    valueBind="kpi.tulong"
                     icon="hand-heart"
                     color="purple"
-                    sublabel="Aprubado ngayong buwan"
-                    sublabelEn="Approved this month"
+                    sublabelBind="kpi.tulongApproved + ($store.lang.current === 'en' ? ' approved this month' : ' aprubado ngayong buwan')"
                     :delay="40"
                 />
 
@@ -257,11 +256,9 @@
                     :href="route('citizen.notifications')"
                     label="Hindi Nabasang Abiso"
                     labelEn="Unread Notifications"
-                    value="4"
+                    valueBind="$store.citizenNotifications.unreadCount"
                     icon="bell"
                     color="orange"
-                    sublabel="2 nangangailangan ng aksyon"
-                    sublabelEn="2 need your attention"
                     :delay="80"
                 />
 
@@ -269,10 +266,9 @@
                     :href="route('citizen.profile')"
                     label="Pagkakumpleto ng Profile"
                     labelEn="Profile Completeness"
-                    value="82%"
+                    valueBind="($store.citizenSession.account?.profileCompleteness ?? 0) + '%'"
                     icon="user-round-check"
                     color="green"
-                    trend="+10%"
                     sublabel="Magdagdag ng valid ID para matapos"
                     sublabelEn="Add a valid ID to finish"
                     :delay="120"
@@ -300,34 +296,26 @@
 
                     <div class="divide-y divide-slate-50">
 
-                        @foreach($requests as $req)
-
+                        <template x-for="req in requests" :key="req.ref">
                             <a
-                                href="{{ route('citizen.document-requests') }}"
+                                :href="(req.type === 'tulong' ? '{{ route('citizen.assistance-requests') }}' : '{{ route('citizen.document-requests') }}') + '?ref=' + encodeURIComponent(req.ref)"
                                 class="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-slate-50/70 transition-colors"
                             >
-
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700 truncate">
-                                        {{ $req['type'] }}
-                                    </p>
-
+                                    <p class="text-sm font-medium text-slate-700 truncate" x-text="req.service"></p>
                                     <p class="text-xs text-slate-400 mt-0.5 font-mono">
-                                        {{ $req['ref'] }}
-                                        ·
+                                        <span x-text="req.ref"></span> ·
                                         <x-ui.t fil="Isinumite" en="Submitted" />
-                                        {{ $req['submitted'] }}
+                                        <span x-text="req.submitted ? new Date(req.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></span>
                                     </p>
                                 </div>
-
-                                <x-ui.badge
-                                    :status="$req['status']"
-                                    class="shrink-0"
-                                />
-
+                                <x-ui.badge status-bind="req.status" class="shrink-0" />
                             </a>
+                        </template>
 
-                        @endforeach
+                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!requests.length">
+                            <x-ui.t fil="Wala ka pang kahilingan." en="You have no requests yet." />
+                        </p>
 
                     </div>
 
@@ -433,6 +421,10 @@
 
                         </template>
 
+                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!balitaPreview.length">
+                            <x-ui.t fil="Wala pang balita." en="No announcements yet." />
+                        </p>
+
                     </div>
 
                 </x-ui.card>
@@ -457,30 +449,26 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-4 pb-4">
 
-                    @foreach($events as $event)
-
+                    <template x-for="(event, i) in events" :key="i">
                         <a
                             href="{{ route('citizen.events') }}"
                             class="block rounded-xl border border-slate-100 p-3.5 hover:border-brand-200 hover:shadow-card hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
                         >
-
                             <div class="flex items-center gap-2 text-xs font-medium text-brand-600 mb-1.5">
                                 <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
-                                {{ $event['date'] }} · {{ $event['time'] }}
+                                <span x-text="event.date + ' · ' + event.time"></span>
                             </div>
-
-                            <p class="text-sm font-medium text-slate-700 leading-snug">
-                                {{ $event['title'] }}
-                            </p>
-
+                            <p class="text-sm font-medium text-slate-700 leading-snug" x-text="event.title"></p>
                             <p class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
                                 <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-                                {{ $event['venue'] }}
+                                <span x-text="event.venue"></span>
                             </p>
-
                         </a>
+                    </template>
 
-                    @endforeach
+                    <p class="col-span-3 py-6 text-center text-xs text-slate-400" x-show="!events.length">
+                        <x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." />
+                    </p>
 
                 </div>
 
@@ -488,19 +476,5 @@
 
         </div>
     </div>
-
-    @if($isBirthdayToday)
-
-        <div
-            x-data
-            x-init="setTimeout(() => {
-                if (!sessionStorage.getItem('esperanza_birthday_seen')) {
-                    $dispatch('show-birthday-popup');
-                    sessionStorage.setItem('esperanza_birthday_seen', '1');
-                }
-            }, 1400)"
-        ></div>
-
-    @endif
 
 </x-layouts.citizen>
