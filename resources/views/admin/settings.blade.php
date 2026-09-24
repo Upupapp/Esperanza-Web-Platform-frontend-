@@ -1,55 +1,6 @@
 @php
-    // TAB 04: fixtures live in resources/data/admin/settings.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/admin/settings.php');
-    $notifPrefs = $__fixtures['notifPrefs'];
-
-    $palette = $__fixtures['palette'];
-
-    $logs = $__fixtures['logs'];
-
-    // Service Catalog — configuration view over the Dokyu/Tulong service
-    // definitions that already drive the citizen wizards and admin routing
-    // (config/esperanza_municipal_documents.php, config/esperanza_barangay_documents.php,
-    // config/esperanza_tulong_types.php). Reuses those real names/categories/
-    // offices/fees rather than inventing a parallel taxonomy — editing here
-    // is a frontend preview only, same as the rest of this admin's mock CRUD
-    // (Roles, Personnel). Barangay documents are read from Labangtaytay's
-    // copy since every barangay shares the identical standard-document
-    // template (config/esperanza_barangay_documents.php's own header
-    // comment) — editing "the" fee here really does mean editing the one
-    // template every barangay uses, not just Labangtaytay's.
-    // A missing fee renders as "—", never "Free". The default was 'Free' until
-    // 2026-09-03 while `days` two characters away already used "—": an absent
-    // amount would have stated, on a government fee schedule, that a chargeable
-    // service costs nothing. Latent rather than live -- all 40 catalogue entries
-    // carry a fee today -- but this screen is meant to become administrable, and
-    // the first service added without one would have said something false about
-    // money. Raised by the mobile lane, who found the same class in their
-    // ReceiptType/ServiceCategory decoders.
-    $serviceCatalog = collect(config('esperanza_municipal_documents.documents'))
-        ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
-        ->map(fn ($d) => [
-            'key' => $d['key'], 'name' => $d['name'], 'category' => $d['category'], 'office' => $d['office'], 'level' => $d['level'],
-            'fee' => $d['fee'] ?? '—', 'days' => $d['days'] ?? '—', 'requirements' => $d['requirements'] ?? [], 'process' => $d['process'] ?? [],
-            'service_type' => 'Dokyu', 'active' => true,
-        ])
-        ->concat(collect(config('esperanza_tulong_types.types'))->map(fn ($t) => [
-            'key' => $t['key'], 'name' => $t['name'], 'category' => $t['category'], 'office' => $t['office'], 'level' => $t['level'],
-            'fee' => $t['fee'] ?? '—', 'days' => $t['days'] ?? '—', 'requirements' => $t['requirements'] ?? [], 'process' => $t['process'] ?? [],
-            'service_type' => 'Tulong', 'active' => true,
-        ]))
-        ->values()->all();
-
-    $catalogRoles = collect(config('esperanza_rbac.roles'))->where('key', '!=', 'citizen')->map(fn ($r) => ['key' => $r['key'], 'name' => $r['name']])->values()->all();
-
-    // Site Content — Privacy Policy, Terms & Conditions, and Support info shown
-    // on the Citizen Portal (config/esperanza_site_content.php).
-    $privacyPolicy = config('esperanza_site_content.privacy_policy');
-    $termsConditions = config('esperanza_site_content.terms_conditions');
-    $supportInfo = config('esperanza_site_content.support');
-    $supportIconOptions = $__fixtures['supportIconOptions'];
-
     $tab = $tab ?? 'general';
+    $supportIconOptions = ['phone', 'mail', 'message-square', 'map-pin', 'clock', 'life-buoy', 'headset', 'globe'];
 @endphp
 
 <x-layouts.admin title="Settings" subtitle="Platform preferences and configuration." active="settings">
@@ -78,20 +29,39 @@
         </div>
 
         <div class="lg:col-span-3">
+            {{-- ============================= GENERAL ============================= --}}
             <div
                 x-show="tab === 'general'"
                 x-data="{
-                    municipality: 'Esperanza', province: 'Masbate', region: 'Region V (Bicol Region)', language: 'English',
-                    save() {
+                    loading: true, failed: false,
+                    municipality: null, province: null, language: 'English',
+                    async load() {
+                        this.loading = true; this.failed = false;
+                        try {
+                            const res = await $api.get('/admin/settings/general');
+                            this.municipality = res.data.municipality;
+                            this.province = res.data.province;
+                            this.language = res.data.settings?.default_language || 'English';
+                        } catch { this.failed = true; } finally { this.loading = false; }
+                    },
+                    async save() {
                         if (!can('set_general','edit')) return;
-                        $dispatch('toast', { message: 'General settings saved — frontend preview only, no data is saved.', variant: 'success' });
+                        try {
+                            await $api.put('/admin/settings/general', { key: 'default_language', value: this.language });
+                            $dispatch('toast', { message: 'General settings saved.', variant: 'success' });
+                        } catch (err) {
+                            $dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save settings.', variant: 'error' });
+                        }
                     },
                 }"
+                x-init="load()"
             >
-                <x-ui.card>
+                <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /></div>
+                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load general settings.'" retryExpr="load()" :retryable="true" /></div>
+
+                <x-ui.card x-show="!loading && !failed">
                     <h3 class="text-sm font-semibold text-navy-900 mb-4">General Settings</h3>
 
-                    {{-- Same editing gate as Service Catalog / Site Content above. --}}
                     <div
                         x-show="!can('set_general','edit')"
                         class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
@@ -104,10 +74,15 @@
                     </div>
 
                     <div class="space-y-4 max-w-lg">
-                        <x-ui.input name="municipality" label="Municipality Name" x-model="municipality" x-bind:disabled="!can('set_general','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                         <div class="grid grid-cols-2 gap-4">
-                            <x-ui.input name="province" label="Province" x-model="province" x-bind:disabled="!can('set_general','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
-                            <x-ui.input name="region" label="Region" x-model="region" x-bind:disabled="!can('set_general','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Municipality</label>
+                                <p class="text-sm text-slate-500 py-2.5 px-4 rounded-xl bg-slate-50" x-text="municipality"></p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Province</label>
+                                <p class="text-sm text-slate-500 py-2.5 px-4 rounded-xl bg-slate-50" x-text="province"></p>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5" for="default-language">Default Language</label>
@@ -121,40 +96,79 @@
                 </x-ui.card>
             </div>
 
-            <div x-show="tab === 'notifications'" x-cloak>
-                <x-ui.card>
+            {{-- ============================= NOTIFICATIONS ============================= --}}
+            <div
+                x-show="tab === 'notifications'" x-cloak
+                x-data="{
+                    loading: true, failed: false,
+                    prefs: [
+                        { key: 'new_document_requests', label: 'New Document Requests', desc: 'Notify when a new Dokyu request is submitted.' },
+                        { key: 'new_assistance_requests', label: 'New Assistance Requests', desc: 'Notify when a new Tulong request is submitted.' },
+                        { key: 'overdue_requests', label: 'Overdue Requests', desc: 'Notify when a request passes its expected processing time.' },
+                        { key: 'weekly_summary', label: 'Weekly Summary', desc: 'A weekly digest of activity across all modules.' },
+                    ],
+                    values: {},
+                    async load() {
+                        this.loading = true; this.failed = false;
+                        try {
+                            const res = await $api.get('/admin/settings/notifications');
+                            this.values = res.data;
+                        } catch { this.failed = true; } finally { this.loading = false; }
+                    },
+                    async toggle(key) {
+                        if (!can('set_general','edit')) return;
+                        const next = !this.values[key];
+                        this.values[key] = next;
+                        try {
+                            await $api.put('/admin/settings/notifications', { [key]: next });
+                        } catch (err) {
+                            this.values[key] = !next;
+                            $dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save.', variant: 'error' });
+                        }
+                    },
+                }"
+                x-init="load()"
+            >
+                <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /></div>
+                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load notification settings.'" retryExpr="load()" :retryable="true" /></div>
+
+                <x-ui.card x-show="!loading && !failed">
                     <h3 class="text-sm font-semibold text-navy-900 mb-1">Notification Settings</h3>
                     <p class="text-xs text-slate-400 mb-4">Choose which system events trigger notifications for administrators.</p>
                     <div class="divide-y divide-slate-50">
-                        @foreach($notifPrefs as $pref)
-                            <label class="flex items-center justify-between gap-4 py-2.5 cursor-pointer">
+                        <template x-for="pref in prefs" :key="pref.key">
+                            <label class="flex items-center justify-between gap-4 py-2.5" :class="can('set_general','edit') ? 'cursor-pointer' : 'cursor-not-allowed'">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700">{{ $pref['label'] }}</p>
-                                    <p class="text-xs text-slate-400 mt-0.5">{{ $pref['desc'] }}</p>
+                                    <p class="text-sm font-medium text-slate-700" x-text="pref.label"></p>
+                                    <p class="text-xs text-slate-400 mt-0.5" x-text="pref.desc"></p>
                                 </div>
-                                <div class="relative shrink-0" x-data="{ on: {{ $pref['checked'] ? 'true' : 'false' }} }">
+                                <div class="relative shrink-0">
                                     <button
-                                        @click="on = !on"
+                                        @click="toggle(pref.key)"
                                         type="button"
                                         class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative"
-                                        :class="on ? 'bg-brand-600' : 'bg-slate-200'"
+                                        :class="values[pref.key] ? 'bg-brand-600' : 'bg-slate-200'"
                                     >
-                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="on && 'translate-x-4'"></span>
+                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="values[pref.key] && 'translate-x-4'"></span>
                                     </button>
                                 </div>
                             </label>
-                        @endforeach
+                        </template>
                     </div>
                 </x-ui.card>
             </div>
 
+            {{-- ============================= SECURITY ============================= --}}
+            {{-- No backend concept exists for these yet (no password-policy or
+                 session-timeout store) — left as a static preview, same treatment
+                 as the Users screen's own Matrix tab. --}}
             <div x-show="tab === 'security'" x-cloak class="space-y-4">
                 <x-ui.card class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm font-medium text-navy-900">Two-Factor Authentication</p>
                         <p class="text-xs text-slate-400 mt-0.5">Require 2FA for all personnel accounts.</p>
                     </div>
-                    <x-ui.button variant="secondary" size="sm" @click="$dispatch('toast', { message: '2FA enforcement is a frontend preview — no data is saved.', variant: 'info' })">Enforce for All</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" @click="$dispatch('toast', { message: '2FA enforcement is a frontend preview — no policy store exists on the backend yet.', variant: 'info' })">Enforce for All</x-ui.button>
                 </x-ui.card>
                 <x-ui.card class="flex items-center justify-between gap-4">
                     <div>
@@ -169,81 +183,121 @@
                 </x-ui.card>
             </div>
 
-            <div x-show="tab === 'branding'" x-cloak class="space-y-4">
-                {{-- Same editing gate as Service Catalog / Site Content / General above. --}}
-                <div
-                    x-show="!can('set_branding','edit')"
-                    class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
-                >
-                    <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
-                    <p class="text-xs text-slate-500">
-                        <span class="font-semibold text-slate-600">View only.</span>
-                        Branding ships to both portals, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change it.
-                    </p>
-                </div>
+            {{-- ============================= BRANDING ============================= --}}
+            <div
+                x-show="tab === 'branding'" x-cloak
+                x-data="{
+                    loading: true, failed: false,
+                    themes: [],
+                    theme: 'Brand Blue',
+                    municipalityName: '',
+                    current: null,
+                    saving: false,
+                    async load() {
+                        this.loading = true; this.failed = false;
+                        try {
+                            const res = await $api.get('/admin/settings/branding');
+                            this.themes = res.data.themes || [];
+                            this.current = res.data.current;
+                            this.theme = res.data.current?.theme || this.themes[0] || 'Brand Blue';
+                            this.municipalityName = res.data.current?.municipality_name || '';
+                        } catch { this.failed = true; } finally { this.loading = false; }
+                    },
+                    async save() {
+                        if (this.saving) return;
+                        this.saving = true;
+                        try {
+                            await $api.post('/admin/settings/branding', { theme: this.theme, municipality_name: this.municipalityName || null });
+                            $dispatch('toast', { message: 'Branding published — a new version.', variant: 'success' });
+                            await this.load();
+                        } catch (err) {
+                            $dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not publish branding.', variant: 'error' });
+                        } finally { this.saving = false; }
+                    },
+                }"
+                x-init="load()"
+            >
+                <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-20" /></div>
+                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load branding.'" retryExpr="load()" :retryable="true" /></div>
 
-                <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4">Municipal Seal</h3>
-                    <div class="flex items-center gap-5">
-                        <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipal Seal" class="w-20 h-20 rounded-full ring-4 ring-slate-100 object-cover">
-                        <div>
-                            <p class="text-sm text-slate-600">esperanza-seal.png</p>
-                            <p class="text-xs text-slate-400 mt-0.5">512×512px · PNG · Used across both portals</p>
-                            <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5" @click="$dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })" x-show="can('set_branding','edit')">Replace Seal</x-ui.button>
-                        </div>
+                <div x-show="!loading && !failed" class="space-y-4">
+                    <div
+                        x-show="!can('set_branding','edit')"
+                        class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
+                    >
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                        <p class="text-xs text-slate-500">
+                            <span class="font-semibold text-slate-600">View only.</span>
+                            Branding ships to both portals, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change it.
+                        </p>
                     </div>
-                </x-ui.card>
 
-                <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4">Brand Colors</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                        @foreach($palette as $color)
-                            <div class="rounded-xl border border-slate-100 overflow-hidden">
-                                <div class="h-16 {{ $color['class'] }}"></div>
-                                <div class="p-2.5">
-                                    <p class="text-xs font-medium text-slate-700">{{ $color['name'] }}</p>
-                                    <p class="text-[11px] text-slate-400 font-mono">{{ $color['hex'] }}</p>
-                                </div>
+                    <x-ui.card>
+                        <h3 class="text-sm font-semibold text-navy-900 mb-4">Municipal Seal</h3>
+                        <div class="flex items-center gap-5">
+                            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipal Seal" class="w-20 h-20 rounded-full ring-4 ring-slate-100 object-cover">
+                            <div>
+                                <p class="text-sm text-slate-600">esperanza-seal.png</p>
+                                <p class="text-xs text-slate-400 mt-0.5">512×512px · PNG · Used across both portals</p>
+                                <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5" @click="$dispatch('toast', { message: 'Seal upload is a frontend preview — no upload endpoint exists on the backend yet.', variant: 'info' })" x-show="can('set_branding','edit')">Replace Seal</x-ui.button>
                             </div>
-                        @endforeach
-                    </div>
-                </x-ui.card>
+                        </div>
+                    </x-ui.card>
 
-                <x-ui.card class="flex items-center justify-between gap-4">
-                    <div>
-                        <p class="text-sm font-medium text-navy-900">Municipality Information</p>
-                        <p class="text-xs text-slate-400 mt-0.5">{{ config('esperanza.municipality') }}, {{ config('esperanza.province') }} · {{ config('esperanza.region') }} · {{ count(config('esperanza.barangays')) }} barangays</p>
-                    </div>
-                    <x-ui.button variant="secondary" size="sm" icon="pencil" @click="$dispatch('toast', { message: 'Editing municipality information is a frontend preview — no data is saved.', variant: 'info' })" x-show="can('set_branding','edit')">Edit Information</x-ui.button>
-                </x-ui.card>
+                    <x-ui.card>
+                        <h3 class="text-sm font-semibold text-navy-900 mb-4">Theme</h3>
+                        <div class="max-w-sm space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Color Theme</label>
+                                <select aria-label="Color Theme" x-model="theme" :disabled="!can('set_branding','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                    <template x-for="t in themes" :key="t"><option :value="t" x-text="t"></option></template>
+                                </select>
+                            </div>
+                            <x-ui.input name="municipality_name" label="Municipality Name" x-model="municipalityName" x-bind:disabled="!can('set_branding','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                            <p class="text-[11px] text-slate-400" x-show="current?.version">Current version <span x-text="current?.version"></span><span x-show="current?.effective_date"> · effective <span x-text="current?.effective_date"></span></span></p>
+                            <x-ui.button icon="check" x-bind:disabled="saving" @click="save()" x-show="can('set_branding','edit')" x-text="saving ? 'Publishing…' : 'Publish New Version'"></x-ui.button>
+                        </div>
+                    </x-ui.card>
+
+                    <x-ui.card class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-navy-900">Municipality Information</p>
+                            <p class="text-xs text-slate-400 mt-0.5">{{ config('esperanza.municipality') }}, {{ config('esperanza.province') }} · {{ count(config('esperanza.barangays')) }} barangays</p>
+                        </div>
+                    </x-ui.card>
+                </div>
             </div>
 
+            {{-- ============================= SERVICE CATALOG ============================= --}}
             <div
                 x-data="{
-                    services: @js($serviceCatalog),
-                    roles: @js($catalogRoles),
-                    typeFilter: 'Dokyu',
+                    loading: true, failed: false,
+                    services: [],
+                    typeFilter: 'dokyu',
                     search: '',
                     open: false,
                     selected: null,
-                    isNew: false,
                     reqInput: '',
+                    saving: false,
+                    async loadServices() {
+                        this.loading = true; this.failed = false;
+                        try {
+                            const [dokyu, tulong] = await Promise.all([
+                                $api.get('/services', { params: { type: 'dokyu' } }),
+                                $api.get('/services', { params: { type: 'tulong' } }),
+                            ]);
+                            this.services = [...(dokyu.data || []), ...(tulong.data || [])];
+                        } catch { this.failed = true; } finally { this.loading = false; }
+                    },
                     get filteredServices() {
                         const q = this.search.trim().toLowerCase();
                         return this.services.filter(s =>
-                            s.service_type === this.typeFilter &&
-                            (q === '' || s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q) || s.office.toLowerCase().includes(q))
+                            s.type === this.typeFilter &&
+                            (q === '' || s.name.toLowerCase().includes(q) || (s.category||'').toLowerCase().includes(q) || (s.office||'').toLowerCase().includes(q))
                         );
                     },
                     editService(s) {
                         this.selected = JSON.parse(JSON.stringify(s));
-                        this.isNew = false;
-                        this.reqInput = '';
-                        this.open = true;
-                    },
-                    addService(type) {
-                        this.selected = { key: '', name: '', category: '', office: '', level: 'Municipal', fee: 'Free', days: '3-5 working days', requirements: [], process: ['Submit Request', 'Review', 'Approval', 'Release'], roles: [], service_type: type, active: true };
-                        this.isNew = true;
                         this.reqInput = '';
                         this.open = true;
                     },
@@ -253,65 +307,40 @@
                         this.reqInput = '';
                     },
                     removeRequirement(i) { this.selected.requirements.splice(i, 1); },
-                    toggleRole(key) {
-                        this.selected.roles = this.selected.roles || [];
-                        const i = this.selected.roles.indexOf(key);
-                        if (i === -1) { this.selected.roles.push(key); } else { this.selected.roles.splice(i, 1); }
-                    },
-                    saveService() {
-                        if (!this.selected.name.trim()) return;
-                        if (this.isNew) {
-                            this.selected.key = 'svc_' + this.selected.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-                            this.services.push(this.selected);
-                        } else {
-                            const idx = this.services.findIndex(s => s.key === this.selected.key);
-                            if (idx !== -1) this.services[idx] = this.selected;
-                        }
-                        this.open = false;
-                        this.$dispatch('toast', { message: 'Service catalog updated — frontend preview only, no data is saved.', variant: 'success' });
+                    async saveService() {
+                        if (this.saving || this.selected.policy_blocked) return;
+                        this.saving = true;
+                        try {
+                            await $api.post('/admin/settings/catalog/' + this.selected.key, {
+                                fee: this.selected.fee?.display,
+                                days: this.selected.days,
+                                requirements: this.selected.requirements,
+                            });
+                            this.open = false;
+                            this.$dispatch('toast', { message: 'Service catalog updated — a new version was published.', variant: 'success' });
+                            await this.loadServices();
+                        } catch (err) {
+                            this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not update the service.', variant: 'error' });
+                        } finally { this.saving = false; }
                     },
                 }"
                 x-show="tab === 'service-catalog'" x-cloak
+                x-init="loadServices()"
             >
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
-                        <button type="button" @click="typeFilter = 'Dokyu'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="typeFilter === 'Dokyu' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="file-text" class="w-3.5 h-3.5"></i>Dokyu</button>
-                        <button type="button" @click="typeFilter = 'Tulong'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="typeFilter === 'Tulong' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="hand-heart" class="w-3.5 h-3.5"></i>Tulong</button>
+                        <button type="button" @click="typeFilter = 'dokyu'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="typeFilter === 'dokyu' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="file-text" class="w-3.5 h-3.5"></i>Dokyu</button>
+                        <button type="button" @click="typeFilter = 'tulong'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="typeFilter === 'tulong' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="hand-heart" class="w-3.5 h-3.5"></i>Tulong</button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <div class="relative">
-                            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input aria-label="Search services" type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
-                        </div>
-                        <div class="relative" x-data="dropdown" @click.outside="close" x-show="can('set_service_catalog','edit')">
-                            <x-ui.button size="sm" icon="plus" @click="toggle">
-                                Add Service
-                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 -mr-0.5 transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
-                            </x-ui.button>
-                            <div
-                                x-show="open"
-                                x-transition:enter="transition duration-[160ms] ease-emphasized"
-                                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                x-cloak
-                                class="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-float border border-slate-100 overflow-hidden z-20 origin-top-right py-1"
-                            >
-                                <button type="button" @click="addService('Dokyu'); close()" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-700 transition-colors">
-                                    <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i> Dokyu
-                                </button>
-                                <button type="button" @click="addService('Tulong'); close()" class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-brand-700 transition-colors">
-                                    <i data-lucide="hand-heart" class="w-4 h-4 text-slate-400"></i> Tulong
-                                </button>
-                            </div>
-                        </div>
+                    <div class="relative">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input aria-label="Search services" type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                     </div>
                 </div>
 
-                {{-- Editing gate — same pattern as Site Content above: fees and
-                     requirements here drive what every citizen actually pays and
-                     submits, so only Super Administrator and Municipal
-                     Administrator (the only roles granted 'set_service_catalog'
-                     edit in config/esperanza_rbac.php) can change it. --}}
+                {{-- New services are seeded from the contract, not created here — no
+                     backend endpoint exists to create one at runtime, so unlike the
+                     rest of this tab, "Add Service" was dropped rather than wired. --}}
                 <div
                     x-show="!can('set_service_catalog','edit')"
                     class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
@@ -323,7 +352,11 @@
                     </p>
                 </div>
 
-                <p class="text-xs text-slate-400 mb-3" x-text="filteredServices.length + ' ' + (filteredServices.length === 1 ? 'service' : 'services') + ' in ' + typeFilter"></p>
+                <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
+                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the service catalog.'" retryExpr="loadServices()" :retryable="true" /></div>
+
+                <div x-show="!loading && !failed">
+                <p class="text-xs text-slate-400 mb-3" x-text="filteredServices.length + ' ' + (filteredServices.length === 1 ? 'service' : 'services') + ' in ' + (typeFilter === 'dokyu' ? 'Dokyu' : 'Tulong')"></p>
 
                 <x-ui.table>
                     <thead>
@@ -333,7 +366,6 @@
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Office</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Fee</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Level</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
                             <th class="px-4 py-2.5"></th>
                         </tr>
                     </thead>
@@ -345,21 +377,15 @@
         @keydown.space.prevent="editService(s)">
                                 <td class="px-4 py-3">
                                     <p class="text-slate-700 font-medium group-hover:text-brand-600 transition-colors" x-text="s.name"></p>
-                                    <p class="text-[11px] text-slate-400" x-text="s.requirements.length + ' requirement' + (s.requirements.length === 1 ? '' : 's')"></p>
+                                    <p class="text-[11px] text-slate-400" x-text="(s.requirements||[]).length + ' requirement' + ((s.requirements||[]).length === 1 ? '' : 's')"></p>
                                 </td>
                                 <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="s.category"></td>
                                 <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="s.office"></td>
                                 <td class="px-4 py-3">
-                                    <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="s.fee === 'Free' ? 'bg-slate-100 text-slate-500' : 'bg-gold-50 text-gold-700'" x-text="s.fee"></span>
+                                    <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="s.fee?.display === 'Free' ? 'bg-slate-100 text-slate-500' : 'bg-gold-50 text-gold-700'" x-text="s.fee?.display || '—'"></span>
                                 </td>
                                 <td class="px-4 py-3 hidden sm:table-cell">
                                     <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="{ 'bg-teal-50 text-teal-600': s.level === 'Barangay', 'bg-brand-50 text-brand-600': s.level === 'Municipal', 'bg-purple-50 text-purple-600': s.level === 'Multi-Office' }" x-text="s.level"></span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset" :class="s.active ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-slate-200'">
-                                        <span class="w-1.5 h-1.5 rounded-full" :class="s.active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
-                                        <span x-text="s.active ? 'Active' : 'Inactive'"></span>
-                                    </span>
                                 </td>
                                 <td class="px-4 py-3 text-right" @click.stop x-show="can('set_service_catalog','edit')">
                                     <button @click="editService(s)" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
@@ -373,26 +399,26 @@
                     <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No services match this search.</p>
                 </div>
+                </div>
 
                 <x-ui.modal title="Edit Service" titleEn="Edit Service" maxWidth="lg">
                     <template x-if="selected">
                         <div class="space-y-4">
-                            <x-ui.input name="svc_name" label="Service Name" x-model="selected.name" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
-                            <div class="grid grid-cols-2 gap-3">
-                                <x-ui.input name="svc_category" label="Category" x-model="selected.category" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Processing Level</label>
-                                    <select aria-label="Processing Level" x-model="selected.level" :disabled="!can('set_service_catalog','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
-                                        <option value="Barangay">Barangay</option>
-                                        <option value="Municipal">Municipal</option>
-                                        <option value="Multi-Office">Multi-Office</option>
-                                    </select>
-                                </div>
+                            <div x-show="selected.policy_blocked" x-cloak class="flex items-start gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+                                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
+                                <p class="text-xs text-amber-700"><span class="font-semibold">Awaiting an LGU ruling.</span> <span x-text="selected.policy_gap_note"></span> This service cannot be edited until then.</p>
                             </div>
-                            <x-ui.input name="svc_office" label="Responsible Office / Department" x-model="selected.office" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div><label class="block text-xs font-medium text-slate-500 mb-1">Service Name</label><p class="text-slate-700 font-medium" x-text="selected.name"></p></div>
+                                <div><label class="block text-xs font-medium text-slate-500 mb-1">Category</label><p class="text-slate-700" x-text="selected.category"></p></div>
+                                <div><label class="block text-xs font-medium text-slate-500 mb-1">Office</label><p class="text-slate-700" x-text="selected.office"></p></div>
+                                <div><label class="block text-xs font-medium text-slate-500 mb-1">Level</label><p class="text-slate-700" x-text="selected.level"></p></div>
+                            </div>
+
                             <div class="grid grid-cols-2 gap-3">
-                                <x-ui.input name="svc_fee" label="Fee" x-model="selected.fee" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
-                                <x-ui.input name="svc_days" label="Processing Time" x-model="selected.days" x-bind:disabled="!can('set_service_catalog','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                                <x-ui.input name="svc_fee" label="Fee" x-model="selected.fee.display" x-bind:disabled="!can('set_service_catalog','edit') || selected.policy_blocked" class="disabled:opacity-60 disabled:cursor-not-allowed" />
+                                <x-ui.input name="svc_days" label="Processing Time" x-model="selected.days" x-bind:disabled="!can('set_service_catalog','edit') || selected.policy_blocked" class="disabled:opacity-60 disabled:cursor-not-allowed" />
                             </div>
 
                             <div>
@@ -402,14 +428,14 @@
                                         <li class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5 transition-colors duration-[160ms] ease-standard focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
                                             <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                                             <input aria-label="Requirements"
-                                                type="text" x-model="selected.requirements[i]" :disabled="!can('set_service_catalog','edit')"
+                                                type="text" x-model="selected.requirements[i]" :disabled="!can('set_service_catalog','edit') || selected.policy_blocked"
                                                 class="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm text-slate-600 focus:outline-none focus:ring-0 disabled:opacity-60"
                                             >
-                                            <button type="button" @click="removeRequirement(i)" x-show="can('set_service_catalog','edit')" class="text-slate-300 hover:text-rose-500 shrink-0" title="Remove requirement"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                            <button type="button" @click="removeRequirement(i)" x-show="can('set_service_catalog','edit') && !selected.policy_blocked" class="text-slate-300 hover:text-rose-500 shrink-0" title="Remove requirement"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                         </li>
                                     </template>
                                 </ul>
-                                <div class="flex items-center gap-2" x-show="can('set_service_catalog','edit')">
+                                <div class="flex items-center gap-2" x-show="can('set_service_catalog','edit') && !selected.policy_blocked">
                                     <input aria-label="Add a requirement" type="text" x-model="reqInput" @keydown.enter.prevent="addRequirement()" placeholder="Add a requirement..." class="flex-1 rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     <x-ui.button variant="secondary" size="sm" icon="plus" @click="addRequirement()">Add</x-ui.button>
                                 </div>
@@ -418,56 +444,44 @@
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Workflow</label>
                                 <div class="flex flex-wrap items-center gap-1.5">
-                                    <template x-for="(step, i) in selected.process" :key="i">
+                                    <template x-for="(step, i) in (selected.process || [])" :key="i">
                                         <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 rounded-full px-2.5 py-1"><span class="text-slate-400" x-text="(i+1) + '.'"></span><span x-text="step"></span></span>
                                     </template>
                                 </div>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Responsible Roles</label>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <template x-for="r in roles" :key="r.key">
-                                        <button
-                                            type="button" @click="toggleRole(r.key)" :disabled="!can('set_service_catalog','edit')"
-                                            class="text-[11px] font-medium rounded-full px-2.5 py-1 border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                                            :class="(selected.roles || []).includes(r.key) ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
-                                            x-text="r.name"
-                                        ></button>
-                                    </template>
-                                </div>
-                            </div>
-
-                            <label class="flex items-center justify-between gap-4 py-1" :class="can('set_service_catalog','edit') ? 'cursor-pointer' : 'cursor-not-allowed'">
-                                <div>
-                                    <p class="text-sm font-medium text-slate-700">Active</p>
-                                    <p class="text-xs text-slate-400 mt-0.5">Inactive services are hidden from the citizen-facing catalog.</p>
-                                </div>
-                                <button type="button" @click="selected.active = !selected.active" :disabled="!can('set_service_catalog','edit')" class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative shrink-0 disabled:opacity-60 disabled:cursor-not-allowed" :class="selected.active ? 'bg-brand-600' : 'bg-slate-200'">
-                                    <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="selected.active && 'translate-x-4'"></span>
-                                </button>
-                            </label>
                         </div>
                     </template>
 
                     <x-slot:footer>
                         <x-ui.button variant="secondary" size="sm" @click="open = false" x-text="can('set_service_catalog','edit') ? 'Cancel' : 'Close'"></x-ui.button>
-                        <x-ui.button size="sm" icon="check" @click="saveService()" x-show="can('set_service_catalog','edit')">Save Service</x-ui.button>
+                        <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="saveService()" x-show="can('set_service_catalog','edit') && selected && !selected.policy_blocked" x-text="saving ? 'Saving…' : 'Save Service'"></x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
             </div>
 
+            {{-- ============================= SITE CONTENT ============================= --}}
             <div
                 x-data="{
                     contentTab: 'privacy',
+                    loading: true, failed: false,
                     previewOpen: false,
                     expandedSection: 0,
                     openIconPicker: null,
-                    privacy: @js($privacyPolicy),
-                    terms: @js($termsConditions),
-                    support: @js($supportInfo),
+                    saving: false,
+                    docs: { privacy: null, terms: null, support: null },
                     supportIconOptions: @js($supportIconOptions),
-                    get doc() { return this.contentTab === 'privacy' ? this.privacy : this.terms; },
+                    async load() {
+                        this.loading = true; this.failed = false;
+                        try {
+                            const [privacy, terms, support] = await Promise.all([
+                                $api.get('/admin/settings/site-content/privacy'),
+                                $api.get('/admin/settings/site-content/terms'),
+                                $api.get('/admin/settings/site-content/support'),
+                            ]);
+                            this.docs = { privacy: privacy.data, terms: terms.data, support: support.data };
+                        } catch { this.failed = true; } finally { this.loading = false; }
+                    },
+                    get doc() { return this.contentTab === 'privacy' ? this.docs.privacy : this.docs.terms; },
                     addSection() {
                         this.doc.sections.push({ heading: 'New Section', body: '' });
                         this.expandedSection = this.doc.sections.length - 1;
@@ -485,23 +499,34 @@
                         if (this.expandedSection === i) this.expandedSection = j;
                         else if (this.expandedSection === j) this.expandedSection = i;
                     },
-                    saveDoc() {
-                        this.doc.last_updated = new Date().toISOString().slice(0, 10);
-                        this.doc.last_updated_by = this.$store.session.account?.name ?? 'Admin';
-                        this.$dispatch('toast', { message: (this.contentTab === 'privacy' ? 'Privacy Policy' : 'Terms & Conditions') + ' updated — this is a frontend preview, no data is saved.', variant: 'success' });
+                    async publish(docKey, doc) {
+                        if (this.saving) return;
+                        this.saving = true;
+                        try {
+                            await $api.post('/admin/settings/site-content/' + docKey, {
+                                title: doc.title, effective_date: doc.effective_date, intro: doc.intro,
+                                sections: doc.sections, channels: doc.channels || [],
+                                office_hours: doc.office_hours, office_hours_fil: doc.office_hours_fil,
+                            });
+                            this.$dispatch('toast', { message: 'Published a new version.', variant: 'success' });
+                            await this.load();
+                        } catch (err) {
+                            this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not publish.', variant: 'error' });
+                        } finally { this.saving = false; }
                     },
                     addChannel() {
-                        this.support.channels.push({ key: 'channel_' + Date.now(), icon: 'phone', label: '', label_fil: '', value: '', color: 'text-brand-600 bg-brand-50' });
+                        this.docs.support.channels = this.docs.support.channels || [];
+                        this.docs.support.channels.push({ key: 'channel_' + Date.now(), icon: 'phone', label: '', label_fil: '', value: '', color: 'text-brand-600 bg-brand-50' });
                     },
-                    removeChannel(i) { this.support.channels.splice(i, 1); },
-                    saveSupport() {
-                        this.support.last_updated = new Date().toISOString().slice(0, 10);
-                        this.support.last_updated_by = this.$store.session.account?.name ?? 'Admin';
-                        this.$dispatch('toast', { message: 'Support info updated — this is a frontend preview, no data is saved.', variant: 'success' });
-                    },
+                    removeChannel(i) { this.docs.support.channels.splice(i, 1); },
                 }"
                 x-show="tab === 'site-content'" x-cloak
+                x-init="load()"
             >
+                <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-40 opacity-80" /></div>
+                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load site content.'" retryExpr="load()" :retryable="true" /></div>
+
+                <div x-show="!loading && !failed">
                 <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
                     <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
                         <button type="button" @click="contentTab = 'privacy'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="contentTab === 'privacy' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>Privacy Policy</button>
@@ -511,11 +536,6 @@
                     <x-ui.button x-show="contentTab !== 'support'" variant="secondary" size="sm" icon="eye" @click="previewOpen = true">Preview as Citizen</x-ui.button>
                 </div>
 
-                {{-- Editing gate — Site Content ships to every citizen on the portal,
-                     so only Super Administrator and Municipal Administrator (the
-                     only roles granted 'set_site_content' edit in config/esperanza_rbac.php)
-                     can change it. Everyone else with view access sees the same
-                     content, fields disabled, with this notice explaining why. --}}
                 <div
                     x-show="!can('set_site_content','edit')"
                     class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
@@ -536,8 +556,8 @@
                                 <input id="effective-date-2" type="date" x-model="doc.effective_date" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Last Updated</label>
-                                <p class="text-sm text-slate-500 py-2.5 px-4 rounded-xl bg-slate-50 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i><span x-text="doc.last_updated + (doc.last_updated_by ? ' by ' + doc.last_updated_by : '')"></span></p>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Version</label>
+                                <p class="text-sm text-slate-500 py-2.5 px-4 rounded-xl bg-slate-50 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i><span x-text="'v' + doc.version + (doc.last_updated_by ? ' · updated by ' + doc.last_updated_by : '')"></span></p>
                             </div>
                         </div>
                         <div class="mt-4">
@@ -547,17 +567,13 @@
                         </div>
                     </x-ui.card>
 
-                    {{-- Document outline — one section open at a time instead of every
-                         section's fields sitting open in an identical stack, so the
-                         list scans like a table of contents and editing has a clear
-                         "this one, right now" focus. --}}
                     <div class="rounded-2xl border border-slate-100 bg-white shadow-card divide-y divide-slate-100 overflow-hidden">
                         <template x-for="(section, i) in doc.sections" :key="i">
                             <div>
                                 <div
                                     class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50/70 transition-colors"
                                     @click="expandedSection = expandedSection === i ? null : i"
-                                
+
         role="button"
         tabindex="0"
         @keydown.enter.prevent="expandedSection = expandedSection === i ? null : i"
@@ -602,7 +618,7 @@
 
                     <div class="flex items-center justify-between mt-4" x-show="can('set_site_content','edit')">
                         <button type="button" @click="addSection()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Section</button>
-                        <x-ui.button size="sm" icon="check" @click="saveDoc()">Save Changes</x-ui.button>
+                        <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="publish(contentTab, doc)" x-text="saving ? 'Publishing…' : 'Save Changes'"></x-ui.button>
                     </div>
                 </div>
 
@@ -610,24 +626,22 @@
                 <div x-show="contentTab === 'support'" x-cloak>
                     <x-ui.card class="mb-3.5">
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="support-page-introduction">Support Page Introduction</label>
-                        <textarea id="support-page-introduction" rows="2" x-model="support.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
+                        <textarea id="support-page-introduction" rows="2" x-model="docs.support.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1" for="office-hours">Office Hours</label>
-                                <input id="office-hours" type="text" x-model="support.office_hours" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                <input id="office-hours" type="text" x-model="docs.support.office_hours" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1" for="office-hours-filipino">Office Hours (Filipino)</label>
-                                <input id="office-hours-filipino" type="text" x-model="support.office_hours_fil" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
+                                <input id="office-hours-filipino" type="text" x-model="docs.support.office_hours_fil" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed">
                             </div>
                         </div>
                     </x-ui.card>
 
                     <div class="space-y-2.5">
-                        <template x-for="(ch, i) in support.channels" :key="ch.key">
+                        <template x-for="(ch, i) in (docs.support.channels || [])" :key="ch.key">
                             <div class="rounded-2xl border border-slate-100 bg-white shadow-card p-3.5 flex items-center gap-3" x-data="{ iconOpen: false }">
-                                {{-- Icon picker — a visible glyph the admin recognizes instead
-                                     of a bare text dropdown of icon names. --}}
                                 <div class="relative shrink-0">
                                     <button
                                         type="button" @click="iconOpen = !iconOpen" :disabled="!can('set_site_content','edit')"
@@ -668,7 +682,7 @@
 
                     <div class="flex items-center justify-between mt-4" x-show="can('set_site_content','edit')">
                         <button type="button" @click="addChannel()" class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Contact Channel</button>
-                        <x-ui.button size="sm" icon="check" @click="saveSupport()">Save Changes</x-ui.button>
+                        <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="publish('support', docs.support)" x-text="saving ? 'Publishing…' : 'Save Changes'"></x-ui.button>
                     </div>
                 </div>
 
@@ -681,7 +695,7 @@
                         </div>
                         <div class="p-5 max-h-[65vh] overflow-y-auto scrollbar-thin">
                             <h2 class="text-base font-bold text-navy-900" x-text="doc.title"></h2>
-                            <p class="text-xs text-slate-400 mt-0.5 mb-4" x-text="'Effective ' + doc.effective_date + ' · Last updated ' + doc.last_updated"></p>
+                            <p class="text-xs text-slate-400 mt-0.5 mb-4" x-text="'Effective ' + doc.effective_date"></p>
                             <p class="text-sm text-slate-600 leading-relaxed pb-4 border-b border-slate-100" x-text="doc.intro"></p>
                             <div class="space-y-4 mt-4">
                                 <template x-for="section in doc.sections" :key="section.heading">
@@ -697,8 +711,12 @@
                         </div>
                     </x-ui.modal>
                 </div>
+                </div>
             </div>
 
+            {{-- ============================= INTEGRATIONS ============================= --}}
+            {{-- No backend concept exists for third-party connection status yet —
+                 left as a static preview, same treatment as Security above. --}}
             <div x-show="tab === 'integrations'" x-cloak>
                 <x-ui.card>
                     <h3 class="text-sm font-semibold text-navy-900 mb-4">Connected Services</h3>
@@ -716,44 +734,71 @@
                 </x-ui.card>
             </div>
 
-            <div x-show="tab === 'audit-logs'" x-cloak>
+            {{-- ============================= AUDIT LOGS ============================= --}}
+            <div
+                x-data="{
+                    loading: true, failed: false,
+                    logs: [],
+                    search: '',
+                    moduleFilter: '',
+                    async load() {
+                        this.loading = true; this.failed = false;
+                        try {
+                            const res = await $api.get('/admin/audit-logs', { params: { per_page: 100, module: this.moduleFilter || undefined } });
+                            this.logs = res.data || [];
+                        } catch { this.failed = true; } finally { this.loading = false; }
+                    },
+                    get filteredLogs() {
+                        const q = this.search.trim().toLowerCase();
+                        return this.logs.filter(l => q === '' || (l.user||'').toLowerCase().includes(q) || (l.action||'').toLowerCase().includes(q));
+                    },
+                }"
+                x-show="tab === 'audit-logs'" x-cloak
+                x-init="load()"
+            >
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div class="relative">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search actions or personnel" type="text" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
+                        <input aria-label="Search actions or personnel" type="text" x-model="search" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                     </div>
-                    <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                        <option>All Modules</option>
-                        <option>Dokyu</option>
-                        <option>Tulong</option>
-                        <option>Balita</option>
-                        <option>User Management</option>
-                        <option>System</option>
+                    <select aria-label="Module filter" x-model="moduleFilter" @change="load()" class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <option value="">All Modules</option>
+                        <option value="dokyu">Dokyu</option>
+                        <option value="tulong">Tulong</option>
+                        <option value="communications">Balita</option>
+                        <option value="users">User Management</option>
+                        <option value="settings">System</option>
                     </select>
                 </div>
 
+                <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
+                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load audit logs.'" retryExpr="load()" :retryable="true" /></div>
+
+                <div x-show="!loading && !failed">
                 <x-ui.table>
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/60">
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Personnel</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Module</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Target</th>
                             <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Timestamp</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">IP Address</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                        @foreach($logs as $log)
+                        <template x-for="log in filteredLogs" :key="log.id">
                             <tr class="hover:bg-slate-50/70 transition-colors">
-                                <td class="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap">{{ $log['user'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-600">{{ $log['action'] }}</td>
-                                <td class="px-4 py-2.5 hidden md:table-cell"><span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{{ $log['module'] }}</span></td>
-                                <td class="px-4 py-2.5 text-slate-500 hidden sm:table-cell whitespace-nowrap">{{ $log['time'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-400 hidden lg:table-cell font-mono text-xs">{{ $log['ip'] }}</td>
+                                <td class="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap" x-text="log.user"></td>
+                                <td class="px-4 py-2.5 text-slate-600" x-text="log.action"></td>
+                                <td class="px-4 py-2.5 hidden md:table-cell"><span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md" x-text="log.module"></span></td>
+                                <td class="px-4 py-2.5 text-slate-400 hidden lg:table-cell text-xs" x-text="log.target || '—'"></td>
+                                <td class="px-4 py-2.5 text-slate-500 hidden sm:table-cell whitespace-nowrap" x-text="log.time ? new Date(log.time).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></td>
                             </tr>
-                        @endforeach
+                        </template>
+                        <tr x-show="!filteredLogs.length"><td colspan="5" class="px-4 py-6 text-center text-xs text-slate-400">No matching audit log entries.</td></tr>
                     </tbody>
                 </x-ui.table>
+                </div>
             </div>
         </div>
 
