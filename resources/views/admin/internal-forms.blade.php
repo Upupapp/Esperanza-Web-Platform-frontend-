@@ -1,31 +1,46 @@
-@php
-    $offices = config('esperanza_internal_forms.offices');
-    $office = $office ?? 'hr';
-    $submittedForms = config('esperanza_internal_forms.submissions');
-@endphp
-
 <x-layouts.admin title="Internal Forms" subtitle="Staff self-service forms for HR, GSO, Agriculture, and MSWD." active="internal-forms">
     <div
         x-data="{
-            office: '{{ $office }}',
-            offices: @js($offices),
+            officeKey: null,
+            offices: {},
+            totalForms: 0,
+            submissions: [],
+            loading: true,
+            failed: false,
             tab: 'all',
             search: '',
-            submitted: @js($submittedForms),
             doneStatuses: ['Completed', 'Released', 'Rejected'],
             open: false,
             selectedForm: null,
             formData: {},
             attachments: {},
-            showFilePicker: null,
             submitting: false,
             doneSubmit: false,
             formStep: 1,
+            iconMap: { hr: 'users-round', gso: 'warehouse', agriculture: 'wheat', mswd: 'hand-heart' },
+            async init() {
+                this.loading = true;
+                this.failed = false;
+                try {
+                    const [defsRes, subsRes] = await Promise.all([
+                        $api.get('/internal-forms'),
+                        $api.get('/internal-forms/submissions', { params: { per_page: 100 } }),
+                    ]);
+                    const grouped = {};
+                    (defsRes.data || []).forEach(d => {
+                        if (!grouped[d.office_key]) grouped[d.office_key] = { shortLabel: d.office, icon: this.iconMap[d.office_key] || 'building-2', forms: [] };
+                        grouped[d.office_key].forms.push(d);
+                    });
+                    this.offices = grouped;
+                    this.officeKey = Object.keys(grouped)[0] || null;
+                    this.totalForms = (defsRes.data || []).length;
+                    this.submissions = subsRes.data || [];
+                } catch { this.failed = true; } finally { this.loading = false; }
+            },
             // Auto-splits a form's fields into logical steps: each repeatable
             // table gets its own step, plain fields are chunked in groups of
-            // 6, and a Requirements/Attachments step is appended when present.
-            // A short form (few fields, no requirements) naturally resolves
-            // to a single step, so it renders exactly like a flat form.
+            // 6. A short form (few fields) naturally resolves to a single
+            // step, so it renders exactly like a flat form.
             get formSteps() {
                 if (!this.selectedForm) return [];
                 const steps = [];
@@ -42,35 +57,33 @@
                 });
                 flush();
                 if (!steps.length) steps.push({ type: 'fields', fields: [] });
-                if ((this.selectedForm.requirements || []).length) steps.push({ type: 'requirements', label: 'Requirements & Attachments' });
                 const fieldSteps = steps.filter(s => s.type === 'fields');
                 fieldSteps.forEach((s, i) => { s.label = fieldSteps.length > 1 ? `Form Details — Part ${i + 1}` : 'Form Details'; });
                 return steps;
             },
             get totalFormSteps() { return this.formSteps.length; },
             get currentFormStep() { return this.formSteps[this.formStep - 1] || { type: 'fields', fields: [] }; },
-            get currentOffice() { return this.offices[this.office]; },
+            get currentOffice() { return this.offices[this.officeKey] || null; },
             // Only Super Administrator, Municipal Administrator, and Department
-            // Heads (who review/approve their department's submissions) can see
-            // everyone's forms. Every other role only sees their own — no
-            // account means an unauthenticated preview, which fails open like
-            // the rest of the admin portal's mock RBAC.
+            // Heads (who review/approve their department's submissions) see
+            // everyone's forms server-side; everyone else's list is already
+            // scoped to their own by the API. This only drives the banner copy.
             get isAuthority() {
                 const role = this.$store.session.account?.roleKey;
                 return !this.$store.session.account || ['super_admin', 'municipal_admin', 'department_head'].includes(role);
             },
             get filteredForms() {
                 const q = this.search.trim().toLowerCase();
-                return (this.currentOffice?.forms || []).map((f, i) => ({ ...f, i })).filter(f => !q || f.name.toLowerCase().includes(q));
+                return (this.currentOffice?.forms || []).filter(f => !q || f.form.toLowerCase().includes(q));
             },
             get filteredSubmitted() {
-                return this.submitted.filter(s => {
-                    if (!this.isAuthority && s.submittedBy !== this.$store.session.account?.name) return false;
+                return this.submissions.filter(s => {
                     if (this.tab === 'action') return !this.doneStatuses.includes(s.status);
                     if (this.tab === 'done') return this.doneStatuses.includes(s.status);
                     return true;
                 });
             },
+            get needingAction() { return this.submissions.filter(s => !this.doneStatuses.includes(s.status)).length; },
             selectForm(f) {
                 this.selectedForm = f;
                 this.formData = {};
@@ -95,29 +108,27 @@
                 f.columns.forEach(c => { row[c.key] = ''; });
                 this.formData[f.key].push(row);
             },
-            reset() { this.open = false; this.selectedForm = null; this.formData = {}; this.attachments = {}; this.showFilePicker = null; this.doneSubmit = false; this.submitting = false; this.formStep = 1; },
-            submit() {
+            reset() { this.open = false; this.selectedForm = null; this.formData = {}; this.attachments = {}; this.doneSubmit = false; this.submitting = false; this.formStep = 1; },
+            async submit() {
                 if (this.submitting) return;
                 this.submitting = true;
-                setTimeout(() => {
-                    this.submitting = false;
+                try {
+                    const res = await $api.post('/internal-forms/' + this.selectedForm.key + '/submit', { data: this.formData });
+                    this.submissions.unshift(res.data);
                     this.doneSubmit = true;
-                    this.submitted.unshift({
-                        ref: 'IF-2026-' + Math.floor(1000 + Math.random() * 9000),
-                        officeKey: this.office,
-                        office: this.currentOffice?.shortLabel,
-                        form: this.selectedForm?.name,
-                        submittedBy: this.$store.session.account?.name || 'Staff Member',
-                        submitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                        status: 'Submitted',
-                    });
-                    setTimeout(() => { this.open = false; this.reset(); $dispatch('toast', { message: 'Form submitted — this is a frontend preview, no data is saved.', variant: 'success' }); }, 1400);
-                }, 700);
+                    setTimeout(() => { this.open = false; this.reset(); this.$dispatch('toast', { message: 'Form submitted — routed for processing.', variant: 'success' }); }, 1400);
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not submit the form.', variant: 'error' });
+                } finally { this.submitting = false; }
             },
         }"
         x-effect="!open && reset()"
         class="animate-fade-up"
     >
+        <div x-show="loading" class="space-y-3 mb-4"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-24 opacity-80" /></div>
+        <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load internal forms.'" retryExpr="init()" :retryable="true" /></div>
+
+        <div x-show="!loading && !failed">
         <!-- Visibility banner: authorities see every submission, everyone else only their own -->
         <div x-show="isAuthority" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="shield-check" class="w-4 h-4 text-brand-500 shrink-0"></i>
@@ -129,22 +140,22 @@
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Submissions" value="{{ count($submittedForms) }}" icon="clipboard-list" color="brand" :delay="0" />
-            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="2" icon="inbox" color="orange" :delay="40" />
-            <x-ui.stat-card label="Offices Covered" value="{{ count($offices) }}" icon="building-2" color="purple" :delay="80" />
-            <x-ui.stat-card label="Forms Available" value="{{ collect($offices)->sum(fn ($o) => count($o['forms'])) }}" icon="file-stack" color="green" :delay="120" />
+            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Submissions" valueBind="submissions.length" icon="clipboard-list" color="brand" :delay="0" />
+            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" valueBind="needingAction" icon="inbox" color="orange" :delay="40" />
+            <x-ui.stat-card label="Offices Covered" valueBind="Object.keys(offices).length" icon="building-2" color="purple" :delay="80" />
+            <x-ui.stat-card label="Forms Available" valueBind="totalForms" icon="file-stack" color="green" :delay="120" />
         </div>
 
         <!-- Office tabs + search -->
         <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
             <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
-                @foreach($offices as $key => $o)
+                <template x-for="(o, key) in offices" :key="key">
                     <button
-                        type="button" @click="office = '{{ $key }}'"
+                        type="button" @click="officeKey = key"
                         class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                        :class="office === '{{ $key }}' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-                    ><i data-lucide="{{ $o['icon'] }}" class="w-3.5 h-3.5"></i>{{ $o['shortLabel'] }}</button>
-                @endforeach
+                        :class="officeKey === key ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                    ><i :data-lucide="o.icon" class="w-3.5 h-3.5"></i><span x-text="o.shortLabel"></span></button>
+                </template>
             </div>
             <div class="relative">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
@@ -161,10 +172,10 @@
                 >
                     <div class="flex items-start justify-between mb-2.5">
                         <span class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></span>
-                        <span class="text-[10px] font-medium text-slate-400" x-text="f.days"></span>
+                        <span x-show="f.sensitive" class="text-[10px] font-medium text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">Sensitive</span>
                     </div>
-                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="f.name"></p>
-                    <p class="text-xs text-slate-400 mt-1 truncate" x-text="f.formNo"></p>
+                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="f.form"></p>
+                    <p class="text-xs text-slate-400 mt-1 truncate" x-text="f.print_template || ''"></p>
                 </button>
             </template>
             <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl" x-show="filteredForms.length === 0">
@@ -195,33 +206,10 @@
                         <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="s.ref"></td>
                         <td class="px-4 py-3 text-slate-700 font-medium" x-text="s.form"></td>
                         <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="s.office"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="s.submittedBy"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="s.submitted"></td>
+                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="s.submitted_by"></td>
+                        <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="s.submitted ? new Date(s.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'"></td>
                         <td class="px-4 py-3">
-                            <span
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"
-                                :class="{
-                                    'bg-blue-50 text-blue-700 ring-blue-200': s.status === 'Submitted',
-                                    'bg-amber-50 text-amber-700 ring-amber-200': s.status === 'Pending Review',
-                                    'bg-emerald-50 text-emerald-700 ring-emerald-200': s.status === 'Approved',
-                                    'bg-cyan-50 text-cyan-700 ring-cyan-200': s.status === 'Released',
-                                    'bg-green-50 text-green-700 ring-green-200': s.status === 'Completed',
-                                    'bg-rose-50 text-rose-700 ring-rose-200': s.status === 'Rejected',
-                                }"
-                            >
-                                <span
-                                    class="w-1.5 h-1.5 rounded-full"
-                                    :class="{
-                                        'bg-blue-500': s.status === 'Submitted',
-                                        'bg-amber-500': s.status === 'Pending Review',
-                                        'bg-emerald-500': s.status === 'Approved',
-                                        'bg-cyan-500': s.status === 'Released',
-                                        'bg-green-500': s.status === 'Completed',
-                                        'bg-rose-500': s.status === 'Rejected',
-                                    }"
-                                ></span>
-                                <span x-text="s.status"></span>
-                            </span>
+                            <x-ui.badge statusBind="s.status" />
                         </td>
                     </tr>
                 </template>
@@ -230,6 +218,7 @@
         <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredSubmitted.length === 0">
             <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600">No submissions in this view.</p>
+        </div>
         </div>
 
         <!-- Fill-out Modal -->
@@ -252,9 +241,20 @@
                         <div class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100">
                             <span class="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4.5 h-4.5"></i></span>
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="selectedForm.name"></p>
-                                <p class="text-xs text-slate-400 truncate" x-text="selectedForm.formNo"></p>
+                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="selectedForm.form"></p>
+                                <p class="text-xs text-slate-400 truncate" x-text="selectedForm.print_template || ''"></p>
                             </div>
+                        </div>
+
+                        {{-- Approval chain, from the form's own real definition --}}
+                        <div x-show="(selectedForm.approval_chain || []).length" x-cloak class="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] text-slate-500">
+                            <span class="font-medium text-slate-600">Routes to:</span>
+                            <template x-for="(step, idx) in (selectedForm.approval_chain || [])" :key="step.step">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span x-show="idx > 0" class="text-slate-300">→</span>
+                                    <span class="bg-slate-100 rounded-full px-2 py-0.5" x-text="step.label"></span>
+                                </span>
+                            </template>
                         </div>
 
                         {{-- Step progress indicator — only shown when the form actually needed splitting --}}
@@ -364,25 +364,6 @@
                                         </div>
                                     </div>
                                 </template>
-                            </div>
-
-                            {{-- Requirements step --}}
-                            <div x-show="currentFormStep.type === 'requirements'">
-                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2" x-show="totalFormSteps === 1">Requirements</p>
-                                <div class="space-y-2">
-                                    <template x-for="(req, i) in selectedForm.requirements || []" :key="i">
-                                        <div class="rounded-xl border p-3 transition-colors duration-[160ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
-                                            <div class="flex items-center justify-between gap-3">
-                                                <p class="text-xs text-slate-600 flex-1" x-text="req"></p>
-                                                <button type="button" x-show="!attachments[i]" @click="attachments[i] = 'Attached.pdf'" class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap">Attach File</button>
-                                                <div class="flex items-center gap-1.5 shrink-0" x-show="attachments[i]">
-                                                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="attachments[i]"></span></span>
-                                                    <button type="button" @click="attachments[i] = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
                             </div>
                         </div>
                     </div>

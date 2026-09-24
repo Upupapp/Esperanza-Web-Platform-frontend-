@@ -1,39 +1,104 @@
 @php
-    // TAB 04: fixtures live in resources/data/admin/reports.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/admin/reports.php');
-    $reportTypes = $__fixtures['reportTypes'];
-
-    $recent = $__fixtures['recent'];
-
-    // Internal Forms — sourced from the shared config so this stays in sync
-    // with the Internal Forms module's own "Recent Submissions" list.
-    $internalFormsCfg   = config('esperanza_internal_forms');
-    $internalSubmissions = $internalFormsCfg['submissions'];
-    $officeColors = $__fixtures['officeColors'];
-    $internalOfficeSplit = collect($internalSubmissions)
-        ->groupBy('office')
-        ->map(fn ($rows, $office) => ['label' => $office, 'value' => $rows->count(), 'color' => $officeColors[$office] ?? '#64748b'])
-        ->values()->all();
-
-    // Sakuna incidents — mirrors the current SWM-2026-07 active-period incident
-    // log on the Sakuna Command Center (12 incidents), broken down by severity.
-    $incidentSeveritySplit = $__fixtures['incidentSeveritySplit'];
-    $incidentTotal = array_sum(array_column($incidentSeveritySplit, 'value'));
-
-    $trendLabels = $__fixtures['trendLabels'];
-    $trendDocuments = $__fixtures['trendDocuments'];
-    $trendAssistance = $__fixtures['trendAssistance'];
-
-    $channelSplit = $__fixtures['channelSplit'];
-    $channelTotal = array_sum(array_column($channelSplit, 'value'));
-
-    $topBarangays = $__fixtures['topBarangays'];
-
     $tab = $tab ?? 'reports';
 @endphp
 
 <x-layouts.admin title="Reports & Analytics" subtitle="Generate reports and explore municipal service insights." active="reports">
-    <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up">
+    <div
+        x-data="{
+            tab: '{{ $tab }}',
+            loading: true,
+            failed: false,
+            reports: [],
+            runs: [],
+            generating: null,
+            dash: null,
+            docSummary: null,
+            assistSummary: null,
+            satisfaction: null,
+            internalForms: null,
+            sakunaIncidents: null,
+            barangayActivity: null,
+            revenue: null,
+            meta: {
+                document_requests_summary: { icon: 'file-text', color: 'text-brand-600 bg-brand-50', desc: 'Volume, processing time, and status breakdown.' },
+                assistance_programs: { icon: 'hand-heart', color: 'text-purple-600 bg-purple-50', desc: 'Volumes and processing time per program.' },
+                resident_profiling_coverage: { icon: 'user-round-search', color: 'text-emerald-600 bg-emerald-50', desc: 'Completion rate per barangay.' },
+                revenue_and_fees: { icon: 'wallet', color: 'text-gold-700 bg-gold-50', desc: 'Assessed vs. collected fees.' },
+                barangay_activity: { icon: 'map-pin', color: 'text-indigo-600 bg-indigo-50', desc: 'Requests and residents by barangay.' },
+                citizen_satisfaction: { icon: 'smile', color: 'text-rose-600 bg-rose-50', desc: 'Citizen feedback from completed requests.' },
+                internal_forms_submissions: { icon: 'clipboard-list', color: 'text-indigo-600 bg-indigo-50', desc: 'Staff form activity by office.' },
+                sakuna_incident_reports: { icon: 'triangle-alert', color: 'text-orange-600 bg-orange-50', desc: 'Disaster incident volume and severity by barangay.' },
+            },
+            officeColors: { MHRMO: '#2f62f5', MGSO: '#f59e0b', Agriculture: '#22c55e', MSWD: '#a855f7' },
+            severityColors: { Critical: '#e11d48', High: '#f97316', Medium: '#f59e0b', Low: '#64748b' },
+            async init() {
+                this.loading = true;
+                this.failed = false;
+                try {
+                    const [reportsRes, runsRes] = await Promise.all([
+                        $api.get('/admin/reports'),
+                        $api.get('/admin/reports/runs', { params: { per_page: 10 } }).catch(() => ({ data: [] })),
+                    ]);
+                    this.reports = reportsRes.data || [];
+                    this.runs = runsRes.data || [];
+                } catch { this.failed = true; } finally { this.loading = false; }
+                this.loadAnalytics();
+            },
+            async loadAnalytics() {
+                const get = (key) => $api.get('/admin/reports/' + key).then(r => r.data).catch(() => null);
+                const [dash, doc, assist, sat, forms, sakuna, brgy, rev] = await Promise.all([
+                    $api.get('/admin/dashboard').then(r => r.data).catch(() => null),
+                    get('document_requests_summary'), get('assistance_programs'), get('citizen_satisfaction'),
+                    get('internal_forms_submissions'), get('sakuna_incident_reports'), get('barangay_activity'),
+                    get('revenue_and_fees'),
+                ]);
+                this.dash = dash; this.docSummary = doc; this.assistSummary = assist; this.satisfaction = sat;
+                this.internalForms = forms; this.sakunaIncidents = sakuna; this.barangayActivity = brgy; this.revenue = rev;
+            },
+            async generate(key) {
+                if (this.generating) return;
+                this.generating = key;
+                try {
+                    const res = await $api.post('/admin/reports/' + key + '/export', {});
+                    this.runs.unshift({
+                        id: res.data.run_id, key: res.data.key, title: res.data.title,
+                        by: this.$store.session.account?.name || 'You', scope: res.data.scope?.geographic,
+                        format: res.data.format, row_count: res.data.row_count, status: res.data.status,
+                        generated: res.data.generated_at,
+                    });
+                    this.$dispatch('toast', { message: res.data.title + ' generated.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not generate the report.', variant: 'error' });
+                } finally { this.generating = null; }
+            },
+            get avgResolutionDays() {
+                const vals = [this.docSummary?.totals?.avg_days_to_release, this.assistSummary?.totals?.avg_days_to_release].filter(v => v !== null && v !== undefined);
+                return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
+            },
+            get totalRequests() { return (this.docSummary?.totals?.requests || 0) + (this.assistSummary?.totals?.requests || 0); },
+            get incidentSeveritySplit() {
+                if (!this.sakunaIncidents) return [];
+                const totals = {};
+                this.sakunaIncidents.rows.forEach(r => { Object.entries(r.by_severity || {}).forEach(([sev, n]) => { totals[sev] = (totals[sev] || 0) + n; }); });
+                return Object.entries(totals).map(([label, value]) => ({ label, value, color: this.severityColors[label] || '#64748b' }));
+            },
+            get incidentTotal() { return this.sakunaIncidents?.totals?.incidents || 0; },
+            get criticalHighCount() { return this.incidentSeveritySplit.filter(s => s.label === 'Critical' || s.label === 'High').reduce((sum, s) => sum + s.value, 0); },
+            get internalOfficeSplit() {
+                if (!this.internalForms) return [];
+                return this.internalForms.rows.map(r => ({ label: r.office, value: r.submissions, color: this.officeColors[r.office] || '#64748b' }));
+            },
+            get officesCovered() { return this.internalForms?.rows?.length || 0; },
+            get barangayRequestRows() {
+                if (!this.barangayActivity) return [];
+                const rows = this.barangayActivity.rows.map(r => ({ name: r.barangay, requests: r.dokyu + r.tulong }))
+                    .filter(r => this.$store.session.inScope(r.name));
+                const max = Math.max(1, ...rows.map(r => r.requests));
+                return rows.map(r => ({ ...r, pct: Math.round((r.requests / max) * 100) })).sort((a, b) => b.requests - a.requests).slice(0, 8);
+            },
+        }"
+        class="animate-fade-up"
+    >
 
         <div x-show="!$store.session.can('reports')" x-cloak>
             <x-admin.access-restricted module="Reports & Analytics" icon="chart-column" />
@@ -43,7 +108,7 @@
 
         <div x-show="$store.session.account && $store.session.account.scope !== 'Municipal'" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="map-pin" class="w-4 h-4 text-purple-500 shrink-0"></i>
-            <p class="text-xs text-purple-700">Reports below are municipality-wide reference data. Barangay-level report generation for your assigned barangay is coming soon.</p>
+            <p class="text-xs text-purple-700">Reports below are scoped to your assigned barangay where applicable.</p>
         </div>
 
         <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4">
@@ -53,25 +118,36 @@
 
         <!-- Reports -->
         <div x-show="tab === 'reports'">
+            <div x-show="loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
+                <x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /><x-ui.skeleton class="h-24 opacity-60" />
+            </div>
+            <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load reports.'" retryExpr="init()" :retryable="true" /></div>
+
+            <div x-show="!loading && !failed">
             <h3 class="text-sm font-semibold text-navy-900 mb-3">Generate a Report</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
-                @foreach($reportTypes as $i => $report)
-                    {{-- Stagger only the first 3 cards (choreography rule: max 3 steps, rest appear together) --}}
-                    <x-ui.card class="group cursor-pointer animate-fade-up" style="animation-delay: {{ min($i, 2) * 40 }}ms" @click="$dispatch('toast', { message: 'Generating {{ $report['title'] }}…', variant: 'info' })">
+                <template x-for="(report, i) in reports" :key="report.key">
+                    <x-ui.card
+                        class="group cursor-pointer animate-fade-up"
+                        ::style="'animation-delay:' + (Math.min(i, 2) * 40) + 'ms'"
+                        @click="report.can_export ? generate(report.key) : $dispatch('toast', { message: 'You do not have export permission for this report.', variant: 'error' })"
+                    >
                         <div class="flex items-start gap-3.5">
-                            <span class="w-11 h-11 rounded-xl {{ $report['color'] }} flex items-center justify-center shrink-0 transition-transform duration-[220ms] ease-standard group-hover:scale-110">
-                                <i data-lucide="{{ $report['icon'] }}" class="w-5 h-5"></i>
+                            <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-[220ms] ease-standard group-hover:scale-110" :class="(meta[report.key] || {}).color || 'text-slate-600 bg-slate-50'">
+                                <i :data-lucide="(meta[report.key] || {}).icon || 'file'" class="w-5 h-5"></i>
                             </span>
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900">{{ $report['title'] }}</p>
-                                <p class="text-xs text-slate-400 mt-1">{{ $report['desc'] }}</p>
+                                <p class="text-sm font-semibold text-navy-900" x-text="report.title"></p>
+                                <p class="text-xs text-slate-400 mt-1" x-text="(meta[report.key] || {}).desc || ''"></p>
                             </div>
                         </div>
-                        <div class="mt-3.5 pt-3.5 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium text-brand-600">
-                            <i data-lucide="download" class="w-3.5 h-3.5"></i>Generate Report
+                        <div class="mt-3.5 pt-3.5 border-t border-slate-100 flex items-center gap-1.5 text-xs font-medium" :class="report.can_export ? 'text-brand-600' : 'text-slate-300'">
+                            <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="generating === report.key"></i>
+                            <i data-lucide="download" class="w-3.5 h-3.5" x-show="generating !== report.key"></i>
+                            <span x-text="generating === report.key ? 'Generating…' : (report.can_export ? 'Generate Report' : 'View only — no export permission')"></span>
                         </div>
                     </x-ui.card>
-                @endforeach
+                </template>
             </div>
 
             <h3 class="text-sm font-semibold text-navy-900 mb-3">Recently Generated</h3>
@@ -82,152 +158,140 @@
                         <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Generated By</th>
                         <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Date</th>
                         <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Format</th>
-                        <th class="px-4 py-2.5"></th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Rows</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                    @foreach($recent as $r)
+                    <template x-for="r in runs" :key="r.id">
                         <tr class="hover:bg-slate-50/70 transition-colors">
-                            <td class="px-4 py-3 text-slate-700 font-medium">{{ $r['name'] }}</td>
-                            <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">{{ $r['by'] }}</td>
-                            <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">{{ $r['generated'] }}</td>
-                            <td class="px-4 py-3"><span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{{ $r['format'] }}</span></td>
-                            <td class="px-4 py-3 text-right">
-                                <button @click="$dispatch('toast', { message: 'Report download is a frontend preview — no file is generated.', variant: 'info' })" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="download" class="w-4 h-4"></i></button>
-                            </td>
+                            <td class="px-4 py-3 text-slate-700 font-medium" x-text="r.title"></td>
+                            <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="r.by"></td>
+                            <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="r.generated ? new Date(r.generated).toLocaleDateString() : '—'"></td>
+                            <td class="px-4 py-3"><span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md" x-text="r.format"></span></td>
+                            <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="r.row_count"></td>
                         </tr>
-                    @endforeach
+                    </template>
+                    <tr x-show="!runs.length"><td colspan="5" class="px-4 py-6 text-center text-xs text-slate-400">No reports generated yet.</td></tr>
                 </tbody>
             </x-ui.table>
+            </div>
         </div>
 
         <!-- Analytics -->
         <div x-show="tab === 'analytics'" x-cloak>
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card label="Avg. Satisfaction Score" value="4.6 / 5" icon="smile" color="green" trend="+0.2" :delay="0" />
-                <x-ui.stat-card label="Digital Adoption Rate" value="63%" icon="smartphone" color="brand" trend="+11%" sublabel="Requests via portal" :delay="40" />
-                <x-ui.stat-card label="Avg. Resolution Time" value="2.4 days" icon="timer" color="purple" trendDirection="down" trend="-0.6 days" :delay="80" />
-                <x-ui.stat-card label="Repeat Requesters" value="38%" icon="repeat" color="gold" :delay="120" />
+                <x-ui.stat-card label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="green" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction?.totals?.note || '')" :delay="0" />
+                <x-ui.stat-card label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="brand" sublabel="Dokyu + Tulong" :delay="40" />
+                <x-ui.stat-card label="Avg. Resolution Time" valueBind="avgResolutionDays !== null ? (avgResolutionDays + ' days') : '—'" icon="timer" color="purple" sublabel="Submission to release" :delay="80" />
+                <x-ui.stat-card label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="120" />
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                 <x-ui.card class="lg:col-span-2">
-                    <h3 class="text-sm font-semibold text-navy-900 mb-1">Requests Trend (YTD)</h3>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-1">Requests Trend (Last 6 Months)</h3>
                     <div class="flex items-center gap-4 text-xs text-slate-400 mb-4">
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
                     </div>
-                    <div class="h-64" x-data="lineChart({
-                        labels: @js($trendLabels),
-                        datasets: [
-                            { label: 'Dokyu', data: @js($trendDocuments), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' },
-                            { label: 'Tulong', data: @js($trendAssistance), color: '#a855f7', fill: 'rgba(168,85,247,0.06)' },
-                        ],
-                    })">
+                    <div class="h-64" x-data="{ chart: null }" x-init="$watch('dash', async (d) => { if (!d?.requests?.trend) return; const Chart = await window.loadChart(); if (chart) chart.destroy(); const t = d.requests.trend; chart = new Chart($refs.canvas, { type: 'line', data: { labels: t.labels, datasets: [ { label: 'Dokyu', data: t.documents, borderColor: '#2f62f5', backgroundColor: 'rgba(47,98,245,0.08)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 }, { label: 'Tulong', data: t.assistance, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.06)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 } ] }, options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } } } }); }, { immediate: true })">
                         <canvas x-ref="canvas"></canvas>
                     </div>
                 </x-ui.card>
 
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4">Requests by Channel</h3>
-                    <div
-                        class="relative w-36 h-36 mx-auto"
-                        x-data="donutChart({ labels: @js(array_column($channelSplit, 'label')), values: @js(array_column($channelSplit, 'value')), colors: @js(array_column($channelSplit, 'color')) })"
-                    >
-                        <canvas x-ref="canvas"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span class="text-xl font-semibold text-navy-900 tabular-nums">{{ number_format($channelTotal) }}</span>
-                            <span class="text-[11px] text-slate-400">Total</span>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-4">Revenue &amp; Fees</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500">Assessed</span>
+                            <span class="font-semibold text-navy-900 tabular-nums" x-text="'₱' + Number(revenue?.totals?.assessed || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></span>
                         </div>
-                    </div>
-                    <div class="mt-5 space-y-2.5">
-                        @foreach($channelSplit as $row)
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="flex items-center gap-2 text-slate-500">
-                                    <span class="w-2 h-2 rounded-full" style="background-color: {{ $row['color'] }}"></span>
-                                    {{ $row['label'] }}
-                                </span>
-                                <span class="font-medium text-navy-900 tabular-nums">{{ number_format($row['value']) }}</span>
-                            </div>
-                        @endforeach
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500">Collected</span>
+                            <span class="font-semibold text-emerald-600 tabular-nums" x-text="'₱' + Number(revenue?.totals?.collected || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500">Outstanding</span>
+                            <span class="font-semibold text-orange-600 tabular-nums" x-text="'₱' + Number(revenue?.totals?.outstanding || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm pt-3 border-t border-slate-100">
+                            <span class="text-slate-500">Receipts Issued</span>
+                            <span class="font-semibold text-navy-900 tabular-nums" x-text="revenue?.totals?.receipts || 0"></span>
+                        </div>
                     </div>
                 </x-ui.card>
             </div>
 
             <x-ui.card>
-                <h3 class="text-sm font-semibold text-navy-900 mb-4">Top Barangays by Digital Engagement</h3>
+                <h3 class="text-sm font-semibold text-navy-900 mb-4">Requests by Barangay</h3>
                 <div class="space-y-4">
-                    @foreach($topBarangays as $b)
-                        <div x-show="$store.session.inScope('{{ $b['name'] }}')" x-cloak>
+                    <template x-for="b in barangayRequestRows" :key="b.name">
+                        <div>
                             <div class="flex items-center justify-between text-sm mb-1.5">
-                                <span class="text-slate-600 font-medium">Brgy. {{ $b['name'] }}</span>
-                                <span class="text-slate-400">{{ $b['pct'] }}%</span>
+                                <span class="text-slate-600 font-medium" x-text="'Brgy. ' + b.name"></span>
+                                <span class="text-slate-400" x-text="b.requests + ' requests'"></span>
                             </div>
                             <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" style="width: 0%" x-init="setTimeout(() => $el.style.width = '{{ $b['pct'] }}%', 150)"></div>
+                                <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + b.pct + '%'"></div>
                             </div>
                         </div>
-                    @endforeach
+                    </template>
+                    <p class="text-xs text-slate-400" x-show="!barangayRequestRows.length">No requests on file yet.</p>
                 </div>
             </x-ui.card>
         </div>
 
-        <h3 class="text-sm font-semibold text-navy-900 mb-3 mt-2">Internal Forms &amp; Incident Reports</h3>
+        <h3 class="text-sm font-semibold text-navy-900 mb-3 mt-4">Internal Forms &amp; Incident Reports</h3>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card label="Internal Forms Submitted" value="{{ count($internalSubmissions) }}" icon="clipboard-list" color="purple" :delay="0" />
-            <x-ui.stat-card label="Offices Covered" value="{{ count($internalFormsCfg['offices']) }}" icon="building-2" color="brand" :delay="40" />
-            <x-ui.stat-card label="Incidents Logged (SWM-2026-07)" value="{{ $incidentTotal }}" icon="triangle-alert" color="orange" :delay="80" />
-            <x-ui.stat-card label="Critical / High Severity" value="{{ $incidentSeveritySplit[0]['value'] + $incidentSeveritySplit[1]['value'] }}" icon="siren" color="red" :delay="120" />
+            <x-ui.stat-card label="Internal Forms Submitted" valueBind="internalForms?.totals?.submissions ?? 0" icon="clipboard-list" color="purple" :delay="0" />
+            <x-ui.stat-card label="Offices Covered" valueBind="officesCovered" icon="building-2" color="brand" :delay="40" />
+            <x-ui.stat-card label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="80" />
+            <x-ui.stat-card label="Critical / High Severity" valueBind="criticalHighCount" icon="siren" color="red" :delay="120" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <x-ui.card>
                 <h3 class="text-sm font-semibold text-navy-900 mb-4">Internal Forms by Office</h3>
-                <div
-                    class="relative w-36 h-36 mx-auto"
-                    x-data="donutChart({ labels: @js(array_column($internalOfficeSplit, 'label')), values: @js(array_column($internalOfficeSplit, 'value')), colors: @js(array_column($internalOfficeSplit, 'color')) })"
-                >
+                <div class="relative w-36 h-36 mx-auto" x-data="{ chart: null }" x-init="$watch('internalOfficeSplit', async (rows) => { if (!rows.length) return; const Chart = await window.loadChart(); if (chart) chart.destroy(); chart = new Chart($refs.canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
                     <canvas x-ref="canvas"></canvas>
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-xl font-semibold text-navy-900 tabular-nums">{{ count($internalSubmissions) }}</span>
+                        <span class="text-xl font-semibold text-navy-900 tabular-nums" x-text="internalForms?.totals?.submissions ?? 0"></span>
                         <span class="text-[11px] text-slate-400">Total</span>
                     </div>
                 </div>
                 <div class="mt-5 space-y-2.5">
-                    @foreach($internalOfficeSplit as $row)
+                    <template x-for="row in internalOfficeSplit" :key="row.label">
                         <div class="flex items-center justify-between text-sm">
                             <span class="flex items-center gap-2 text-slate-500">
-                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $row['color'] }}"></span>
-                                {{ $row['label'] }}
+                                <span class="w-2 h-2 rounded-full" :style="'background-color: ' + row.color"></span>
+                                <span x-text="row.label"></span>
                             </span>
-                            <span class="font-medium text-navy-900 tabular-nums">{{ number_format($row['value']) }}</span>
+                            <span class="font-medium text-navy-900 tabular-nums" x-text="row.value"></span>
                         </div>
-                    @endforeach
+                    </template>
+                    <p class="text-xs text-slate-400" x-show="!internalOfficeSplit.length">No submissions yet.</p>
                 </div>
             </x-ui.card>
 
             <x-ui.card>
                 <h3 class="text-sm font-semibold text-navy-900 mb-4">Incident Reports by Severity</h3>
-                <div
-                    class="relative w-36 h-36 mx-auto"
-                    x-data="donutChart({ labels: @js(array_column($incidentSeveritySplit, 'label')), values: @js(array_column($incidentSeveritySplit, 'value')), colors: @js(array_column($incidentSeveritySplit, 'color')) })"
-                >
+                <div class="relative w-36 h-36 mx-auto" x-data="{ chart: null }" x-init="$watch('incidentSeveritySplit', async (rows) => { if (!rows.length) return; const Chart = await window.loadChart(); if (chart) chart.destroy(); chart = new Chart($refs.canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
                     <canvas x-ref="canvas"></canvas>
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-xl font-semibold text-navy-900 tabular-nums">{{ $incidentTotal }}</span>
+                        <span class="text-xl font-semibold text-navy-900 tabular-nums" x-text="incidentTotal"></span>
                         <span class="text-[11px] text-slate-400">Total</span>
                     </div>
                 </div>
                 <div class="mt-5 space-y-2.5">
-                    @foreach($incidentSeveritySplit as $row)
+                    <template x-for="row in incidentSeveritySplit" :key="row.label">
                         <div class="flex items-center justify-between text-sm">
                             <span class="flex items-center gap-2 text-slate-500">
-                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $row['color'] }}"></span>
-                                {{ $row['label'] }}
+                                <span class="w-2 h-2 rounded-full" :style="'background-color: ' + row.color"></span>
+                                <span x-text="row.label"></span>
                             </span>
-                            <span class="font-medium text-navy-900 tabular-nums">{{ number_format($row['value']) }}</span>
+                            <span class="font-medium text-navy-900 tabular-nums" x-text="row.value"></span>
                         </div>
-                    @endforeach
+                    </template>
+                    <p class="text-xs text-slate-400" x-show="!incidentSeveritySplit.length">No incidents logged yet.</p>
                 </div>
             </x-ui.card>
         </div>
