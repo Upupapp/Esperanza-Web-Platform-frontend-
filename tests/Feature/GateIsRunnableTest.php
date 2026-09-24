@@ -89,7 +89,7 @@ class GateIsRunnableTest extends TestCase
         }
 
         $configured = trim((string) shell_exec(
-            'git -C '.escapeshellarg(base_path()).' config core.hooksPath 2>/dev/null'
+            'git -C '.escapeshellarg(base_path()).' config core.hooksPath 2>'.self::nullDevice()
         ));
 
         $this->assertSame('scripts/hooks', $configured, sprintf(
@@ -116,7 +116,7 @@ class GateIsRunnableTest extends TestCase
         }
 
         $configured = trim((string) shell_exec(
-            'git -C '.escapeshellarg(base_path()).' config core.hooksPath 2>/dev/null'
+            'git -C '.escapeshellarg(base_path()).' config core.hooksPath 2>'.self::nullDevice()
         ));
 
         $this->assertNotSame('', $configured, 'core.hooksPath is unset, so no hook runs at all.');
@@ -128,6 +128,19 @@ class GateIsRunnableTest extends TestCase
             .'and say nothing, which is indistinguishable from a gate that passed.',
             $configured
         ));
+
+        // Windows has no executable bit for is_executable() to read, and Git
+        // for Windows runs the hook regardless of it (see this class's own
+        // header comment and test_the_gate_and_its_hook_are_executable_in_the_index()
+        // above, which checks the real signal -- the git index's 100755 mode
+        // -- for exactly this reason). Asserting a filesystem property this
+        // platform cannot represent would fail every Windows run regardless
+        // of whether the hook actually runs, which it does.
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->assertTrue(true);
+
+            return;
+        }
 
         $this->assertTrue(
             is_executable($hook),
@@ -151,5 +164,21 @@ class GateIsRunnableTest extends TestCase
         );
 
         $this->assertFileExists(base_path('scripts/install-git-hooks.php'));
+    }
+
+    /**
+     * `2>/dev/null` is a no-op typo on Windows, not a redirect: shell_exec()
+     * runs through cmd.exe there, which has no /dev/null and no special
+     * handling for it, so the path is treated as a literal (nonexistent)
+     * file. The two callers above ran `git config` with stderr therefore
+     * unredirected, which is harmless for a real hooksPath but meant a
+     * missing one printed noise into $configured on every Windows run
+     * instead of the empty string the assertions expect (production-readiness
+     * programme, 2026-09-25 — the backend lane hit the identical bug in
+     * PgDiscoveryTest and fixed it the same way).
+     */
+    private static function nullDevice(): string
+    {
+        return PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null';
     }
 }

@@ -10,7 +10,7 @@
                      <x-ui.skeleton class="h-16 mb-2" />
                  </x-slot:skeleton>
 
-                 {{-- the loaded state --}}
+                 <!-- the loaded state -->
                  <template x-for="row in items" :key="row.id"> ... </template>
              </x-ui.data-panel>
          </div>
