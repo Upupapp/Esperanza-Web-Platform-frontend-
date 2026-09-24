@@ -1,32 +1,32 @@
 @php
-    // Single source of truth for the RBAC model lives in config/esperanza_rbac.php
-    // (also embedded as JSON on the login screen and every admin page for the
-    // "log in as this role" session simulation — see resources/js/app.js).
-    $permTypes = config('esperanza_rbac.permission_types');
+    // The module/submodule HIERARCHY (names, icons, which actions exist per
+    // submodule) is structural RBAC catalog metadata that rarely changes —
+    // kept from the contract config, same reasoning as the barangay-name
+    // list elsewhere. What is NOT kept from config anymore: which roles
+    // exist, who is assigned to them, and what each role is actually
+    // granted — all three now come from GET /admin/roles and GET /admin/users
+    // (production-readiness programme, 2026-09-25). The role list used to be
+    // config('esperanza_rbac.roles') with a hand-maintained `users` count
+    // baked in ("46 personnel") that could never match reality.
     $permissionModules = config('esperanza_rbac.permission_modules');
-    $roles = config('esperanza_rbac.roles');
-    $accounts = config('esperanza_rbac.accounts');
-
-    $roleNames = array_column($roles, 'name', 'key');
-
-    // TAB 04: fixtures live in resources/data/admin/users.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/admin/users.php');
-    $departments = $__fixtures['departments'];
-
-    // Access scope: a Municipal account can act across the whole LGU; a
-    // Barangay account is restricted to the data of one specific barangay.
-    $barangays = config('esperanza.barangays');
-
-    $users = array_map(fn ($a) => [
-        'name' => $a['name'], 'id' => $a['id'], 'role' => $a['role'], 'dept' => $a['dept'],
-        'status' => $a['status'], 'scope' => $a['scope'],
-    ], $accounts);
-
     $tab = $tab ?? 'personnel';
 @endphp
 
 <x-layouts.admin title="User Management" subtitle="Manage LGU personnel accounts, roles, and access." active="users">
     <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up">
+    {{--
+        Note on structure: each tab below (and the Add Personnel wizard
+        inside the Personnel tab) owns a fully independent x-data scope and
+        fetches its own copy of /admin/roles (and /barangays, where used)
+        rather than sharing one fetch through a parent scope. Alpine's
+        nested-x-data method/getter bodies do not reliably see an ancestor
+        scope's reactive properties through `this` the way inline template
+        expressions (x-show, x-text) do -- only directive expressions walk
+        the merged ancestor scope; a method's own function body does not.
+        Each tab's role list is small (~9 rows), so the duplicate fetches
+        cost nothing that matters, and every scope stays simple to reason
+        about in isolation (production-readiness programme, 2026-09-25).
+    --}}
 
         <div x-show="!$store.session.can('user_management')" x-cloak>
             <x-admin.access-restricted module="User Management" icon="user-cog" />
@@ -46,25 +46,50 @@
             x-data="{
                 open: false,
                 search: '',
-                users: @js($users),
+                users: [],
+                usersLoading: true,
+                usersFailed: false,
                 statusStyles: {
                     'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
                     'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                     'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
                     'Archived': ['bg-slate-100 text-slate-400 ring-slate-200', 'bg-slate-300'],
                 },
+                roleNamesByKey: {},
+                roleName(key) { return this.roleNamesByKey[key] || key; },
+                async loadUsers() {
+                    this.usersLoading = true;
+                    this.usersFailed = false;
+                    try {
+                        const [usersResult, rolesResult] = await Promise.all([
+                            $api.get('/admin/users', { params: { per_page: 200 } }),
+                            $api.get('/admin/roles').catch(() => ({ data: [] })),
+                        ]);
+                        this.roleNamesByKey = Object.fromEntries((rolesResult.data || []).map((r) => [r.key, r.name]));
+                        this.users = (usersResult.data || []).map((u) => ({
+                            name: u.name, id: u.employee_id, roleKey: u.role, role: this.roleName(u.role),
+                            dept: u.dept, status: u.status, scope: u.scope,
+                        }));
+                    } catch { this.usersFailed = true; } finally { this.usersLoading = false; }
+                },
                 get filteredUsers() {
                     const q = this.search.trim().toLowerCase();
                     return this.users.filter(u => q === '' || u.name.toLowerCase().includes(q) || u.id.toLowerCase().includes(q) || u.role.toLowerCase().includes(q));
                 },
+                get totalCount() { return this.users.length; },
+                get activeCount() { return this.users.filter(u => u.status === 'Approved').length; },
+                get pendingCount() { return this.users.filter(u => u.status === 'Pending Review').length; },
+                get archivedCount() { return this.users.filter(u => u.status === 'Archived' || u.status === 'Rejected').length; },
             }"
+            x-init="loadUsers()"
+            @personnel-created.window="loadUsers()"
             x-show="tab === 'personnel'"
         >
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card label="Total Personnel" value="46" icon="users" color="brand" :delay="0" />
-                <x-ui.stat-card label="Active Accounts" value="42" icon="user-round-check" color="green" :delay="40" />
-                <x-ui.stat-card label="Pending Approval" value="3" icon="user-round-search" color="orange" :delay="80" />
-                <x-ui.stat-card label="Deactivated" value="1" icon="user-x" color="red" :delay="120" />
+                <x-ui.stat-card label="Total Personnel" valueBind="totalCount" icon="users" color="brand" :delay="0" />
+                <x-ui.stat-card label="Active Accounts" valueBind="activeCount" icon="user-round-check" color="green" :delay="40" />
+                <x-ui.stat-card label="Pending Approval" valueBind="pendingCount" icon="user-round-search" color="orange" :delay="80" />
+                <x-ui.stat-card label="Deactivated" valueBind="archivedCount" icon="user-x" color="red" :delay="120" />
             </div>
 
             <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 flex flex-wrap items-center gap-2">
@@ -77,6 +102,10 @@
                 <x-ui.button @click="open = true" icon="user-plus" size="sm" class="shrink-0">Add Personnel</x-ui.button>
             </div>
 
+            <div x-show="usersLoading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /><x-ui.skeleton class="h-12 opacity-60" /></div>
+            <div x-show="usersFailed" x-cloak><x-ui.error-state messageExpr="'Could not load personnel.'" retryExpr="loadUsers()" :retryable="true" /></div>
+
+            <div x-show="!usersLoading && !usersFailed">
             <x-ui.table>
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/60">
@@ -115,7 +144,11 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <button @click="$dispatch('toast', { message: 'Personnel actions are a frontend preview.', variant: 'info' })" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
+                                <button
+                                    x-show="u.status !== 'Archived'"
+                                    @click="if (confirm('Archive ' + u.name + '\'s account? They will be signed out everywhere and can no longer log in.')) { $api.post('/admin/users/' + u.id + '/archive').then(() => loadUsers()).catch((e) => $dispatch('toast', { message: e.localised ? e.localised('en') : 'Could not archive.', variant: 'error' })); }"
+                                    class="text-slate-400 hover:text-rose-600 transition-colors" title="Archive"
+                                ><i data-lucide="user-x" class="w-4 h-4"></i></button>
                             </td>
                         </tr>
                     </template>
@@ -126,25 +159,64 @@
                 <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600">No personnel match this search.</p>
             </div>
+            </div>
 
             {{-- ---------------- Add Personnel wizard ---------------- --}}
             <div
                 x-data="{
                     step: 1,
-                    roles: @js(array_map(fn ($r) => ['key' => $r['key'], 'name' => $r['name'], 'icon' => $r['icon'], 'color' => $r['color'], 'desc' => $r['desc'], 'editable' => $r['editable'], 'permissions' => $r['permissions']], array_values(array_filter($roles, fn ($r) => $r['key'] !== 'citizen')))),
                     modules: @js($permissionModules),
-                    barangays: @js($barangays),
-                    form: { firstName: '', lastName: '', email: '', dept: '{{ $departments[0] }}', roleKey: 'department_staff', scope: 'municipal', barangay: '{{ $barangays[0] }}' },
+                    roles: [],
+                    barangays: [],
+                    departments: [],
+                    submitting: false,
+                    createError: null,
+                    form: { firstName: '', lastName: '', email: '', password: '', dept: '', roleKey: 'department_staff', scope: 'municipal', barangay: '' },
                     get selectedRole() { return this.roles.find(r => r.key === this.form.roleKey); },
-                    grantedCount(role) { return Object.values(role.permissions).reduce((n, arr) => n + arr.length, 0); },
+                    grantedCount(role) { return Object.values(role.permissions || {}).reduce((n, arr) => n + arr.length, 0); },
                     accessedModules(role) {
-                        return this.modules.filter(m => m.submodules.some(s => (role.permissions[s.key] || []).length > 0));
+                        return this.modules.filter(m => m.submodules.some(s => (role?.permissions?.[s.key] || []).length > 0));
                     },
                     next() { if (this.step < 4) this.step++; },
                     back() { if (this.step > 1) this.step--; },
-                    reset() { this.step = 1; this.form = { firstName: '', lastName: '', email: '', dept: '{{ $departments[0] }}', roleKey: 'department_staff', scope: 'municipal', barangay: '{{ $barangays[0] }}' }; },
+                    reset() { this.step = 1; this.createError = null; this.form = { firstName: '', lastName: '', email: '', password: '', dept: this.departments[0] || '', roleKey: 'department_staff', scope: 'municipal', barangay: this.barangays[0] || '' }; },
+                    async loadOptions() {
+                        try {
+                            const [rolesResult, barangaysResult, directoryResult] = await Promise.all([
+                                $api.get('/admin/roles'),
+                                $api.get('/barangays'),
+                                $api.get('/directory'),
+                            ]);
+                            this.roles = (rolesResult.data || []).filter((r) => r.key !== 'citizen');
+                            this.barangays = (barangaysResult.data || []).map((b) => b.name);
+                            this.departments = [...new Set((directoryResult.data || []).map((o) => o.office))].sort();
+                        } catch { /* the modal's own fields just stay empty; nothing to submit without them anyway */ }
+                        if (!this.form.dept) this.form.dept = this.departments[0] || '';
+                        if (!this.form.barangay) this.form.barangay = this.barangays[0] || '';
+                    },
+                    async createPersonnel() {
+                        if (this.submitting) return;
+                        this.submitting = true;
+                        this.createError = null;
+                        try {
+                            await $api.post('/admin/users', {
+                                name: (this.form.firstName + ' ' + this.form.lastName).trim(),
+                                email: this.form.email,
+                                password: this.form.password,
+                                role_key: this.form.roleKey,
+                                dept: this.form.dept,
+                                scope: this.form.scope === 'municipal' ? 'Municipal' : this.form.barangay,
+                            });
+                            window.dispatchEvent(new CustomEvent('personnel-created'));
+                            this.$dispatch('toast', { message: 'Personnel account created.', variant: 'success' });
+                        } catch (err) {
+                            this.createError = err.localised ? err.localised('en') : 'Could not create the account.';
+                        } finally {
+                            this.submitting = false;
+                        }
+                    },
                 }"
-                x-init="$watch('open', v => { if (!v) reset(); })"
+                x-init="loadOptions(); $watch('open', v => { if (!v) reset(); })"
             >
                 <x-ui.modal title="Add Personnel Account" maxWidth="3xl" :fullscreen="true">
                     <div class="space-y-4">
@@ -174,12 +246,13 @@
                                 <x-ui.input name="last_name" label="Last Name" placeholder="Mercado" x-model="form.lastName" />
                             </div>
                             <x-ui.input name="email" type="email" label="Work Email" icon="mail" placeholder="angeline.mercado@esperanza.gov.ph" x-model="form.email" />
+                            <x-ui.input name="password" type="password" label="Temporary Password" icon="lock" placeholder="At least 10 characters" x-model="form.password" />
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5" for="department">Department</label>
                                 <select id="department" x-model="form.dept" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                    @foreach($departments as $dept)
-                                        <option value="{{ $dept }}">{{ $dept }}</option>
-                                    @endforeach
+                                    <template x-for="d in departments" :key="d">
+                                        <option :value="d" x-text="d"></option>
+                                    </template>
                                 </select>
                             </div>
                         </div>
@@ -287,35 +360,63 @@
                         <x-ui.button variant="secondary" size="sm" x-show="step === 1" @click="open = false">Cancel</x-ui.button>
                         <x-ui.button variant="secondary" size="sm" x-show="step > 1" @click="back()" icon="arrow-left">Back</x-ui.button>
                         <x-ui.button size="sm" x-show="step < 4" @click="next()" icon="arrow-right">Continue</x-ui.button>
-                        <x-ui.button size="sm" x-show="step === 4" icon="user-plus" @click="open = false; $dispatch('toast', { message: 'Personnel account created — invite sent.', variant: 'success' })">Create Account</x-ui.button>
+                        <x-ui.button size="sm" x-show="step === 4" icon="user-plus" x-bind:disabled="submitting" @click="await createPersonnel(); if (!createError) open = false">
+                            <span x-text="submitting ? 'Creating…' : 'Create Account'"></span>
+                        </x-ui.button>
+                        <p class="text-xs text-rose-600 mt-1" x-show="createError" x-text="createError"></p>
                     </x-slot:footer>
                 </x-ui.modal>
             </div>
         </div>
 
         {{-- ============================= ROLES ============================= --}}
-        <div x-data="{ roles: @js($roles), modules: @js($permissionModules), grantedCount(role) { return Object.values(role.permissions).reduce((n, arr) => n + arr.length, 0); }, moduleCount(role) { return this.modules.filter(m => m.submodules.some(s => (role.permissions[s.key] || []).length > 0)).length; } }" x-show="tab === 'roles'" x-cloak>
+        <div
+            x-data="{
+                roles: [],
+                loading: true,
+                failed: false,
+                modules: @js($permissionModules),
+                async loadRoles() {
+                    this.loading = true;
+                    this.failed = false;
+                    try {
+                        const result = await $api.get('/admin/roles');
+                        this.roles = result.data || [];
+                    } catch { this.failed = true; } finally { this.loading = false; }
+                },
+                get totalAccounts() { return this.roles.reduce((n, r) => n + (r.accounts || 0), 0); },
+                grantedCount(role) { return Object.values(role.permissions || {}).reduce((n, arr) => n + arr.length, 0); },
+                moduleCount(role) { return this.modules.filter(m => m.submodules.some(s => (role.permissions?.[s.key] || []).length > 0)).length; },
+            }"
+            x-init="loadRoles()"
+            x-show="tab === 'roles'" x-cloak
+        >
             <div class="flex items-center justify-between gap-3 mb-4">
-                <p class="text-sm text-slate-500">{{ count($roles) }} roles · 46 personnel accounts</p>
+                <p class="text-sm text-slate-500" x-text="roles.length + ' roles · ' + totalAccounts + ' personnel accounts'"></p>
                 <x-ui.button icon="plus" size="sm" @click="$dispatch('toast', { message: 'Custom role builder — connect to backend to persist new roles.', variant: 'default' })">New Role</x-ui.button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <x-ui.skeleton class="h-32 rounded-2xl" /><x-ui.skeleton class="h-32 rounded-2xl opacity-80" /><x-ui.skeleton class="h-32 rounded-2xl opacity-60" />
+            </div>
+            <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load roles.'" retryExpr="loadRoles()" :retryable="true" /></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" x-show="!loading && !failed">
                 <template x-for="role in roles" :key="role.key">
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center gap-3">
-                                <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="role.color">
-                                    <i :data-lucide="role.icon" class="w-5 h-5"></i>
+                                <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="role.color || 'text-slate-600 bg-slate-50'">
+                                    <i :data-lucide="role.icon || 'shield'" class="w-5 h-5"></i>
                                 </span>
                                 <div>
                                     <p class="text-sm font-semibold text-navy-900 flex items-center gap-1.5" x-text="role.name"></p>
-                                    <p class="text-xs text-slate-400" x-text="(role.users > 999 ? role.users.toLocaleString() : role.users) + ' personnel'"></p>
+                                    <p class="text-xs text-slate-400" x-text="(role.accounts || 0) + ' personnel'"></p>
                                 </div>
                             </div>
                             <span x-show="!role.editable" class="text-slate-300" title="System role — not editable"><i data-lucide="lock" class="w-3.5 h-3.5"></i></span>
                         </div>
-                        <p class="text-xs text-slate-500 mt-3.5 leading-relaxed line-clamp-3" x-text="role.desc"></p>
+                        <p class="text-xs text-slate-500 mt-3.5 leading-relaxed line-clamp-3" x-text="role.description"></p>
                         <div class="mt-3.5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
                             <span class="text-[11px] text-slate-400"><span class="font-semibold text-slate-600" x-text="moduleCount(role)"></span> modules · <span class="font-semibold text-slate-600" x-text="grantedCount(role)"></span> permissions</span>
                             <button
@@ -331,31 +432,57 @@
         {{-- ============================= PERMISSIONS ============================= --}}
         <div
             x-data="{
-                roles: @js($roles),
+                roles: [],
+                loading: true,
+                failed: false,
                 modules: @js($permissionModules),
                 selectedRoleKey: 'municipal_admin',
                 workingPerms: {},
                 dirty: false,
+                saving: false,
                 get selectedRole() { return this.roles.find(r => r.key === this.selectedRoleKey); },
+                async loadRoles() {
+                    this.loading = true;
+                    this.failed = false;
+                    try {
+                        const result = await $api.get('/admin/roles');
+                        this.roles = result.data || [];
+                        if (!this.roles.some((r) => r.key === this.selectedRoleKey)) this.selectedRoleKey = this.roles[0]?.key;
+                        this.loadWorking();
+                    } catch { this.failed = true; } finally { this.loading = false; }
+                },
                 selectRole(key) { this.selectedRoleKey = key; this.loadWorking(); },
-                loadWorking() { this.workingPerms = JSON.parse(JSON.stringify(this.selectedRole.permissions)); this.dirty = false; },
+                loadWorking() { this.workingPerms = JSON.parse(JSON.stringify(this.selectedRole?.permissions || {})); this.dirty = false; },
                 totalGranted() { return Object.values(this.workingPerms).reduce((n, arr) => n + arr.length, 0); },
                 totalAvailable() { return this.modules.reduce((n, m) => n + m.submodules.reduce((n2, s) => n2 + s.perms.length, 0), 0); },
                 moduleGranted(mod) { return mod.submodules.reduce((n, s) => n + (this.workingPerms[s.key]?.length || 0), 0); },
                 moduleTotal(mod) { return mod.submodules.reduce((n, s) => n + s.perms.length, 0); },
                 accessedModules() { return this.modules.filter(m => this.moduleGranted(m) > 0); },
-                savePerms() {
-                    this.selectedRole.permissions = JSON.parse(JSON.stringify(this.workingPerms));
-                    this.dirty = false;
-                    $dispatch('toast', { message: 'Permissions updated for ' + this.selectedRole.name + '.', variant: 'success' });
+                async savePerms() {
+                    if (this.saving) return;
+                    this.saving = true;
+                    const permissions = Object.entries(this.workingPerms).flatMap(([submodule, actions]) => actions.map((action) => ({ submodule, action })));
+                    try {
+                        await $api.put('/admin/roles/' + this.selectedRoleKey + '/permissions', { permissions });
+                        this.selectedRole.permissions = JSON.parse(JSON.stringify(this.workingPerms));
+                        this.dirty = false;
+                        this.$dispatch('toast', { message: 'Permissions updated for ' + this.selectedRole.name + '.', variant: 'success' });
+                    } catch (err) {
+                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save permissions.', variant: 'error' });
+                    } finally {
+                        this.saving = false;
+                    }
                 },
             }"
-            x-init="loadWorking(); $watch('workingPerms', () => dirty = true); window.addEventListener('select-role', e => selectRole(e.detail))"
+            x-init="loadRoles(); $watch('workingPerms', () => dirty = true); window.addEventListener('select-role', e => selectRole(e.detail))"
             x-show="tab === 'permissions'" x-cloak
             class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start"
         >
+            <div x-show="loading" class="lg:col-span-12"><x-ui.skeleton class="h-40" /></div>
+            <div x-show="failed" x-cloak class="lg:col-span-12"><x-ui.error-state messageExpr="'Could not load roles.'" retryExpr="loadRoles()" :retryable="true" /></div>
+
             <!-- Sticky role sidebar -->
-            <div class="lg:col-span-3 lg:sticky lg:top-4 space-y-1.5">
+            <div class="lg:col-span-3 lg:sticky lg:top-4 space-y-1.5" x-show="!loading && !failed">
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1 mb-2">System Roles</p>
                 <template x-for="role in roles" :key="role.key">
                     <button
@@ -363,12 +490,12 @@
                         class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-colors duration-[160ms] ease-standard"
                         :class="selectedRoleKey === role.key ? 'bg-brand-50 ring-1 ring-brand-200' : 'hover:bg-slate-50'"
                     >
-                        <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="role.color">
-                            <i :data-lucide="role.icon" class="w-4 h-4"></i>
+                        <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="role.color || 'text-slate-600 bg-slate-50'">
+                            <i :data-lucide="role.icon || 'shield'" class="w-4 h-4"></i>
                         </span>
                         <div class="min-w-0 flex-1">
                             <p class="text-xs font-semibold truncate" :class="selectedRoleKey === role.key ? 'text-brand-700' : 'text-navy-900'" x-text="role.name"></p>
-                            <p class="text-[10.5px] text-slate-400" x-text="(role.users > 999 ? role.users.toLocaleString() : role.users) + ' personnel'"></p>
+                            <p class="text-[10.5px] text-slate-400" x-text="(role.accounts || 0) + ' personnel'"></p>
                         </div>
                         <i data-lucide="lock" class="w-3 h-3 text-slate-300 shrink-0" x-show="!role.editable"></i>
                     </button>
@@ -376,11 +503,11 @@
             </div>
 
             <!-- Role description + permission tree -->
-            <div class="lg:col-span-6 space-y-4">
+            <div class="lg:col-span-6 space-y-4" x-show="!loading && !failed && selectedRole">
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
                     <div class="flex items-start justify-between gap-3 mb-1">
                         <div class="flex items-center gap-3">
-                            <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="selectedRole.color">
+                            <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="selectedRole.color || 'text-slate-600 bg-slate-50'">
                                 <i :data-lucide="selectedRole.icon" class="w-5 h-5"></i>
                             </span>
                             <div>
@@ -388,7 +515,7 @@
                                     <span x-text="selectedRole.name"></span>
                                     <span x-show="!selectedRole.editable" class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5"><i data-lucide="lock" class="w-2.5 h-2.5"></i>System</span>
                                 </p>
-                                <p class="text-xs text-slate-400" x-text="(selectedRole.users > 999 ? selectedRole.users.toLocaleString() : selectedRole.users) + ' personnel assigned'"></p>
+                                <p class="text-xs text-slate-400" x-text="(selectedRole.accounts || 0) + ' personnel assigned'"></p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
@@ -397,10 +524,12 @@
                                 x-show="$store.session.canExportReports()"
                                 @click="$dispatch('toast', { message: 'Downloading permission report for ' + selectedRole.name + ' — frontend preview only.', variant: 'default' })"
                             >Download Report</x-ui.button>
-                            <x-ui.button size="sm" icon="save" x-show="selectedRole.editable" x-bind:disabled="!dirty" @click="savePerms()">Save Changes</x-ui.button>
+                            <x-ui.button size="sm" icon="save" x-show="selectedRole.editable" x-bind:disabled="!dirty || saving" @click="savePerms()">
+                                <span x-text="saving ? 'Saving…' : 'Save Changes'"></span>
+                            </x-ui.button>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-500 mt-3 leading-relaxed" x-text="selectedRole.desc"></p>
+                    <p class="text-xs text-slate-500 mt-3 leading-relaxed" x-text="selectedRole.description"></p>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
@@ -413,7 +542,7 @@
             </div>
 
             <!-- Sticky permission summary -->
-            <div class="lg:col-span-3 lg:sticky lg:top-4 space-y-4">
+            <div class="lg:col-span-3 lg:sticky lg:top-4 space-y-4" x-show="!loading && !failed && selectedRole">
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Permission Summary</p>
                     <div class="flex items-end gap-1.5 mb-1">

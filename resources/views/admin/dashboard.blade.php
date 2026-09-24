@@ -1,74 +1,73 @@
 @php
+    // Module catalog (key/name/icon) is reference metadata for the RBAC
+    // system, not a per-account business record -- the account's own real
+    // moduleKeys/permissions come from GET /auth/me (see resources/js/app.js
+    // $store.session), so this is only used to look up a display name/icon
+    // for whichever keys that response actually grants.
     $permissionModules = config('esperanza_rbac.permission_modules');
-
-    // Scope-aware headline stats: reuses the same municipal/per-barangay
-    // residents data already established in Constituents
-    // (config/esperanza_constituents.php) as the single source of truth,
-    // and derives proportional Dokyu/Tulong/Pending Approvals breakdowns
-    // from each barangay's real share of total residents, so a
-    // barangay-scoped account's dashboard shows figures scaled to their
-    // own barangay instead of the same municipality-wide totals everyone
-    // else sees (see Phase 14 of the RBAC/scope enforcement rules).
-    $constituentsData = config('esperanza_constituents');
-    $totalResidents = (int) str_replace(',', '', $constituentsData['municipalStats']['residents']);
-    $dokyuTotal = 1284;
-    $tulongTotal = 417;
-    $pendingApprovalsTotal = 63;
-
-    $municipalDashboardStats = [
-        'residents' => $constituentsData['municipalStats']['residents'],
-        'dokyu' => number_format($dokyuTotal),
-        'tulong' => number_format($tulongTotal),
-        'pending' => $pendingApprovalsTotal,
-        'sublabel' => 'Across 20 barangays',
-    ];
-    // TAB 04: fixtures live in resources/data/admin/dashboard.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/admin/dashboard.php');
-    $barangayDashboardStats = $__fixtures['barangayDashboardStats'];
-    foreach ($constituentsData['barangayStats'] as $brgy => $stats) {
-        $share = ((int) str_replace(',', '', $stats['residents'])) / $totalResidents;
-        $barangayDashboardStats[$brgy] = [
-            'residents' => $stats['residents'],
-            'dokyu' => number_format((int) round($dokyuTotal * $share)),
-            'tulong' => number_format((int) round($tulongTotal * $share)),
-            'pending' => (int) round($pendingApprovalsTotal * $share),
-            'sublabel' => 'Brgy. ' . $brgy,
-        ];
-    }
-
-    $docStatus = $__fixtures['docStatus'];
-    $docStatusTotal = array_sum(array_column($docStatus, 'value'));
-
-    $assistStatus = $__fixtures['assistStatus'];
-    $assistStatusTotal = array_sum(array_column($assistStatus, 'value'));
-
-    $barangayRequests = $__fixtures['barangayRequests'];
-
-    $trendLabels = $__fixtures['trendLabels'];
-    $trendDocuments = $__fixtures['trendDocuments'];
-    $trendAssistance = $__fixtures['trendAssistance'];
-
-    $alerts = $__fixtures['alerts'];
-
-    $activities = $__fixtures['activities'];
 @endphp
 
 <x-layouts.admin title="Executive Dashboard" subtitle="Overview of citizen services and municipal operations." active="dashboard">
     <div
         x-data="{
             ready: false,
+            loading: true,
+            failed: false,
             modules: @js($permissionModules),
-            municipalDashboardStats: @js($municipalDashboardStats),
-            barangayDashboardStats: @js($barangayDashboardStats),
-            get activeDashStats() {
-                const s = this.$store.session.account?.scope;
-                return (!s || s === 'Municipal') ? this.municipalDashboardStats : (this.barangayDashboardStats[s] ?? this.municipalDashboardStats);
+            dash: null,
+            coverage: null,
+            statusColors: {
+                'Draft': '#94a3b8', 'Submitted': '#3b82f6', 'Pending Review': '#f59e0b',
+                'Under Verification': '#6366f1', 'Assigned': '#a855f7', 'Processing': '#2f62f5',
+                'Under Review': '#f97316', 'Resubmitted': '#0ea5e9', 'Approved': '#10b981',
+                'Rejected': '#f43f5e', 'Mark to Release': '#14b8a6', 'Released': '#06b6d4',
+                'Completed': '#22c55e', 'Cancelled': '#94a3b8', 'Archived': '#cbd5e1',
+            },
+            alertColors: {
+                'Critical': 'bg-rose-50 text-rose-600', 'Warning': 'bg-orange-50 text-orange-600',
+                'Watch': 'bg-amber-50 text-amber-600', 'Advisory': 'bg-teal-50 text-teal-600',
+                'Information': 'bg-sky-50 text-sky-600',
+            },
+            get myModules() { return this.modules.filter(m => this.$store.session.can(m.key)); },
+            get docStatus() {
+                const by = this.dash?.requests?.documents_by_status || {};
+                return Object.entries(by).map(([label, value]) => ({ label, value, color: this.statusColors[label] || '#94a3b8' }));
+            },
+            get docStatusTotal() { return this.docStatus.reduce((n, r) => n + r.value, 0); },
+            get assistStatus() {
+                const by = this.dash?.requests?.assistance_by_status || {};
+                return Object.entries(by).map(([label, value]) => ({ label, value, color: this.statusColors[label] || '#94a3b8' }));
+            },
+            get assistStatusTotal() { return this.assistStatus.reduce((n, r) => n + r.value, 0); },
+            get barangayRequests() {
+                const rows = this.dash?.requests?.by_barangay || [];
+                const max = Math.max(1, ...rows.map(r => r.open));
+                return rows.map(r => ({ name: r.barangay, count: r.open, pct: Math.round((r.open / max) * 100) }));
+            },
+            get registeredResidents() {
+                return this.coverage?.meta?.municipal?.residents ?? this.coverage?.data?.[0]?.residents ?? null;
+            },
+            async init() {
+                this.loading = true;
+                this.failed = false;
+                try {
+                    const [dash, coverage] = await Promise.all([
+                        $api.get('/admin/dashboard'),
+                        this.$store.session.can('constituents') ? $api.get('/admin/coverage') : Promise.resolve(null),
+                    ]);
+                    this.dash = dash.data;
+                    this.coverage = coverage;
+                } catch {
+                    this.failed = true;
+                } finally {
+                    this.loading = false;
+                    setTimeout(() => (this.ready = true), 150);
+                }
             },
         }"
-        x-init="setTimeout(() => ready = true, 550)"
     >
 
-        <!-- Welcome hero — reflects whichever sample account is signed in -->
+        <!-- Welcome hero — reflects the signed-in account -->
         <div x-show="$store.session.account" x-cloak class="relative rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 shadow-card animate-fade-up">
             <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,theme(colors.white),transparent_55%)] pointer-events-none"></div>
             <div class="relative px-5 py-6 sm:px-7 sm:py-7 flex flex-col lg:flex-row lg:items-center gap-5">
@@ -87,7 +86,7 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-1.5 lg:max-w-xs xl:max-w-sm lg:justify-end" x-data="{ get myModules() { return modules.filter(m => $store.session.can(m.key)); } }">
+                <div class="flex flex-wrap items-center gap-1.5 lg:max-w-xs xl:max-w-sm lg:justify-end">
                     <span
                         class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1 shrink-0 bg-white/10 text-white border border-white/20"
                     >
@@ -113,35 +112,7 @@
 
         <div class="flex items-center justify-between mb-4">
             <p class="text-sm text-slate-400">Real-time overview of citizen services and municipal operations.</p>
-            <div class="flex items-center gap-2">
-                <div class="relative" x-data="{ open: false, range: 'This Quarter (Jul–Sep 2026)' }" @click.outside="open = false">
-                    <button
-                        @click="open = !open"
-                        class="inline-flex items-center gap-2 text-sm text-slate-500 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors"
-                    >
-                        <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
-                        <span x-text="range"></span>
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
-                    </button>
-                    <div
-                        x-show="open"
-                        x-cloak
-                        x-transition:enter="transition duration-[200ms] ease-emphasized"
-                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                        class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-30 origin-top-right py-1.5"
-                    >
-                        @foreach(['Today', 'This Week', 'This Month', 'This Quarter (Jul–Sep 2026)', 'This Year', 'All Time'] as $opt)
-                            <button
-                                @click="range = '{{ $opt }}'; open = false; $dispatch('toast', { message: 'Showing data for {{ $opt }}.', variant: 'info' })"
-                                class="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-slate-50"
-                                :class="range === '{{ $opt }}' ? 'text-brand-600 font-medium bg-brand-50/60' : 'text-slate-600'"
-                            >{{ $opt }}</button>
-                        @endforeach
-                    </div>
-                </div>
-                <x-ui.button :href="route('admin.reports')" variant="secondary" size="sm" icon="download">Export Report</x-ui.button>
-            </div>
+            <x-ui.button :href="route('admin.reports')" variant="secondary" size="sm" icon="download">Export Report</x-ui.button>
         </div>
 
         <!-- Skeleton state -->
@@ -165,17 +136,21 @@
             </div>
         </div>
 
+        <div x-show="failed" x-cloak>
+            <x-ui.error-state messageExpr="'Could not load the dashboard.'" retryExpr="init()" :retryable="true" />
+        </div>
+
         <!-- Real content -->
-        <div x-show="ready" x-cloak x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="ready && !failed" x-cloak x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
             <!-- KPI row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">
-                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card :href="route('admin.constituents')" label="Registered Residents" valueBind="activeDashStats.residents" icon="users" color="brand" trend="+312" sublabel="Across 20 barangays" :delay="0" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Dokyu" valueBind="activeDashStats.dokyu" icon="file-text" color="green" trend="+8.4%" sublabel="This month" :delay="40" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Pending Approvals" valueBind="activeDashStats.pending" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" /></div>
-                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.assistance-requests')" label="Tulong" valueBind="activeDashStats.tulong" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" /></div>
-                <div x-show="$store.session.can('communications')" x-cloak><x-ui.stat-card :href="route('admin.communications')" label="Balita" value="28" icon="megaphone" color="gold" sublabel="Published this year" :delay="160" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.analytics')" label="Avg. Processing Time" value="2.4 days" icon="timer" color="red" trend="-0.6 days" trendDirection="down" sublabel="Document requests" :delay="200" /></div>
+                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabel="Across 20 barangays" :delay="0" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Dokyu" valueBind="docStatusTotal" icon="file-text" color="green" sublabel="Open + closed this window" :delay="40" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Pending Approvals" valueBind="dash?.requests?.needing_action ?? 0" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" /></div>
+                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.assistance-requests')" label="Tulong" valueBind="assistStatusTotal" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="teal" sublabel="Document requests" :delay="160" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="red" sublabel="Dokyu + Tulong" :delay="200" /></div>
             </div>
 
             <!-- Middle row: donuts + barangay list -->
@@ -186,26 +161,24 @@
                         <h3 class="font-semibold text-navy-900">Dokyu</h3>
                         <a href="{{ route('admin.document-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
-                    <div
-                        class="relative w-40 h-40 mx-auto"
-                        x-data="donutChart({ labels: @js(array_column($docStatus, 'label')), values: @js(array_column($docStatus, 'value')), colors: @js(array_column($docStatus, 'color')) })"
-                    >
+                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('docStatus', async (rows) => { const Chart = await window.loadChart(); if (chart) chart.destroy(); chart = new Chart($refs.canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
                         <canvas x-ref="canvas"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span class="text-2xl font-semibold text-navy-900 tabular-nums">{{ number_format($docStatusTotal) }}</span>
+                            <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="docStatusTotal.toLocaleString()"></span>
                             <span class="text-[11px] text-slate-400">Total Requests</span>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2.5">
-                        @foreach($docStatus as $row)
+                        <template x-for="row in docStatus" :key="row.label">
                             <div class="flex items-center justify-between text-sm">
                                 <span class="flex items-center gap-2 text-slate-500">
-                                    <span class="w-2 h-2 rounded-full" style="background-color: {{ $row['color'] }}"></span>
-                                    {{ $row['label'] }}
+                                    <span class="w-2 h-2 rounded-full" :style="'background-color:' + row.color"></span>
+                                    <span x-text="row.label"></span>
                                 </span>
-                                <span class="font-medium text-navy-900 tabular-nums">{{ number_format($row['value']) }}</span>
+                                <span class="font-medium text-navy-900 tabular-nums" x-text="row.value.toLocaleString()"></span>
                             </div>
-                        @endforeach
+                        </template>
+                        <p class="text-xs text-slate-400" x-show="!docStatus.length">No Dokyu requests yet.</p>
                     </div>
                 </x-ui.card>
                 </div>
@@ -216,26 +189,24 @@
                         <h3 class="font-semibold text-navy-900">Tulong</h3>
                         <a href="{{ route('admin.assistance-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
-                    <div
-                        class="relative w-40 h-40 mx-auto"
-                        x-data="donutChart({ labels: @js(array_column($assistStatus, 'label')), values: @js(array_column($assistStatus, 'value')), colors: @js(array_column($assistStatus, 'color')) })"
-                    >
+                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('assistStatus', async (rows) => { const Chart = await window.loadChart(); if (chart) chart.destroy(); chart = new Chart($refs.canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
                         <canvas x-ref="canvas"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span class="text-2xl font-semibold text-navy-900 tabular-nums">{{ number_format($assistStatusTotal) }}</span>
+                            <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="assistStatusTotal.toLocaleString()"></span>
                             <span class="text-[11px] text-slate-400">Active Cases</span>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2.5">
-                        @foreach($assistStatus as $row)
+                        <template x-for="row in assistStatus" :key="row.label">
                             <div class="flex items-center justify-between text-sm">
                                 <span class="flex items-center gap-2 text-slate-500">
-                                    <span class="w-2 h-2 rounded-full" style="background-color: {{ $row['color'] }}"></span>
-                                    {{ $row['label'] }}
+                                    <span class="w-2 h-2 rounded-full" :style="'background-color:' + row.color"></span>
+                                    <span x-text="row.label"></span>
                                 </span>
-                                <span class="font-medium text-navy-900 tabular-nums">{{ number_format($row['value']) }}</span>
+                                <span class="font-medium text-navy-900 tabular-nums" x-text="row.value.toLocaleString()"></span>
                             </div>
-                        @endforeach
+                        </template>
+                        <p class="text-xs text-slate-400" x-show="!assistStatus.length">No Tulong requests yet.</p>
                     </div>
                 </x-ui.card>
                 </div>
@@ -243,21 +214,22 @@
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong') || $store.session.can('constituents')" x-cloak>
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-navy-900">Requests by Barangay</h3>
+                        <h3 class="font-semibold text-navy-900">Open Requests by Barangay</h3>
                         <a href="{{ route('admin.directory') }}" class="text-xs font-medium text-brand-600 hover:underline">View All</a>
                     </div>
                     <div class="space-y-4">
-                        @foreach($barangayRequests as $brgy)
-                            <div x-show="$store.session.inScope('{{ $brgy['name'] }}')" x-cloak>
+                        <template x-for="brgy in barangayRequests" :key="brgy.name">
+                            <div>
                                 <div class="flex items-center justify-between text-sm mb-1.5">
-                                    <span class="text-slate-600 font-medium">Brgy. {{ $brgy['name'] }}</span>
-                                    <span class="text-slate-400">{{ $brgy['count'] }} requests</span>
+                                    <span class="text-slate-600 font-medium" x-text="'Brgy. ' + brgy.name"></span>
+                                    <span class="text-slate-400" x-text="brgy.count + ' requests'"></span>
                                 </div>
                                 <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" style="width: 0%" x-init="setTimeout(() => $el.style.width = '{{ $brgy['pct'] }}%', 100)"></div>
+                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
                                 </div>
                             </div>
-                        @endforeach
+                        </template>
+                        <p class="text-xs text-slate-400" x-show="!barangayRequests.length">No open requests.</p>
                     </div>
                 </x-ui.card>
                 </div>
@@ -268,42 +240,37 @@
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak>
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-1">
-                        <h3 class="font-semibold text-navy-900">Requests Trend (YTD)</h3>
+                        <h3 class="font-semibold text-navy-900">Requests Trend (Last 6 Months)</h3>
                     </div>
                     <div class="flex items-center gap-4 text-xs text-slate-400 mb-4">
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
                     </div>
-                    <div class="h-52" x-data="lineChart({
-                        labels: @js($trendLabels),
-                        datasets: [
-                            { label: 'Dokyu', data: @js($trendDocuments), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' },
-                            { label: 'Tulong', data: @js($trendAssistance), color: '#a855f7', fill: 'rgba(168,85,247,0.06)' },
-                        ],
-                    })">
+                    <div class="h-52" x-data="{ chart: null }" x-init="$watch('dash', async (d) => { if (!d?.requests?.trend) return; const Chart = await window.loadChart(); if (chart) chart.destroy(); const t = d.requests.trend; chart = new Chart($refs.canvas, { type: 'line', data: { labels: t.labels, datasets: [ { label: 'Dokyu', data: t.documents, borderColor: '#2f62f5', backgroundColor: 'rgba(47,98,245,0.08)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 }, { label: 'Tulong', data: t.assistance, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.06)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 } ] }, options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } } } }); }, { immediate: true })">
                         <canvas x-ref="canvas"></canvas>
                     </div>
                 </x-ui.card>
                 </div>
 
-                <x-ui.card padded="false">
+                <x-ui.card padded="false" x-show="$store.session.can('sakuna')" x-cloak>
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="font-semibold text-navy-900">Key Alerts</h3>
-                        <span class="text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">{{ count($alerts) }}</span>
+                        <h3 class="font-semibold text-navy-900">Sakuna Alerts</h3>
+                        <span class="text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full" x-text="(dash?.sakuna?.alerts || []).length"></span>
                     </div>
                     <div class="divide-y divide-slate-50">
-                        @foreach($alerts as $alert)
-                            <a href="{{ route($alert['link']) }}" class="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50/70 transition-colors">
-                                <span class="w-8 h-8 rounded-lg {{ $alert['color'] }} flex items-center justify-center shrink-0">
-                                    <i data-lucide="{{ $alert['icon'] }}" class="w-4 h-4"></i>
+                        <template x-for="alert in (dash?.sakuna?.alerts || [])" :key="alert.ref">
+                            <a href="{{ route('admin.sakuna.alerts') }}" class="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50/70 transition-colors">
+                                <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="alertColors[alert.level] || 'bg-slate-50 text-slate-600'">
+                                    <i data-lucide="triangle-alert" class="w-4 h-4"></i>
                                 </span>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700 leading-snug">{{ $alert['title'] }}</p>
-                                    <p class="text-xs text-slate-400 mt-0.5">{{ $alert['body'] }}</p>
-                                    <p class="text-[11px] text-slate-300 mt-1">{{ $alert['time'] }}</p>
+                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="alert.title?.en"></p>
+                                    <p class="text-xs text-slate-400 mt-0.5" x-text="alert.type + ' · ' + alert.level"></p>
+                                    <p class="text-[11px] text-slate-300 mt-1" x-text="alert.published_at ? new Date(alert.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></p>
                                 </div>
                             </a>
-                        @endforeach
+                        </template>
+                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!(dash?.sakuna?.alerts || []).length">No active alerts.</p>
                     </div>
                 </x-ui.card>
 
@@ -313,18 +280,19 @@
                         <a href="{{ route('admin.audit-logs') }}" class="text-xs font-medium text-brand-600 hover:underline">View All</a>
                     </div>
                     <div class="divide-y divide-slate-50">
-                        @foreach($activities as $activity)
-                            <a href="{{ route($activity['link']) }}" class="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50/70 transition-colors">
-                                <span class="w-8 h-8 rounded-lg {{ $activity['color'] }} flex items-center justify-center shrink-0">
-                                    <i data-lucide="{{ $activity['icon'] }}" class="w-4 h-4"></i>
+                        <template x-for="(activity, i) in (dash?.activities || [])" :key="i">
+                            <div class="flex items-start gap-3 px-4 py-2.5">
+                                <span class="w-8 h-8 rounded-lg bg-slate-50 text-slate-500 flex items-center justify-center shrink-0">
+                                    <i data-lucide="activity" class="w-4 h-4"></i>
                                 </span>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700 leading-snug">{{ $activity['title'] }}</p>
-                                    <p class="text-xs text-slate-400 mt-0.5">{{ $activity['body'] }}</p>
-                                    <p class="text-[11px] text-slate-300 mt-1">{{ $activity['time'] }}</p>
+                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="activity.actor + ' — ' + activity.action"></p>
+                                    <p class="text-xs text-slate-400 mt-0.5" x-text="(activity.module || '') + (activity.target ? ' · ' + activity.target : '')"></p>
+                                    <p class="text-[11px] text-slate-300 mt-1" x-text="activity.at ? new Date(activity.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></p>
                                 </div>
-                            </a>
-                        @endforeach
+                            </div>
+                        </template>
+                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!(dash?.activities || []).length">No recent activity.</p>
                     </div>
                 </x-ui.card>
             </div>
