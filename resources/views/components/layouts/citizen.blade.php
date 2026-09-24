@@ -1,19 +1,4 @@
 @props(['title' => 'Dashboard', 'subtitle' => null, 'active' => 'dashboard'])
-@php
-    // Lightweight per-barangay directory (label, seal, officials, contact —
-    // no document templates) available everywhere in the Citizen Portal via
-    // $store.barangay, so any page can show the signed-in citizen's own
-    // barangay branding without re-fetching the full Dokyu catalog.
-    $barangayCatalog = [];
-    foreach (config('esperanza_barangay_documents') as $b) {
-        $barangayCatalog[$b['label']] = [
-            'label' => $b['label'],
-            'seal' => $b['seal'],
-            'officials' => $b['officials'],
-            'contact' => $b['contact'] ?? null,
-        ];
-    }
-@endphp
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -21,9 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} — Esperanza Citizen Portal</title>
     <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal.png') }}">
-    <script>
-        window.__barangayCatalog = @json($barangayCatalog);
-    </script>
+    {{-- The per-barangay directory (seal, officials, contact) used to be
+         injected here from config/esperanza_barangay_documents.php as
+         window.__barangayCatalog. $store.barangay now loads it from
+         GET /barangays itself (see resources/js/app.js) so every barangay in
+         the real table shows up here, not just the ones a build-time fixture
+         happened to list. --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans antialiased">

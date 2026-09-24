@@ -311,7 +311,9 @@
             // (see citizen/notifications.blade.php) — open that exact
             // request's tracking modal instead of just landing on the list.
             init() {
-                this.$store.citizenNotifications.seedFromRequests(this.requests, 'dokyu');
+                // Notifications are server-driven now (see resources/js/app.js) —
+                // the backend lifecycle itself creates one on every status
+                // change, so there is nothing left to backfill here.
                 const ref = new URLSearchParams(window.location.search).get('ref');
                 if (!ref) return;
                 const match = this.requests.find(r => r.ref === ref);
@@ -557,19 +559,16 @@
                                 verifierTitle: doc?.verifierTitle || null,
                                 formSnapshot: JSON.parse(JSON.stringify(this.formData || {})),
                             });
-                            this.$store.citizenNotifications.push({
-                                icon: 'file-plus', color: 'brand', portal: 'dokyu', ref,
-                                title: 'Document Request Submitted',
-                                body: (doc?.name || 'Your document request') + ' (' + ref + ') has been submitted and is now Submitted.',
-                            });
-                            // Same-browser demo only — see adminNotifications'
-                            // own comment in resources/js/app.js.
-                            const citizenName = [this.applicant.firstName, this.applicant.lastName].filter(Boolean).join(' ') || 'A citizen';
-                            this.$store.adminNotifications.push({
-                                icon: 'file-text', color: 'brand', portal: 'dokyu', ref,
-                                title: citizenName + ' Submitted ' + (doc?.name || 'a Dokyu request'),
-                                body: citizenName + ' submitted a ' + (doc?.name || 'document') + ' request (' + ref + ').',
-                            });
+                            // This wizard still writes the new request into local
+                            // Alpine state rather than POST /requests (see
+                            // PRODUCTION_READINESS.md) — submission is not yet on
+                            // the real backend, so there is no server-side
+                            // NotificationService.notifyTransition() call to
+                            // reflect here. $store.citizenNotifications and
+                            // $store.adminNotifications now read real rows from
+                            // GET {citizen,admin}/notifications; a client-side
+                            // push() into either would show a notification for a
+                            // request the server has never heard of.
                         },
                     }"
                     x-init="catalogTab = myBarangayInfo ? 'barangay' : 'municipal'; seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant())"

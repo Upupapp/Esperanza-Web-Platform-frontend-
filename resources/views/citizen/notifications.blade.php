@@ -1,51 +1,20 @@
-@php
-    // TAB 04: fixtures live in resources/data/citizen/notifications.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/citizen/notifications.php');
-    $notifications = $__fixtures['notifications'];
-
-    $categoryMeta = $__fixtures['categoryMeta'];
-
-    // Build each row's full click behavior server-side (mark read + open popup
-    // and/or navigate) so the template stays a single, uniform @click binding.
-    foreach ($notifications as $i => $n) {
-        $actions = ["read.includes({$i}) || read.push({$i})"];
-        if (!empty($n['popup'])) {
-            $actions[] = "\$dispatch('{$n['popup']}')";
-        }
-        if (!empty($n['link'])) {
-            $url = route($n['link']) . (!empty($n['ref']) ? '?ref=' . urlencode($n['ref']) : '');
-            $actions[] = "window.location.href = '" . $url . "'";
-        }
-        $notifications[$i]['clickAction'] = implode('; ', $actions);
-    }
-
-    $dokyuCount = collect($notifications)->where('category', 'dokyu')->count();
-    $tulongCount = collect($notifications)->where('category', 'tulong')->count();
-    $unreadCount = collect($notifications)->where('unread', true)->count();
-@endphp
-
 <x-layouts.citizen title="Notifications" subtitle="All your account and request updates in one place." active="notifications">
     <div
         x-data="{
             tab: 'all',
-            read: [],
-            removed: [],
-            unreadFlags: @js(collect($notifications)->pluck('unread')->all()),
-            categories: @js(collect($notifications)->pluck('category')->all()),
             markingAll: false,
-            // Real, request-driven notifications (submission + every admin
-            // status change) live in $store.citizenNotifications, persisted
-            // via localStorage — see resources/js/app.js. They're merged in
-            // above the static seed list below (account/community/events
-            // content that isn't request-driven).
             dokyuUrl: @js(route('citizen.document-requests')),
             tulongUrl: @js(route('citizen.assistance-requests')),
             colorClasses: {
                 brand: 'text-brand-600 bg-brand-50', rose: 'text-rose-600 bg-rose-50', amber: 'text-amber-600 bg-amber-50',
                 indigo: 'text-indigo-600 bg-indigo-50', teal: 'text-teal-600 bg-teal-50', cyan: 'text-cyan-600 bg-cyan-50',
-                emerald: 'text-emerald-600 bg-emerald-50',
+                emerald: 'text-emerald-600 bg-emerald-50', purple: 'text-purple-600 bg-purple-50',
+            },
+            init() {
+                this.$store.citizenNotifications.load();
             },
             timeAgo(iso) {
+                if (!iso) return '';
                 const diffMs = Date.now() - new Date(iso).getTime();
                 const mins = Math.floor(diffMs / 60000);
                 if (mins < 1) return 'Just now';
@@ -58,7 +27,10 @@
             },
             goTo(n) {
                 this.$store.citizenNotifications.markRead(n.id);
-                window.location.href = (n.portal === 'tulong' ? this.tulongUrl : this.dokyuUrl) + '?ref=' + encodeURIComponent(n.ref);
+                if (n.link) { window.location.href = n.link; return; }
+                if (n.portal === 'dokyu' || n.portal === 'tulong') {
+                    window.location.href = (n.portal === 'tulong' ? this.tulongUrl : this.dokyuUrl) + '?ref=' + encodeURIComponent(n.ref || '');
+                }
             },
             dynamicMatches(n) {
                 if (this.tab === 'all') return true;
@@ -66,34 +38,18 @@
                 if (this.tab === 'read') return !n.unread;
                 return n.portal === this.tab;
             },
-            isRead(i) { return !this.unreadFlags[i] || this.read.includes(i); },
-            matches(i) {
-                if (this.removed.includes(i)) return false;
-                if (this.tab === 'all') return true;
-                if (this.tab === 'unread') return !this.isRead(i);
-                if (this.tab === 'read') return this.isRead(i);
-                return this.categories[i] === this.tab;
-            },
-            get visibleCount() {
-                return this.unreadFlags.map((_, i) => i).filter(i => this.matches(i)).length
-                    + this.$store.citizenNotifications.items.filter(n => this.dynamicMatches(n)).length;
-            },
-            get unreadTotal() {
-                return this.unreadFlags.map((_, i) => i).filter(i => !this.removed.includes(i) && !this.isRead(i)).length
-                    + this.$store.citizenNotifications.unreadCount;
-            },
-            get totalCount() { return this.unreadFlags.length + this.$store.citizenNotifications.items.length; },
-            get dokyuTotalCount() { return {{ $dokyuCount }} + this.$store.citizenNotifications.items.filter(n => n.portal === 'dokyu').length; },
-            get tulongTotalCount() { return {{ $tulongCount }} + this.$store.citizenNotifications.items.filter(n => n.portal === 'tulong').length; },
+            get visible() { return this.$store.citizenNotifications.visible.filter((n) => this.dynamicMatches(n)); },
+            get totalCount() { return this.$store.citizenNotifications.visible.length; },
+            get unreadTotal() { return this.$store.citizenNotifications.unreadCount; },
+            get dokyuTotalCount() { return this.$store.citizenNotifications.visible.filter((n) => n.portal === 'dokyu').length; },
+            get tulongTotalCount() { return this.$store.citizenNotifications.visible.filter((n) => n.portal === 'tulong').length; },
             markAllRead() {
                 if (this.markingAll) return;
                 this.markingAll = true;
-                setTimeout(() => {
-                    this.read = [...this.unreadFlags.keys()];
-                    this.$store.citizenNotifications.markAllRead();
+                this.$store.citizenNotifications.markAllRead().finally(() => {
                     this.markingAll = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'All notifications marked as read.' : 'Lahat ng abiso ay minarkahan nang nabasa na.', variant: 'success' });
-                }, 500);
+                });
             },
         }"
         class="animate-fade-up max-w-3xl"
@@ -130,86 +86,45 @@
                     <span x-text="markingAll ? ($store.lang.current === 'en' ? 'Marking…' : 'Minamarkahan…') : ($store.lang.current === 'en' ? 'Mark all as read' : 'Markahan Lahat na Nabasa')"></span>
                 </button>
             </div>
-            <p class="text-[11px] text-slate-400" x-text="visibleCount + ' ' + ($store.lang.current === 'en' ? 'shown' : 'ipinapakita')"></p>
+            <p class="text-[11px] text-slate-400" x-text="visible.length + ' ' + ($store.lang.current === 'en' ? 'shown' : 'ipinapakita')"></p>
         </div>
 
-        <x-ui.card padded="false">
-            <div class="divide-y divide-slate-50">
-                <template x-for="n in $store.citizenNotifications.items" :key="n.id">
-                    <div
-                        x-show="dynamicMatches(n)"
-                        @click="goTo(n)"
-                        class="group flex items-start gap-3 px-4 py-4 hover:bg-slate-50/70 transition-colors relative cursor-pointer"
-                    
-        role="button"
-        tabindex="0"
-        @keydown.enter.prevent="goTo(n)"
-        @keydown.space.prevent="goTo(n)">
-                        <span class="absolute left-2 top-6 w-1.5 h-1.5 rounded-full bg-brand-500" x-show="n.unread"></span>
-                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="colorClasses[n.color] || colorClasses.brand">
-                            <i :data-lucide="n.icon" class="w-4 h-4"></i>
-                        </span>
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <p class="text-sm font-medium text-slate-700 leading-snug" x-text="n.title"></p>
-                                <span class="text-[9px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 shrink-0" :class="n.portal === 'tulong' ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'" x-text="n.portal === 'tulong' ? 'Tulong' : 'Dokyu'"></span>
+        <x-ui.data-panel empty-title="Walang abisong tumutugma dito" empty-title-en="No notifications here" empty-icon="inbox">
+            <div x-data="{ get loading() { return $store.citizenNotifications.loading; }, get failed() { return $store.citizenNotifications.failed; }, get empty() { return !loading && !failed && visible.length === 0; }, retry() { $store.citizenNotifications.load(); }, message() { return $store.lang.current === 'en' ? 'Could not load notifications.' : 'Hindi mai-load ang mga abiso.'; } }" class="contents">
+                <div x-show="loading" x-cloak class="py-8"><x-ui.skeleton class="h-14 mb-2.5" /><x-ui.skeleton class="h-14 mb-2.5 opacity-80" /></div>
+                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="message()" retryExpr="retry()" :retryable="true" /></div>
+                <x-ui.card padded="false" x-show="!loading && !failed">
+                    <div class="divide-y divide-slate-50">
+                        <template x-for="n in visible" :key="n.id">
+                            <div
+                                @click="goTo(n)"
+                                class="group flex items-start gap-3 px-4 py-4 hover:bg-slate-50/70 transition-colors relative cursor-pointer"
+                                role="button" tabindex="0"
+                                @keydown.enter.prevent="goTo(n)" @keydown.space.prevent="goTo(n)"
+                            >
+                                <span class="absolute left-2 top-6 w-1.5 h-1.5 rounded-full bg-brand-500" x-show="n.unread"></span>
+                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="colorClasses[n.color] || colorClasses.brand">
+                                    <i :data-lucide="n.icon" class="w-4 h-4"></i>
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="text-sm font-medium text-slate-700 leading-snug" x-text="n.title"></p>
+                                        <span class="text-[9px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 shrink-0" x-show="n.portal === 'dokyu' || n.portal === 'tulong'" :class="n.portal === 'tulong' ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'" x-text="n.portal === 'tulong' ? 'Tulong' : 'Dokyu'"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-0.5" x-text="n.body"></p>
+                                    <p class="text-[11px] text-slate-300 mt-1.5" x-text="timeAgo(n.createdAt)"></p>
+                                </div>
+                                <span class="text-[10px] font-medium text-slate-300 shrink-0 mt-0.5 whitespace-nowrap" x-show="n.pinned"><x-ui.t fil="Awtomatiko" en="Automated" /></span>
+                                <button
+                                    type="button" x-show="!n.pinned"
+                                    @click.stop="$store.citizenNotifications.dismiss(n.id)"
+                                    class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
+                                ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                             </div>
-                            <p class="text-xs text-slate-400 mt-0.5" x-text="n.body"></p>
-                            <p class="text-[11px] text-slate-300 mt-1.5" x-text="timeAgo(n.createdAt)"></p>
-                        </div>
-                        <button
-                            type="button"
-                            @click.stop="$store.citizenNotifications.remove(n.id)"
-                            class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
-                        ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </template>
                     </div>
-                </template>
-                @foreach($notifications as $n)
-                    @php $cat = $categoryMeta[$n['category']] ?? null; @endphp
-                    <div
-                        x-show="matches({{ $loop->index }})"
-                        @click="{{ $n['clickAction'] }}"
-                        class="group flex items-start gap-3 px-4 py-4 hover:bg-slate-50/70 transition-colors relative cursor-pointer"
-                    
-        role="button"
-        tabindex="0"
-        @keydown.enter.prevent="{{ $n['clickAction'] }}"
-        @keydown.space.prevent="{{ $n['clickAction'] }}">
-                        <span class="absolute left-2 top-6 w-1.5 h-1.5 rounded-full bg-brand-500" x-show="!isRead({{ $loop->index }})"></span>
-                        <span class="w-9 h-9 rounded-lg {{ $n['color'] }} flex items-center justify-center shrink-0">
-                            <i data-lucide="{{ $n['icon'] }}" class="w-4 h-4"></i>
-                        </span>
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <p
-                                    class="text-sm font-medium text-slate-700 leading-snug"
-                                    @if($n['popup'] === 'show-birthday-popup') x-text="'Happy Birthday, ' + ($store.citizenSession.account?.firstName ?? 'Resident') + '! 🎉'" @endif
-                                >{{ $n['popup'] === 'show-birthday-popup' ? '' : $n['title'] }}</p>
-                                @if($cat)
-                                    <span class="text-[9px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 shrink-0 {{ $cat['pill'] }}"><x-ui.t :fil="$cat['fil']" :en="$cat['en']" /></span>
-                                @endif
-                            </div>
-                            <p class="text-xs text-slate-400 mt-0.5">{{ $n['body'] }}</p>
-                            <p class="text-[11px] text-slate-300 mt-1.5">{{ $n['time'] }}</p>
-                        </div>
-                        @if($n['pinned'])
-                            <span class="text-[10px] font-medium text-slate-300 shrink-0 mt-0.5 whitespace-nowrap"><x-ui.t fil="Awtomatiko" en="Automated" /></span>
-                        @else
-                            <button
-                                type="button"
-                                @click.stop="removed.push({{ $loop->index }})"
-                                class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
-                            ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                        @endif
-                    </div>
-                @endforeach
-
-                <div class="flex flex-col items-center text-center py-12" x-show="visibleCount === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="inbox" class="w-7 h-7"></i></span>
-                    <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang abisong tumutugma dito." en="No notifications here." /></p>
-                    <p class="text-xs text-slate-400 mt-0.5"><x-ui.t fil="Subukan ang ibang kategorya sa itaas." en="Try a different category above." /></p>
-                </div>
+                </x-ui.card>
             </div>
-        </x-ui.card>
+        </x-ui.data-panel>
     </div>
 </x-layouts.citizen>

@@ -68,6 +68,43 @@ window.DokyuEditor = DokyuEditor;
 // back off afterward, regardless of which page's button triggered print.
 window.addEventListener('afterprint', () => document.body.classList.remove('dp-printing'));
 
+/**
+ * 'super_admin' -> 'Super Admin'. The exact display name (with icon/color)
+ * lives in the roles table and comes back from GET /admin/roles, but that
+ * route is itself gated by perm:um_roles,view -- not every signed-in role can
+ * call it. This title-cases the key so every account always has SOMETHING to
+ * show immediately after login, independent of what that account can see.
+ */
+function formatRoleLabel(roleKey) {
+    if (!roleKey) return '';
+
+    return roleKey
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+function readJson(key) {
+    try {
+        return JSON.parse(localStorage.getItem(key) || 'null');
+    } catch {
+        return null;
+    }
+}
+
+function writeJson(key, value) {
+    try {
+        if (value === null) {
+            localStorage.removeItem(key);
+        } else {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+    } catch {
+        // Private mode with storage disabled -- the session still works for
+        // this page load, it just will not survive a reload.
+    }
+}
+
 document.addEventListener('alpine:init', () => {
     Alpine.magic('api', () => api);
 
@@ -90,44 +127,82 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
-    // Frontend-only "logged in as this role" simulation for the Administrative
-    // Portal (see config/esperanza_rbac.php). No real auth — the account object
-    // just persists to localStorage so nav/pages can gate content by module
-    // access and Municipal/Barangay scope.
+    // Real personnel session for the Administrative Portal, backed by
+    // Sanctum bearer tokens (production-readiness programme, 2026-09-25).
+    // The account object is cached to localStorage for a warm reload, but it
+    // is never the source of truth: refresh() always re-fetches GET /auth/me
+    // and overwrites it, so a newly granted module or edited role bundle
+    // (see UserManagementTest) is visible on the very next request rather
+    // than only after a manual logout/login.
     //
-    // No session -> fail CLOSED (TAB 08). This used to fail open so the design
-    // could be previewed without logging in. That is wrong the moment a real API
-    // exists: it trains every screen to treat "no account" as "allowed", and the
-    // preview is indistinguishable from a genuine unrestricted session.
-    //
-    // What this gating is for: hiding what the user cannot use. It is NOT the
-    // security boundary. The server enforces every permission triple, and a
-    // check here must never be presented as protection.
+    // No session -> fail CLOSED (TAB 08). What this gating is for: hiding
+    // what the user cannot use. It is NOT the security boundary. The server
+    // enforces every permission triple, and a check here must never be
+    // presented as protection.
     Alpine.store('session', {
-        // Re-derive moduleKeys/permissions from the current RBAC config on every
-        // load instead of trusting whatever was frozen into localStorage at
-        // login time — otherwise a newly added module (e.g. Papeles) stays
-        // invisible to already-logged-in sessions until they manually log out
-        // and back in.
-        account: (() => {
-            const stored = JSON.parse(localStorage.getItem('esperanza_session') || 'null');
-            if (stored && window.__ESPERANZA_RBAC_ACCOUNTS__) {
-                const fresh = window.__ESPERANZA_RBAC_ACCOUNTS__.find((a) => a.id === stored.id);
-                if (fresh) {
-                    stored.moduleKeys = fresh.moduleKeys;
-                    stored.permissions = fresh.permissions;
-                }
+        account: readJson('esperanza_session'),
+        booting: false,
+
+        setAccount(raw) {
+            this.account = {
+                id: raw.employee_id,
+                name: raw.name,
+                roleKey: raw.role,
+                role: formatRoleLabel(raw.role),
+                dept: raw.dept,
+                scope: raw.scope,
+                status: raw.status,
+                moduleKeys: raw.moduleKeys || [],
+                permissions: raw.permissions || {},
+            };
+            writeJson('esperanza_session', this.account);
+        },
+
+        /** Step 1 (and, if MFA is required, step 2) of personnel sign-in. */
+        async login(identifier, password, mfaCode = null) {
+            const result = await api.post('/auth/personnel/login', { identifier, password, mfa_code: mfaCode });
+            const data = result.data;
+
+            // Even an MFA-pending login issues a token — one that can do
+            // nothing but answer the challenge (see AuthController).
+            api.setToken(data.token);
+
+            if (data.mfa?.required && !data.mfa.satisfied) {
+                return { mfaRequired: true };
             }
-            return stored;
-        })(),
-        login(account) {
-            this.account = account;
-            localStorage.setItem('esperanza_session', JSON.stringify(account));
+
+            this.setAccount(data.account);
+
+            return { mfaRequired: false };
         },
-        logout() {
+
+        /** Re-derive the account from the server. Never trust a cached copy for a decision. */
+        async refresh() {
+            this.booting = true;
+            try {
+                const result = await api.get('/auth/me');
+                this.setAccount(result.data);
+            } finally {
+                this.booting = false;
+            }
+        },
+
+        clear() {
             this.account = null;
-            localStorage.removeItem('esperanza_session');
+            writeJson('esperanza_session', null);
         },
+
+        async logout() {
+            try {
+                await api.post('/auth/logout');
+            } catch {
+                // Token already invalid or the request never landed -- the
+                // session is cleared locally either way.
+            }
+            api.setToken(null);
+            this.clear();
+        },
+
         can(moduleKey) {
             if (!this.account) return false;
             return (this.account.moduleKeys || []).includes(moduleKey);
@@ -175,189 +250,215 @@ document.addEventListener('alpine:init', () => {
         },
     });
 
-    // Frontend-only "logged in as this resident" simulation for the Citizen
-    // Portal (see config/esperanza_citizens.php). Mirrors $store.session above
-    // but simpler — citizens don't have module permissions, just a barangay
-    // identity that Dokyu (and later other pages) can read to show the right
-    // barangay-specific content.
+    // Real citizen session for the Citizen Portal, backed by the same
+    // Sanctum bearer tokens as $store.session above (production-readiness
+    // programme, 2026-09-25). refresh() re-reads GET /citizen/profile, the
+    // one endpoint with every field the portal's views already read this
+    // account object for (name parts, contact, barangay, verification tier).
     Alpine.store('citizenSession', {
-        account: JSON.parse(localStorage.getItem('esperanza_citizen_session') || 'null'),
-        login(account) {
-            this.account = account;
-            localStorage.setItem('esperanza_citizen_session', JSON.stringify(account));
+        account: readJson('esperanza_citizen_session'),
+
+        setAccount(p) {
+            this.account = {
+                id: p.account_no,
+                firstName: p.first_name,
+                middleName: p.middle_name,
+                lastName: p.last_name,
+                suffix: p.suffix,
+                fullName: p.name,
+                email: p.email,
+                mobile: p.mobile,
+                barangay: p.barangay,
+                purok: p.purok,
+                address: p.address,
+                birthdate: p.birthdate,
+                sex: p.sex,
+                civilStatus: p.civil_status,
+                occupation: p.occupation,
+                residentSince: p.resident_since,
+                status: p.status,
+                accessLevel: p.access_level,
+                fullServiceAccess: p.full_service_access,
+                capabilities: p.capabilities,
+                profileCompleteness: p.profile_completeness,
+                identityLocked: p.identity_locked,
+            };
+            writeJson('esperanza_citizen_session', this.account);
         },
-        logout() {
+
+        async login(identifier, password) {
+            const result = await api.post('/auth/citizen/login', { identifier, password });
+            api.setToken(result.data.token);
+            await this.refresh();
+        },
+
+        async refresh() {
+            const result = await api.get('/citizen/profile');
+            this.setAccount(result.data);
+        },
+
+        clear() {
             this.account = null;
-            localStorage.removeItem('esperanza_citizen_session');
+            writeJson('esperanza_citizen_session', null);
         },
+
+        async logout() {
+            try {
+                await api.post('/auth/logout');
+            } catch {
+                // Same reasoning as $store.session.logout() above.
+            }
+            api.setToken(null);
+            this.clear();
+        },
+
         initials() {
             if (!this.account) return 'CI';
             return ((this.account.firstName?.[0] || '') + (this.account.lastName?.[0] || '')).toUpperCase();
         },
     });
 
-    // Citizen-facing notifications, persisted to localStorage so a citizen
-    // still sees them after navigating away or reloading (same persistence
-    // approach as $store.citizenSession above — this project has no real
-    // backend, per CLAUDE.md). Dokyu/Tulong submission pushes from
-    // citizen/document-requests.blade.php and citizen/assistance-requests.blade.php;
-    // admin status-change actions (reject, needs more docs, approve, ready
-    // for release, release) push from the matching admin process modals so
-    // the citizen sees each processing step. citizen/notifications.blade.php
-    // reads and displays this list above its static seed notifications.
-    Alpine.store('citizenNotifications', {
-        items: JSON.parse(localStorage.getItem('esperanza_notifications') || '[]'),
-        persist() {
-            localStorage.setItem('esperanza_notifications', JSON.stringify(this.items));
-        },
-        push({ icon, color, title, body, ref, portal }) {
-            this.items.unshift({
-                id: Date.now() + Math.random(),
-                icon, color, title, body, ref, portal,
-                createdAt: new Date().toISOString(),
-                unread: true,
-            });
-            this.items = this.items.slice(0, 50);
-            this.persist();
-        },
-        // Backfills one notification per existing request reflecting its
-        // CURRENT status — without this, a citizen only ever sees a
-        // notification for something that changed status live in their own
-        // browser session; the 50+ pre-seeded historical Dokyu/Tulong mock
-        // requests would otherwise never appear here at all. Idempotent
-        // (keyed by ref, called from citizen/document-requests.blade.php
-        // and citizen/assistance-requests.blade.php's own init()) — safe to
-        // call on every page load, never creates duplicates. Backfilled
-        // items start read (unread: false) since they aren't a new event.
-        seedFromRequests(requests, portal) {
-            const existingRefs = new Set(this.items.map((n) => n.ref));
-            const statusCopy = {
-                'Submitted': ['file-plus', 'brand', (t) => 'Your ' + t + ' request has been submitted and is now Pending Review.'],
-                'Pending Review': ['clock', 'amber', (t) => 'Your ' + t + ' request is pending review.'],
-                'Under Verification': ['search-check', 'indigo', (t) => 'Your ' + t + ' request is now being verified.'],
-                'Under Review': ['file-plus-2', 'amber', (t) => 'Your ' + t + ' request needs additional documents.'],
-                'Assigned': ['send', 'indigo', (t) => 'Your ' + t + ' request has been assigned for processing.'],
-                'Processing': ['loader', 'indigo', (t) => 'Your ' + t + ' request is being processed.'],
-                'Approved': ['package-check', 'emerald', (t) => 'Your ' + t + ' request has been approved.'],
-                'Mark to Release': ['circle-check', 'teal', (t) => 'Your ' + t + ' request is ready for release!'],
-                'Released': ['check-check', 'cyan', (t) => 'Your ' + t + ' request has been released.'],
-                'Completed': ['circle-check', 'emerald', (t) => 'Your ' + t + ' request is complete.'],
-                'Rejected': ['circle-x', 'rose', (t) => 'Your ' + t + ' request was rejected.'],
-                'Cancelled': ['circle-x', 'rose', (t) => 'Your ' + t + ' request was cancelled.'],
-                // Tulong-only statuses (see admin/assistance-requests.blade.php)
-                'Initial Screening': ['search-check', 'indigo', (t) => 'Your ' + t + ' request is now under initial screening.'],
-                'Needs Requirements': ['file-plus-2', 'amber', (t) => 'Your ' + t + ' request needs additional requirements.'],
-                'Assessment': ['clipboard-check', 'indigo', (t) => 'Your ' + t + ' request is being assessed for eligibility.'],
-                'For Approval': ['send', 'indigo', (t) => 'Your ' + t + ' request has been submitted for approval.'],
-                'Returned for Reassessment': ['rotate-ccw', 'orange', (t) => 'Your ' + t + ' request is being reassessed.'],
-                'Assistance Processing': ['loader', 'purple', (t) => 'Your ' + t + ' assistance is being processed.'],
-                'Ready for Release': ['package-check', 'teal', (t) => 'Your ' + t + ' assistance is ready for release!'],
-            };
-            const toAdd = [];
-            requests.forEach((r) => {
-                if (!r.ref || existingRefs.has(r.ref)) return;
-                const copy = statusCopy[r.status];
-                if (!copy) return;
-                const [icon, color, bodyFn] = copy;
-                toAdd.push({
-                    id: r.ref, icon, color, portal, ref: r.ref,
-                    title: r.status + ': ' + r.type,
-                    body: bodyFn(r.type) + (r.remarks ? ' ' + r.remarks : ''),
-                    createdAt: new Date().toISOString(),
-                    unread: false,
-                });
-            });
-            if (!toAdd.length) return;
-            this.items = [...this.items, ...toAdd];
-            this.persist();
-        },
-        markRead(id) {
-            const n = this.items.find((i) => i.id === id);
-            if (!n) return;
-            n.unread = false;
-            this.persist();
-        },
-        markAllRead() {
-            this.items.forEach((i) => (i.unread = false));
-            this.persist();
-        },
-        remove(id) {
-            this.items = this.items.filter((i) => i.id !== id);
-            this.persist();
-        },
-        get unreadCount() {
-            return this.items.filter((i) => i.unread).length;
-        },
-    });
+    // Notification centers, real for both portals (production-readiness
+    // programme, 2026-09-25). GET {citizen|admin}/notifications and
+    // POST .../notifications/{id}/read are the same ModuleController on the
+    // backend; category IS the request type ('dokyu' | 'tulong') for a
+    // Dokyu/Tulong lifecycle notification, so it doubles as the existing
+    // 'portal' badge with no extra mapping. `dismiss` below is
+    // session-only — there is no backend endpoint to delete a notification,
+    // only to mark one read, so hiding one from view does not survive a
+    // reload; that is a real, intentional gap (see PRODUCTION_READINESS.md).
+    const notificationStyle = {
+        dokyu: ['file-text', 'brand'], tulong: ['hand-heart', 'purple'],
+        account: ['user-round', 'indigo'], community: ['megaphone', 'teal'],
+        events: ['calendar', 'amber'], sakuna: ['shield-alert', 'rose'],
+    };
 
-    // Admin-facing counterpart to citizenNotifications above — same shape,
-    // same localStorage persistence, but for events an LGU staff member
-    // needs to know about (a citizen submitted something, a citizen
-    // resubmitted a corrected document) rather than events a citizen needs
-    // to know about. Since this project has no real backend, this only
-    // actually notifies the admin when viewed in the same browser as the
-    // citizen action that triggered it (shared localStorage) — see
-    // components/admin/topbar.blade.php for where this renders, and
-    // citizen/document-requests.blade.php's submitRequest() /
-    // admin/document-requests.blade.php's markRequirementResubmitted() for
-    // where it's pushed to.
-    Alpine.store('adminNotifications', {
-        items: JSON.parse(localStorage.getItem('esperanza_admin_notifications') || '[]'),
-        persist() {
-            localStorage.setItem('esperanza_admin_notifications', JSON.stringify(this.items));
-        },
-        push({ icon, color, title, body, ref, portal }) {
-            this.items.unshift({
-                id: Date.now() + Math.random(),
-                icon, color, title, body, ref, portal,
-                createdAt: new Date().toISOString(),
-                unread: true,
-            });
-            this.items = this.items.slice(0, 50);
-            this.persist();
-        },
-        // One-time seed so the flagship demo scenario (Cristy's Barangay
-        // Clearance) has a real notification to click through on a fresh
-        // browser, without needing to actually submit it live first.
-        // Idempotent — keyed by ref, safe to call on every page load.
-        seedDefaults() {
-            if (this.items.some((n) => n.ref === 'DR-2026-2255')) return;
-            this.items.push({
-                id: 'seed-DR-2026-2255',
-                icon: 'file-text', color: 'brand', portal: 'dokyu', ref: 'DR-2026-2255',
-                title: 'Cristy Submitted Barangay Clearance',
-                body: 'Cristy Pareja Bonghanoy submitted a Barangay Clearance request (DR-2026-2255).',
-                createdAt: new Date().toISOString(),
-                unread: true,
-            });
-            this.persist();
-        },
-        markRead(id) {
-            const n = this.items.find((i) => i.id === id);
-            if (!n) return;
-            n.unread = false;
-            this.persist();
-        },
-        markAllRead() {
-            this.items.forEach((i) => (i.unread = false));
-            this.persist();
-        },
-        get unreadCount() {
-            return this.items.filter((i) => i.unread).length;
-        },
-    });
+    function makeNotificationStore(path) {
+        return {
+            items: [],
+            state: 'idle',
+            error: null,
+            dismissed: [],
+
+            get loading() { return this.state === 'loading'; },
+            get failed() { return this.state === 'error'; },
+            get visible() { return this.items.filter((n) => !this.dismissed.includes(n.id)); },
+            get unreadCount() { return this.visible.filter((n) => n.unread).length; },
+
+            async load() {
+                this.state = 'loading';
+                this.error = null;
+                try {
+                    const result = await api.get(path);
+                    this.items = (result.data || []).map((n) => {
+                        const [icon, color] = notificationStyle[n.category] || ['bell', 'brand'];
+                        const lang = window.Alpine?.store('lang')?.current || 'fil';
+
+                        return {
+                            id: n.id,
+                            portal: n.category,
+                            icon, color,
+                            title: n.title?.[lang] || n.title?.en || '',
+                            titleFil: n.title?.fil, titleEn: n.title?.en,
+                            body: n.body?.[lang] || n.body?.en || '',
+                            bodyFil: n.body?.fil, bodyEn: n.body?.en,
+                            pill: n.pill, ref: n.ref, link: n.link,
+                            pinned: n.pinned, unread: n.unread,
+                            createdAt: n.time,
+                        };
+                    });
+                    this.state = 'loaded';
+                } catch (err) {
+                    this.error = err;
+                    this.state = 'error';
+                }
+            },
+
+            async markRead(id) {
+                const n = this.items.find((i) => i.id === id);
+                if (!n || !n.unread) return;
+                n.unread = false;
+                try {
+                    await api.post(`${path}/${id}/read`);
+                } catch {
+                    n.unread = true; // the server did not accept it — undo the optimistic flip
+                }
+            },
+
+            async markAllRead() {
+                await Promise.all(this.visible.filter((n) => n.unread).map((n) => this.markRead(n.id)));
+            },
+
+            dismiss(id) {
+                this.dismissed = [...this.dismissed, id];
+            },
+        };
+    }
+
+    Alpine.store('citizenNotifications', makeNotificationStore('/citizen/notifications'));
+    Alpine.store('adminNotifications', makeNotificationStore('/admin/notifications'));
 
     // Per-barangay directory (see components/layouts/citizen.blade.php, which
     // injects window.__barangayCatalog from config/esperanza_barangay_documents.php).
     // `.mine` lets any Citizen Portal page show the signed-in resident's own
     // barangay seal/officials/contact without re-declaring the catalog per view.
+    // The per-barangay directory (seal, officials, contact, history), read
+    // from GET /barangays instead of a window.__barangayCatalog the layout
+    // used to inject from config/esperanza_barangay_documents.php
+    // (production-readiness programme, 2026-09-25). Public and unauthenticated
+    // — a resident chooses their barangay before they have an account (see
+    // auth/citizen-register.blade.php). `officials` here is the two-name
+    // captain/secretary pair the barangays table actually stores; the fuller
+    // per-official roster with photos/committees that citizen/directory's
+    // barangay profile panel used to show from a fixture is NOT backed by
+    // any column yet (see PRODUCTION_READINESS.md).
     Alpine.store('barangay', {
-        catalog: window.__barangayCatalog || {},
+        catalog: {},
+        state: 'idle',
+        async load() {
+            if (this.state === 'loading' || this.state === 'loaded') return;
+            this.state = 'loading';
+            try {
+                const result = await api.get('/barangays');
+                const map = {};
+                (result.data || []).forEach((b) => {
+                    map[b.name] = {
+                        label: b.name,
+                        seal: b.seal_path,
+                        officials: b.officials || {},
+                        contact: b.contact,
+                        history: b.history,
+                    };
+                });
+                this.catalog = map;
+                this.state = 'loaded';
+            } catch {
+                this.state = 'error';
+            }
+        },
         get mine() {
             const b = Alpine.store('citizenSession').account?.barangay;
             return b ? this.catalog[b] || null : null;
         },
     });
+    Alpine.store('barangay').load();
+
+    // On any full page load, if a bearer token exists, re-validate the
+    // session against the server rather than trusting what localStorage
+    // cached at login -- a revoked token, an edited role bundle (see
+    // UserManagementTest), or an account archived from another tab must all
+    // take effect on the very next request, not only after a manual
+    // logout/login.
+    if (api.getToken()) {
+        const bootStore = window.location.pathname.startsWith('/admin')
+            ? Alpine.store('session')
+            : Alpine.store('citizenSession');
+        bootStore.refresh().catch(() => {
+            // A 401 already dispatches api:unauthorized and redirects; any
+            // other failure (offline, 5xx) just leaves the cached account in
+            // place for this page load.
+        });
+    }
 
     Alpine.data('dropdown', () => ({
         open: false,
@@ -481,25 +582,6 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    Alpine.data('authForm', (redirectUrl = null) => ({
-        loading: false,
-        done: false,
-        submit() {
-            if (this.loading) return;
-            this.loading = true;
-            setTimeout(() => {
-                this.loading = false;
-                if (redirectUrl) {
-                    window.location.href = redirectUrl;
-                } else {
-                    this.done = true;
-                    this.$dispatch('toast', { message: 'This portal is a frontend preview — sign-in is mocked for now.', variant: 'info' });
-                    setTimeout(() => (this.done = false), 2600);
-                }
-            }, 900);
-        },
-    }));
-
     // Progressive-enhancement haptics: fires only for meaningful, user-triggered
     // confirmations (never on load, scroll, hover, typing, or negative/rejection
     // states). Feature-detected, reduced-motion-gated, and never throws — every
@@ -583,10 +665,11 @@ window.addEventListener('api:unauthorized', (event) => {
     const lang = window.Alpine?.store('lang')?.current || 'fil';
     api.setToken(null);
 
-    // Drop the simulated session too, so the UI cannot keep showing a signed-in
-    // shell around a token the server has already rejected.
-    window.Alpine?.store('session')?.logout?.();
-    window.Alpine?.store('citizenSession')?.logout?.();
+    // Clear locally rather than calling logout() -- the token this event is
+    // reporting on is already rejected, so a second round trip to revoke it
+    // would just 401 again. clear() is the sync, no-network half of logout().
+    window.Alpine?.store('session')?.clear?.();
+    window.Alpine?.store('citizenSession')?.clear?.();
 
     toast(event.detail.error.localised(lang));
 

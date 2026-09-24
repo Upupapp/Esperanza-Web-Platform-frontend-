@@ -7,52 +7,48 @@
 <x-layouts.guest title="LGU Personnel Login" image="rectangle_sunset.jpg" fullscreen>
     <div
         x-data="{
-            accounts: @js(config('esperanza_rbac.accounts')),
-            barangayNames: @js(config('esperanza.barangays')),
+            barangayNames: [],
             scope: '',
             scopeSearch: '',
             employeeId: '',
             password: '',
+            mfaCode: '',
+            step: 'scope',
             loading: false,
             error: '',
-            showSamples: false,
+            async init() {
+                try {
+                    const result = await $api.get('/barangays');
+                    this.barangayNames = (result.data || []).map((b) => b.name);
+                } catch { this.barangayNames = []; }
+            },
             get filteredScopes() {
                 const q = this.scopeSearch.trim().toLowerCase();
                 return this.barangayNames.filter(b => !q || b.toLowerCase().includes(q));
             },
-            get filteredAccounts() {
-                return this.accounts.filter(a => !this.scope || a.scope === this.scope);
-            },
             chooseScope(s) {
                 this.scope = s;
                 this.error = '';
+                this.step = 'credentials';
                 this.$nextTick(() => this.$refs.employeeId?.focus());
             },
-            fill(account) {
-                this.scope = account.scope;
-                this.employeeId = account.id;
-                this.password = 'demo1234';
-                this.error = '';
-            },
-            submit() {
+            async submit() {
                 if (this.loading) return;
-                if (!this.scope) {
-                    this.error = 'Please select your access scope.';
-                    return;
-                }
-                const match = this.accounts.find(a => a.id.toLowerCase() === this.employeeId.trim().toLowerCase() && a.scope === this.scope);
-                if (!match) {
-                    this.error = 'Employee ID not recognized for the selected scope. Try one of the sample accounts below.';
-                    this.showSamples = true;
-                    return;
-                }
                 this.error = '';
                 this.loading = true;
-                setTimeout(() => {
-                    this.loading = false;
-                    this.$store.session.login(match);
+                try {
+                    const result = await this.$store.session.login(this.employeeId.trim(), this.password, this.mfaCode || null);
+                    if (result.mfaRequired) {
+                        this.step = 'mfa';
+                        this.loading = false;
+                        this.$nextTick(() => this.$refs.mfaCode?.focus());
+                        return;
+                    }
                     window.location.href = '{{ route('admin.dashboard') }}';
-                }, 900);
+                } catch (err) {
+                    this.loading = false;
+                    this.error = err.localised ? err.localised('en') : 'Sign in failed.';
+                }
             },
         }"
     >
@@ -70,10 +66,10 @@
         </div>
 
         <h1 class="text-xl font-semibold text-navy-900 mt-3 animate-fade-up" style="animation-delay: 40ms">LGU Personnel Login</h1>
-        <p class="text-slate-500 text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="scope ? 'Signing in to ' + (scope === 'Municipal' ? 'Municipal-wide access.' : 'Brgy. ' + scope + '.') : 'First, select your assigned access scope.'"></p>
+        <p class="text-slate-500 text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="step === 'scope' ? 'First, select your assigned access scope.' : (step === 'mfa' ? 'Enter the 6-digit code sent to confirm it is you.' : 'Signing in to ' + (scope === 'Municipal' ? 'Municipal-wide access.' : 'Brgy. ' + scope + '.'))"></p>
 
-        <!-- Step 1: choose access scope -->
-        <div x-show="!scope" x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
+        <!-- Step 1: choose access scope (informational only — the server returns the account's real scope) -->
+        <div x-show="step === 'scope'" x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
             <button
                 type="button" @click="chooseScope('Municipal')"
                 class="w-full flex items-center gap-2.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3.5 py-3 text-sm shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard mb-2.5"
@@ -105,10 +101,10 @@
             </div>
         </div>
 
-        <!-- Step 2: credentials, scoped to the chosen access scope -->
-        <div x-show="scope" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
+        <!-- Step 2: credentials -->
+        <div x-show="step === 'credentials'" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
             <button
-                type="button" @click="scope = ''; scopeSearch = ''"
+                type="button" @click="step = 'scope'; scope = ''; scopeSearch = ''"
                 class="w-full flex items-center justify-between gap-2 rounded-xl border border-navy-200 bg-navy-50/60 px-3.5 py-2.5 text-left hover:bg-navy-50 transition-colors mb-3.5 animate-fade-up"
             >
                 <span class="flex items-center gap-2 text-sm font-medium text-navy-800 min-w-0">
@@ -161,31 +157,28 @@
             </form>
         </div>
 
-        <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 overflow-hidden animate-fade-up" style="animation-delay: 260ms">
-            <button type="button" @click="showSamples = !showSamples" class="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-left">
-                <span class="flex items-center gap-2 text-xs font-medium text-slate-600"><i data-lucide="flask-conical" class="w-3.5 h-3.5 text-slate-400"></i>Try a sample account (preview only)</span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-[160ms] ease-standard" :class="showSamples && 'rotate-180'"></i>
-            </button>
-            <div x-show="showSamples" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
-                <p class="px-3.5 pb-2 text-[10.5px] text-slate-400" x-show="!scope">Picking an account below will select its access scope for you.</p>
-                <div class="px-3.5 pb-3.5 grid grid-cols-2 gap-1.5 max-h-52 overflow-y-auto scrollbar-thin">
-                    <template x-for="account in filteredAccounts" :key="account.id">
-                        <button
-                            type="button" @click="fill(account)"
-                            class="text-left rounded-lg border px-2.5 py-2 transition-all duration-[160ms] ease-standard"
-                            :class="employeeId.toLowerCase() === account.id.toLowerCase() ? 'border-navy-400 bg-white ring-2 ring-navy-100' : 'border-slate-200 bg-white hover:border-slate-300'"
-                        >
-                            <span class="block text-[11px] font-mono font-semibold text-navy-800" x-text="account.id"></span>
-                            <span class="block text-[10.5px] text-slate-400 truncate" x-text="account.role"></span>
-                            <span class="inline-flex items-center gap-1 text-[9.5px] font-medium rounded-full px-1.5 py-0.5 mt-1" :class="account.scope === 'Municipal' ? 'bg-brand-50 text-brand-600' : 'bg-purple-50 text-purple-600'">
-                                <i :data-lucide="account.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
-                                <span x-text="account.scope === 'Municipal' ? 'Municipal' : 'Brgy. ' + account.scope"></span>
-                            </span>
-                        </button>
-                    </template>
-                    <p x-show="filteredAccounts.length === 0" class="col-span-2 text-center text-[11px] text-slate-400 py-4">No sample accounts for this scope yet.</p>
+        <!-- Step 3: MFA challenge (super_admin, municipal_admin — see PersonnelAccount::mfaRequired()) -->
+        <div x-show="step === 'mfa'" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
+            <form class="space-y-3.5" @submit.prevent="submit">
+                <x-ui.input name="mfa_code" type="text" label="6-digit code" icon="shield-check" placeholder="000000" class="font-mono text-center tracking-[0.4em]" x-model="mfaCode" x-ref="mfaCode" maxlength="6" required />
+
+                <div x-show="error" x-cloak class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
+                    <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>
+                    <p class="text-xs text-rose-600" x-text="error"></p>
                 </div>
-            </div>
+
+                <button
+                    type="submit"
+                    class="btn-shine w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3.5 text-sm font-medium select-none shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard disabled:opacity-50 disabled:pointer-events-none"
+                    :disabled="loading"
+                >
+                    <svg x-show="loading" x-cloak class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span x-text="loading ? 'Verifying…' : 'Verify and Sign In'"></span>
+                </button>
+            </form>
         </div>
 
         <p class="text-center text-xs text-slate-400 mt-4">

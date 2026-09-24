@@ -141,7 +141,9 @@
             // (see citizen/notifications.blade.php) — open that exact
             // request's tracking modal instead of just landing on the list.
             init() {
-                this.$store.citizenNotifications.seedFromRequests(this.requests, 'tulong');
+                // Notifications are server-driven now (see resources/js/app.js) —
+                // the backend lifecycle itself creates one on every status
+                // change, so there is nothing left to backfill here.
                 const ref = new URLSearchParams(window.location.search).get('ref');
                 if (!ref) return;
                 const match = this.requests.find(r => r.ref === ref);
@@ -270,19 +272,13 @@
                             submitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                             status: 'Submitted',
                         });
-                        this.$store.citizenNotifications.push({
-                            icon: 'hand-heart', color: 'brand', portal: 'tulong', ref,
-                            title: 'Assistance Request Submitted',
-                            body: (type?.name || 'Your assistance request') + ' (' + ref + ') has been submitted and is now Submitted.',
-                        });
-                        // Same-browser demo only — see adminNotifications'
-                        // own comment in resources/js/app.js.
-                        const citizenName = [this.applicant.firstName, this.applicant.lastName].filter(Boolean).join(' ') || 'A citizen';
-                        this.$store.adminNotifications.push({
-                            icon: 'hand-heart', color: 'brand', portal: 'tulong', ref,
-                            title: citizenName + ' Submitted ' + (type?.name || 'a Tulong request'),
-                            body: citizenName + ' submitted a ' + (type?.name || 'assistance') + ' request (' + ref + ').',
-                        });
+                        // This wizard still writes the new request into local
+                        // Alpine state rather than POST /requests (see
+                        // PRODUCTION_READINESS.md) — submission is not yet on the
+                        // real backend, so there is no server-side notification
+                        // to reflect here. $store.citizenNotifications and
+                        // $store.adminNotifications now read real rows from
+                        // GET {citizen,admin}/notifications.
                     },
                 }"
                 x-init="seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant())"

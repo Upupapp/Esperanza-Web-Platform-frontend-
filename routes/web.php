@@ -9,6 +9,7 @@ Route::view('/', 'auth.select-portal')->name('home');
 // Citizen auth
 Route::view('/citizen/login', 'auth.citizen-login')->name('citizen.login');
 Route::view('/citizen/register', 'auth.citizen-register')->name('citizen.register');
+Route::view('/citizen/password-reset', 'auth.citizen-password-reset')->name('citizen.password-reset');
 
 // LGU Personnel auth
 Route::view('/admin/login', 'auth.admin-login')->name('admin.login');

@@ -6,9 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} — Esperanza LGU Administrative Portal</title>
     <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal.png') }}">
-    <script>
-        window.__ESPERANZA_RBAC_ACCOUNTS__ = @json(collect(config('esperanza_rbac.accounts'))->map(fn ($a) => ['id' => $a['id'], 'moduleKeys' => $a['moduleKeys'], 'permissions' => $a['permissions']])->values());
-    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans antialiased">

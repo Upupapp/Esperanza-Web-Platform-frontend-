@@ -1961,16 +1961,18 @@
                 this.open = true;
                 this.$nextTick(() => window.renderIcons?.());
             },
-            // Pushes a status-change notification into the citizen's
-            // Notifications list (see $store.citizenNotifications in
-            // resources/js/app.js) — every status transition below calls
-            // this so the citizen sees each processing step, not just the
-            // final outcome.
-            notifyStatus(title, body, icon = 'bell', color = 'brand') {
-                this.$store.citizenNotifications.push({
-                    icon, color, portal: 'dokyu', ref: this.selected.ref, title, body,
-                });
-            },
+            // Every status transition below still writes to local Alpine
+            // state instead of calling the real lifecycle endpoints (see
+            // PRODUCTION_READINESS.md), so there is no request on the
+            // backend for a server-side notification to be about yet.
+            // $store.citizenNotifications now reads real rows from
+            // GET /citizen/notifications — the moment this modal's actions
+            // call the real POST .../reject|approve|... endpoints, the
+            // notification for that step arrives on the citizen's own next
+            // load() for free, from NotificationService::notifyTransition(),
+            // and this no-op (kept only so every existing call site below
+            // still resolves) should be deleted along with its calls.
+            notifyStatus() {},
             reject() {
                 if (this.processing || !this.rejectRemarks.trim()) return;
                 this.processing = true;
@@ -2108,11 +2110,11 @@
                     req.reject_reason = null;
                     req.remarks = null;
                     req._pendingResubmit = false;
-                    this.$store.adminNotifications.push({
-                        icon: 'refresh-ccw', color: 'sky', portal: 'dokyu', ref: request.ref,
-                        title: request.citizen + ' Resubmitted ' + req.name,
-                        body: request.citizen + ' replaced ' + req.name + ' for the ' + request.type + ' request (' + request.ref + ').',
-                    });
+                    // This processing modal still mutates local Alpine state
+                    // rather than calling the real requirement-resubmit
+                    // endpoint (see PRODUCTION_READINESS.md), so there is no
+                    // server-side notification to reflect. $store.adminNotifications
+                    // now reads real rows from GET /admin/notifications.
                 });
                 if (changed) this.persistProgress();
             },

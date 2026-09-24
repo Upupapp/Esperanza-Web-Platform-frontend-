@@ -3,7 +3,7 @@
 <header
     class="relative z-20 h-16 bg-white/90 backdrop-blur border-b border-slate-200/70 flex items-center justify-between px-4 lg:px-6 shrink-0"
     x-data="{ time: '' }"
-    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.adminNotifications.seedDefaults()"
+    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.adminNotifications.load()"
 >
     <div class="flex items-center gap-3 min-w-0">
         <button @click="mobileOpen = true" class="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100">
@@ -54,24 +54,25 @@
                     <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full" x-show="$store.adminNotifications.unreadCount" x-text="$store.adminNotifications.unreadCount + ' new'"></span>
                 </div>
                 <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-slate-50">
-                    <template x-for="n in $store.adminNotifications.items" :key="n.id">
+                    <template x-for="n in $store.adminNotifications.visible" :key="n.id">
                         <a
-                            :href="(n.portal === 'tulong' ? '{{ route('admin.assistance-requests') }}' : '{{ route('admin.document-requests') }}') + '?ref=' + encodeURIComponent(n.ref)"
+                            :href="n.link || ((n.portal === 'tulong' ? '{{ route('admin.assistance-requests') }}' : '{{ route('admin.document-requests') }}') + '?ref=' + encodeURIComponent(n.ref || ''))"
                             @click="$store.adminNotifications.markRead(n.id)"
                             class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
                             :class="n.unread && 'bg-brand-50/30'"
                         >
-                            <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="{ brand: 'text-brand-600 bg-brand-50', sky: 'text-sky-600 bg-sky-50', amber: 'text-amber-600 bg-amber-50', rose: 'text-rose-600 bg-rose-50', emerald: 'text-emerald-600 bg-emerald-50', indigo: 'text-indigo-600 bg-indigo-50' }[n.color] || 'text-brand-600 bg-brand-50'">
+                            <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="{ brand: 'text-brand-600 bg-brand-50', sky: 'text-sky-600 bg-sky-50', amber: 'text-amber-600 bg-amber-50', rose: 'text-rose-600 bg-rose-50', emerald: 'text-emerald-600 bg-emerald-50', indigo: 'text-indigo-600 bg-indigo-50', purple: 'text-purple-600 bg-purple-50', teal: 'text-teal-600 bg-teal-50' }[n.color] || 'text-brand-600 bg-brand-50'">
                                 <i :data-lucide="n.icon" class="w-4 h-4"></i>
                             </span>
                             <span class="min-w-0">
                                 <span class="block text-sm font-medium text-slate-700 truncate" x-text="n.title"></span>
                                 <span class="block text-xs text-slate-400 mt-0.5 line-clamp-2" x-text="n.body"></span>
-                                <span class="block text-[11px] text-slate-300 mt-1" x-text="new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(n.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })"></span>
+                                <span class="block text-[11px] text-slate-300 mt-1" x-text="n.createdAt ? (new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(n.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })) : ''"></span>
                             </span>
                         </a>
                     </template>
-                    <p class="px-4 py-8 text-center text-sm text-slate-400" x-show="!$store.adminNotifications.items.length">No notifications yet.</p>
+                    <p class="px-4 py-8 text-center text-sm text-slate-400" x-show="$store.adminNotifications.loading">Loading…</p>
+                    <p class="px-4 py-8 text-center text-sm text-slate-400" x-show="!$store.adminNotifications.loading && !$store.adminNotifications.visible.length">No notifications yet.</p>
                 </div>
                 <button type="button" @click="$store.adminNotifications.markAllRead()" x-show="$store.adminNotifications.unreadCount" class="block w-full text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
                     Mark all as read

@@ -1,24 +1,29 @@
 @props(['title' => 'Dashboard', 'subtitle' => null, 'active' => null])
 
 @php
-    // TAB 04: fixtures live in resources/data/components/citizen/topbar.php so this view stays presentation only.
-    $__fixtures = require base_path('resources/data/components/citizen/topbar.php');
-    $filTitles = $__fixtures['filTitles'];
-    $filSubtitles = $__fixtures['filSubtitles'];
+    // The Filipino translation of each page's title/subtitle is real
+    // product copy (TAB 01 bilingual requirement), not a mock business
+    // record, so it stays inline rather than moving behind an API call —
+    // there is no "title translations" table and none is warranted.
+    $filTitles = [
+        'dashboard' => 'Home', 'document-requests' => 'Dokyu', 'assistance-requests' => 'Tulong',
+        'announcements' => 'Balita', 'events' => 'Mga Kaganapan', 'directory' => 'Direktoryo ng Pamahalaan',
+        'help' => 'Suporta', 'profile' => 'Aking Profile', 'notifications' => 'Mga Abiso', 'settings' => 'Mga Setting',
+    ];
+    $filSubtitles = [
+        'dashboard' => 'Narito ang buod ng iyong account.',
+        'document-requests' => 'Humiling at subaybayan ang mga dokumento ng munisipyo online.',
+        'assistance-requests' => 'Magsumite at subaybayan ang mga kahilingan para sa tulong.',
+        'announcements' => 'Pinakabagong balita at abiso mula sa munisipyo.',
+        'events' => 'Mga paparating na kaganapan sa Esperanza.',
+        'directory' => 'Hanapin ang mga opisina at contact ng pamahalaan.',
+        'help' => 'Mga tanong, gabay, at suporta.',
+        'profile' => 'Pamahalaan ang iyong impormasyon bilang residente.',
+        'notifications' => 'Lahat ng update sa iyong account, nasa isang lugar.',
+        'settings' => 'Pamahalaan ang iyong mga kagustuhan sa account.',
+    ];
     $filTitle = $filTitles[$active] ?? $title;
     $filSubtitle = $filSubtitles[$active] ?? $subtitle;
-@endphp
-
-@php
-    // A citizen typically has more than one valid ID on file (e.g. PhilSys
-    // plus a Voter's ID) — same {type, masked} shape as the admin side's
-    // per-resident verified_ids, so "My IDs" reads as the same concept from
-    // both sides, not a different format invented for the citizen view.
-    $myIds = $__fixtures['myIds'];
-@endphp
-
-@php
-    $notifications = $__fixtures['notifications'];
 @endphp
 
 <header
@@ -45,7 +50,7 @@
             return this.searchIndex.filter(i => i.en.toLowerCase().includes(q) || i.fil.toLowerCase().includes(q));
         },
     }"
-    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000)"
+    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.citizenNotifications.load()"
 >
     <div class="flex items-center gap-3 min-w-0">
         <button @click="mobileOpen = true" class="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100">
@@ -66,17 +71,37 @@
             <span x-text="time"></span>
         </div>
 
-        {{-- My IDs — grouped with the other quick-access panels (notifications,
-             profile) on the right, matching their icon-button styling, instead
-             of sitting apart next to the page title. --}}
-        <div class="relative" x-data="dropdown" @click.outside="close">
+        {{-- My IDs — the identity/verification documents a citizen has on
+             file, read from their own Papeles (production-readiness
+             programme, 2026-09-25: this used to be a 3-item fixture with
+             fabricated masked ID numbers). Papeles does not carry a masked
+             document number, so this panel shows type + status only. --}}
+        <div
+            class="relative"
+            x-data="{
+                open: false,
+                toggle() { this.open = !this.open; },
+                close() { this.open = false; },
+                idFilter: 'all',
+                myIds: [],
+                async init() {
+                    try {
+                        const result = await $api.get('/citizen/papeles');
+                        this.myIds = (result.data || [])
+                            .filter((d) => d.category === 'Identity / Verification')
+                            .map((d) => ({ type: d.type, status: d.status === 'Approved' ? 'Verified' : 'Unverified' }));
+                    } catch { this.myIds = []; }
+                },
+                get filteredIds() { return this.idFilter === 'all' ? this.myIds : this.myIds.filter(d => d.status === this.idFilter); },
+            }"
+            @click.outside="close"
+        >
             <button @click="toggle" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors" :title="$store.lang.current === 'en' ? 'My IDs' : 'Aking mga ID'">
                 <i data-lucide="id-card" class="w-5 h-5"></i>
-                <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" x-show="{{ collect($myIds)->contains(fn ($d) => $d['status'] !== 'Verified') ? 'true' : 'false' }}"></span>
+                <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" x-show="myIds.some((d) => d.status !== 'Verified')"></span>
             </button>
 
             <div
-                x-data="{ idFilter: 'all', myIds: @js($myIds), get filteredIds() { return this.idFilter === 'all' ? this.myIds : this.myIds.filter(d => d.status === this.idFilter); } }"
                 x-show="open"
                 x-transition:enter="transition duration-[200ms] ease-emphasized"
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
@@ -105,7 +130,6 @@
                             <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="id-card" class="w-4 h-4"></i></span>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-medium text-slate-700 truncate" x-text="idDoc.type"></p>
-                                <p class="text-xs font-mono text-slate-400" x-text="idDoc.masked"></p>
                             </div>
                             <span
                                 class="inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap shrink-0"
@@ -163,62 +187,61 @@
             </div>
         </div>
 
+        {{-- Real, request- and account-driven notifications from
+             $store.citizenNotifications (production-readiness programme,
+             2026-09-25). Loaded once on the shell's own init below, so this
+             dropdown and the dedicated Notifications page share one fetch. --}}
         <div class="relative" x-data="dropdown" @click.outside="close">
-            <div x-data="{ removed: [] }">
-                <button @click="toggle" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
-                    <span class="absolute top-1.5 right-1.5 flex w-2 h-2" x-show="removed.length < {{ count($notifications) }}">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full w-2 h-2 bg-rose-500 ring-2 ring-white"></span>
-                    </span>
-                </button>
+            <button @click="toggle" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
+                <i data-lucide="bell" class="w-5 h-5"></i>
+                <span class="absolute top-1.5 right-1.5 flex w-2 h-2" x-show="$store.citizenNotifications.unreadCount">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full w-2 h-2 bg-rose-500 ring-2 ring-white"></span>
+                </span>
+            </button>
 
-                <div
-                    x-show="open"
-                    x-transition:enter="transition duration-[200ms] ease-emphasized"
-                    x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                    x-cloak
-                    class="absolute right-0 mt-2 w-[22rem] bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right"
-                >
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                        <p class="text-sm font-semibold text-navy-900" x-text="$store.lang.current === 'en' ? 'Notifications' : 'Mga Abiso'"></p>
-                        <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full" x-text="({{ count($notifications) }} - removed.length) + ($store.lang.current === 'en' ? ' new' : ' bago')"></span>
-                    </div>
-                    <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-slate-50">
-                        @foreach($notifications as $n)
-                            <div x-show="!removed.includes({{ $loop->index }})" class="group relative flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
-                                <a
-                                    href="{{ route('citizen.notifications') }}"
-                                    @if($n['popup']) @click.prevent="$dispatch('{{ $n['popup'] }}'); close()" @endif
-                                    class="flex items-start gap-3 flex-1 min-w-0"
-                                >
-                                    <span class="w-9 h-9 rounded-lg {{ $n['color'] }} flex items-center justify-center shrink-0">
-                                        <i data-lucide="{{ $n['icon'] }}" class="w-4 h-4"></i>
-                                    </span>
-                                    <span class="min-w-0">
-                                        <span
-                                            class="block text-sm font-medium text-slate-700 truncate"
-                                            @if($n['popup'] === 'show-birthday-popup') x-text="'Happy Birthday, ' + ($store.citizenSession.account?.firstName ?? 'Resident') + '! 🎉'" @endif
-                                        >{{ $n['popup'] === 'show-birthday-popup' ? '' : $n['title'] }}</span>
-                                        <span class="block text-xs text-slate-400 mt-0.5 line-clamp-2">{{ $n['body'] }}</span>
-                                        <span class="block text-[11px] text-slate-300 mt-1">{{ $n['time'] }}</span>
-                                    </span>
-                                </a>
-                                @if(!$n['pinned'])
-                                    <button
-                                        type="button"
-                                        @click.prevent.stop="removed.push({{ $loop->index }})"
-                                        class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
-                                    ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                    <a href="{{ route('citizen.notifications') }}" class="block text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
-                        <x-ui.t fil="Tingnan lahat ng abiso" en="View all notifications" />
-                    </a>
+            <div
+                x-show="open"
+                x-transition:enter="transition duration-[200ms] ease-emphasized"
+                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                x-cloak
+                class="absolute right-0 mt-2 w-[22rem] bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right"
+            >
+                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <p class="text-sm font-semibold text-navy-900" x-text="$store.lang.current === 'en' ? 'Notifications' : 'Mga Abiso'"></p>
+                    <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full" x-show="$store.citizenNotifications.unreadCount" x-text="$store.citizenNotifications.unreadCount + ($store.lang.current === 'en' ? ' new' : ' bago')"></span>
                 </div>
+                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-slate-50">
+                    <template x-for="n in $store.citizenNotifications.visible.slice(0, 8)" :key="n.id">
+                        <div class="group relative flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+                            <a
+                                :href="n.link || '{{ route('citizen.notifications') }}'"
+                                @click="$store.citizenNotifications.markRead(n.id); close()"
+                                class="flex items-start gap-3 flex-1 min-w-0"
+                            >
+                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="{ brand: 'text-brand-600 bg-brand-50', purple: 'text-purple-600 bg-purple-50', indigo: 'text-indigo-600 bg-indigo-50', teal: 'text-teal-600 bg-teal-50', amber: 'text-amber-600 bg-amber-50', rose: 'text-rose-600 bg-rose-50' }[n.color] || 'text-brand-600 bg-brand-50'">
+                                    <i :data-lucide="n.icon" class="w-4 h-4"></i>
+                                </span>
+                                <span class="min-w-0">
+                                    <span class="block text-sm font-medium text-slate-700 truncate" x-text="n.title"></span>
+                                    <span class="block text-xs text-slate-400 mt-0.5 line-clamp-2" x-text="n.body"></span>
+                                </span>
+                            </a>
+                            <button
+                                type="button" x-show="!n.pinned"
+                                @click.prevent.stop="$store.citizenNotifications.dismiss(n.id)"
+                                class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
+                            ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </template>
+                    <p class="px-4 py-8 text-center text-sm text-slate-400" x-show="!$store.citizenNotifications.loading && !$store.citizenNotifications.visible.length">
+                        <x-ui.t fil="Wala pang abiso." en="No notifications yet." />
+                    </p>
+                </div>
+                <a href="{{ route('citizen.notifications') }}" class="block text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                    <x-ui.t fil="Tingnan lahat ng abiso" en="View all notifications" />
+                </a>
             </div>
         </div>
 
