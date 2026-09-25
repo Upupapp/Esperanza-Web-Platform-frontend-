@@ -20,11 +20,11 @@
     // Vulnerability now loads from GET /sakuna/vulnerability -- the
     // vulnerabilityProfiles fixture key is no longer read by anything.
 
-    // ── Incidents ────────────────────────────────────────────────────────────
-    $incidents = $__fixtures['incidents'];
+    // Incidents now loads from GET /sakuna/incidents -- the fixture key is no
+    // longer read by anything.
 
-    // ── Evacuation Centers ───────────────────────────────────────────────────
-    $centers = $__fixtures['centers'];
+    // Evacuation Centers now loads from GET /sakuna/centers -- the fixture
+    // key is no longer read by anything.
 
     // Evacuees now loads from GET /sakuna/evacuees -- the fixture key is no
     // longer read by anything.
@@ -41,6 +41,9 @@
 
     // Alerts now loads from GET /sakuna/alerts -- the fixture key is no
     // longer read by anything.
+
+    // Reports now loads incidents/centers/vulnerability directly from their
+    // own real endpoints -- the fixture keys are no longer read by anything.
 @endphp
 
 <x-layouts.admin
@@ -883,7 +886,61 @@
 
         // Reports tab
         reportBarangayFilter: '',
-        reportPeriodFilter: 'SWM-2026-07',
+        reportsLoading: true,
+        reportsFailed: false,
+        reportIncidents: [],
+        reportCenters: [],
+        reportVulnerability: [],
+        // No operational-period model exists anywhere in Sakuna's schema (the
+        // shell's own period selector above is chrome, not a real filter) --
+        // barangay is the one real, consistent axis across all three lists.
+        async loadReports() {
+            this.reportsLoading = true;
+            this.reportsFailed = false;
+            try {
+                const [inc, centers, vul] = await Promise.all([
+                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }),
+                    $api.get('/sakuna/centers', { params: { per_page: 100 } }),
+                    $api.get('/sakuna/vulnerability', { params: { per_page: 100 } }),
+                ]);
+                this.reportIncidents = inc.data || [];
+                this.reportCenters = centers.data || [];
+                this.reportVulnerability = vul.data || [];
+            } catch { this.reportsFailed = true; } finally { this.reportsLoading = false; }
+        },
+        get reportScopedIncidents() { return this.reportIncidents.filter(i => !this.reportBarangayFilter || i.barangay === this.reportBarangayFilter); },
+        get reportScopedCenters() { return this.reportCenters.filter(c => !this.reportBarangayFilter || c.barangay === this.reportBarangayFilter); },
+        get reportScopedVulnerability() { return this.reportVulnerability.filter(v => !this.reportBarangayFilter || v.barangay === this.reportBarangayFilter); },
+        // Last 14 days, bucketed from each incident's own real `reported`
+        // timestamp -- there is no stored daily-trend aggregate anywhere.
+        reportTrendLabels() {
+            return Array.from({ length: 14 }, (_, i) => {
+                const d = new Date(); d.setDate(d.getDate() - (13 - i));
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+        },
+        reportTrendData() {
+            const days = this.reportTrendLabels();
+            const counts = days.map(() => 0);
+            this.reportScopedIncidents.forEach(i => {
+                if (!i.reported) return;
+                const label = new Date(i.reported).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const idx = days.indexOf(label);
+                if (idx !== -1) counts[idx]++;
+            });
+            return counts;
+        },
+        reportTypeBreakdown() {
+            const counts = {};
+            this.reportScopedIncidents.forEach(i => { counts[i.type] = (counts[i.type] || 0) + 1; });
+            return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        },
+        reportLowestReadiness(n) {
+            return [...this.reportScopedVulnerability]
+                .filter(v => v.readiness_score !== null && v.readiness_score !== undefined)
+                .sort((a, b) => a.readiness_score - b.readiness_score)
+                .slice(0, n);
+        },
 
         // Only this tab's partial exists in the document now, so switching tabs
         // is a navigation. The query string is preserved deliberately: arriving
@@ -1198,7 +1255,7 @@
             {{-- Reports --}}
             @if($activeTab === 'reports')
             <div>
-                @include('admin.partials.sakuna.tab-reports', ['barangays' => $barangays, 'incidents' => $incidents, 'centers' => $centers])
+                @include('admin.partials.sakuna.tab-reports', ['barangays' => $barangays])
             </div>
             @endif
 
