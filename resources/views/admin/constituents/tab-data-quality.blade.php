@@ -1,11 +1,9 @@
 {{-- tab-data-quality.blade.php — Data Quality Management Tab --}}
 {{-- Rendered inside constituents.blade.php Alpine x-data scope --}}
-
-@php
-    $totalIssues    = count($qualityIssues);
-    $criticalHigh   = collect($qualityIssues)->whereIn('severity', ['Critical','High'])->count();
-    $inReview       = collect($qualityIssues)->where('status', 'In Review')->count();
-@endphp
+{{-- GET /admin/data-quality via loadRegistry(); real types are Duplicate Suspected,
+     Orphaned Record, Incomplete Profile only (DataQualityService); real statuses are
+     Open, In Review, Resolved only (DataQualityVocabulary) — confirmed against the
+     backend rather than kept from the mock's wider, partly-invented lists. --}}
 
 <div class="space-y-6">
 
@@ -13,31 +11,30 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <x-ui.stat-card
             label="Open Issues"
-            value="{{ $totalIssues }}"
+            valueBind="qualityIssues.filter(i => i.status === 'Open').length"
             icon="circle-alert"
             color="orange"
             :delay="0"
         />
         <x-ui.stat-card
             label="Critical / High"
-            value="{{ $criticalHigh }}"
+            valueBind="qualityIssues.filter(i => ['Critical','High'].includes(i.severity)).length"
             icon="flame"
             color="red"
             :delay="75"
         />
         <x-ui.stat-card
             label="In Review"
-            value="{{ $inReview }}"
+            valueBind="qualityIssues.filter(i => i.status === 'In Review').length"
             icon="search"
             color="brand"
             :delay="150"
         />
         <x-ui.stat-card
-            label="Resolved This Month"
-            value="2"
+            label="Resolved"
+            valueBind="qualityIssues.filter(i => i.status === 'Resolved').length"
             icon="circle-check"
             color="green"
-            sublabel="Keep up the pace"
             :delay="225"
         />
     </div>
@@ -72,9 +69,6 @@
                     <option value="Duplicate Suspected">Duplicate Suspected</option>
                     <option value="Orphaned Record">Orphaned Record</option>
                     <option value="Incomplete Profile">Incomplete Profile</option>
-                    <option value="Missing Documents">Missing Documents</option>
-                    <option value="Stale Record">Stale Record</option>
-                    <option value="Address Mismatch">Address Mismatch</option>
                 </select>
                 <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -94,7 +88,6 @@
                     <option value="Open">Open</option>
                     <option value="In Review">In Review</option>
                     <option value="Resolved">Resolved</option>
-                    <option value="Dismissed">Dismissed</option>
                 </select>
                 <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
@@ -112,6 +105,19 @@
                 <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
             </button>
 
+            {{-- Run detection scan --}}
+            <button
+                x-show="can('const_data_quality','verify')"
+                @click="runDataQualityDetection()"
+                :disabled="dqScanning"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-navy-900 text-white hover:bg-navy-800 transition shrink-0 disabled:opacity-60 disabled:pointer-events-none"
+                title="Scan resident records for duplicates, orphaned links, and incomplete profiles"
+            >
+                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="dqScanning" x-cloak></i>
+                <i data-lucide="radar" class="w-3.5 h-3.5" x-show="!dqScanning"></i>
+                <span x-text="dqScanning ? 'Scanning…' : 'Run Scan'"></span>
+            </button>
+
         </div>
 
         {{-- Result count --}}
@@ -120,11 +126,11 @@
                 Showing <span class="font-semibold text-navy-900" x-text="filteredQualityIssues.length"></span>
                 <span x-text="filteredQualityIssues.length === 1 ? 'issue' : 'issues'"></span>
                 <span x-show="search !== '' || dqTypeFilter !== '' || dqStatusFilter !== ''" x-cloak>
-                    &mdash; filtered from <span class="font-semibold">{{ $totalIssues }}</span> total
+                    &mdash; filtered from <span class="font-semibold" x-text="qualityIssues.length"></span> total
                 </span>
             </p>
             <button
-                @click="$dispatch('toast',{message:'Data quality report exported.',variant:'info'})"
+                @click="exportCSV(filteredQualityIssues, 'data-quality-export.csv')"
                 class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 transition"
             >
                 <i data-lucide="download" class="w-3 h-3"></i> Export
@@ -142,7 +148,7 @@
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Type</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Severity</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record Name</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Assigned To</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Created</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
@@ -151,21 +157,16 @@
                 </thead>
                 <tbody class="divide-y divide-slate-50 bg-white">
 
-                    {{-- Alpine x-for loop over filteredQualityIssues --}}
-                    <template x-for="issue in filteredQualityIssues" :key="issue.id">
+                    <template x-for="issue in filteredQualityIssues" :key="issue.ref">
                         <tr
                             @click="openDQIssue(issue)"
                             class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                        
-        tabindex="0"
-        @keydown.enter.prevent="openDQIssue(issue)"
-        @keydown.space.prevent="openDQIssue(issue)">
-                            {{-- Issue ID --}}
+                            tabindex="0"
+                            @keydown.enter.prevent="openDQIssue(issue)"
+                            @keydown.space.prevent="openDQIssue(issue)">
+                            {{-- Issue ref --}}
                             <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell" @click.stop>
-                                <span
-                                    class="font-mono text-xs font-semibold text-navy-900"
-                                    x-text="'#' + issue.id"
-                                ></span>
+                                <span class="font-mono text-xs font-semibold text-navy-900" x-text="issue.ref"></span>
                             </td>
 
                             {{-- Type chip --}}
@@ -176,9 +177,6 @@
                                         'text-rose-700 bg-rose-50 ring-rose-200':       issue.type === 'Duplicate Suspected',
                                         'text-orange-700 bg-orange-50 ring-orange-200': issue.type === 'Orphaned Record',
                                         'text-amber-700 bg-amber-50 ring-amber-200':    issue.type === 'Incomplete Profile',
-                                        'text-indigo-700 bg-indigo-50 ring-indigo-200': issue.type === 'Missing Documents',
-                                        'text-slate-600 bg-slate-50 ring-slate-200':    issue.type === 'Stale Record',
-                                        'text-purple-700 bg-purple-50 ring-purple-200': issue.type === 'Address Mismatch',
                                     }"
                                     x-text="issue.type"
                                 ></span>
@@ -201,10 +199,10 @@
                                 </span>
                             </td>
 
-                            {{-- Record name --}}
+                            {{-- Record --}}
                             <td class="px-4 py-3 whitespace-nowrap">
-                                <div class="text-xs font-medium text-navy-900" x-text="issue.record_name"></div>
-                                <div class="text-[10px] text-slate-400 font-mono" x-text="issue.record_id"></div>
+                                <div class="text-xs font-medium text-navy-900" x-text="dqRecordName(issue.record) || '—'"></div>
+                                <div class="text-[10px] text-slate-400 font-mono" x-text="issue.record"></div>
                             </td>
 
                             {{-- Assigned to --}}
@@ -219,17 +217,17 @@
                             </td>
 
                             {{-- Created date --}}
-                            <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500 hidden 2xl:table-cell" x-text="issue.created"></td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500 hidden 2xl:table-cell"
+                                x-text="issue.created ? new Date(issue.created).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
 
                             {{-- Status badge --}}
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <span
                                     class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ring-1"
                                     :class="{
-                                        'text-rose-700 bg-rose-50 ring-rose-200':       issue.status === 'Open',
-                                        'text-amber-700 bg-amber-50 ring-amber-200':    issue.status === 'In Review',
+                                        'text-rose-700 bg-rose-50 ring-rose-200':          issue.status === 'Open',
+                                        'text-amber-700 bg-amber-50 ring-amber-200':       issue.status === 'In Review',
                                         'text-emerald-700 bg-emerald-50 ring-emerald-200': issue.status === 'Resolved',
-                                        'text-slate-500 bg-slate-50 ring-slate-200':    issue.status === 'Dismissed',
                                     }"
                                     x-text="issue.status"
                                 ></span>
@@ -249,7 +247,7 @@
 
                                     {{-- Compare & Merge (only for Duplicate Suspected) --}}
                                     <button
-                                        x-show="issue.type === 'Duplicate Suspected' && issue.merge_candidate"
+                                        x-show="can('const_data_quality','merge') && issue.type === 'Duplicate Suspected' && issue.merge_candidate"
                                         @click="selectedDQIssue = issue; showMerge = true; $nextTick(() => window.renderIcons?.())"
                                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 ring-1 ring-rose-200 transition"
                                         title="Compare records and merge"
@@ -276,7 +274,7 @@
                                             <button @click="search=''; dqTypeFilter=''; dqStatusFilter=''" class="text-brand-600 underline hover:text-brand-700 ml-1">Clear filters</button>
                                         </span>
                                         <span x-show="search === '' && dqTypeFilter === '' && dqStatusFilter === ''">
-                                            All data quality issues have been resolved.
+                                            All data quality issues have been resolved. Run a scan to check for new ones.
                                         </span>
                                     </p>
                                 </div>
@@ -312,11 +310,11 @@
     <div class="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-800">
         <i data-lucide="info" class="w-4 h-4 mt-0.5 shrink-0 text-blue-500"></i>
         <div>
-            <p class="font-semibold">Data Quality Review Protocol</p>
+            <p class="font-semibold">How this queue fills up</p>
             <p class="text-xs text-blue-700 mt-0.5">
-                All Critical and High severity issues must be resolved within 5 business days per DILG MC 2023-012.
-                Duplicate Suspected records require supervisor sign-off before merging.
-                Contact the Data Management Officer for escalations.
+                Issues are raised by Run Scan, which checks resident records for suspected duplicate names,
+                residents with no linked household, and profiles missing required fields. The scan is
+                idempotent — running it again will not raise the same open issue twice.
             </p>
         </div>
     </div>

@@ -2,7 +2,11 @@
 {{-- Rendered inside constituents.blade.php Alpine x-data scope --}}
 {{-- Open state bound to: showDQDetail --}}
 
-<div x-data="{ get open() { return showDQDetail }, set open(v) { showDQDetail = v } }">
+<div x-data="{
+    get open() { return showDQDetail }, set open(v) { showDQDetail = v },
+    assignEncoderId: '',
+    resolutionNote: '',
+}" x-init="$watch('showDQDetail', v => { if (v) { assignEncoderId = ''; resolutionNote = ''; } })">
     <x-ui.modal maxWidth="xl">
 
         {{-- ── MODAL HEADER ────────────────────────────────────────────────── --}}
@@ -11,10 +15,7 @@
 
                 {{-- Title row --}}
                 <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                    <h2 class="text-base font-bold text-navy-900 tracking-tight">
-                        Issue
-                        <span x-text="selectedDQIssue ? '#' + selectedDQIssue.id : ''"></span>
-                    </h2>
+                    <h2 class="text-base font-bold text-navy-900 tracking-tight font-mono" x-text="selectedDQIssue?.ref"></h2>
 
                     {{-- Type chip --}}
                     <span
@@ -23,9 +24,6 @@
                             'text-rose-700 bg-rose-50 ring-rose-200':       selectedDQIssue?.type === 'Duplicate Suspected',
                             'text-orange-700 bg-orange-50 ring-orange-200': selectedDQIssue?.type === 'Orphaned Record',
                             'text-amber-700 bg-amber-50 ring-amber-200':    selectedDQIssue?.type === 'Incomplete Profile',
-                            'text-indigo-700 bg-indigo-50 ring-indigo-200': selectedDQIssue?.type === 'Missing Documents',
-                            'text-slate-600 bg-slate-50 ring-slate-200':    selectedDQIssue?.type === 'Stale Record',
-                            'text-purple-700 bg-purple-50 ring-purple-200': selectedDQIssue?.type === 'Address Mismatch',
                         }"
                         x-text="selectedDQIssue?.type"
                     ></span>
@@ -52,7 +50,7 @@
                     <span class="text-slate-300">·</span>
                     <span class="flex items-center gap-1">
                         <i data-lucide="calendar" class="w-3 h-3"></i>
-                        Created <span class="font-medium text-slate-700 ml-1" x-text="selectedDQIssue?.created"></span>
+                        Created <span class="font-medium text-slate-700 ml-1" x-text="selectedDQIssue?.created ? new Date(selectedDQIssue.created).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></span>
                     </span>
                 </div>
             </div>
@@ -84,7 +82,7 @@
                             <span class="text-[11px] text-slate-500 font-medium">Record ID</span>
                             <code
                                 class="px-2 py-0.5 rounded bg-slate-100 text-[11px] font-mono font-semibold text-navy-900"
-                                x-text="selectedDQIssue?.record_id"
+                                x-text="selectedDQIssue?.record"
                             ></code>
                         </div>
                         <span class="text-slate-300">·</span>
@@ -92,7 +90,7 @@
                             <span class="text-[11px] text-slate-500 font-medium">Record Name</span>
                             <span
                                 class="text-sm font-semibold text-navy-900"
-                                x-text="selectedDQIssue?.record_name"
+                                x-text="dqRecordName(selectedDQIssue?.record) || '—'"
                             ></span>
                         </div>
                     </div>
@@ -147,10 +145,10 @@
                         ></dd>
                     </div>
 
-                    {{-- Assigned To --}}
-                    <div class="bg-white px-4 py-3">
+                    {{-- Assigned To + Assign action --}}
+                    <div class="bg-white px-4 py-3 col-span-2 md:col-span-1">
                         <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Assigned To</dt>
-                        <dd class="flex items-center gap-1.5">
+                        <dd class="flex items-center gap-1.5 mb-2">
                             <span
                                 class="w-5 h-5 rounded-full bg-brand-100 text-brand-700 text-[9px] font-bold flex items-center justify-center uppercase shrink-0"
                                 x-text="selectedDQIssue?.assigned_to ? selectedDQIssue.assigned_to.charAt(0) : '?'"
@@ -160,6 +158,20 @@
                                 x-text="selectedDQIssue?.assigned_to || 'Unassigned'"
                             ></span>
                         </dd>
+                        <div x-show="can('const_data_quality','assign') && selectedDQIssue?.status !== 'Resolved'" class="flex items-center gap-1.5">
+                            <select aria-label="Assign to encoder" x-model="assignEncoderId"
+                                class="min-w-0 flex-1 text-[11px] rounded-lg border border-slate-200 bg-white py-1 px-1.5">
+                                <option value="">Assign to…</option>
+                                <template x-for="e in encoders" :key="e.id">
+                                    <option :value="e.id" x-text="e.name + ' (' + e.employee_id + ')'"></option>
+                                </template>
+                            </select>
+                            <button
+                                @click="assignDQIssue(selectedDQIssue, assignEncoderId); assignEncoderId = ''"
+                                :disabled="!assignEncoderId"
+                                class="shrink-0 px-2 py-1 rounded-lg text-[11px] font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 ring-1 ring-brand-200 transition disabled:opacity-40 disabled:pointer-events-none"
+                            >Go</button>
+                        </div>
                     </div>
 
                     {{-- Created --}}
@@ -167,7 +179,7 @@
                         <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Created</dt>
                         <dd
                             class="text-xs text-slate-700"
-                            x-text="selectedDQIssue?.created"
+                            x-text="selectedDQIssue?.created ? new Date(selectedDQIssue.created).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"
                         ></dd>
                     </div>
 
@@ -181,7 +193,6 @@
                                     'text-rose-700 bg-rose-50 ring-rose-200':           selectedDQIssue?.status === 'Open',
                                     'text-amber-700 bg-amber-50 ring-amber-200':        selectedDQIssue?.status === 'In Review',
                                     'text-emerald-700 bg-emerald-50 ring-emerald-200':  selectedDQIssue?.status === 'Resolved',
-                                    'text-slate-500 bg-slate-50 ring-slate-200':        selectedDQIssue?.status === 'Dismissed',
                                 }"
                                 x-text="selectedDQIssue?.status"
                             ></span>
@@ -206,27 +217,8 @@
                             <p class="text-[11px] text-rose-600 font-semibold uppercase tracking-wider mb-1">
                                 Suspected Duplicate Record
                             </p>
-                            <p class="text-sm font-bold text-navy-900" x-text="selectedDQIssue?.merge_candidate?.name"></p>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="selectedDQIssue?.merge_candidate?.record_id"></p>
-                        </div>
-
-                        {{-- Confidence indicator --}}
-                        <div class="shrink-0 text-right">
-                            <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Match Confidence</p>
-                            <div class="flex items-center gap-2">
-                                <div class="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
-                                    <div
-                                        class="h-full rounded-full transition-all duration-[600ms] ease-standard"
-                                        :class="(selectedDQIssue?.merge_candidate?.confidence || 0) >= 85 ? 'bg-rose-500' : (selectedDQIssue?.merge_candidate?.confidence || 0) >= 60 ? 'bg-amber-400' : 'bg-slate-400'"
-                                        :style="'width:' + (selectedDQIssue?.merge_candidate?.confidence || 0) + '%'"
-                                    ></div>
-                                </div>
-                                <span
-                                    class="text-sm font-bold tabular-nums"
-                                    :class="(selectedDQIssue?.merge_candidate?.confidence || 0) >= 85 ? 'text-rose-700' : 'text-amber-600'"
-                                    x-text="(selectedDQIssue?.merge_candidate?.confidence || 0) + '%'"
-                                ></span>
-                            </div>
+                            <p class="text-sm font-bold text-navy-900" x-text="dqRecordName(selectedDQIssue?.merge_candidate) || '—'"></p>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="selectedDQIssue?.merge_candidate"></p>
                         </div>
                     </div>
 
@@ -234,9 +226,10 @@
                     <div class="pt-3 border-t border-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <p class="text-xs text-rose-700">
                             <i data-lucide="triangle-alert" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>
-                            Both records require side-by-side review before merging. This action cannot be undone.
+                            Compare both records before merging. The merged-away record can be restored by a System Administrator.
                         </p>
                         <button
+                            x-show="can('const_data_quality','merge')"
                             @click="showMerge = true; showDQDetail = false; $nextTick(() => window.renderIcons?.())"
                             class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition shadow-sm shrink-0"
                         >
@@ -246,6 +239,18 @@
                     </div>
 
                 </div>
+            </section>
+
+            {{-- ── SECTION 4: Resolve ───────────────────────────────────────── --}}
+            <section x-show="can('const_data_quality','resolve') && selectedDQIssue?.status !== 'Resolved'" x-cloak>
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i data-lucide="circle-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                    Resolve This Issue
+                </h3>
+                <textarea aria-label="Resolution note" x-model="resolutionNote" rows="2"
+                    placeholder="What was done to resolve this issue? (required, min. 3 characters)"
+                    class="w-full text-sm rounded-lg border border-slate-200 bg-white p-3 placeholder-slate-400 text-navy-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
+                ></textarea>
             </section>
 
         </div>
@@ -261,34 +266,16 @@
                 <i data-lucide="x" class="w-3.5 h-3.5"></i> Close
             </button>
 
-            {{-- Right: Action buttons --}}
-            <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
+            {{-- Right: Mark Resolved --}}
+            <button
+                x-show="can('const_data_quality','resolve') && selectedDQIssue?.status !== 'Resolved'"
+                @click="resolveDQIssue(selectedDQIssue, resolutionNote); resolutionNote = ''; showDQDetail = false"
+                :disabled="resolutionNote.trim().length < 3"
+                class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:pointer-events-none"
+            >
+                <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Mark Resolved
+            </button>
 
-                {{-- Reassign --}}
-                <button
-                    @click="$dispatch('toast',{message:'Reassignment feature coming soon.',variant:'info'})"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition"
-                >
-                    <i data-lucide="user-pen" class="w-3.5 h-3.5"></i> Reassign
-                </button>
-
-                {{-- Dismiss --}}
-                <button
-                    @click="showDQDetail = false; $dispatch('toast',{message:'Issue dismissed. It will no longer appear in the Open queue.',variant:'warning'})"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition"
-                >
-                    <i data-lucide="ban" class="w-3.5 h-3.5"></i> Dismiss
-                </button>
-
-                {{-- Mark Resolved --}}
-                <button
-                    @click="showDQDetail = false; $dispatch('toast',{message:'Issue marked as resolved. Great work!',variant:'success'})"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm"
-                >
-                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i> Mark Resolved
-                </button>
-
-            </div>
         </div>
 
     </x-ui.modal>

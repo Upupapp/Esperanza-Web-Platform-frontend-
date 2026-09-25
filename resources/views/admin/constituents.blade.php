@@ -1,13 +1,13 @@
 @php
-    // TAB 04: the Data Quality and Profiling Coverage tabs are not converted
-    // in this pass yet -- their own fixtures stay here for now, scoped only
-    // to those two tabs, so this file states plainly what still needs doing
-    // rather than silently leaving a stale require in place. $barangayCoverage
-    // is a plain Blade @foreach in tab-profiling.blade.php (not Alpine state),
-    // so it must stay defined here even though that tab isn't wired to real
-    // data yet -- Blade renders it server-side regardless of the tab's x-show.
+    // TAB 04: Profiling Coverage is not converted in this pass yet -- its own
+    // fixture stays here for now, scoped only to that tab, so this file states
+    // plainly what still needs doing rather than silently leaving a stale
+    // require in place. $barangayCoverage is a plain Blade @foreach in
+    // tab-profiling.blade.php (not Alpine state), so it must stay defined
+    // here even though that tab isn't wired to real data yet -- Blade renders
+    // it server-side regardless of the tab's x-show. Data Quality itself now
+    // loads from GET /admin/data-quality in loadRegistry() below.
     $__constituentsFixture = config('esperanza_constituents');
-    $qualityIssues = $__constituentsFixture['dataQualityIssues'];
     $barangayCoverage = $__constituentsFixture['barangayCoverage'];
     $barangayOptions = config('esperanza.barangays');
     $tab  = $tab  ?? 'registry';
@@ -25,7 +25,9 @@
         families:     [],
         households:   [],
         citizens:     [],
-        qualityIssues: @js($qualityIssues),
+        qualityIssues: [],
+        encoders:     [],
+        dqScanning:   false,
         barangayOptions: @js($barangayOptions),
 
         async init() {
@@ -46,7 +48,7 @@
             this.loading = true;
             this.failed = false;
             try {
-                const [residents, households, families, citizens] = await Promise.all([
+                const [residents, households, families, citizens, issues, encoders] = await Promise.all([
                     $api.get('/admin/residents', { params: { per_page: 100 } }),
                     $api.get('/admin/households', { params: { per_page: 100 } }),
                     $api.get('/admin/families', { params: { per_page: 100 } }),
@@ -54,6 +56,13 @@
                     // every resident, so this joins onto individuals below rather
                     // than driving its own separate list.
                     $api.get('/admin/citizens', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    // Data Quality tab. Caught separately so a permission gap on
+                    // this one queue doesn't take down the whole Registry.
+                    $api.get('/admin/data-quality', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    // Encoder list for the Assign action -- not everyone who can
+                    // see the queue can see Personnel, so this degrades to an
+                    // empty picker rather than failing the page.
+                    $api.get('/admin/users', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
                 ]);
                 const citizensByRef = {};
                 (citizens.data || []).forEach(c => { if (c.resident_profile?.ref) citizensByRef[c.resident_profile.ref] = c; });
@@ -61,6 +70,8 @@
                 this.households = households.data || [];
                 this.families = families.data || [];
                 this.citizens = citizens.data || [];
+                this.qualityIssues = issues.data || [];
+                this.encoders = encoders.data || [];
             } catch { this.failed = true; } finally { this.loading = false; }
         },
 
@@ -290,9 +301,77 @@
                 if (!this.$store.session.inScope(i.barangay)) return false;
                 if (this.dqTypeFilter && i.type !== this.dqTypeFilter) return false;
                 if (this.dqStatusFilter && i.status !== this.dqStatusFilter) return false;
-                if (this.search) { const q=this.search.toLowerCase(); return (i.record_name||'').toLowerCase().includes(q)||(i.description||'').toLowerCase().includes(q)||(i.barangay||'').toLowerCase().includes(q); }
+                if (this.search) {
+                    const q = this.search.toLowerCase();
+                    return (this.dqRecordName(i.record)||'').toLowerCase().includes(q) || (i.description||'').toLowerCase().includes(q) || (i.barangay||'').toLowerCase().includes(q) || (i.ref||'').toLowerCase().includes(q);
+                }
                 return true;
             });
+        },
+        // The data-quality index only returns a `record` ref (e.g. RES-2026-0042),
+        // never a name -- resolved here against what Registry already loaded
+        // instead of a second fetch per row.
+        dqRecordName(ref) {
+            if (!ref) return null;
+            const person = this.individuals.find(x => x.ref === ref);
+            if (person) return person.name;
+            const hh = this.households.find(x => x.ref === ref);
+            if (hh) return hh.label || hh.ref;
+            return ref;
+        },
+        dqRecord(ref) {
+            return this.individuals.find(x => x.ref === ref) || null;
+        },
+        async runDataQualityDetection() {
+            if (this.dqScanning) return;
+            this.dqScanning = true;
+            try {
+                const res = await $api.post('/admin/data-quality/detect', {});
+                const { created = 0, skipped = 0 } = res.data || {};
+                this.$dispatch('toast', {
+                    message: created
+                        ? `Scan complete: ${created} new issue(s) found, ${skipped} already open.`
+                        : `Scan complete: no new issues. ${skipped} already open.`,
+                    variant: created ? 'warning' : 'info',
+                });
+                if (created) {
+                    const refreshed = await $api.get('/admin/data-quality', { params: { per_page: 100 } });
+                    this.qualityIssues = refreshed.data || [];
+                }
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not run the detection scan.', variant: 'error' });
+            } finally { this.dqScanning = false; }
+        },
+        async assignDQIssue(issue, encoderId) {
+            if (!issue || !encoderId) return;
+            try {
+                const res = await $api.post('/admin/data-quality/' + issue.ref + '/assign', { encoder_id: encoderId });
+                Object.assign(issue, res.data);
+                this.$dispatch('toast', { message: 'Issue assigned.', variant: 'success' });
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not assign this issue.', variant: 'error' });
+            }
+        },
+        async resolveDQIssue(issue, resolution) {
+            if (!issue || !resolution || resolution.trim().length < 3) return;
+            try {
+                const res = await $api.post('/admin/data-quality/' + issue.ref + '/resolve', { resolution: resolution.trim() });
+                Object.assign(issue, res.data);
+                this.$dispatch('toast', { message: 'Issue marked as resolved.', variant: 'success' });
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not resolve this issue.', variant: 'error' });
+            }
+        },
+        // Merging IS the resolution of the issue that raised it -- the backend
+        // resolves issueRef itself when given, this just mirrors that locally.
+        async confirmDQMerge(keepRef, mergeRef, issueRef, note) {
+            const res = await $api.post('/admin/merges', { keep: keepRef, merge: mergeRef, issue_ref: issueRef || null, note: note || null });
+            this.individuals = this.individuals.filter(i => i.ref !== mergeRef);
+            if (issueRef) {
+                const issue = this.qualityIssues.find(i => i.ref === issueRef);
+                if (issue) issue.status = 'Resolved';
+            }
+            return res.data;
         },
 
         async openIndividual(r) {
