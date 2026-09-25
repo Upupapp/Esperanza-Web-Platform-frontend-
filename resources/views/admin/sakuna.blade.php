@@ -26,8 +26,8 @@
     // ── Evacuation Centers ───────────────────────────────────────────────────
     $centers = $__fixtures['centers'];
 
-    // ── Evacuees ─────────────────────────────────────────────────────────────
-    $evacuees = $__fixtures['evacuees'];
+    // Evacuees now loads from GET /sakuna/evacuees -- the fixture key is no
+    // longer read by anything.
 
     // ── Resources ─────────────────────────────────────────────────────────────
     $resources = $__fixtures['resources'];
@@ -335,11 +335,98 @@
         evacueeSearch: '',
         evCenterFilter: '',
         evStatusFilter: '',
-        evHealthFilter: '',
         selectedEvacuee: null,
         showEvacueeDetail: false,
         showEvacueeReg: false,
-        evacueeRegStep: 1,
+        evacueesList: [],
+        evacueesLoading: true,
+        evacueesFailed: false,
+        evacueeCentersOpen: [],
+        checkInForm: { center: '', head_name: '', barangay: '', sitio: '', members: [] },
+        checkInSaving: false,
+        // GET /sakuna/evacuees (list) + GET /sakuna/centers filtered to open
+        // ones, for the check-in/transfer center pickers.
+        async loadEvacuees() {
+            this.evacueesLoading = true;
+            this.evacueesFailed = false;
+            try {
+                const [ev, centers] = await Promise.all([
+                    $api.get('/sakuna/evacuees', { params: { per_page: 100 } }),
+                    $api.get('/sakuna/centers', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                ]);
+                this.evacueesList = ev.data || [];
+                this.evacueeCentersOpen = (centers.data || []).filter(c => c.status === 'Processing');
+            } catch { this.evacueesFailed = true; } finally { this.evacueesLoading = false; }
+        },
+        resetCheckInForm() {
+            this.checkInForm = { center: '', head_name: '', barangay: '', sitio: '', members: [] };
+        },
+        openEvacueeReg() {
+            this.resetCheckInForm();
+            this.showEvacueeReg = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        addCheckInMember() { this.checkInForm.members.push({ name: '', relation: '', age: '', sex: '', needs: '' }); },
+        removeCheckInMember(i) { this.checkInForm.members.splice(i, 1); },
+        // members[] is optional on the real endpoint (a bare member_count is
+        // enough), but sending it is what makes the detail view's real
+        // per-person needs/relation breakdown possible later.
+        async submitCheckIn() {
+            if (this.checkInSaving || !this.checkInForm.center || !this.checkInForm.head_name || !this.checkInForm.barangay) return;
+            this.checkInSaving = true;
+            const members = this.checkInForm.members
+                .filter(m => m.name.trim())
+                .map(m => ({
+                    name: m.name.trim(),
+                    relation: m.relation || null,
+                    age: m.age === '' ? null : Number(m.age),
+                    sex: m.sex || null,
+                    needs: m.needs ? m.needs.split(',').map(s => s.trim()).filter(Boolean) : [],
+                }));
+            const payload = { head_name: this.checkInForm.head_name, barangay: this.checkInForm.barangay, sitio: this.checkInForm.sitio || null, members };
+            try {
+                const res = await $api.post('/sakuna/centers/' + this.checkInForm.center + '/check-in', payload);
+                this.evacueesList.unshift(res.data);
+                this.showEvacueeReg = false;
+                this.toast(res.data.ref + ' checked in.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not check in this household.', 'error');
+            } finally { this.checkInSaving = false; }
+        },
+        async openEvacueeDetail(row) {
+            this.selectedEvacuee = row;
+            this.showEvacueeDetail = true;
+            this.$nextTick(() => window.renderIcons?.());
+            // The list row has no members/movements; GET /sakuna/evacuees/{ref}
+            // (added because it never existed before) has both.
+            try {
+                const res = await $api.get('/sakuna/evacuees/' + row.ref);
+                this.selectedEvacuee = { ...row, ...res.data };
+            } catch { /* keep the list row's fields if the detail fetch fails */ }
+        },
+        async transferEvacuee(ev, toCenterRef) {
+            if (!toCenterRef) return;
+            try {
+                const res = await $api.post('/sakuna/evacuees/' + ev.ref + '/transfer', { to_center: toCenterRef });
+                const idx = this.evacueesList.findIndex(e => e.ref === res.data.ref);
+                if (idx !== -1) this.evacueesList[idx] = { ...this.evacueesList[idx], ...res.data };
+                if (this.selectedEvacuee?.ref === res.data.ref) this.selectedEvacuee = { ...this.selectedEvacuee, ...res.data };
+                this.toast(ev.head_name + ' transferred.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not transfer this household.', 'error');
+            }
+        },
+        async checkOutEvacuee(ev) {
+            try {
+                const res = await $api.post('/sakuna/evacuees/' + ev.ref + '/check-out', {});
+                const idx = this.evacueesList.findIndex(e => e.ref === res.data.ref);
+                if (idx !== -1) this.evacueesList[idx] = { ...this.evacueesList[idx], ...res.data };
+                if (this.selectedEvacuee?.ref === res.data.ref) this.selectedEvacuee = { ...this.selectedEvacuee, ...res.data };
+                this.toast(ev.head_name + ' checked out.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not check out this household.', 'error');
+            }
+        },
 
         // Resources tab state
         resourceSearch: '',
@@ -719,7 +806,8 @@
             {{-- Evacuees --}}
             @if($activeTab === 'evacuees')
             <div>
-                @include('admin.partials.sakuna.tab-evacuees', ['evacuees' => $evacuees, 'centers' => $centers, 'barangays' => $barangays])
+                {{-- Loads its own data from GET /sakuna/evacuees and GET /sakuna/centers; $barangays is real, static reference data. --}}
+                @include('admin.partials.sakuna.tab-evacuees', ['barangays' => $barangays])
             </div>
             @endif
 
