@@ -1,9 +1,40 @@
 {{-- modal-household-detail.blade.php --}}
-{{-- Household detail modal — 5 tabs: Overview | Members | Amenities | Programs | History --}}
+{{-- Household detail modal — 3 tabs: Overview | Members | Amenities --}}
 
 <div x-data="{
     get open() { return showHouseholdDetail },
-    set open(v) { showHouseholdDetail = v }
+    set open(v) { showHouseholdDetail = v },
+    editing: false,
+    saving: false,
+    edit: {},
+    startEdit() {
+        this.edit = {
+            sitio: selectedHousehold.sitio, address: selectedHousehold.address, head_name: null,
+            dwelling_type: selectedHousehold.dwelling_type, housing_tenure: selectedHousehold.housing_tenure,
+            flood_risk: selectedHousehold.flood_risk, electricity: !!selectedHousehold.electricity,
+            water: !!selectedHousehold.water, toilet: !!selectedHousehold.toilet,
+        };
+        this.editing = true;
+    },
+    async saveEdit() {
+        if (this.saving) return;
+        this.saving = true;
+        // head_name only sent if actually changed -- leaving it blank must not
+        // silently detach the current head.
+        const payload = { ...this.edit };
+        if (!payload.head_name) delete payload.head_name;
+        this.saving = true;
+        try {
+            const res = await $api.put('/admin/households/' + selectedHousehold.ref, payload);
+            Object.assign(selectedHousehold, res.data);
+            const idx = this.households.findIndex(x => x.ref === selectedHousehold.ref);
+            if (idx !== -1) this.households[idx] = { ...this.households[idx], ...res.data };
+            this.editing = false;
+            this.$dispatch('toast', { message: 'Household record updated.', variant: 'success' });
+        } catch (err) {
+            this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save changes.', variant: 'error' });
+        } finally { this.saving = false; }
+    },
 }">
 <x-ui.modal maxWidth="2xl" :bare="true" :fullscreen="true">
 
@@ -23,36 +54,14 @@
                         <span x-show="compact"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i></span>
                         <span x-show="!compact"><i data-lucide="minimize-2" class="w-3.5 h-3.5"></i></span>
                     </button>
-                    <button type="button" @click="showHouseholdDetail = false" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Close">
+                    <button type="button" @click="showHouseholdDetail = false; editing = false" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Close">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
                 <div class="flex items-start gap-5 relative z-10">
-
-                    {{-- Profile completion ring + icon --}}
-                    <div class="flex-shrink-0 relative">
-                        <div class="relative w-20 h-20">
-                            <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-                                <circle cx="40" cy="40" r="36" stroke="rgba(255,255,255,0.15)" stroke-width="5" fill="none"/>
-                                <circle
-                                    cx="40" cy="40" r="36"
-                                    stroke="rgba(255,255,255,0.85)"
-                                    stroke-width="5"
-                                    fill="none"
-                                    stroke-linecap="round"
-                                    :stroke-dasharray="'226.2'"
-                                    :stroke-dashoffset="226.2 - (226.2 * (selectedHousehold?.profile_pct || 0) / 100)"
-                                    class="transition-all duration-[600ms] ease-standard"
-                                />
-                            </svg>
-                            <div class="absolute inset-2 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase">
-                                <span x-text="(selectedHousehold?.label || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('')"></span>
-                            </div>
-                        </div>
-                        <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap">
-                            <span x-text="(selectedHousehold?.profile_pct || 0) + '%'"></span>
-                        </div>
+                    <div class="flex-shrink-0 w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase">
+                        <span x-text="(selectedHousehold?.label || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('')"></span>
                     </div>
 
                     {{-- Identity block --}}
@@ -71,7 +80,7 @@
                                  where nothing has been reviewed yet. --}}
                             <button
                                 type="button"
-                                x-show="selectedHousehold?.verification !== 'Verified' && can('const_citizen_verification','verify')"
+                                x-show="selectedHousehold?.verification !== 'Verified' && can('const_data_quality','verify')"
                                 @click="verifyHousehold(selectedHousehold)"
                                 class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100 ring-1 ring-emerald-300/30 hover:bg-emerald-400/30 transition-colors"
                             >
@@ -81,7 +90,7 @@
 
                         <h2 class="text-xl font-bold text-white leading-tight truncate" x-text="selectedHousehold?.label"></h2>
                         <p class="text-sm text-white/60 mt-0.5">
-                            ID: <span class="font-mono font-medium text-white/80" x-text="selectedHousehold?.id"></span>
+                            ID: <span class="font-mono font-medium text-white/80" x-text="selectedHousehold?.ref"></span>
                             &nbsp;·&nbsp;
                             <span x-text="(selectedHousehold?.member_count || 0) + ' members'"></span>
                         </p>
@@ -110,9 +119,7 @@
                     <template x-for="tab in [
                         {id:'overview',icon:'layout-dashboard',label:'Overview'},
                         {id:'members',icon:'users',label:'Members',count:selectedHousehold?.member_count},
-                        {id:'amenities',icon:'plug-zap',label:'Amenities'},
-                        {id:'programs',icon:'heart-handshake',label:'Programs'},
-                        {id:'history',icon:'history',label:'History'}
+                        {id:'amenities',icon:'plug-zap',label:'Amenities'}
                     ]" :key="tab.id">
                         <button
                             @click="householdTab = tab.id"
@@ -136,6 +143,7 @@
 
                 {{-- ── OVERVIEW TAB ── --}}
                 <div x-show="householdTab === 'overview'" x-cloak>
+                    <template x-if="!editing">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Left column --}}
                         <x-ui.card class="p-4">
@@ -147,7 +155,7 @@
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
                                     <dt class="text-xs text-slate-500">Household ID</dt>
-                                    <dd class="text-xs font-mono font-semibold text-navy-900" x-text="selectedHousehold.id"></dd>
+                                    <dd class="text-xs font-mono font-semibold text-navy-900" x-text="selectedHousehold.ref"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
                                     <dt class="text-xs text-slate-500">Barangay</dt>
@@ -164,10 +172,6 @@
                                 <div class="flex justify-between items-center gap-2">
                                     <dt class="text-xs text-slate-500">Total Members</dt>
                                     <dd class="text-xs font-bold text-navy-900" x-text="selectedHousehold.member_count"></dd>
-                                </div>
-                                <div class="flex justify-between items-center gap-2">
-                                    <dt class="text-xs text-slate-500">Family Count</dt>
-                                    <dd class="text-xs font-bold text-navy-900" x-text="selectedHousehold.family_count"></dd>
                                 </div>
                             </dl>
                         </x-ui.card>
@@ -199,23 +203,7 @@
                                             ></span>
                                         </dd>
                                     </div>
-                                    <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Hazard Zone</dt>
-                                        <dd class="text-xs font-semibold text-navy-900 text-right" x-text="selectedHousehold.hazard_zone || '—'"></dd>
-                                    </div>
                                 </dl>
-                            </x-ui.card>
-
-                            <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Tags</h4>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <template x-if="!selectedHousehold.tags || selectedHousehold.tags.length === 0">
-                                        <span class="text-xs text-slate-400 italic">No tags assigned</span>
-                                    </template>
-                                    <template x-for="tag in (selectedHousehold.tags || [])" :key="tag">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600" x-text="tag"></span>
-                                    </template>
-                                </div>
                             </x-ui.card>
 
                             <x-ui.card class="p-4">
@@ -226,22 +214,65 @@
                                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" :class="statusBadge(selectedHousehold.status)" x-text="selectedHousehold.status"></span>
                                         </dd>
                                     </div>
-                                    <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Profile Completion</dt>
-                                        <dd class="text-xs font-bold" :class="completionTextColor(selectedHousehold.profile_pct)" x-text="(selectedHousehold.profile_pct||0) + '%'"></dd>
-                                    </div>
-                                    <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Registered</dt>
-                                        <dd class="text-xs text-slate-600" x-text="selectedHousehold.created || '—'"></dd>
-                                    </div>
-                                    <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Last Updated</dt>
-                                        <dd class="text-xs text-slate-600" x-text="selectedHousehold.last_updated || '—'"></dd>
-                                    </div>
                                 </dl>
                             </x-ui.card>
                         </div>
                     </div>
+                    </template>
+
+                    {{-- ── EDIT FORM ── --}}
+                    <template x-if="editing">
+                        <div class="max-w-xl space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-address">Address</label>
+                                <input id="hh-edit-address" type="text" x-model="edit.address" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-sitio">Sitio / Purok</label>
+                                <input id="hh-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-head">Head of Household <span class="text-slate-400 font-normal">(leave blank to keep current)</span></label>
+                                <input id="hh-edit-head" type="text" x-model="edit.head_name" placeholder="Full name" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Dwelling Type</label>
+                                    <select aria-label="Dwelling Type" x-model="edit.dwelling_type" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                        <option value="Single Detached">Single Detached</option>
+                                        <option value="Single Attached">Single Attached</option>
+                                        <option value="Apartment">Apartment</option>
+                                        <option value="Informal Settler">Informal Settler</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1.5">Housing Tenure</label>
+                                    <select aria-label="Housing Tenure" x-model="edit.housing_tenure" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                        <option value="Owner">Owner</option>
+                                        <option value="Renter">Renter</option>
+                                        <option value="Shared">Shared</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5">Flood Risk</label>
+                                <select aria-label="Flood Risk" x-model="edit.flood_risk" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" x-model="edit.electricity" class="rounded text-brand-600"> Electricity</label>
+                                <label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" x-model="edit.water" class="rounded text-brand-600"> Water</label>
+                                <label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" x-model="edit.toilet" class="rounded text-brand-600"> Toilet</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <x-ui.button variant="secondary" size="sm" @click="editing = false">Cancel</x-ui.button>
+                                <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="saveEdit()" x-text="saving ? 'Saving…' : 'Save Changes'"></x-ui.button>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 {{-- ── MEMBERS TAB ── --}}
@@ -251,13 +282,13 @@
                             All Household Members
                             <span
                                 class="ml-1.5 px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold"
-                                x-text="individuals.filter(r => r.household_id === selectedHousehold?.id).length"
+                                x-text="individuals.filter(r => r.household?.ref === selectedHousehold?.ref).length"
                             ></span>
                         </h3>
                     </div>
 
                     <x-ui.card class="overflow-hidden">
-                        <template x-if="individuals.filter(r => r.household_id === selectedHousehold?.id).length === 0">
+                        <template x-if="individuals.filter(r => r.household?.ref === selectedHousehold?.ref).length === 0">
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <i data-lucide="user-x" class="w-8 h-8 text-slate-300"></i>
@@ -267,26 +298,16 @@
                         </template>
 
                         <ul class="divide-y divide-slate-100">
-                            <template x-for="r in individuals.filter(r => r.household_id === selectedHousehold?.id)" :key="r.id">
+                            <template x-for="r in individuals.filter(r => r.household?.ref === selectedHousehold?.ref)" :key="r.ref">
                                 <li
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50/40 cursor-pointer transition-colors"
                                     @click="openIndividual(r)"
-                                
+
         role="button"
         tabindex="0"
         @keydown.enter.prevent="openIndividual(r)"
         @keydown.space.prevent="openIndividual(r)">
-                                    <span class="relative shrink-0">
-                                        <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
-                                        <span
-                                            x-show="r.citizen_account?.identity_check?.face_match === 'Mismatch' || (r.identity_flags || []).length"
-                                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white flex items-center justify-center"
-                                            :class="r.citizen_account?.identity_check?.face_match === 'Mismatch' ? 'bg-rose-500' : 'bg-amber-500'"
-                                            title="Identity review recommended — see profile for details"
-                                        >
-                                            <i data-lucide="triangle-alert" class="w-2 h-2 text-white"></i>
-                                        </span>
-                                    </span>
+                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
                                         <div class="flex items-center gap-2 mt-0.5">
@@ -295,11 +316,9 @@
                                             <template x-if="r.relation"><span class="text-xs text-slate-500 font-medium" x-text="'· ' + r.relation"></span></template>
                                         </div>
                                     </div>
-                                    {{-- Family label --}}
-                                    <template x-if="r.family_label">
-                                        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full hidden sm:inline-flex" x-text="r.family_label"></span>
+                                    <template x-if="r.family?.label">
+                                        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full hidden sm:inline-flex" x-text="r.family.label"></span>
                                     </template>
-                                    {{-- Verification --}}
                                     <span
                                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
                                         :class="verificationBadge(r.verification).class"
@@ -379,135 +398,52 @@
                         </x-ui.card>
                     </div>
 
-                    {{-- Risk information blocks --}}
+                    {{-- Flood risk block --}}
                     <h3 class="text-sm font-semibold text-navy-900 mb-3">Disaster Risk Profile</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {{-- Flood risk block --}}
+                    <div
+                        class="rounded-xl p-4 flex items-start gap-3"
+                        :class="{
+                            'bg-emerald-50 border border-emerald-200': selectedHousehold.flood_risk === 'Low',
+                            'bg-amber-50 border border-amber-200': selectedHousehold.flood_risk === 'Medium',
+                            'bg-rose-50 border border-rose-200': selectedHousehold.flood_risk === 'High'
+                        }"
+                    >
                         <div
-                            class="rounded-xl p-4 flex items-start gap-3"
+                            class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                             :class="{
-                                'bg-emerald-50 border border-emerald-200': selectedHousehold.flood_risk === 'Low',
-                                'bg-amber-50 border border-amber-200': selectedHousehold.flood_risk === 'Medium',
-                                'bg-rose-50 border border-rose-200': selectedHousehold.flood_risk === 'High'
+                                'bg-emerald-100': selectedHousehold.flood_risk === 'Low',
+                                'bg-amber-100': selectedHousehold.flood_risk === 'Medium',
+                                'bg-rose-100': selectedHousehold.flood_risk === 'High'
                             }"
                         >
-                            <div
-                                class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                            <i data-lucide="waves-horizontal" class="w-5 h-5"
                                 :class="{
-                                    'bg-emerald-100': selectedHousehold.flood_risk === 'Low',
-                                    'bg-amber-100': selectedHousehold.flood_risk === 'Medium',
-                                    'bg-rose-100': selectedHousehold.flood_risk === 'High'
+                                    'text-emerald-600': selectedHousehold.flood_risk === 'Low',
+                                    'text-amber-600': selectedHousehold.flood_risk === 'Medium',
+                                    'text-rose-600': selectedHousehold.flood_risk === 'High'
                                 }"
-                            >
-                                <i data-lucide="waves-horizontal" class="w-5 h-5"
-                                    :class="{
-                                        'text-emerald-600': selectedHousehold.flood_risk === 'Low',
-                                        'text-amber-600': selectedHousehold.flood_risk === 'Medium',
-                                        'text-rose-600': selectedHousehold.flood_risk === 'High'
-                                    }"
-                                ></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Flood Risk Level</p>
-                                <p class="text-sm font-bold mt-0.5"
-                                    :class="{
-                                        'text-emerald-700': selectedHousehold.flood_risk === 'Low',
-                                        'text-amber-700': selectedHousehold.flood_risk === 'Medium',
-                                        'text-rose-700': selectedHousehold.flood_risk === 'High'
-                                    }"
-                                    x-text="selectedHousehold.flood_risk || '—'"
-                                ></p>
-                            </div>
+                            ></i>
                         </div>
-
-                        {{-- Hazard zone block --}}
-                        <div class="rounded-xl p-4 flex items-start gap-3 bg-slate-50 border border-slate-200">
-                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                                <i data-lucide="triangle-alert" class="w-5 h-5 text-slate-500"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Hazard Zone Classification</p>
-                                <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="selectedHousehold.hazard_zone || '—'"></p>
-                            </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Flood Risk Level</p>
+                            <p class="text-sm font-bold mt-0.5"
+                                :class="{
+                                    'text-emerald-700': selectedHousehold.flood_risk === 'Low',
+                                    'text-amber-700': selectedHousehold.flood_risk === 'Medium',
+                                    'text-rose-700': selectedHousehold.flood_risk === 'High'
+                                }"
+                                x-text="selectedHousehold.flood_risk || '—'"
+                            ></p>
                         </div>
                     </div>
-                </div>
-
-                {{-- ── PROGRAMS TAB ── --}}
-                <div x-show="householdTab === 'programs'" x-cloak>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-3">Program Enrollments</h3>
-
-                    <template x-if="!selectedHousehold.programs || selectedHousehold.programs.length === 0">
-                        <x-ui.card class="py-10 text-center">
-                            <div class="flex flex-col items-center gap-2">
-                                <i data-lucide="heart-handshake" class="w-8 h-8 text-slate-300"></i>
-                                <p class="text-sm text-slate-400">No programs enrolled for this household.</p>
-                            </div>
-                        </x-ui.card>
-                    </template>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <template x-for="prog in (selectedHousehold.programs || [])" :key="prog">
-                            <x-ui.card class="p-4 flex items-center gap-3">
-                                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                                    <i data-lucide="heart-handshake" class="w-5 h-5 text-emerald-600"></i>
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-navy-900" x-text="prog"></p>
-                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 mt-0.5">
-                                        <i data-lucide="circle-check" class="w-3 h-3"></i>
-                                        Active
-                                    </span>
-                                </div>
-                            </x-ui.card>
-                        </template>
-                    </div>
-                </div>
-
-                {{-- ── HISTORY TAB ── --}}
-                <div x-show="householdTab === 'history'" x-cloak>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-3">Record History</h3>
-                    <x-ui.card class="p-4 space-y-4">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i data-lucide="file-plus" class="w-4 h-4 text-indigo-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-navy-900">Record Created</p>
-                                <p class="text-xs text-slate-500 mt-0.5" x-text="selectedHousehold.created || 'Date not recorded'"></p>
-                                <p class="text-xs text-slate-400 mt-0.5">Encoded by: <span class="font-medium text-slate-600">System</span></p>
-                            </div>
-                        </div>
-                        <div class="border-t border-slate-100"></div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i data-lucide="pencil" class="w-4 h-4 text-amber-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-navy-900">Last Updated</p>
-                                <p class="text-xs text-slate-500 mt-0.5" x-text="selectedHousehold.last_updated || 'No updates recorded'"></p>
-                                <p class="text-xs text-slate-400 mt-0.5">Updated by: <span class="font-medium text-slate-600">System</span></p>
-                            </div>
-                        </div>
-                        <div class="border-t border-slate-100"></div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i data-lucide="hash" class="w-4 h-4 text-slate-500"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-navy-900">Household Record ID</p>
-                                <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="selectedHousehold.id"></p>
-                            </div>
-                        </div>
-                    </x-ui.card>
                 </div>
 
                 </div>
             </div>
 
             {{-- ── Modal Footer ── --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl">
-                <x-ui.button size="sm" icon="pencil" @click="$dispatch('toast', {message: 'Edit household feature coming soon.', type: 'info'})">Edit Household</x-ui.button>
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
+                <x-ui.button size="sm" icon="pencil" x-show="can('const_household','edit')" @click="startEdit()">Edit Household</x-ui.button>
             </div>
 
         </div>

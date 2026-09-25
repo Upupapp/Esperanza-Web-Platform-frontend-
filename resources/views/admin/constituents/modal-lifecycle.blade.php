@@ -8,6 +8,7 @@
     x-data="{
         get open() { return showLifecycle; },
         set open(v) { showLifecycle = v; },
+        submitting: false,
 
         form: {
             target_barangay: '',
@@ -29,14 +30,28 @@
             };
         },
 
-        confirmLifecycle() {
-            this.open = false;
-            this.resetLifecycleForm();
-            $dispatch('toast', {
-                message: 'Lifecycle action recorded: ' + lifecycleAction,
-                variant: 'success'
-            });
-            window.renderIcons?.();
+        async confirmLifecycle() {
+            if (this.submitting || !selectedIndividual) return;
+            this.submitting = true;
+            const action = { Transfer: 'transfer', Deceased: 'deceased', Archive: 'archive' }[lifecycleAction];
+            try {
+                await $api.post('/admin/residents/' + selectedIndividual.ref + '/lifecycle', { action, ...this.form });
+                if (action === 'transfer') {
+                    const idx = this.individuals.findIndex(x => x.ref === selectedIndividual.ref);
+                    if (idx !== -1) this.individuals[idx].barangay = this.form.target_barangay;
+                } else {
+                    this.individuals = this.individuals.filter(x => x.ref !== selectedIndividual.ref);
+                }
+                this.open = false;
+                this.resetLifecycleForm();
+                $dispatch('toast', {
+                    message: 'Lifecycle action recorded: ' + lifecycleAction,
+                    variant: 'success'
+                });
+                window.renderIcons?.();
+            } catch (err) {
+                $dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not record this action.', variant: 'error' });
+            } finally { this.submitting = false; }
         },
 
         get actionConfig() {
@@ -52,22 +67,15 @@
                     color: 'slate',
                     icon: 'flower',
                     title: 'Mark as Deceased',
-                    desc: 'Record the passing of this resident. The profile will be retained for historical reference and program reconciliation.',
+                    desc: 'Record the passing of this resident. The profile is soft-deleted and retained for historical reference and program reconciliation.',
                     confirmLabel: 'Record Passing',
                 },
                 Archive: {
                     color: 'amber',
                     icon: 'archive',
                     title: 'Archive Record',
-                    desc: 'Archiving removes this record from active views but preserves all data for audit and compliance purposes. This action can be reversed.',
+                    desc: 'Archiving soft-deletes this record — it is removed from active views but preserves all data for audit and compliance purposes.',
                     confirmLabel: 'Archive Record',
-                },
-                Restore: {
-                    color: 'emerald',
-                    icon: 'refresh-cw',
-                    title: 'Restore Record',
-                    desc: 'Restore this archived resident record to Active status. They will appear in all active views and program eligibility checks.',
-                    confirmLabel: 'Restore to Active',
                 },
             };
             return cfg[lifecycleAction] || cfg['Archive'];
@@ -85,7 +93,6 @@
                 'bg-indigo-50': lifecycleAction === 'Transfer',
                 'bg-slate-50': lifecycleAction === 'Deceased',
                 'bg-amber-50': lifecycleAction === 'Archive',
-                'bg-emerald-50': lifecycleAction === 'Restore',
                 'bg-slate-50': !lifecycleAction,
             }"
         >
@@ -96,7 +103,6 @@
                     'bg-indigo-400': lifecycleAction === 'Transfer',
                     'bg-slate-400': lifecycleAction === 'Deceased',
                     'bg-amber-400': lifecycleAction === 'Archive',
-                    'bg-emerald-400': lifecycleAction === 'Restore',
                 }"
             ></div>
 
@@ -117,27 +123,18 @@
                         'bg-indigo-100 text-indigo-600': lifecycleAction === 'Transfer',
                         'bg-slate-200 text-slate-600': lifecycleAction === 'Deceased',
                         'bg-amber-100 text-amber-600': lifecycleAction === 'Archive',
-                        'bg-emerald-100 text-emerald-600': lifecycleAction === 'Restore',
                     }"
                 >
-                    {{-- Transfer --}}
                     <template x-if="lifecycleAction === 'Transfer'">
                         <i data-lucide="arrow-right-from-line" class="w-6 h-6"></i>
                     </template>
-                    {{-- Deceased --}}
                     <template x-if="lifecycleAction === 'Deceased'">
                         <i data-lucide="flower" class="w-6 h-6"></i>
                     </template>
-                    {{-- Archive --}}
                     <template x-if="lifecycleAction === 'Archive'">
                         <i data-lucide="archive" class="w-6 h-6"></i>
                     </template>
-                    {{-- Restore --}}
-                    <template x-if="lifecycleAction === 'Restore'">
-                        <i data-lucide="refresh-cw" class="w-6 h-6"></i>
-                    </template>
-                    {{-- Fallback --}}
-                    <template x-if="!['Transfer','Deceased','Archive','Restore'].includes(lifecycleAction)">
+                    <template x-if="!['Transfer','Deceased','Archive'].includes(lifecycleAction)">
                         <i data-lucide="settings-2" class="w-6 h-6"></i>
                     </template>
                 </div>
@@ -149,7 +146,6 @@
                             'text-indigo-900': lifecycleAction === 'Transfer',
                             'text-slate-700': lifecycleAction === 'Deceased',
                             'text-amber-900': lifecycleAction === 'Archive',
-                            'text-emerald-900': lifecycleAction === 'Restore',
                         }"
                         x-text="actionConfig.title"
                     ></h2>
@@ -171,7 +167,7 @@
                 <div class="min-w-0 flex-1">
                     <p class="text-sm font-bold text-navy-900 truncate" x-text="selectedIndividual?.name || '—'"></p>
                     <p class="text-xs text-slate-500 mt-0.5">
-                        ID: <span class="font-mono font-medium text-slate-700" x-text="selectedIndividual?.id || '—'"></span>
+                        ID: <span class="font-mono font-medium text-slate-700" x-text="selectedIndividual?.ref || '—'"></span>
                         <span class="mx-1.5 text-slate-300">·</span>
                         Brgy. <span x-text="selectedIndividual?.barangay || '—'"></span>
                     </p>
@@ -208,39 +204,36 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="reason-for-transfer">
-                        Reason for Transfer <span class="text-red-500">*</span>
+                        Reason for Transfer
                     </label>
                     <textarea id="reason-for-transfer"
                         x-model="form.transfer_reason"
                         placeholder="Briefly state the reason for this transfer (e.g., marriage, employment relocation, family consolidation…)"
                         rows="3"
                         class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition resize-none"
-                        required
                     ></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="effective-date">
-                            Effective Date <span class="text-red-500">*</span>
+                            Effective Date
                         </label>
                         <input id="effective-date"
                             type="date"
                             x-model="form.effective_date"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                            required
                         />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="certifying-officer">
-                            Certifying Officer <span class="text-red-500">*</span>
+                            Certifying Officer
                         </label>
                         <input id="certifying-officer"
                             type="text"
                             x-model="form.certifying_officer"
                             placeholder="Full name of the barangay officer"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
-                            required
                         />
                     </div>
                 </div>
@@ -249,8 +242,8 @@
                 <div class="bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 flex items-start gap-2.5 text-xs text-indigo-700">
                     <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5 text-indigo-400"></i>
                     <span>
-                        This transfer will flag the record for barangay scope reassignment.
-                        Program linkages (4Ps, OSCA, PWD) must be updated at the receiving barangay.
+                        This transfer moves the resident's barangay on their record and unlinks their current
+                        household and family — they'll need to be re-linked at the receiving barangay.
                     </span>
                 </div>
 
@@ -285,14 +278,13 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="informant-name">
-                        Informant Name <span class="text-red-500">*</span>
+                        Informant Name
                     </label>
                     <input id="informant-name"
                         type="text"
                         x-model="form.informant_name"
                         placeholder="Name of the person reporting the death"
                         class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
-                        required
                     />
                 </div>
 
@@ -301,7 +293,7 @@
                     <input id="psa-death-certificate-reference-no"
                         type="text"
                         x-model="form.death_cert_ref"
-                        placeholder="e.g. 2024-DC-000123"
+                        placeholder="e.g. 2026-DC-000123"
                         class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
                     />
                     <p class="text-xs text-slate-400 mt-1">Leave blank if PSA certificate is not yet available.</p>
@@ -311,8 +303,7 @@
                 <div class="bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 flex items-start gap-2.5 text-xs text-slate-600">
                     <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-400"></i>
                     <span>
-                        The record will be set to <strong>Deceased</strong> status and removed from active views.
-                        All program enrollments will be flagged for review by the MSWDO office.
+                        The record will be soft-deleted and removed from active views. It is not permanently erased.
                     </span>
                 </div>
 
@@ -328,7 +319,7 @@
                         <p class="font-semibold mb-1">Confirm Archive</p>
                         <p class="text-xs leading-relaxed">
                             This resident record will be hidden from all active dashboards, reports, and program eligibility lists.
-                            The data is <strong>not deleted</strong> and can be restored by an authorized administrator at any time.
+                            The data is <strong>not deleted</strong> — it is soft-deleted, and a record of who archived it and why is kept in the audit log.
                         </p>
                     </div>
                 </div>
@@ -347,64 +338,7 @@
                     <p class="text-xs text-slate-400 mt-1">This reason will be recorded in the audit log and is required by LGU data governance policy.</p>
                 </div>
 
-                {{-- Acknowledgment checkbox --}}
-                <label class="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400" />
-                    <span class="text-xs text-slate-600">
-                        I confirm that this archive action is authorized and that all required program linkages have been reviewed prior to archiving.
-                    </span>
-                </label>
-
             </div>{{-- /Archive --}}
-
-
-            {{-- ── RESTORE FORM ── --}}
-            <div x-show="lifecycleAction === 'Restore'" class="space-y-4">
-
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
-                    <i data-lucide="refresh-cw" class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"></i>
-                    <div class="text-sm text-emerald-800">
-                        <p class="font-semibold mb-1">Confirm Restore</p>
-                        <p class="text-xs leading-relaxed">
-                            This action will restore the resident record to <strong>Active</strong> status.
-                            The record will reappear in all active views, program eligibility checks, and barangay reports.
-                            Please verify that no duplicate record exists before proceeding.
-                        </p>
-                    </div>
-                </div>
-
-                {{-- Summary of record being restored --}}
-                <div class="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-                    <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Record Being Restored</h4>
-                    <div class="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
-                        <div>
-                            <span class="text-slate-400">Name:</span>
-                            <span class="font-semibold text-navy-900 ml-1" x-text="selectedIndividual?.name || '—'"></span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400">ID:</span>
-                            <span class="font-mono font-semibold text-navy-900 ml-1" x-text="selectedIndividual?.id || '—'"></span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400">Barangay:</span>
-                            <span class="font-semibold text-navy-900 ml-1" x-text="'Brgy. ' + (selectedIndividual?.barangay || '—')"></span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400">New Status:</span>
-                            <span class="font-semibold text-emerald-600 ml-1">Active</span>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Acknowledgment --}}
-                <label class="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-400" />
-                    <span class="text-xs text-slate-600">
-                        I have verified this is not a duplicate record and that restoring it is appropriate under current LGU data policy.
-                    </span>
-                </label>
-
-            </div>{{-- /Restore --}}
 
         </div>{{-- /body --}}
 
@@ -424,29 +358,32 @@
             {{-- Confirm button — color shifts per action --}}
             <button
                 @click="confirmLifecycle()"
-                class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-white text-sm font-semibold transition-colors shadow-sm"
+                :disabled="submitting || (lifecycleAction === 'Transfer' && !form.target_barangay) || (lifecycleAction === 'Deceased' && !form.date_of_passing) || (lifecycleAction === 'Archive' && form.archive_reason.trim().length < 5)"
+                class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-60"
                 :class="{
                     'bg-indigo-600 hover:bg-indigo-700': lifecycleAction === 'Transfer',
                     'bg-slate-700 hover:bg-slate-800': lifecycleAction === 'Deceased',
                     'bg-amber-500 hover:bg-amber-600': lifecycleAction === 'Archive',
-                    'bg-emerald-600 hover:bg-emerald-700': lifecycleAction === 'Restore',
                 }"
             >
-                {{-- Icon per action --}}
-                <template x-if="lifecycleAction === 'Transfer'">
-                    <i data-lucide="arrow-right-from-line" class="w-4 h-4"></i>
+                <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting"></i>
+                <template x-if="!submitting">
+                    <template x-if="lifecycleAction === 'Transfer'">
+                        <i data-lucide="arrow-right-from-line" class="w-4 h-4"></i>
+                    </template>
                 </template>
-                <template x-if="lifecycleAction === 'Deceased'">
-                    <i data-lucide="flower" class="w-4 h-4"></i>
+                <template x-if="!submitting">
+                    <template x-if="lifecycleAction === 'Deceased'">
+                        <i data-lucide="flower" class="w-4 h-4"></i>
+                    </template>
                 </template>
-                <template x-if="lifecycleAction === 'Archive'">
-                    <i data-lucide="archive" class="w-4 h-4"></i>
-                </template>
-                <template x-if="lifecycleAction === 'Restore'">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                <template x-if="!submitting">
+                    <template x-if="lifecycleAction === 'Archive'">
+                        <i data-lucide="archive" class="w-4 h-4"></i>
+                    </template>
                 </template>
 
-                <span x-text="actionConfig.confirmLabel"></span>
+                <span x-text="submitting ? 'Saving…' : actionConfig.confirmLabel"></span>
             </button>
 
         </div>

@@ -27,7 +27,6 @@
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Household</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head of Family</th>
                 <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Members</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap w-36 hidden 2xl:table-cell">Completion</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Verification</th>
                 <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
             </tr>
@@ -37,7 +36,7 @@
             {{-- Empty state row --}}
             <template x-if="filteredFamilies.length === 0">
                 <tr>
-                    <td colspan="8" class="py-16 px-4 text-center">
+                    <td colspan="7" class="py-16 px-4 text-center">
                         <x-ui.empty-state
                             icon="users-round"
                             title="No families found"
@@ -48,11 +47,11 @@
             </template>
 
             {{-- Family rows --}}
-            <template x-for="f in filteredFamilies" :key="f.id">
+            <template x-for="f in filteredFamilies" :key="f.ref">
                 <tr
                     class="hover:bg-blue-50/40 cursor-pointer transition-colors group"
                     @click="openFamily(f)"
-                
+
         tabindex="0"
         @keydown.enter.prevent="openFamily(f)"
         @keydown.space.prevent="openFamily(f)">
@@ -60,11 +59,11 @@
                     <td class="px-4 py-3">
                         <div class="flex items-start gap-3">
                             <div class="flex-shrink-0 w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center ring-2 ring-white shadow-sm">
-                                <span class="text-blue-700 font-bold text-xs" x-text="f.surname?.substring(0,2).toUpperCase()"></span>
+                                <span class="text-blue-700 font-bold text-xs" x-text="(f.surname || '').substring(0,2).toUpperCase()"></span>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-navy-900 truncate" x-text="f.label"></p>
-                                <p class="text-xs text-slate-400 font-mono" x-text="'#' + f.id"></p>
+                                <p class="text-xs text-slate-400 font-mono" x-text="f.ref"></p>
                                 {{-- Family type chip --}}
                                 <span
                                     class="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded text-xs font-medium"
@@ -87,16 +86,13 @@
 
                     {{-- Household link --}}
                     <td class="px-4 py-3 hidden 2xl:table-cell">
-                        <template x-if="f.household_id">
-                            <button
-                                @click.stop="openHousehold(filteredHouseholds.find(h=>h.id===f.household_id) || {id:f.household_id,label:'HH-'+f.household_id})"
-                                class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
-                            >
+                        <template x-if="f.household_ref">
+                            <span class="inline-flex items-center gap-1 text-xs text-slate-600 font-medium">
                                 <i data-lucide="house" class="w-3 h-3"></i>
-                                <span x-text="'HH-' + f.household_id"></span>
-                            </button>
+                                <span x-text="f.household_ref"></span>
+                            </span>
                         </template>
-                        <template x-if="!f.household_id">
+                        <template x-if="!f.household_ref">
                             <span class="text-xs text-slate-400 italic">Unlinked</span>
                         </template>
                     </td>
@@ -114,20 +110,6 @@
                     {{-- Member count --}}
                     <td class="px-4 py-3 text-center">
                         <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold" x-text="f.member_count"></span>
-                    </td>
-
-                    {{-- Profile completion bar --}}
-                    <td class="px-4 py-3 hidden 2xl:table-cell">
-                        <div class="flex items-center gap-2">
-                            <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    class="h-full rounded-full transition-all"
-                                    :class="completionColor(f.profile_pct)"
-                                    :style="'width:' + (f.profile_pct||0) + '%'"
-                                ></div>
-                            </div>
-                            <span class="text-xs font-medium w-8 text-right" :class="completionTextColor(f.profile_pct)" x-text="(f.profile_pct||0) + '%'"></span>
-                        </div>
                     </td>
 
                     {{-- Verification badge --}}
@@ -148,13 +130,6 @@
                                 class="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             >
                                 <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                            <button
-                                @click="$dispatch('toast', {message: 'Add member feature coming soon.', type: 'info'})"
-                                title="Add member to family"
-                                class="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                            >
-                                <i data-lucide="user-plus" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </td>

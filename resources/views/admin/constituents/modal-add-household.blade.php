@@ -4,6 +4,7 @@
 <div x-data="{
     get open() { return showAddHousehold },
     set open(v) { showAddHousehold = v },
+    submitting: false,
     form: {
         barangay: '',
         sitio: '',
@@ -12,27 +13,11 @@
         dwelling_type: '',
         housing_tenure: '',
         flood_risk: '',
-        hazard_zone: '',
         electricity: false,
         water: false,
         toilet: false,
-        programs: [],
-        notes: ''
     },
-    programOptions: [
-        '4Ps (Pantawid Pamilyang Pilipino Program)',
-        'OSCA (Senior Citizen Assistance)',
-        'PWD Assistance Program',
-        'Solo Parent Welfare Program',
-        'DSWD Financial Assistance',
-        'Other Government Assistance'
-    ],
     barangayOptions: @js(config('esperanza.barangays')),
-    hazardZoneOptions: [
-        'Zone 1 (Safe)',
-        'Zone 2 (Moderate Risk)',
-        'Zone 3 (High Risk)'
-    ],
     get canProceed() {
         if (addHouseholdStep === 1) {
             return this.form.barangay !== '' && this.form.address.trim() !== '' && this.form.head_name.trim() !== ''
@@ -42,16 +27,23 @@
         }
         return true
     },
-    saveHousehold() {
-        this.$dispatch('toast', { message: 'Household record saved successfully.', type: 'success' })
-        showAddHousehold = false
-        addHouseholdStep = 1
-        this.form = {
-            barangay: '', sitio: '', address: '', head_name: '',
-            dwelling_type: '', housing_tenure: '', flood_risk: '', hazard_zone: '',
-            electricity: false, water: false, toilet: false,
-            programs: [], notes: ''
-        }
+    async saveHousehold() {
+        if (this.submitting) return;
+        this.submitting = true;
+        try {
+            const res = await $api.post('/admin/households', this.form);
+            this.households.push(res.data);
+            this.$dispatch('toast', { message: 'Household record saved successfully.', variant: 'success' });
+            showAddHousehold = false;
+            addHouseholdStep = 1;
+            this.form = {
+                barangay: '', sitio: '', address: '', head_name: '',
+                dwelling_type: '', housing_tenure: '', flood_risk: '',
+                electricity: false, water: false, toilet: false,
+            };
+        } catch (err) {
+            this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not create this household.', variant: 'error' });
+        } finally { this.submitting = false; }
     }
 }">
 <x-ui.modal maxWidth="xl" :fullscreen="true">
@@ -75,7 +67,7 @@
                 <template x-for="(step, idx) in [
                     {n:1, label:'Location'},
                     {n:2, label:'Dwelling'},
-                    {n:3, label:'Amenities & Programs'}
+                    {n:3, label:'Amenities'}
                 ]" :key="step.n">
                     <div class="flex items-center" :class="idx < 2 ? 'flex-1' : ''">
                         <div class="flex items-center gap-1.5 sm:gap-2">
@@ -169,7 +161,7 @@
                         placeholder="Full name of household head"
                         class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     />
-                    <p class="text-xs text-slate-400 mt-1.5">This person will be listed as the primary occupant of this household.</p>
+                    <p class="text-xs text-slate-400 mt-1.5">This person will be listed as the primary occupant of this household. If they aren't already a resident on file, a new resident record is created for them.</p>
                 </div>
             </div>
 
@@ -251,9 +243,9 @@
                     </label>
                     <div class="grid grid-cols-3 gap-2">
                         <template x-for="fr in [
-                            {val:'Low', cls:'border-emerald-300 bg-emerald-50', activeCls:'border-emerald-500 bg-emerald-50', iconCls:'text-emerald-600', textCls:'text-emerald-700', dotCls:'bg-emerald-500'},
-                            {val:'Medium', cls:'border-amber-300 bg-amber-50', activeCls:'border-amber-500 bg-amber-50', iconCls:'text-amber-600', textCls:'text-amber-700', dotCls:'bg-amber-500'},
-                            {val:'High', cls:'border-rose-300 bg-rose-50', activeCls:'border-rose-500 bg-rose-50', iconCls:'text-rose-600', textCls:'text-rose-700', dotCls:'bg-rose-500'}
+                            {val:'Low', activeCls:'border-emerald-500 bg-emerald-50', iconCls:'text-emerald-600', textCls:'text-emerald-700', dotCls:'bg-emerald-500'},
+                            {val:'Medium', activeCls:'border-amber-500 bg-amber-50', iconCls:'text-amber-600', textCls:'text-amber-700', dotCls:'bg-amber-500'},
+                            {val:'High', activeCls:'border-rose-500 bg-rose-50', iconCls:'text-rose-600', textCls:'text-rose-700', dotCls:'bg-rose-500'}
                         ]" :key="fr.val">
                             <label
                                 class="relative flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 cursor-pointer transition-all text-center"
@@ -271,27 +263,13 @@
                         </template>
                     </div>
                 </div>
-
-                {{-- Hazard zone dropdown --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="hazard-zone-classification">Hazard Zone Classification</label>
-                    <select id="hazard-zone-classification"
-                        x-model="form.hazard_zone"
-                        class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                    >
-                        <option value="">Select hazard zone…</option>
-                        <template x-for="hz in hazardZoneOptions" :key="hz">
-                            <option :value="hz" x-text="hz"></option>
-                        </template>
-                    </select>
-                </div>
             </div>
 
-            {{-- ── STEP 3: Amenities & Programs ── --}}
+            {{-- ── STEP 3: Amenities ── --}}
             <div x-show="addHouseholdStep === 3" x-cloak class="space-y-5">
                 <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex items-start gap-2">
                     <i data-lucide="plug-zap" class="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0"></i>
-                    Indicate available basic amenities, government program enrollments, and any notes.
+                    Indicate available basic amenities.
                 </p>
 
                 {{-- Amenities checkboxes --}}
@@ -348,34 +326,6 @@
                     </div>
                 </div>
 
-                {{-- Programs --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-2">Programs to Enroll</label>
-                    <div class="space-y-2">
-                        <template x-for="prog in programOptions" :key="prog">
-                            <label
-                                class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition-colors"
-                                :class="form.programs.includes(prog) ? 'border-emerald-300 bg-emerald-50/50' : ''"
-                            >
-                                <input type="checkbox" :value="prog" x-model="form.programs"
-                                    class="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500" />
-                                <span class="text-sm text-navy-900" x-text="prog"></span>
-                            </label>
-                        </template>
-                    </div>
-                </div>
-
-                {{-- Notes --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="notes-remarks-2">Notes / Remarks</label>
-                    <textarea id="notes-remarks-2"
-                        x-model="form.notes"
-                        rows="3"
-                        placeholder="Any additional observations or notes about this household…"
-                        class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
-                    ></textarea>
-                </div>
-
                 {{-- Summary preview --}}
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">Household Summary</h4>
@@ -384,12 +334,11 @@
                         <div><dt class="text-slate-400">Head</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.head_name || '—'"></dd></div>
                         <div><dt class="text-slate-400">Dwelling</dt><dd class="font-semibold text-navy-900" x-text="form.dwelling_type || '—'"></dd></div>
                         <div><dt class="text-slate-400">Flood Risk</dt><dd class="font-semibold text-navy-900" x-text="form.flood_risk || '—'"></dd></div>
-                        <div><dt class="text-slate-400">Amenities</dt>
+                        <div class="col-span-2"><dt class="text-slate-400">Amenities</dt>
                             <dd class="font-semibold text-navy-900">
                                 <span x-text="[form.electricity ? 'Elec' : null, form.water ? 'Water' : null, form.toilet ? 'Toilet' : null].filter(Boolean).join(', ') || 'None'"></span>
                             </dd>
                         </div>
-                        <div><dt class="text-slate-400">Programs</dt><dd class="font-semibold text-navy-900" x-text="form.programs.length > 0 ? form.programs.length + ' selected' : 'None'"></dd></div>
                     </dl>
                 </div>
             </div>
@@ -426,11 +375,13 @@
             {{-- Save (step 3) --}}
             <button
                 x-show="addHouseholdStep === 3"
+                :disabled="submitting"
                 @click="saveHousehold()"
-                class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
             >
-                <i data-lucide="save" class="w-4 h-4"></i>
-                Save Household
+                <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting"></i>
+                <i data-lucide="save" class="w-4 h-4" x-show="!submitting"></i>
+                <span x-text="submitting ? 'Saving…' : 'Save Household'"></span>
             </button>
         </div>
 

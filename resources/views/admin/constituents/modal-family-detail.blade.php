@@ -1,9 +1,30 @@
 {{-- modal-family-detail.blade.php --}}
-{{-- Family detail modal — 4 tabs: Overview | Members | Programs | History --}}
+{{-- Family detail modal — 3 tabs: Overview | Members | Programs --}}
 
 <div x-data="{
     get open() { return showFamilyDetail },
-    set open(v) { showFamilyDetail = v }
+    set open(v) { showFamilyDetail = v },
+    editing: false,
+    saving: false,
+    edit: {},
+    startEdit() {
+        this.edit = { family_type: selectedFamily.family_type, sitio: selectedFamily.sitio, head_name: selectedFamily.head_name, notes: selectedFamily.notes, programs: [...(selectedFamily.programs || [])] };
+        this.editing = true;
+    },
+    async saveEdit() {
+        if (this.saving) return;
+        this.saving = true;
+        try {
+            const res = await $api.put('/admin/families/' + selectedFamily.ref, this.edit);
+            Object.assign(selectedFamily, res.data);
+            const idx = this.families.findIndex(x => x.ref === selectedFamily.ref);
+            if (idx !== -1) this.families[idx] = { ...this.families[idx], ...res.data };
+            this.editing = false;
+            this.$dispatch('toast', { message: 'Family record updated.', variant: 'success' });
+        } catch (err) {
+            this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save changes.', variant: 'error' });
+        } finally { this.saving = false; }
+    },
 }">
 <x-ui.modal maxWidth="2xl" :bare="true" :fullscreen="true">
 
@@ -23,36 +44,14 @@
                         <span x-show="compact"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i></span>
                         <span x-show="!compact"><i data-lucide="minimize-2" class="w-3.5 h-3.5"></i></span>
                     </button>
-                    <button type="button" @click="showFamilyDetail = false" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Close">
+                    <button type="button" @click="showFamilyDetail = false; editing = false" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Close">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
                 <div class="flex items-start gap-5 relative z-10">
-
-                    {{-- Profile completion ring + avatar --}}
-                    <div class="flex-shrink-0 relative">
-                        <div class="relative w-20 h-20">
-                            <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-                                <circle cx="40" cy="40" r="36" stroke="rgba(255,255,255,0.15)" stroke-width="5" fill="none"/>
-                                <circle
-                                    cx="40" cy="40" r="36"
-                                    stroke="rgba(255,255,255,0.85)"
-                                    stroke-width="5"
-                                    fill="none"
-                                    stroke-linecap="round"
-                                    :stroke-dasharray="'226.2'"
-                                    :stroke-dashoffset="226.2 - (226.2 * (selectedFamily?.profile_pct || 0) / 100)"
-                                    class="transition-all duration-[600ms] ease-standard"
-                                />
-                            </svg>
-                            <div class="absolute inset-2 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase">
-                                <span x-text="selectedFamily?.surname?.substring(0,2).toUpperCase()"></span>
-                            </div>
-                        </div>
-                        <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/20 rounded-full px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap">
-                            <span x-text="(selectedFamily?.profile_pct || 0) + '%'"></span>
-                        </div>
+                    <div class="flex-shrink-0 w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase">
+                        <span x-text="(selectedFamily?.surname || '').substring(0,2).toUpperCase()"></span>
                     </div>
 
                     {{-- Identity block --}}
@@ -68,21 +67,21 @@
                                  has been reviewed yet. --}}
                             <button
                                 type="button"
-                                x-show="selectedFamily?.verification !== 'Verified' && can('const_citizen_verification','verify')"
+                                x-show="selectedFamily?.verification !== 'Verified' && can('const_data_quality','verify')"
                                 @click="verifyFamily(selectedFamily)"
                                 class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100 ring-1 ring-emerald-300/30 hover:bg-emerald-400/30 transition-colors"
                             >
                                 <i data-lucide="check" class="w-3 h-3"></i> Mark as Verified
                             </button>
-                            <span x-show="selectedFamily?.household_id" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100 ring-1 ring-emerald-300/30">
+                            <span x-show="selectedFamily?.household_ref" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-100 ring-1 ring-emerald-300/30">
                                 <i data-lucide="house" class="w-3 h-3"></i>
-                                <span x-text="selectedFamily?.household_id"></span>
+                                <span x-text="selectedFamily?.household_ref"></span>
                             </span>
                         </div>
 
                         <h2 class="text-xl font-bold text-white leading-tight truncate" x-text="selectedFamily?.label"></h2>
                         <p class="text-sm text-white/60 mt-0.5">
-                            ID: <span class="font-mono font-medium text-white/80" x-text="selectedFamily?.id"></span>
+                            ID: <span class="font-mono font-medium text-white/80" x-text="selectedFamily?.ref"></span>
                             &nbsp;·&nbsp;
                             <span x-text="(selectedFamily?.member_count || 0) + ' members'"></span>
                         </p>
@@ -111,8 +110,7 @@
                     <template x-for="tab in [
                         {id:'overview',icon:'layout-dashboard',label:'Overview'},
                         {id:'members',icon:'users',label:'Members',count:selectedFamily?.member_count},
-                        {id:'programs',icon:'heart-handshake',label:'Programs'},
-                        {id:'history',icon:'history',label:'History'}
+                        {id:'programs',icon:'heart-handshake',label:'Programs'}
                     ]" :key="tab.id">
                         <button
                             @click="familyTab = tab.id"
@@ -136,6 +134,7 @@
 
                 {{-- ── OVERVIEW TAB ── --}}
                 <div x-show="familyTab === 'overview'" x-cloak>
+                    <template x-if="!editing">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Left column --}}
                         <div class="space-y-3">
@@ -155,14 +154,14 @@
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.sitio || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Household ID</dt>
-                                        <dd class="text-xs font-semibold text-blue-600" x-text="selectedFamily.household_id || 'Unlinked'"></dd>
+                                        <dt class="text-xs text-slate-500">Household</dt>
+                                        <dd class="text-xs font-semibold text-blue-600" x-text="selectedFamily.household_ref || 'Unlinked'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-slate-500">Head of Family</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.head_name || '—'"></dd>
                                     </div>
-                                    <div class="flex justify-between items-start gap-2">
+                                    <div class="flex justify-between items-center gap-2">
                                         <dt class="text-xs text-slate-500">Member Count</dt>
                                         <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.member_count"></dd>
                                     </div>
@@ -191,10 +190,6 @@
                                             ></span>
                                         </dd>
                                     </div>
-                                    <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Profile Completion</dt>
-                                        <dd class="text-xs font-bold" :class="completionTextColor(selectedFamily.profile_pct)" x-text="(selectedFamily.profile_pct||0) + '%'"></dd>
-                                    </div>
                                 </dl>
                             </x-ui.card>
 
@@ -218,6 +213,37 @@
                             </x-ui.card>
                         </div>
                     </div>
+                    </template>
+
+                    {{-- ── EDIT FORM ── --}}
+                    <template x-if="editing">
+                        <div class="max-w-xl space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5">Family Type</label>
+                                <select aria-label="Family Type" x-model="edit.family_type" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                    <option value="Nuclear">Nuclear</option>
+                                    <option value="Extended">Extended</option>
+                                    <option value="Single Parent">Single Parent</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-sitio">Sitio / Purok</label>
+                                <input id="fam-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-head">Head of Family</label>
+                                <input id="fam-edit-head" type="text" x-model="edit.head_name" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-notes">Notes</label>
+                                <textarea id="fam-edit-notes" x-model="edit.notes" rows="3" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all resize-none"></textarea>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <x-ui.button variant="secondary" size="sm" @click="editing = false">Cancel</x-ui.button>
+                                <x-ui.button size="sm" icon="check" x-bind:disabled="saving" @click="saveEdit()" x-text="saving ? 'Saving…' : 'Save Changes'"></x-ui.button>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 {{-- ── MEMBERS TAB ── --}}
@@ -230,7 +256,7 @@
                     </div>
 
                     <x-ui.card class="overflow-hidden">
-                        <template x-if="(individuals.filter(r => selectedFamily?.member_ids?.includes(r.id))).length === 0">
+                        <template x-if="(individuals.filter(r => r.family?.ref === selectedFamily?.ref)).length === 0">
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <i data-lucide="user-x" class="w-8 h-8 text-slate-300"></i>
@@ -240,26 +266,16 @@
                         </template>
 
                         <ul class="divide-y divide-slate-100">
-                            <template x-for="r in individuals.filter(r => selectedFamily?.member_ids?.includes(r.id))" :key="r.id">
+                            <template x-for="r in individuals.filter(r => r.family?.ref === selectedFamily?.ref)" :key="r.ref">
                                 <li
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50/40 cursor-pointer transition-colors"
                                     @click="openIndividual(r)"
-                                
+
         role="button"
         tabindex="0"
         @keydown.enter.prevent="openIndividual(r)"
         @keydown.space.prevent="openIndividual(r)">
-                                    <span class="relative shrink-0">
-                                        <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
-                                        <span
-                                            x-show="r.citizen_account?.identity_check?.face_match === 'Mismatch' || (r.identity_flags || []).length"
-                                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white flex items-center justify-center"
-                                            :class="r.citizen_account?.identity_check?.face_match === 'Mismatch' ? 'bg-rose-500' : 'bg-amber-500'"
-                                            title="Identity review recommended — see profile for details"
-                                        >
-                                            <i data-lucide="triangle-alert" class="w-2 h-2 text-white"></i>
-                                        </span>
-                                    </span>
+                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
                                         <p class="text-xs text-slate-400">
@@ -310,50 +326,12 @@
                     </div>
                 </div>
 
-                {{-- ── HISTORY TAB ── --}}
-                <div x-show="familyTab === 'history'" x-cloak>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-3">Record History</h3>
-                    <x-ui.card class="p-4 space-y-4">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i data-lucide="file-plus" class="w-4 h-4 text-blue-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-navy-900">Record Created</p>
-                                <p class="text-xs text-slate-500 mt-0.5" x-text="selectedFamily.created || 'Date not recorded'"></p>
-                                <p class="text-xs text-slate-400 mt-0.5">Encoded by: <span class="font-medium text-slate-600">System</span></p>
-                            </div>
-                        </div>
-                        <div class="border-t border-slate-100"></div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i data-lucide="pencil" class="w-4 h-4 text-amber-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-navy-900">Last Updated</p>
-                                <p class="text-xs text-slate-500 mt-0.5" x-text="selectedFamily.last_updated || 'No updates recorded'"></p>
-                                <p class="text-xs text-slate-400 mt-0.5">Updated by: <span class="font-medium text-slate-600">System</span></p>
-                            </div>
-                        </div>
-                        <div class="border-t border-slate-100"></div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i data-lucide="hash" class="w-4 h-4 text-slate-500"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-semibold text-navy-900">Record ID</p>
-                                <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="selectedFamily.id"></p>
-                            </div>
-                        </div>
-                    </x-ui.card>
-                </div>
-
                 </div>
             </div>
 
             {{-- ── Modal Footer ── --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl">
-                <x-ui.button size="sm" icon="user-plus" @click="$dispatch('toast', {message: 'Add member feature coming soon.', type: 'info'})">Add Member</x-ui.button>
+            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
+                <x-ui.button size="sm" icon="pencil" x-show="can('const_family','edit')" @click="startEdit()">Edit Family</x-ui.button>
             </div>
 
         </div>

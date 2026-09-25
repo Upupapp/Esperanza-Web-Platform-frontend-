@@ -8,12 +8,13 @@
     x-data="{
         get open() { return showAddIndividual; },
         set open(v) { showAddIndividual = v; },
+        submitting: false,
 
         form: {
             first_name: '', middle_name: '', last_name: '', suffix: '',
-            sex: '', dob: '', civil_status: '', contact: '', email: '',
-            barangay: '', sitio: '', address: '', household_id: '',
-            family_id: '', relation: '',
+            sex: '', dob: '', civil_status: '', contact: '',
+            barangay: '', sitio: '', household_ref: '',
+            family_ref: '', relation: '',
             occupation: '', education: '', income_range: '',
             tags: [], verification: 'Unverified',
         },
@@ -21,20 +22,28 @@
         resetForm() {
             this.form = {
                 first_name:'', middle_name:'', last_name:'', suffix:'',
-                sex:'', dob:'', civil_status:'', contact:'', email:'',
-                barangay:'', sitio:'', address:'', household_id:'',
-                family_id:'', relation:'',
+                sex:'', dob:'', civil_status:'', contact:'',
+                barangay:'', sitio:'', household_ref:'',
+                family_ref:'', relation:'',
                 occupation:'', education:'', income_range:'',
                 tags:[], verification:'Unverified',
             };
             addIndividualStep = 1;
         },
 
-        submitForm() {
-            this.open = false;
-            this.resetForm();
-            $dispatch('toast', { message: 'Resident record created successfully.', variant: 'success' });
-            window.renderIcons?.();
+        async submitForm() {
+            if (this.submitting) return;
+            this.submitting = true;
+            try {
+                const res = await $api.post('/admin/residents', this.form);
+                this.individuals.push({ ...res.data, citizen_account: null });
+                this.open = false;
+                this.resetForm();
+                this.$dispatch('toast', { message: 'Resident record created successfully.', variant: 'success' });
+                window.renderIcons?.();
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not create this resident.', variant: 'error' });
+            } finally { this.submitting = false; }
         },
 
         toggleTag(tag) {
@@ -238,11 +247,11 @@
                             <label class="flex-1 flex items-center gap-2.5 cursor-pointer group">
                                 <div
                                     class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all text-sm font-medium"
-                                    :class="form.sex === 'M'
+                                    :class="form.sex === 'Male'
                                         ? 'border-blue-400 bg-blue-50 text-blue-700'
                                         : 'border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50/50'"
                                 >
-                                    <input type="radio" name="sex" value="M" x-model="form.sex" class="sr-only" />
+                                    <input type="radio" name="sex" value="Male" x-model="form.sex" class="sr-only" />
                                     <i data-lucide="mars" class="w-4 h-4"></i>
                                     Male
                                 </div>
@@ -250,11 +259,11 @@
                             <label class="flex-1 flex items-center gap-2.5 cursor-pointer group">
                                 <div
                                     class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all text-sm font-medium"
-                                    :class="form.sex === 'F'
+                                    :class="form.sex === 'Female'
                                         ? 'border-pink-400 bg-pink-50 text-pink-700'
                                         : 'border-slate-200 bg-white text-slate-500 hover:border-pink-200 hover:bg-pink-50/50'"
                                 >
-                                    <input type="radio" name="sex" value="F" x-model="form.sex" class="sr-only" />
+                                    <input type="radio" name="sex" value="Female" x-model="form.sex" class="sr-only" />
                                     <i data-lucide="venus" class="w-4 h-4"></i>
                                     Female
                                 </div>
@@ -296,34 +305,20 @@
                     </div>
                 </div>
 
-                {{-- Contact & Email --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">
-                            Contact Number <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">+63</span>
-                            <input aria-label="9XXXXXXXXX"
-                                type="tel"
-                                x-model="form.contact"
-                                placeholder="9XXXXXXXXX"
-                                maxlength="10"
-                                class="w-full pl-12 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="email-address-optional">
-                            Email Address
-                            <span class="text-slate-400 font-normal ml-1">(optional)</span>
-                        </label>
-                        <input id="email-address-optional"
-                            type="email"
-                            x-model="form.email"
-                            placeholder="email@example.com"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                {{-- Contact --}}
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        Contact Number <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">+63</span>
+                        <input aria-label="9XXXXXXXXX"
+                            type="tel"
+                            x-model="form.contact"
+                            placeholder="9XXXXXXXXX"
+                            maxlength="10"
+                            class="w-full pl-12 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            required
                         />
                     </div>
                 </div>
@@ -372,46 +367,32 @@
                     </div>
                 </div>
 
-                {{-- Full Address --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="full-address">
-                        Full Address <span class="text-red-500">*</span>
-                    </label>
-                    <textarea id="full-address"
-                        x-model="form.address"
-                        placeholder="House No. / Block, Street, Purok, Barangay, Municipality, Province"
-                        rows="3"
-                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition resize-none"
-                        required
-                    ></textarea>
-                </div>
-
-                {{-- Household & Family IDs --}}
+                {{-- Household & Family refs --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">
-                            Household ID
+                            Household Reference
                             <span class="text-slate-400 font-normal ml-1">(optional — link to existing)</span>
                         </label>
                         <div class="relative">
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input aria-label="e.g. HH-2024-001"
+                            <input aria-label="e.g. HH-2026-0001"
                                 type="text"
-                                x-model="form.household_id"
-                                placeholder="e.g. HH-2024-001"
+                                x-model="form.household_ref"
+                                placeholder="e.g. HH-2026-0001"
                                 class="w-full pl-9 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             />
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="family-id-optional">
-                            Family ID
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="family-ref-optional">
+                            Family Reference
                             <span class="text-slate-400 font-normal ml-1">(optional)</span>
                         </label>
-                        <input id="family-id-optional"
+                        <input id="family-ref-optional"
                             type="text"
-                            x-model="form.family_id"
-                            placeholder="e.g. FAM-2024-001"
+                            x-model="form.family_ref"
+                            placeholder="e.g. FAM-2026-0001"
                             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         />
                     </div>
@@ -692,11 +673,13 @@
                 {{-- Save Resident (step 3) --}}
                 <button
                     x-show="addIndividualStep === 3"
+                    :disabled="submitting"
                     @click="submitForm()"
-                    class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm"
+                    class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-60 transition-colors shadow-sm"
                 >
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    Save Resident
+                    <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting"></i>
+                    <i data-lucide="save" class="w-4 h-4" x-show="!submitting"></i>
+                    <span x-text="submitting ? 'Saving…' : 'Save Resident'"></span>
                 </button>
             </div>
 

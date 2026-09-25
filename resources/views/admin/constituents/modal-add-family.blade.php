@@ -4,13 +4,14 @@
 <div x-data="{
     get open() { return showAddFamily },
     set open(v) { showAddFamily = v },
+    submitting: false,
     form: {
         surname: '',
         family_type: 'Nuclear',
         barangay: '',
         sitio: '',
         head_name: '',
-        household_id: '',
+        household_ref: '',
         notes: '',
         programs: []
     },
@@ -22,12 +23,19 @@
         }
         return true
     },
-    saveFamily() {
-        // Dispatch success toast and close
-        this.$dispatch('toast', { message: 'Family record saved successfully.', type: 'success' })
-        showAddFamily = false
-        addFamilyStep = 1
-        this.form = { surname: '', family_type: 'Nuclear', barangay: '', sitio: '', head_name: '', household_id: '', notes: '', programs: [] }
+    async saveFamily() {
+        if (this.submitting) return;
+        this.submitting = true;
+        try {
+            const res = await $api.post('/admin/families', this.form);
+            this.families.push(res.data);
+            this.$dispatch('toast', { message: 'Family record saved successfully.', variant: 'success' });
+            showAddFamily = false;
+            addFamilyStep = 1;
+            this.form = { surname: '', family_type: 'Nuclear', barangay: '', sitio: '', head_name: '', household_ref: '', notes: '', programs: [] };
+        } catch (err) {
+            this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not create this family.', variant: 'error' });
+        } finally { this.submitting = false; }
     }
 }">
 <x-ui.modal maxWidth="xl" :fullscreen="true">
@@ -157,7 +165,7 @@
                     </div>
                 </div>
 
-                {{-- Head of Family + Household ID --}}
+                {{-- Head of Family + Household reference --}}
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="head-of-family">Head of Family</label>
@@ -167,13 +175,14 @@
                             placeholder="Full name of head"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         />
+                        <p class="text-[10.5px] text-slate-400 mt-1">If they aren't already a resident on file, a new resident record is created for them.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="link-to-household-id-optional">Link to Household ID <span class="text-slate-400 font-normal">(optional)</span></label>
-                        <input id="link-to-household-id-optional"
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="link-to-household-ref-optional">Link to Household <span class="text-slate-400 font-normal">(optional)</span></label>
+                        <input id="link-to-household-ref-optional"
                             type="text"
-                            x-model="form.household_id"
-                            placeholder="e.g. 1042"
+                            x-model="form.household_ref"
+                            placeholder="e.g. HH-2026-0001"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         />
                     </div>
@@ -252,11 +261,13 @@
 
             <button
                 x-show="addFamilyStep === 2"
+                :disabled="submitting"
                 @click="saveFamily()"
-                class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
             >
-                <i data-lucide="save" class="w-4 h-4"></i>
-                Save Family
+                <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting"></i>
+                <i data-lucide="save" class="w-4 h-4" x-show="!submitting"></i>
+                <span x-text="submitting ? 'Saving…' : 'Save Family'"></span>
             </button>
         </div>
 

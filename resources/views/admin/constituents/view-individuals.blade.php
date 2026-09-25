@@ -15,10 +15,6 @@
             <span class="font-semibold text-navy-900" x-text="individuals.length"></span>
             residents
         </p>
-        <div class="flex items-center gap-2 text-xs text-slate-400">
-            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-            <span>Last synced: just now</span>
-        </div>
     </div>
 
     {{-- ── Table card ── --}}
@@ -38,9 +34,6 @@
                     <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Verification
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">
-                        Profile
-                    </th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Status
                     </th>
@@ -54,7 +47,7 @@
                 {{-- ── Empty state ── --}}
                 <template x-if="filteredIndividuals.length === 0">
                     <tr>
-                        <td colspan="7" class="py-16 px-4 text-center">
+                        <td colspan="6" class="py-16 px-4 text-center">
                             <x-ui.empty-state
                                 icon="users"
                                 title="No residents found"
@@ -75,11 +68,11 @@
                 </template>
 
                 {{-- ── Individual rows ── --}}
-                <template x-for="r in filteredIndividuals" :key="r.id">
+                <template x-for="r in filteredIndividuals" :key="r.ref">
                     <tr
                         class="hover:bg-slate-50/70 transition-colors cursor-pointer group"
                         @click="openIndividual(r)"
-                    
+
         tabindex="0"
         @keydown.enter.prevent="openIndividual(r)"
         @keydown.space.prevent="openIndividual(r)">
@@ -88,10 +81,7 @@
                         <td class="px-4 py-3">
                             <div class="flex items-start gap-3 min-w-0">
                                 <div class="flex-shrink-0 relative">
-                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 overflow-hidden">
-                                        <img x-show="r.citizen_account?.photo_asset" :src="r.citizen_account?.photo_asset" class="w-full h-full object-cover" :alt="r.name">
-                                        <span x-show="!r.citizen_account?.photo_asset" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
-                                    </div>
+                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     {{-- Sex indicator dot --}}
                                     <span
                                         class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center text-white"
@@ -105,10 +95,8 @@
                                         x-text="r.name"
                                     ></p>
                                     <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                                        <span x-text="'ID: ' + r.id"></span>
-                                        <i x-show="r.citizen_account_id" data-lucide="smartphone" class="w-3 h-3 text-brand-500" title="Linked to Citizen Portal account"></i>
-                                        <i x-show="r.citizen_account?.identity_check?.face_match === 'Mismatch'" data-lucide="triangle-alert" class="w-3 h-3 text-rose-500" title="Face-match flagged — selfie doesn't match uploaded ID"></i>
-                                        <i x-show="(r.identity_flags || []).length" data-lucide="shield-alert" class="w-3 h-3 text-amber-500" title="Identity review recommended — see profile for details"></i>
+                                        <span x-text="'ID: ' + r.ref"></span>
+                                        <i x-show="r.citizen_account" data-lucide="smartphone" class="w-3 h-3 text-brand-500" title="Linked to Citizen Portal account"></i>
                                     </p>
                                     {{-- Tag chips --}}
                                     <div class="flex flex-wrap gap-1 mt-1.5">
@@ -146,10 +134,10 @@
                         <td class="px-4 py-3 hidden 2xl:table-cell">
                             <div class="min-w-0">
                                 <p class="text-xs text-slate-600 font-medium">
-                                    HH: <span class="text-slate-800 font-semibold" x-text="r.household_id || '—'"></span>
+                                    HH: <span class="text-slate-800 font-semibold" x-text="r.household?.ref || '—'"></span>
                                 </p>
                                 <p class="text-xs text-slate-400 mt-0.5">
-                                    Fam: <span x-text="r.family_id || '—'"></span>
+                                    Fam: <span x-text="r.family?.ref || '—'"></span>
                                 </p>
                                 <p
                                     class="text-[10px] font-semibold uppercase text-slate-500 mt-1 bg-slate-100 rounded px-1 py-0.5 inline-block"
@@ -186,24 +174,6 @@
                             </span>
                         </td>
 
-                        {{-- Profile completion --}}
-                        <td class="px-4 py-3 hidden 2xl:table-cell">
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                    <div
-                                        class="h-full rounded-full transition-all duration-[600ms] ease-standard"
-                                        :class="completionColor(r.profile_pct)"
-                                        :style="'width:' + r.profile_pct + '%'"
-                                    ></div>
-                                </div>
-                                <span
-                                    class="text-xs font-semibold tabular-nums"
-                                    :class="completionTextColor(r.profile_pct)"
-                                    x-text="r.profile_pct + '%'"
-                                ></span>
-                            </div>
-                        </td>
-
                         {{-- Status badge --}}
                         <td class="px-4 py-3">
                             <span
@@ -222,13 +192,6 @@
                                     class="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 >
                                     <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button
-                                    @click="$dispatch('toast', {message: 'Edit resident feature coming soon.', type: 'info'})"
-                                    title="Edit resident"
-                                    class="p-1.5 rounded-md text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                                >
-                                    <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </td>

@@ -28,13 +28,12 @@
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Individual ─────────────────────────────────── --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4" x-show="cvType === 'Individual'">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4" x-show="cvType === 'Individual'">
         <x-ui.stat-card @click="cvStatusFilter = 'Pending Review'" class="cursor-pointer" label="Pending Review" valueBind="cvCounts.pending" icon="clock" color="orange" :delay="0" />
         <x-ui.stat-card @click="cvStatusFilter = 'Under Verification'" class="cursor-pointer" label="Under Verification" valueBind="cvCounts.underVerification" icon="search" color="brand" :delay="75" />
         <x-ui.stat-card @click="cvStatusFilter = 'Approved'" class="cursor-pointer" label="Approved" valueBind="cvCounts.verified" icon="badge-check" color="green" :delay="150" />
         <x-ui.stat-card @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvCounts.rejected" icon="circle-x" color="red" :delay="225" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Flagged'" class="cursor-pointer" label="Identity Flagged" valueBind="cvCounts.flagged" icon="shield-alert" color="gold" :delay="300" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Not Registered'" class="cursor-pointer" label="Not Registered" sublabel="Notified, not yet signed up" valueBind="cvCounts.notRegistered" icon="user-round-x" color="slate" :delay="375" />
+        <x-ui.stat-card @click="cvStatusFilter = 'Not Registered'" class="cursor-pointer" label="Not Registered" sublabel="No Citizen Portal account on file" valueBind="cvCounts.notRegistered" icon="user-round-x" color="slate" :delay="300" />
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Family ─────────────────────────────────────── --}}
@@ -79,8 +78,8 @@
                 >
                     <option value="">All Statuses</option>
                     <template x-if="cvType === 'Individual'">
-                        <template x-for="s in ['Pending Review', 'Under Verification', 'Approved', 'Rejected', 'Flagged', 'Not Registered']" :key="s">
-                            <option :value="s" x-text="s === 'Flagged' ? 'Identity Flagged' : s"></option>
+                        <template x-for="s in ['Pending Review', 'Under Verification', 'Approved', 'Rejected', 'Not Registered']" :key="s">
+                            <option :value="s" x-text="s"></option>
                         </template>
                     </template>
                     <template x-if="cvType !== 'Individual'">
@@ -207,44 +206,23 @@
                             </td>
                         </tr>
                     </template>
-                    <template x-for="i in filteredCitizenAccounts" :key="i.id">
+                    <template x-for="i in filteredCitizenAccounts" :key="i.ref">
                         <tr @click="openIndividual(i)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
         tabindex="0"
         @keydown.enter.prevent="openIndividual(i)"
         @keydown.space.prevent="openIndividual(i)">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
-                                    <span class="relative shrink-0">
-                                        <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold text-xs ring-2 ring-white shadow-sm overflow-hidden">
-                                            <img x-show="i.citizen_account?.photo_asset" :src="i.citizen_account?.photo_asset" class="w-full h-full object-cover" :alt="i.name">
-                                            <span x-show="!i.citizen_account?.photo_asset" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
-                                        </span>
-                                        <span
-                                            x-show="i.citizen_account?.identity_check?.face_match === 'Mismatch'"
-                                            x-cloak
-                                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-rose-500 ring-2 ring-white flex items-center justify-center"
-                                            title="Face-match flagged — selfie doesn't match uploaded ID"
-                                        >
-                                            <i data-lucide="triangle-alert" class="w-2 h-2 text-white"></i>
-                                        </span>
-                                        <span
-                                            x-show="i.citizen_account?.identity_check?.face_match !== 'Mismatch' && (i.identity_flags || []).length"
-                                            x-cloak
-                                            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 ring-2 ring-white flex items-center justify-center"
-                                            title="Identity review recommended — see profile for details"
-                                        >
-                                            <i data-lucide="shield-alert" class="w-2 h-2 text-white"></i>
-                                        </span>
-                                    </span>
+                                    <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold text-xs ring-2 ring-white shadow-sm shrink-0" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="i.name"></p>
                                         <p class="text-xs text-slate-400 truncate" x-text="i.citizen_account ? i.citizen_account.email : 'Not registered on Citizen Portal'"></p>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap hidden xl:table-cell" x-text="i.id"></td>
+                            <td class="px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap hidden xl:table-cell" x-text="i.ref"></td>
                             <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell" x-text="'Brgy. ' + i.barangay"></td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell" x-text="i.citizen_account?.registered_at || '—'"></td>
+                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell" x-text="i.citizen_account?.registered_at ? new Date(i.citizen_account.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'"></td>
                             <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
                                 <div class="flex items-center gap-2" x-show="i.citizen_account">
                                     <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden shrink-0">
@@ -330,7 +308,6 @@
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head of Family</th>
                         <th class="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Members</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Profile</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Verification</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                     </tr>
@@ -338,12 +315,12 @@
                 <tbody class="divide-y divide-slate-50 bg-white">
                     <template x-if="filteredCvFamilies.length === 0">
                         <tr>
-                            <td colspan="7" class="py-16 px-4 text-center">
+                            <td colspan="6" class="py-16 px-4 text-center">
                                 <x-ui.empty-state icon="users-round" title="No families match this search." />
                             </td>
                         </tr>
                     </template>
-                    <template x-for="f in filteredCvFamilies" :key="f.id">
+                    <template x-for="f in filteredCvFamilies" :key="f.ref">
                         <tr @click="openFamily(f)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
         tabindex="0"
         @keydown.enter.prevent="openFamily(f)"
@@ -353,7 +330,7 @@
                                     <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold shrink-0 text-xs text-blue-700 ring-2 ring-white shadow-sm" x-text="(f.surname || '').substring(0,2).toUpperCase()"></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="f.label"></p>
-                                        <p class="text-xs text-slate-400 font-mono truncate" x-text="'#' + f.id"></p>
+                                        <p class="text-xs text-slate-400 font-mono truncate" x-text="f.ref"></p>
                                     </div>
                                 </div>
                             </td>
@@ -361,14 +338,6 @@
                             <td class="px-4 py-3 text-slate-600 whitespace-nowrap hidden xl:table-cell" x-text="f.head_name || '—'"></td>
                             <td class="px-4 py-3 text-center hidden 2xl:table-cell">
                                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold" x-text="f.member_count"></span>
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden shrink-0">
-                                        <div class="h-full rounded-full transition-all" :class="completionColor(f.profile_pct)" :style="'width:' + (f.profile_pct||0) + '%'"></div>
-                                    </div>
-                                    <span class="text-xs text-slate-400" x-text="(f.profile_pct||0) + '%'"></span>
-                                </div>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <span
@@ -382,13 +351,13 @@
                                      a family requires opening the record and reviewing its
                                      members first. --}}
                                 <button
-                                    x-show="f.verification !== 'Verified' && can('const_citizen_verification', 'verify')"
+                                    x-show="f.verification !== 'Verified' && can('const_data_quality', 'verify')"
                                     @click="openFamily(f)"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
-                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openFamily(f)" x-show="f.verification === 'Verified' || !can('const_citizen_verification', 'verify')"
+                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openFamily(f)" x-show="f.verification === 'Verified' || !can('const_data_quality', 'verify')"
         role="button"
         tabindex="0"
         @keydown.enter.prevent="openFamily(f)"
@@ -409,7 +378,6 @@
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head</th>
                         <th class="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Members</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Profile</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Verification</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                     </tr>
@@ -417,12 +385,12 @@
                 <tbody class="divide-y divide-slate-50 bg-white">
                     <template x-if="filteredCvHouseholds.length === 0">
                         <tr>
-                            <td colspan="7" class="py-16 px-4 text-center">
+                            <td colspan="6" class="py-16 px-4 text-center">
                                 <x-ui.empty-state icon="house" title="No households match this search." />
                             </td>
                         </tr>
                     </template>
-                    <template x-for="h in filteredCvHouseholds" :key="h.id">
+                    <template x-for="h in filteredCvHouseholds" :key="h.ref">
                         <tr @click="openHousehold(h)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
         tabindex="0"
         @keydown.enter.prevent="openHousehold(h)"
@@ -432,7 +400,7 @@
                                     <span class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm"><i data-lucide="house" class="w-4 h-4 text-indigo-600"></i></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="h.label"></p>
-                                        <p class="text-xs text-slate-400 font-mono truncate" x-text="'#' + h.id"></p>
+                                        <p class="text-xs text-slate-400 font-mono truncate" x-text="h.ref"></p>
                                     </div>
                                 </div>
                             </td>
@@ -440,14 +408,6 @@
                             <td class="px-4 py-3 text-slate-600 whitespace-nowrap hidden xl:table-cell" x-text="h.head_name || '—'"></td>
                             <td class="px-4 py-3 text-center hidden 2xl:table-cell">
                                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold" x-text="h.member_count"></span>
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden shrink-0">
-                                        <div class="h-full rounded-full transition-all" :class="completionColor(h.profile_pct)" :style="'width:' + (h.profile_pct||0) + '%'"></div>
-                                    </div>
-                                    <span class="text-xs text-slate-400" x-text="(h.profile_pct||0) + '%'"></span>
-                                </div>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <span
@@ -461,13 +421,13 @@
                                      a household requires opening the record and reviewing its
                                      members first. --}}
                                 <button
-                                    x-show="h.verification !== 'Verified' && can('const_citizen_verification', 'verify')"
+                                    x-show="h.verification !== 'Verified' && can('const_data_quality', 'verify')"
                                     @click="openHousehold(h)"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
-                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openHousehold(h)" x-show="h.verification === 'Verified' || !can('const_citizen_verification', 'verify')"
+                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openHousehold(h)" x-show="h.verification === 'Verified' || !can('const_data_quality', 'verify')"
         role="button"
         tabindex="0"
         @keydown.enter.prevent="openHousehold(h)"

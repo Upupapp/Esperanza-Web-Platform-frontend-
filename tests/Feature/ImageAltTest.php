@@ -70,8 +70,13 @@ class ImageAltTest extends TestCase
         }
 
         // Guards the scan itself: if the traversal broke, an empty result would
-        // otherwise read as a clean bill of health.
-        $this->assertGreaterThan(50, $total, 'Found suspiciously few <img> tags -- the scan has probably broken.');
+        // otherwise read as a clean bill of health. Lowered from 50 to 40 when
+        // admin/constituents/modal-individual-detail.blade.php was cut from
+        // 2,202 to ~370 lines: most of what it removed was a gallery of
+        // synthetic ID-scan/selfie <img> tags built around identity-review
+        // data (per-signal face-match state, verified_ids) that no backend
+        // endpoint actually returns -- a real content drop, not a broken scan.
+        $this->assertGreaterThan(40, $total, 'Found suspiciously few <img> tags -- the scan has probably broken.');
 
         sort($missing);
 
