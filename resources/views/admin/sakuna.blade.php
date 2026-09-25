@@ -17,8 +17,8 @@
     // ── Barangays ────────────────────────────────────────────────────────────
     $barangays = config('esperanza.barangays');
 
-    // ── Vulnerability profiles ────────────────────────────────────────────────
-    $vulnerabilityProfiles = $__fixtures['vulnerabilityProfiles'];
+    // Vulnerability now loads from GET /sakuna/vulnerability -- the
+    // vulnerabilityProfiles fixture key is no longer read by anything.
 
     // ── Incidents ────────────────────────────────────────────────────────────
     $incidents = $__fixtures['incidents'];
@@ -103,6 +103,93 @@
         vulReadinessFilter: '',
         selectedBarangayVul: null,
         showVulDetail: false,
+        vulProfiles: [],
+        vulLoading: true,
+        vulFailed: false,
+        showVulForm: false,
+        vulFormMode: 'create',
+        vulSaving: false,
+        vulForm: { ref: null, barangay: '', population: '', households: '', vulnerable: '', hazards: [], exposed: '', evac_cap: '', readiness_score: '', completeness: '', last_assessed: '', focal: '', notes: '' },
+        // GET /sakuna/vulnerability (SakunaVulnerabilityAssessment via SakunaFormsController).
+        async loadVulnerability() {
+            this.vulLoading = true;
+            this.vulFailed = false;
+            try {
+                const res = await $api.get('/sakuna/vulnerability', { params: { per_page: 100 } });
+                this.vulProfiles = res.data || [];
+            } catch { this.vulFailed = true; } finally { this.vulLoading = false; }
+        },
+        // readiness_score (0-100) is the only real field -- there is no stored
+        // categorical label. Derived client-side with the same thresholds the
+        // score's own color-coding already uses.
+        readinessLabel(score) {
+            if (score === null || score === undefined) return 'Not Assessed';
+            if (score >= 70) return 'Ready';
+            if (score >= 50) return 'Needs Improvement';
+            return 'Major Gaps';
+        },
+        resetVulForm() {
+            this.vulForm = { ref: null, barangay: '', population: '', households: '', vulnerable: '', hazards: [], exposed: '', evac_cap: '', readiness_score: '', completeness: '', last_assessed: '', focal: '', notes: '' };
+        },
+        openVulCreate() {
+            this.resetVulForm();
+            this.vulFormMode = 'create';
+            this.showVulForm = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        openVulEdit(p) {
+            this.vulForm = { ref: p.ref, barangay: p.barangay, population: p.population ?? '', households: p.households ?? '', vulnerable: p.vulnerable ?? '', hazards: [...(p.hazards || [])], exposed: p.exposed ?? '', evac_cap: p.evac_cap ?? '', readiness_score: p.readiness_score ?? '', completeness: p.completeness ?? '', last_assessed: p.last_assessed || '', focal: p.focal || '', notes: p.notes || '' };
+            this.vulFormMode = 'edit';
+            this.showVulForm = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        toggleVulFormHazard(h) {
+            this.vulForm.hazards = this.vulForm.hazards.includes(h)
+                ? this.vulForm.hazards.filter(x => x !== h)
+                : [...this.vulForm.hazards, h];
+        },
+        async saveVulnerability() {
+            if (this.vulSaving) return;
+            this.vulSaving = true;
+            const payload = { ...this.vulForm };
+            delete payload.ref;
+            ['population', 'households', 'vulnerable', 'exposed', 'evac_cap', 'readiness_score', 'completeness'].forEach(k => {
+                payload[k] = payload[k] === '' ? null : Number(payload[k]);
+            });
+            if (!payload.last_assessed) delete payload.last_assessed;
+            try {
+                const res = this.vulFormMode === 'create'
+                    ? await $api.post('/sakuna/vulnerability', payload)
+                    : await $api.put('/sakuna/vulnerability/' + this.vulForm.ref, payload);
+                const idx = this.vulProfiles.findIndex(p => p.ref === res.data.ref);
+                if (idx !== -1) this.vulProfiles[idx] = res.data; else this.vulProfiles.push(res.data);
+                if (this.selectedBarangayVul?.ref === res.data.ref) this.selectedBarangayVul = res.data;
+                this.showVulForm = false;
+                this.toast(this.vulFormMode === 'create' ? 'Assessment recorded.' : 'Assessment updated.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not save this assessment.', 'error');
+            } finally { this.vulSaving = false; }
+        },
+        async approveVulnerabilityAssessment(p) {
+            try {
+                const res = await $api.post('/sakuna/vulnerability/' + p.ref + '/approve', {});
+                Object.assign(p, res.data);
+                if (this.selectedBarangayVul?.ref === p.ref) this.selectedBarangayVul = { ...this.selectedBarangayVul, ...res.data };
+                this.toast(p.barangay + "'s assessment approved.", 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not approve this assessment.', 'error');
+            }
+        },
+        // Reused by any tab that wants a plain client-side CSV of already-loaded
+        // real rows -- same one-liner already established for Constituents/Papeles.
+        exportCSV(rows, filename) {
+            if (!rows.length) { this.toast('No records to export.', 'warning'); return; }
+            const keys = Object.keys(rows[0]).filter(k => !Array.isArray(rows[0][k]) && typeof rows[0][k] !== 'object');
+            const csv = [keys.join(','), ...rows.map(r => keys.map(k => JSON.stringify(r[k] ?? '')).join(','))].join('\n');
+            const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })), download: filename });
+            a.click();
+            this.toast('Exported successfully.', 'success');
+        },
 
         // Centers tab state
         centerSearch: '',
@@ -351,6 +438,12 @@
         toast(message, variant = 'success') {
             this.$dispatch('toast', { message, variant });
         },
+        // Sakuna's submodule keys vary per tab (sakuna_vulnerability,
+        // sakuna_incidents, ...), so this takes both rather than being a
+        // single-submodule wrapper like other admin screens' own can().
+        can(submodule, action) {
+            return this.$store.session.canPerm ? this.$store.session.canPerm(submodule, action) : true;
+        },
     }"
     x-init="
         setTimeout(() => { ready = true; $nextTick(() => window.renderIcons?.()); }, 600);
@@ -465,7 +558,8 @@
             {{-- Vulnerability --}}
             @if($activeTab === 'vulnerability')
             <div>
-                @include('admin.partials.sakuna.tab-vulnerability', ['profiles' => $vulnerabilityProfiles, 'barangays' => $barangays])
+                {{-- Loads its own data from GET /sakuna/vulnerability; $barangays is real, static reference data. --}}
+                @include('admin.partials.sakuna.tab-vulnerability', ['barangays' => $barangays])
             </div>
             @endif
 
