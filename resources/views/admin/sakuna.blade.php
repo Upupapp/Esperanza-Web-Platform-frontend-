@@ -39,8 +39,8 @@
     // Damage now loads from GET /sakuna/damage -- the fixture key is no
     // longer read by anything.
 
-    // ── Alerts ────────────────────────────────────────────────────────────────
-    $alerts = $__fixtures['alerts'];
+    // Alerts now loads from GET /sakuna/alerts -- the fixture key is no
+    // longer read by anything.
 @endphp
 
 <x-layouts.admin
@@ -695,7 +695,121 @@
         selectedAlert: null,
         showAlertDetail: false,
         showCreateAlert: false,
-        alertComposerStep: 1,
+        showCancelAlert: false,
+        alertsList: [],
+        alertsLoading: true,
+        alertsFailed: false,
+        alertFormMode: 'create',
+        alertSaving: false,
+        alertForm: { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'] },
+        cancelReason: '',
+        cancelSaving: false,
+        // GET /sakuna/alerts -- the real channel vocabulary is exactly
+        // in_app/sms/email (AlertService::publish()'s own channel match);
+        // the mock's SMS/Mobile Push/Barangay Notification/Portal Banner/
+        // Social Media list was never real. target_barangays is the only
+        // real audience axis -- there is no demographic/occupational
+        // "target group" concept (All Residents/Farmers/PWD Households/etc.)
+        // anywhere in the schema.
+        async loadAlerts() {
+            this.alertsLoading = true;
+            this.alertsFailed = false;
+            try {
+                const res = await $api.get('/sakuna/alerts', { params: { per_page: 100 } });
+                this.alertsList = res.data || [];
+            } catch { this.alertsFailed = true; } finally { this.alertsLoading = false; }
+        },
+        // type has no fixed vocabulary on the backend (a plain string column)
+        // -- offered as suggestions from what is actually in use, the same
+        // treatment Resources' category and Damage's sector already get.
+        alertTypes() {
+            return [...new Set(this.alertsList.map(a => a.type).filter(Boolean))].sort();
+        },
+        resetAlertForm() {
+            this.alertForm = { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'] };
+        },
+        openCreateAlert() {
+            this.resetAlertForm();
+            this.alertFormMode = 'create';
+            this.showCreateAlert = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        openEditAlert(a) {
+            this.alertForm = { ref: a.ref, type: a.type, level: a.level, title_fil: a.title?.fil || '', title_en: a.title?.en || '', body_fil: a.body?.fil || '', body_en: a.body?.en || '', target_barangays: [...(a.barangays || [])], channels: [...(a.channels || ['in_app'])] };
+            this.alertFormMode = 'edit';
+            this.showCreateAlert = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        toggleAlertFormBarangay(b) {
+            this.alertForm.target_barangays = this.alertForm.target_barangays.includes(b)
+                ? this.alertForm.target_barangays.filter(x => x !== b)
+                : [...this.alertForm.target_barangays, b];
+        },
+        toggleAlertFormChannel(c) {
+            this.alertForm.channels = this.alertForm.channels.includes(c)
+                ? this.alertForm.channels.filter(x => x !== c)
+                : [...this.alertForm.channels, c];
+        },
+        async saveAlert() {
+            if (this.alertSaving || !this.alertForm.type || !this.alertForm.level || !this.alertForm.title_fil || !this.alertForm.title_en || !this.alertForm.body_fil || !this.alertForm.body_en) return;
+            this.alertSaving = true;
+            const payload = { type: this.alertForm.type, level: this.alertForm.level, title_fil: this.alertForm.title_fil, title_en: this.alertForm.title_en, body_fil: this.alertForm.body_fil, body_en: this.alertForm.body_en, target_barangays: this.alertForm.target_barangays, channels: this.alertForm.channels };
+            try {
+                const res = this.alertFormMode === 'create'
+                    ? await $api.post('/sakuna/alerts', payload)
+                    : await $api.put('/sakuna/alerts/' + this.alertForm.ref, payload);
+                const idx = this.alertsList.findIndex(a => a.ref === res.data.ref);
+                if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data }; else this.alertsList.unshift(res.data);
+                if (this.selectedAlert?.ref === res.data.ref) this.selectedAlert = { ...this.selectedAlert, ...res.data };
+                this.showCreateAlert = false;
+                this.toast(this.alertFormMode === 'create' ? res.data.ref + ' drafted.' : 'Alert updated.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not save this alert.', 'error');
+            } finally { this.alertSaving = false; }
+        },
+        // The list row has no body text; the detail fetch adds the real
+        // bilingual message, never read back by anything before this.
+        async openAlertDetail(row) {
+            this.selectedAlert = row;
+            this.showAlertDetail = true;
+            this.$nextTick(() => window.renderIcons?.());
+            try {
+                const res = await $api.get('/sakuna/alerts/' + row.ref);
+                this.selectedAlert = { ...row, ...res.data };
+            } catch { /* keep the list row's fields if the detail fetch fails */ }
+        },
+        // Recipients are materialised at publish time -- the same real
+        // rows a cancellation later has to reach exactly.
+        async publishAlert(a) {
+            try {
+                const res = await $api.post('/sakuna/alerts/' + a.ref + '/publish', {});
+                const idx = this.alertsList.findIndex(x => x.ref === res.data.ref);
+                if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data };
+                if (this.selectedAlert?.ref === res.data.ref) this.selectedAlert = { ...this.selectedAlert, ...res.data };
+                this.toast(a.ref + ' published to ' + res.data.recipients + ' recipient(s).', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not publish this alert.', 'error');
+            }
+        },
+        openCancelAlert(a) {
+            this.selectedAlert = a;
+            this.cancelReason = '';
+            this.showCancelAlert = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        async submitCancelAlert() {
+            if (this.cancelSaving || !this.cancelReason.trim()) return;
+            this.cancelSaving = true;
+            try {
+                const res = await $api.post('/sakuna/alerts/' + this.selectedAlert.ref + '/cancel', { reason: this.cancelReason });
+                const idx = this.alertsList.findIndex(x => x.ref === res.data.ref);
+                if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data };
+                this.showCancelAlert = false;
+                this.toast('Cancellation reached ' + res.data.cancellation_reached + ' recipient(s).', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not cancel this alert.', 'error');
+            } finally { this.cancelSaving = false; }
+        },
 
         // Command center state
         showEOCConfirm: false,
@@ -859,6 +973,9 @@
                 'Under Verification': 'bg-indigo-100 text-indigo-700',
                 'Processing': 'bg-orange-100 text-orange-700',
                 'Completed': 'bg-emerald-100 text-emerald-700',
+                // The real value AlertService::publish() sets -- distinct
+                // from the fake vocabulary's own unrelated 'Published' above.
+                'Released': 'bg-emerald-100 text-emerald-700',
             };
             return (map[st] || 'bg-slate-100 text-slate-600') + ' px-2.5 py-0.5 rounded-full text-xs font-medium';
         },
@@ -1074,7 +1191,7 @@
             {{-- Alerts --}}
             @if($activeTab === 'alerts')
             <div>
-                @include('admin.partials.sakuna.tab-alerts', ['alerts' => $alerts, 'barangays' => $barangays])
+                @include('admin.partials.sakuna.tab-alerts', ['barangays' => $barangays])
             </div>
             @endif
 
