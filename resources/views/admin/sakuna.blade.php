@@ -163,8 +163,73 @@
 
         // Command center state
         showEOCConfirm: false,
-        showDecisionModal: false,
-        selectedDecision: null,
+        // Shaped with real empty defaults, not null: the content wrapper below
+        // is only display:none while loading, not removed from the DOM, so
+        // Alpine still evaluates its bindings against this before the fetch
+        // resolves. A null here would throw on every nested field access.
+        commandBoard: {
+            counts: { incidents_open: 0, incidents_total: 0, centers_open: 0, families_sheltered: 0, individuals_sheltered: 0, relief_released: 0, damage_reports: 0, alerts_live: 0 },
+            markers: [], centers: [], feed: [], alerts: [], resources: [],
+        },
+        commandLoading: true,
+        commandFailed: false,
+        priorityIncidents: [],
+        personnel: [],
+        showEscalateForm: false,
+        showAssignForm: false,
+        escalateSeverity: 'High',
+        escalateNote: '',
+        assignTo: '',
+
+        // GET /sakuna/command-center (CommandCenter::board -- a read-only
+        // projection over everything else) plus the real incidents list for
+        // a true severity-ranked priority queue, which the projection itself
+        // doesn't provide (its own `markers` are only incidents with lat/lng).
+        async loadCommandCenter() {
+            this.commandLoading = true;
+            this.commandFailed = false;
+            try {
+                const [board, incidents, personnel] = await Promise.all([
+                    $api.get('/sakuna/command-center'),
+                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }),
+                    $api.get('/admin/users', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                ]);
+                this.commandBoard = board.data;
+                const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+                this.priorityIncidents = (incidents.data || [])
+                    .filter(i => i.status !== 'Archived')
+                    .sort((a, b) => (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9))
+                    .slice(0, 6);
+                this.personnel = personnel.data || [];
+            } catch { this.commandFailed = true; } finally { this.commandLoading = false; }
+        },
+        async openIncidentDetail(row) {
+            this.selectedIncident = row;
+            this.showIncidentDetail = true;
+            this.showEscalateForm = false;
+            this.showAssignForm = false;
+            this.$nextTick(() => window.renderIcons?.());
+            // The list row is lean; the detail fetch adds description/timeline.
+            try {
+                const res = await $api.get('/sakuna/incidents/' + row.ref);
+                this.selectedIncident = { ...row, ...res.data };
+            } catch { /* keep the list row's fields if the detail fetch fails */ }
+        },
+        // One method for every verb in the chain (validate/assign/dispatch/
+        // escalate/resolve/close) -- the verb IS the permission on the backend
+        // too, so this mirrors that exactly rather than having six near-copies.
+        async actIncidentVerb(inc, verb, payload = {}) {
+            try {
+                const res = await $api.post('/sakuna/incidents/' + inc.ref + '/' + verb, payload);
+                Object.assign(inc, res.data);
+                if (this.selectedIncident?.ref === inc.ref) this.selectedIncident = { ...this.selectedIncident, ...res.data };
+                this.showEscalateForm = false;
+                this.showAssignForm = false;
+                this.toast(inc.ref + ' ' + verb + 'd.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not ' + verb + ' this incident.', 'error');
+            }
+        },
 
         // Reports tab
         reportBarangayFilter: '',
@@ -392,7 +457,8 @@
             {{-- Command Center --}}
             @if($activeTab === 'command-center')
             <div>
-                @include('admin.partials.sakuna.tab-command', ['incidents' => $incidents, 'centers' => $centers, 'resources' => $resources])
+                {{-- Loads its own data from GET /sakuna/command-center + /sakuna/incidents; no fixture variables needed. --}}
+                @include('admin.partials.sakuna.tab-command')
             </div>
             @endif
 
@@ -481,14 +547,14 @@
                     <i data-lucide="siren" class="w-6 h-6 text-rose-600"></i>
                 </div>
                 <div>
-                    <h3 class="text-base font-semibold text-slate-800">Activate Emergency Operations Center</h3>
-                    <p class="text-sm text-slate-500">This is a high-impact action. Please confirm.</p>
+                    <h3 class="text-base font-semibold text-slate-800">Set Operational Status</h3>
+                    <p class="text-sm text-slate-500">This changes the banner shown in your own browser only.</p>
                 </div>
             </div>
-            <p class="text-sm text-slate-600 mb-5">Activating the EOC will notify all department heads, MDRRMO personnel, and partner agencies. An EOC activation log will be recorded with your credentials and timestamp.</p>
+            <p class="text-sm text-slate-600 mb-5">There is no backend notion of an "operational status" yet — no notification, log entry, or record is created anywhere by this. It changes what this banner reads, for you, until you reload the page.</p>
             <div class="flex gap-3">
                 <button @click="showEOCConfirm = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
-                <button @click="showEOCConfirm = false; opStatus = 'Emergency Operations Activated'; toast('EOC activated. All department heads notified.', 'success'); $nextTick(() => window.renderIcons?.())" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors">Confirm Activation</button>
+                <button @click="showEOCConfirm = false; opStatus = 'Emergency Operations Activated'; toast('Operational status set. This is a local display setting only — nobody was notified.', 'warning'); $nextTick(() => window.renderIcons?.())" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors">Set Status</button>
             </div>
         </div>
     </div>
