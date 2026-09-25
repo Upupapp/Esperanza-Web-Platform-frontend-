@@ -47,7 +47,7 @@
                     $api.get('/admin/residents', { params: { per_page: 100 } }),
                     $api.get('/admin/households', { params: { per_page: 100 } }),
                     $api.get('/admin/families', { params: { per_page: 100 } }),
-                    // A citizen-verification queue's "Not Registered" bucket needs
+                    // A citizen-verification queue's 'Not Registered' bucket needs
                     // every resident, so this joins onto individuals below rather
                     // than driving its own separate list.
                     $api.get('/admin/citizens', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
