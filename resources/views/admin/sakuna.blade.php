@@ -36,8 +36,8 @@
     // longer read by anything. There never was a real inventory/requests/
     // donations model behind those parts of the mock (see tab-relief.blade.php).
 
-    // ── Damage Assessments ───────────────────────────────────────────────────
-    $assessments = $__fixtures['assessments'];
+    // Damage now loads from GET /sakuna/damage -- the fixture key is no
+    // longer read by anything.
 
     // ── Alerts ────────────────────────────────────────────────────────────────
     $alerts = $__fixtures['alerts'];
@@ -598,12 +598,94 @@
 
         // Damage tab state
         damageSearch: '',
-        damageTypeFilter: '',
-        damageStatusFilter: '',
         damageBarangayFilter: '',
+        damageSectorFilter: '',
         selectedAssessment: null,
         showAssessmentDetail: false,
         showCreateAssessment: false,
+        damagesList: [],
+        damagesLoading: true,
+        damagesFailed: false,
+        damageFormMode: 'create',
+        damageSaving: false,
+        damageForm: { ref: null, barangay: '', sector: '', units_affected: '', estimated_cost: '', notes: '', incident_id: '', photoFile: null },
+        damageIncidentsOpen: [],
+        // GET /sakuna/damage -- SakunaDamageAssessment has no `type` enum, no
+        // assessor name, no priority-needs list and no Population/Housing/
+        // Infrastructure/Agriculture/Financial breakdown; see
+        // tab-damage.blade.php's header for what that means for the UI.
+        async loadDamage() {
+            this.damagesLoading = true;
+            this.damagesFailed = false;
+            try {
+                const [res, incidents] = await Promise.all([
+                    $api.get('/sakuna/damage', { params: { per_page: 100 } }),
+                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                ]);
+                this.damagesList = res.data || [];
+                this.damageIncidentsOpen = incidents.data || [];
+            } catch { this.damagesFailed = true; } finally { this.damagesLoading = false; }
+        },
+        damageSectors() {
+            return [...new Set(this.damagesList.map(d => d.sector).filter(Boolean))].sort();
+        },
+        resetDamageForm() {
+            this.damageForm = { ref: null, barangay: '', sector: '', units_affected: '', estimated_cost: '', notes: '', incident_id: '', photoFile: null };
+        },
+        openCreateAssessment() {
+            this.resetDamageForm();
+            this.damageFormMode = 'create';
+            this.showCreateAssessment = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        openEditAssessment(d) {
+            this.damageForm = { ref: d.ref, barangay: d.barangay, sector: d.sector, units_affected: d.units_affected ?? '', estimated_cost: d.estimated_cost ?? '', notes: d.notes || '', incident_id: '', photoFile: null };
+            this.damageFormMode = 'edit';
+            this.showCreateAssessment = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        // PHP never populates a multipart body's fields on a true PUT request
+        // (only POST) -- sent as POST with Laravel's own _method override on
+        // edit, the same workaround already established for admin banners.
+        async saveDamage() {
+            if (this.damageSaving || !this.damageForm.barangay || !this.damageForm.sector) return;
+            this.damageSaving = true;
+            const body = new FormData();
+            body.append('barangay', this.damageForm.barangay);
+            body.append('sector', this.damageForm.sector);
+            if (this.damageForm.units_affected !== '') body.append('units_affected', this.damageForm.units_affected);
+            if (this.damageForm.estimated_cost !== '') body.append('estimated_cost', this.damageForm.estimated_cost);
+            if (this.damageForm.notes) body.append('notes', this.damageForm.notes);
+            if (this.damageForm.incident_id) body.append('incident_id', this.damageForm.incident_id);
+            if (this.damageForm.photoFile) body.append('photo', this.damageForm.photoFile);
+            try {
+                let res;
+                if (this.damageFormMode === 'create') {
+                    res = await $api.post('/sakuna/damage', body);
+                } else {
+                    body.append('_method', 'PUT');
+                    res = await $api.post('/sakuna/damage/' + this.damageForm.ref, body);
+                }
+                const idx = this.damagesList.findIndex(d => d.ref === res.data.ref);
+                if (idx !== -1) this.damagesList[idx] = { ...this.damagesList[idx], ...res.data }; else this.damagesList.unshift(res.data);
+                if (this.selectedAssessment?.ref === res.data.ref) this.selectedAssessment = { ...this.selectedAssessment, ...res.data };
+                this.showCreateAssessment = false;
+                this.toast(this.damageFormMode === 'create' ? res.data.ref + ' recorded.' : 'Assessment updated.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not save this assessment.', 'error');
+            } finally { this.damageSaving = false; }
+        },
+        // The list row has only a photo COUNT; the detail fetch adds notes,
+        // the linked incident's ref and each photo's real signed URL.
+        async openAssessmentDetail(row) {
+            this.selectedAssessment = row;
+            this.showAssessmentDetail = true;
+            this.$nextTick(() => window.renderIcons?.());
+            try {
+                const res = await $api.get('/sakuna/damage/' + row.ref);
+                this.selectedAssessment = { ...row, ...res.data };
+            } catch { /* keep the list row's fields if the detail fetch fails */ }
+        },
 
         // Alerts tab state
         alertSearch: '',
@@ -978,7 +1060,7 @@
             {{-- Damage Assessment --}}
             @if($activeTab === 'damage-assessment')
             <div>
-                @include('admin.partials.sakuna.tab-damage', ['assessments' => $assessments, 'barangays' => $barangays, 'incidents' => $incidents])
+                @include('admin.partials.sakuna.tab-damage', ['barangays' => $barangays])
             </div>
             @endif
 

@@ -1,939 +1,306 @@
-{{-- Damage & Needs Assessment Tab --}}
-<div class="space-y-6">
+{{--
+    tab-damage.blade.php
+    Damage Assessment
+    Included by sakuna.blade.php — NO x-data at root.
+    Parent Alpine state: damageSearch/damageBarangayFilter/damageSectorFilter,
+    damagesList/damagesLoading/damagesFailed, damageIncidentsOpen, selectedAssessment/
+    showAssessmentDetail, showCreateAssessment/damageFormMode/damageForm/damageSaving.
+    Helpers: can(submodule, action), exportCSV(rows, filename), toast(msg, variant),
+    statusBadge(st), loadDamage(), damageSectors(), openCreateAssessment(),
+    openEditAssessment(d), saveDamage(), openAssessmentDetail(row).
 
-    {{-- Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-navy-900">Damage & Needs Assessment</h2>
-            <p class="text-sm text-slate-500 mt-0.5">Barangay-level damage assessments, needs prioritization, and municipal consolidation.</p>
-        </div>
-        <div class="flex items-center gap-2 self-start sm:self-auto">
-            <button
-                @click="showCreateAssessment = true"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                New Assessment
-            </button>
-            <button
-                @click="$dispatch('toast', { message: 'Assessment report exported.', variant: 'success' })"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                Export
-            </button>
-        </div>
+    GET/POST /sakuna/damage, GET/PUT /sakuna/damage/{ref} (detail + edit added in
+    backend commit 297d039 -- notes, the incident link and photo URLs existed on
+    the real model since recordDamage() first shipped, but nothing ever read any
+    of them back; the list endpoint only ever exposed a bare photo COUNT).
+
+    SakunaDamageAssessment has no `type` enum (the mock offered 8 fixed choices —
+    "Initial Rapid Assessment", "Housing Assessment", etc. — none of them a real
+    column; `sector` is the one real free-text field), no assessor name, no
+    priority-needs list, and no Population/Housing/Infrastructure/Agriculture/
+    Financial/Certification breakdown -- the mock's 7-subtab detail modal and its
+    "Municipal Consolidated Summary" table (a fully invented per-barangay Housing/
+    Infrastructure/Agriculture peso split) had nothing behind either. The real
+    status axis is whatever `recordDamage()` actually sets, which today is only
+    ever Submitted -- the mock's 8-value kanban (Draft/Submitted/For Validation/
+    Validated/For Approval/Approved/Returned for Revision/Consolidated) does not
+    exist. `validate`/`approve` are declared sakuna_damage actions with nothing
+    behind them (only `create`/`edit` exist) -- left alone rather than invented,
+    matching the restraint already applied to sakuna_relief's `approve` and
+    sakuna_resources' `assign`.
+--}}
+
+<div x-data="{
+    get filteredDamage() {
+        const q = damageSearch.toLowerCase();
+        return damagesList.filter(d =>
+            $store.session.inScope(d.barangay) &&
+            (!q || d.ref.toLowerCase().includes(q) || d.barangay.toLowerCase().includes(q) || d.sector.toLowerCase().includes(q)) &&
+            (!damageBarangayFilter || d.barangay === damageBarangayFilter) &&
+            (!damageSectorFilter || d.sector === damageSectorFilter)
+        );
+    },
+}" x-init="loadDamage()" class="space-y-4">
+
+{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
+<div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+        <h2 class="text-base font-semibold text-slate-800">Damage Assessment</h2>
+        <p class="text-sm text-slate-500 mt-0.5">Barangay-level damage reports, with optional photo evidence.</p>
     </div>
-
-    {{-- Summary Pills --}}
-    <div class="flex flex-wrap gap-3">
-        <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-card text-sm">
-            <i data-lucide="clipboard-list" class="w-4 h-4 text-slate-400"></i>
-            <span class="text-slate-500">Total:</span>
-            <span class="font-bold text-slate-800">8</span>
-        </div>
-        <div class="flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100 shadow-card text-sm">
-            <i data-lucide="circle-check" class="w-4 h-4 text-emerald-500"></i>
-            <span class="text-emerald-700">Approved:</span>
-            <span class="font-bold text-emerald-800">1</span>
-        </div>
-        <div class="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl border border-blue-100 shadow-card text-sm">
-            <i data-lucide="shield-check" class="w-4 h-4 text-blue-500"></i>
-            <span class="text-blue-700">Validated:</span>
-            <span class="font-bold text-blue-800">1</span>
-        </div>
-        <div class="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-xl border border-indigo-100 shadow-card text-sm">
-            <i data-lucide="search" class="w-4 h-4 text-indigo-500"></i>
-            <span class="text-indigo-700">For Validation:</span>
-            <span class="font-bold text-indigo-800">2</span>
-        </div>
-        <div class="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100 shadow-card text-sm">
-            <i data-lucide="file-text" class="w-4 h-4 text-amber-500"></i>
-            <span class="text-amber-700">Draft / Submitted:</span>
-            <span class="font-bold text-amber-800">4</span>
-        </div>
-        <div class="flex items-center gap-2 px-4 py-2 bg-rose-50 rounded-xl border border-rose-100 shadow-card text-sm">
-            <i data-lucide="banknote" class="w-4 h-4 text-rose-500"></i>
-            <span class="text-rose-700">Est. Total Damage:</span>
-            <span class="font-bold text-rose-800">₱9,570,000</span>
-        </div>
+    <div class="flex items-center gap-2 flex-wrap">
+        <button @click="exportCSV(filteredDamage, 'damage-assessments.csv')"
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+        </button>
+        <button x-show="can('sakuna_damage', 'create')" @click="openCreateAssessment()"
+            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i> New Assessment
+        </button>
     </div>
+</div>
 
-    {{-- Filter Bar --}}
+<div x-show="damagesLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
+<div x-show="damagesFailed" x-cloak><x-ui.error-state messageExpr="'Could not load damage assessments.'" retryExpr="loadDamage()" :retryable="true" /></div>
+
+<div x-show="!damagesLoading && !damagesFailed" x-cloak class="space-y-4">
+
+{{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
+<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Total Assessments</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1" x-text="damagesList.length"></p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Units Affected</p>
+        <p class="text-2xl font-bold text-amber-600 mt-1" x-text="damagesList.reduce((s,d) => s + (d.units_affected || 0), 0)"></p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Est. Total Damage</p>
+        <p class="text-2xl font-bold text-rose-600 mt-1" x-text="'₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US')"></p>
+    </div>
+</div>
+
+{{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
+<div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
     <div class="flex flex-wrap gap-3 items-center">
-        <div class="relative flex-1 min-w-[200px]">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input aria-label="Search by ID or barangay"
-                type="text"
-                x-model="damageSearch"
-                placeholder="Search by ID or barangay…"
-                class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600 bg-white">
+        <div class="relative flex-1 min-w-48">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+            <input aria-label="Search by ref, barangay or sector" type="text" x-model="damageSearch" placeholder="Search by ref, barangay or sector…"
+                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
-        <select aria-label="Damage type filter"
-            x-model="damageTypeFilter"
-            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-            <option value="">All Types</option>
-            <option>Initial Rapid Assessment</option>
-            <option>Barangay Damage Assessment</option>
-            <option>Infrastructure Assessment</option>
-            <option>Housing Assessment</option>
-            <option>Agriculture Assessment</option>
-            <option>Livelihood Assessment</option>
-            <option>Evacuation Center Assessment</option>
-            <option>Post-Disaster Needs Assessment</option>
-        </select>
-        <select aria-label="Damage status filter"
-            x-model="damageStatusFilter"
-            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-            <option value="">All Statuses</option>
-            <option>Draft</option>
-            <option>Submitted</option>
-            <option>For Validation</option>
-            <option>Validated</option>
-            <option>For Approval</option>
-            <option>Approved</option>
-            <option>Returned for Revision</option>
-            <option>Consolidated</option>
-        </select>
-        <select aria-label="Damage barangay filter"
-            x-model="damageBarangayFilter"
-            class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
+        <select aria-label="Damage barangay filter" x-model="damageBarangayFilter"
+            class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Barangays</option>
             @foreach($barangays as $brgy)
-            <option value="{{ $brgy }}">{{ $brgy }}</option>
+                <option value="{{ $brgy }}">{{ $brgy }}</option>
             @endforeach
         </select>
+        <select aria-label="Damage sector filter" x-model="damageSectorFilter"
+            class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            <option value="">All Sectors</option>
+            <template x-for="s in damageSectors()" :key="s"><option :value="s" x-text="s"></option></template>
+        </select>
+        <button @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''"
+            class="text-sm text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl hover:bg-slate-100 transition-colors">
+            Clear filters
+        </button>
     </div>
+</div>
 
-    {{-- Assessment Table --}}
-    <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-100">
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">ID</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Incident</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Barangay</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Assessor</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Affected Fam.</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Est. Damage</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority Needs</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    @foreach($assessments as $a)
-                    @php
-                        $statusBadgeClass = match($a['status'] ?? 'Draft') {
-                            'Approved'             => 'bg-emerald-100 text-emerald-700',
-                            'Validated'            => 'bg-blue-100 text-blue-700',
-                            'For Validation'       => 'bg-indigo-100 text-indigo-700',
-                            'For Approval'         => 'bg-violet-100 text-violet-700',
-                            'Draft'                => 'bg-slate-100 text-slate-600',
-                            'Submitted'            => 'bg-amber-100 text-amber-700',
-                            'Returned for Revision'=> 'bg-rose-100 text-rose-700',
-                            'Consolidated'         => 'bg-teal-100 text-teal-700',
-                            default                => 'bg-slate-100 text-slate-600',
-                        };
-                        $needs = $a['priority_needs'] ?? [];
-                        $shownNeeds = array_slice($needs, 0, 2);
-                        $extraNeeds = count($needs) > 2 ? count($needs) - 2 : 0;
-                        $isEditable = in_array($a['status'] ?? 'Draft', ['Draft', 'Submitted', 'Returned for Revision']);
-                    @endphp
-                    <tr
-                        x-show="
-                            $store.session.inScope('{{ $a['barangay'] }}') &&
-                            (damageSearch === '' || '{{ strtolower($a['id']) }}'.includes(damageSearch.toLowerCase()) || '{{ strtolower($a['barangay']) }}'.includes(damageSearch.toLowerCase())) &&
-                            (damageTypeFilter === '' || '{{ $a['type'] }}' === damageTypeFilter) &&
-                            (damageStatusFilter === '' || '{{ $a['status'] }}' === damageStatusFilter) &&
-                            (damageBarangayFilter === '' || '{{ $a['barangay'] }}' === damageBarangayFilter)
-                        "
-                        class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-3">
-                            <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ $a['id'] }}</span>
-                        </td>
-                        <td class="px-4 py-3 text-xs text-slate-600 max-w-[120px]">
-                            <span class="line-clamp-1" title="{{ $a['incident'] }}">{{ $a['incident'] }}</span>
-                        </td>
-                        <td class="px-4 py-3 font-medium text-slate-800 text-xs">{{ $a['barangay'] }}</td>
-                        <td class="px-4 py-3 text-xs text-slate-600 max-w-[140px]">
-                            <span class="line-clamp-2">{{ $a['type'] }}</span>
-                        </td>
-                        <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{{ $a['date'] }}</td>
-                        <td class="px-4 py-3 text-xs text-slate-500">{{ $a['assessor'] }}</td>
-                        <td class="px-4 py-3 text-center font-semibold text-slate-800">{{ number_format($a['affected_families']) }}</td>
-                        <td class="px-4 py-3 font-semibold text-slate-800 text-xs whitespace-nowrap">₱{{ number_format($a['estimated_damage']) }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex flex-wrap gap-1">
-                                @foreach($shownNeeds as $need)
-                                <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">{{ $need }}</span>
-                                @endforeach
-                                @if($extraNeeds > 0)
-                                <span class="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-xs">+{{ $extraNeeds }} more</span>
-                                @endif
-                            </div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $statusBadgeClass }}">{{ $a['status'] }}</span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-1">
-                                <button
-                                    @click="selectedAssessment = {{ json_encode($a) }}; showAssessmentDetail = true"
-                                    class="p-1.5 text-brand-600 hover:bg-blue-50 rounded-lg transition-colors" title="View">
-                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+{{-- ── Assessment Table ────────────────────────────────────────────────────────────────── --}}
+<div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-slate-100 bg-slate-50/60">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Ref</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Barangay</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Sector</th>
+                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Units Affected</th>
+                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Est. Damage</th>
+                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Photos</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                <template x-for="d in filteredDamage" :key="d.ref">
+                    <tr class="hover:bg-slate-50/60 transition-colors cursor-pointer group" @click="openAssessmentDetail(d)" tabindex="0" @keydown.enter.prevent="openAssessmentDetail(d)">
+                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-slate-500" x-text="d.ref"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-800" x-text="d.barangay"></td>
+                        <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="d.sector"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700" x-text="d.units_affected || '—'"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right font-medium text-slate-800" x-text="d.estimated_cost ? '₱' + d.estimated_cost.toLocaleString('en-US') : '—'"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center text-slate-500" x-text="d.photos || 0"></td>
+                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right" @click.stop>
+                            <div class="flex items-center justify-end gap-1">
+                                <button @click="openAssessmentDetail(d)" class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View Details">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
-                                @if($isEditable)
-                                <button
-                                    @click="$dispatch('toast', { message: 'Editing {{ $a['id'] }}...', variant: 'info' })"
-                                    class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
-                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                                </button>
-                                <button
-                                    @click="$dispatch('toast', { message: '{{ $a['id'] }} submitted for validation.', variant: 'success' })"
-                                    class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Submit">
-                                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                                </button>
-                                @endif
-                                @if($a['status'] === 'For Validation')
-                                <button
-                                    @click="$dispatch('toast', { message: '{{ $a['id'] }} validated successfully.', variant: 'success' })"
-                                    class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Validate">
-                                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                                </button>
-                                @endif
-                                @if($a['status'] === 'Validated' || $a['status'] === 'For Approval')
-                                <button
-                                    @click="$dispatch('toast', { message: '{{ $a['id'] }} approved.', variant: 'success' })"
-                                    class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Approve">
-                                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>
-                                </button>
-                                @endif
-                                <button
-                                    @click="$dispatch('toast', { message: '{{ $a['id'] }} returned for revision. Assessor notified.', variant: 'info' })"
-                                    class="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Return">
-                                    <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
-                                </button>
-                                <button
-                                    @click="$dispatch('toast', { message: '{{ $a['id'] }} exported.', variant: 'success' })"
-                                    class="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors" title="Export">
-                                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                <button x-show="can('sakuna_damage','edit')" @click="openEditAssessment(d)" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Edit">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </td>
                     </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                </template>
+                <tr x-show="filteredDamage.length === 0">
+                    <td colspan="8" class="px-4 py-12 text-center">
+                        <div class="flex flex-col items-center gap-3 text-slate-400">
+                            <i data-lucide="clipboard-list" class="w-10 h-10 opacity-30"></i>
+                            <p class="text-sm font-medium text-slate-500">No assessments match your filters.</p>
+                            <button @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-
-    {{-- ================================================================ --}}
-    {{-- Municipal Consolidated Summary --}}
-    {{-- ================================================================ --}}
-    <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-        <div class="p-5 border-b border-slate-100">
-            <div class="flex items-center gap-2">
-                <i data-lucide="chart-column" class="w-5 h-5 text-brand-600"></i>
-                <h3 class="text-base font-bold text-navy-900">Municipal Consolidated Summary — SWM-2026-07</h3>
-            </div>
-            <p class="text-xs text-slate-500 mt-1">Estimates subject to validation. Assessment coverage: 8 of 20 barangays.</p>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-100">
-                        <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Barangay</th>
-                        <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Affected Fam.</th>
-                        <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Housing Damage</th>
-                        <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Infrastructure</th>
-                        <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Agriculture</th>
-                        <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    @foreach([
-                        ['Masbaranon',  48,  '₱1,840,000', '₱640,000',   '—',         '₱2,480,000'],
-                        ['Baras',       22,  '₱520,000',   '₱370,000',   '—',         '₱890,000'],
-                        ['Santiago',    '—', '—',           '₱3,200,000', '—',         '₱3,200,000'],
-                        ['Domorog',     8,   '—',           '₱1,200,000', '—',         '₱1,200,000'],
-                        ['Magsaysay',   28,  '₱680,000',   '₱470,000',   '—',         '₱1,150,000'],
-                        ['Guadalupe',   45,  '—',           '—',          '₱560,000',  '₱560,000'],
-                        ['Rizal',       14,  '₱280,000',   '₱140,000',   '—',         '₱420,000'],
-                        ['Poblacion',   84,  '₱1,240,000', '₱630,000',   '—',         '₱1,870,000'],
-                    ] as [$brgy,$fam,$housing,$infra,$agri,$total])
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-3 font-medium text-slate-800">{{ $brgy }}</td>
-                        <td class="px-4 py-3 text-right text-slate-700">{{ is_numeric($fam) ? number_format($fam) : $fam }}</td>
-                        <td class="px-4 py-3 text-right text-slate-700 {{ $housing !== '—' ? 'font-medium' : 'text-slate-400' }}">{{ $housing }}</td>
-                        <td class="px-4 py-3 text-right text-slate-700 {{ $infra !== '—' ? 'font-medium' : 'text-slate-400' }}">{{ $infra }}</td>
-                        <td class="px-4 py-3 text-right text-slate-700 {{ $agri !== '—' ? 'font-medium' : 'text-slate-400' }}">{{ $agri }}</td>
-                        <td class="px-4 py-3 text-right font-bold text-slate-900">{{ $total }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr class="bg-slate-50 border-t-2 border-slate-200">
-                        <td class="px-4 py-3 font-bold text-slate-900">TOTAL</td>
-                        <td class="px-4 py-3 text-right font-bold text-slate-900">249</td>
-                        <td class="px-4 py-3 text-right font-bold text-slate-900">₱4,560,000</td>
-                        <td class="px-4 py-3 text-right font-bold text-slate-900">₱6,650,000</td>
-                        <td class="px-4 py-3 text-right font-bold text-slate-900">₱560,000</td>
-                        <td class="px-4 py-3 text-right font-bold text-rose-700 text-base">₱11,770,000</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+    <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/40">
+        <p class="text-xs text-slate-500">Showing <strong x-text="filteredDamage.length"></strong> of <strong x-text="damagesList.length"></strong> assessments</p>
     </div>
+</div>
 
-    {{-- ================================================================ --}}
-    {{-- MODAL: Assessment Detail --}}
-    {{-- ================================================================ --}}
-    <div
-        x-show="showAssessmentDetail"
-        x-cloak
-        x-data="{ assessTab: 'population', showApproveConfirm: false }"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showAssessmentDetail = false; showApproveConfirm = false"
+</div>{{-- /loaded content --}}
+
+{{-- ── Assessment Detail Modal ─────────────────────────────────────────────────────────── --}}
+<div x-show="showAssessmentDetail" x-cloak
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    @click.self="showAssessmentDetail = false"
         x-trap="showAssessmentDetail"
         role="dialog"
         aria-modal="true"
-        @keydown.escape.window="showAssessmentDetail = false; showApproveConfirm = false">
-        <div class="bg-white rounded-2xl shadow-float w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+        @keydown.escape.window="showAssessmentDetail = false">
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+        class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
-            {{-- Modal Header --}}
-            <div class="flex items-start justify-between mb-5">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <h3 class="text-base font-bold text-navy-900" x-text="selectedAssessment?.id ?? 'Assessment Detail'"></h3>
-                        <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium" x-text="selectedAssessment?.status ?? ''"></span>
-                    </div>
-                    <p class="text-xs text-slate-500" x-text="(selectedAssessment?.type ?? '') + ' · ' + (selectedAssessment?.barangay ?? '') + ' · ' + (selectedAssessment?.date ?? '')"></p>
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+                <div class="flex items-center gap-2">
+                    <h3 class="font-semibold text-slate-800" x-text="selectedAssessment?.ref ?? ''"></h3>
+                    <span :class="statusBadge(selectedAssessment?.status ?? '')" x-text="selectedAssessment?.status"></span>
                 </div>
-                <button @click="showAssessmentDetail = false; showApproveConfirm = false" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
-                </button>
+                <p class="text-xs text-slate-500 mt-0.5" x-text="(selectedAssessment?.sector ?? '') + ' · ' + (selectedAssessment?.barangay ?? '')"></p>
             </div>
+            <button @click="showAssessmentDetail = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
 
-            {{-- Mini Tabs --}}
-            <div class="flex flex-wrap gap-1.5 mb-5 pb-4 border-b border-slate-100">
-                @foreach([['population','Population'],['housing','Housing'],['infrastructure','Infrastructure'],['agriculture','Agriculture'],['needs','Needs'],['financial','Financial'],['certification','Certification']] as [$tabKey,$tabLabel])
-                <button
-                    @click="assessTab = '{{ $tabKey }}'"
-                    :class="assessTab === '{{ $tabKey }}' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
-                    {{ $tabLabel }}
-                </button>
-                @endforeach
-            </div>
-
-            {{-- Tab: Population --}}
-            <div x-show="assessTab === 'population'" class="space-y-3">
-                <h4 class="text-sm font-semibold text-navy-900">Affected Population</h4>
-                <div class="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Category</th>
-                                <th class="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Count</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            @foreach([
-                                ['Affected Families', 48, 'emerald'],
-                                ['Displaced Families', 32, 'amber'],
-                                ['Injured', 3, 'orange'],
-                                ['Missing', 1, 'rose'],
-                                ['Deceased', 0, 'slate'],
-                                ['Rescued', 38, 'blue'],
-                                ['Evacuated', 48, 'indigo'],
-                            ] as [$cat, $val, $clr])
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-4 py-2.5 text-slate-700">{{ $cat }}</td>
-                                <td class="px-4 py-2.5 text-right">
-                                    @php
-                                        $numClass = match($clr) {
-                                            'emerald' => 'text-emerald-700 font-bold',
-                                            'amber'   => 'text-amber-700 font-bold',
-                                            'orange'  => 'text-orange-600 font-semibold',
-                                            'rose'    => 'text-rose-600 font-semibold',
-                                            'blue'    => 'text-blue-700 font-semibold',
-                                            'indigo'  => 'text-indigo-700 font-semibold',
-                                            default   => 'text-slate-500',
-                                        };
-                                    @endphp
-                                    <span class="{{ $numClass }}">{{ number_format($val) }}</span>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+        <div class="p-6 space-y-5">
+            <div>
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Units Affected</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAssessment?.units_affected || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Estimated Cost</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAssessment?.estimated_cost ? '₱' + selectedAssessment.estimated_cost.toLocaleString('en-US') : '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-slate-400">Related Incident</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAssessment?.incident_ref || '—'"></p></div>
                 </div>
             </div>
 
-            {{-- Tab: Housing --}}
-            <div x-show="assessTab === 'housing'" x-cloak class="space-y-3">
-                <h4 class="text-sm font-semibold text-navy-900">Housing Damage Assessment</h4>
-                <div class="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Category</th>
-                                <th class="text-center px-4 py-2.5 text-xs font-semibold text-slate-500">Count</th>
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-2.5 text-slate-700">Partially Damaged</td>
-                                <td class="px-4 py-2.5 text-center font-semibold text-amber-700">12</td>
-                                <td class="px-4 py-2.5 text-slate-500 text-xs">Roof/walls</td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-2.5 text-slate-700">Totally Damaged</td>
-                                <td class="px-4 py-2.5 text-center font-semibold text-rose-700">4</td>
-                                <td class="px-4 py-2.5 text-slate-500 text-xs">Collapsed/uninhabitable</td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-2.5 text-slate-700">Unsafe for Occupancy</td>
-                                <td class="px-4 py-2.5 text-center font-semibold text-orange-700">6</td>
-                                <td class="px-4 py-2.5 text-slate-500 text-xs">Pending structural check</td>
-                            </tr>
-                            <tr class="bg-rose-50 border-t border-slate-200">
-                                <td class="px-4 py-2.5 font-semibold text-slate-800">Estimated Housing Damage</td>
-                                <td class="px-4 py-2.5 text-center text-slate-400">—</td>
-                                <td class="px-4 py-2.5 font-bold text-rose-700 text-base">₱1,840,000</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div>
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Notes</h4>
+                <p class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3" x-text="selectedAssessment?.notes || 'No notes recorded.'"></p>
             </div>
 
-            {{-- Tab: Infrastructure --}}
-            <div x-show="assessTab === 'infrastructure'" x-cloak class="space-y-3">
-                <h4 class="text-sm font-semibold text-navy-900">Infrastructure Damage</h4>
-                <div class="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Type</th>
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Affected</th>
-                                <th class="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Est. Damage</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            @foreach([
-                                ['Roads',               '2 sections',                   '₱380,000'],
-                                ['Bridges',             '1 bridge',                     '₱450,000'],
-                                ['Schools',             '1 (flooding only)',             '₱120,000'],
-                                ['Health Facilities',   'None',                          '—'],
-                                ['Gov. Buildings',      'None',                          '—'],
-                                ['Water System',        '1 pumping station interrupted', '₱45,000'],
-                                ['Power',               'Interrupted (utility)',          '—'],
-                                ['Communications',      'Degraded',                      '—'],
-                                ['Drainage',            '3 sections clogged',            '₱85,000'],
-                            ] as [$type,$affected,$damage])
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-4 py-2.5 text-slate-700">{{ $type }}</td>
-                                <td class="px-4 py-2.5 text-slate-600 text-xs">{{ $affected }}</td>
-                                <td class="px-4 py-2.5 text-right font-semibold {{ $damage === '—' ? 'text-slate-400' : 'text-slate-800' }}">{{ $damage }}</td>
-                            </tr>
-                            @endforeach
-                            <tr class="bg-rose-50 border-t border-slate-200">
-                                <td class="px-4 py-2.5 font-bold text-slate-900" colspan="2">Total Infrastructure Damage</td>
-                                <td class="px-4 py-2.5 text-right font-bold text-rose-700 text-base">₱1,080,000</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div>
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5"></i> Photo Evidence</h4>
+                <div class="grid grid-cols-3 gap-2">
+                    <template x-for="(p, idx) in (selectedAssessment?.photos || [])" :key="idx">
+                        <a :href="p.url" target="_blank" rel="noopener" class="block aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50 hover:opacity-90 transition-opacity" :title="p.caption">
+                            <img :src="p.url" :alt="p.caption || 'Damage photo'" class="w-full h-full object-cover" loading="lazy">
+                        </a>
+                    </template>
                 </div>
-            </div>
-
-            {{-- Tab: Agriculture --}}
-            <div x-show="assessTab === 'agriculture'" x-cloak class="space-y-3">
-                <h4 class="text-sm font-semibold text-navy-900">Agriculture & Livelihood</h4>
-                <div class="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Category</th>
-                                <th class="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Crop Area Affected</td><td class="px-4 py-2.5 text-right text-slate-600">0 ha (residential area)</td></tr>
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Estimated Crop Loss</td><td class="px-4 py-2.5 text-right text-slate-600">₱0</td></tr>
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Livestock Affected</td><td class="px-4 py-2.5 text-right text-slate-600">0</td></tr>
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Livelihood Interruption</td><td class="px-4 py-2.5 text-right text-slate-600">8 households (fishing/vending)</td></tr>
-                            <tr class="bg-amber-50 border-t border-slate-200"><td class="px-4 py-2.5 font-semibold text-slate-800">Estimated Livelihood Loss</td><td class="px-4 py-2.5 text-right font-bold text-amber-700">₱85,000</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {{-- Tab: Needs --}}
-            <div x-show="assessTab === 'needs'" x-cloak class="space-y-3">
-                <h4 class="text-sm font-semibold text-navy-900">Immediate Needs Checklist</h4>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    @foreach([
-                        ['Food', true],
-                        ['Water', true],
-                        ['Shelter', true],
-                        ['Medicine', true],
-                        ['Rescue', true],
-                        ['Sanitation', true],
-                        ['Psychosocial Support', false],
-                        ['Livelihood Assistance', false],
-                        ['Road Clearing', true],
-                        ['Power Restoration', false],
-                    ] as [$need, $checked])
-                    <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border {{ $checked ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-white' }}">
-                        <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center {{ $checked ? 'bg-emerald-500' : 'bg-slate-200' }}">
-                            @if($checked)
-                            <i data-lucide="check" class="w-3 h-3 text-white"></i>
-                            @else
-                            <i data-lucide="minus" class="w-3 h-3 text-slate-400"></i>
-                            @endif
-                        </div>
-                        <span class="text-xs font-medium {{ $checked ? 'text-emerald-800' : 'text-slate-500' }}">{{ $need }}</span>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Tab: Financial --}}
-            <div x-show="assessTab === 'financial'" x-cloak class="space-y-3">
-                <h4 class="text-sm font-semibold text-navy-900">Financial Damage Breakdown</h4>
-                <div class="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Category</th>
-                                <th class="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Estimate</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Housing Damage</td><td class="px-4 py-2.5 text-right font-semibold text-slate-800">₱1,840,000</td></tr>
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Infrastructure</td><td class="px-4 py-2.5 text-right font-semibold text-slate-800">₱1,080,000</td></tr>
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Agriculture / Livelihood</td><td class="px-4 py-2.5 text-right font-semibold text-slate-800">₱85,000</td></tr>
-                            <tr class="hover:bg-slate-50"><td class="px-4 py-2.5 text-slate-700">Other</td><td class="px-4 py-2.5 text-right text-slate-400">₱0</td></tr>
-                            <tr class="bg-rose-50 border-t-2 border-rose-200">
-                                <td class="px-4 py-3 font-bold text-slate-900 text-base">Estimated Total</td>
-                                <td class="px-4 py-3 text-right font-extrabold text-rose-700 text-xl">₱2,480,000 <span class="text-xs font-medium text-rose-500">est.</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p class="text-xs text-slate-400 italic">Preliminary estimate. Subject to technical validation.</p>
-            </div>
-
-            {{-- Tab: Certification --}}
-            <div x-show="assessTab === 'certification'" x-cloak class="space-y-5">
-                <h4 class="text-sm font-semibold text-navy-900">Certification & Approval</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {{-- Assessor --}}
-                    <div class="bg-slate-50 rounded-xl p-4 space-y-2">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Assessor</p>
-                        <p class="text-sm font-semibold text-slate-800" x-text="selectedAssessment?.assessor ?? 'Barangay DRRM Officer'"></p>
-                        <p class="text-xs text-slate-500">Barangay DRRM Officer</p>
-                        <div class="border-2 border-dashed border-slate-300 rounded-lg h-16 flex items-center justify-center">
-                            <span class="text-xs text-slate-400">Signature placeholder</span>
-                        </div>
-                    </div>
-                    {{-- Validator --}}
-                    <div class="bg-slate-50 rounded-xl p-4 space-y-2">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Validator</p>
-                        <input aria-label="Validator name" type="text" placeholder="Validator name" value="MDRRMO Officer Salinas" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        <p class="text-xs text-slate-500">Municipal DRRM Officer</p>
-                        <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">Pending Validation</span>
-                    </div>
-                    {{-- Approving Officer --}}
-                    <div class="bg-slate-50 rounded-xl p-4 space-y-2">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Approving Officer</p>
-                        <input aria-label="Officer name" type="text" placeholder="Officer name" value="Mayor Reyes" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        <p class="text-xs text-slate-500">Local Chief Executive</p>
-                        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Awaiting</span>
-                    </div>
-                </div>
-
-                {{-- Attachments --}}
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <h5 class="text-sm font-semibold text-navy-900">Attachments</h5>
-                        <button
-                            @click="$dispatch('toast', { message: 'Attachment upload dialog opened.', variant: 'info' })"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-xs font-medium hover:bg-brand-600/90 transition-colors">
-                            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-                            Add Attachment
-                        </button>
-                    </div>
-                    <div class="space-y-2">
-                        @foreach([
-                            ['Photo 1 — Flood damage Purok 3.jpg', 'Jul 15, 2026', '2.4 MB'],
-                            ['Photo 2 — Roof damage sample.jpg',    'Jul 15, 2026', '1.8 MB'],
-                            ['Site map sketch.jpg',                  'Jul 15, 2026', '890 KB'],
-                        ] as [$fname,$fdate,$fsize])
-                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <div class="flex items-center gap-2.5">
-                                <i data-lucide="image" class="w-4 h-4 text-blue-400"></i>
-                                <div>
-                                    <p class="text-xs font-medium text-slate-800">{{ $fname }}</p>
-                                    <p class="text-xs text-slate-400">Uploaded {{ $fdate }} · {{ $fsize }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <button
-                                    @click="$dispatch('toast', { message: 'Opening {{ $fname }}...', variant: 'info' })"
-                                    class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-brand-600 hover:bg-blue-50 transition-colors">
-                                    View
-                                </button>
-                                <button
-                                    @click="$dispatch('toast', { message: '{{ $fname }} removed.', variant: 'info' })"
-                                    class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-50 transition-colors">
-                                    Remove
-                                </button>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-
-            {{-- Approve Confirm Banner --}}
-            <div x-show="showApproveConfirm" x-cloak class="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <p class="text-sm font-semibold text-emerald-800 mb-1">Confirm Approval</p>
-                <p class="text-xs text-emerald-700 mb-3">Approving this assessment marks it as the official record for the barangay. This action cannot be undone.</p>
-                <div class="flex gap-2">
-                    <button
-                        @click="$dispatch('toast', { message: 'Assessment approved successfully.', variant: 'success' }); showAssessmentDetail = false; showApproveConfirm = false"
-                        class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition-colors">
-                        Confirm Approve
-                    </button>
-                    <button
-                        @click="showApproveConfirm = false"
-                        class="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 rounded-xl text-xs font-semibold hover:bg-emerald-50 transition-colors">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-
-            {{-- Modal Footer Actions --}}
-            <div class="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-slate-100">
-                <button
-                    @click="$dispatch('toast', { message: 'Assessment submitted for validation.', variant: 'success' })"
-                    class="px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors">
-                    Submit for Validation
-                </button>
-                <button
-                    @click="$dispatch('toast', { message: 'Assessment validated.', variant: 'success' })"
-                    class="px-3 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition-colors">
-                    Validate
-                </button>
-                <button
-                    @click="showApproveConfirm = true"
-                    class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition-colors">
-                    Approve
-                </button>
-                <button
-                    @click="$dispatch('toast', { message: 'Returned for revision. Assessor has been notified.', variant: 'info' })"
-                    class="px-3 py-2 bg-amber-500 text-white rounded-xl text-xs font-semibold hover:bg-amber-600 transition-colors">
-                    Return for Revision
-                </button>
-                <button
-                    @click="$dispatch('toast', { message: 'Assessment report exported.', variant: 'success' })"
-                    class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors">
-                    <i data-lucide="download" class="w-3.5 h-3.5 inline-block mr-1"></i>
-                    Export PDF
-                </button>
-                <button
-                    @click="$dispatch('toast', { message: 'Sent to printer.', variant: 'success' })"
-                    class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors">
-                    <i data-lucide="printer" class="w-3.5 h-3.5 inline-block mr-1"></i>
-                    Print
-                </button>
-                <button
-                    @click="showAssessmentDetail = false; showApproveConfirm = false"
-                    class="ml-auto px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors">
-                    Close
-                </button>
+                <p x-show="!Array.isArray(selectedAssessment?.photos) || !selectedAssessment.photos.length" class="text-xs text-slate-400 italic">No photos attached.</p>
             </div>
         </div>
-    </div>
 
-    {{-- ================================================================ --}}
-    {{-- MODAL: Create Assessment --}}
-    {{-- ================================================================ --}}
-    <div
-        x-show="showCreateAssessment"
-        x-cloak
-        x-data="{
-            daStep: 1,
-            daStepLabels: ['Basic Info', 'Affected Population', 'Housing Damage', 'Infrastructure Damage', 'Immediate Needs', 'Total Damage'],
-            newType: '',
-            newIncident: '',
-            newBarangay: '',
-            newDate: '{{ date('Y-m-d') }}',
-            newAssessor: '',
-            newOffice: '',
-            popAffected: 0, popDisplaced: 0, popInjured: 0, popMissing: 0, popDeceased: 0, popRescued: 0, popEvacuated: 0,
-            housingPartial: 0, housingTotal: 0, housingUnsafe: 0, housingEstimate: 0,
-            infraRoads: false, infraRoadsAmt: 0,
-            infraBridges: false, infraBridgesAmt: 0,
-            infraSchools: false, infraSchoolsAmt: 0,
-            infraHealth: false, infraHealthAmt: 0,
-            infraGov: false, infraGovAmt: 0,
-            infraWater: false, infraWaterAmt: 0,
-            infraPower: false, infraPowerAmt: 0,
-            infraComms: false, infraCommsAmt: 0,
-            infraDrainage: false, infraDrainageAmt: 0,
-            needFood: false, needWater: false, needShelter: false, needMedicine: false,
-            needRescue: false, needSanitation: false, needPsycho: false, needLivelihood: false,
-            needRoadClearing: false, needPowerRestoration: false,
-            totalDamage: 0
-        }"
-        x-effect="showCreateAssessment && (daStep = 1)"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showCreateAssessment = false"
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center gap-2">
+            <button x-show="can('sakuna_damage','edit')" @click="showAssessmentDetail = false; openEditAssessment(selectedAssessment)"
+                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors">
+                <i data-lucide="pencil" class="w-4 h-4"></i> Edit
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- ── New / Edit Assessment Modal ─────────────────────────────────────────────────────── --}}
+<div x-show="showCreateAssessment" x-cloak
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-navy-950/60 backdrop-blur-sm overflow-y-auto"
+    @click.self="showCreateAssessment = false"
         x-trap="showCreateAssessment"
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showCreateAssessment = false">
-        <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+        class="bg-white rounded-2xl shadow-float w-full max-w-xl mb-8">
 
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <h3 class="text-base font-bold text-navy-900">New Damage Assessment</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Complete all sections. Save as draft or submit directly.</p>
-                </div>
-                <button @click="showCreateAssessment = false" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
-                </button>
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="font-semibold text-slate-800" x-text="damageFormMode === 'create' ? 'New Damage Assessment' : 'Edit Assessment'"></h3>
+            <button @click="showCreateAssessment = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-barangay">Barangay <span class="text-rose-500">*</span></label>
+                <select id="dmg-barangay" x-model="damageForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <option value="">Select barangay…</option>
+                    @foreach($barangays as $brgy)
+                        <option>{{ $brgy }}</option>
+                    @endforeach
+                </select>
             </div>
-
-            {{-- Step progress indicator --}}
-            <nav class="flex items-center gap-0 mb-5" aria-label="Assessment steps">
-                <template x-for="(label, idx) in daStepLabels" :key="idx">
-                    <div class="flex-1 flex flex-col items-center">
-                        <div class="flex items-center w-full">
-                            <div class="flex-1 h-0.5" :class="daStep > idx + 1 ? 'bg-brand-600' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
-                            <div
-                                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
-                                :class="daStep >= idx + 1 ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-400'"
-                            >
-                                <template x-if="daStep > idx + 1"><i data-lucide="check" class="w-3 h-3"></i></template>
-                                <template x-if="daStep <= idx + 1"><span x-text="idx + 1"></span></template>
-                            </div>
-                            <div class="flex-1 h-0.5" :class="[daStep > idx + 1 ? 'bg-brand-600' : 'bg-slate-200', idx === daStepLabels.length - 1 ? '!bg-transparent' : '']"></div>
-                        </div>
-                        <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="daStep === idx + 1 ? 'text-brand-600' : daStep > idx + 1 ? 'text-brand-600/70' : 'text-slate-400'" x-text="label"></span>
-                    </div>
-                </template>
-            </nav>
-
-            <div class="space-y-5">
-
-                {{-- Section 1: Basic Info --}}
-                <div x-show="daStep === 1">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="assessment-type">Assessment Type</label>
-                            <select id="assessment-type" x-model="newType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                                <option value="">Select type…</option>
-                                <option>Initial Rapid Assessment</option>
-                                <option>Barangay Damage Assessment</option>
-                                <option>Infrastructure Assessment</option>
-                                <option>Housing Assessment</option>
-                                <option>Agriculture Assessment</option>
-                                <option>Livelihood Assessment</option>
-                                <option>Evacuation Center Assessment</option>
-                                <option>Post-Disaster Needs Assessment</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="incident">Incident</label>
-                            <select id="incident" x-model="newIncident" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                                <option value="">Select incident…</option>
-                                @foreach($incidents as $incident)
-                                <option value="{{ $incident['id'] }}">{{ $incident['id'] }} — {{ $incident['type'] }} ({{ $incident['barangay'] }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="barangay-6">Barangay</label>
-                            <select id="barangay-6" x-model="newBarangay" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                                <option value="">Select barangay…</option>
-                                @foreach($barangays as $brgy)
-                                <option value="{{ $brgy }}">{{ $brgy }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="assessment-date">Assessment Date</label>
-                            <input id="assessment-date" type="date" x-model="newDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="assessor-name">Assessor Name</label>
-                            <input id="assessor-name" type="text" x-model="newAssessor" placeholder="Full name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="office-designation">Office / Designation</label>
-                            <input id="office-designation" type="text" x-model="newOffice" placeholder="e.g. Barangay DRRM Officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Section 2: Affected Population --}}
-                <div x-show="daStep === 2">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        @foreach([
-                            ['popAffected',  'Affected Families'],
-                            ['popDisplaced', 'Displaced Families'],
-                            ['popInjured',   'Injured'],
-                            ['popMissing',   'Missing'],
-                            ['popDeceased',  'Deceased'],
-                            ['popRescued',   'Rescued'],
-                            ['popEvacuated', 'Evacuated'],
-                        ] as [$model, $label])
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ $label }}</label>
-                            <input aria-label="{{ $label }}" type="number" min="0" x-model="{{ $model }}" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                {{-- Section 3: Housing Damage --}}
-                <div x-show="daStep === 3">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="partially-damaged">Partially Damaged</label>
-                            <input id="partially-damaged" type="number" min="0" x-model="housingPartial" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="totally-damaged">Totally Damaged</label>
-                            <input id="totally-damaged" type="number" min="0" x-model="housingTotal" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="unsafe-for-occupancy">Unsafe for Occupancy</label>
-                            <input id="unsafe-for-occupancy" type="number" min="0" x-model="housingUnsafe" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="est-housing-damage">Est. Housing Damage (₱)</label>
-                            <input id="est-housing-damage" type="number" min="0" x-model="housingEstimate" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Section 4: Infrastructure Damage --}}
-                <div x-show="daStep === 4">
-                    <div class="space-y-2">
-                        @foreach([
-                            ['infraRoads',    'infraRoadsAmt',    'Roads'],
-                            ['infraBridges',  'infraBridgesAmt',  'Bridges'],
-                            ['infraSchools',  'infraSchoolsAmt',  'Schools'],
-                            ['infraHealth',   'infraHealthAmt',   'Health Facilities'],
-                            ['infraGov',      'infraGovAmt',      'Government Buildings'],
-                            ['infraWater',    'infraWaterAmt',    'Water System'],
-                            ['infraPower',    'infraPowerAmt',    'Power'],
-                            ['infraComms',    'infraCommsAmt',    'Communications'],
-                            ['infraDrainage', 'infraDrainageAmt', 'Drainage'],
-                        ] as [$check, $amt, $label])
-                        <div class="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
-                            <label class="flex items-center gap-2 w-44 flex-shrink-0 cursor-pointer">
-                                <input type="checkbox" x-model="{{ $check }}" class="rounded text-brand-600">
-                                <span class="text-sm text-slate-700">{{ $label }}</span>
-                            </label>
-                            <div x-show="{{ $check }}" x-cloak class="flex-1">
-                                <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₱</span>
-                                    <input type="number" min="0" x-model="{{ $amt }}" placeholder="0" class="w-full pl-7 pr-3 py-1.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                                </div>
-                            </div>
-                            <div x-show="!{{ $check }}" class="flex-1 text-xs text-slate-400">Check to enter damage amount</div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                {{-- Section 5: Immediate Needs --}}
-                <div x-show="daStep === 5">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        @foreach([
-                            ['needFood',             'Food'],
-                            ['needWater',            'Water'],
-                            ['needShelter',          'Shelter'],
-                            ['needMedicine',         'Medicine'],
-                            ['needRescue',           'Rescue'],
-                            ['needSanitation',       'Sanitation'],
-                            ['needPsycho',           'Psychosocial Support'],
-                            ['needLivelihood',       'Livelihood Assistance'],
-                            ['needRoadClearing',     'Road Clearing'],
-                            ['needPowerRestoration', 'Power Restoration'],
-                        ] as [$model, $label])
-                        <label
-                            :class="{{ $model }} ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-100'"
-                            class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors">
-                            <input type="checkbox" x-model="{{ $model }}" class="rounded text-emerald-600">
-                            <span class="text-sm text-slate-700">{{ $label }}</span>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                {{-- Section 6: Total Financial Damage --}}
-                <div x-show="daStep === 6" class="bg-rose-50 rounded-xl p-4 border border-rose-100">
-                    <label class="block text-sm font-semibold text-rose-800 mb-1.5">
-                        Estimated Total Financial Damage (₱)
-                    </label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">₱</span>
-                        <input aria-label="Total damage"
-                            type="number"
-                            min="0"
-                            x-model="totalDamage"
-                            placeholder="0"
-                            class="w-full pl-8 pr-3 py-2.5 rounded-xl border border-rose-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-400/30 bg-white text-rose-900">
-                    </div>
-                    <p class="text-xs text-rose-600 mt-1.5">Auto-sum hint: sum of housing + infrastructure + agriculture estimates entered above.</p>
-                </div>
-
+            <div>
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-sector">Sector <span class="text-rose-500">*</span></label>
+                <input id="dmg-sector" type="text" x-model="damageForm.sector" list="damage-sector-suggestions" placeholder="e.g. Housing"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <datalist id="damage-sector-suggestions">
+                    <template x-for="s in damageSectors()" :key="s"><option :value="s"></option></template>
+                </datalist>
             </div>
-
-            {{-- Modal Footer --}}
-            <div class="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-slate-100">
-                <button @click="showCreateAssessment = false" x-show="daStep === 1" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                <button @click="daStep--" x-show="daStep > 1" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>Back
-                </button>
-                <button
-                    @click="$dispatch('toast', { message: 'Assessment draft saved. You can continue editing later.', variant: 'info' })"
-                    class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">
-                    <i data-lucide="save" class="w-4 h-4 inline-block mr-1"></i>
-                    Save as Draft
-                </button>
-                <span class="text-xs text-slate-400 mx-1" x-text="'Step ' + daStep + ' of ' + daStepLabels.length"></span>
-                <button
-                    @click="daStep++; $nextTick(() => window.renderIcons?.())" x-show="daStep < daStepLabels.length"
-                    class="inline-flex items-center gap-1.5 px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm ml-auto">
-                    Next<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                </button>
-                <button
-                    @click="$dispatch('toast', { message: 'Assessment submitted for validation.', variant: 'success' }); showCreateAssessment = false" x-show="daStep >= daStepLabels.length"
-                    class="px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm ml-auto">
-                    <i data-lucide="send" class="w-4 h-4 inline-block mr-1"></i>
-                    Submit for Validation
-                </button>
+            <div>
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-units">Units Affected</label>
+                <input id="dmg-units" type="number" min="0" x-model="damageForm.units_affected" placeholder="e.g. 48"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
+            <div>
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-cost">Estimated Cost (₱)</label>
+                <input id="dmg-cost" type="number" min="0" step="0.01" x-model="damageForm.estimated_cost" placeholder="0.00"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-incident">Related Incident (optional)</label>
+                <select id="dmg-incident" x-model="damageForm.incident_id" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <option value="">— None —</option>
+                    <template x-for="inc in damageIncidentsOpen" :key="inc.id">
+                        <option :value="inc.id" x-text="inc.ref + ' — ' + inc.type + ', ' + inc.barangay"></option>
+                    </template>
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-notes">Notes</label>
+                <textarea id="dmg-notes" x-model="damageForm.notes" rows="3" placeholder="Field observations…"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-photo">
+                    <span x-text="damageFormMode === 'create' ? 'Photo Evidence' : 'Add Another Photo'"></span>
+                </label>
+                <input id="dmg-photo" type="file" accept="image/*" @change="damageForm.photoFile = $event.target.files[0] || null"
+                    class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-700 file:text-sm file:font-medium hover:file:bg-brand-100">
+            </div>
+        </div>
 
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex gap-3">
+            <button @click="showCreateAssessment = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+            <button :disabled="damageSaving || !damageForm.barangay || !damageForm.sector" @click="saveDamage()"
+                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors disabled:opacity-50">
+                <span x-text="damageSaving ? 'Saving…' : (damageFormMode === 'create' ? 'Record Assessment' : 'Save Changes')"></span>
+            </button>
         </div>
     </div>
-
 </div>
 
-@once
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    window.renderIcons?.();
-});
-</script>
-@endonce
+</div>{{-- end x-data wrapper --}}
