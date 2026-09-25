@@ -32,8 +32,9 @@
     // Resources now loads from GET /sakuna/resources -- the fixture key is no
     // longer read by anything.
 
-    // ── Relief Inventory ──────────────────────────────────────────────────────
-    $inventory = $__fixtures['inventory'];
+    // Relief now loads from GET /sakuna/relief -- the fixture key is no
+    // longer read by anything. There never was a real inventory/requests/
+    // donations model behind those parts of the mock (see tab-relief.blade.php).
 
     // ── Damage Assessments ───────────────────────────────────────────────────
     $assessments = $__fixtures['assessments'];
@@ -536,13 +537,64 @@
         },
 
         // Relief tab state
-        reliefSubtab: 'inventory',
-        inventorySearch: '',
-        inventoryCategoryFilter: '',
-        showStockInModal: false,
-        showStockOutModal: false,
-        selectedInventoryItem: null,
-        showRequestModal: false,
+        reliefSearch: '',
+        reliefOperationFilter: '',
+        reliefStatusFilter: '',
+        reliefList: [],
+        reliefLoading: true,
+        reliefFailed: false,
+        showCreateDistribution: false,
+        distributionSaving: false,
+        distributionForm: { operation: '', barangay: '', beneficiary_name: '', item: '', quantity: '' },
+        // GET /sakuna/relief -- SakunaReliefDistribution is the ONLY real model
+        // behind this submodule (see tab-relief.blade.php's header for what
+        // that means for the UI: no inventory, request-approval or donation
+        // model exists anywhere in the schema).
+        async loadRelief() {
+            this.reliefLoading = true;
+            this.reliefFailed = false;
+            try {
+                const res = await $api.get('/sakuna/relief', { params: { per_page: 100 } });
+                this.reliefList = res.data || [];
+            } catch { this.reliefFailed = true; } finally { this.reliefLoading = false; }
+        },
+        reliefOperations() {
+            return [...new Set(this.reliefList.map(d => d.operation).filter(Boolean))].sort();
+        },
+        resetDistributionForm() {
+            this.distributionForm = { operation: this.reliefOperationFilter || '', barangay: '', beneficiary_name: '', item: '', quantity: '' };
+        },
+        openCreateDistribution() {
+            this.resetDistributionForm();
+            this.showCreateDistribution = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        // DUPLICATE_DISTRIBUTION (409) is a real, enforced guard -- the same
+        // beneficiary cannot receive twice from the same operation. Surfaced
+        // via the ordinary error toast rather than re-implemented client-side.
+        async submitDistribution() {
+            if (this.distributionSaving || !this.distributionForm.operation || !this.distributionForm.barangay || !this.distributionForm.beneficiary_name || !this.distributionForm.item) return;
+            this.distributionSaving = true;
+            const payload = { ...this.distributionForm, quantity: this.distributionForm.quantity === '' ? undefined : Number(this.distributionForm.quantity) };
+            try {
+                const res = await $api.post('/sakuna/relief', payload);
+                this.reliefList.unshift(res.data);
+                this.showCreateDistribution = false;
+                this.toast(res.data.ref + ' recorded.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not record this distribution.', 'error');
+            } finally { this.distributionSaving = false; }
+        },
+        async releaseDistribution(d) {
+            try {
+                const res = await $api.post('/sakuna/relief/' + d.ref + '/release', {});
+                const idx = this.reliefList.findIndex(x => x.ref === res.data.ref);
+                if (idx !== -1) this.reliefList[idx] = { ...this.reliefList[idx], ...res.data };
+                this.toast(d.ref + ' released.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not release this distribution.', 'error');
+            }
+        },
 
         // Damage tab state
         damageSearch: '',
@@ -919,7 +971,7 @@
             {{-- Relief & Logistics --}}
             @if($activeTab === 'relief')
             <div>
-                @include('admin.partials.sakuna.tab-relief', ['inventory' => $inventory, 'barangays' => $barangays, 'centers' => $centers])
+                @include('admin.partials.sakuna.tab-relief', ['barangays' => $barangays])
             </div>
             @endif
 

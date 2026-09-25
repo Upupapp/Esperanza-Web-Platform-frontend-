@@ -1,1039 +1,237 @@
-{{-- Relief & Logistics Tab --}}
-<div class="space-y-6">
+{{--
+    tab-relief.blade.php
+    Relief Distribution
+    Included by sakuna.blade.php — NO x-data at root.
+    Parent Alpine state: reliefSearch/reliefOperationFilter/reliefStatusFilter,
+    reliefList/reliefLoading/reliefFailed, showCreateDistribution/distributionForm/
+    distributionSaving. Helpers: can(submodule, action), exportCSV(rows, filename),
+    toast(msg, variant), loadRelief(), reliefOperations(), openCreateDistribution(),
+    submitDistribution(), releaseDistribution(d).
 
-    {{-- Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-navy-900">Relief & Logistics</h2>
-            <p class="text-sm text-slate-500 mt-0.5">Inventory management, relief requests, distributions, and donation tracking.</p>
-        </div>
-        <button
-            @click="$dispatch('toast', { message: 'Relief logistics report exported.', variant: 'success' })"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm self-start sm:self-auto">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            Export
+    GET/POST /sakuna/relief, POST /sakuna/relief/{ref}/release. `SakunaReliefDistribution`
+    is the ONLY real model behind this submodule — the mock's five subtabs
+    (Inventory, Requests, Releases, Distribution, Donations) mapped to at most ONE of
+    them for real. There is no `sakuna_relief_inventory`, no relief-request-approval
+    table and no donations table anywhere in the schema (checked every Sakuna
+    migration). Dropped rather than reskinned:
+      - Inventory: 15 named stock items with reorder levels, expiry dates and
+        condition ratings — no stock-tracking model exists at all.
+      - Requests: a 6-card kanban ("For Validation" → "For Approval" → "Preparing"
+        → "In Transit" → "Delivered"/"Distributing") with named relief officers —
+        no request/approval workflow model exists; a distribution is created
+        directly, with no separate approval step.
+      - Releases: a flat table of four more invented rows, structurally identical
+        to Distribution below it — not a distinct real concept.
+      - Donations: donor/value/status tracking — no donations model exists.
+    What's real: a flat list of distributions (operation + barangay + beneficiary +
+    item + quantity), created directly and released once handed over, with a real
+    server-side duplicate guard (DUPLICATE_DISTRIBUTION, 409) keyed on
+    (operation, beneficiary) — not the mock's hardcoded "Rodrigo Panganiban" check.
+    `approve` is a declared sakuna_relief permission with nothing behind it (only
+    `release` is implemented) — left alone rather than invented, the same restraint
+    applied to sakuna_resources' declared-but-unimplemented `assign`.
+--}}
+
+<div x-data="{
+    get filteredRelief() {
+        const q = reliefSearch.toLowerCase();
+        return reliefList.filter(d =>
+            $store.session.inScope(d.barangay) &&
+            (!q || d.beneficiary.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.item.toLowerCase().includes(q)) &&
+            (!reliefOperationFilter || d.operation === reliefOperationFilter) &&
+            (!reliefStatusFilter || d.status === reliefStatusFilter)
+        );
+    },
+}" x-init="loadRelief()" class="space-y-4">
+
+{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
+<div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+        <h2 class="text-base font-semibold text-slate-800">Relief Distribution</h2>
+        <p class="text-sm text-slate-500 mt-0.5">Record and release relief goods to beneficiaries, with built-in duplicate protection.</p>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+        <button @click="exportCSV(filteredRelief, 'relief-distributions.csv')"
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+        </button>
+        <button x-show="can('sakuna_relief', 'create')" @click="openCreateDistribution()"
+            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i> Record Distribution
         </button>
     </div>
-
-    {{-- Subtab Navigation --}}
-    <div class="flex flex-wrap gap-2">
-        @foreach([['inventory','Inventory'],['requests','Requests'],['releases','Releases'],['distribution','Distribution'],['donations','Donations']] as [$key,$label])
-        <button
-            @click="reliefSubtab = '{{ $key }}'"
-            :class="reliefSubtab === '{{ $key }}'
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
-            class="px-4 py-2 rounded-full text-sm font-medium transition-all">
-            {{ $label }}
-        </button>
-        @endforeach
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- SUBTAB: Inventory --}}
-    {{-- ================================================================ --}}
-    <div x-show="reliefSubtab === 'inventory'" x-cloak class="space-y-4">
-
-        {{-- Summary Pills --}}
-        <div class="flex flex-wrap gap-3">
-            <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-card text-sm">
-                <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
-                <span class="text-slate-500">Total Item Types:</span>
-                <span class="font-bold text-slate-800">15</span>
-            </div>
-            <div class="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100 shadow-card text-sm">
-                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500"></i>
-                <span class="text-amber-700">Low Stock Items:</span>
-                <span class="font-bold text-amber-800">4</span>
-            </div>
-            <div class="flex items-center gap-2 px-4 py-2 bg-rose-50 rounded-xl border border-rose-100 shadow-card text-sm">
-                <i data-lucide="calendar-x" class="w-4 h-4 text-rose-500"></i>
-                <span class="text-rose-700">Expiring Soon (≤30 days):</span>
-                <span class="font-bold text-rose-800">1</span>
-            </div>
-            <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-card text-sm">
-                <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i>
-                <span class="text-slate-500">Total Reserved:</span>
-                @php $totalReserved = collect($inventory)->sum('reserved'); @endphp
-                <span class="font-bold text-slate-800">{{ number_format($totalReserved) }}</span>
-            </div>
-        </div>
-
-        {{-- Filter Bar --}}
-        <div class="flex flex-wrap gap-3 items-center">
-            <div class="relative flex-1 min-w-[200px]">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input aria-label="Search by name or code"
-                    type="text"
-                    x-model="inventorySearch"
-                    placeholder="Search by name or code…"
-                    class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600 bg-white">
-            </div>
-            <select aria-label="Inventory category filter"
-                x-model="inventoryCategoryFilter"
-                class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                <option value="">All Categories</option>
-                <option value="Food">Food</option>
-                <option value="Water">Water</option>
-                <option value="Non-Food">Non-Food</option>
-                <option value="Medicine">Medicine</option>
-                <option value="Baby Supplies">Baby Supplies</option>
-                <option value="PPE">PPE</option>
-                <option value="Fuel">Fuel</option>
-                <option value="Medical">Medical</option>
-            </select>
-            <button
-                @click="showStockInModal = true; selectedInventoryItem = null"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
-                <i data-lucide="circle-plus" class="w-4 h-4"></i>
-                Stock In
-            </button>
-            <button
-                @click="showStockOutModal = true; selectedInventoryItem = null"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors shadow-sm">
-                <i data-lucide="circle-minus" class="w-4 h-4"></i>
-                Stock Out
-            </button>
-        </div>
-
-        {{-- Inventory Table --}}
-        <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Code</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Item Name</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Available</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Reserved</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Reorder Lvl</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Storage</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Expiry</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Condition</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach($inventory as $item)
-                        @php
-                            $isLowStock = $item['available'] <= $item['reorder'];
-                            $isExpiringSoon = isset($item['expiry']) && $item['code'] === 'INV-013';
-                        @endphp
-                        <tr
-                            x-show="(inventorySearch === '' || '{{ strtolower($item['name']) }}'.includes(inventorySearch.toLowerCase()) || '{{ strtolower($item['code']) }}'.includes(inventorySearch.toLowerCase())) && (inventoryCategoryFilter === '' || '{{ $item['category'] }}' === inventoryCategoryFilter)"
-                            class="{{ $isLowStock ? 'bg-amber-50' : 'bg-white hover:bg-slate-50' }} transition-colors">
-                            <td class="px-4 py-3">
-                                <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ $item['code'] }}</span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="font-medium text-slate-800">{{ $item['name'] }}</span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="text-slate-600">{{ $item['category'] }}</span>
-                            </td>
-                            <td class="px-4 py-3 text-slate-600">{{ $item['unit'] }}</td>
-                            <td class="px-4 py-3">
-                                <span class="{{ $isLowStock ? 'text-rose-600 font-bold' : 'text-slate-700 font-medium' }}">
-                                    {{ number_format($item['available']) }} {{ $item['unit'] }}
-                                </span>
-                                @if($isLowStock)
-                                    <span class="ml-1.5 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">Low Stock</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-slate-600">{{ number_format($item['reserved']) }} {{ $item['unit'] }}</td>
-                            <td class="px-4 py-3 text-slate-600">{{ number_format($item['reorder']) }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs">{{ $item['location'] ?? '—' }}</td>
-                            <td class="px-4 py-3">
-                                @if(isset($item['expiry']) && $item['expiry'])
-                                    <span class="{{ $isExpiringSoon ? 'text-rose-600 font-semibold' : 'text-slate-600' }} text-xs">
-                                        {{ $item['expiry'] }}
-                                    </span>
-                                    @if($isExpiringSoon)
-                                        <span class="ml-1 px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded text-xs font-medium whitespace-nowrap">Expiring Soon</span>
-                                    @endif
-                                @else
-                                    <span class="text-slate-400 text-xs">N/A</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
-                                @php
-                                    $condColor = match($item['condition'] ?? 'Good') {
-                                        'Good' => 'bg-emerald-100 text-emerald-700',
-                                        'Fair' => 'bg-amber-100 text-amber-700',
-                                        'Poor' => 'bg-rose-100 text-rose-700',
-                                        default => 'bg-slate-100 text-slate-600',
-                                    };
-                                @endphp
-                                <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $condColor }}">{{ $item['condition'] ?? 'Good' }}</span>
-                            </td>
-                            <td class="px-4 py-3 text-xs text-slate-500">{{ $item['source'] ?? '—' }}</td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-1">
-                                    <button
-                                        @click="selectedInventoryItem = {{ json_encode($item) }}; showStockInModal = true"
-                                        class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Stock In">
-                                        <i data-lucide="circle-plus" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                    <button
-                                        @click="selectedInventoryItem = {{ json_encode($item) }}; showStockOutModal = true"
-                                        class="p-1.5 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" title="Stock Out">
-                                        <i data-lucide="circle-minus" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                    <button
-                                        @click="$dispatch('toast', { message: 'Movement history for {{ $item['name'] }}.', variant: 'info' })"
-                                        class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="View History">
-                                        <i data-lucide="history" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                    <button
-                                        @click="$dispatch('toast', { message: 'Items reserved from {{ $item['name'] }}.', variant: 'success' })"
-                                        class="p-1.5 text-brand-600 hover:bg-blue-50 rounded-lg transition-colors" title="Reserve">
-                                        <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- SUBTAB: Requests --}}
-    {{-- ================================================================ --}}
-    <div x-show="reliefSubtab === 'requests'" x-cloak class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-navy-900">Relief Requests</h3>
-            <button
-                @click="showRequestModal = true"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                Create Request
-            </button>
-        </div>
-
-        {{-- Request Cards Grid --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-
-            {{-- REQ-001 --}}
-            <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5 flex flex-col gap-3">
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <span class="font-mono text-xs text-slate-400">REQ-001</span>
-                        <h4 class="font-semibold text-slate-800 text-sm mt-0.5">Masbaranon Elementary School</h4>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-0.5 bg-violet-100 text-violet-700 rounded-full text-xs font-medium">For Approval</span>
-                        <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full text-xs font-medium">Urgent</span>
-                    </div>
-                </div>
-                <ul class="text-xs text-slate-600 space-y-1">
-                    <li class="flex items-center gap-1.5"><i data-lucide="package" class="w-3 h-3 text-slate-400"></i>30 Family Food Packs</li>
-                    <li class="flex items-center gap-1.5"><i data-lucide="droplet" class="w-3 h-3 text-slate-400"></i>60 Bottled Water (1.5L)</li>
-                </ul>
-                <div class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
-                    120 beneficiaries
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-auto">
-                    <div class="text-xs text-slate-400">Relief Officer Reyes · Jul 15, 2026</div>
-                    <button
-                        @click="$dispatch('toast', { message: 'REQ-001 approved and queued for preparation.', variant: 'success' })"
-                        class="px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 transition-colors">
-                        Approve
-                    </button>
-                </div>
-            </div>
-
-            {{-- REQ-002 --}}
-            <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5 flex flex-col gap-3">
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <span class="font-mono text-xs text-slate-400">REQ-002</span>
-                        <h4 class="font-semibold text-slate-800 text-sm mt-0.5">Baras Barangay Hall</h4>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">Approved</span>
-                        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Normal</span>
-                    </div>
-                </div>
-                <ul class="text-xs text-slate-600 space-y-1">
-                    <li class="flex items-center gap-1.5"><i data-lucide="package" class="w-3 h-3 text-slate-400"></i>20 Hygiene Kits</li>
-                    <li class="flex items-center gap-1.5"><i data-lucide="bed" class="w-3 h-3 text-slate-400"></i>10 Sleeping Mats</li>
-                </ul>
-                <div class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
-                    45 beneficiaries
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-auto">
-                    <div class="text-xs text-slate-400">Relief Officer Cruz · Jul 15, 2026</div>
-                    <button
-                        @click="$dispatch('toast', { message: 'REQ-002 marked as preparing.', variant: 'success' })"
-                        class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors">
-                        Prepare Release
-                    </button>
-                </div>
-            </div>
-
-            {{-- REQ-003 --}}
-            <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5 flex flex-col gap-3">
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <span class="font-mono text-xs text-slate-400">REQ-003</span>
-                        <h4 class="font-semibold text-slate-800 text-sm mt-0.5">Domorog MPH</h4>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">Preparing</span>
-                        <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">Normal</span>
-                    </div>
-                </div>
-                <ul class="text-xs text-slate-600 space-y-1">
-                    <li class="flex items-center gap-1.5"><i data-lucide="package" class="w-3 h-3 text-slate-400"></i>15 Family Food Packs</li>
-                    <li class="flex items-center gap-1.5"><i data-lucide="droplet" class="w-3 h-3 text-slate-400"></i>30 Bottled Water (1.5L)</li>
-                </ul>
-                <div class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
-                    38 beneficiaries
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-auto">
-                    <div class="text-xs text-slate-400">Relief Officer Bato · Jul 15, 2026</div>
-                    <button
-                        @click="$dispatch('toast', { message: 'REQ-003 marked as in transit.', variant: 'success' })"
-                        class="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-colors">
-                        Mark In Transit
-                    </button>
-                </div>
-            </div>
-
-            {{-- REQ-004 --}}
-            <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5 flex flex-col gap-3">
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <span class="font-mono text-xs text-slate-400">REQ-004</span>
-                        <h4 class="font-semibold text-slate-800 text-sm mt-0.5">Magsaysay Barangay Hall</h4>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-0.5 bg-teal-100 text-teal-700 rounded-full text-xs font-medium">Delivered</span>
-                        <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full text-xs font-medium">High</span>
-                    </div>
-                </div>
-                <ul class="text-xs text-slate-600 space-y-1">
-                    <li class="flex items-center gap-1.5"><i data-lucide="baby" class="w-3 h-3 text-slate-400"></i>10 Baby Diapers packs</li>
-                    <li class="flex items-center gap-1.5"><i data-lucide="heart-pulse" class="w-3 h-3 text-slate-400"></i>5 ORS sachets</li>
-                </ul>
-                <div class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
-                    18 beneficiaries
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-auto">
-                    <div class="text-xs text-slate-400">Relief Officer Villanueva · Jul 14, 2026</div>
-                    <button
-                        @click="$dispatch('toast', { message: 'REQ-004 marked as received.', variant: 'success' })"
-                        class="px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 transition-colors">
-                        Mark Received
-                    </button>
-                </div>
-            </div>
-
-            {{-- REQ-005 --}}
-            <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5 flex flex-col gap-3">
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <span class="font-mono text-xs text-slate-400">REQ-005</span>
-                        <h4 class="font-semibold text-slate-800 text-sm mt-0.5">Municipal Gymnasium</h4>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Distributing</span>
-                        <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full text-xs font-medium">Urgent</span>
-                    </div>
-                </div>
-                <ul class="text-xs text-slate-600 space-y-1">
-                    <li class="flex items-center gap-1.5"><i data-lucide="package" class="w-3 h-3 text-slate-400"></i>100 Family Food Packs</li>
-                    <li class="flex items-center gap-1.5"><i data-lucide="droplet" class="w-3 h-3 text-slate-400"></i>200 Bottled Water (1.5L)</li>
-                    <li class="flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3 h-3 text-slate-400"></i>50 Hygiene Kits</li>
-                </ul>
-                <div class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
-                    312 beneficiaries
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-auto">
-                    <div class="text-xs text-slate-400">Relief Officer Santos · Jul 15, 2026</div>
-                    <span class="px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-xs font-medium border border-purple-100">Active Distribution</span>
-                </div>
-            </div>
-
-            {{-- REQ-006 --}}
-            <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5 flex flex-col gap-3">
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <span class="font-mono text-xs text-slate-400">REQ-006</span>
-                        <h4 class="font-semibold text-slate-800 text-sm mt-0.5">Santiago (Incoming Request)</h4>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">For Validation</span>
-                        <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full text-xs font-medium">High</span>
-                    </div>
-                </div>
-                <ul class="text-xs text-slate-600 space-y-1">
-                    <li class="flex items-center gap-1.5"><i data-lucide="package" class="w-3 h-3 text-slate-400"></i>25 Family Food Packs</li>
-                </ul>
-                <div class="flex items-center gap-1.5 text-xs text-slate-500">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
-                    60 beneficiaries
-                </div>
-                <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-auto">
-                    <div class="text-xs text-slate-400">Brgy. Captain Dizon · Jul 15, 2026</div>
-                    <button
-                        @click="$dispatch('toast', { message: 'REQ-006 validated and queued for approval.', variant: 'success' })"
-                        class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors">
-                        Validate
-                    </button>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- SUBTAB: Releases --}}
-    {{-- ================================================================ --}}
-    <div x-show="reliefSubtab === 'releases'" x-cloak class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-navy-900">Relief Releases</h3>
-            <button
-                @click="$dispatch('toast', { message: 'Releases report exported.', variant: 'success' })"
-                class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                Export
-            </button>
-        </div>
-        <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Release ID</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Destination</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Items Released</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Beneficiaries</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Released By</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach([
-                            ['REL-001', 'Jul 15, 2026', 'Magsaysay Barangay Hall', 'Family Food Packs, Bottled Water', '28 packs / 56 bottles', '28 families', 'Relief Officer Ramos', 'Delivered', 'teal'],
-                            ['REL-002', 'Jul 15, 2026', 'Baras Barangay Hall', 'Hygiene Kits, Sleeping Mats', '22 kits / 22 mats', '22 families', 'Relief Officer Ramos', 'Received', 'emerald'],
-                            ['REL-003', 'Jul 15, 2026', 'Municipal Gymnasium', 'Family Food Packs, Hygiene Kits, Water', '84 packs / 84 kits', '84 families', 'Relief Officer Santos', 'Distributing', 'purple'],
-                            ['REL-004', 'Jul 15, 2026', 'Domorog MPH', 'Family Food Packs', '19 packs', '19 families', 'Relief Officer Ramos', 'In Transit', 'orange'],
-                        ] as [$id, $date, $dest, $items, $qty, $bene, $by, $status, $color])
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-3"><span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ $id }}</span></td>
-                            <td class="px-4 py-3 text-slate-600 text-xs whitespace-nowrap">{{ $date }}</td>
-                            <td class="px-4 py-3 font-medium text-slate-800">{{ $dest }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs">{{ $items }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs whitespace-nowrap">{{ $qty }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs">{{ $bene }}</td>
-                            <td class="px-4 py-3 text-xs text-slate-500">{{ $by }}</td>
-                            <td class="px-4 py-3">
-                                @php
-                                    $statusClass = match($color) {
-                                        'teal' => 'bg-teal-100 text-teal-700',
-                                        'emerald' => 'bg-emerald-100 text-emerald-700',
-                                        'purple' => 'bg-purple-100 text-purple-700',
-                                        'orange' => 'bg-orange-100 text-orange-700',
-                                        default => 'bg-slate-100 text-slate-600',
-                                    };
-                                @endphp
-                                <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">{{ $status }}</span>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- SUBTAB: Distribution --}}
-    {{-- ================================================================ --}}
-    <div x-show="reliefSubtab === 'distribution'" x-cloak
-         x-data="{ showDistModal: false, distHouseholdSearch: '', distPackageType: '', isDuplicate: false, supervisorConfirmed: false }"
-         class="space-y-4">
-
-        <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-navy-900">Beneficiary Distribution</h3>
-            <button
-                @click="showDistModal = true; distHouseholdSearch = ''; distPackageType = ''; isDuplicate = false; supervisorConfirmed = false"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                Record Distribution
-            </button>
-        </div>
-
-        {{-- Duplicate Warning Banner --}}
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2 text-amber-700 text-sm">
-            <i data-lucide="triangle-alert" class="w-4 h-4 flex-shrink-0"></i>
-            Duplicate assistance warnings are active for the current operational period (SWM-2026-07).
-        </div>
-
-        {{-- Distribution Table --}}
-        <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Dist. ID</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Barangay</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Center</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Household Head</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Size</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Package</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Officer</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Verification</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach([
-                            ['DIST-001','Masbaranon','EC-002','Rodrigo Panganiban',5,'Family Food Pack','Jul 15','Juan Dela Cruz','QR Scan','Completed'],
-                            ['DIST-002','Masbaranon','EC-002','Nenita Cruz',4,'Family Food Pack','Jul 15','Juan Dela Cruz','Manual','Completed'],
-                            ['DIST-003','Baras','EC-003','Rosario Dela Cruz',3,'Family Food Pack','Jul 15','Maria Santos','ID Scan','Completed'],
-                            ['DIST-004','Domorog','EC-004','Eduardo Santos',6,'Family Food Pack','Jul 15','Pedro Garcia','Manual','Completed'],
-                            ['DIST-005','Magsaysay','EC-005','Margarita Flores',4,'Family Food Pack','Jul 14','Linda Razon','QR Scan','Completed'],
-                            ['DIST-006','Poblacion','EC-006','Antonio Mendez',8,'Family Food Pack + Hygiene Kit','Jul 15','Rodrigo Castillo','QR Scan','Completed'],
-                            ['DIST-007','Poblacion','EC-006','Felisa Bautista',5,'Family Food Pack + Hygiene Kit','Jul 15','Rodrigo Castillo','ID Scan','Completed'],
-                            ['DIST-008','Iligan','EC-007','Hernando Alcala',3,'Family Food Pack','Jul 15','Priscilla Buena','Manual','Completed'],
-                            ['DIST-009','Masbaranon','EC-002','Consuelo Ramos',6,'Family Food Pack','Jul 15','Juan Dela Cruz','QR Scan','Completed'],
-                            ['DIST-010','Baras','EC-003','Gerardo Umali',4,'Family Food Pack','Jul 15','Maria Santos','Manual','Completed'],
-                        ] as [$id,$brgy,$center,$head,$size,$pkg,$date,$officer,$verify,$status])
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-3"><span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ $id }}</span></td>
-                            <td class="px-4 py-3 text-slate-700 text-xs">{{ $brgy }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs">{{ $center }}</td>
-                            <td class="px-4 py-3 font-medium text-slate-800">{{ $head }}</td>
-                            <td class="px-4 py-3 text-center text-slate-600">{{ $size }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs">{{ $pkg }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs whitespace-nowrap">{{ $date }}</td>
-                            <td class="px-4 py-3 text-xs text-slate-500">{{ $officer }}</td>
-                            <td class="px-4 py-3">
-                                @php
-                                    $vColor = match($verify) {
-                                        'QR Scan' => 'bg-blue-100 text-blue-700',
-                                        'ID Scan' => 'bg-indigo-100 text-indigo-700',
-                                        'Manual' => 'bg-slate-100 text-slate-600',
-                                        default => 'bg-slate-100 text-slate-600',
-                                    };
-                                @endphp
-                                <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $vColor }}">{{ $verify }}</span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">{{ $status }}</span>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {{-- Record Distribution Modal --}}
-        <div
-            x-show="showDistModal"
-            x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-            @click.self="showDistModal = false"
-        x-trap="showDistModal"
-        role="dialog"
-        aria-modal="true"
-        @keydown.escape.window="showDistModal = false">
-            <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-                <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-base font-bold text-navy-900">Record Distribution</h3>
-                    <button @click="showDistModal = false" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                        <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
-                    </button>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="household-head-search">Household Head Search</label>
-                        <input id="household-head-search"
-                            type="text"
-                            x-model="distHouseholdSearch"
-                            @input="isDuplicate = distHouseholdSearch.toLowerCase().includes('rodrigo panganiban') && distPackageType === 'Family Food Pack'; supervisorConfirmed = false"
-                            placeholder="Type household head name…"
-                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600">
-                        <p class="text-xs text-slate-400 mt-1">Type to search from registered evacuee households (DIST-001 – DIST-010).</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="package-type">Package Type</label>
-                            <select id="package-type"
-                                x-model="distPackageType"
-                                @change="isDuplicate = distHouseholdSearch.toLowerCase().includes('rodrigo panganiban') && distPackageType === 'Family Food Pack'; supervisorConfirmed = false"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                                <option value="">Select package…</option>
-                                <option>Family Food Pack</option>
-                                <option>Hygiene Kit</option>
-                                <option>Family Food Pack + Hygiene Kit</option>
-                                <option>Water Pack</option>
-                                <option>Sleeping Kit</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="verification-method">Verification Method</label>
-                            <select id="verification-method" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                                <option>QR Scan</option>
-                                <option>ID Scan</option>
-                                <option>Manual</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="distribution-center">Distribution Center</label>
-                            <select id="distribution-center" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                                @foreach($centers as $center)
-                                <option value="{{ $center['id'] }}">{{ $center['name'] }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="distributing-officer">Distributing Officer</label>
-                            <input id="distributing-officer" type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                    </div>
-
-                    {{-- Duplicate Warning --}}
-                    <div x-show="isDuplicate" x-cloak class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-700 text-sm">
-                        <strong>⚠ Duplicate Alert:</strong> This household already received 1 Family Food Pack on Jul 15, 2026. Override requires supervisor authorization.
-                        <label class="flex items-center gap-2 mt-2 cursor-pointer">
-                            <input type="checkbox" x-model="supervisorConfirmed" class="rounded text-rose-600">
-                            <span class="text-xs">I am a supervisor and authorize this distribution.</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
-                    <button @click="showDistModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                    <button
-                        :disabled="isDuplicate && !supervisorConfirmed"
-                        :class="(isDuplicate && !supervisorConfirmed) ? 'opacity-40 cursor-not-allowed bg-brand-600 text-white' : 'bg-brand-600 text-white hover:bg-brand-600/90'"
-                        @click="if(!(isDuplicate && !supervisorConfirmed)){ $dispatch('toast', { message: 'Distribution DIST-011 recorded for ' + (distHouseholdSearch || 'household') + '.', variant: 'success' }); showDistModal = false }"
-                        class="px-5 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
-                        <i data-lucide="check" class="w-4 h-4 inline-block mr-1"></i>
-                        Distribute
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- SUBTAB: Donations --}}
-    {{-- ================================================================ --}}
-    <div x-show="reliefSubtab === 'donations'" x-cloak
-         x-data="{ showDonationModal: false }"
-         class="space-y-4">
-
-        <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-navy-900">Donation Records</h3>
-            <button
-                @click="showDonationModal = true"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-600/90 transition-colors shadow-sm">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                Record Donation
-            </button>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">ID</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Donor</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Items</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Est. Value</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Received By</th>
-                            <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach([
-                            ['DON-001','SM Foundation Masbate','Jul 14, 2026','Canned goods, Bottled water','500 cans / 200 bottles','₱45,000','Relief Officer Santos','Allocated','emerald'],
-                            ['DON-002','Philippine Red Cross — Masbate Chapter','Jul 15, 2026','First Aid Kits, ORS','20 kits / 100 sachets','₱28,000','MDRRMO Head Salinas','Allocated','emerald'],
-                            ['DON-003','Reyes Family (Private)','Jul 15, 2026','Cash for food packs','—','₱10,000','Treasurer Mendoza','Acknowledged','blue'],
-                            ['DON-004','Bayanihan Group Manila','Jul 15, 2026','Sleeping mats, Blankets','50 mats / 50 blankets','₱22,000','Relief Officer Ramos','Partially Allocated','amber'],
-                            ['DON-005','LGU Masbate City','Jul 15, 2026','Rice (50kg sacks), Canned goods','20 sacks / 300 cans','₱38,000','MDRRMO Head Salinas','Allocated','emerald'],
-                        ] as [$id,$donor,$date,$items,$qty,$value,$by,$status,$color])
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-3"><span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ $id }}</span></td>
-                            <td class="px-4 py-3 font-medium text-slate-800 text-xs">{{ $donor }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs whitespace-nowrap">{{ $date }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs">{{ $items }}</td>
-                            <td class="px-4 py-3 text-slate-600 text-xs">{{ $qty }}</td>
-                            <td class="px-4 py-3 font-semibold text-slate-800 text-xs">{{ $value }}</td>
-                            <td class="px-4 py-3 text-xs text-slate-500">{{ $by }}</td>
-                            <td class="px-4 py-3">
-                                @php
-                                    $donClass = match($color) {
-                                        'emerald' => 'bg-emerald-100 text-emerald-700',
-                                        'blue'    => 'bg-blue-100 text-blue-700',
-                                        'amber'   => 'bg-amber-100 text-amber-700',
-                                        default   => 'bg-slate-100 text-slate-600',
-                                    };
-                                @endphp
-                                <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $donClass }}">{{ $status }}</span>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {{-- Record Donation Modal --}}
-        <div
-            x-show="showDonationModal"
-            x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-            @click.self="showDonationModal = false"
-        x-trap="showDonationModal"
-        role="dialog"
-        aria-modal="true"
-        @keydown.escape.window="showDonationModal = false">
-            <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-                <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-base font-bold text-navy-900">Record Donation</h3>
-                    <button @click="showDonationModal = false" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                        <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
-                    </button>
-                </div>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="donor-name-organization">Donor Name / Organization</label>
-                            <input id="donor-name-organization" type="text" placeholder="e.g. SM Foundation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="date-received">Date Received</label>
-                            <input id="date-received" type="date" value="{{ date('Y-m-d') }}" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="items-description">Items / Description</label>
-                            <input id="items-description" type="text" placeholder="e.g. Canned goods, Bottled water" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="quantity">Quantity</label>
-                            <input id="quantity" type="text" placeholder="e.g. 500 cans / 200 bottles" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="estimated-value">Estimated Value (₱)</label>
-                            <input id="estimated-value" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="received-by">Received By</label>
-                            <input id="received-by" type="text" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="notes-remarks-3">Notes / Remarks</label>
-                        <textarea id="notes-remarks-3" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
-                    </div>
-                </div>
-                <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
-                    <button @click="showDonationModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                    <button
-                        @click="$dispatch('toast', { message: 'Donation DON-006 recorded successfully.', variant: 'success' }); showDonationModal = false"
-                        class="px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm">
-                        Save Donation
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- MODAL: Stock In --}}
-    {{-- ================================================================ --}}
-    <div
-        x-show="showStockInModal"
-        x-cloak
-        x-data="{ stockInQty: 0, stockInItem: '', stockInBatch: '', stockInSource: '', stockInBy: '', stockInDate: '{{ date('Y-m-d') }}', stockInCondition: 'Good', stockInNotes: '' }"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showStockInModal = false"
-        x-trap="showStockInModal"
-        role="dialog"
-        aria-modal="true"
-        @keydown.escape.window="showStockInModal = false">
-        <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <h3 class="text-base font-bold text-navy-900">Stock In</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Record incoming inventory items</p>
-                </div>
-                <button @click="showStockInModal = false" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
-                </button>
-            </div>
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="item-name">Item Name</label>
-                        <select id="item-name" x-model="stockInItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                            <option value="">Select item…</option>
-                            @foreach($inventory as $item)
-                            <option value="{{ $item['name'] }}" @if(isset($selectedInventoryItem) && $selectedInventoryItem && $item['code'] === ($selectedInventoryItem['code'] ?? '')) selected @endif>
-                                {{ $item['code'] }} — {{ $item['name'] }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="quantity-2">Quantity</label>
-                        <input id="quantity-2" type="number" min="1" x-model="stockInQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="batch-lot-number">Batch / Lot Number</label>
-                        <input id="batch-lot-number" type="text" x-model="stockInBatch" placeholder="e.g. LOT-2026-0715" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="source-donor">Source / Donor</label>
-                        <input id="source-donor" type="text" x-model="stockInSource" placeholder="e.g. DSWD Masbate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="received-by-2">Received By</label>
-                        <input id="received-by-2" type="text" x-model="stockInBy" placeholder="Officer name" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="date-received-2">Date Received</label>
-                        <input id="date-received-2" type="date" x-model="stockInDate" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="condition">Condition</label>
-                        <select id="condition" x-model="stockInCondition" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                            <option>Good</option>
-                            <option>Fair</option>
-                            <option>Poor</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="notes">Notes</label>
-                    <textarea id="notes" x-model="stockInNotes" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
-                </div>
-            </div>
-            <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
-                <button @click="showStockInModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                <button
-                    @click="$dispatch('toast', { message: 'Stock added: +' + stockInQty + ' ' + stockInItem + '. Inventory updated.', variant: 'success' }); showStockInModal = false"
-                    class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
-                    <i data-lucide="circle-plus" class="w-4 h-4 inline-block mr-1"></i>
-                    Confirm Stock In
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- MODAL: Stock Out --}}
-    {{-- ================================================================ --}}
-    <div
-        x-show="showStockOutModal"
-        x-cloak
-        x-data="{ stockOutQty: 0, stockOutItem: '', stockOutPurpose: '', stockOutDest: '', stockOutBy: '', stockOutRemarks: '' }"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showStockOutModal = false"
-        x-trap="showStockOutModal"
-        role="dialog"
-        aria-modal="true"
-        @keydown.escape.window="showStockOutModal = false">
-        <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <h3 class="text-base font-bold text-navy-900">Stock Out</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Release inventory from storage</p>
-                </div>
-                <button @click="showStockOutModal = false" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
-                </button>
-            </div>
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="item">Item</label>
-                        <select id="item" x-model="stockOutItem" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                            <option value="">Select item…</option>
-                            @foreach($inventory as $item)
-                            <option value="{{ $item['name'] }}" @if(isset($selectedInventoryItem) && $selectedInventoryItem && $item['code'] === ($selectedInventoryItem['code'] ?? '')) selected @endif>
-                                {{ $item['code'] }} — {{ $item['name'] }} (Available: {{ number_format($item['available']) }})
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="quantity-to-release">Quantity to Release</label>
-                        <input id="quantity-to-release" type="number" min="1" x-model="stockOutQty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                        <div x-show="stockOutQty > 999 && stockOutItem === ''" class="mt-1.5 flex items-center gap-1.5 text-xs text-amber-600">
-                            <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>
-                            Requested quantity exceeds available stock.
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="purpose">Purpose</label>
-                        <select id="purpose" x-model="stockOutPurpose" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                            <option value="">Select purpose…</option>
-                            <option>Relief Distribution</option>
-                            <option>Evacuation Center Supply</option>
-                            <option>Medical Use</option>
-                            <option>Transfer</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="destination-beneficiary">Destination / Beneficiary</label>
-                        <input id="destination-beneficiary" type="text" x-model="stockOutDest" placeholder="e.g. Masbaranon EC" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="authorized-by">Authorized By</label>
-                        <input id="authorized-by" type="text" x-model="stockOutBy" placeholder="Authorizing officer" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="remarks">Remarks</label>
-                    <textarea id="remarks" x-model="stockOutRemarks" rows="2" placeholder="Additional remarks…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
-                </div>
-            </div>
-            <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
-                <button @click="showStockOutModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                <button
-                    @click="$dispatch('toast', { message: 'Stock released: -' + stockOutQty + ' ' + (stockOutItem || 'item') + '.', variant: 'success' }); showStockOutModal = false"
-                    class="px-5 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600 transition-colors shadow-sm">
-                    <i data-lucide="circle-minus" class="w-4 h-4 inline-block mr-1"></i>
-                    Confirm Stock Out
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- ================================================================ --}}
-    {{-- MODAL: Create Request --}}
-    {{-- ================================================================ --}}
-    <div
-        x-show="showRequestModal"
-        x-cloak
-        x-data="{ reqItemCount: 1, reqBeneficiaries: 0, reqPriority: 'Normal', reqReason: '', reqBy: '' }"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-        @click.self="showRequestModal = false"
-        x-trap="showRequestModal"
-        role="dialog"
-        aria-modal="true"
-        @keydown.escape.window="showRequestModal = false">
-        <div class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <h3 class="text-base font-bold text-navy-900">Create Relief Request</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Submit a new relief request for review and approval</p>
-                </div>
-                <button @click="showRequestModal = false" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
-                </button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="requesting-entity">Requesting Entity</label>
-                    <select id="requesting-entity" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                        <option value="">Select center or barangay…</option>
-                        <optgroup label="Evacuation Centers">
-                            @foreach($centers as $center)
-                            <option value="center-{{ $center['id'] }}">{{ $center['name'] }} ({{ $center['barangay'] }})</option>
-                            @endforeach
-                        </optgroup>
-                        <optgroup label="Barangays">
-                            @foreach($barangays as $brgy)
-                            <option value="brgy-{{ Str::slug($brgy) }}">{{ $brgy }} Barangay Hall</option>
-                            @endforeach
-                        </optgroup>
-                    </select>
-                </div>
-
-                {{-- Item Rows --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Requested Items</label>
-                    <div class="space-y-2">
-                        <template x-for="i in reqItemCount" :key="i">
-                            <div class="flex gap-2 items-center">
-                                <select class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                                    <option value="">Select item…</option>
-                                    @foreach($inventory as $item)
-                                    <option value="{{ $item['code'] }}">{{ $item['name'] }}</option>
-                                    @endforeach
-                                </select>
-                                <input aria-label="Qty" type="number" min="1" placeholder="Qty" class="w-24 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                            </div>
-                        </template>
-                    </div>
-                    <button
-                        x-show="reqItemCount < 5"
-                        @click="reqItemCount++"
-                        class="mt-2 text-xs text-brand-600 hover:underline flex items-center gap-1">
-                        <i data-lucide="plus" class="w-3 h-3"></i>
-                        Add Another Item
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="beneficiary-count">Beneficiary Count</label>
-                        <input id="beneficiary-count" type="number" min="0" x-model="reqBeneficiaries" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="priority">Priority</label>
-                        <select id="priority" x-model="reqPriority" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 bg-white">
-                            <option>Normal</option>
-                            <option>High</option>
-                            <option>Urgent</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="reason-justification">Reason / Justification</label>
-                    <textarea id="reason-justification" x-model="reqReason" rows="2" placeholder="Describe the need…" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 resize-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="requested-by">Requested By</label>
-                    <input id="requested-by" type="text" x-model="reqBy" placeholder="Name and designation" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30">
-                </div>
-            </div>
-            <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
-                <button @click="showRequestModal = false" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                <button
-                    @click="$dispatch('toast', { message: 'Relief request REQ-007 submitted for approval.', variant: 'success' }); showRequestModal = false"
-                    class="px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-600/90 transition-colors shadow-sm">
-                    Submit Request
-                </button>
-            </div>
-        </div>
-    </div>
-
 </div>
 
-@once
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    window.renderIcons?.();
-});
-</script>
-@endonce
+<div x-show="reliefLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
+<div x-show="reliefFailed" x-cloak><x-ui.error-state messageExpr="'Could not load relief distributions.'" retryExpr="loadRelief()" :retryable="true" /></div>
+
+<div x-show="!reliefLoading && !reliefFailed" x-cloak class="space-y-4">
+
+{{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Total Distributions</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1" x-text="reliefList.length"></p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Beneficiaries Served</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1" x-text="new Set(reliefList.map(d => d.beneficiary)).size"></p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Released</p>
+        <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="reliefList.filter(d => d.status === 'Released').length"></p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Awaiting Release</p>
+        <p class="text-2xl font-bold text-amber-600 mt-1" x-text="reliefList.filter(d => d.status === 'Submitted').length"></p>
+    </div>
+</div>
+
+{{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
+<div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+    <div class="flex flex-wrap gap-3 items-center">
+        <div class="relative flex-1 min-w-48">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+            <input aria-label="Search by beneficiary, ref or item" type="text" x-model="reliefSearch" placeholder="Search by beneficiary, ref or item…"
+                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+        </div>
+        <select aria-label="Operation filter" x-model="reliefOperationFilter"
+            class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            <option value="">All Operations</option>
+            <template x-for="op in reliefOperations()" :key="op"><option :value="op" x-text="op"></option></template>
+        </select>
+        <select aria-label="Relief status filter" x-model="reliefStatusFilter"
+            class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            <option value="">All Statuses</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Released">Released</option>
+        </select>
+        <button @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''"
+            class="text-sm text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl hover:bg-slate-100 transition-colors">
+            Clear filters
+        </button>
+    </div>
+</div>
+
+{{-- ── Distributions Table ─────────────────────────────────────────────────────────────── --}}
+<div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-slate-100 bg-slate-50/60">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Ref</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Operation</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Beneficiary</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Barangay</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Item</th>
+                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Qty</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Released</th>
+                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                <template x-for="d in filteredRelief" :key="d.ref">
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-slate-500" x-text="d.ref"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="d.operation"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-800" x-text="d.beneficiary"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="d.barangay"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="d.item"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700" x-text="d.quantity"></td>
+                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right">
+                            <button x-show="can('sakuna_relief','release') && d.status === 'Submitted'" @click="releaseDistribution(d)"
+                                class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 transition-colors">
+                                <i data-lucide="package-check" class="w-3.5 h-3.5"></i> Release
+                            </button>
+                            <span x-show="d.status === 'Released'" class="text-xs text-slate-300">—</span>
+                        </td>
+                    </tr>
+                </template>
+                <tr x-show="filteredRelief.length === 0">
+                    <td colspan="9" class="px-4 py-12 text-center">
+                        <div class="flex flex-col items-center gap-3 text-slate-400">
+                            <i data-lucide="package" class="w-10 h-10 opacity-30"></i>
+                            <p class="text-sm font-medium text-slate-500">No distributions match your filters.</p>
+                            <button @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/40">
+        <p class="text-xs text-slate-500">Showing <strong x-text="filteredRelief.length"></strong> of <strong x-text="reliefList.length"></strong> distributions</p>
+    </div>
+</div>
+
+</div>{{-- /loaded content --}}
+
+{{-- ── Record Distribution Modal ───────────────────────────────────────────────────────── --}}
+<div x-show="showCreateDistribution" x-cloak
+    x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
+    @click.self="showCreateDistribution = false"
+        x-trap="showCreateDistribution"
+        role="dialog"
+        aria-modal="true"
+        @keydown.escape.window="showCreateDistribution = false">
+    <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+        class="bg-white rounded-2xl shadow-float w-full max-w-xl">
+
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+                <h3 class="font-semibold text-slate-800">Record Distribution</h3>
+                <p class="text-xs text-slate-500 mt-0.5">A duplicate for the same operation and beneficiary is refused automatically.</p>
+            </div>
+            <button @click="showCreateDistribution = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dist-operation">Operation <span class="text-rose-500">*</span></label>
+                <input id="dist-operation" type="text" x-model="distributionForm.operation" list="relief-operation-suggestions" placeholder="e.g. SWM-2026-07"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <datalist id="relief-operation-suggestions">
+                    <template x-for="op in reliefOperations()" :key="op"><option :value="op"></option></template>
+                </datalist>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dist-beneficiary">Beneficiary Name <span class="text-rose-500">*</span></label>
+                <input id="dist-beneficiary" type="text" x-model="distributionForm.beneficiary_name" placeholder="Household head or individual name"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            </div>
+            <div>
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dist-barangay">Barangay <span class="text-rose-500">*</span></label>
+                <select id="dist-barangay" x-model="distributionForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <option value="">Select barangay…</option>
+                    @foreach($barangays as $brgy)
+                        <option>{{ $brgy }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dist-item">Item <span class="text-rose-500">*</span></label>
+                <input id="dist-item" type="text" x-model="distributionForm.item" placeholder="e.g. Family Food Pack"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dist-quantity">Quantity</label>
+                <input id="dist-quantity" type="number" min="1" x-model="distributionForm.quantity" placeholder="1"
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex gap-3">
+            <button @click="showCreateDistribution = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+            <button :disabled="distributionSaving || !distributionForm.operation || !distributionForm.barangay || !distributionForm.beneficiary_name || !distributionForm.item" @click="submitDistribution()"
+                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors disabled:opacity-50">
+                <span x-text="distributionSaving ? 'Recording…' : 'Record Distribution'"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+</div>{{-- end x-data wrapper --}}
