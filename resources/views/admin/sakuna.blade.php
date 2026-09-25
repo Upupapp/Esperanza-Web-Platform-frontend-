@@ -234,6 +234,102 @@
         showOpenCenterConfirm: false,
         showCloseCenterConfirm: false,
         pendingCenterAction: null,
+        centersList: [],
+        centersLoading: true,
+        centersFailed: false,
+        centerFormMode: 'create',
+        centerSaving: false,
+        centerForm: { ref: null, name: '', barangay: '', address: '', capacity: '', services: [] },
+        centerEvacuees: [],
+        // GET /sakuna/centers (real, derived occupancy -- SakunaCenter has no
+        // lat/lng, no manager/contact column, no inspection/room/personnel
+        // sub-model; see tab-centers.blade.php's header comment).
+        async loadCenters() {
+            this.centersLoading = true;
+            this.centersFailed = false;
+            try {
+                const res = await $api.get('/sakuna/centers', { params: { per_page: 100 } });
+                this.centersList = res.data || [];
+            } catch { this.centersFailed = true; } finally { this.centersLoading = false; }
+        },
+        resetCenterForm() {
+            this.centerForm = { ref: null, name: '', barangay: '', address: '', capacity: '', services: [] };
+        },
+        openCreateCenter() {
+            this.resetCenterForm();
+            this.centerFormMode = 'create';
+            this.showCreateCenter = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        openEditCenter(c) {
+            this.centerForm = { ref: c.ref, name: c.name, barangay: c.barangay, address: c.address || '', capacity: c.capacity, services: [...(c.services || [])] };
+            this.centerFormMode = 'edit';
+            this.showCreateCenter = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        toggleCenterFormService(s) {
+            this.centerForm.services = this.centerForm.services.includes(s)
+                ? this.centerForm.services.filter(x => x !== s)
+                : [...this.centerForm.services, s];
+        },
+        async saveCenter() {
+            if (this.centerSaving || !this.centerForm.name || !this.centerForm.barangay || this.centerForm.capacity === '') return;
+            this.centerSaving = true;
+            const payload = { name: this.centerForm.name, barangay: this.centerForm.barangay, address: this.centerForm.address || null, capacity: Number(this.centerForm.capacity), services: this.centerForm.services };
+            try {
+                const res = this.centerFormMode === 'create'
+                    ? await $api.post('/sakuna/centers', payload)
+                    : await $api.put('/sakuna/centers/' + this.centerForm.ref, payload);
+                const idx = this.centersList.findIndex(c => c.ref === res.data.ref);
+                if (idx !== -1) this.centersList[idx] = res.data; else this.centersList.unshift(res.data);
+                if (this.selectedCenter?.ref === res.data.ref) this.selectedCenter = res.data;
+                this.showCreateCenter = false;
+                this.toast(this.centerFormMode === 'create' ? res.data.ref + ' registered.' : 'Center updated.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not save this center.', 'error');
+            } finally { this.centerSaving = false; }
+        },
+        // The Occupants tab shows real checked-in families for this specific
+        // center, fetched on open rather than baked into the centers list.
+        async openCenterDetail(c) {
+            this.selectedCenter = c;
+            this.showCenterDetail = true;
+            this.centerEvacuees = [];
+            this.$nextTick(() => window.renderIcons?.());
+            try {
+                const res = await $api.get('/sakuna/evacuees', { params: { center: c.ref, per_page: 100 } });
+                this.centerEvacuees = res.data || [];
+            } catch { /* the tab just shows no families rather than failing the modal */ }
+        },
+        async confirmOpenCenter() {
+            if (!this.pendingCenterAction) return;
+            try {
+                const res = await $api.post('/sakuna/centers/' + this.pendingCenterAction.ref + '/open', {});
+                const idx = this.centersList.findIndex(c => c.ref === res.data.ref);
+                if (idx !== -1) this.centersList[idx] = res.data;
+                if (this.selectedCenter?.ref === res.data.ref) this.selectedCenter = res.data;
+                this.showOpenCenterConfirm = false;
+                this.toast(res.data.name + ' opened.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not open this center.', 'error');
+            }
+        },
+        // The backend itself refuses to close an occupied center (real
+        // CENTER_NOT_EMPTY guard) -- the confirmation here is a UX gesture on
+        // a consequential action, not a re-implementation of that check.
+        async confirmCloseCenter() {
+            if (!this.pendingCenterAction) return;
+            try {
+                const res = await $api.post('/sakuna/centers/' + this.pendingCenterAction.ref + '/close', {});
+                const idx = this.centersList.findIndex(c => c.ref === res.data.ref);
+                if (idx !== -1) this.centersList[idx] = res.data;
+                if (this.selectedCenter?.ref === res.data.ref) this.selectedCenter = res.data;
+                this.showCloseCenterConfirm = false;
+                this.toast(res.data.name + ' closed.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not close this center.', 'error');
+            }
+        },
 
         // Evacuees tab state
         evacueeSearch: '',
@@ -437,6 +533,13 @@
                 'Expired': 'bg-slate-100 text-slate-500',
                 'Cancelled': 'bg-rose-100 text-rose-700',
                 'Archived': 'bg-slate-100 text-slate-500',
+                // Real values reachable on SakunaIncident/SakunaCenter/
+                // SakunaEvacueeFamily that the map above never carried --
+                // added when Command Center/Incidents/Centers were wired to
+                // the real API rather than the fake vocabularies above.
+                'Under Verification': 'bg-indigo-100 text-indigo-700',
+                'Processing': 'bg-orange-100 text-orange-700',
+                'Completed': 'bg-emerald-100 text-emerald-700',
             };
             return (map[st] || 'bg-slate-100 text-slate-600') + ' px-2.5 py-0.5 rounded-full text-xs font-medium';
         },
@@ -608,7 +711,8 @@
             {{-- Evacuation Centers --}}
             @if($activeTab === 'evacuation-centers')
             <div>
-                @include('admin.partials.sakuna.tab-centers', ['centers' => $centers, 'barangays' => $barangays])
+                {{-- Loads its own data from GET/POST/PUT /sakuna/centers; $barangays is real, static reference data. --}}
+                @include('admin.partials.sakuna.tab-centers', ['barangays' => $barangays])
             </div>
             @endif
 
