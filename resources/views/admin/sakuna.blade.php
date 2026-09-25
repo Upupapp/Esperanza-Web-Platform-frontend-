@@ -90,11 +90,45 @@
         incidentTypeFilter: '',
         incidentSeverityFilter: '',
         incidentStatusFilter: '',
+        incidentBarangayFilter: '',
         selectedIncident: null,
         showIncidentDetail: false,
         showCreateIncident: false,
-        showDispatch: false,
-        dispatchTarget: null,
+        incidentsList: [],
+        incidentsLoading: true,
+        incidentsFailed: false,
+        incidentSaving: false,
+        incidentForm: { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '' },
+        // GET /sakuna/incidents (full list for this tab, distinct from Command
+        // Center's own severity-ranked slice of the same endpoint).
+        async loadIncidentsList() {
+            this.incidentsLoading = true;
+            this.incidentsFailed = false;
+            try {
+                const res = await $api.get('/sakuna/incidents', { params: { per_page: 100 } });
+                this.incidentsList = res.data || [];
+            } catch { this.incidentsFailed = true; } finally { this.incidentsLoading = false; }
+        },
+        resetIncidentForm() {
+            this.incidentForm = { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '' };
+        },
+        openCreateIncident() {
+            this.resetIncidentForm();
+            this.showCreateIncident = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        async submitIncident() {
+            if (this.incidentSaving || !this.incidentForm.title || !this.incidentForm.type || !this.incidentForm.barangay || !this.incidentForm.severity) return;
+            this.incidentSaving = true;
+            try {
+                const res = await $api.post('/sakuna/incidents', this.incidentForm);
+                this.incidentsList.unshift(res.data);
+                this.showCreateIncident = false;
+                this.toast(res.data.ref + ' reported.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not report this incident.', 'error');
+            } finally { this.incidentSaving = false; }
+        },
 
         // Vulnerability tab state
         vulSearch: '',
@@ -566,7 +600,8 @@
             {{-- Incidents --}}
             @if($activeTab === 'incidents')
             <div>
-                @include('admin.partials.sakuna.tab-incidents', ['incidents' => $incidents, 'barangays' => $barangays])
+                {{-- Loads its own data from GET/POST /sakuna/incidents; $barangays is real, static reference data. --}}
+                @include('admin.partials.sakuna.tab-incidents', ['barangays' => $barangays])
             </div>
             @endif
 
