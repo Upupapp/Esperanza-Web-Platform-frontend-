@@ -1,14 +1,7 @@
 @php
-    // TAB 04: Profiling Coverage is not converted in this pass yet -- its own
-    // fixture stays here for now, scoped only to that tab, so this file states
-    // plainly what still needs doing rather than silently leaving a stale
-    // require in place. $barangayCoverage is a plain Blade @foreach in
-    // tab-profiling.blade.php (not Alpine state), so it must stay defined
-    // here even though that tab isn't wired to real data yet -- Blade renders
-    // it server-side regardless of the tab's x-show. Data Quality itself now
-    // loads from GET /admin/data-quality in loadRegistry() below.
-    $__constituentsFixture = config('esperanza_constituents');
-    $barangayCoverage = $__constituentsFixture['barangayCoverage'];
+    // All four Constituents tabs now load from the real API in loadRegistry()
+    // below -- nothing in this file reads config('esperanza_constituents')
+    // any more.
     $barangayOptions = config('esperanza.barangays');
     $tab  = $tab  ?? 'registry';
     $view = $view ?? 'individuals';
@@ -28,6 +21,8 @@
         qualityIssues: [],
         encoders:     [],
         dqScanning:   false,
+        barangayCoverage: [],
+        coverageMunicipal: null,
         barangayOptions: @js($barangayOptions),
 
         async init() {
@@ -48,7 +43,7 @@
             this.loading = true;
             this.failed = false;
             try {
-                const [residents, households, families, citizens, issues, encoders] = await Promise.all([
+                const [residents, households, families, citizens, issues, encoders, coverage] = await Promise.all([
                     $api.get('/admin/residents', { params: { per_page: 100 } }),
                     $api.get('/admin/households', { params: { per_page: 100 } }),
                     $api.get('/admin/families', { params: { per_page: 100 } }),
@@ -63,6 +58,9 @@
                     // see the queue can see Personnel, so this degrades to an
                     // empty picker rather than failing the page.
                     $api.get('/admin/users', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    // Profiling Coverage tab. `meta.municipal` is only present for
+                    // a municipality-scoped actor -- null for a barangay-scoped one.
+                    $api.get('/admin/coverage').catch(() => ({ data: [], meta: null })),
                 ]);
                 const citizensByRef = {};
                 (citizens.data || []).forEach(c => { if (c.resident_profile?.ref) citizensByRef[c.resident_profile.ref] = c; });
@@ -72,6 +70,8 @@
                 this.citizens = citizens.data || [];
                 this.qualityIssues = issues.data || [];
                 this.encoders = encoders.data || [];
+                this.barangayCoverage = coverage.data || [];
+                this.coverageMunicipal = coverage.meta?.municipal || null;
             } catch { this.failed = true; } finally { this.loading = false; }
         },
 
@@ -364,6 +364,15 @@
         },
         // Merging IS the resolution of the issue that raised it -- the backend
         // resolves issueRef itself when given, this just mirrors that locally.
+        get barangayStatusBreakdown() {
+            const colors = { 'Complete': '#10b981', 'In Progress': '#3b82f6', 'Needs Follow-up': '#f59e0b', 'Not Started (Re-visit Required)': '#f43f5e' };
+            const counts = {};
+            this.barangayCoverage.forEach(b => { const s = b.status || 'Not Started (Re-visit Required)'; counts[s] = (counts[s] || 0) + 1; });
+            return Object.keys(colors).filter(s => counts[s]).map(s => ({ label: s, value: counts[s], color: colors[s] }));
+        },
+        goToBarangayResidents(name) {
+            this.tab = 'registry'; this.view = 'individuals'; this.clearFilters(); this.barangayFilter = name;
+        },
         async confirmDQMerge(keepRef, mergeRef, issueRef, note) {
             const res = await $api.post('/admin/merges', { keep: keepRef, merge: mergeRef, issue_ref: issueRef || null, note: note || null });
             this.individuals = this.individuals.filter(i => i.ref !== mergeRef);
