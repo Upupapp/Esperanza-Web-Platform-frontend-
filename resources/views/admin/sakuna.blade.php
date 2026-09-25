@@ -29,8 +29,8 @@
     // Evacuees now loads from GET /sakuna/evacuees -- the fixture key is no
     // longer read by anything.
 
-    // ── Resources ─────────────────────────────────────────────────────────────
-    $resources = $__fixtures['resources'];
+    // Resources now loads from GET /sakuna/resources -- the fixture key is no
+    // longer read by anything.
 
     // ── Relief Inventory ──────────────────────────────────────────────────────
     $inventory = $__fixtures['inventory'];
@@ -431,11 +431,109 @@
         // Resources tab state
         resourceSearch: '',
         resourceCategoryFilter: '',
-        resourceStatusFilter: '',
         selectedResource: null,
         showResourceDetail: false,
         showDeployModal: false,
-        deployTarget: null,
+        showCreateResource: false,
+        resourcesList: [],
+        resourcesLoading: true,
+        resourcesFailed: false,
+        resourceFormMode: 'create',
+        resourceSaving: false,
+        resourceForm: { ref: null, name: '', category: '', quantity: '', unit: '', readiness: '', barangay: '' },
+        resourceIncidentsOpen: [],
+        deployForm: { quantity: '', incident_id: '' },
+        deploySaving: false,
+        // GET /sakuna/resources -- a bulk quantity/deployed inventory, not a
+        // per-unit asset with its own status/condition/fuel/personnel/serial
+        // (see tab-resources.blade.php's header for what that means for the UI).
+        async loadResources() {
+            this.resourcesLoading = true;
+            this.resourcesFailed = false;
+            try {
+                const [res, incidents] = await Promise.all([
+                    $api.get('/sakuna/resources', { params: { per_page: 100 } }),
+                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                ]);
+                this.resourcesList = res.data || [];
+                this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived'].includes(i.status));
+            } catch { this.resourcesFailed = true; } finally { this.resourcesLoading = false; }
+        },
+        // category has no fixed vocabulary on the backend (a plain string
+        // column) -- offered as suggestions from what is actually in use
+        // rather than a hardcoded, possibly-wrong enum.
+        resourceCategories() {
+            return [...new Set(this.resourcesList.map(r => r.category).filter(Boolean))].sort();
+        },
+        resetResourceForm() {
+            this.resourceForm = { ref: null, name: '', category: '', quantity: '', unit: '', readiness: '', barangay: '' };
+        },
+        openCreateResource() {
+            this.resetResourceForm();
+            this.resourceFormMode = 'create';
+            this.showCreateResource = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        openEditResource(r) {
+            this.resourceForm = { ref: r.ref, name: r.name, category: r.category, quantity: r.quantity, unit: r.unit || '', readiness: r.readiness || '', barangay: r.barangay || '' };
+            this.resourceFormMode = 'edit';
+            this.showCreateResource = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        async saveResource() {
+            if (this.resourceSaving || !this.resourceForm.name || !this.resourceForm.category || this.resourceForm.quantity === '') return;
+            this.resourceSaving = true;
+            const payload = { name: this.resourceForm.name, category: this.resourceForm.category, quantity: Number(this.resourceForm.quantity), unit: this.resourceForm.unit || null, readiness: this.resourceForm.readiness || null, barangay: this.resourceForm.barangay || null };
+            try {
+                const res = this.resourceFormMode === 'create'
+                    ? await $api.post('/sakuna/resources', payload)
+                    : await $api.put('/sakuna/resources/' + this.resourceForm.ref, payload);
+                const idx = this.resourcesList.findIndex(r => r.ref === res.data.ref);
+                if (idx !== -1) this.resourcesList[idx] = { ...this.resourcesList[idx], ...res.data }; else this.resourcesList.unshift(res.data);
+                if (this.selectedResource?.ref === res.data.ref) this.selectedResource = { ...this.selectedResource, ...res.data };
+                this.showCreateResource = false;
+                this.toast(this.resourceFormMode === 'create' ? res.data.ref + ' registered.' : 'Resource updated.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not save this resource.', 'error');
+            } finally { this.resourceSaving = false; }
+        },
+        // The list row already has quantity/deployed/available; the detail
+        // fetch adds sakuna_resource_movements' real deploy/return history,
+        // never read back anywhere before GET /sakuna/resources/{ref} existed.
+        async openResourceDetail(row) {
+            this.selectedResource = row;
+            this.showResourceDetail = true;
+            this.$nextTick(() => window.renderIcons?.());
+            try {
+                const res = await $api.get('/sakuna/resources/' + row.ref);
+                this.selectedResource = { ...row, ...res.data };
+            } catch { /* keep the list row's fields if the detail fetch fails */ }
+        },
+        openDeploy(r) {
+            this.selectedResource = r;
+            this.deployForm = { quantity: '', incident_id: '' };
+            this.showDeployModal = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        // verb is 'deploy' or 'return' -- the only two actions the backend
+        // actually implements; incident_id is optional (a return never needs
+        // one, and a deploy may be general standby rather than incident-tied).
+        async submitDeploy(verb) {
+            if (this.deploySaving || !this.selectedResource || !this.deployForm.quantity) return;
+            this.deploySaving = true;
+            const payload = { quantity: Number(this.deployForm.quantity) };
+            if (verb === 'deploy' && this.deployForm.incident_id) payload.incident_id = Number(this.deployForm.incident_id);
+            try {
+                const res = await $api.post('/sakuna/resources/' + this.selectedResource.ref + '/' + verb, payload);
+                const idx = this.resourcesList.findIndex(r => r.ref === res.data.ref);
+                if (idx !== -1) this.resourcesList[idx] = { ...this.resourcesList[idx], ...res.data };
+                if (this.selectedResource?.ref === res.data.ref) this.selectedResource = { ...this.selectedResource, ...res.data };
+                this.showDeployModal = false;
+                this.toast((verb === 'deploy' ? 'Deployed ' : 'Returned ') + payload.quantity + ' ' + (this.selectedResource.unit || 'unit(s)') + '.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not record this movement.', 'error');
+            } finally { this.deploySaving = false; }
+        },
 
         // Relief tab state
         reliefSubtab: 'inventory',
@@ -814,7 +912,7 @@
             {{-- Resources --}}
             @if($activeTab === 'resources')
             <div>
-                @include('admin.partials.sakuna.tab-resources', ['resources' => $resources, 'incidents' => $incidents, 'centers' => $centers])
+                @include('admin.partials.sakuna.tab-resources', ['barangays' => $barangays])
             </div>
             @endif
 
