@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # Runs the gate before every push. There is no CI on this project, so this hook
 # is the only thing standing between a broken tree and a deploy.
@@ -6,4 +6,23 @@
 # Enable with:  git config core.hooksPath scripts/hooks
 #
 # Never bypass with --no-verify. If the gate cannot finish here, fix the gate.
-exec "$(dirname "$0")/../gate.sh" </dev/null
+#
+# This launcher is plain `sh` on purpose. GitHub Desktop pushes with its own
+# bundled git, which ships `sh` but NOT `bash`, so a `#!/usr/bin/env bash` hook
+# fails there with "'bash': No such file or directory". Find bash instead: PATH
+# first, then the usual Git for Windows locations. Its directory goes on PATH so
+# the `#!/usr/bin/env bash` scripts the gate calls resolve too.
+here=$(dirname "$0")
+if command -v bash >/dev/null 2>&1; then
+    exec bash "$here/../gate.sh" </dev/null
+fi
+for dir in "/c/Program Files/Git/bin" "/c/Program Files (x86)/Git/bin" "$LOCALAPPDATA/Programs/Git/bin"; do
+    if [ -x "$dir/bash.exe" ]; then
+        PATH="$dir:$PATH"
+        export PATH
+        exec "$dir/bash.exe" "$here/../gate.sh" </dev/null
+    fi
+done
+echo "pre-push gate: bash not found. Install Git for Windows (https://git-scm.com), then push again." >&2
+echo "Do not bypass with --no-verify." >&2
+exit 1
