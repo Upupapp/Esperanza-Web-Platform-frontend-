@@ -286,7 +286,7 @@
                 open: false, reviewOpen: false, selected: null, rejectReason: '',
                 search: '', status: 'All', scope: 'All', category: 'All',
                 processing: false,
-                newForm: { name: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: '{{ config('esperanza.barangays')[0] ?? '' }}' },
+                newForm: { name: '', description: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: '{{ config('esperanza.barangays')[0] ?? '' }}' },
                 statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],
                 categoryColor: { Community: 'bg-brand-500', Health: 'bg-emerald-500', 'Public Service': 'bg-indigo-500', Advisory: 'bg-amber-500', Livelihood: 'bg-teal-500', Governance: 'bg-purple-500' },
                 async load() {
@@ -313,6 +313,7 @@
                         const key = this.newForm.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
                         await $api.post('/admin/events', {
                             key, name: this.newForm.name.trim(), title: this.newForm.name.trim(), date: this.newForm.date,
+                            description: this.newForm.description.trim() || null,
                             time: this.newForm.time || null, venue: this.newForm.venue || null, category: this.newForm.category,
                             barangay: this.newForm.audience === 'Barangay' ? this.newForm.barangay : null,
                         });
@@ -320,7 +321,7 @@
                             await $api.post('/admin/events/' + key + '/transition', { to: 'Pending Review' });
                         }
                         this.open = false;
-                        this.newForm = { name: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: this.barangayNames?.[0] || '' };
+                        this.newForm = { name: '', description: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: this.barangayNames?.[0] || '' };
                         this.$dispatch('toast', { message: submit ? 'Submitted for review.' : 'Saved as draft.', variant: 'success' });
                         await this.load();
                     } catch (err) {
@@ -449,6 +450,11 @@
                     </div>
                     <x-ui.input name="event_venue" label="Venue" placeholder="e.g. Municipal Plaza" x-model="newForm.venue" />
                     <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="event-description">Description <span class="font-normal text-slate-500">(optional)</span></label>
+                        <textarea id="event-description" x-model="newForm.description" rows="4" maxlength="2000" placeholder="What happens at this event, who it is for, and what to bring." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <p class="text-[11px] text-slate-500 mt-1 text-right" x-text="newForm.description.length + ' / 2000'"></p>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="category-2">Category</label>
                         <select id="category-2" x-model="newForm.category" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             <template x-for="c in Object.keys(categoryColor)" :key="c"><option x-text="c" :value="c"></option></template>
@@ -495,6 +501,7 @@
                             <span class="text-[10px] font-medium text-white rounded-full px-2 py-0.5 shrink-0" :class="categoryColor[selected.category] || 'bg-slate-400'" x-text="selected.category"></span>
                         </div>
                         <p class="text-sm font-semibold text-navy-900 mb-2" x-text="selected.title || selected.name"></p>
+                        <p x-show="selected.description" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line mb-3" x-text="selected.description"></p>
                         <dl class="grid grid-cols-2 gap-3 mb-3">
                             <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
                                 <dt class="text-[10px] text-slate-400 uppercase tracking-wide">Time</dt>

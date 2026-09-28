@@ -176,6 +176,7 @@
                                         <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i><span x-text="event.time"></span></span>
                                         <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="event.venue"></span></span>
                                     </p>
+                                    <p x-show="event.description" class="text-xs text-slate-600 mt-2 leading-relaxed whitespace-pre-line" x-text="event.description"></p>
                                 </div>
                                 <button
                                     type="button"
