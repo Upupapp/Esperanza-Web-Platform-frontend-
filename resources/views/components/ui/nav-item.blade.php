@@ -1,4 +1,4 @@
-@props(['href' => '#', 'icon', 'label', 'labelEn' => null, 'active' => false, 'badge' => null, 'dense' => false, 'moduleKey' => null])
+@props(['href' => '#', 'icon', 'label', 'labelEn' => null, 'active' => false, 'badge' => null, 'badgeBind' => null, 'dense' => false, 'moduleKey' => null])
 
 <a
     href="{{ $href }}"
@@ -11,7 +11,11 @@
 >
     <i data-lucide="{{ $icon }}" class="{{ $dense ? 'w-4 h-4' : 'w-[18px] h-[18px]' }} shrink-0 {{ $active ? 'text-white' : 'text-slate-400 group-hover:text-white' }} transition-colors"></i>
     <span x-show="!collapsed" x-transition.opacity.duration.150ms class="truncate" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</span>
-    @if($badge)
+    {{-- badgeBind: a live count (an Alpine expression), hidden while it is
+         unknown or zero. --}}
+    @if($badgeBind)
+        <span x-show="!collapsed && {{ $badgeBind }}" x-cloak x-text="{{ $badgeBind }}" class="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full {{ $active ? 'bg-white/20 text-white' : 'bg-brand-500/20 text-brand-300' }}"></span>
+    @elseif($badge)
         <span x-show="!collapsed" class="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full {{ $active ? 'bg-white/20 text-white' : 'bg-brand-500/20 text-brand-300' }}">{{ $badge }}</span>
     @endif
 </a>

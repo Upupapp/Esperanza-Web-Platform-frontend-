@@ -13,6 +13,7 @@
         @keydown.space.prevent="mobileOpen = false"></div>
 
 <aside
+    x-init="$store.queueCounts.load('admin')"
     class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-navy-900 text-white shrink-0 w-64 transition-transform duration-[260ms] ease-standard -translate-x-full lg:translate-x-0"
     :class="[collapsed ? 'lg:w-[76px]' : 'lg:w-64', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
 >
@@ -50,8 +51,8 @@
         <x-ui.nav-item dense :href="route('admin.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" moduleKey="constituents" />
         <x-ui.nav-item dense :href="route('admin.papeles')" icon="folder-open" label="Papeles" :active="$active === 'papeles'" moduleKey="papeles" />
-        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badge="18" :active="$active === 'document-requests'" moduleKey="dokyu" />
-        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badge="9" :active="$active === 'assistance-requests'" moduleKey="tulong" />
+        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badgeBind="$store.queueCounts.dokyu" :active="$active === 'document-requests'" moduleKey="dokyu" />
+        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badgeBind="$store.queueCounts.tulong" :active="$active === 'assistance-requests'" moduleKey="tulong" />
         <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />
         <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
         <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Balita" :active="$active === 'communications'" moduleKey="communications" />

@@ -398,6 +398,36 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('citizenNotifications', makeNotificationStore('/citizen/notifications'));
     Alpine.store('adminNotifications', makeNotificationStore('/admin/notifications'));
 
+    // The sidebar's Dokyu/Tulong badges. They were fixed numbers in the markup
+    // (18 and 9 for staff, 2 and 1 for residents) whatever the queues held.
+    // Staff see new requests waiting to be opened (Submitted or Resubmitted)
+    // in their own scope; a resident sees their own requests still in
+    // progress. Each is one per_page=1 list read for meta.total, once per
+    // page; a count that cannot be read stays null and the badge stays hidden.
+    Alpine.store('queueCounts', {
+        dokyu: null,
+        tulong: null,
+        loaded: false,
+        async load(side) {
+            if (this.loaded) return;
+            this.loaded = true;
+            const total = (result) => result?.meta?.total ?? null;
+            if (side === 'admin') {
+                const session = Alpine.store('session');
+                if (!session.account) return;
+                const count = (type) => (session.can(type)
+                    ? api.get('/admin/' + type + '/requests', { params: { status: 'Submitted,Resubmitted', per_page: 1 } }).then(total).catch(() => null)
+                    : Promise.resolve(null));
+                [this.dokyu, this.tulong] = await Promise.all([count('dokyu'), count('tulong')]);
+            } else {
+                if (!Alpine.store('citizenSession').account) return;
+                const open = 'Submitted,Under Verification,Under Review,Resubmitted,Approved,Mark to Release';
+                const count = (type) => api.get('/citizen/requests', { params: { type, status: open, per_page: 1 } }).then(total).catch(() => null);
+                [this.dokyu, this.tulong] = await Promise.all([count('dokyu'), count('tulong')]);
+            }
+        },
+    });
+
     // Per-barangay directory (see components/layouts/citizen.blade.php, which
     // injects window.__barangayCatalog from config/esperanza_barangay_documents.php).
     // `.mine` lets any Citizen Portal page show the signed-in resident's own
