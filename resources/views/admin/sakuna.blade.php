@@ -109,7 +109,7 @@
             this.incidentsLoading = true;
             this.incidentsFailed = false;
             try {
-                const res = await $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } });
+                const res = await $api.getAll('/admin/sakuna/incidents');
                 this.incidentsList = res.data || [];
             } catch { this.incidentsFailed = true; } finally { this.incidentsLoading = false; }
         },
@@ -153,7 +153,7 @@
             this.vulLoading = true;
             this.vulFailed = false;
             try {
-                const res = await $api.get('/admin/sakuna/vulnerability', { params: { per_page: 100 } });
+                const res = await $api.getAll('/admin/sakuna/vulnerability');
                 this.vulProfiles = res.data || [];
             } catch { this.vulFailed = true; } finally { this.vulLoading = false; }
         },
@@ -252,7 +252,7 @@
             this.centersLoading = true;
             this.centersFailed = false;
             try {
-                const res = await $api.get('/admin/sakuna/centers', { params: { per_page: 100 } });
+                const res = await $api.getAll('/admin/sakuna/centers');
                 this.centersList = res.data || [];
             } catch { this.centersFailed = true; } finally { this.centersLoading = false; }
         },
@@ -301,7 +301,7 @@
             this.centerEvacuees = [];
             this.$nextTick(() => window.renderIcons?.());
             try {
-                const res = await $api.get('/admin/sakuna/evacuees', { params: { center: c.ref, per_page: 100 } });
+                const res = await $api.getAll('/admin/sakuna/evacuees', { params: { center: c.ref } });
                 this.centerEvacuees = res.data || [];
             } catch { /* the tab just shows no families rather than failing the modal */ }
         },
@@ -355,8 +355,8 @@
             this.evacueesFailed = false;
             try {
                 const [ev, centers] = await Promise.all([
-                    $api.get('/admin/sakuna/evacuees', { params: { per_page: 100 } }),
-                    $api.get('/admin/sakuna/centers', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.getAll('/admin/sakuna/evacuees'),
+                    $api.getAll('/admin/sakuna/centers').catch(() => ({ data: [] })),
                 ]);
                 this.evacueesList = ev.data || [];
                 this.evacueeCentersOpen = (centers.data || []).filter(c => c.status === 'Processing');
@@ -456,8 +456,8 @@
             this.resourcesFailed = false;
             try {
                 const [res, incidents] = await Promise.all([
-                    $api.get('/admin/sakuna/resources', { params: { per_page: 100 } }),
-                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.getAll('/admin/sakuna/resources'),
+                    $api.getAll('/admin/sakuna/incidents').catch(() => ({ data: [] })),
                 ]);
                 this.resourcesList = res.data || [];
                 this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived'].includes(i.status));
@@ -557,7 +557,7 @@
             this.reliefLoading = true;
             this.reliefFailed = false;
             try {
-                const res = await $api.get('/admin/sakuna/relief', { params: { per_page: 100 } });
+                const res = await $api.getAll('/admin/sakuna/relief');
                 this.reliefList = res.data || [];
             } catch { this.reliefFailed = true; } finally { this.reliefLoading = false; }
         },
@@ -622,8 +622,8 @@
             this.damagesFailed = false;
             try {
                 const [res, incidents] = await Promise.all([
-                    $api.get('/admin/sakuna/damage', { params: { per_page: 100 } }),
-                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.getAll('/admin/sakuna/damage'),
+                    $api.getAll('/admin/sakuna/incidents').catch(() => ({ data: [] })),
                 ]);
                 this.damagesList = res.data || [];
                 this.damageIncidentsOpen = incidents.data || [];
@@ -718,7 +718,7 @@
             this.alertsLoading = true;
             this.alertsFailed = false;
             try {
-                const res = await $api.get('/admin/sakuna/alerts', { params: { per_page: 100 } });
+                const res = await $api.getAll('/admin/sakuna/alerts');
                 this.alertsList = res.data || [];
             } catch { this.alertsFailed = true; } finally { this.alertsLoading = false; }
         },
@@ -844,8 +844,8 @@
             try {
                 const [board, incidents, personnel] = await Promise.all([
                     $api.get('/admin/sakuna/command-center'),
-                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }),
-                    $api.get('/admin/users', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.getAll('/admin/sakuna/incidents'),
+                    $api.getAll('/admin/users').catch(() => ({ data: [] })),
                 ]);
                 this.commandBoard = board.data;
                 const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
@@ -899,9 +899,9 @@
             this.reportsFailed = false;
             try {
                 const [inc, centers, vul] = await Promise.all([
-                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }),
-                    $api.get('/admin/sakuna/centers', { params: { per_page: 100 } }),
-                    $api.get('/admin/sakuna/vulnerability', { params: { per_page: 100 } }),
+                    $api.getAll('/admin/sakuna/incidents'),
+                    $api.getAll('/admin/sakuna/centers'),
+                    $api.getAll('/admin/sakuna/vulnerability'),
                 ]);
                 this.reportIncidents = inc.data || [];
                 this.reportCenters = centers.data || [];

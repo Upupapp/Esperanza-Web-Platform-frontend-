@@ -14,6 +14,11 @@
         view: '{{ $view }}',
         loading: true,
         failed: false,
+        // Set when a registry list has more rows than one load fetches (getAll's
+        // bound), so the screen says it is a partial view instead of implying
+        // these are every resident.
+        registryTruncated: false,
+        registryTotals: { residents: 0, households: 0, families: 0 },
         individuals:  [],
         families:     [],
         households:   [],
@@ -44,20 +49,20 @@
             this.failed = false;
             try {
                 const [residents, households, families, citizens, issues, encoders, coverage] = await Promise.all([
-                    $api.get('/admin/residents', { params: { per_page: 100 } }),
-                    $api.get('/admin/households', { params: { per_page: 100 } }),
-                    $api.get('/admin/families', { params: { per_page: 100 } }),
+                    $api.getAll('/admin/residents'),
+                    $api.getAll('/admin/households'),
+                    $api.getAll('/admin/families'),
                     // A citizen-verification queue's 'Not Registered' bucket needs
                     // every resident, so this joins onto individuals below rather
                     // than driving its own separate list.
-                    $api.get('/admin/citizens', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.getAll('/admin/citizens').catch(() => ({ data: [] })),
                     // Data Quality tab. Caught separately so a permission gap on
                     // this one queue doesn't take down the whole Registry.
-                    $api.get('/admin/data-quality', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.getAll('/admin/data-quality').catch(() => ({ data: [] })),
                     // Encoder list for the Assign action -- not everyone who can
                     // see the queue can see Personnel, so this degrades to an
                     // empty picker rather than failing the page.
-                    $api.get('/admin/users', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.getAll('/admin/users').catch(() => ({ data: [] })),
                     // Profiling Coverage tab. `meta.municipal` is only present for
                     // a municipality-scoped actor -- null for a barangay-scoped one.
                     $api.get('/admin/coverage').catch(() => ({ data: [], meta: null })),
@@ -72,6 +77,12 @@
                 this.encoders = encoders.data || [];
                 this.barangayCoverage = coverage.data || [];
                 this.coverageMunicipal = coverage.meta?.municipal || null;
+                this.registryTruncated = [residents, households, families].some(r => r.meta?.truncated);
+                this.registryTotals = {
+                    residents: residents.meta?.total ?? this.individuals.length,
+                    households: households.meta?.total ?? this.households.length,
+                    families: families.meta?.total ?? this.families.length,
+                };
             } catch { this.failed = true; } finally { this.loading = false; }
         },
 
@@ -335,7 +346,7 @@
                     variant: created ? 'warning' : 'info',
                 });
                 if (created) {
-                    const refreshed = await $api.get('/admin/data-quality', { params: { per_page: 100 } });
+                    const refreshed = await $api.getAll('/admin/data-quality');
                     this.qualityIssues = refreshed.data || [];
                 }
             } catch (err) {
@@ -529,6 +540,16 @@
 
         <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-40 opacity-80" /></div>
         <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the constituent registry.'" retryExpr="loadRegistry()" :retryable="true" /></div>
+        <div x-show="!loading && !failed && registryTruncated" x-cloak role="status"
+             class="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <i data-lucide="info" class="w-4 h-4 mt-0.5 shrink-0"></i>
+            <span>
+                Showing the first <strong x-text="individuals.length.toLocaleString()"></strong> of
+                <strong x-text="registryTotals.residents.toLocaleString()"></strong> residents
+                (<span x-text="households.length.toLocaleString() + ' of ' + registryTotals.households.toLocaleString()"></span> households).
+                Counts and filters on this page cover the records shown.
+            </span>
+        </div>
 
         <div x-show="!loading && !failed">
         {{-- ── Registry tab ────────────────────────────────────────── --}}

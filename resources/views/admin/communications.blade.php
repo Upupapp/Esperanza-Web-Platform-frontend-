@@ -42,7 +42,7 @@
                 async load() {
                     this.loading = true; this.failed = false;
                     try {
-                        const res = await $api.get('/admin/announcements', { params: { per_page: 100 } });
+                        const res = await $api.getAll('/admin/announcements');
                         this.posts = res.data || [];
                     } catch { this.failed = true; } finally { this.loading = false; }
                 },
@@ -292,7 +292,7 @@
                 async load() {
                     this.loading = true; this.failed = false;
                     try {
-                        const res = await $api.get('/admin/events', { params: { per_page: 100 } });
+                        const res = await $api.getAll('/admin/events');
                         this.events = res.data || [];
                     } catch { this.failed = true; } finally { this.loading = false; }
                 },
@@ -537,7 +537,7 @@
                 async load() {
                     this.loading = true; this.failed = false;
                     try {
-                        const res = await $api.get('/admin/banners', { params: { per_page: 100 } });
+                        const res = await $api.getAll('/admin/banners');
                         this.banners = res.data || [];
                     } catch { this.failed = true; } finally { this.loading = false; }
                 },
@@ -756,7 +756,7 @@
                 async load() {
                     this.loading = true; this.failed = false;
                     try {
-                        const res = await $api.get('/admin/community-posts', { params: { per_page: 100 } });
+                        const res = await $api.getAll('/admin/community-posts');
                         this.posts = res.data || [];
                     } catch { this.failed = true; } finally { this.loading = false; }
                 },
@@ -1065,7 +1065,7 @@
                 async load() {
                     this.loading = true; this.failed = false;
                     try {
-                        const res = await $api.get('/admin/blotter', { params: { per_page: 100 } });
+                        const res = await $api.getAll('/admin/blotter');
                         this.entries = res.data || [];
                     } catch { this.failed = true; } finally { this.loading = false; }
                 },

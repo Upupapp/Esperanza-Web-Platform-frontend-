@@ -42,7 +42,7 @@
                 this.buildWeeks();
                 try {
                     const monthParam = this.year + '-' + String(this.month).padStart(2, '0');
-                    const result = await $api.get('/events', { params: { month: monthParam, per_page: 100 } });
+                    const result = await $api.getAll('/events', { params: { month: monthParam } });
                     this.events = (result.data || []).map((e) => {
                         const d = new Date(e.date + 'T00:00:00');
                         return {

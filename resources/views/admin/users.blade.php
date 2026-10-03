@@ -62,7 +62,7 @@
                     this.usersFailed = false;
                     try {
                         const [usersResult, rolesResult] = await Promise.all([
-                            $api.get('/admin/users', { params: { per_page: 200 } }),
+                            $api.getAll('/admin/users'),
                             $api.get('/admin/roles').catch(() => ({ data: [] })),
                         ]);
                         this.roleNamesByKey = Object.fromEntries((rolesResult.data || []).map((r) => [r.key, r.name]));

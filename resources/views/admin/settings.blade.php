@@ -741,12 +741,31 @@
                     logs: [],
                     search: '',
                     moduleFilter: '',
+                    // The trail is paged on the server, newest first. It used to
+                    // load one page of 100 and present it as the whole log; now it
+                    // says how many entries exist and loads older ones on request.
+                    page: 0, lastPage: 1, total: 0, loadingMore: false,
                     async load() {
                         this.loading = true; this.failed = false;
                         try {
-                            const res = await $api.get('/admin/audit-logs', { params: { per_page: 100, module: this.moduleFilter || undefined } });
+                            const res = await $api.get('/admin/audit-logs', { params: { per_page: 100, page: 1, module: this.moduleFilter || undefined } });
                             this.logs = res.data || [];
+                            this.page = 1;
+                            this.lastPage = res.meta?.last_page || 1;
+                            this.total = res.meta?.total ?? this.logs.length;
                         } catch { this.failed = true; } finally { this.loading = false; }
+                    },
+                    async loadMore() {
+                        if (this.loadingMore || this.page >= this.lastPage) return;
+                        this.loadingMore = true;
+                        try {
+                            const res = await $api.get('/admin/audit-logs', { params: { per_page: 100, page: this.page + 1, module: this.moduleFilter || undefined } });
+                            this.logs = [...this.logs, ...(res.data || [])];
+                            this.page += 1;
+                            this.lastPage = res.meta?.last_page || this.lastPage;
+                        } catch (err) {
+                            this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not load older entries.', variant: 'error' });
+                        } finally { this.loadingMore = false; }
                     },
                     get filteredLogs() {
                         const q = this.search.trim().toLowerCase();
@@ -765,9 +784,17 @@
                         <option value="">All Modules</option>
                         <option value="dokyu">Dokyu</option>
                         <option value="tulong">Tulong</option>
-                        <option value="communications">Balita</option>
-                        <option value="users">User Management</option>
-                        <option value="settings">System</option>
+                        <option value="sakuna">Sakuna</option>
+                        <option value="constituents">Constituents</option>
+                        <option value="communications">Communications</option>
+                        <option value="payments">Payments</option>
+                        <option value="papeles">Papeles</option>
+                        <option value="user_management">User Management</option>
+                        <option value="identity">Sign-in &amp; Accounts</option>
+                        <option value="support">Support</option>
+                        <option value="reports">Reports</option>
+                        <option value="privacy">Privacy</option>
+                        <option value="settings">Settings</option>
                     </select>
                 </div>
 
@@ -795,9 +822,19 @@
                                 <td class="px-4 py-2.5 text-slate-500 hidden sm:table-cell whitespace-nowrap" x-text="log.time ? new Date(log.time).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></td>
                             </tr>
                         </template>
-                        <tr x-show="!filteredLogs.length"><td colspan="5" class="px-4 py-6 text-center text-xs text-slate-400">No matching audit log entries.</td></tr>
+                        <tr x-show="!filteredLogs.length"><td colspan="5" class="px-4 py-6 text-center text-xs text-slate-500">No matching audit log entries.</td></tr>
                     </tbody>
                 </x-ui.table>
+                <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+                    <span>
+                        Showing <span x-text="logs.length.toLocaleString()"></span> of <span x-text="total.toLocaleString()"></span> entries, newest first.
+                        <span x-show="search.trim() !== ''">Search covers the entries loaded.</span>
+                    </span>
+                    <button type="button" x-show="page < lastPage" @click="loadMore()" :disabled="loadingMore"
+                            class="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-card hover:bg-slate-50 disabled:opacity-60">
+                        <span x-text="loadingMore ? 'Loading…' : 'Load older entries'"></span>
+                    </button>
+                </div>
                 </div>
             </div>
         </div>

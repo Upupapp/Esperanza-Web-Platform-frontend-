@@ -22,7 +22,7 @@
                 this.loading = true;
                 this.failed = false;
                 try {
-                    const res = await $api.get('/admin/payments', { params: { per_page: 100 } });
+                    const res = await $api.getAll('/admin/payments');
                     this.payments = res.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }
             },

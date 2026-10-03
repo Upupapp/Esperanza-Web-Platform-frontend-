@@ -24,7 +24,7 @@
                 try {
                     const [defsRes, subsRes] = await Promise.all([
                         $api.get('/admin/internal-forms'),
-                        $api.get('/admin/internal-forms/submissions', { params: { per_page: 100 } }),
+                        $api.getAll('/admin/internal-forms/submissions'),
                     ]);
                     const grouped = {};
                     (defsRes.data || []).forEach(d => {

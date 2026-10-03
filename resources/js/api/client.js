@@ -161,8 +161,33 @@ async function send(method, url, { data, params, group, ...rest } = {}) {
     }
 }
 
+/**
+ * Every page of a list, for a screen that filters, counts or groups rows
+ * client-side. The API caps a page at 100 rows (ListQuery::MAX_PER_PAGE) and
+ * clamps a larger per_page silently, so a single get() of "per_page: 100"
+ * quietly showed the first hundred records as if they were all of them.
+ *
+ * Bounded by maxPages, never unbounded. The result keeps the list envelope,
+ * with meta.total (the server's count), meta.loaded and meta.truncated, so a
+ * screen can say "showing N of M" instead of pretending.
+ */
+async function getAll(url, { params = {}, maxPages = 20, ...options } = {}) {
+    const data = [];
+    let meta = null;
+    for (let page = 1; page <= maxPages; page += 1) {
+        const result = await send('get', url, { ...options, params: { ...params, per_page: 100, page } });
+        data.push(...(result?.data || []));
+        meta = result?.meta || null;
+        if (!meta || !meta.last_page || page >= meta.last_page) break;
+    }
+    const total = meta?.total ?? data.length;
+
+    return { data, meta: { ...(meta || {}), total, loaded: data.length, truncated: data.length < total } };
+}
+
 export const api = {
     get: (url, options) => send('get', url, options),
+    getAll,
     post: (url, data, options) => send('post', url, { ...options, data }),
     put: (url, data, options) => send('put', url, { ...options, data }),
     patch: (url, data, options) => send('patch', url, { ...options, data }),

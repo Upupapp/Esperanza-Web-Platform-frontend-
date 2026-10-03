@@ -52,7 +52,7 @@
             async load() {
                 this.loading = true; this.failed = false;
                 try {
-                    const res = await $api.get('/admin/papeles', { params: { per_page: 100 } });
+                    const res = await $api.getAll('/admin/papeles');
                     this.documents = res.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }
             },
