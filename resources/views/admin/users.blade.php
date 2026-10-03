@@ -458,6 +458,21 @@
                 moduleGranted(mod) { return mod.submodules.reduce((n, s) => n + (this.workingPerms[s.key]?.length || 0), 0); },
                 moduleTotal(mod) { return mod.submodules.reduce((n, s) => n + s.perms.length, 0); },
                 accessedModules() { return this.modules.filter(m => this.moduleGranted(m) > 0); },
+                // The role's saved permission set as a CSV: every module,
+                // submodule and permission in the matrix, and whether the role
+                // holds it. This button used to toast 'frontend preview only'.
+                downloadReport() {
+                    const role = this.selectedRole;
+                    if (!role) return;
+                    const held = role.permissions || {};
+                    const rows = [['Role', 'Module', 'Submodule', 'Permission', 'Granted']];
+                    this.modules.forEach((m) => m.submodules.forEach((sub) => sub.perms.forEach((p) => {
+                        rows.push([role.name, m.name, sub.name, p, (held[sub.key] || []).includes(p) ? 'Yes' : 'No']);
+                    })));
+                    const csv = rows.map((r) => r.map((v) => JSON.stringify(String(v ?? ''))).join(',')).join('\n');
+                    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })), download: 'permissions-' + role.key + '.csv' });
+                    a.click();
+                },
                 async savePerms() {
                     if (this.saving) return;
                     this.saving = true;
@@ -507,37 +522,37 @@
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
                     <div class="flex items-start justify-between gap-3 mb-1">
                         <div class="flex items-center gap-3">
-                            <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="selectedRole.color || 'text-slate-600 bg-slate-50'">
-                                <i :data-lucide="selectedRole.icon" class="w-5 h-5"></i>
+                            <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="selectedRole?.color || 'text-slate-600 bg-slate-50'">
+                                <i :data-lucide="selectedRole?.icon" class="w-5 h-5"></i>
                             </span>
                             <div>
                                 <p class="text-sm font-semibold text-navy-900 flex items-center gap-2">
-                                    <span x-text="selectedRole.name"></span>
-                                    <span x-show="!selectedRole.editable" class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5"><i data-lucide="lock" class="w-2.5 h-2.5"></i>System</span>
+                                    <span x-text="selectedRole?.name"></span>
+                                    <span x-show="!selectedRole?.editable" class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5"><i data-lucide="lock" class="w-2.5 h-2.5"></i>System</span>
                                 </p>
-                                <p class="text-xs text-slate-400" x-text="(selectedRole.accounts || 0) + ' personnel assigned'"></p>
+                                <p class="text-xs text-slate-400" x-text="(selectedRole?.accounts || 0) + ' personnel assigned'"></p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <x-ui.button
                                 variant="secondary" size="sm" icon="download"
                                 x-show="$store.session.canExportReports()"
-                                @click="$dispatch('toast', { message: 'Downloading permission report for ' + selectedRole.name + ' — frontend preview only.', variant: 'default' })"
+                                @click="downloadReport()"
                             >Download Report</x-ui.button>
-                            <x-ui.button size="sm" icon="save" x-show="selectedRole.editable" x-bind:disabled="!dirty || saving" @click="savePerms()">
+                            <x-ui.button size="sm" icon="save" x-show="selectedRole?.editable" x-bind:disabled="!dirty || saving" @click="savePerms()">
                                 <span x-text="saving ? 'Saving…' : 'Save Changes'"></span>
                             </x-ui.button>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-500 mt-3 leading-relaxed" x-text="selectedRole.description"></p>
+                    <p class="text-xs text-slate-500 mt-3 leading-relaxed" x-text="selectedRole?.description"></p>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-xs font-semibold text-navy-900">Module Permissions</p>
-                        <p class="text-[11px] text-slate-400" x-show="!selectedRole.editable">Read-only — system role</p>
+                        <p class="text-[11px] text-slate-400" x-show="!selectedRole?.editable">Read-only — system role</p>
                     </div>
-                    <x-admin.permission-tree modules="modules" bind="workingPerms" locked="!selectedRole.editable" />
+                    <x-admin.permission-tree modules="modules" bind="workingPerms" locked="!selectedRole?.editable" />
                 </div>
             </div>
 
