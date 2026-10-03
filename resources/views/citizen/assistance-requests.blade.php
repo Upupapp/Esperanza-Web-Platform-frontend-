@@ -1,7 +1,10 @@
 @php
     // TAB 04: fixtures live in resources/data/citizen/assistance-requests.php so this view stays presentation only.
     $__fixtures = require base_path('resources/data/citizen/assistance-requests.php');
-    $requests = $__fixtures['requests'];
+    // The resident's own requests come from the API after paint
+    // (GET /citizen/requests). This was a fixture list, and the wizard only
+    // added a row to the page: nothing reached the Municipality.
+    $requests = [];
 
     // Relocated to config/esperanza_tulong_types.php, so this file has a
     // single source of truth for every Tulong fee (see admin Settings >
@@ -12,22 +15,14 @@
     // Attach expected-processing-time onto each seeded request by matching its
     // type against $assistanceTypes, same mechanism as the Dokyu tracker.
     $daysByAssistType = collect($assistanceTypes)->pluck('days', 'name');
-    foreach ($requests as &$r) {
-        $r['days'] = $daysByAssistType[$r['type']] ?? '3-5 working days';
-    }
-    unset($r);
+    $officeByAssistType = collect($assistanceTypes)->pluck('office', 'name');
+    // By service key too: the API's service_key is exact, and the backend's
+    // display name differs from this catalog's for TUPAD and ERPAT.
+    $daysByAssistKey = collect($assistanceTypes)->filter(fn ($t) => ! empty($t['key']))->pluck('days', 'key');
 
     // Where to follow up / claim assistance, keyed by office name.
     $pickupDirectory = $__fixtures['pickupDirectory'];
 
-    $submittedDocs = $__fixtures['submittedDocs'];
-
-    // Computed (not hardcoded) so the stat row stays correct as the mock
-    // $requests list above changes — same approach as the admin Tulong page.
-    $totalTulongRequests = count($requests);
-    $tulongProcessingCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Assistance Processing'));
-    $tulongReadyForReleaseCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Ready for Release'));
-    $tulongCompletedCount = count(array_filter($requests, fn ($r) => $r['status'] === 'Completed'));
 @endphp
 
 <x-layouts.citizen title="Tulong" subtitle="Submit and follow up assistance program requests." active="assistance-requests">
@@ -35,10 +30,25 @@
         x-data="{
             open: false,
             tab: 'all',
-            requests: @js($requests),
-            doneStatuses: ['Completed', 'Rejected', 'Cancelled'],
+            requests: [],
+            requestsLoading: true,
+            requestsFailed: false,
+            daysByType: @js($daysByAssistType),
+            daysByKey: @js($daysByAssistKey),
+            officeByType: @js($officeByAssistType),
+            papeles: [],
+            // Tulong runs the same lifecycle as Dokyu on the server; these are
+            // its statuses (the case-management names below are kept only for
+            // older rows).
+            doneStatuses: ['Released', 'Completed', 'Rejected', 'Cancelled'],
             statusStyles: {
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
+                'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
+                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
+                'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
+                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
+                'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Initial Screening': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
                 'Needs Requirements': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Assessment': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
@@ -58,74 +68,113 @@
                 });
             },
             pickupDirectory: @js($pickupDirectory),
-            files: @js($submittedDocs),
             progressOpen: false,
             selectedRequest: null,
             resubmitNote: '',
             resubmitting: false,
-            openProgress(r) { this.selectedRequest = r; this.resubmitNote = ''; this.progressOpen = true; },
-            // The SAME case moves Needs Requirements -> Initial Screening
-            // here — it never goes back to Submitted, never resets, and
-            // keeps its ref and review remarks. This mirrors the admin
-            // side's resumeScreeningAfterRequirements() (see
-            // admin/assistance-requests.blade.php), which is what a staff
-            // member triggers once the citizen's submission below is seen.
-            // Used only for cases with no structured per-requirement list
-            // (see resubmitRequirements below for the requirements-based
-            // equivalent).
-            resubmitRequest() {
-                if (this.resubmitting || !this.resubmitNote.trim()) return;
-                this.resubmitting = true;
-                setTimeout(() => {
-                    this.selectedRequest.status = 'Initial Screening';
-                    this.selectedRequest.resubmission_note = this.resubmitNote.trim();
-                    this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    this.resubmitting = false;
-                    this.progressOpen = false;
-                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
-                }, 800);
+            lang(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+            apiMessage(err, fallback) { return err && err.localised ? err.localised(this.$store.lang.current) : fallback; },
+            formatDay(iso) {
+                if (!iso) return '';
+                const d = new Date(iso);
+                return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
-            replaceRequirementFile(req, fileName) {
-                req.versions = req.versions || [];
-                req.versions.push({ file: req.file, status: req.status, date: req._flaggedDate || '', reject_reason: req.reject_reason, remarks: req.remarks });
-                req.file = fileName;
-                req.status = 'Resubmitted';
-                req.reject_reason = null;
-                req.remarks = null;
-                req._showPicker = false;
-                this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Replacement uploaded — awaiting review.' : 'Na-upload ang kapalit — hinihintay ang pagsusuri.', variant: 'success' });
+            async loadRequests() {
+                this.requestsLoading = true;
+                this.requestsFailed = false;
+                try {
+                    const res = await $api.getAll('/citizen/requests', { params: { sort: '-submitted_at' } });
+                    this.requests = (res.data || []).filter((r) => r.type === 'tulong').map((r) => ({
+                        ref: r.ref,
+                        type: r.service || '—',
+                        serviceKey: r.service_key || null,
+                        office: r.office || this.officeByType[r.service] || '',
+                        purpose: '',
+                        days: this.daysByKey[r.service_key] || this.daysByType[r.service] || '3-5 working days',
+                        submitted: this.formatDay(r.submitted),
+                        submitted_at: r.submitted,
+                        status: r.status,
+                        requirements: null,
+                    }));
+                } catch { this.requestsFailed = true; } finally {
+                    this.requestsLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             },
+            async loadPapeles() {
+                try {
+                    const res = await $api.get('/citizen/papeles');
+                    this.papeles = res.data || [];
+                } catch { this.papeles = []; }
+            },
+            applyDetail(r, d) {
+                r.status = d.status;
+                r.office = d.office || r.office;
+                r.remarks = d.decision_remarks || null;
+                r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose;
+                r.canResubmit = !!d.can_resubmit;
+                r.payment = d.payment || null;
+                r.requirements = (d.requirements || []).map((q) => ({
+                    key: q.key,
+                    name: q.label,
+                    status: q.status === 'Pending Review' ? 'Submitted' : q.status,
+                    reject_reason: q.reason,
+                    remarks: q.remarks,
+                    file: q.file?.name || null,
+                    attachable: !!q.attachable,
+                    _busy: false,
+                }));
+            },
+            async openProgress(r) {
+                this.selectedRequest = r;
+                this.progressOpen = true;
+                try {
+                    const res = await $api.get('/citizen/requests/' + encodeURIComponent(r.ref));
+                    this.applyDetail(r, res.data);
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not load ' + r.ref + '.'), variant: 'error' });
+                } finally { this.$nextTick(() => window.renderIcons?.()); }
+            },
+            async sendRequirementFile(req, file, action) {
+                if (!file || req._busy) return;
+                const r = this.selectedRequest;
+                const form = new FormData();
+                form.append('file', file);
+                req._busy = true;
+                try {
+                    const res = await $api.post('/citizen/requests/' + encodeURIComponent(r.ref) + '/requirements/' + encodeURIComponent(req.key) + '/' + action, form);
+                    this.applyDetail(r, res.data);
+                    this.$dispatch('toast', { message: action === 'replace' ? this.lang('Replacement uploaded — awaiting review.', 'Na-upload ang kapalit — hinihintay ang pagsusuri.') : this.lang('Document attached.', 'Naikabit ang dokumento.'), variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, this.lang('Could not upload the file.', 'Hindi ma-upload ang file.')), variant: 'error' });
+                } finally { req._busy = false; this.$nextTick(() => window.renderIcons?.()); }
+            },
+            replaceRequirementFile(req, file) { return this.sendRequirementFile(req, file, 'replace'); },
+            attachRequirementFile(req, file) { return this.sendRequirementFile(req, file, 'attach'); },
             get canResubmitRequirements() {
-                return this.selectedRequest && (this.selectedRequest.requirements || []).every(r => r.status !== 'Flagged for Replacement');
+                return !!(this.selectedRequest && this.selectedRequest.canResubmit);
             },
-            resubmitRequirements() {
+            async resubmitRequirements() {
                 if (this.resubmitting || !this.canResubmitRequirements) return;
+                const r = this.selectedRequest;
                 this.resubmitting = true;
-                setTimeout(() => {
-                    this.selectedRequest.status = 'Initial Screening';
-                    this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    this.resubmitting = false;
-                    this.progressOpen = false;
-                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
-                }, 800);
+                try {
+                    const res = await $api.post('/citizen/requests/' + encodeURIComponent(r.ref) + '/resubmit');
+                    this.applyDetail(r, res.data);
+                    this.$dispatch('toast', { message: this.lang(r.ref + ' resubmitted for review.', 'Naisumite muli ang ' + r.ref + ' para sa pagsusuri.'), variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not resubmit.'), variant: 'error' });
+                } finally { this.resubmitting = false; }
             },
-            stepOrder: ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'],
+            stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             stepIndex(status) {
-                const map = {
-                    'Submitted': 0,
-                    'Initial Screening': 1, 'Needs Requirements': 1,
-                    'Assessment': 2,
-                    'For Approval': 3, 'Returned for Reassessment': 3,
-                    'Assistance Processing': 4,
-                    'Ready for Release': 5,
-                    'Completed': 6,
-                };
+                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
                 return map[status] ?? 0;
             },
             get pickupInfo() {
                 const r = this.selectedRequest;
                 if (!r) return null;
-                const primaryOffice = r.office.split('/')[0].trim();
+                const primaryOffice = (r.office || '').split('/')[0].trim();
                 return this.pickupDirectory[primaryOffice] || { contact: 'Municipal Hall Trunkline (056) 333-1000', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
             },
             get expectedRelease() {
@@ -137,7 +186,7 @@
                 d.setDate(d.getDate() + addDays);
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
-            // Deep-link landing: a notification click appends ?ref=AR-2026-xxxx
+            // Deep-link landing: a notification click appends ?ref=TUL-2026-xxxx
             // (see citizen/notifications.blade.php) — open that exact
             // request's tracking modal instead of just landing on the list.
             init() {
@@ -145,9 +194,12 @@
                 // the backend lifecycle itself creates one on every status
                 // change, so there is nothing left to backfill here.
                 const ref = new URLSearchParams(window.location.search).get('ref');
-                if (!ref) return;
-                const match = this.requests.find(r => r.ref === ref);
-                if (match) this.openProgress(match);
+                this.loadPapeles();
+                this.loadRequests().then(() => {
+                    if (!ref) return;
+                    const match = this.requests.find(r => r.ref === ref);
+                    if (match) this.openProgress(match);
+                });
             },
         }"
         class="animate-fade-up"
@@ -155,17 +207,19 @@
 
         <x-ui.page-intro id="tulong" icon="hand-heart" title="Paano gumagana ang Tulong" titleEn="How Tulong works" color="purple">
             <x-ui.t
-                fil="Piliin ang programang tulong o ayuda na kailangan mo, sabihin sa amin ang iyong sitwasyon, ikabit ang mga requirement, pagkatapos i-submit. Halos lahat ng programa rito ay libreng i-apply — nagsisimula sa AR- ang reference number."
-                en="Choose the assistance or ayuda program you need, tell us about your situation, attach your requirements, then submit. Almost every program here is free to apply for — reference numbers start with AR-."
+                fil="Piliin ang programang tulong o ayuda na kailangan mo, sabihin sa amin ang iyong sitwasyon, ikabit ang mga requirement, pagkatapos i-submit. Halos lahat ng programa rito ay libreng i-apply — nagsisimula sa TUL- ang reference number."
+                en="Choose the assistance or ayuda program you need, tell us about your situation, attach your requirements, then submit. Almost every program here is free to apply for — reference numbers start with TUL-."
             />
         </x-ui.page-intro>
 
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" :value="$totalTulongRequests" icon="hand-heart" color="purple" :delay="0" />
-            <x-ui.stat-card label="Isinasagawa" labelEn="Processing" :value="$tulongProcessingCount" icon="loader" color="purple" :delay="40" />
-            <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" :value="$tulongReadyForReleaseCount" icon="package-check" color="brand" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" :value="$tulongCompletedCount" icon="badge-check" color="gold" :delay="120" />
-            <x-ui.stat-card label="Natanggap na Ayuda" labelEn="Ayuda Received" value="₱42,500" icon="hand-coins" color="green" sublabel="Kabuuang natanggap na tulong" sublabelEn="Total aid received" :delay="160" />
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            {{-- Counted from the resident's own requests. A fifth tile showed
+                 "Ayuda Received ₱42,500" to everyone; no amount received is
+                 recorded anywhere, so it is gone. --}}
+            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="hand-heart" color="purple" :delay="0" />
+            <x-ui.stat-card label="Isinasagawa" labelEn="Processing" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="purple" :delay="40" />
+            <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="brand" :delay="80" />
+            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed'].includes(r.status)).length" icon="badge-check" color="gold" :delay="120" />
         </div>
 
         <div class="flex items-center gap-3 mb-3">
@@ -197,12 +251,10 @@
                     showFilePicker: null,
                     submitted: false,
                     submitting: false,
-                    paymentMethod: null,
-                    alreadyPaid: false,
-                    receipt: null,
-                    showReceiptPicker: false,
                     types: @js($assistanceTypes),
-                    files: @js($submittedDocs),
+                    submittedRef: null,
+                    attachFile(i, file) { if (file) this.attachments[i] = { kind: 'file', file, name: file.name }; this.showFilePicker = null; },
+                    attachPapeles(i, doc) { this.attachments[i] = { kind: 'papeles', id: doc.id, name: doc.name }; this.showFilePicker = null; },
                     search: '',
                     selectedCategory: null,
                     categoryIcons: {
@@ -249,36 +301,44 @@
                             firstName: a.firstName, lastName: a.lastName, address: a.address, mobile: a.mobile, email: a.email,
                         } : { firstName: '', lastName: '', address: '', mobile: '', email: '' };
                     },
-                    paymentMethods: [
-                        { key: 'gcash', label: 'GCash', hint: 'Send to 0917-000-0000', hintFil: 'Ipadala sa 0917-000-0000', icon: 'smartphone' },
-                        { key: 'paymaya', label: 'Maya', hint: 'Send to 0918-000-0000', hintFil: 'Ipadala sa 0918-000-0000', icon: 'wallet' },
-                        { key: 'center', label: 'Onsite', labelFil: 'Bayad sa Opisina', hint: 'Pay at the MSWDO / OSCA office', hintFil: 'Magbayad sa opisina ng MSWDO / OSCA', icon: 'landmark' },
-                    ],
+                    // No online payment exists (LGU question Q3). The GCash and Maya
+                    // 'numbers' this listed were placeholders a resident could have
+                    // sent real money to.
                     stepLabels: {
                         fil: ['Pumili ng Tulong', 'Detalye ng Aplikasyon', 'Bayad', 'I-review at I-submit'],
                         en: ['Choose Assistance', 'Application Details', 'Payment', 'Review & Submit'],
                     },
                     stepIcons: ['hand-heart', 'user-round', 'credit-card', 'clipboard-check'],
-                    reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.paymentMethod = null; this.alreadyPaid = false; this.receipt = null; this.showReceiptPicker = false; this.search = ''; this.formData = {}; this.selectedCategory = null; },
-                    submitRequest() {
+                    reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.submittedRef = null; this.search = ''; this.formData = {}; this.selectedCategory = null; },
+                    // POST /citizen/requests, then each attachment onto its
+                    // requirement. The server assigns the ref and notifies the
+                    // office; a failed attachment can be added from Track Request.
+                    async submitRequest() {
                         const type = this.types[this.selectedType];
-                        const ref = 'AR-2026-' + Math.floor(1000 + Math.random() * 9000);
-                        this.requests.unshift({
-                            ref,
-                            type: type?.name || '—',
-                            office: type?.office || '—',
-                            purpose: type?.name || '—',
-                            days: type?.days || '3-5 working days',
-                            submitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                            status: 'Submitted',
-                        });
-                        // This wizard still writes the new request into local
-                        // Alpine state rather than POST /requests (see
-                        // PRODUCTION_READINESS.md) — submission is not yet on the
-                        // real backend, so there is no server-side notification
-                        // to reflect here. $store.citizenNotifications and
-                        // $store.adminNotifications now read real rows from
-                        // GET {citizen,admin}/notifications.
+                        const res = await $api.post('/citizen/requests', { service_key: type.key, form_data: JSON.parse(JSON.stringify(this.formData || {})) });
+                        const created = res.data || {};
+                        const serverReqs = created.requirements || [];
+                        const names = type.requirements || [];
+                        const failed = [];
+                        for (const [i, att] of Object.entries(this.attachments)) {
+                            if (!att) continue;
+                            const label = names[i];
+                            const target = serverReqs.find((q) => q.label === label) || serverReqs[Number(i)];
+                            if (!target) { failed.push(label); continue; }
+                            try {
+                                const url = '/citizen/requests/' + encodeURIComponent(created.ref) + '/requirements/' + encodeURIComponent(target.key) + '/attach';
+                                if (att.kind === 'papeles') {
+                                    await $api.post(url, { papeles_id: att.id });
+                                } else {
+                                    const form = new FormData();
+                                    form.append('file', att.file);
+                                    await $api.post(url, form);
+                                }
+                            } catch { failed.push(label); }
+                        }
+                        this.submittedRef = created.ref;
+                        await this.loadRequests();
+                        return { ref: created.ref, failed };
                     },
                 }"
                 x-init="seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant())"
@@ -574,7 +634,7 @@
                         <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
                             <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((types[selectedType]?.requirements || []).length ? (Object.keys(attachments).filter(k => attachments[k]).length / (types[selectedType]?.requirements || []).length) : 0) * 100) + '%'"></div>
                         </div>
-                        <p class="text-xs text-slate-400 mb-3"><x-ui.t fil="Ikabit mula sa mga file na na-upload mo na, o mag-upload ng bago." en="Attach from your already-uploaded files, or upload a new one." /></p>
+                        <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             <template x-for="(req, i) in types[selectedType]?.requirements || []" :key="i">
                                 <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
@@ -587,19 +647,22 @@
                                         ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
                                         <div class="flex items-center gap-1.5 shrink-0" x-show="attachments[i]">
                                             <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
-                                                <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="attachments[i]"></span>
+                                                <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span class="truncate max-w-[140px]" x-text="attachments[i]?.name"></span>
                                             </span>
                                             <button type="button" @click="attachments[i] = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                         </div>
                                     </div>
-                                    <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
-                                        <x-ui.file-picker
-                                            files="files"
-                                            onSelect="attachments[i] = file.name; showFilePicker = null"
-                                            uploadAction="attachments[i] = 'New upload.jpg'; showFilePicker = null; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                            :columns="2"
-                                            :search="false"
-                                        />
+                                    <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
+                                        <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-white bg-purple-600 rounded-lg px-2.5 py-1.5 hover:bg-purple-700 transition-colors cursor-pointer">
+                                            <i data-lucide="upload" class="w-3.5 h-3.5"></i><x-ui.t fil="Mag-upload ng file" en="Upload a file" />
+                                            <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachFile(i, $event.target.files[0]); $event.target.value = ''">
+                                        </label>
+                                        <div x-show="papeles.length" class="space-y-1">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500"><x-ui.t fil="O gamitin mula sa Papeles" en="Or reuse from Papeles" /></p>
+                                            <template x-for="doc in papeles" :key="doc.id">
+                                                <button type="button" @click="attachPapeles(i, doc)" class="w-full text-left text-[11px] text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg px-2 py-1 truncate" x-text="doc.name"></button>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
                             </template>
@@ -621,63 +684,11 @@
                         <template x-if="types[selectedType]?.fee !== 'Free'">
                             <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
                                 <div class="lg:col-span-3 order-2 lg:order-1">
-                                    <template x-if="!alreadyPaid">
-                                        <div>
-                                            <p class="text-sm font-semibold text-navy-900 mb-3"><x-ui.t fil="Piliin ang Paraan ng Pagbabayad" en="Choose Payment Method" /></p>
-                                            <div class="space-y-2 mb-4">
-                                                <template x-for="m in paymentMethods" :key="m.key">
-                                                    <label
-                                                        class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                                        :class="paymentMethod === m.key ? 'border-purple-400 bg-purple-50/60 ring-4 ring-purple-100' : 'border-slate-200 hover:border-slate-300'"
-                                                    >
-                                                        <input type="radio" name="assist_payment_method" class="text-purple-600 focus:ring-purple-200" :checked="paymentMethod === m.key" @change="paymentMethod = m.key">
-                                                        <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                                                            <i :data-lucide="m.icon" class="w-4 h-4"></i>
-                                                        </span>
-                                                        <div class="min-w-0">
-                                                            <p class="text-sm font-medium text-slate-700" x-text="$store.lang.current === 'en' ? m.label : (m.labelFil || m.label)"></p>
-                                                            <p class="text-xs text-slate-400" x-text="$store.lang.current === 'en' ? m.hint : (m.hintFil || m.hint)"></p>
-                                                        </div>
-                                                    </label>
-                                                </template>
-                                            </div>
-                                            <button type="button" @click="alreadyPaid = true" class="text-xs font-medium text-purple-600 hover:underline"><x-ui.t fil="Nakabayad na ako — ikakabit ang resibo" en="I've already paid — attach my receipt instead" /></button>
-                                        </div>
-                                    </template>
-
-                                    <template x-if="alreadyPaid">
-                                        <div>
-                                            <div class="flex items-center justify-between mb-3">
-                                                <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Ikabit ang Patunay ng Bayad" en="Attach Proof of Payment" /></p>
-                                                <button type="button" @click="alreadyPaid = false; receipt = null" class="text-xs font-medium text-slate-400 hover:text-slate-600"><x-ui.t fil="Kanselahin" en="Cancel" /></button>
-                                            </div>
-                                            <div class="rounded-xl border border-slate-200 p-3">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <p class="text-xs text-slate-600 flex-1"><x-ui.t fil="Resibo o screenshot ng kumpirmasyon ng bayad" en="Receipt or payment confirmation screenshot" /></p>
-                                                    <button
-                                                        type="button" x-show="!receipt"
-                                                        @click="showReceiptPicker = !showReceiptPicker"
-                                                        class="text-[11px] font-medium text-purple-600 hover:underline shrink-0 whitespace-nowrap"
-                                                    ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
-                                                    <div class="flex items-center gap-1.5 shrink-0" x-show="receipt">
-                                                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
-                                                            <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="receipt"></span>
-                                                        </span>
-                                                        <button type="button" @click="receipt = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                                                    </div>
-                                                </div>
-                                                <div x-show="showReceiptPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
-                                                    <x-ui.file-picker
-                                                        files="files"
-                                                        onSelect="receipt = file.name; showReceiptPicker = false"
-                                                        uploadAction="receipt = 'Receipt Scan.jpg'; showReceiptPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                                        :columns="2"
-                                                        :search="false"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
+                                    <p class="text-sm font-semibold text-navy-900 mb-2"><x-ui.t fil="Paano magbayad" en="How to pay" /></p>
+                                    <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
+                                        <p class="flex items-start gap-2"><i data-lucide="landmark" class="w-4 h-4 text-purple-600 shrink-0 mt-0.5"></i><x-ui.t fil="Babayaran mo ang bayarin nang personal sa tanggapang nakalista, at bibigyan ka roon ng opisyal na resibo." en="You pay the fee in person at the office listed, which gives you an official receipt." /></p>
+                                        <p class="flex items-start gap-2 text-amber-700"><i data-lucide="shield-alert" class="w-4 h-4 shrink-0 mt-0.5"></i><x-ui.t fil="Huwag magpadala ng bayad sa anumang e-wallet o account na hindi kinumpirma ng Munisipyo." en="Never send payment to an e-wallet or account the Municipality has not confirmed." /></p>
+                                    </div>
                                 </div>
 
                                 <!-- Invoice -->
@@ -753,8 +764,7 @@
                                         <p class="text-[10px] text-slate-400 uppercase tracking-wide"><x-ui.t fil="Bayarin sa Dokumento" en="Documentary Fee" /></p>
                                         <p class="text-sm font-medium text-navy-900 truncate">
                                             <template x-if="types[selectedType]?.fee === 'Free'"><span><x-ui.t fil="Hindi aplikable" en="Not applicable" /></span></template>
-                                            <template x-if="types[selectedType]?.fee !== 'Free' && alreadyPaid"><span x-text="$store.lang.current === 'en' ? 'Paid — receipt attached' : 'Nabayaran na — nakakabit ang resibo'"></span></template>
-                                            <template x-if="types[selectedType]?.fee !== 'Free' && !alreadyPaid"><span x-text="paymentMethod ? (paymentMethods.find(m => m.key === paymentMethod)?.label || '') : ($store.lang.current === 'en' ? 'Not selected' : 'Wala pang napili')"></span></template>
+                                            <template x-if="types[selectedType]?.fee !== 'Free'"><span x-text="$store.lang.current === 'en' ? 'Pay at the office (' + types[selectedType]?.fee + ')' : 'Bayaran sa opisina (' + types[selectedType]?.fee + ')'"></span></template>
                                         </p>
                                     </div>
                                 </div>
@@ -835,17 +845,20 @@
                         <x-ui.button
                             size="sm"
                             x-show="!submitted"
-                            ::disabled="submitting || (step === 1 && selectedType === null) || (step === 3 && types[selectedType]?.fee !== 'Free' && !alreadyPaid && !paymentMethod) || (step === 3 && alreadyPaid && !receipt)"
+                            ::disabled="submitting || (step === 1 && selectedType === null)"
                             @click="
                                 if (step < 4) { step++ }
                                 else {
                                     submitting = true;
-                                    setTimeout(() => {
-                                        submitting = false;
+                                    submitRequest().then(({ ref, failed }) => {
                                         submitted = true;
-                                        submitRequest();
-                                        setTimeout(() => { open = false; reset(); $dispatch('toast', { message: $store.lang.current === 'en' ? 'Assistance request submitted — this is a frontend preview, no data is saved.' : 'Naisumite ang kahilingan sa tulong — frontend preview lang ito, walang naiimbak na datos.', variant: 'success' }) }, 1400);
-                                    }, 700);
+                                        const msg = $store.lang.current === 'en'
+                                            ? 'Request ' + ref + ' submitted.' + (failed.length ? ' Some files did not upload (' + failed.join(', ') + ') — add them from Track Request.' : '')
+                                            : 'Naisumite ang kahilingan ' + ref + '.' + (failed.length ? ' May mga file na hindi na-upload (' + failed.join(', ') + ') — idagdag sa Subaybayan.' : '');
+                                        setTimeout(() => { open = false; reset(); $dispatch('toast', { message: msg, variant: failed.length ? 'warning' : 'success' }) }, 1200);
+                                    }).catch((err) => {
+                                        $dispatch('toast', { message: err && err.localised ? err.localised($store.lang.current) : 'Could not submit the request.', variant: 'error' });
+                                    }).finally(() => { submitting = false; });
                                 }
                             "
                         >
@@ -902,8 +915,10 @@
             </tbody>
         </x-ui.table>
 
-        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredRequests.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+        <div x-show="requestsLoading" class="space-y-2 mt-3"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
+        <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="$store.lang.current === 'en' ? 'Could not load your requests.' : 'Hindi ma-load ang iyong mga kahilingan.'" retryExpr="loadRequests()" :retryable="true" /></div>
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kahilingang tumutugma dito." en="No requests in this view." /></p>
         </div>
 
@@ -957,51 +972,26 @@
                             </div>
                         </div>
 
-                        {{-- Returned for Reassessment is internal — our own
-                             staff re-checking the recommended amount/package,
-                             not something the citizen needs to fix. Shown as
-                             a plain status note, no resubmission form. --}}
-                        <div class="rounded-xl bg-orange-50 border border-orange-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Returned for Reassessment'">
-                            <div class="flex items-start gap-2.5">
-                                <i data-lucide="rotate-ccw" class="w-4 h-4 text-orange-500 shrink-0 mt-0.5"></i>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-orange-700"><x-ui.t fil="Muling sinusuri ang kahilingan" en="Your case is being reassessed" /></p>
-                                    <p class="text-xs text-orange-600 mt-0.5"><x-ui.t fil="Wala kang kailangang gawin ngayon — sinusuri lang muli ng aming tauhan ang detalye." en="No action is needed from you right now — our staff is simply re-checking the details." /></p>
-                                </div>
+                        <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="['Submitted', 'Under Verification', 'Resubmitted'].includes(selectedRequest.status) && (selectedRequest.requirements || []).length" x-cloak>
+                            <p class="text-xs font-semibold text-navy-900 mb-2"><x-ui.t fil="Aking mga Dokumento para dito" en="My documents for this request" /></p>
+                            <div class="space-y-2">
+                                <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
+                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-2.5">
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
+                                            <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file')"></p>
+                                        </div>
+                                        <label x-show="req.attachable" class="shrink-0 text-[11px] font-medium text-purple-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                            <span x-text="req._busy ? '…' : (req.file ? ($store.lang.current === 'en' ? 'Change' : 'Palitan') : ($store.lang.current === 'en' ? 'Attach' : 'Ikabit'))"></span>
+                                            <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
+                                        </label>
+                                        <span x-show="!req.attachable" class="shrink-0 text-[11px] text-slate-500" x-text="req.status === 'Approved' ? 'Verified' : req.status"></span>
+                                    </div>
+                                </template>
                             </div>
                         </div>
 
-                        {{-- Needs Requirements, no structured per-requirement
-                             list — the note-based correction path (see
-                             resubmitRequest(), which moves this SAME case to
-                             Initial Screening rather than resetting it). --}}
-                        <div class="rounded-xl bg-amber-50 border border-amber-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Needs Requirements' && !(selectedRequest.requirements || []).length">
-                            <div class="flex items-start gap-2.5">
-                                <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-amber-700"><x-ui.t fil="Kailangan ng Ayos ang Kahilingan" en="Application Needs Correction" /></p>
-                                    <p class="text-xs text-amber-600 mt-0.5" x-show="selectedRequest.remarks" x-text="selectedRequest.remarks"></p>
-                                </div>
-                            </div>
-
-                            <div class="mt-3 pt-3 border-t border-amber-100/70">
-                                <label class="block text-xs font-medium text-amber-700 mb-1.5"><x-ui.t fil="Itama at Isumite Muli" en="Correct & Resubmit" /></label>
-                                <textarea aria-label="Resubmit note"
-                                    x-model="resubmitNote" rows="2"
-                                    :placeholder="$store.lang.current === 'en' ? 'Describe what you corrected, or provide the missing requirement...' : 'Ilarawan kung ano ang inayos mo, o ibigay ang kulang na requirement...'"
-                                    class="w-full rounded-xl border border-amber-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
-                                ></textarea>
-                                <x-ui.button
-                                    size="sm" icon="rotate-ccw" class="mt-2.5 w-full justify-center"
-                                    x-bind:disabled="resubmitting || !resubmitNote.trim()"
-                                    @click="resubmitRequest()"
-                                >
-                                    <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Request' : 'Isumite Muli ang Kahilingan')"></span>
-                                </x-ui.button>
-                            </div>
-                        </div>
-
-                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Needs Requirements' && (selectedRequest.requirements || []).length">
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Under Review' && (selectedRequest.requirements || []).length">
                             <div class="flex items-start gap-2.5 px-3.5 py-2.5">
                                 <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
@@ -1029,17 +1019,10 @@
                                         <div x-show="req.status === 'Flagged for Replacement'" class="mt-2 pt-2 border-t border-amber-100 text-[11px]">
                                             <p class="font-semibold text-amber-700" x-text="req.reject_reason"></p>
                                             <p class="text-amber-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
-                                            <button type="button" x-show="!req._showPicker" @click="req._showPicker = true" class="mt-1.5 text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Palitan ang Dokumento" en="Replace Document" /></button>
-                                            <div x-show="req._showPicker" x-cloak x-transition class="mt-2 pt-2 border-t border-rose-100/70">
-                                                <x-ui.file-picker
-                                                    files="files"
-                                                    onSelect="replaceRequirementFile(req, file.name)"
-                                                    uploadAction="replaceRequirementFile(req, 'New upload.jpg')"
-                                                    :columns="2"
-                                                    :search="false"
-                                                    :bilingual="false"
-                                                />
-                                            </div>
+                                            <label class="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                                <i data-lucide="upload" class="w-3 h-3"></i><span x-text="req._busy ? ($store.lang.current === 'en' ? 'Uploading…' : 'Ina-upload…') : ($store.lang.current === 'en' ? 'Replace Document' : 'Palitan ang Dokumento')"></span>
+                                                <input type="file" class="sr-only" accept="image/*,application/pdf" @change="replaceRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
+                                            </label>
                                         </div>
                                     </div>
                                 </template>

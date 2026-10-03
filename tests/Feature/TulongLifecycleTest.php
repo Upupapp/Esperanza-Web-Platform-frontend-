@@ -136,16 +136,27 @@ class TulongLifecycleTest extends TestCase
         }
     }
 
-    public function test_both_steppers_match_the_declared_main_sequence(): void
+    /**
+     * The steppers show the lifecycle the SERVER runs, and both show the same one.
+     *
+     * The case-management sequence declared in config is still the spec, but the
+     * backend runs Tulong on the shared request engine (RequestLifecycle; its
+     * finding B-044 is open), and the Tulong pages now read and act on real
+     * requests (2026-10-04). A stepper drawn from statuses no request can reach
+     * would sit on step one forever, so both follow the engine's main line until
+     * the backend implements the case lifecycle -- at which point this test goes
+     * back to the declared main sequence.
+     */
+    public function test_both_steppers_follow_the_lifecycle_the_server_runs(): void
     {
-        $main = config('esperanza_tulong_lifecycle.main_sequence', []);
+        $engine = ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'];
 
-        $this->assertSame($main, $this->jsArray('resources/views/admin/assistance-requests.blade.php', 'statusOrder'),
-            "The admin Process tab's statusOrder has drifted from the declared main sequence."
+        $this->assertSame($engine, $this->jsArray('resources/views/admin/assistance-requests.blade.php', 'statusOrder'),
+            "The admin Process tab's statusOrder is not the server's lifecycle."
         );
 
-        $this->assertSame($main, $this->jsArray('resources/views/citizen/assistance-requests.blade.php', 'stepOrder'),
-            "The citizen stepper's stepOrder has drifted from the declared main sequence. "
+        $this->assertSame($engine, $this->jsArray('resources/views/citizen/assistance-requests.blade.php', 'stepOrder'),
+            "The citizen stepper's stepOrder is not the server's lifecycle. "
             .'The two sides would then show a case at different stages.'
         );
     }

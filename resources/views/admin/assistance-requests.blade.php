@@ -1,256 +1,44 @@
 @php
     $barangays = config('esperanza.barangays');
-    // Citizen name -> avatar + biographical-fact maps. ONE seam, shared with
-    // the other admin screens that show a resident by name -- see
-    // resources/data/citizen-directory.php, which also explains why this is a
-    // render-time data file rather than a config file.
-    $citizenDirectory = require base_path('resources/data/citizen-directory.php');
-    $citizenAvatars = $citizenDirectory['avatars'];
-    $citizenBio = $citizenDirectory['bio'];
-    // TAB 04: fixtures live in resources/data/admin/assistance-requests.php so this view stays presentation only.
+    // Lookup tables only. The cases come from the API after paint
+    // (GET /admin/tulong/requests). This page used to render a fixture queue
+    // with synthesized requirements and form answers, so staff never saw a
+    // request a resident had filed.
     $__fixtures = require base_path('resources/data/admin/assistance-requests.php');
-    $requests = $__fixtures['requests'];
-
-    // Manual Document Validation & Application Decision Guide — maps each
-    // case's 'type' string to its checklist key in
-    // config/esperanza_validation_guide.php. A few mock types have no
-    // service defined in the LGU-supplied guide yet (e.g. Agricultural
-    // Damage Assistance); those fall back to the general Tulong checklist
-    // in the validation-guide panel rather than inventing criteria the
-    // guide never specified.
+    $requests = [];
     $validationGuide = config('esperanza_validation_guide');
     $typeToServiceGuideKey = $__fixtures['typeToServiceGuideKey'];
-
-    // Classification lookup for the mock request rows above, per the Dokyu &
-    // Tulong routing plan -- centralized here rather than hand-edited per row.
     $tulongClassification = $__fixtures['tulongClassification'];
-    $assignedByRef = $__fixtures['assignedByRef'];
-    // Same reasoning as Dokyu — every case needs to open as a complete,
-    // filled-in record, not just a status row. Rows without hand-authored
-    // purpose/requirements get realistic ones synthesized from their
-    // category below.
-    $purposeByCategory = $__fixtures['purposeByCategory'];
-    $defaultRequirementsByCategory = $__fixtures['defaultRequirementsByCategory'];
-    // Requirement names that are literally "the citizen's ID" rather than a
-    // different supporting document — see the identical list's own comment
-    // in admin/document-requests.blade.php.
-    $idRequirementNames = $__fixtures['idRequirementNames'];
-    $synthesizeRequirements = function (array $names, string $status, ?string $remarks, string $citizenFirst, ?string $idPreviewAsset = null) use ($idRequirementNames) {
-        $total = count($names);
-        return collect($names)->map(function ($name, $i) use ($status, $remarks, $citizenFirst, $total, $idPreviewAsset, $idRequirementNames) {
-            $slug = str($name)->slug('-');
-            // Every requirement the citizen was asked for gets a real
-            // attached file — submitting the request on mobile means they
-            // actually uploaded something for each one, whether or not an
-            // admin has reviewed it yet. Only the review $reqStatus (and,
-            // for the one item that actually failed, its reject reason)
-            // tracks what's been checked.
-            $file = "{$citizenFirst}-{$slug}.jpg";
-            $reqStatus = 'Approved';
-            $rejectReason = null; $reqRemarks = null;
-            if ($status === 'Rejected' && $i === 0) {
-                $reqStatus = 'Rejected'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
-            } elseif ($status === 'Under Review' && $i === $total - 1) {
-                // The specific document standing in the way of approval —
-                // matches the per-requirement "Flag for Replacement"
-                // vocabulary, so the checklist stays consistent with the
-                // rest of the case-correction flow.
-                $reqStatus = 'Flagged for Replacement'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
-            } elseif (in_array($status, ['Submitted', 'Under Verification'], true)) {
-                // Under Verification is the whole point of the review queue
-                // — nothing has been decided on any requirement yet, so
-                // Approve / Flag for Replacement / Reject need to actually
-                // be available here, not silently pre-approved.
-                $reqStatus = 'Submitted';
-            }
-            $previewAsset = null;
-            if ($idPreviewAsset && in_array($name, $idRequirementNames, true)) {
-                $file = "{$citizenFirst}-Valid-ID.jpg";
-                $previewAsset = $idPreviewAsset;
-            }
-            return [
-                'key' => 'req_' . $slug, 'name' => $name, 'file' => $file, 'status' => $reqStatus,
-                'reject_reason' => $rejectReason, 'remarks' => $reqRemarks, 'versions' => [], 'preview_asset' => $previewAsset,
-            ];
-        })->all();
-    };
-    // Full mobile-form preview — see the identical block's own comment in
-    // admin/document-requests.blade.php and
-    // config/esperanza_service_form_specs.php's header for the full
-    // rationale; duplicated here rather than shared since this project has
-    // no shared PHP helper layer, only per-file @php blocks and config.
     $formSpecs = config('esperanza_service_form_specs');
-    // See the identical helper's own comment in admin/document-requests.blade.php.
-    $resolveEducationOption = function (string $raw, array $options) {
-        $r = strtolower($raw);
-        $buckets = [
-            'post grad' => 'Post Graduate',
-            'vocational' => 'Vocational',
-            'college' => 'College',
-            'senior high' => 'High School',
-            'junior high' => 'High School',
-            'high school' => 'High School',
-            'elementary' => 'Elementary',
-            'no grade' => 'None',
-        ];
-        foreach ($buckets as $needle => $bucket) {
-            if (str_contains($r, $needle) && in_array($bucket, $options, true)) {
-                return $bucket;
-            }
-        }
-        return null;
-    };
-    $synthesizeFormAnswer = function (array $field, string $ref, string $citizenFirst, string $barangay, ?array $bio = null) use ($resolveEducationOption) {
-        $seed = crc32($ref . '|' . $field['key']);
-        // Fields that describe the citizen themselves must agree with their
-        // real Constituents profile wherever we actually know it — an
-        // applicant can't be one age on their profile and a different age
-        // on their own scholarship application.
-        if ($bio) {
-            if ($field['key'] === 'dateOfBirth' && $field['type'] === 'date' && !empty($bio['dob'])) {
-                return $bio['dob'];
-            }
-            if ($field['key'] === 'sex' && $field['type'] === 'select' && !empty($bio['sex']) && in_array($bio['sex'], $field['options'] ?? [], true)) {
-                return $bio['sex'];
-            }
-            if ($field['key'] === 'civilStatus' && $field['type'] === 'select' && !empty($bio['civil_status']) && in_array($bio['civil_status'], $field['options'] ?? [], true)) {
-                return $bio['civil_status'];
-            }
-            if (in_array($field['key'], ['occupation', 'presentOccupation'], true) && $field['type'] === 'text' && !empty($bio['occupation'])) {
-                return $bio['occupation'];
-            }
-            if ($field['key'] === 'emergencyContactName' && $field['type'] === 'text' && !empty($bio['emergency_name'])) {
-                return $bio['emergency_name'];
-            }
-            if ($field['key'] === 'emergencyContactNumber' && $field['type'] === 'text' && !empty($bio['emergency_contact'])) {
-                return $bio['emergency_contact'];
-            }
-            if (in_array($field['key'], ['fatherName', 'fatherFullName'], true) && $field['type'] === 'text' && !empty($bio['father_name'])) {
-                return $bio['father_name'];
-            }
-            if ($field['key'] === 'motherName' && $field['type'] === 'text' && !empty($bio['mother_name'])) {
-                return $bio['mother_name'];
-            }
-            if ($field['key'] === 'motherMaidenName' && $field['type'] === 'text' && !empty($bio['mother_maiden_name'])) {
-                return $bio['mother_maiden_name'];
-            }
-            if (in_array($field['key'], ['educationalAttainment', 'highestEducationalAttainment', 'educationalAttainmentBeforeTraining'], true) && $field['type'] === 'select' && !empty($bio['education'])) {
-                $resolved = $resolveEducationOption($bio['education'], $field['options'] ?? []);
-                if ($resolved) return $resolved;
-            }
-        }
-        $textPool = [
-            'businessName' => ["{$citizenFirst}'s Sari-Sari Store", "{$citizenFirst}'s Trading", "{$citizenFirst}'s Enterprises"],
-            'businessNature' => ['Retail / Sari-Sari Store', 'Food Stall / Carinderia', 'Buy-and-Sell Trading', 'Home-Based Tailoring'],
-            'placeOfBirth' => ["Brgy. {$barangay}, Esperanza, Masbate", 'Masbate City, Masbate', 'Milagros, Masbate'],
-            'schoolName' => ['Esperanza National High School', 'Masbate National Comprehensive High School', 'Naval State University'],
-            'yearOrGradeLevel' => ['Grade 11', 'Grade 12', '1st Year College', '2nd Year College', '3rd Year College', '4th Year College'],
-            'degreeProgramOrCourse' => ['BS Education', 'BS Business Administration', 'BS Criminology', 'BS Information Technology'],
-            'lastSchoolAverageGrade' => ['88', '90', '92', '85'],
-            'fatherName' => ['Ernesto ' . $citizenFirst, 'Ramon ' . $citizenFirst, 'Domingo ' . $citizenFirst],
-            'fatherOccupation' => ['Farmer', 'Fisherman', 'Tricycle Driver', 'Construction Worker'],
-            'motherName' => ['Corazon ' . $citizenFirst, 'Remedios ' . $citizenFirst, 'Leticia ' . $citizenFirst],
-            'motherOccupation' => ['Housewife', 'Sari-Sari Store Vendor', 'Laundrywoman'],
-            'communityInvolvement' => ['Active member of the school\'s Supreme Student Council.', 'Volunteers at barangay youth council activities.', 'Member of the church youth ministry.'],
-            'postGraduationPlans' => ['Plans to work locally and support the family.', 'Plans to pursue a teaching career in Esperanza.', 'Plans to apply for government service after graduation.'],
-            'purpose' => ["For proof of residency and identification purposes in Brgy. {$barangay}.", 'For submission as a TESDA/scholarship requirement.', 'For local employment application requirement.'],
-            'familyComposition' => ["Juan {$citizenFirst} Jr., 8, Son; Maria {$citizenFirst}, 5, Daughter", "Pedro {$citizenFirst}, 12, Son"],
-            'needsOrProblems' => ['Needs assistance with school supplies and daily food expenses for the children.', 'Needs support with monthly rent and utility bills.'],
-            'emergencyContactName' => ['Rosario ' . $citizenFirst, 'Teresita ' . $citizenFirst, 'Bienvenido ' . $citizenFirst],
-            'emergencyContactNumber' => ['0917 4' . str_pad((string) ($seed % 100000), 6, '0', STR_PAD_LEFT), '0918 3' . str_pad((string) ($seed % 100000), 6, '0', STR_PAD_LEFT)],
-            'occupation' => ['Market Vendor', 'Farmer', 'Fisherman', 'Sari-Sari Store Owner', 'Tricycle Driver'],
-            'presentOccupation' => ['Retired', 'Sari-Sari Store Owner', 'Farmer (Retired)', 'Housekeeper'],
-            'personFullName' => [$citizenFirst . ' (as printed on record)'],
-            'deceasedFullName' => [$citizenFirst . ' (as printed on record)'],
-            'motherMaidenName' => ['Reyes', 'Santos', 'Villanueva', 'Bautista'],
-            'citizenship' => ['Filipino'],
-            'spouseName' => ['Not applicable', $citizenFirst . "'s spouse"],
-            'placeOfDeath' => ["Brgy. {$barangay}, Esperanza, Masbate", 'Masbate Provincial Hospital, Masbate City'],
-            'religion' => ['Roman Catholic', 'Iglesia ni Cristo', 'Born Again Christian'],
-            'philsysIdNumber' => ['1234-5678-9012-' . str_pad((string) ($seed % 10000), 4, '0', STR_PAD_LEFT)],
-            'lastGovtOffice' => ['Barangay Hall (Brgy. ' . $barangay . ')', 'Municipal Treasurer\'s Office', 'Not applicable'],
-            'lastGovtPosition' => ['Barangay Tanod', 'Barangay Health Worker', 'Not applicable'],
-            'lastGovtYear' => ['2015', '2018', '2020', 'Not applicable'],
-        ];
-        switch ($field['type']) {
-            case 'date':
-                $age = 20 + ($seed % 35);
-                $year = 2026 - $age;
-                $month = 1 + ($seed % 12);
-                $day = 1 + ($seed % 28);
-                return sprintf('%04d-%02d-%02d', $year, $month, $day);
-            case 'derivedAge':
-                return null;
-            case 'select':
-                $opts = $field['options'] ?? [];
-                return $opts ? $opts[$seed % count($opts)] : null;
-            case 'multiselect':
-                $opts = $field['options'] ?? [];
-                if (!$opts) return [];
-                $total = count($opts);
-                $count = 1 + ($seed % min(3, $total));
-                $picked = [];
-                for ($i = 0; $i < $count; $i++) {
-                    $picked[] = $opts[($seed + $i * 7) % $total];
-                }
-                return array_values(array_unique($picked));
-            case 'checkbox':
-                return $seed % 2 === 0;
-            case 'number':
-                if (str_contains(strtolower($field['label']), 'income') || str_contains(strtolower($field['label']), 'capital')) {
-                    return 3000 + ($seed % 12000);
-                }
-                return 1 + ($seed % 15);
-            case 'textarea':
-            case 'text':
-            default:
-                // No curated pool for this field key — an honest "Not
-                // provided" placeholder (see request-form-review.blade.php)
-                // beats fabricating a specific-sounding answer for a field
-                // this mock dataset has no real basis for.
-                $pool = $textPool[$field['key']] ?? null;
-                return $pool ? $pool[$seed % count($pool)] : null;
-        }
-    };
-    $resolveFormSpec = function (?string $type) use ($formSpecs) {
-        if (!$type || !isset($formSpecs[$type])) return null;
-        $spec = $formSpecs[$type];
-        return $spec['alias'] ?? null ? ($formSpecs[$spec['alias']] ?? null) : $spec;
-    };
-    // See the identical map's own comment in admin/document-requests.blade.php.
-    $idPreviewAssetByCitizen = $__fixtures['idPreviewAssetByCitizen'];
-    // See the identical map's own comment in admin/document-requests.blade.php.
+    $formSpecsByType = collect($formSpecs)
+        ->map(fn ($spec) => ($spec['alias'] ?? null) ? ($formSpecs[$spec['alias']] ?? null) : $spec)
+        ->filter()
+        ->all();
+    // The questions the PORTAL's wizard asks, per service key (the same keys
+    // the API returns), so a request filed from the portal is labelled by the
+    // form it was actually filed on. One filed from the app answers the app's
+    // own form spec instead; formStepsFor() tells them apart by the answers.
+    $wizardFieldsByKey = collect(config('esperanza_municipal_documents.documents'))
+        ->concat(collect(config('esperanza_barangay_documents'))->first()['documents'] ?? [])
+        ->concat(config('esperanza_tulong_types.types'))
+        ->filter(fn ($d) => ! empty($d['key']) && ! empty($d['fields']))
+        ->mapWithKeys(fn ($d) => [$d['key'] => collect($d['fields'])
+            ->map(fn ($f) => ['key' => $f['key'], 'label' => $f['label'] ?? $f['key'], 'type' => $f['type'] ?? 'text'])
+            ->values()->all()])
+        ->all();
+    // Service key -> this catalog's name, for the lookups below that are keyed
+    // by name: the backend's display name differs for some services (TUPAD,
+    // ERPAT), its key does not.
+    $catalogNameByKey = collect(config('esperanza_municipal_documents.documents'))
+        ->concat(collect(config('esperanza_barangay_documents'))->first()['documents'] ?? [])
+        ->concat(config('esperanza_tulong_types.types'))
+        ->filter(fn ($d) => ! empty($d['key']))
+        ->pluck('name', 'key')
+        ->all();
     $referencePdfByType = collect(config('esperanza_tulong_types.types'))
         ->filter(fn ($d) => !empty($d['reference_pdf']))
         ->pluck('reference_pdf', 'name')
         ->map(fn ($path) => asset($path));
-    foreach ($requests as &$r) {
-        $r = array_merge($r, $tulongClassification[$r['type']] ?? ['category' => 'Social Protection', 'office' => $r['office'], 'level' => 'Municipal']);
-        $r['reference_pdf'] = $referencePdfByType[$r['type']] ?? null;
-        $r['assigned'] = $assignedByRef[$r['ref']] ?? null;
-        $r['service_guide_key'] = $typeToServiceGuideKey[$r['type']] ?? null;
-        $r['purpose'] = $r['purpose'] ?? ($purposeByCategory[$r['category']] ?? 'Social protection assistance benefit application');
-        if (!isset($r['requirements'])) {
-            $names = $defaultRequirementsByCategory[$r['category']] ?? ['Valid Government-Issued ID'];
-            $r['requirements'] = $synthesizeRequirements($names, $r['status'], $r['remarks'] ?? null, explode(' ', $r['citizen'])[0], $idPreviewAssetByCitizen[$r['citizen']] ?? null);
-        }
-        $spec = $resolveFormSpec($r['type']);
-        if ($spec) {
-            $citizenFirst = explode(' ', $r['citizen'])[0];
-            $bio = $citizenBio[$r['citizen']] ?? null;
-            $r['form_source'] = $spec['source'];
-            $r['form_steps'] = collect($spec['steps'])->map(function ($step) use ($synthesizeFormAnswer, $r, $citizenFirst, $bio) {
-                return [
-                    'label' => $step['label'],
-                    'description' => $step['description'] ?? null,
-                    'fields' => collect($step['fields'])->map(function ($field) use ($synthesizeFormAnswer, $r, $citizenFirst, $bio) {
-                        return $field + ['answer' => $synthesizeFormAnswer($field, $r['ref'], $citizenFirst, $r['barangay'], $bio)];
-                    })->all(),
-                ];
-            })->all();
-        }
-    }
-    unset($r);
 
     $tabs = $__fixtures['tabs'];
     $actionStatuses = $__fixtures['actionStatuses'];
@@ -300,10 +88,26 @@
             missingRequirementPicks: [],
             missingRequirementOther: '',
             previewDoc: null,
-            requests: @js($requests),
-            citizenAvatars: @js($citizenAvatars),
-            actionStatuses: @js($actionStatuses),
-            allTulongStatuses: @js($allTulongStatuses),
+            // Tulong runs the same lifecycle engine as Dokyu on the server
+            // (RequestLifecycle; the case-management stages of
+            // config/esperanza_tulong_lifecycle.php are backend finding B-044,
+            // still open), so the queue shows and acts on the engine's
+            // statuses. The stage-by-stage case forms that had nowhere to be
+            // saved are gone until the backend stores them.
+            requests: [],
+            requestsLoading: true,
+            requestsFailed: false,
+            detailLoading: false,
+            citizenAvatars: {},
+            actionStatuses: ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted'],
+            allTulongStatuses: ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted', 'Approved', 'Mark to Release', 'Released', 'Rejected'],
+            formSpecsByType: @js($formSpecsByType),
+            wizardFieldsByKey: @js($wizardFieldsByKey),
+            catalogNameByKey: @js($catalogNameByKey),
+            tulongClassification: @js($tulongClassification),
+            referencePdfByType: @js($referencePdfByType),
+            typeToServiceGuideKey: @js($typeToServiceGuideKey),
+            requestType: 'tulong',
             tulongTypesByName: @js($tulongTypesByName),
             statusFilter: '',
             standardReasons: @js($validationGuide['standard_reasons']),
@@ -313,7 +117,8 @@
             // processingKind field. Falls back to 'general' for any type
             // missing one rather than guessing from the name.
             get processingKind() {
-                return this.tulongTypesByName[this.selected?.type]?.processingKind || 'general';
+                const name = this.catalogNameByKey[this.selected?.service_key] || this.selected?.type;
+                return this.tulongTypesByName[name]?.processingKind || 'general';
             },
             // Evidence Strength Hierarchy (guide section 1.2) — a light
             // keyword heuristic since this is mock/reference data, not a
@@ -393,58 +198,173 @@
                     try { this.returnToProfile = JSON.parse(stored); } catch (e) { this.returnToProfile = null; }
                     sessionStorage.removeItem('returnToProfile');
                 }
-                this.restoreProgress();
-                // Arriving from a notification (see components/admin/topbar.blade.php)
-                // — jump straight into that exact request, not just the filtered list.
-                if (ref) {
+                this.loadRequests().then(() => {
+                    // Arriving from a notification (see components/admin/topbar.blade.php)
+                    // — jump straight into that exact request, not just the filtered list.
+                    if (!ref) return;
                     const match = this.requests.find(r => r.ref === ref);
                     if (match) this.$nextTick(() => this.openRequest(match));
+                });
+            },
+            // ---- The queue, from the API -----------------------------------
+            // Every action calls the lifecycle endpoint it names and takes the
+            // server's answer as the new state; a reload shows the same.
+            apiBase(ref) {
+                return '/admin/' + this.requestType + '/requests/' + encodeURIComponent(ref);
+            },
+            apiMessage(err, fallback) {
+                return err && err.localised ? err.localised('en') : fallback;
+            },
+            formatDay(iso) {
+                if (!iso) return '';
+                const d = new Date(iso);
+                return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            },
+            async loadRequests() {
+                this.requestsLoading = true;
+                this.requestsFailed = false;
+                try {
+                    const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params: { sort: '-submitted_at' } });
+                    this.requests = (res.data || []).map((row) => this.fromApi(row));
+                } catch (err) {
+                    this.requestsFailed = true;
+                } finally {
+                    this.requestsLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
                 }
-                // Closing the process modal is the signal that time has
-                // passed in this simulation — see resolvePendingResubmissions.
-                this.$watch('open', (isOpen) => { if (!isOpen) this.resolvePendingResubmissions(); });
             },
-            // Resumable verification flow — see the identical pair of
-            // methods' own comment in admin/document-requests.blade.php.
-            restoreProgress() {
-                let saved = {};
-                try { saved = JSON.parse(localStorage.getItem('esperanza_tulong_progress') || '{}'); } catch (e) { saved = {}; }
-                this.requests.forEach((r) => {
-                    if (saved[r.ref]) Object.assign(r, saved[r.ref]);
-                });
+            fromApi(row) {
+                const type = row.service || row.service_key || 'Assistance';
+                // The name-keyed tables below use this catalog's name for the
+                // service, which is not always the backend's display name.
+                const name = this.catalogNameByKey[row.service_key] || type;
+                const cls = this.tulongClassification[name] || this.tulongClassification[type] || {};
+                return {
+                    ref: row.ref,
+                    citizen: row.applicant || '—',
+                    type,
+                    service_key: row.service_key,
+                    office: row.office || cls.office || '—',
+                    barangay: row.barangay || '',
+                    submitted: this.formatDay(row.submitted),
+                    submitted_at: row.submitted,
+                    status: row.status,
+                    category: cls.category || 'Social Protection',
+                    level: cls.level || 'Municipal',
+                    reference_pdf: this.referencePdfByType[name] || this.referencePdfByType[type] || null,
+                    service_guide_key: this.typeToServiceGuideKey[name] || this.typeToServiceGuideKey[type] || null,
+                    assigned: null,
+                    purpose: '',
+                    requirements: null,
+                    remarks: null,
+                    history: [],
+                    release_evidence: null,
+                    release_evidence_at: null,
+                };
             },
-            // Escape hatch for stale saved progress — see the identical
-            // method's own comment in admin/document-requests.blade.php.
-            resetDemoData() {
-                localStorage.removeItem('esperanza_dokyu_progress');
-                localStorage.removeItem('esperanza_tulong_progress');
-                window.location.href = window.location.pathname;
+            // The request's form answers, labelled by the form they were filed
+            // on. A request from the app answers the app's form spec (looked up
+            // by name); one from the portal answers the portal wizard's fields
+            // (by service key) -- their field keys differ, so the answers say
+            // which applies. Anything neither knows is still shown, under its
+            // own name, rather than dropped.
+            formStepsFor(type, formData, serviceKey) {
+                const data = formData || {};
+                const answered = (v) => v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && !v.length);
+                const seen = new Set(['purpose']);
+                let steps = [];
+                const spec = this.formSpecsByType[this.catalogNameByKey[serviceKey] || type] || this.formSpecsByType[type];
+                const specFields = (spec?.steps || []).flatMap((s) => s.fields || []);
+                const wizardFields = this.wizardFieldsByKey[serviceKey] || [];
+                if (specFields.some((f) => answered(data[f.key]))) {
+                    steps = spec.steps.map((step) => ({
+                        label: step.label,
+                        description: step.description || null,
+                        fields: (step.fields || []).map((f) => { seen.add(f.key); return this.answerField(f, data[f.key]); }),
+                    }));
+                } else if (wizardFields.some((f) => answered(data[f.key]))) {
+                    steps = [{
+                        label: 'Application details',
+                        description: null,
+                        fields: wizardFields.map((f) => { seen.add(f.key); return this.answerField(f, data[f.key]); }),
+                    }];
+                }
+                const extra = Object.keys(data).filter((k) => !seen.has(k) && answered(data[k]));
+                if (extra.length) {
+                    steps.push({
+                        label: steps.length ? 'Other details' : 'Application details',
+                        description: null,
+                        fields: extra.map((k) => this.answerField({ key: k, label: k.replace(/([A-Z])/g, ' $1').replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase()), type: 'text' }, data[k])),
+                    });
+                }
+                return steps;
             },
-            persistProgress() {
-                const data = {};
-                this.requests.forEach((r) => {
-                    data[r.ref] = {
-                        status: r.status, remarks: r.remarks ?? null, assigned: r.assigned ?? null,
-                        release_evidence: r.release_evidence ?? null, release_evidence_at: r.release_evidence_at ?? null,
-                        requirements: r.requirements ?? undefined,
-                        // Tulong's own case-data sections (Milestones 7-15,
-                        // 26) — without these, every assessment/approval/
-                        // processing/release/completion field and the case
-                        // history would silently vanish on reload, since
-                        // restoreProgress() only brings back whatever keys
-                        // were actually saved here.
-                        screening: r.screening ?? undefined,
-                        assessment: r.assessment ?? undefined,
-                        approval: r.approval ?? undefined,
-                        returnReason: r.returnReason ?? null,
-                        cancelReason: r.cancelReason ?? null,
-                        processing: r.processing ?? undefined,
-                        release: r.release ?? undefined,
-                        completion: r.completion ?? undefined,
-                        history: r.history ?? undefined,
-                    };
-                });
-                try { localStorage.setItem('esperanza_tulong_progress', JSON.stringify(data)); } catch (e) {}
+            // One answer in the shape x-admin.request-form-review prints. The
+            // portal's field types are mapped onto the review's (a checkbox
+            // group is a multiselect; a table prints one line per row), and an
+            // array or object answer is joined instead of printing as
+            // "[object Object]".
+            answerField(f, value) {
+                const type = { 'checkbox-group': 'multiselect', derived_age: 'text', table: 'textarea' }[f.type] || f.type || 'text';
+                let answer = value ?? null;
+                if (type === 'multiselect') {
+                    answer = Array.isArray(answer) ? answer : (answer ? [String(answer)] : []);
+                } else if (Array.isArray(answer)) {
+                    answer = answer.map((row) => (row && typeof row === 'object')
+                        ? Object.values(row).filter((v) => v !== '' && v !== null && v !== undefined).join(' · ')
+                        : String(row)).filter(Boolean).join('; ');
+                } else if (answer && typeof answer === 'object') {
+                    answer = Object.entries(answer).map(([k, v]) => k + ': ' + v).join(', ');
+                }
+                return { ...f, type, answer };
+            },
+            fromApiRequirement(q) {
+                return {
+                    key: q.key,
+                    name: q.label,
+                    status: q.status === 'Pending Review' ? 'Submitted' : q.status,
+                    reject_reason: q.reason,
+                    remarks: q.remarks,
+                    file: q.file?.name || null,
+                    file_url: q.file?.url || null,
+                    file_mime: q.file?.mime || null,
+                    preview_asset: q.file?.url && (q.file?.mime || '').startsWith('image/') ? q.file.url : null,
+                    versions: (q.versions || []).map((v) => ({
+                        file: v.file?.name || null,
+                        file_url: v.file?.url || null,
+                        status: v.status === 'Pending Review' ? 'Submitted' : v.status,
+                        date: this.formatDay(v.archived_at),
+                        reject_reason: v.reason,
+                        remarks: v.remarks,
+                    })),
+                    _decidingOutcome: null,
+                    _reason: '',
+                    _remarks: '',
+                    _showVersions: false,
+                };
+            },
+            applyDetail(r, d) {
+                r.status = d.status;
+                r.office = d.office || r.office;
+                r.remarks = d.decision_remarks || null;
+                r.form_data = d.form_data || {};
+                r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : '';
+                r.form_steps = this.formStepsFor(r.type, d.form_data, r.service_key);
+                r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
+                r.payment = d.payment || null;
+                r.history = (d.history || []).map((h) => ({ stage: h.to, date: this.formatDay(h.at), by: h.actor_name || '—', note: h.trigger || '' }));
+                const proof = d.proof_of_release || {};
+                if (proof.captured) {
+                    r.release_evidence = proof.file?.url || r.release_evidence || null;
+                    r.release_evidence_at = proof.note || 'on file';
+                }
+            },
+            async refreshSelected() {
+                if (!this.selected) return;
+                const r = this.selected;
+                const res = await $api.get(this.apiBase(r.ref));
+                this.applyDetail(r, res.data);
+                this.$nextTick(() => window.renderIcons?.());
             },
             backToProfile() {
                 if (!this.returnToProfile) return;
@@ -472,6 +392,12 @@
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
+                'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
+                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
+                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
+                'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
+                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
+                'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Initial Screening': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
                 'Needs Requirements': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Assessment': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
@@ -487,8 +413,8 @@
                 if (this.statusFilter) return r.status === this.statusFilter;
                 if (this.tab === 'all') return true;
                 if (this.tab === 'action') return this.actionStatuses.includes(r.status);
-                if (this.tab === 'release') return r.status === 'Ready for Release';
-                if (this.tab === 'done') return r.status === 'Completed';
+                if (this.tab === 'release') return r.status === 'Mark to Release';
+                if (this.tab === 'done') return ['Released', 'Rejected'].includes(r.status);
                 return true;
             },
             get filteredRequests() {
@@ -506,189 +432,75 @@
                 );
             },
             clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; this.statusFilter = ''; },
-            // Side states inherit their parent stage's index on the 7-step
-            // main-line stepper (Needs Requirements sits at Initial
-            // Screening's position, Returned for Reassessment sits at For
-            // Approval's) — see PROCESS_TAB_FLOW.txt Part 2.
+            // The engine's main line (see statusOrder below); Under Review and
+            // Resubmitted are the correction loop at the verification step.
             stepIndex(status) {
-                const map = {
-                    'Submitted': 0,
-                    'Initial Screening': 1, 'Needs Requirements': 1,
-                    'Assessment': 2,
-                    'For Approval': 3, 'Returned for Reassessment': 3,
-                    'Assistance Processing': 4,
-                    'Ready for Release': 5,
-                    'Completed': 6,
-                };
+                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Rejected': 0 };
                 return map[status] ?? 0;
             },
-            // Unlike Dokyu (and unlike this file's own previous behavior),
-            // opening a Submitted case does NOT auto-advance it — Milestone
-            // 4 wants Start Screening to be a real, explicit action the
-            // admin takes, not something that silently happens on open.
-            openRequest(r) {
-                // Guarantees every case-data section exists as a real
-                // object before anything in the modal tries to bind to it
-                // — regardless of whether the seeded mock record happened
-                // to include one, since a case can be opened at any stage
-                // (e.g. jumping straight to a Completed demo row that was
-                // never walked through Assessment/Approval by hand).
-                r.screening = r.screening || {};
-                r.assessment = r.assessment || {};
-                r.approval = r.approval || {};
-                r.processing = r.processing || {};
-                r.release = r.release || {};
-                r.completion = r.completion || {};
-                r.history = r.history || [];
+            // Opening is the server's own trigger: GET on a Submitted request
+            // moves it to Under Verification (RequestLifecycle::open).
+            async openRequest(r) {
                 this.selected = r;
                 this.rejectRemarks = '';
-                this.returnRemarks = '';
-                this.cancelRemarks = '';
-                this.missingRequirementPicks = [];
-                this.showReturnForm = false;
-                this.showCancelForm = false;
-                this.showRequirementsForm = false;
                 this.previewDoc = null;
                 this.open = true;
-                this.$nextTick(() => window.renderIcons?.());
+                this.detailLoading = true;
+                try {
+                    await this.refreshSelected();
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not open ' + r.ref + '.'), variant: 'error' });
+                } finally {
+                    this.detailLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             },
-            // Appends one line to this case's stage-transition history —
-            // Milestone 26's simple history of stage transitions, using
-            // the same lightweight simulation approach as everything else
-            // here (no backend, just a plain array on the request object,
-            // persisted the same way requirements/status already are).
-            pushHistory(note) {
-                if (!this.selected) return;
-                this.selected.history = this.selected.history || [];
-                this.selected.history.push({
-                    stage: this.selected.status,
-                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                    by: this.$store.session.account?.name || 'Staff',
-                    note,
-                });
-            },
-            // Every status transition below still writes to local Alpine
-            // state instead of calling the real lifecycle endpoints (see
-            // PRODUCTION_READINESS.md), so there is no request on the
-            // backend for a server-side notification to be about yet.
-            // $store.citizenNotifications now reads real rows from
-            // GET /citizen/notifications — the moment this modal's actions
-            // call the real POST .../reject|approve|... endpoints, the
-            // notification for that step arrives on the citizen's own next
-            // load() for free, from NotificationService::notifyTransition(),
-            // and this no-op (kept only so every existing call site below
-            // still resolves) should be deleted along with its calls.
-            notifyStatus() {},
-            // Reject is available across every non-terminal stage up
-            // through For Approval (see canReject below) — a case can turn
-            // out to be ineligible at screening, during assessment, or
-            // even after the social worker's own recommendation is
-            // reviewed, not just at one fixed point.
-            rejectCase() {
+            async rejectCase() {
                 if (this.processing || !this.rejectRemarks.trim()) return;
                 this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Rejected';
-                    this.selected.remarks = this.rejectRemarks.trim();
-                    this.pushHistory('Rejected: ' + this.selected.remarks);
+                const r = this.selected;
+                try {
+                    const res = await $api.post(this.apiBase(r.ref) + '/reject', { decision_remarks: this.rejectRemarks.trim() });
+                    this.applyDetail(r, res.data);
                     this.rejectRemarks = '';
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: 'Case ' + this.selected.ref + ' rejected.', variant: 'error' });
-                    this.notifyStatus('Request Rejected', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') was rejected: ' + this.selected.remarks, 'circle-x', 'rose');
-                }, 700);
-            },
-            // Cancellation is offered only while nothing has been approved
-            // or committed yet (Submitted through Assessment) — once a
-            // case reaches For Approval, Reject is the remaining exit,
-            // since resources may already be earmarked for it.
-            cancelCase() {
-                if (this.processing || !this.cancelRemarks.trim()) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Cancelled';
-                    this.selected.cancelReason = this.cancelRemarks.trim();
-                    this.pushHistory('Cancelled: ' + this.selected.cancelReason);
-                    this.cancelRemarks = '';
-                    this.showCancelForm = false;
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: 'Case ' + this.selected.ref + ' cancelled.', variant: 'info' });
-                    this.notifyStatus('Request Cancelled', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') was cancelled: ' + this.selected.cancelReason, 'circle-x', 'slate');
-                }, 500);
+                    this.$dispatch('toast', { message: 'Case ' + r.ref + ' rejected.', variant: 'error' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not reject ' + r.ref + '.'), variant: 'error' });
+                } finally { this.processing = false; }
             },
             rejectReasons: ['Invalid document', 'Incorrect document', 'Unreadable', 'Expired', 'Wrong document', 'Missing information', 'Does not meet requirement', 'Other'],
-            verifyRequirement(req) {
-                req.status = 'Approved';
-                req.reject_reason = null;
-                req.remarks = null;
-                this.persistProgress();
-                this.$dispatch('toast', { message: req.name + ' verified.', variant: 'success' });
+            async verifyRequirement(req) {
+                if (req._busy) return;
+                req._busy = true;
+                try {
+                    await $api.post(this.apiBase(this.selected.ref) + '/requirements/' + encodeURIComponent(req.key) + '/approve');
+                    await this.refreshSelected();
+                    this.$dispatch('toast', { message: req.name + ' verified.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not verify ' + req.name + '.'), variant: 'error' });
+                } finally { req._busy = false; }
             },
-            // Requirement-level decision flow covering the guide's other
-            // three outcomes — Needs Additional Documents, Needs Manual
-            // Verification, and Reject — each requiring a reason before it
-            // can be confirmed, same as the existing whole-case reject.
             startRequirementDecision(req, outcome) {
                 req._decidingOutcome = outcome;
                 req._reason = '';
                 req._remarks = '';
             },
-            // Flagging a requirement stays flagged while this modal is open
-            // — the citizen resubmitting only happens once you leave (see
-            // resolvePendingResubmissions, fired by the open-state watcher
-            // in init()). Without that delay, flagging and the citizen
-            // fixing it would appear to happen in the same instant, which
-            // reads as if the citizen were watching the admin's screen.
-            confirmRequirementDecision(req) {
-                if (!req._reason) return;
+            // Flag for Replacement asks the resident for a new file (the whole
+            // case moves to Under Review on the server); Reject refuses that
+            // document. The resident is notified by the server either way.
+            async confirmRequirementDecision(req) {
+                if (!req._reason || req._busy) return;
                 const outcome = req._decidingOutcome;
-                req.versions = req.versions || [];
-                req.versions.push({ file: req.file, status: outcome, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), reject_reason: req._reason, remarks: req._remarks || '' });
-                req.status = outcome;
-                req.reject_reason = req._reason;
-                req.remarks = req._remarks || '';
-                req._pendingResubmit = outcome === 'Flagged for Replacement';
-                req._decidingOutcome = null;
-                req._reason = '';
-                req._remarks = '';
-                // Unlike Dokyu, flagging one requirement here does NOT
-                // auto-roll the whole case's status — Milestone 5 says not
-                // to copy that mechanic. A requirement needing more work is
-                // just information the admin uses when explicitly deciding
-                // to use Request Additional Requirements (see
-                // requestRequirements() below), which is its own deliberate
-                // whole-case action with its own specified list, not an
-                // automatic side effect of a single document flag.
-                const variant = outcome === 'Rejected' ? 'error' : outcome === 'Flagged for Replacement' ? 'warning' : 'info';
-                this.persistProgress();
-                this.$dispatch('toast', { message: req.name + ' marked ' + outcome + '.', variant });
-            },
-            // Resolves any requirement flagged during this viewing into
-            // Resubmitted — called when the process modal closes (see the
-            // $watch('open', ...) in init()), so the citizen's correction
-            // only becomes visible on the NEXT time this case is opened,
-            // not instantly while the admin is still looking at it.
-            resolvePendingResubmissions() {
-                if (!this.selected) return;
-                const request = this.selected;
-                let changed = false;
-                (request.requirements || []).forEach((req) => {
-                    if (!req._pendingResubmit) return;
-                    changed = true;
-                    const ext = (req.file || '').toLowerCase().endsWith('.pdf') ? '.pdf' : '.jpg';
-                    req.file = req.name.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_revised' + ext;
-                    req.status = 'Resubmitted';
-                    req.reject_reason = null;
-                    req.remarks = null;
-                    req._pendingResubmit = false;
-                    // This processing modal still mutates local Alpine state
-                    // rather than calling the real requirement-resubmit
-                    // endpoint (see PRODUCTION_READINESS.md), so there is no
-                    // server-side notification to reflect. $store.adminNotifications
-                    // now reads real rows from GET /admin/notifications.
-                });
-                if (changed) this.persistProgress();
+                const action = outcome === 'Rejected' ? 'reject' : 'flag';
+                const remarks = (req._remarks || '').trim() || req._reason;
+                req._busy = true;
+                try {
+                    await $api.post(this.apiBase(this.selected.ref) + '/requirements/' + encodeURIComponent(req.key) + '/' + action, { reason: req._reason, remarks });
+                    await this.refreshSelected();
+                    this.$dispatch('toast', { message: req.name + ' marked ' + outcome + '.', variant: outcome === 'Rejected' ? 'error' : 'warning' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not save the decision on ' + req.name + '.'), variant: 'error' });
+                } finally { req._busy = false; }
             },
             // Plain-language read on what to do next, shown in the System
             // Advice panel beside the stepper — mirrors the Esperanza Mobile
@@ -700,266 +512,97 @@
             // since this is a case-management flow, not a document one.
             get processAdvice() {
                 if (!this.selected) return { icon: 'info', tone: 'brand', title: 'Reviewing', message: '' };
-                if (this.selected.status === 'Rejected') {
-                    return { icon: 'circle-x', tone: 'rose', title: 'Rejected', message: this.selected.remarks || 'This case was rejected.' };
-                }
-                if (this.selected.status === 'Cancelled') {
-                    return { icon: 'ban', tone: 'slate', title: 'Cancelled', message: this.selected.cancelReason || 'This case was cancelled.' };
-                }
-                if (this.terminalStatuses.includes(this.selected.status)) {
-                    return { icon: 'circle-check', tone: 'emerald', title: 'Finalized', message: 'This case is complete — no further action is needed.' };
-                }
-                if (this.selected.status === 'Needs Requirements') {
-                    const list = (this.selected.screening?.missingRequirements || []);
-                    return { icon: 'file-plus-2', tone: 'amber', title: 'Awaiting Requirements', message: (list.length ? list.length + ' item(s) requested — ' : '') + 'this case is waiting for the citizen to submit the missing requirement(s) below.' };
-                }
-                if (this.selected.status === 'Returned for Reassessment') {
-                    return { icon: 'rotate-ccw', tone: 'orange', title: 'Reassessment Requested', message: (this.selected.returnReason ? this.selected.returnReason + ' — ' : '') + 'resume the assessment once addressed.' };
-                }
-                if (this.selected.status === 'Assistance Processing') {
-                    return { icon: 'package', tone: 'brand', title: 'Prepare Assistance', message: 'Prepare the approved assistance and release details.' };
-                }
-                if (this.selected.status === 'Ready for Release') {
+                const st = this.selected.status;
+                if (this.detailLoading) return { icon: 'loader-circle', tone: 'brand', title: 'Loading', message: 'Opening the case…' };
+                if (st === 'Rejected') return { icon: 'circle-x', tone: 'rose', title: 'Rejected', message: this.selected.remarks || 'This case was rejected.' };
+                if (st === 'Released') return { icon: 'circle-check', tone: 'emerald', title: 'Released', message: 'The assistance was released to the beneficiary. No further action is needed.' };
+                if (st === 'Mark to Release') {
                     return this.selected.release_evidence
-                        ? { icon: 'circle-check', tone: 'emerald', title: 'Ready to Confirm', message: 'Proof of Release is on file. Confirm the release once the beneficiary actually receives it.' }
-                        : { icon: 'truck', tone: 'amber', title: 'Release Assistance', message: 'The assistance is prepared. Capture Proof of Release, then confirm once received by the beneficiary.' };
+                        ? { icon: 'circle-check', tone: 'emerald', title: 'Ready to Confirm', message: 'Proof of Release is ready. Confirm the release once the beneficiary actually receives it.' }
+                        : { icon: 'truck', tone: 'amber', title: 'Release Assistance', message: 'Capture Proof of Release, then confirm once received by the beneficiary.' };
                 }
-                if (this.selected.status === 'For Approval') {
-                    return { icon: 'eye', tone: 'amber', title: 'Review Recommendation', message: 'Review the assessment and recommended assistance before approval.' };
-                }
-                if (this.selected.status === 'Assessment') {
-                    return { icon: 'clipboard-check', tone: 'indigo', title: 'Assess Application', message: 'Evaluate the circumstances of the applicant and record your recommendation.' };
-                }
-                if (this.selected.status === 'Initial Screening') {
-                    const reqs = this.selected.requirements || [];
-                    const pending = reqs.filter(r => r.status === 'Submitted' || r.status === 'Resubmitted').length;
-                    return { icon: 'search-check', tone: 'indigo', title: 'Check Eligibility', message: (pending ? pending + ' of ' + reqs.length + ' requirement(s) still need review. ' : '') + 'Verify completeness and basic eligibility. Request missing requirements if needed.' };
-                }
-                // Submitted — nothing has been screened yet.
-                return { icon: 'clipboard-list', tone: 'brand', title: 'Start Screening', message: 'Review the applicant and submitted requirements before assessment.' };
+                if (st === 'Approved') return { icon: 'package', tone: 'indigo', title: 'Prepare Assistance', message: 'The case is approved. Prepare the assistance, then mark it ready for release.' };
+                const reqs = this.selected.requirements || [];
+                const flagged = reqs.filter(r => r.status === 'Flagged for Replacement').length;
+                const pending = reqs.filter(r => r.status === 'Submitted' || r.status === 'Resubmitted').length;
+                if (st === 'Under Review' && flagged) return { icon: 'clock', tone: 'amber', title: 'Awaiting Beneficiary', message: flagged + ' document(s) flagged for replacement — waiting for the resident to send new ones.' };
+                if (pending) return { icon: 'search-check', tone: 'indigo', title: 'Check Eligibility', message: pending + ' of ' + reqs.length + ' requirement(s) still need review. Approve each, or flag what must be replaced.' };
+                if (reqs.length && reqs.every(r => r.status === 'Approved')) return { icon: 'circle-check', tone: 'emerald', title: 'Ready to Approve', message: 'Every requirement is verified. You can approve the assistance.' };
+                return { icon: 'clipboard-list', tone: 'brand', title: 'Review Case', message: 'Review the applicant and the submitted requirements, then decide.' };
             },
-            // Reject is offered at the stages where a real eligibility
-            // decision is actually being made — screening, assessment, and
-            // the final approval review. Not at Submitted (nothing has
-            // been looked at yet) and not once assistance is already being
-            // prepared/released (resources are already committed by then).
             get canReject() {
-                return this.selected && ['Initial Screening', 'Assessment', 'For Approval'].includes(this.selected.status);
+                return this.selected && ['Under Verification', 'Under Review', 'Resubmitted'].includes(this.selected.status);
             },
-            // Cancellation (Milestone 3's user/admin-cancellation-where-
-            // applicable side state) is only offered before anything has
-            // been approved or committed — Submitted through Assessment.
-            get canCancel() {
-                return this.selected && ['Submitted', 'Initial Screening', 'Needs Requirements', 'Assessment'].includes(this.selected.status);
-            },
-            // Tulong's own 7-stage case-management lifecycle — see
-            // PROCESS_TAB_FLOW.txt Part 2 for the full spec and stepIndex()
-            // above for how the Needs Requirements/Returned for
-            // Reassessment side states map onto it.
-            statusOrder: ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'],
-            terminalStatuses: ['Completed', 'Rejected', 'Cancelled', 'Archived'],
-            // Milestone 18's exact stage -> primary-button-label table.
+            statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
+            terminalStatuses: ['Released', 'Rejected', 'Completed', 'Cancelled', 'Archived'],
             stageActionLabels: {
-                'Submitted': 'Start Screening',
-                'Initial Screening': 'Proceed to Assessment',
-                'Needs Requirements': 'Requirements Received',
-                'Assessment': 'Submit for Approval',
-                'For Approval': 'Approve Assistance',
-                'Returned for Reassessment': 'Resume Assessment',
-                'Assistance Processing': 'Mark Ready for Release',
-                'Ready for Release': 'Confirm Release',
+                'Under Verification': 'Approve Assistance',
+                'Under Review': 'Approve Assistance',
+                'Resubmitted': 'Approve Assistance',
+                'Approved': 'Mark Ready for Release',
+                'Mark to Release': 'Confirm Release',
             },
             get nextStageLabel() {
-                if (!this.selected) return '';
+                if (!this.selected || this.detailLoading) return '';
                 return this.stageActionLabels[this.selected.status] ?? '';
             },
-            // Dispatches the footer's single primary button to whichever
-            // stage-specific method actually applies — see the
-            // stageActionLabels map above for the label side of this same
-            // table (Milestone 18).
-            primaryAction() {
-                const byStatus = {
-                    'Submitted': this.startScreening,
-                    'Initial Screening': this.proceedToAssessment,
-                    'Needs Requirements': this.resumeScreeningAfterRequirements,
-                    'Assessment': this.submitForApproval,
-                    'For Approval': this.approveAssistance,
-                    'Returned for Reassessment': this.resumeAssessment,
-                    'Assistance Processing': this.markReadyForRelease,
-                    'Ready for Release': this.confirmRelease,
-                };
-                const fn = byStatus[this.selected?.status];
-                if (fn) fn.call(this);
-            },
-            // FRONTEND SIMULATION — see the identical method's own comment in
-            // admin/document-requests.blade.php for the full rationale.
+            // A real photo, held here and sent with the release itself
+            // (POST .../release, proof_file): the server refuses a release
+            // without proof.
             captureReleaseEvidence(source) {
-                this.selected.release_evidence = this.citizenAvatars[this.selected.citizen] || `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(this.selected.citizen)}`;
-                this.selected.release_evidence_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                this.persistProgress();
-                this.$dispatch('toast', { message: (source === 'camera' ? 'Photo captured' : 'Photo uploaded') + ' — frontend preview only, no data is saved.', variant: 'info' });
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                if (source === 'camera') input.setAttribute('capture', 'environment');
+                input.onchange = () => {
+                    const file = input.files && input.files[0];
+                    if (!file || !this.selected) return;
+                    if (this.selected._proofPreview) URL.revokeObjectURL(this.selected._proofPreview);
+                    this.selected._proofFile = file;
+                    this.selected._proofPreview = URL.createObjectURL(file);
+                    this.selected.release_evidence = this.selected._proofPreview;
+                    this.selected.release_evidence_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                    this.$nextTick(() => window.renderIcons?.());
+                };
+                input.click();
             },
             clearReleaseEvidence() {
+                if (this.selected._proofPreview) URL.revokeObjectURL(this.selected._proofPreview);
+                this.selected._proofFile = null;
+                this.selected._proofPreview = null;
                 this.selected.release_evidence = null;
                 this.selected.release_evidence_at = null;
-                this.persistProgress();
             },
-            // --- Stage transition actions (Milestones 4-15, 18) ---
-            // Each is its own explicit method (rather than one generic
-            // advance step like Dokyu's approve()) because every Tulong
-            // stage transition records different data (assessment fields,
-            // approval fields, processing fields, release/completion
-            // fields) — see the data-model comment above $requests in the
-            // @php block for the full shape.
-            startScreening() {
+            // The footer's one primary button, a real endpoint per stage:
+            //   Under Verification / Under Review / Resubmitted -> approve
+            //   Approved        -> mark-to-release
+            //   Mark to Release -> release, carrying the proof-of-release photo
+            async primaryAction() {
                 if (this.processing) return;
+                const r = this.selected;
                 this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Initial Screening';
-                    this.pushHistory('Screening started');
+                try {
+                    let res;
+                    if (['Under Verification', 'Under Review', 'Resubmitted'].includes(r.status)) {
+                        res = await $api.post(this.apiBase(r.ref) + '/approve');
+                    } else if (r.status === 'Approved') {
+                        res = await $api.post(this.apiBase(r.ref) + '/mark-to-release');
+                    } else if (r.status === 'Mark to Release') {
+                        const form = new FormData();
+                        if (r._proofFile) form.append('proof_file', r._proofFile);
+                        form.append('proof_note', 'Released to ' + r.citizen + '. Recorded by ' + (this.$store.session.account?.name || 'staff') + '.');
+                        res = await $api.post(this.apiBase(r.ref) + '/release', form);
+                    } else {
+                        return;
+                    }
+                    this.applyDetail(r, res.data);
+                    this.$dispatch('toast', { message: r.ref + ' moved to: ' + r.status + '.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not update ' + r.ref + '.'), variant: 'error' });
+                } finally {
                     this.processing = false;
-                    this.persistProgress();
-                    this.notifyStatus('Screening Started', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') is now being screened.', 'search-check', 'indigo');
-                }, 500);
-            },
-            proceedToAssessment() {
-                if (this.processing) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Assessment';
-                    this.selected.assessment = this.selected.assessment || {};
-                    this.pushHistory('Proceeded to assessment');
-                    this.processing = false;
-                    this.persistProgress();
-                    this.notifyStatus('Application Under Assessment', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') is now being assessed.', 'clipboard-check', 'indigo');
-                }, 500);
-            },
-            // Milestone 6 — staff specifies exactly what's missing (drawn
-            // from the type's own configured requirements list, see
-            // missingRequirementPicks in the template) rather than a
-            // generic documents-incomplete flag.
-            requestRequirements() {
-                const list = [...this.missingRequirementPicks];
-                if (this.missingRequirementOther.trim()) list.push(this.missingRequirementOther.trim());
-                if (this.processing || !list.length) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Needs Requirements';
-                    this.selected.screening = this.selected.screening || {};
-                    this.selected.screening.missingRequirements = list;
-                    this.pushHistory('Requested: ' + list.join(', '));
-                    this.missingRequirementPicks = [];
-                    this.missingRequirementOther = '';
-                    this.showRequirementsForm = false;
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: 'Requirements requested for ' + this.selected.ref + '.', variant: 'warning' });
-                    this.notifyStatus('Additional Requirements Needed', 'Please submit: ' + list.join(', ') + ' for your ' + this.selected.type + ' request (' + this.selected.ref + ').', 'file-plus-2', 'amber');
-                }, 500);
-            },
-            resumeScreeningAfterRequirements() {
-                if (this.processing) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Initial Screening';
-                    this.pushHistory('Requirements received — resuming screening');
-                    this.processing = false;
-                    this.persistProgress();
-                    this.notifyStatus('Requirements Received', 'Thank you — your ' + this.selected.type + ' request (' + this.selected.ref + ') is being reviewed again.', 'search-check', 'indigo');
-                }, 500);
-            },
-            // Milestone 9 — the assessment recommendation becomes a
-            // standalone summary the approving officer can read without
-            // re-reading the whole original application.
-            submitForApproval() {
-                if (this.processing || !this.selected.assessment?.eligibility) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.assessment.assessedBy = this.$store.session.account?.name || 'Social Worker';
-                    this.selected.assessment.assessmentDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    this.selected.status = 'For Approval';
-                    this.pushHistory('Assessment submitted — ' + this.selected.assessment.eligibility);
-                    this.processing = false;
-                    this.persistProgress();
-                    this.notifyStatus('Assessment Submitted', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') has been assessed and is awaiting approval.', 'eye', 'amber');
-                }, 500);
-            },
-            // Milestone 11 — the approved amount/package is recorded
-            // separately from the social worker's own recommended one, so
-            // the two can differ (a real, common case).
-            approveAssistance() {
-                if (this.processing) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.approval = this.selected.approval || {};
-                    this.selected.approval.approvedBy = this.$store.session.account?.name || 'Approving Officer';
-                    this.selected.approval.approvalDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    if (this.selected.approval.approvedAmount == null) this.selected.approval.approvedAmount = this.selected.assessment?.recommendedAmount ?? null;
-                    if (!this.selected.approval.approvedPackage) this.selected.approval.approvedPackage = this.selected.assessment?.recommendedPackage ?? '';
-                    if (!this.selected.approval.approvedType) this.selected.approval.approvedType = this.selected.assessment?.recommendedAssistance ?? this.selected.type;
-                    this.selected.status = 'Assistance Processing';
-                    this.pushHistory('Assistance approved');
-                    this.processing = false;
-                    this.persistProgress();
-                    this.notifyStatus('Assistance Approved', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') has been approved and is being prepared.', 'package-check', 'emerald');
-                }, 500);
-            },
-            returnForReassessment() {
-                if (this.processing || !this.returnRemarks.trim()) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.returnReason = this.returnRemarks.trim();
-                    this.selected.status = 'Returned for Reassessment';
-                    this.pushHistory('Returned for reassessment: ' + this.selected.returnReason);
-                    this.returnRemarks = '';
-                    this.showReturnForm = false;
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: this.selected.ref + ' returned for reassessment.', variant: 'warning' });
-                }, 500);
-            },
-            resumeAssessment() {
-                if (this.processing) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Assessment';
-                    this.pushHistory('Resuming assessment');
-                    this.processing = false;
-                    this.persistProgress();
-                }, 500);
-            },
-            markReadyForRelease() {
-                if (this.processing) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Ready for Release';
-                    this.pushHistory('Marked ready for release');
-                    this.processing = false;
-                    this.persistProgress();
-                    this.notifyStatus('Ready for Release', 'Your ' + this.selected.type + ' assistance (' + this.selected.ref + ') is ready! Visit the office to claim it.', 'truck', 'teal');
-                }, 500);
-            },
-            // Milestone 15 — the terminal, fulfilled state. Deliberately
-            // Completed, not Released, to communicate the case itself is
-            // done, not just that a document changed hands.
-            confirmRelease() {
-                if (this.processing) return;
-                this.processing = true;
-                setTimeout(() => {
-                    this.selected.completion = this.selected.completion || {};
-                    this.selected.completion.dateReleased = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    this.selected.completion.releasedBy = this.$store.session.account?.name || 'Staff';
-                    this.selected.completion.recipient = this.selected.completion.recipient || this.selected.citizen;
-                    if (this.selected.completion.actualAmount == null) this.selected.completion.actualAmount = this.selected.approval?.approvedAmount ?? null;
-                    if (!this.selected.completion.actualPackage) this.selected.completion.actualPackage = this.selected.approval?.approvedPackage ?? '';
-                    if (!this.selected.completion.reference) this.selected.completion.reference = this.selected.release?.reference ?? '';
-                    this.selected.status = 'Completed';
-                    this.pushHistory('Assistance released — case completed');
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: this.selected.ref + ' marked completed.', variant: 'success' });
-                    this.notifyStatus('Assistance Completed', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') has been released. Thank you!', 'check-check', 'green');
-                }, 500);
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             },
         }"
         class="animate-fade-up"
@@ -994,9 +637,13 @@
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Active Cases" value="{{ collect($requests)->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled', 'Archived'])->count() }}" valueBind="requests.filter(r => !terminalStatuses.includes(r.status)).length" icon="hand-heart" color="purple" :delay="0" />
             <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or assessment" :delay="40" />
-            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="{{ collect($requests)->where('status', 'Ready for Release')->count() }}" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
-            <x-ui.stat-card :href="route('admin.analytics')" label="Budget Utilized (Q3)" value="₱1.8M" icon="wallet" color="brand" sublabel="of ₱2.5M allocated" :delay="120" />
-            <x-ui.stat-card :href="route('admin.reports')" label="Ayuda Received" value="₱1.8M" icon="hand-coins" color="gold" sublabel="Disbursed to citizens" :delay="160" />
+            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
+            {{-- These two were hard-coded peso figures ("₱1.8M of ₱2.5M") shown as
+                 if they were the municipality's budget. No budget or
+                 disbursement amount is recorded anywhere, so they count what is
+                 real instead. --}}
+            <x-ui.stat-card @click="tab = 'done'" class="cursor-pointer" label="Released" value="0" valueBind="requests.filter(r => r.status === 'Released').length" icon="hand-coins" color="gold" sublabel="Assistance received" :delay="120" />
+            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="All Cases" value="0" valueBind="requests.length" icon="wallet" color="brand" sublabel="Every status" :delay="160" />
         </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
@@ -1017,11 +664,11 @@
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
                 </button>
                 <button
-                    type="button" @click="resetDemoData()"
-                    title="Clears saved review progress for every Dokyu/Tulong request in this browser and reloads with the current mock data — use this if a case's status or documents look out of date."
-                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors shrink-0"
+                    type="button" @click="loadRequests()"
+                    title="Reload the cases from the server."
+                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors shrink-0"
                 >
-                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Demo Data
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
                 </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -1133,9 +780,11 @@
             </tbody>
         </x-ui.table>
 
-        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredRequests.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
-            <p class="text-sm font-medium text-slate-600">No cases match these filters.</p>
+        <div x-show="requestsLoading" class="space-y-2 mt-3"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
+        <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="'Could not load assistance requests.'" retryExpr="loadRequests()" :retryable="true" /></div>
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+            <p class="text-sm font-medium text-slate-600" x-text="requests.length ? 'No cases match these filters.' : 'No assistance requests yet.'"></p>
         </div>
 
         <x-ui.modal title="Tulong Case" maxWidth="4xl">
@@ -1157,7 +806,7 @@
                     <div class="sm:w-44 shrink-0">
                         <p class="text-xs text-slate-400 mb-3 font-mono" x-text="selected.ref"></p>
                         <div class="flex flex-col">
-                            @foreach(['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'] as $i => $step)
+                            @foreach(['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'] as $i => $step)
                                 <div class="flex items-start gap-3">
                                     <div class="flex flex-col items-center shrink-0">
                                         <span
@@ -1398,200 +1047,11 @@
                         </div>
                     </div>
 
-                    {{-- Assistance Assessment — Milestone 7/8, the
-                         Tulong-specific heart of this modal: eligibility
-                         findings and a recommendation, editable while the
-                         assessment is active and shown as a read-only
-                         recap once it's been submitted (Milestone 9). --}}
-                    <div class="rounded-xl border border-indigo-200 bg-indigo-50/30 p-4 mt-3" x-show="stepIndex(selected.status) >= 2" x-cloak>
-                        <p class="text-xs font-semibold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5 mb-3"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> Assistance Assessment</p>
 
-                        <template x-if="['Assessment', 'Returned for Reassessment'].includes(selected.status)">
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Assessment Result</label>
-                                    <select aria-label="Assessment Result" x-model="selected.assessment.eligibility" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                        <option value="">Select a result…</option>
-                                        <option value="Eligible — Recommend Approval">Eligible — Recommend Approval</option>
-                                        <option value="Needs Further Assessment">Needs Further Assessment</option>
-                                        <option value="Not Eligible — Recommend Rejection">Not Eligible — Recommend Rejection</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Social Worker Assessment Notes</label>
-                                    <textarea aria-label="Social Worker Assessment Notes" x-model="selected.assessment.notes" @change="persistProgress()" rows="2" placeholder="Eligibility findings, household circumstances, etc." class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Recommended Assistance</label>
-                                    <input aria-label="Recommended Assistance" type="text" x-model="selected.assessment.recommendedAssistance" @change="persistProgress()" :placeholder="selected.type" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                                <div x-show="['cash', 'medical'].includes(processingKind)">
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Recommended Amount (₱)</label>
-                                    <input aria-label="Recommended Amount (₱)" type="number" min="0" step="0.01" x-model.number="selected.assessment.recommendedAmount" @change="persistProgress()" placeholder="0.00" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                                <div x-show="!['cash', 'medical'].includes(processingKind)">
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Recommended Package / Coverage</label>
-                                    <input aria-label="Recommended Package / Coverage" type="text" x-model="selected.assessment.recommendedPackage" @change="persistProgress()" placeholder="e.g. Relief goods package, Registration slot" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                            </div>
-                        </template>
 
-                        <template x-if="!['Assessment', 'Returned for Reassessment'].includes(selected.status) && selected.assessment.eligibility">
-                            <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-                                <div><dt class="text-slate-400">Eligibility Finding</dt><dd class="font-medium text-navy-900" x-text="selected.assessment.eligibility"></dd></div>
-                                <div><dt class="text-slate-400">Assessed By</dt><dd class="font-medium text-navy-900" x-text="selected.assessment.assessedBy || '—'"></dd></div>
-                                <div><dt class="text-slate-400">Assessment Date</dt><dd class="font-medium text-navy-900" x-text="selected.assessment.assessmentDate || '—'"></dd></div>
-                                <div><dt class="text-slate-400">Recommended Assistance</dt><dd class="font-medium text-navy-900" x-text="selected.assessment.recommendedAssistance || selected.type"></dd></div>
-                                <div x-show="['cash', 'medical'].includes(processingKind)"><dt class="text-slate-400">Recommended Amount</dt><dd class="font-medium text-navy-900" x-text="selected.assessment.recommendedAmount != null ? ('₱' + Number(selected.assessment.recommendedAmount).toLocaleString()) : '—'"></dd></div>
-                                <div x-show="!['cash', 'medical'].includes(processingKind)"><dt class="text-slate-400">Recommended Package</dt><dd class="font-medium text-navy-900" x-text="selected.assessment.recommendedPackage || '—'"></dd></div>
-                                <div class="col-span-2" x-show="selected.assessment.notes"><dt class="text-slate-400">Assessment Notes</dt><dd class="font-medium text-navy-900" x-text="selected.assessment.notes"></dd></div>
-                            </dl>
-                        </template>
-                    </div>
 
-                    {{-- Approval — Milestone 9/11: recap of the
-                         recommendation for the approving officer, then the
-                         actual approval decision (which may differ from
-                         what was recommended). --}}
-                    <div class="rounded-xl border border-amber-200 bg-amber-50/30 p-4 mt-3" x-show="stepIndex(selected.status) >= 3" x-cloak>
-                        <p class="text-xs font-semibold text-amber-900 uppercase tracking-wide flex items-center gap-1.5 mb-3"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Approval</p>
-                        <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs" x-show="selected.approval.approvedBy">
-                            <div><dt class="text-slate-400">Approved By</dt><dd class="font-medium text-navy-900" x-text="selected.approval.approvedBy || '—'"></dd></div>
-                            <div><dt class="text-slate-400">Approval Date</dt><dd class="font-medium text-navy-900" x-text="selected.approval.approvalDate || '—'"></dd></div>
-                            <div><dt class="text-slate-400">Approved Assistance</dt><dd class="font-medium text-navy-900" x-text="selected.approval.approvedType || '—'"></dd></div>
-                            <div x-show="['cash', 'medical'].includes(processingKind)"><dt class="text-slate-400">Approved Amount</dt><dd class="font-medium text-navy-900" x-text="selected.approval.approvedAmount != null ? ('₱' + Number(selected.approval.approvedAmount).toLocaleString()) : '—'"></dd></div>
-                            <div x-show="!['cash', 'medical'].includes(processingKind)"><dt class="text-slate-400">Approved Package</dt><dd class="font-medium text-navy-900" x-text="selected.approval.approvedPackage || '—'"></dd></div>
-                        </dl>
-                        <template x-if="selected.status === 'For Approval'">
-                            <div class="space-y-3" :class="selected.approval.approvedBy ? 'mt-3 pt-3 border-t border-amber-100' : ''">
-                                <p class="text-[11px] text-slate-500">Adjust the amount/package below only if the approved assistance differs from the social worker's recommendation — otherwise it carries over automatically on Approve.</p>
-                                <div x-show="['cash', 'medical'].includes(processingKind)">
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Approved Amount (₱)</label>
-                                    <input aria-label="Approved Amount (₱)" type="number" min="0" step="0.01" x-model.number="selected.approval.approvedAmount" @change="persistProgress()" :placeholder="selected.assessment.recommendedAmount != null ? String(selected.assessment.recommendedAmount) : '0.00'" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                                <div x-show="!['cash', 'medical'].includes(processingKind)">
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Approved Package / Coverage</label>
-                                    <input aria-label="Approved Package / Coverage" type="text" x-model="selected.approval.approvedPackage" @change="persistProgress()" :placeholder="selected.assessment.recommendedPackage || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                            </div>
-                        </template>
-                    </div>
 
-                    {{-- Assistance Processing — Milestone 12, fields branch
-                         on processingKind so cash/goods/medical/
-                         registration each ask for what actually applies
-                         (Milestone 24: do not force everything into a
-                         cash-only shape). --}}
-                    <div class="rounded-xl border border-purple-200 bg-purple-50/30 p-4 mt-3" x-show="stepIndex(selected.status) >= 4" x-cloak>
-                        <p class="text-xs font-semibold text-purple-900 uppercase tracking-wide flex items-center gap-1.5 mb-3"><i data-lucide="package" class="w-3.5 h-3.5"></i> Assistance Processing</p>
-                        <div class="space-y-3" :class="selected.status !== 'Assistance Processing' ? 'opacity-80 pointer-events-none' : ''">
-                            <template x-if="processingKind === 'cash'">
-                                <div class="space-y-3">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Release Method</label>
-                                            <select aria-label="Release Method" x-model="selected.processing.releaseMethod" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                                <option value="">Select…</option>
-                                                <option value="Cash">Cash</option>
-                                                <option value="Check">Check</option>
-                                                <option value="Bank / E-Wallet Transfer">Bank / E-Wallet Transfer</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Voucher / Reference No.</label>
-                                            <input aria-label="Voucher / Reference No." type="text" x-model="selected.processing.voucherRef" @change="persistProgress()" placeholder="ASSIST-2026-XXXX" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                            <template x-if="processingKind === 'goods'">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Assistance Package</label>
-                                        <input aria-label="Assistance Package" type="text" x-model="selected.processing.package" @change="persistProgress()" :placeholder="selected.approval.approvedPackage || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Quantity</label>
-                                        <input aria-label="Quantity" type="text" x-model="selected.processing.quantity" @change="persistProgress()" placeholder="e.g. 1 relief pack" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Distribution Method</label>
-                                        <input aria-label="Distribution Method" type="text" x-model="selected.processing.distributionMethod" @change="persistProgress()" placeholder="e.g. Pickup at Barangay Hall" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                    </div>
-                                </div>
-                            </template>
-                            <template x-if="processingKind === 'medical'">
-                                <div class="space-y-3">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Hospital / Provider</label>
-                                            <input aria-label="Hospital / Provider" type="text" x-model="selected.processing.hospitalProvider" @change="persistProgress()" placeholder="e.g. Masbate Provincial Hospital" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Release Method</label>
-                                            <select aria-label="Release Method" x-model="selected.processing.releaseMethod" @change="persistProgress()" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                                <option value="">Select…</option>
-                                                <option value="Guarantee Letter">Guarantee Letter</option>
-                                                <option value="Cash">Cash</option>
-                                                <option value="Check">Check</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Referral / Guarantee Details</label>
-                                        <textarea aria-label="Referral / Guarantee Details" x-model="selected.processing.referralDetails" @change="persistProgress()" rows="2" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
-                                    </div>
-                                </div>
-                            </template>
-                            <template x-if="processingKind === 'registration' || processingKind === 'general'">
-                                <div>
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Registration / Enrollment Reference</label>
-                                    <input aria-label="Registration / Enrollment Reference" type="text" x-model="selected.processing.voucherRef" @change="persistProgress()" placeholder="e.g. Enrollment batch / reference no." class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                            </template>
-                            <div>
-                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Processing Notes</label>
-                                <textarea aria-label="Processing Notes" x-model="selected.processing.processingNotes" @change="persistProgress()" rows="2" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Release Information — Milestone 14/15: schedule
-                         while preparing, then the final completion record
-                         once actually released. --}}
-                    <div class="rounded-xl border border-teal-200 bg-teal-50/30 p-4 mt-3" x-show="stepIndex(selected.status) >= 5" x-cloak>
-                        <p class="text-xs font-semibold text-teal-900 uppercase tracking-wide flex items-center gap-1.5 mb-3"><i data-lucide="truck" class="w-3.5 h-3.5"></i> Release Information</p>
-                        <template x-if="selected.status === 'Ready for Release'">
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Release Location</label>
-                                    <input aria-label="Release Location" type="text" x-model="selected.release.releaseLocation" @change="persistProgress()" placeholder="Esperanza Municipal Hall" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Scheduled Release Date</label>
-                                    <input aria-label="Scheduled Release Date" type="text" x-model="selected.release.scheduledDate" @change="persistProgress()" placeholder="e.g. September 5, 2026" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                                <div class="col-span-2">
-                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Reference</label>
-                                    <input aria-label="Reference" type="text" x-model="selected.release.reference" @change="persistProgress()" :placeholder="selected.processing.voucherRef || ''" class="w-full text-xs rounded-lg bg-white border border-slate-200 py-2 px-2.5 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                </div>
-                            </div>
-                        </template>
-                        <template x-if="selected.status === 'Completed'">
-                            <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-                                <div><dt class="text-slate-400">Date Released</dt><dd class="font-medium text-navy-900" x-text="selected.completion.dateReleased || '—'"></dd></div>
-                                <div><dt class="text-slate-400">Released By</dt><dd class="font-medium text-navy-900" x-text="selected.completion.releasedBy || '—'"></dd></div>
-                                <div><dt class="text-slate-400">Recipient</dt><dd class="font-medium text-navy-900" x-text="selected.completion.recipient || '—'"></dd></div>
-                                <div x-show="['cash', 'medical'].includes(processingKind)"><dt class="text-slate-400">Actual Amount</dt><dd class="font-medium text-navy-900" x-text="selected.completion.actualAmount != null ? ('₱' + Number(selected.completion.actualAmount).toLocaleString()) : '—'"></dd></div>
-                                <div x-show="!['cash', 'medical'].includes(processingKind)"><dt class="text-slate-400">Assistance Provided</dt><dd class="font-medium text-navy-900" x-text="selected.completion.actualPackage || '—'"></dd></div>
-                                <div><dt class="text-slate-400">Reference</dt><dd class="font-medium text-navy-900" x-text="selected.completion.reference || '—'"></dd></div>
-                            </dl>
-                        </template>
-                    </div>
-
-                    {{-- History — Milestone 26, a simple stage-transition
-                         log using the same lightweight simulation as
-                         everything else here. --}}
+                    {{-- Case history: every transition the server recorded, newest first. --}}
                     <div class="rounded-xl border border-slate-200 p-4 mt-3" x-show="(selected.history || []).length" x-cloak>
                         <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide flex items-center gap-1.5 mb-2"><i data-lucide="history" class="w-3.5 h-3.5"></i> Case History</p>
                         <ul class="space-y-2">
@@ -1604,47 +1064,8 @@
                         </ul>
                     </div>
 
-                    {{-- Request Additional Requirements — Milestone 6,
-                         staff-specified list drawn from this type's own
-                         configured requirements. Toggled open from the
-                         footer's secondary action. --}}
-                    <div x-ref="requirementsForm" class="rounded-xl border border-slate-200 p-3.5 mt-3" x-show="showRequirementsForm" x-cloak>
-                        <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-2">Specify Missing Requirements</p>
-                        <div class="space-y-1.5 mb-2">
-                            <template x-for="item in (tulongTypesByName[selected.type]?.requirements || [])" :key="item">
-                                <label class="flex items-center gap-2 text-xs text-slate-600">
-                                    <input type="checkbox" :value="item" x-model="missingRequirementPicks" class="rounded border-slate-300 text-amber-600 focus:ring-amber-400">
-                                    <span x-text="item"></span>
-                                </label>
-                            </template>
-                        </div>
-                        <input aria-label="Other requirement (optional)" type="text" x-model="missingRequirementOther" placeholder="Other requirement (optional)" class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 mb-2 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                        <div class="flex items-center gap-2">
-                            <button type="button" @click="requestRequirements()" :disabled="!missingRequirementPicks.length && !missingRequirementOther.trim()" class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none bg-amber-500 hover:bg-amber-600 rounded-lg px-2.5 py-1.5 transition-colors">Confirm Requirements</button>
-                            <button type="button" @click="showRequirementsForm = false" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Cancel</button>
-                        </div>
-                    </div>
 
-                    {{-- Return for Reassessment reason — Milestone 10,
-                         required before confirming. --}}
-                    <div x-ref="returnForm" class="rounded-xl border border-orange-200 p-3.5 mt-3" x-show="showReturnForm" x-cloak>
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Reason for Returning to Assessment <span class="text-slate-400 font-normal">(required)</span></label>
-                        <textarea aria-label="Reason for Returning to Assessment (required)" x-model="returnRemarks" rows="2" placeholder="e.g. Recommended amount needs review against the household's actual income documentation." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
-                        <div class="flex items-center gap-2 mt-2">
-                            <button type="button" @click="returnForReassessment()" :disabled="!returnRemarks.trim()" class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none bg-orange-500 hover:bg-orange-600 rounded-lg px-2.5 py-1.5 transition-colors">Confirm Return</button>
-                            <button type="button" @click="showReturnForm = false" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Cancel</button>
-                        </div>
-                    </div>
 
-                    {{-- Cancel reason — Milestone 3. --}}
-                    <div x-ref="cancelForm" class="rounded-xl border border-slate-300 p-3.5 mt-3" x-show="showCancelForm" x-cloak>
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Cancellation Reason <span class="text-slate-400 font-normal">(required)</span></label>
-                        <textarea aria-label="Cancellation Reason (required)" x-model="cancelRemarks" rows="2" placeholder="e.g. Citizen requested to withdraw the application." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
-                        <div class="flex items-center gap-2 mt-2">
-                            <button type="button" @click="cancelCase()" :disabled="!cancelRemarks.trim()" class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none bg-slate-600 hover:bg-slate-700 rounded-lg px-2.5 py-1.5 transition-colors">Confirm Cancel</button>
-                            <button type="button" @click="showCancelForm = false" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Keep Case</button>
-                        </div>
-                    </div>
 
                     <div class="mt-3" x-show="canReject">
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Rejection Reason <span class="text-slate-400 font-normal">(required for Reject — this is what the citizen will see)</span></label>
@@ -1724,7 +1145,7 @@
                              identical block for the full rationale), regated
                              onto Tulong's own Ready for Release stage and
                              relabeled for assistance rather than a document. --}}
-                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Ready for Release' || selected.release_evidence" x-cloak>
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
                                 <i data-lucide="camera" class="w-3.5 h-3.5"></i> Proof of Release
                             </p>
@@ -1737,7 +1158,7 @@
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <span class="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3 h-3"></i> Captured <span x-text="selected.release_evidence_at"></span></span>
-                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-400 hover:text-rose-500" x-show="selected.status === 'Ready for Release'">Retake</button>
+                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-400 hover:text-rose-500" x-show="selected.status === 'Mark to Release'">Retake</button>
                                     </div>
                                 </div>
                             </template>
@@ -1758,7 +1179,7 @@
                              application form (not a Dokyu-style prepared
                              document), gated the same as Proof of Release
                              above. --}}
-                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Ready for Release' || selected.release_evidence" x-cloak>
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
                                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Reference Form
                             </p>
@@ -1853,32 +1274,6 @@
                 </p>
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">
                     <div class="flex items-center gap-2 flex-wrap justify-end">
-                        {{-- Secondary, contextual actions (Milestone 18) —
-                             only ever the ones that make sense for the
-                             current stage. --}}
-                        {{-- Each toggle scrolls its own form into view —
-                             these panels live inside the scrollable middle
-                             column, often well below the fold once
-                             Assessment/Approval/Processing/Release have
-                             all rendered above them, so clicking the
-                             footer button alone would otherwise leave an
-                             admin staring at an unchanged screen with no
-                             clue anything happened. --}}
-                        <x-ui.button
-                            variant="secondary" size="sm" icon="file-plus-2"
-                            x-show="selected.status === 'Initial Screening' && !showRequirementsForm"
-                            @click="showRequirementsForm = true; showReturnForm = false; showCancelForm = false; $nextTick(() => $refs.requirementsForm?.scrollIntoView({ behavior: 'smooth', block: 'center' }))"
-                        >Request Additional Requirements</x-ui.button>
-                        <x-ui.button
-                            variant="secondary" size="sm" icon="rotate-ccw"
-                            x-show="selected.status === 'For Approval' && !showReturnForm"
-                            @click="showReturnForm = true; showRequirementsForm = false; showCancelForm = false; $nextTick(() => $refs.returnForm?.scrollIntoView({ behavior: 'smooth', block: 'center' }))"
-                        >Return for Reassessment</x-ui.button>
-                        <x-ui.button
-                            variant="secondary" size="sm" icon="ban"
-                            x-show="canCancel && !showCancelForm"
-                            @click="showCancelForm = true; showRequirementsForm = false; showReturnForm = false; $nextTick(() => $refs.cancelForm?.scrollIntoView({ behavior: 'smooth', block: 'center' }))"
-                        >Cancel Case</x-ui.button>
                         <template x-if="canReject">
                             <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="rejectCase()">
                                 <span class="inline-flex items-center gap-1.5">
@@ -1894,9 +1289,9 @@
                         <x-ui.button
                             size="sm"
                             x-show="nextStageLabel"
-                            x-bind:disabled="processing || (selected.status === 'Ready for Release' && !selected.release_evidence)"
+                            x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)"
                             @click="primaryAction()"
-                            x-bind:title="selected.status === 'Ready for Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null"
+                            x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null"
                         >
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
