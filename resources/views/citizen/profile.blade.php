@@ -6,20 +6,29 @@
             submitted: false,
             idType: '',
             idFile: null,
-            idTypes: ['PhilSys National ID', 'Driver\'s License (LTO)', 'Voter\'s ID', 'Passport', 'PRC ID', 'SSS/GSIS ID', 'PWD ID', 'Senior Citizen ID'],
-            reset() { this.open = false; this.submitted = false; this.idType = ''; this.idFile = null; },
+            idBack: null,
+            idSelfie: null,
+            // GET /citizen/verification/id: the accepted ID types (the server's
+            // list, never typed here), whether one may be sent, and the latest
+            // submission with its review status. The ID used to go to Papeles,
+            // which no officer reads when verifying an account.
+            idView: { id_types: [], can_submit: false, submission: null },
+            async loadIdView() {
+                try { this.idView = (await $api.get('/citizen/verification/id')).data || this.idView; } catch { /* keeps the last view */ }
+            },
+            reset() { this.open = false; this.submitted = false; this.idType = ''; this.idFile = null; this.idBack = null; this.idSelfie = null; },
             async submitId() {
                 if (this.submitting || !this.idType || !this.idFile) return;
                 this.submitting = true;
                 try {
                     const form = new FormData();
-                    form.append('file', this.idFile);
-                    form.append('name', this.idType);
-                    form.append('type', this.idType);
-                    form.append('category', 'Identity / Verification');
-                    await $api.post('/citizen/papeles', form);
+                    form.append('id_type', this.idType);
+                    form.append('front', this.idFile);
+                    if (this.idBack) form.append('back', this.idBack);
+                    if (this.idSelfie) form.append('selfie', this.idSelfie);
+                    const result = await $api.post('/citizen/verification/id', form);
+                    this.idView = result.data || this.idView;
                     this.submitted = true;
-                    await this.loadDocuments();
                     setTimeout(() => { this.reset(); this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Valid ID submitted for verification.' : 'Naisumite ang valid ID para sa beripikasyon.', variant: 'success' }); }, 1400);
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not submit ID.', variant: 'error' });
@@ -29,6 +38,27 @@
             },
 
             showDigitalId: false,
+
+            // The profile photo is an identification record: a new one waits
+            // for an officer, and the Digital ID keeps the approved one.
+            photo: { url: null, latest: null, can_change: true, next_change_at: null, change_months: 6 },
+            uploadingPhoto: false,
+            async loadPhoto() {
+                try { this.photo = (await $api.get('/citizen/profile')).data?.photo || this.photo; } catch { /* keeps the last view */ }
+            },
+            async uploadPhoto(file) {
+                if (!file || this.uploadingPhoto) return;
+                this.uploadingPhoto = true;
+                try {
+                    const form = new FormData();
+                    form.append('photo', file);
+                    this.photo = (await $api.post('/citizen/profile/photo', form)).data || this.photo;
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Photo sent. It appears on your Digital ID once the LGU approves it.' : 'Naipadala ang litrato. Lalabas ito sa iyong Digital ID kapag inaprubahan ng LGU.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not send the photo.', variant: 'error' });
+                } finally { this.uploadingPhoto = false; }
+            },
+            formatDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
 
             familyMembers: [],
             residentProfileLoading: true,
@@ -48,6 +78,8 @@
                     this.familyMembers = result.data?.family?.members || [];
                 } catch { this.familyMembers = []; } finally { this.residentProfileLoading = false; }
                 this.loadDocuments();
+                this.loadIdView();
+                this.loadPhoto();
             },
 
             showEditProfile: false,
@@ -94,10 +126,18 @@
             <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,theme(colors.white),transparent_55%)] pointer-events-none"></div>
             <div class="relative px-5 py-6 sm:px-7 sm:py-7 flex flex-col sm:flex-row sm:items-center gap-5">
                 <div class="relative shrink-0">
-                    <div class="w-20 h-20 text-2xl rounded-full bg-white/15 backdrop-blur border-2 border-white/40 text-white flex items-center justify-center font-semibold shadow-lg" x-text="$store.citizenSession.initials()"></div>
-                    <span class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
+                    <img x-show="photo.url" :src="photo.url" alt="Profile photo" class="w-20 h-20 rounded-full object-cover border-2 border-white/40 shadow-lg">
+                    <div x-show="!photo.url" class="w-20 h-20 text-2xl rounded-full bg-white/15 backdrop-blur border-2 border-white/40 text-white flex items-center justify-center font-semibold shadow-lg" x-text="$store.citizenSession.initials()"></div>
+                    <span x-show="$store.citizenSession.account?.fullServiceAccess" class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
                         <i data-lucide="badge-check" class="w-3.5 h-3.5 text-white"></i>
                     </span>
+                    <label x-show="photo.can_change" class="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-white text-navy-900 border-2 border-navy-900 flex items-center justify-center cursor-pointer hover:bg-slate-100"
+                           :title="$store.lang.current === 'en' ? 'Change photo' : 'Palitan ang litrato'">
+                        <i data-lucide="camera" class="w-3.5 h-3.5" x-show="!uploadingPhoto"></i>
+                        <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="uploadingPhoto" x-cloak></i>
+                        <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp" :aria-label="$store.lang.current === 'en' ? 'Change profile photo' : 'Palitan ang profile photo'"
+                               @change="uploadPhoto($event.target.files[0]); $event.target.value = ''">
+                    </label>
                 </div>
 
                 <div class="min-w-0 flex-1">
@@ -114,13 +154,24 @@
                         <span class="flex items-center gap-1.5"><i data-lucide="map-pinned" class="w-3.5 h-3.5"></i><span x-text="'Brgy. ' + ($store.citizenSession.account?.barangay || '—')"></span></span>
                         <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5"></i><span x-text="($store.lang.current === 'en' ? 'Resident since ' : 'Residente mula ') + ($store.citizenSession.account?.residentSince || '—')"></span></span>
                     </p>
+                    <p class="text-xs text-amber-100 mt-1.5" x-show="photo.latest?.status === 'Pending Review'" x-cloak
+                       x-text="$store.lang.current === 'en' ? 'Your new photo is waiting for LGU approval.' : 'Naghihintay ng pag-apruba ng LGU ang iyong bagong litrato.'"></p>
+                    <p class="text-xs text-rose-100 mt-1.5" x-show="photo.latest?.status === 'Rejected'" x-cloak
+                       x-text="($store.lang.current === 'en' ? 'Your new photo was not approved: ' : 'Hindi naaprubahan ang bagong litrato: ') + (photo.latest?.remarks || '')"></p>
+                    <p class="text-xs text-white/60 mt-1.5" x-show="!photo.can_change && photo.next_change_at" x-cloak
+                       x-text="($store.lang.current === 'en' ? 'You can change your photo again on ' : 'Maaari mong palitan muli ang litrato sa ') + formatDate(photo.next_change_at)"></p>
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
+                    <span x-show="idView.submission?.status === 'Pending Review'" x-cloak
+                          class="inline-flex items-center gap-1.5 text-xs font-medium text-amber-100 bg-amber-500/20 border border-amber-400/30 rounded-xl px-3.5 py-2.5">
+                        <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> <x-ui.t fil="Sinusuri ang ID" en="ID under review" />
+                    </span>
                     <button
+                        x-show="idView.can_submit && idView.submission?.status !== 'Pending Review'" x-cloak
                         @click="open = true"
                         class="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-3.5 py-2.5 transition-colors"
-                    ><i data-lucide="shield-plus" class="w-3.5 h-3.5"></i> <x-ui.t fil="Mag-verify ng ID" en="Verify ID" /></button>
+                    ><i data-lucide="shield-plus" class="w-3.5 h-3.5"></i> <span x-text="idView.submission?.status === 'Rejected' ? ($store.lang.current === 'en' ? 'Send a new ID' : 'Magpadala ng bagong ID') : ($store.lang.current === 'en' ? 'Verify ID' : 'Mag-verify ng ID')"></span></button>
                     <button
                         @click="openEditProfile()"
                         class="inline-flex items-center gap-1.5 text-xs font-medium text-navy-900 bg-white hover:bg-slate-100 rounded-xl px-3.5 py-2.5 transition-colors shadow-sm"
@@ -326,13 +377,16 @@
             </div>
 
             <div x-show="!submitted">
-                <p class="text-sm text-slate-500 mb-4"><x-ui.t fil="Magsumite ng valid ID para ma-verify ng aming staff ang iyong resident profile." en="Submit a valid ID so our staff can verify your resident profile." /></p>
+                <p class="text-sm text-slate-500 mb-4"><x-ui.t fil="Magsumite ng valid ID para ma-verify ng aming staff ang iyong account." en="Submit a valid ID so our staff can verify your account." /></p>
+                <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800" x-show="idView.submission?.status === 'Rejected'" x-cloak>
+                    <span x-text="($store.lang.current === 'en' ? 'Your last ID was not accepted: ' : 'Hindi tinanggap ang huling ID: ') + (idView.submission?.remarks || '')"></span>
+                </div>
 
                 <div class="mb-3">
                     <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Uri ng ID" en="ID Type" /></label>
                     <select aria-label="Id type" x-model="idType" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="" disabled x-text="$store.lang.current === 'en' ? 'Select ID type' : 'Pumili ng uri ng ID'"></option>
-                        <template x-for="t in idTypes" :key="t">
+                        <template x-for="t in idView.id_types" :key="t">
                             <option :value="t" x-text="t"></option>
                         </template>
                     </select>
@@ -346,6 +400,29 @@
                         <label class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap cursor-pointer">
                             <x-ui.t fil="Pumili ng File" en="Choose File" />
                             <input type="file" accept="image/*,.pdf" class="sr-only" @change="idFile = $event.target.files[0] || null">
+                        </label>
+                    </div>
+                </div>
+
+                <p class="text-sm font-semibold text-navy-900 mt-4 mb-1"><x-ui.t fil="Likod ng ID (opsyonal)" en="Back of the ID (optional)" /></p>
+                <div class="rounded-xl border border-slate-200 p-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-xs text-slate-600 flex-1" x-text="idBack ? idBack.name : ($store.lang.current === 'en' ? 'No file chosen' : 'Walang napiling file')"></p>
+                        <label class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap cursor-pointer">
+                            <x-ui.t fil="Pumili ng File" en="Choose File" />
+                            <input type="file" accept="image/*,.pdf" class="sr-only" @change="idBack = $event.target.files[0] || null">
+                        </label>
+                    </div>
+                </div>
+
+                <p class="text-sm font-semibold text-navy-900 mt-4 mb-1"><x-ui.t fil="Selfie (opsyonal)" en="Selfie (optional)" /></p>
+                <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Isang malinaw na larawan ng iyong mukha, para maihambing ng staff sa iyong ID." en="A clear photo of your face, so staff can compare it with your ID." /></p>
+                <div class="rounded-xl border border-slate-200 p-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-xs text-slate-600 flex-1" x-text="idSelfie ? idSelfie.name : ($store.lang.current === 'en' ? 'No photo chosen' : 'Walang napiling litrato')"></p>
+                        <label class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap cursor-pointer">
+                            <x-ui.t fil="Pumili ng Litrato" en="Choose Photo" />
+                            <input type="file" accept="image/jpeg,image/png,image/webp" capture="user" class="sr-only" @change="idSelfie = $event.target.files[0] || null">
                         </label>
                     </div>
                 </div>

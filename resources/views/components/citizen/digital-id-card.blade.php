@@ -78,7 +78,9 @@
                             </div>
 
                             <div class="flex items-center gap-3 mt-3.5">
-                                <div class="w-14 h-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-lg font-bold text-white shrink-0 overflow-hidden" x-text="initials"></div>
+                                {{-- The LGU-approved photo; initials until there is one. --}}
+                                <img x-show="card.photo_url" :src="card.photo_url" alt="Resident photo" class="w-14 h-14 rounded-xl border border-white/20 object-cover shrink-0">
+                                <div x-show="!card.photo_url" class="w-14 h-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-lg font-bold text-white shrink-0 overflow-hidden" x-text="initials"></div>
                                 <div class="min-w-0">
                                     <p class="text-[8px] text-white/45 uppercase tracking-wide">Full Name</p>
                                     <p class="text-[13px] font-bold leading-tight truncate" x-text="card.name"></p>

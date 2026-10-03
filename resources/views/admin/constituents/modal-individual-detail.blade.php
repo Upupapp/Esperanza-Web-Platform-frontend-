@@ -307,19 +307,10 @@
                         </div>
                     </dl>
 
-                    <div x-show="['Pending Review', 'Under Verification'].includes(selectedIndividual?.citizen_account?.status) && (can('const_citizen_verification','verify') || can('const_citizen_verification','reject'))" class="space-y-2.5 pt-3 border-t border-slate-100">
-                        <div class="flex items-center gap-2">
-                            <x-ui.button size="sm" icon="check" x-bind:disabled="processingCitizen" @click="verifyCitizenAccount(selectedIndividual)">Verify Account</x-ui.button>
-                        </div>
-                        <div>
-                            <textarea aria-label="Rejection remarks" x-model="rejectAccountRemarks" rows="2" placeholder="Reason for rejection (required to reject)..." class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all"></textarea>
-                            <button
-                                type="button"
-                                :disabled="processingCitizen || rejectAccountRemarks.trim().length < 5"
-                                @click="rejectCitizenAccount(selectedIndividual)"
-                                class="mt-1.5 text-xs font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg px-3 py-1.5"
-                            >Reject Account</button>
-                        </div>
+                    {{-- The account is decided where its valid ID, selfie and photo
+                         are: the account review. --}}
+                    <div x-show="selectedIndividual?.citizen_account && (can('const_citizen_verification','view'))" class="pt-3 border-t border-slate-100">
+                        <x-ui.button size="sm" variant="secondary" icon="scan-search" @click="openAccount(selectedIndividual)">Review account, ID and photo</x-ui.button>
                     </div>
                 </div>
 

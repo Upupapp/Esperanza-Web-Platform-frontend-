@@ -143,14 +143,67 @@
         cvTagFilter: '',
         rejectAccountRemarks: '',
         processingCitizen: false,
+        // The account review (modal-citizen-account): the detail is an
+        // audited read of the account, its valid ID, selfie and photo.
+        showAccountReview: false,
+        accountRow: null,
+        accountDetail: null,
+        accountLoading: false,
+        photoRejectRemarks: '',
         // Every resident in scope belongs here, not just the ones who signed
         // up on the Citizen Portal — Individual/Family/Household already show
         // everyone, so Citizen Verification's Individual list matches that
         // same total instead of silently dropping non-portal residents.
         // Residents with no citizen_account render as Not Registered further
         // down, since there's nothing to approve/reject for them yet.
+        // Resident records, plus registrants with no resident record yet: a
+        // new account is not linked to one, and used to be missing from this
+        // queue entirely, so nobody could verify it from here.
         get citizenAccountList() {
-            return this.individuals.filter(i => this.$store.session.inScope(i.barangay));
+            const linked = new Set(this.individuals.map(i => i.ref));
+            const accountOnly = (this.citizens || [])
+                .filter(c => !(c.resident_profile?.ref && linked.has(c.resident_profile.ref)))
+                .map(c => ({ ref: c.account_no, name: c.name, barangay: c.barangay, tags: [], citizen_account: c, accountOnly: true }));
+            return [...this.individuals, ...accountOnly].filter(i => this.$store.session.inScope(i.barangay));
+        },
+        async openAccount(i) {
+            if (!i?.citizen_account) return;
+            this.accountRow = i;
+            this.accountDetail = null;
+            this.photoRejectRemarks = '';
+            this.showAccountReview = true;
+            this.accountLoading = true;
+            try {
+                this.accountDetail = (await $api.get('/admin/citizens/' + encodeURIComponent(i.citizen_account.account_no))).data;
+            } catch (err) {
+                this.showAccountReview = false;
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not open this account.', variant: 'error' });
+            } finally {
+                this.accountLoading = false;
+                this.$nextTick(() => window.renderIcons?.());
+            }
+        },
+        async decideAccount(action) {
+            const i = this.accountRow;
+            if (!i) return;
+            if (action === 'verify') await this.verifyCitizenAccount(i); else await this.rejectCitizenAccount(i);
+            await this.openAccount(i);
+        },
+        async decideAccountPhoto(action) {
+            const i = this.accountRow;
+            if (!i || this.processingCitizen) return;
+            if (action === 'reject' && this.photoRejectRemarks.trim().length < 5) return;
+            this.processingCitizen = true;
+            try {
+                const url = '/admin/citizens/' + encodeURIComponent(i.citizen_account.account_no) + '/photo/' + action;
+                const res = await $api.post(url, action === 'reject' ? { remarks: this.photoRejectRemarks.trim() } : {});
+                this.accountDetail = res.data;
+                i.citizen_account = { ...i.citizen_account, photo_pending: false };
+                this.photoRejectRemarks = '';
+                this.$dispatch('toast', { message: action === 'approve' ? 'Photo approved; it is on the Digital ID now.' : 'Photo rejected; the resident was told why.', variant: action === 'approve' ? 'success' : 'info' });
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not decide the photo.', variant: 'error' });
+            } finally { this.processingCitizen = false; }
         },
         get pendingCitizenVerificationCount() {
             const indiv = this.citizenAccountList.filter(i => i.citizen_account && ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length;
@@ -678,6 +731,7 @@
     <div x-show="showLifecycle"        x-cloak>@include('admin.constituents.modal-lifecycle')</div>
     <div x-show="showMerge"            x-cloak>@include('admin.constituents.modal-merge')</div>
     <div x-show="showDQDetail"         x-cloak>@include('admin.constituents.modal-dq-detail')</div>
+    <div x-show="showAccountReview"    x-cloak>@include('admin.constituents.modal-citizen-account')</div>
 
 </div>
 </x-layouts.admin>

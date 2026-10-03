@@ -207,10 +207,10 @@
                         </tr>
                     </template>
                     <template x-for="i in filteredCitizenAccounts" :key="i.ref">
-                        <tr @click="openIndividual(i)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                        <tr @click="i.accountOnly ? openAccount(i) : openIndividual(i)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
         tabindex="0"
-        @keydown.enter.prevent="openIndividual(i)"
-        @keydown.space.prevent="openIndividual(i)">
+        @keydown.enter.prevent="i.accountOnly ? openAccount(i) : openIndividual(i)"
+        @keydown.space.prevent="i.accountOnly ? openAccount(i) : openIndividual(i)">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
                                     <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold text-xs ring-2 ring-white shadow-sm shrink-0" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
@@ -268,17 +268,17 @@
                                      (submitted ID, selfie, verification signals) first.
                                      "Review" is the only action available here. --}}
                                 <button
-                                    x-show="i.citizen_account && ['Pending Review', 'Under Verification'].includes(i.citizen_account.status) && (can('const_citizen_verification', 'verify') || can('const_citizen_verification', 'reject'))"
-                                    @click="openIndividual(i)"
+                                    x-show="i.citizen_account && (['Pending Review', 'Under Verification'].includes(i.citizen_account.status) || i.citizen_account.photo_pending) && (can('const_citizen_verification', 'verify') || can('const_citizen_verification', 'reject'))"
+                                    @click="openAccount(i)"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
-                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openIndividual(i)" x-show="i.citizen_account && !['Pending Review', 'Under Verification'].includes(i.citizen_account.status)"
+                                <span class="text-xs font-medium text-brand-600 hover:underline cursor-pointer" @click="openAccount(i)" x-show="i.citizen_account && !['Pending Review', 'Under Verification'].includes(i.citizen_account.status) && !i.citizen_account.photo_pending"
         role="button"
         tabindex="0"
-        @keydown.enter.prevent="openIndividual(i)"
-        @keydown.space.prevent="openIndividual(i)">View</span>
+        @keydown.enter.prevent="openAccount(i)"
+        @keydown.space.prevent="openAccount(i)">View</span>
                                 {{-- No citizen_account at all — this resident was never
                                      verified because they haven't signed up on the portal.
                                      There is nothing for an officer to approve/reject yet,
