@@ -276,13 +276,18 @@
                 const spec = this.formSpecsByType[this.catalogNameByKey[serviceKey] || type] || this.formSpecsByType[type];
                 const specFields = (spec?.steps || []).flatMap((s) => s.fields || []);
                 const wizardFields = this.wizardFieldsByKey[serviceKey] || [];
-                if (specFields.some((f) => answered(data[f.key]))) {
+                // The two forms share a few keys (age, purpose), so pick the one
+                // that covers more of the answers, not the first that covers any.
+                const covered = (fields) => fields.filter((f) => f.key !== 'purpose' && answered(data[f.key])).length;
+                const specCovers = covered(specFields);
+                const wizardCovers = covered(wizardFields);
+                if (specCovers > 0 && specCovers >= wizardCovers) {
                     steps = spec.steps.map((step) => ({
                         label: step.label,
                         description: step.description || null,
                         fields: (step.fields || []).map((f) => { seen.add(f.key); return this.answerField(f, data[f.key]); }),
                     }));
-                } else if (wizardFields.some((f) => answered(data[f.key]))) {
+                } else if (wizardCovers > 0) {
                     steps = [{
                         label: 'Application details',
                         description: null,
@@ -1019,7 +1024,7 @@
                     <div class="rounded-xl border border-amber-200 bg-amber-50/40 px-3.5 py-3 mt-3" x-show="selected.status === 'Needs Requirements'" x-cloak>
                         <p class="text-xs font-semibold text-amber-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Requirements Needed</p>
                         <ul class="mt-2 space-y-1">
-                            <template x-for="item in (selected.screening.missingRequirements || [])" :key="item">
+                            <template x-for="item in (selected.screening?.missingRequirements || [])" :key="item">
                                 <li class="text-xs text-amber-700 flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-500 shrink-0"></span><span x-text="item"></span></li>
                             </template>
                         </ul>

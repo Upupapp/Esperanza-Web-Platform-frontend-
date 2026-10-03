@@ -1704,13 +1704,18 @@
                 const spec = this.formSpecsByType[this.catalogNameByKey[serviceKey] || type] || this.formSpecsByType[type];
                 const specFields = (spec?.steps || []).flatMap((s) => s.fields || []);
                 const wizardFields = this.wizardFieldsByKey[serviceKey] || [];
-                if (specFields.some((f) => answered(data[f.key]))) {
+                // The two forms share a few keys (age, purpose), so pick the one
+                // that covers more of the answers, not the first that covers any.
+                const covered = (fields) => fields.filter((f) => f.key !== 'purpose' && answered(data[f.key])).length;
+                const specCovers = covered(specFields);
+                const wizardCovers = covered(wizardFields);
+                if (specCovers > 0 && specCovers >= wizardCovers) {
                     steps = spec.steps.map((step) => ({
                         label: step.label,
                         description: step.description || null,
                         fields: (step.fields || []).map((f) => { seen.add(f.key); return this.answerField(f, data[f.key]); }),
                     }));
-                } else if (wizardFields.some((f) => answered(data[f.key]))) {
+                } else if (wizardCovers > 0) {
                     steps = [{
                         label: 'Application details',
                         description: null,
