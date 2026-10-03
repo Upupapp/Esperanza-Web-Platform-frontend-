@@ -61,7 +61,7 @@
     x-cloak
     x-data="{
         activeTab: '{{ $activeTab }}',
-        tabUrls: @json($tabUrls),
+        tabUrls: @js($tabUrls),
         opStatus: 'Red Alert',
         selectedPeriod: 'SWM-2026-07',
         selectedBarangay: '',
@@ -213,7 +213,7 @@
                 const res = await $api.post('/admin/sakuna/vulnerability/' + p.ref + '/approve', {});
                 Object.assign(p, res.data);
                 if (this.selectedBarangayVul?.ref === p.ref) this.selectedBarangayVul = { ...this.selectedBarangayVul, ...res.data };
-                this.toast(p.barangay + "'s assessment approved.", 'success');
+                this.toast(`${p.barangay}'s assessment approved.`, 'success');
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not approve this assessment.', 'error');
             }
@@ -712,7 +712,7 @@
         // the mock's SMS/Mobile Push/Barangay Notification/Portal Banner/
         // Social Media list was never real. target_barangays is the only
         // real audience axis -- there is no demographic/occupational
-        // "target group" concept (All Residents/Farmers/PWD Households/etc.)
+        // 'target group' concept (All Residents/Farmers/PWD Households/etc.)
         // anywhere in the schema.
         async loadAlerts() {
             this.alertsLoading = true;

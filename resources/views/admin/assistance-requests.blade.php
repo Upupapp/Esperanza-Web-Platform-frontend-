@@ -303,7 +303,7 @@
             // portal's field types are mapped onto the review's (a checkbox
             // group is a multiselect; a table prints one line per row), and an
             // array or object answer is joined instead of printing as
-            // "[object Object]".
+            // '[object Object]'.
             answerField(f, value) {
                 const type = { 'checkbox-group': 'multiselect', derived_age: 'text', table: 'textarea' }[f.type] || f.type || 'text';
                 let answer = value ?? null;

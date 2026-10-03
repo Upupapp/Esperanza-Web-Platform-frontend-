@@ -1624,7 +1624,7 @@
             // ---- The queue, from the API -----------------------------------
             // Every action below calls the lifecycle endpoint it names and then
             // takes the server's answer as the new state. The old localStorage
-            // "progress" layer, the demo reset and the simulated resubmission
+            // 'progress' layer, the demo reset and the simulated resubmission
             // are gone: the server is the record, and a reload shows it.
             apiBase(ref) {
                 return '/admin/' + this.requestType + '/requests/' + encodeURIComponent(ref);
@@ -1731,7 +1731,7 @@
             // portal's field types are mapped onto the review's (a checkbox
             // group is a multiselect; a table prints one line per row), and an
             // array or object answer is joined instead of printing as
-            // "[object Object]".
+            // '[object Object]'.
             answerField(f, value) {
                 const type = { 'checkbox-group': 'multiselect', derived_age: 'text', table: 'textarea' }[f.type] || f.type || 'text';
                 let answer = value ?? null;

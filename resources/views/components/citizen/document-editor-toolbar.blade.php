@@ -53,13 +53,13 @@
     x-cloak
 >
     <div class="flex items-center gap-1 overflow-x-auto min-w-0">
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Undo (Ctrl+Z)" : "I-undo (Ctrl+Z)"" :aria-label="$store.lang.current === 'en' ? "Undo (Ctrl+Z)" : "I-undo (Ctrl+Z)"" :class="!canUndo() ? 'opacity-40 cursor-not-allowed' : ''" :disabled="!canUndo()" @mousedown.prevent="undo()"><i data-lucide="undo-2" class="w-3.5 h-3.5"></i></button>
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Redo (Ctrl+Y)" : "I-redo (Ctrl+Y)"" :aria-label="$store.lang.current === 'en' ? "Redo (Ctrl+Y)" : "I-redo (Ctrl+Y)"" :class="!canRedo() ? 'opacity-40 cursor-not-allowed' : ''" :disabled="!canRedo()" @mousedown.prevent="redo()"><i data-lucide="redo-2" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Undo (Ctrl+Z)' : 'I-undo (Ctrl+Z)'" :aria-label="$store.lang.current === 'en' ? 'Undo (Ctrl+Z)' : 'I-undo (Ctrl+Z)'" :class="!canUndo() ? 'opacity-40 cursor-not-allowed' : ''" :disabled="!canUndo()" @mousedown.prevent="undo()"><i data-lucide="undo-2" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Redo (Ctrl+Y)' : 'I-redo (Ctrl+Y)'" :aria-label="$store.lang.current === 'en' ? 'Redo (Ctrl+Y)' : 'I-redo (Ctrl+Y)'" :class="!canRedo() ? 'opacity-40 cursor-not-allowed' : ''" :disabled="!canRedo()" @mousedown.prevent="redo()"><i data-lucide="redo-2" class="w-3.5 h-3.5"></i></button>
 
         <span class="doc-toolbar-sep"></span>
 
-        <select class="doc-toolbar-select" :title="$store.lang.current === 'en' ? "Font family" : "Uri ng font"" :aria-label="$store.lang.current === 'en' ? "Font family" : "Uri ng font"" @mousedown="saveSelection()" @change="applyFontFamily($event.target.value)">
-            <option value="" selected disabled x-text="$store.lang.current === 'en' ? "Font" : "Font"">Font</option>
+        <select class="doc-toolbar-select" :title="$store.lang.current === 'en' ? 'Font family' : 'Uri ng font'" :aria-label="$store.lang.current === 'en' ? 'Font family' : 'Uri ng font'" @mousedown="saveSelection()" @change="applyFontFamily($event.target.value)">
+            <option value="" selected disabled x-text="$store.lang.current === 'en' ? 'Font' : 'Font'">Font</option>
             <option value="Arial, sans-serif">Arial</option>
             <option value="'Times New Roman', serif">Times New Roman</option>
             <option value="Georgia, serif">Georgia</option>
@@ -70,8 +70,8 @@
             <option value="sans-serif">Sans-serif</option>
         </select>
 
-        <select class="doc-toolbar-select w-16" :title="$store.lang.current === 'en' ? "Font size" : "Laki ng font"" :aria-label="$store.lang.current === 'en' ? "Font size" : "Laki ng font"" @mousedown="saveSelection()" @change="applyFontSize($event.target.value)">
-            <option value="" selected disabled x-text="$store.lang.current === 'en' ? "Size" : "Laki"">Size</option>
+        <select class="doc-toolbar-select w-16" :title="$store.lang.current === 'en' ? 'Font size' : 'Laki ng font'" :aria-label="$store.lang.current === 'en' ? 'Font size' : 'Laki ng font'" @mousedown="saveSelection()" @change="applyFontSize($event.target.value)">
+            <option value="" selected disabled x-text="$store.lang.current === 'en' ? 'Size' : 'Laki'">Size</option>
             <template x-for="s in [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32]" :key="s">
                 <option :value="s" x-text="s"></option>
             </template>
@@ -79,43 +79,43 @@
 
         <span class="doc-toolbar-sep"></span>
 
-        <button type="button" class="doc-toolbar-btn font-bold" :title="$store.lang.current === 'en' ? "Bold" : "Bold"" :aria-label="$store.lang.current === 'en' ? "Bold" : "Bold"" @mousedown.prevent="execCmd('bold')">B</button>
-        <button type="button" class="doc-toolbar-btn italic" :title="$store.lang.current === 'en' ? "Italic" : "Italic"" :aria-label="$store.lang.current === 'en' ? "Italic" : "Italic"" @mousedown.prevent="execCmd('italic')">I</button>
-        <button type="button" class="doc-toolbar-btn underline" :title="$store.lang.current === 'en' ? "Underline" : "Salungguhit"" :aria-label="$store.lang.current === 'en' ? "Underline" : "Salungguhit"" @mousedown.prevent="execCmd('underline')">U</button>
-        <button type="button" class="doc-toolbar-btn line-through" :title="$store.lang.current === 'en' ? "Strikethrough" : "Ekis na linya"" :aria-label="$store.lang.current === 'en' ? "Strikethrough" : "Ekis na linya"" @mousedown.prevent="execCmd('strikeThrough')">S</button>
+        <button type="button" class="doc-toolbar-btn font-bold" :title="$store.lang.current === 'en' ? 'Bold' : 'Bold'" :aria-label="$store.lang.current === 'en' ? 'Bold' : 'Bold'" @mousedown.prevent="execCmd('bold')">B</button>
+        <button type="button" class="doc-toolbar-btn italic" :title="$store.lang.current === 'en' ? 'Italic' : 'Italic'" :aria-label="$store.lang.current === 'en' ? 'Italic' : 'Italic'" @mousedown.prevent="execCmd('italic')">I</button>
+        <button type="button" class="doc-toolbar-btn underline" :title="$store.lang.current === 'en' ? 'Underline' : 'Salungguhit'" :aria-label="$store.lang.current === 'en' ? 'Underline' : 'Salungguhit'" @mousedown.prevent="execCmd('underline')">U</button>
+        <button type="button" class="doc-toolbar-btn line-through" :title="$store.lang.current === 'en' ? 'Strikethrough' : 'Ekis na linya'" :aria-label="$store.lang.current === 'en' ? 'Strikethrough' : 'Ekis na linya'" @mousedown.prevent="execCmd('strikeThrough')">S</button>
 
         <span class="doc-toolbar-sep"></span>
 
-        <label class="doc-toolbar-btn p-0.5 cursor-pointer" :title="$store.lang.current === 'en' ? "Text color" : "Kulay ng teksto"" :aria-label="$store.lang.current === 'en' ? "Text color" : "Kulay ng teksto"">
+        <label class="doc-toolbar-btn p-0.5 cursor-pointer" :title="$store.lang.current === 'en' ? 'Text color' : 'Kulay ng teksto'" :aria-label="$store.lang.current === 'en' ? 'Text color' : 'Kulay ng teksto'">
             <input type="color" value="#000000" class="w-5 h-5 border-0 p-0 bg-transparent cursor-pointer"
-                :aria-label="$store.lang.current === 'en' ? "Text color" : "Kulay ng teksto"" @mousedown="saveSelection()" @input="applyColor($event.target.value)">
+                :aria-label="$store.lang.current === 'en' ? 'Text color' : 'Kulay ng teksto'" @mousedown="saveSelection()" @input="applyColor($event.target.value)">
         </label>
 
         <span class="doc-toolbar-sep"></span>
 
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Align left" : "Ihanay sa kaliwa"" :aria-label="$store.lang.current === 'en' ? "Align left" : "Ihanay sa kaliwa"" @mousedown.prevent="execCmd('justifyLeft')"><i data-lucide="align-left" class="w-3.5 h-3.5"></i></button>
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Align center" : "Ihanay sa gitna"" :aria-label="$store.lang.current === 'en' ? "Align center" : "Ihanay sa gitna"" @mousedown.prevent="execCmd('justifyCenter')"><i data-lucide="align-center" class="w-3.5 h-3.5"></i></button>
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Align right" : "Ihanay sa kanan"" :aria-label="$store.lang.current === 'en' ? "Align right" : "Ihanay sa kanan"" @mousedown.prevent="execCmd('justifyRight')"><i data-lucide="align-right" class="w-3.5 h-3.5"></i></button>
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Justify" : "Pantay ang magkabilang gilid"" :aria-label="$store.lang.current === 'en' ? "Justify" : "Pantay ang magkabilang gilid"" @mousedown.prevent="execCmd('justifyFull')"><i data-lucide="align-justify" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Align left' : 'Ihanay sa kaliwa'" :aria-label="$store.lang.current === 'en' ? 'Align left' : 'Ihanay sa kaliwa'" @mousedown.prevent="execCmd('justifyLeft')"><i data-lucide="align-left" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Align center' : 'Ihanay sa gitna'" :aria-label="$store.lang.current === 'en' ? 'Align center' : 'Ihanay sa gitna'" @mousedown.prevent="execCmd('justifyCenter')"><i data-lucide="align-center" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Align right' : 'Ihanay sa kanan'" :aria-label="$store.lang.current === 'en' ? 'Align right' : 'Ihanay sa kanan'" @mousedown.prevent="execCmd('justifyRight')"><i data-lucide="align-right" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Justify' : 'Pantay ang magkabilang gilid'" :aria-label="$store.lang.current === 'en' ? 'Justify' : 'Pantay ang magkabilang gilid'" @mousedown.prevent="execCmd('justifyFull')"><i data-lucide="align-justify" class="w-3.5 h-3.5"></i></button>
 
         <span class="doc-toolbar-sep"></span>
 
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Decrease indent (Shift+Tab)" : "Bawasan ang indent (Shift+Tab)"" :aria-label="$store.lang.current === 'en' ? "Decrease indent (Shift+Tab)" : "Bawasan ang indent (Shift+Tab)"" @mousedown.prevent="decreaseIndentAtCaret()"><i data-lucide="indent-decrease" class="w-3.5 h-3.5"></i></button>
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Increase indent (Tab)" : "Dagdagan ang indent (Tab)"" :aria-label="$store.lang.current === 'en' ? "Increase indent (Tab)" : "Dagdagan ang indent (Tab)"" @mousedown.prevent="increaseIndentAtCaret()"><i data-lucide="indent-increase" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Decrease indent (Shift+Tab)' : 'Bawasan ang indent (Shift+Tab)'" :aria-label="$store.lang.current === 'en' ? 'Decrease indent (Shift+Tab)' : 'Bawasan ang indent (Shift+Tab)'" @mousedown.prevent="decreaseIndentAtCaret()"><i data-lucide="indent-decrease" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Increase indent (Tab)' : 'Dagdagan ang indent (Tab)'" :aria-label="$store.lang.current === 'en' ? 'Increase indent (Tab)' : 'Dagdagan ang indent (Tab)'" @mousedown.prevent="increaseIndentAtCaret()"><i data-lucide="indent-increase" class="w-3.5 h-3.5"></i></button>
 
         <span class="doc-toolbar-sep"></span>
 
-        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? "Reset formatting on selected text" : "I-reset ang formatting ng napiling teksto"" :aria-label="$store.lang.current === 'en' ? "Reset formatting on selected text" : "I-reset ang formatting ng napiling teksto"" @mousedown.prevent="resetSelectionFormatting()"><i data-lucide="eraser" class="w-3.5 h-3.5"></i></button>
+        <button type="button" class="doc-toolbar-btn" :title="$store.lang.current === 'en' ? 'Reset formatting on selected text' : 'I-reset ang formatting ng napiling teksto'" :aria-label="$store.lang.current === 'en' ? 'Reset formatting on selected text' : 'I-reset ang formatting ng napiling teksto'" @mousedown.prevent="resetSelectionFormatting()"><i data-lucide="eraser" class="w-3.5 h-3.5"></i></button>
     </div>
 
     <div class="flex flex-wrap items-center gap-2 shrink-0 ml-auto">
-        <button type="button" class="doc-toolbar-btn shrink-0" :class="activePanel === 'spacing' ? 'bg-slate-200' : ''" :title="$store.lang.current === 'en' ? "Adjust spacing between sections" : "Ayusin ang espasyo sa pagitan ng mga seksyon"" :aria-label="$store.lang.current === 'en' ? "Adjust spacing between sections" : "Ayusin ang espasyo sa pagitan ng mga seksyon"" @click="activePanel = activePanel === 'spacing' ? null : 'spacing'">
+        <button type="button" class="doc-toolbar-btn shrink-0" :class="activePanel === 'spacing' ? 'bg-slate-200' : ''" :title="$store.lang.current === 'en' ? 'Adjust spacing between sections' : 'Ayusin ang espasyo sa pagitan ng mga seksyon'" :aria-label="$store.lang.current === 'en' ? 'Adjust spacing between sections' : 'Ayusin ang espasyo sa pagitan ng mga seksyon'" @click="activePanel = activePanel === 'spacing' ? null : 'spacing'">
             <i data-lucide="move-vertical" class="w-3.5 h-3.5"></i> <span class="text-[11px] font-medium"><x-ui.t fil="Espasyo" en="Spacing" /></span>
         </button>
-        <button type="button" class="doc-toolbar-btn shrink-0" :class="activePanel === 'seals' ? 'bg-slate-200' : ''" :title="$store.lang.current === 'en' ? "Replace or adjust the header seals" : "Palitan o ayusin ang mga selyo sa header"" :aria-label="$store.lang.current === 'en' ? "Replace or adjust the header seals" : "Palitan o ayusin ang mga selyo sa header"" @click="activePanel = activePanel === 'seals' ? null : 'seals'; refreshSealOffsets()">
+        <button type="button" class="doc-toolbar-btn shrink-0" :class="activePanel === 'seals' ? 'bg-slate-200' : ''" :title="$store.lang.current === 'en' ? 'Replace or adjust the header seals' : 'Palitan o ayusin ang mga selyo sa header'" :aria-label="$store.lang.current === 'en' ? 'Replace or adjust the header seals' : 'Palitan o ayusin ang mga selyo sa header'" @click="activePanel = activePanel === 'seals' ? null : 'seals'; refreshSealOffsets()">
             <i data-lucide="shield" class="w-3.5 h-3.5"></i> <span class="text-[11px] font-medium"><x-ui.t fil="Mga Selyo sa Header" en="Header Seals" /></span>
         </button>
-        <button type="button" class="doc-toolbar-btn shrink-0" :class="activePanel === 'background' ? 'bg-slate-200' : ''" :title="$store.lang.current === 'en' ? "Change the paper's watermark and background color" : "Palitan ang watermark at kulay ng papel"" :aria-label="$store.lang.current === 'en' ? "Change the paper's watermark and background color" : "Palitan ang watermark at kulay ng papel"" @click="activePanel = activePanel === 'background' ? null : 'background'">
+        <button type="button" class="doc-toolbar-btn shrink-0" :class="activePanel === 'background' ? 'bg-slate-200' : ''" :title="$store.lang.current === 'en' ? 'Change the paper\'s watermark and background color' : 'Palitan ang watermark at kulay ng papel'" :aria-label="$store.lang.current === 'en' ? 'Change the paper\'s watermark and background color' : 'Palitan ang watermark at kulay ng papel'" @click="activePanel = activePanel === 'background' ? null : 'background'">
             <i data-lucide="image" class="w-3.5 h-3.5"></i> <span class="text-[11px] font-medium"><x-ui.t fil="Background" en="Background" /></span>
         </button>
 

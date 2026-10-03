@@ -95,6 +95,15 @@ fi
 EMPTY=$(find dist -name '*.html' -size 0 2>/dev/null | wc -l | tr -d ' ')
 [ "$EMPTY" = "0" ] && pass "no zero-byte HTML" || { fail "$EMPTY zero-byte HTML file(s)"; }
 
+# Every Alpine expression in the rendered pages must parse. A stray double quote
+# inside x-data="..." ends the attribute and prints the component as page text,
+# and nothing above notices: the page still renders and exports.
+if node scripts/check-alpine.mjs dist </dev/null >/tmp/esperanza-gate-alpine.log 2>&1; then
+  pass "every Alpine expression parses ($(grep -oE '[0-9]+ Alpine expressions' /tmp/esperanza-gate-alpine.log | grep -oE '[0-9]+'))"
+else
+  fail "Alpine expressions that do not parse"; tail -20 /tmp/esperanza-gate-alpine.log
+fi
+
 # The Master Commands state RBAC COUNTS by hand -- the triple count alone
 # appears ten times across the two documents, and it went stale within a day
 # of the contract moving with nothing disagreeing with it.

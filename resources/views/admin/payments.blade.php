@@ -37,8 +37,8 @@
                 const searchOk = q === '' || p.ref.toLowerCase().includes(q) || (p.citizen || '').toLowerCase().includes(q);
                 return tabOk && barangayOk && searchOk;
             },
-            // Arriving from a request's own process modal via "View in
-            // Payments" — pre-filter to exactly that ref, mirroring the same
+            // Arriving from a request's own process modal via 'View in
+            // Payments' — pre-filter to exactly that ref, mirroring the same
             // ?ref= pattern admin/document-requests.blade.php already uses.
             async init() {
                 const params = new URLSearchParams(window.location.search);
