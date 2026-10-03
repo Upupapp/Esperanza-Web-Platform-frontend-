@@ -6,7 +6,18 @@
             notifPrefsLoading: true,
             savingPassword: false,
             passwordForm: { current_password: '', password: '', password_confirmation: '' },
-            enabling2fa: false,
+            // Data-subject requests (RA 10173): the four kinds the backend takes
+            // (CitizenPortalController::DATA_REQUEST_KINDS), the resident's own
+            // words, and their history -- the same as mobile's My Data Requests.
+            dataKinds: [
+                { key: 'access', fil: 'Tingnan ang aking datos', en: 'See my data' },
+                { key: 'correction', fil: 'Itama ang aking datos', en: 'Correct my data' },
+                { key: 'erasure', fil: 'Burahin ang aking datos', en: 'Delete my data' },
+                { key: 'portability', fil: 'Kumuha ng kopya', en: 'Get a copy' },
+            ],
+            dataForm: { kind: 'access', detail: '' },
+            dataRequests: [],
+            dataRequestsLoading: true,
             requestingData: false,
 
             async init() {
@@ -15,18 +26,36 @@
                     const result = await $api.get('/citizen/notification-preferences');
                     this.notifPrefs = result.data?.preferences || [];
                 } catch { this.notifPrefs = []; } finally { this.notifPrefsLoading = false; }
+                this.loadDataRequests();
             },
-            async togglePref(pref) {
-                const next = !pref.in_app;
-                pref.in_app = pref.sms = pref.email = next;
+            // One switch per channel. The old single switch set in-app, SMS and
+            // email together off the in-app flag -- which the server always
+            // delivers anyway -- so a resident could not choose texts without
+            // email. In-app is not a choice (backend B3); SMS and email are.
+            // in_app is still sent as true: a backend from before B3 requires it.
+            async togglePref(pref, channel) {
+                const next = !pref[channel];
+                pref[channel] = next;
                 try {
                     await $api.put('/citizen/notification-preferences', {
-                        preferences: this.notifPrefs.map((p) => ({ category: p.category, in_app: p.in_app, sms: p.sms, email: p.email })),
+                        preferences: this.notifPrefs.map((p) => ({ category: p.category, in_app: true, sms: !!p.sms, email: !!p.email })),
                     });
                 } catch (err) {
-                    pref.in_app = pref.sms = pref.email = !next;
+                    pref[channel] = !next;
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not save preference.', variant: 'error' });
                 }
+            },
+            kindLabel(key) {
+                const kind = this.dataKinds.find((k) => k.key === key);
+                if (!kind) return key;
+                return this.$store.lang.current === 'en' ? kind.en : kind.fil;
+            },
+            async loadDataRequests() {
+                this.dataRequestsLoading = true;
+                try {
+                    const result = await $api.get('/citizen/data-requests');
+                    this.dataRequests = result.data || [];
+                } catch { this.dataRequests = []; } finally { this.dataRequestsLoading = false; }
             },
             async updatePassword() {
                 if (this.savingPassword) return;
@@ -41,20 +70,14 @@
                     this.savingPassword = false;
                 }
             },
-            enable2fa() {
-                if (this.enabling2fa) return;
-                this.enabling2fa = true;
-                setTimeout(() => {
-                    this.enabling2fa = false;
-                    this.$dispatch('toast', { message: 'Two-factor authentication setup is a frontend preview — no data is saved.', variant: 'info' });
-                }, 800);
-            },
             async requestData() {
-                if (this.requestingData) return;
+                if (this.requestingData || this.dataForm.detail.trim() === '') return;
                 this.requestingData = true;
                 try {
-                    await $api.post('/citizen/data-requests', { kind: 'portability', detail: this.$store.lang.current === 'en' ? 'Citizen requested a copy of their data via Settings > Privacy.' : 'Humiling ang mamamayan ng kopya ng kanilang datos sa pamamagitan ng Settings > Privacy.' });
-                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Data request received — the LGU will respond by email or mobile.' : 'Natanggap ang hiling sa datos — sasagutin ng LGU sa email o mobile.', variant: 'success' });
+                    const result = await $api.post('/citizen/data-requests', { kind: this.dataForm.kind, detail: this.dataForm.detail.trim() });
+                    this.dataRequests = [result.data, ...this.dataRequests];
+                    this.dataForm = { kind: this.dataForm.kind, detail: '' };
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Request filed as ' + result.data.ref + '. The LGU will respond by email or mobile.' : 'Naisampa ang hiling bilang ' + result.data.ref + '. Sasagutin ito ng LGU sa email o mobile.', variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not submit request.', variant: 'error' });
                 } finally {
@@ -85,26 +108,39 @@
             <div x-show="tab === 'notifications'">
                 <x-ui.card>
                     <h3 class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Mga Kagustuhan sa Abiso" en="Notification Preferences" /></h3>
-                    <p class="text-xs text-slate-400 mb-4"><x-ui.t fil="Piliin kung anong mga update ang gusto mong matanggap." en="Choose what updates you want to receive." /></p>
+                    <p class="text-xs text-slate-500 mb-1"><x-ui.t fil="Piliin kung paano mo gustong matanggap ang bawat uri ng update." en="Choose how you want to receive each kind of update." /></p>
+                    <p class="text-xs text-slate-500 mb-4 flex items-center gap-1.5">
+                        <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <x-ui.t fil="Laging naka-on ang mga abiso sa portal at app — dito mo makikita ang lahat ng update sa iyong mga kahilingan." en="Notifications in the portal and app are always on — they are where every update on your requests appears." />
+                    </p>
+                    <div class="hidden sm:grid grid-cols-[minmax(0,1fr)_64px_64px] gap-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                        <span><x-ui.t fil="Uri ng update" en="Update type" /></span>
+                        <span class="text-center">SMS</span>
+                        <span class="text-center">Email</span>
+                    </div>
                     <div class="divide-y divide-slate-50">
                         <template x-for="pref in notifPrefs" :key="pref.category">
-                            <label class="flex items-center justify-between gap-4 py-3.5 cursor-pointer">
-                                <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700" x-text="$store.lang.current === 'en' ? pref.label?.en : (pref.label?.fil || pref.label?.en)"></p>
-                                </div>
-                                <div class="relative shrink-0">
-                                    <button
-                                        @click="togglePref(pref)"
-                                        type="button"
-                                        class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative"
-                                        :class="pref.in_app ? 'bg-brand-600' : 'bg-slate-200'"
-                                    >
-                                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="pref.in_app && 'translate-x-4'"></span>
-                                    </button>
-                                </div>
-                            </label>
+                            <div class="grid grid-cols-[minmax(0,1fr)_64px_64px] items-center gap-4 py-3.5">
+                                <p class="min-w-0 text-sm font-medium text-slate-700" x-text="$store.lang.current === 'en' ? pref.label?.en : (pref.label?.fil || pref.label?.en)"></p>
+                                <template x-for="channel in ['sms', 'email']" :key="channel">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <button
+                                            @click="togglePref(pref, channel)"
+                                            type="button"
+                                            role="switch"
+                                            :aria-checked="pref[channel] ? 'true' : 'false'"
+                                            :aria-label="(channel === 'sms' ? 'SMS' : 'Email') + ': ' + ($store.lang.current === 'en' ? pref.label?.en : (pref.label?.fil || pref.label?.en))"
+                                            class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative"
+                                            :class="pref[channel] ? 'bg-brand-600' : 'bg-slate-200'"
+                                        >
+                                            <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="pref[channel] && 'translate-x-4'"></span>
+                                        </button>
+                                        <span class="sm:hidden text-[10px] text-slate-500" x-text="channel === 'sms' ? 'SMS' : 'Email'"></span>
+                                    </div>
+                                </template>
+                            </div>
                         </template>
-                        <p class="py-6 text-center text-xs text-slate-400" x-show="!notifPrefsLoading && !notifPrefs.length">
+                        <p class="py-6 text-center text-xs text-slate-500" x-show="!notifPrefsLoading && !notifPrefs.length">
                             <x-ui.t fil="Walang mga kagustuhan sa abiso." en="No notification preferences available." />
                         </p>
                     </div>
@@ -127,18 +163,9 @@
                         </x-ui.button>
                     </div>
                 </x-ui.card>
-                <x-ui.card class="flex items-center justify-between gap-4">
-                    <div>
-                        <p class="text-sm font-medium text-navy-900"><x-ui.t fil="Two-Factor Authentication" en="Two-Factor Authentication" /></p>
-                        <p class="text-xs text-slate-400 mt-0.5"><x-ui.t fil="Magdagdag ng karagdagang proteksyon sa iyong account." en="Add an extra layer of security to your account." /></p>
-                    </div>
-                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="enabling2fa" @click="enable2fa()">
-                        <span class="inline-flex items-center gap-1.5">
-                            <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="enabling2fa" x-cloak></i>
-                            <span x-text="enabling2fa ? ($store.lang.current === 'en' ? 'Enabling…' : 'Ina-enable…') : ($store.lang.current === 'en' ? 'Enable 2FA' : 'I-enable ang 2FA')"></span>
-                        </span>
-                    </x-ui.button>
-                </x-ui.card>
+                {{-- Two-factor setup was a setTimeout preview that saved nothing and
+                     told the resident it was "enabling". There is no citizen 2FA on
+                     the backend, so the control is gone until one exists. --}}
             </div>
 
             <div x-show="tab === 'privacy'" x-cloak>
@@ -154,14 +181,52 @@
                             />
                         </p>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2.5 mt-4">
-                        <x-ui.button variant="secondary" size="sm" x-bind:disabled="requestingData" @click="requestData()">
+                    <form class="mt-5 space-y-3 max-w-xl" @submit.prevent="requestData()">
+                        <h4 class="text-sm font-semibold text-navy-900"><x-ui.t fil="Humiling tungkol sa iyong datos" en="Make a request about your data" /></h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <template x-for="kind in dataKinds" :key="kind.key">
+                                <label class="flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm cursor-pointer transition-colors"
+                                       :class="dataForm.kind === kind.key ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'">
+                                    <input type="radio" name="data_request_kind" class="accent-brand-600" :value="kind.key" x-model="dataForm.kind">
+                                    <span x-text="$store.lang.current === 'en' ? kind.en : kind.fil"></span>
+                                </label>
+                            </template>
+                        </div>
+                        <label class="block">
+                            <span class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Mga detalye" en="Details" /></span>
+                            <textarea x-model="dataForm.detail" rows="3" maxlength="2000" required
+                                      :aria-label="$store.lang.current === 'en' ? 'Details of your data request' : 'Mga detalye ng iyong hiling sa datos'"
+                                      :placeholder="$store.lang.current === 'en' ? 'Tell the LGU what you need, e.g. which information is wrong and what it should say.' : 'Sabihin sa LGU ang kailangan mo, hal. aling impormasyon ang mali at ano dapat ito.'"
+                                      class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                        </label>
+                        <x-ui.button type="submit" size="sm" x-bind:disabled="requestingData || dataForm.detail.trim() === ''">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="requestingData" x-cloak></i>
-                                <i data-lucide="download" class="w-3.5 h-3.5" x-show="!requestingData"></i>
-                                <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Requesting…' : 'Hinihiling…') : ($store.lang.current === 'en' ? 'Request My Data' : 'Hilingin ang Aking Datos')"></span>
+                                <i data-lucide="send" class="w-3.5 h-3.5" x-show="!requestingData"></i>
+                                <span x-text="requestingData ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : ($store.lang.current === 'en' ? 'Send Request' : 'Ipadala ang Hiling')"></span>
                             </span>
                         </x-ui.button>
+                    </form>
+
+                    <div class="mt-6">
+                        <h4 class="text-sm font-semibold text-navy-900 mb-2"><x-ui.t fil="Aking mga hiling sa datos" en="My data requests" /></h4>
+                        <div x-show="dataRequestsLoading"><x-ui.skeleton class="h-12" /></div>
+                        <p x-show="!dataRequestsLoading && !dataRequests.length" class="text-xs text-slate-500"><x-ui.t fil="Wala ka pang hiling." en="You have no requests yet." /></p>
+                        <ul class="divide-y divide-slate-100" x-show="!dataRequestsLoading && dataRequests.length">
+                            <template x-for="req in dataRequests" :key="req.ref">
+                                <li class="py-3 flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-slate-700"><span x-text="kindLabel(req.kind)"></span> · <span class="font-mono text-xs text-slate-500" x-text="req.ref"></span></p>
+                                        <p class="text-xs text-slate-500 mt-0.5 line-clamp-2" x-text="req.detail"></p>
+                                        <p class="text-xs text-slate-600 mt-1" x-show="req.resolution" x-text="req.resolution"></p>
+                                    </div>
+                                    <x-ui.badge statusBind="req.status" />
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5 mt-5">
                         <x-ui.button variant="ghost" size="sm" :href="route('citizen.privacy-policy')" icon="shield-check">
                             <x-ui.t fil="Buong Patakaran sa Privacy" en="View Full Privacy Policy" />
                         </x-ui.button>

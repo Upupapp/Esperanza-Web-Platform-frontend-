@@ -14,21 +14,23 @@
                 this.loading = true;
                 this.failed = false;
                 try {
+                    // The resident's own engagement lives under /citizen (likes,
+                    // comments, the community feed); only the announcement and
+                    // event reads are public. The community feed failing must not
+                    // blank the official announcements, so it fails on its own.
                     const [ann, comm, ev] = await Promise.all([
                         $api.get('/announcements', { params: { per_page: 30 } }),
-                        $api.get('/community-posts', { params: { per_page: 30 } }),
+                        $api.get('/citizen/community-posts', { params: { per_page: 30 } }).catch(() => ({ data: [] })),
                         $api.get('/events', { params: { per_page: 4, from: new Date().toISOString().slice(0, 10) } }).catch(() => ({ data: [] })),
                     ]);
                     const annPosts = (ann.data || []).map(a => ({
                         kind: 'announcement', id: a.id, author: a.author, barangay: a.barangay, category: a.category,
                         body: a.body, image_url: a.image_url, official: true, likes: a.likes,
-                        comments_count: a.comments_count, liked_by_me: false, mine: false, visible: true,
+                        // Sent with the resident's token, the public feed says which
+                        // announcements they liked (null only for an anonymous read).
+                        comments_count: a.comments_count, liked_by_me: a.liked_by_me === true, mine: false, visible: true,
                         at: a.published_at, comments: null, showComments: false,
                     }));
-                    // The API doesn't say whether *I* already liked something I'm
-                    // now loading fresh — starting every heart unfilled is honest
-                    // about that rather than guessing; it still tracks correctly
-                    // for the rest of this session once I toggle one.
                     const commPosts = (comm.data || []).map(p => ({
                         kind: 'community', id: p.id, author: p.author, barangay: p.barangay, category: p.category,
                         body: p.body, image_url: p.image_url, official: false, likes: p.likes,
@@ -58,8 +60,11 @@
                 if (hrs < 24) return hrs + (this.$store.lang.current === 'en' ? ' hrs ago' : ' oras ang nakalipas');
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
+            engagementPath(post, action) {
+                return (post.kind === 'announcement' ? '/citizen/announcements/' : '/citizen/community-posts/') + post.id + '/' + action;
+            },
             async toggleLike(post) {
-                const endpoint = post.kind === 'announcement' ? '/announcements/' + post.id + '/like' : '/community-posts/' + post.id + '/like';
+                const endpoint = this.engagementPath(post, 'like');
                 try {
                     const res = await $api.post(endpoint);
                     post.liked_by_me = res.data.liked;
@@ -75,7 +80,7 @@
                 }
             },
             async loadComments(post) {
-                const endpoint = post.kind === 'announcement' ? '/announcements/' + post.id + '/comments' : '/community-posts/' + post.id + '/comments';
+                const endpoint = this.engagementPath(post, 'comments');
                 try {
                     const res = await $api.get(endpoint, { params: { per_page: 50 } });
                     post.comments = res.data || [];
@@ -84,7 +89,7 @@
             async addComment(post) {
                 const text = (this.commentDraft[post.id] || '').trim();
                 if (!text) return;
-                const endpoint = post.kind === 'announcement' ? '/announcements/' + post.id + '/comments' : '/community-posts/' + post.id + '/comments';
+                const endpoint = this.engagementPath(post, 'comments');
                 try {
                     const res = await $api.post(endpoint, { body: text });
                     if (post.comments === null) post.comments = [];
@@ -101,7 +106,7 @@
                 if (!reason || this.reportSubmitting[post.id]) return;
                 this.reportSubmitting[post.id] = true;
                 try {
-                    await $api.post('/community-posts/' + post.id + '/report', { reason });
+                    await $api.post(this.engagementPath(post, 'report'), { reason });
                     this.reportOpenFor = null;
                     this.reportReason[post.id] = '';
                     this.$dispatch('toast', { message: 'Naiulat ang post na ito sa LGU.', variant: 'success' });

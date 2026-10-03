@@ -10,11 +10,12 @@
             requests: [],
             balitaPreview: [],
             events: [],
+            alerts: [],
             kpi: { dokyu: 0, dokyuReady: 0, tulong: 0, tulongApproved: 0 },
             isBirthdayToday: false,
 
             async init() {
-                await Promise.all([this.loadRequests(), this.loadBalita(), this.loadEvents()]);
+                await Promise.all([this.loadRequests(), this.loadBalita(), this.loadEvents(), this.loadAlerts()]);
                 this.checkBirthday();
                 this.$store.citizenNotifications.load();
                 setTimeout(() => (this.ready = true), 250);
@@ -22,13 +23,17 @@
 
             async loadRequests() {
                 try {
-                    const result = await $api.get('/citizen/requests', { params: { sort: '-submitted_at', per_page: 5 } });
-                    this.requests = result.data || [];
+                    // The tiles count ALL of the resident's requests. They used to
+                    // count only the five most recent rows fetched for the list
+                    // below, so a sixth request never showed in any total.
+                    const result = await $api.getAll('/citizen/requests', { params: { sort: '-submitted_at' } });
+                    const all = result.data || [];
+                    this.requests = all.slice(0, 5);
                     const thisMonth = new Date().toISOString().slice(0, 7);
-                    this.kpi.dokyu = this.requests.filter((r) => r.type === 'dokyu').length;
-                    this.kpi.dokyuReady = this.requests.filter((r) => r.type === 'dokyu' && r.status === 'Mark to Release').length;
-                    this.kpi.tulong = this.requests.filter((r) => r.type === 'tulong').length;
-                    this.kpi.tulongApproved = this.requests.filter((r) => r.type === 'tulong' && r.status === 'Approved' && (r.submitted || '').startsWith(thisMonth)).length;
+                    this.kpi.dokyu = all.filter((r) => r.type === 'dokyu').length;
+                    this.kpi.dokyuReady = all.filter((r) => r.type === 'dokyu' && r.status === 'Mark to Release').length;
+                    this.kpi.tulong = all.filter((r) => r.type === 'tulong').length;
+                    this.kpi.tulongApproved = all.filter((r) => r.type === 'tulong' && r.status === 'Approved' && (r.submitted || '').startsWith(thisMonth)).length;
                 } catch { this.requests = []; }
             },
             async loadBalita() {
@@ -43,10 +48,26 @@
                         body: post.body,
                         time: post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
                         likes: post.likes || 0,
-                        liked: false,
+                        liked: post.liked_by_me === true,
                         commentCount: post.comments_count || 0,
                     }));
                 } catch { this.balitaPreview = []; }
+            },
+            // Published emergency alerts (Sakuna), the public feed the backend
+            // has always served and no citizen page ever asked for (web backlog
+            // C8). The resident's own barangay plus municipality-wide ones.
+            async loadAlerts() {
+                try {
+                    const barangay = this.$store.citizenSession.account?.barangay;
+                    const result = await $api.get('/alerts', { params: barangay ? { barangay } : {} });
+                    this.alerts = result.data || [];
+                    this.$nextTick(() => window.renderIcons?.());
+                } catch { this.alerts = []; }
+            },
+            alertText(field) {
+                if (!field) return '';
+                if (typeof field === 'string') return field;
+                return this.$store.lang.current === 'en' ? (field.en || field.fil || '') : (field.fil || field.en || '');
             },
             async loadEvents() {
                 try {
@@ -72,9 +93,18 @@
                     }, 1400);
                 }
             },
-            toggleBalitaLike(post) {
-                post.liked = !post.liked;
-                post.likes += post.liked ? 1 : -1;
+            // A real like. This used to flip the heart on screen only, so the
+            // like vanished on reload and never reached the Balita feed.
+            async toggleBalitaLike(post) {
+                if (post.pending) return;
+                post.pending = true;
+                try {
+                    const res = await $api.post('/citizen/announcements/' + post.id + '/like');
+                    post.liked = res.data.liked;
+                    post.likes = res.data.likes;
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not like this.', variant: 'error' });
+                } finally { post.pending = false; }
             },
         }"
     >
@@ -102,6 +132,24 @@
             x-transition:enter-start="opacity-0 translate-y-2"
             x-transition:enter-end="opacity-100 translate-y-0"
         >
+
+            <!-- Emergency alerts: above everything else, while any is in force -->
+            <template x-for="alert in alerts" :key="alert.ref">
+                <div role="alert" class="mb-4 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 shadow-card">
+                    <i data-lucide="siren" class="w-5 h-5 text-rose-700 shrink-0 mt-0.5"></i>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-rose-900">
+                            <span x-text="alertText(alert.title)"></span>
+                            <span class="ml-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-700" x-show="alert.level" x-text="alert.level"></span>
+                        </p>
+                        <p class="text-sm text-rose-900/90 mt-0.5 whitespace-pre-line" x-text="alertText(alert.body)"></p>
+                        <p class="text-xs text-rose-800 mt-1">
+                            <span x-text="alert.barangays && alert.barangays.length ? alert.barangays.join(', ') : ($store.lang.current === 'en' ? 'Whole municipality' : 'Buong munisipyo')"></span>
+                            <span x-show="alert.published_at"> · <span x-text="alert.published_at ? new Date(alert.published_at).toLocaleString($store.lang.current === 'en' ? 'en-US' : 'fil-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span></span>
+                        </p>
+                    </div>
+                </div>
+            </template>
 
             <!-- Welcome hero -->
             <div class="relative rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 shadow-card">
