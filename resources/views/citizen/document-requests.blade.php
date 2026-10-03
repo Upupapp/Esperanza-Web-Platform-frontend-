@@ -89,6 +89,11 @@
     $daysByType = collect($documentTypes)->pluck('days', 'name')
         ->union(collect($barangayDocTemplate)->pluck('days', 'name'));
     $officeByType = collect($documentTypes)->pluck('office', 'name');
+    // The same, by service key: the API's service_key is exact, while display
+    // names differ between this catalog and the backend's for several
+    // municipal services. The name maps stay as the fallback.
+    $daysByKey = collect($documentTypes)->merge($barangayDocTemplate ?? [])
+        ->filter(fn ($d) => ! empty($d['key']))->pluck('days', 'key');
 
     // Where to follow up / claim a released document, keyed by office name.
     // Barangay Hall entries vary per barangay (the office string already
@@ -106,6 +111,7 @@
             requestsLoading: true,
             requestsFailed: false,
             daysByType: @js($daysByType),
+            daysByKey: @js($daysByKey),
             officeByType: @js($officeByType),
             papeles: [],
             papelesLoading: true,
@@ -161,9 +167,10 @@
                     this.requests = (res.data || []).filter((r) => r.type === 'dokyu').map((r) => ({
                         ref: r.ref,
                         type: r.service || '—',
-                        office: this.officeByType[r.service] || '',
+                        serviceKey: r.service_key || null,
+                        office: r.office || this.officeByType[r.service] || '',
                         purpose: '',
-                        days: this.daysByType[r.service] || '3-5 working days',
+                        days: this.daysByKey[r.service_key] || this.daysByType[r.service] || '3-5 working days',
                         submitted: this.formatDay(r.submitted),
                         submitted_at: r.submitted,
                         status: r.status,
@@ -270,32 +277,31 @@
                 d.setDate(d.getDate() + addDays);
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
-            // The issued document renders from whichever data is actually
-            // available: a request submitted through the wizard carries its
-            // own formSnapshot (docKey/previewType/certTitle all captured at
-            // submit time — see submitRequest()); a request seeded
-            // server-side as pre-resolved demo history (most of the array at
-            // the top of this file) never went through the wizard, so this
-            // falls back to docTypeLookup (config/esperanza_document_type_lookup.php)
-            // to resolve the same docKey/previewType from the request's
-            // plain 'type' string, synthesizing a minimal snapshot from the
-            // citizen's own name so the correct document still renders
-            // instead of dead-ending on a no-document-ready empty state. Only a request
-            // whose type isn't in EITHER source returns null — genuinely no
-            // template exists for it, which the empty state states honestly.
+            // The issued document renders from config/esperanza_document_type_lookup.php,
+            // found by the request's service key (its docKey) -- or, from a
+            // backend that does not send service_key yet, by the service's
+            // display name. The snapshot starts from the citizen's own name
+            // and fills in what the account has on file. A service with no
+            // template returns null, which the empty state says honestly.
             get resolvedDocument() {
                 const r = this.selectedRequest;
                 if (!r) return null;
                 if (r.previewType && r.formSnapshot) {
                     return { previewType: r.previewType, docKey: r.docKey, certTitle: r.certTitle, certSubtitle: r.certSubtitle, snapshot: r.formSnapshot, barangay: r.barangay || this.myBarangay };
                 }
-                const meta = this.docTypeLookup[r.type];
+                const meta = (r.serviceKey && Object.values(this.docTypeLookup).find((m) => m.docKey === r.serviceKey))
+                    || this.docTypeLookup[r.type];
                 if (!meta) return null;
                 const account = this.$store.citizenSession.account;
                 const citizenName = [account?.firstName, account?.lastName].filter(Boolean).join(' ');
                 const snapshot = {};
                 if (meta.nameField) snapshot[meta.nameField] = citizenName;
                 if (meta.purposeField) snapshot[meta.purposeField] = meta.purposeIsArray ? (r.purpose ? [r.purpose] : []) : (r.purpose || '');
+                // What the resident actually filed (the server's form_data) wins
+                // over the defaults above.
+                for (const [key, value] of Object.entries(r.formSnapshot || {})) {
+                    if (value !== null && value !== '' && !(Array.isArray(value) && !value.length)) snapshot[key] = value;
+                }
                 // The citizen's own account already has address/purok/birthdate/
                 // sex/civilStatus/occupation on file from registration (see
                 // config/esperanza_citizens.php) — merge whichever of those a

@@ -22,6 +22,27 @@
         ->map(fn ($spec) => ($spec['alias'] ?? null) ? ($formSpecs[$spec['alias']] ?? null) : $spec)
         ->filter()
         ->all();
+    // The questions the PORTAL's wizard asks, per service key (the same keys
+    // the API returns), so a request filed from the portal is labelled by the
+    // form it was actually filed on. One filed from the app answers the app's
+    // own form spec instead; formStepsFor() tells them apart by the answers.
+    $wizardFieldsByKey = collect(config('esperanza_municipal_documents.documents'))
+        ->concat(collect(config('esperanza_barangay_documents'))->first()['documents'] ?? [])
+        ->concat(config('esperanza_tulong_types.types'))
+        ->filter(fn ($d) => ! empty($d['key']) && ! empty($d['fields']))
+        ->mapWithKeys(fn ($d) => [$d['key'] => collect($d['fields'])
+            ->map(fn ($f) => ['key' => $f['key'], 'label' => $f['label'] ?? $f['key'], 'type' => $f['type'] ?? 'text'])
+            ->values()->all()])
+        ->all();
+    // Service key -> this catalog's name, for the lookups below that are keyed
+    // by name: the backend's display name differs for some services (TUPAD,
+    // ERPAT), its key does not.
+    $catalogNameByKey = collect(config('esperanza_municipal_documents.documents'))
+        ->concat(collect(config('esperanza_barangay_documents'))->first()['documents'] ?? [])
+        ->concat(config('esperanza_tulong_types.types'))
+        ->filter(fn ($d) => ! empty($d['key']))
+        ->pluck('name', 'key')
+        ->all();
     $referencePdfByType = collect(config('esperanza_municipal_documents.documents'))
         ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
         ->concat(config('esperanza_tulong_types.types'))
@@ -1493,6 +1514,8 @@
             actionStatuses: @js($actionStatuses),
             doneStatuses: @js($doneStatuses),
             formSpecsByType: @js($formSpecsByType),
+            wizardFieldsByKey: @js($wizardFieldsByKey),
+            catalogNameByKey: @js($catalogNameByKey),
             dokyuClassification: @js($dokyuClassification),
             referencePdfByType: @js($referencePdfByType),
             typeToServiceGuideKey: @js($typeToServiceGuideKey),
@@ -1640,7 +1663,10 @@
             },
             fromApi(row) {
                 const type = row.service || row.service_key || 'Request';
-                const cls = this.dokyuClassification[type] || {};
+                // The name-keyed tables below use this catalog's name for the
+                // service, which is not always the backend's display name.
+                const name = this.catalogNameByKey[row.service_key] || type;
+                const cls = this.dokyuClassification[name] || this.dokyuClassification[type] || {};
                 return {
                     ref: row.ref,
                     citizen: row.applicant || '—',
@@ -1653,8 +1679,8 @@
                     status: row.status,
                     category: cls.category || 'Other Municipal Services',
                     level: cls.level || 'Municipal',
-                    reference_pdf: this.referencePdfByType[type] || null,
-                    service_guide_key: this.typeToServiceGuideKey[type] || null,
+                    reference_pdf: this.referencePdfByType[name] || this.referencePdfByType[type] || null,
+                    service_guide_key: this.typeToServiceGuideKey[name] || this.typeToServiceGuideKey[type] || null,
                     assigned: null,
                     purpose: '',
                     requirements: null,
@@ -1664,27 +1690,61 @@
                     release_evidence_at: null,
                 };
             },
-            // The request's form answers, labelled by the same spec the app's
-            // wizard asked them from. A key the spec does not know is still
-            // shown, under its own name, rather than dropped.
-            formStepsFor(type, formData) {
+            // The request's form answers, labelled by the form they were filed
+            // on. A request from the app answers the app's form spec (looked up
+            // by name); one from the portal answers the portal wizard's fields
+            // (by service key) -- their field keys differ, so the answers say
+            // which applies. Anything neither knows is still shown, under its
+            // own name, rather than dropped.
+            formStepsFor(type, formData, serviceKey) {
                 const data = formData || {};
-                const spec = this.formSpecsByType[type];
-                const seen = new Set();
-                const steps = (spec?.steps || []).map((step) => ({
-                    label: step.label,
-                    description: step.description || null,
-                    fields: (step.fields || []).map((f) => { seen.add(f.key); return { ...f, answer: data[f.key] ?? null }; }),
-                }));
-                const extra = Object.keys(data).filter((k) => !seen.has(k) && k !== 'purpose');
+                const answered = (v) => v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && !v.length);
+                const seen = new Set(['purpose']);
+                let steps = [];
+                const spec = this.formSpecsByType[this.catalogNameByKey[serviceKey] || type] || this.formSpecsByType[type];
+                const specFields = (spec?.steps || []).flatMap((s) => s.fields || []);
+                const wizardFields = this.wizardFieldsByKey[serviceKey] || [];
+                if (specFields.some((f) => answered(data[f.key]))) {
+                    steps = spec.steps.map((step) => ({
+                        label: step.label,
+                        description: step.description || null,
+                        fields: (step.fields || []).map((f) => { seen.add(f.key); return this.answerField(f, data[f.key]); }),
+                    }));
+                } else if (wizardFields.some((f) => answered(data[f.key]))) {
+                    steps = [{
+                        label: 'Application details',
+                        description: null,
+                        fields: wizardFields.map((f) => { seen.add(f.key); return this.answerField(f, data[f.key]); }),
+                    }];
+                }
+                const extra = Object.keys(data).filter((k) => !seen.has(k) && answered(data[k]));
                 if (extra.length) {
                     steps.push({
-                        label: 'Other details',
+                        label: steps.length ? 'Other details' : 'Application details',
                         description: null,
-                        fields: extra.map((k) => ({ key: k, label: k.replace(/([A-Z])/g, ' $1').replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase()), type: 'text', answer: data[k] })),
+                        fields: extra.map((k) => this.answerField({ key: k, label: k.replace(/([A-Z])/g, ' $1').replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase()), type: 'text' }, data[k])),
                     });
                 }
                 return steps;
+            },
+            // One answer in the shape x-admin.request-form-review prints. The
+            // portal's field types are mapped onto the review's (a checkbox
+            // group is a multiselect; a table prints one line per row), and an
+            // array or object answer is joined instead of printing as
+            // "[object Object]".
+            answerField(f, value) {
+                const type = { 'checkbox-group': 'multiselect', derived_age: 'text', table: 'textarea' }[f.type] || f.type || 'text';
+                let answer = value ?? null;
+                if (type === 'multiselect') {
+                    answer = Array.isArray(answer) ? answer : (answer ? [String(answer)] : []);
+                } else if (Array.isArray(answer)) {
+                    answer = answer.map((row) => (row && typeof row === 'object')
+                        ? Object.values(row).filter((v) => v !== '' && v !== null && v !== undefined).join(' · ')
+                        : String(row)).filter(Boolean).join('; ');
+                } else if (answer && typeof answer === 'object') {
+                    answer = Object.entries(answer).map(([k, v]) => k + ': ' + v).join(', ');
+                }
+                return { ...f, type, answer };
             },
             fromApiRequirement(q) {
                 return {
@@ -1717,8 +1777,8 @@
                 r.office = d.office || r.office;
                 r.remarks = d.decision_remarks || null;
                 r.form_data = d.form_data || {};
-                r.purpose = (d.form_data && d.form_data.purpose) || '';
-                r.form_steps = this.formStepsFor(r.type, d.form_data);
+                r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : '';
+                r.form_steps = this.formStepsFor(r.type, d.form_data, r.service_key);
                 r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
                 r.payment = d.payment || null;
                 r.remarks_log = d.remarks || [];
@@ -1956,11 +2016,6 @@
                 if (!this.selected) return '';
                 return this.stageActionLabels[this.selected.status] ?? 'Approve & Continue';
             },
-            // FRONTEND SIMULATION — no real camera/file access. Stands in
-            // with the citizen's own on-file photo (a real asset, not a
-            // fabricated one) since a genuine handover snapshot isn't
-            // available in this mock dataset; a real backend would store
-            // whatever image the admin actually captured/uploaded.
             // A real photo from the device camera or files. It is held here
             // and sent with the release itself (POST .../release, proof_file):
             // the server refuses a release without proof.
@@ -2566,9 +2621,9 @@
                              at handover. Only relevant once the request has reached
                              Mark to Release; stays visible afterward once captured
                              so Released/Completed requests still show their own
-                             proof on reopen. FRONTEND SIMULATION — no real camera
-                             access, mirrors the same "simulated attach" pattern
-                             already used for payment receipts on the Payments page. --}}
+                             proof on reopen. The photo is sent with the release
+                             itself (proof_file); the server refuses a release
+                             without proof. --}}
                         <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
                                 <i data-lucide="camera" class="w-3.5 h-3.5"></i> Proof of Release

@@ -72,7 +72,7 @@
         <div class="border-t border-slate-100">
             <div class="px-4 pt-3.5 pb-1 flex items-center gap-1.5">
                 <i data-lucide="file-text" class="w-3 h-3 text-slate-300"></i>
-                <p class="text-[10px] text-slate-400" x-text="'From the Esperanza Mobile app’s own ' + selected.type + ' form'"></p>
+                <p class="text-[10px] text-slate-400" x-text="'The ' + selected.type + ' form, as the resident filled it in'"></p>
             </div>
             <template x-for="step in selected.form_steps" :key="step.label">
                 <div class="px-4 pb-3.5">
