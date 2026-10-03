@@ -39,6 +39,15 @@
                 return n.portal === this.tab;
             },
             get visible() { return this.$store.citizenNotifications.visible.filter((n) => this.dynamicMatches(n)); },
+            // The four states x-ui.data-panel reads from the scope around it.
+            // They sat in an x-data inside the panel, where the panel cannot
+            // see them: every state threw, and the loaded list stayed hidden.
+            get loading() { return this.$store.citizenNotifications.loading; },
+            get failed() { return this.$store.citizenNotifications.failed; },
+            get loaded() { return this.$store.citizenNotifications.state === 'loaded'; },
+            get empty() { return this.loaded && this.visible.length === 0; },
+            retry() { this.$store.citizenNotifications.load(); },
+            message() { return this.$store.lang.current === 'en' ? 'Could not load notifications.' : 'Hindi mai-load ang mga abiso.'; },
             get totalCount() { return this.$store.citizenNotifications.visible.length; },
             get unreadTotal() { return this.$store.citizenNotifications.unreadCount; },
             get dokyuTotalCount() { return this.$store.citizenNotifications.visible.filter((n) => n.portal === 'dokyu').length; },
@@ -90,10 +99,7 @@
         </div>
 
         <x-ui.data-panel empty-title="Walang abisong tumutugma dito" empty-title-en="No notifications here" empty-icon="inbox">
-            <div x-data="{ get loading() { return $store.citizenNotifications.loading; }, get failed() { return $store.citizenNotifications.failed; }, get empty() { return !loading && !failed && visible.length === 0; }, retry() { $store.citizenNotifications.load(); }, message() { return $store.lang.current === 'en' ? 'Could not load notifications.' : 'Hindi mai-load ang mga abiso.'; } }" class="contents">
-                <div x-show="loading" x-cloak class="py-8"><x-ui.skeleton class="h-14 mb-2.5" /><x-ui.skeleton class="h-14 mb-2.5 opacity-80" /></div>
-                <div x-show="failed" x-cloak><x-ui.error-state messageExpr="message()" retryExpr="retry()" :retryable="true" /></div>
-                <x-ui.card padded="false" x-show="!loading && !failed">
+                <x-ui.card padded="false">
                     <div class="divide-y divide-slate-50">
                         <template x-for="n in visible" :key="n.id">
                             <div
@@ -124,7 +130,6 @@
                         </template>
                     </div>
                 </x-ui.card>
-            </div>
         </x-ui.data-panel>
     </div>
 </x-layouts.citizen>

@@ -468,7 +468,13 @@
                     expandedSection: 0,
                     openIconPicker: null,
                     saving: false,
-                    docs: { privacy: null, terms: null, support: null },
+                    // Empty documents until the published ones load: the editor's
+                    // bindings read these fields at once, and threw on null.
+                    docs: {
+                        privacy: { title: '', version: null, effective_date: '', intro: '', sections: [] },
+                        terms: { title: '', version: null, effective_date: '', intro: '', sections: [] },
+                        support: { title: '', version: null, effective_date: '', intro: '', channels: [], office_hours: '', office_hours_fil: '' },
+                    },
                     supportIconOptions: @js($supportIconOptions),
                     async load() {
                         this.loading = true; this.failed = false;

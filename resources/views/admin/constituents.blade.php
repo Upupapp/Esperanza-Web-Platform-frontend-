@@ -19,6 +19,12 @@
         // these are every resident.
         registryTruncated: false,
         registryTotals: { residents: 0, households: 0, families: 0 },
+        // The resident detail colours profile completeness by how far along
+        // it is; it called this helper, which did not exist, and threw.
+        completionTextColor(pct) {
+            const p = Number(pct) || 0;
+            return p >= 80 ? 'text-emerald-700' : (p >= 50 ? 'text-amber-700' : 'text-rose-700');
+        },
         individuals:  [],
         families:     [],
         households:   [],
