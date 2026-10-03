@@ -392,7 +392,7 @@ return [
             'name' => 'Certificate of Residency',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
-            'office_short' => 'Civil Registrar',
+            'office_short' => 'MCRO',
             'level' => 'Municipal',
             'title' => 'CERTIFICATE OF RESIDENCY',
             'fee' => '₱50.00', 'days' => '1-2 working days',

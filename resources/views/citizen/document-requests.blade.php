@@ -280,7 +280,7 @@
                 // The directory is keyed by the office's short name; where an
                 // office is listed as 'A / B', A is where to claim it.
                 const short = (this.officeShortByKey[r.serviceKey] || r.office || '').split('/')[0].trim();
-                return this.pickupDirectory[short] || this.pickupDirectory[{ MCRO: 'Civil Registrar' }[short]]
+                return this.pickupDirectory[short]
                     || { contact: 'Municipal Hall Trunkline (056) 333-1000', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
             },
             get expectedRelease() {

@@ -30,7 +30,7 @@ return [
         ],
         ['ref' => 'DR-2026-2210', 'type' => 'Cedula (Community Tax Certificate)', 'office' => "Treasurer's Office", 'purpose' => 'Employment requirement', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-2187', 'type' => 'Barangay Clearance', 'office' => 'Barangay Hall', 'purpose' => 'Proof of Residency', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
-        ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'office' => 'Civil Registrar', 'purpose' => 'School enrollment', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
+        ['ref' => 'DR-2026-1998', 'type' => 'Certificate of Residency', 'office' => 'Office of the Municipal Civil Registrar', 'purpose' => 'School enrollment', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-1872', 'type' => 'Certificate of Indigency', 'office' => 'MSWDO', 'purpose' => 'Medical assistance application', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted'],
         ['ref' => 'DR-2026-1655', 'type' => 'Business Permit (New)', 'office' => 'BPLO', 'purpose' => 'Sari-sari store registration', 'submitted' => 'Aug 24, 2026', 'status' => 'Submitted', 'requirements' => [
             ['key' => 'req_dti', 'name' => 'DTI or SEC Registration', 'file' => 'DTI-Registration.pdf', 'status' => 'Submitted', 'reject_reason' => null, 'remarks' => null, 'versions' => []],
@@ -57,7 +57,7 @@ return [
 
     'pickupDirectory' => [
         "Treasurer's Office" => ['contact' => '(056) 333-1032', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
-        'Civil Registrar' => ['contact' => '(056) 333-1067', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
+        'MCRO' => ['contact' => '(056) 333-1067', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
         'MSWDO' => ['contact' => '(056) 333-1044', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
         'BPLO' => ['contact' => '(056) 333-1050', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],
         'OSCA' => ['contact' => '(056) 333-1088', 'address' => 'Municipal Hall, Poblacion, Esperanza, Masbate'],

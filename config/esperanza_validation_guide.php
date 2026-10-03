@@ -313,7 +313,7 @@ return [
             ],
         ],
         'Certificate of Residency' => [
-            'group' => 'Dokyu', 'office' => 'Civil Registrar / appropriate local office',
+            'group' => 'Dokyu', 'office' => 'Office of the Municipal Civil Registrar',
             'source_basis' => 'Official Esperanza source', 'source_note' => 'BRGY. RESIDENCY.docx',
             'checks' => [
                 ['check' => 'Valid ID', 'accept' => 'ID identifies applicant.', 'weak' => 'Request stronger/current ID.', 'reject' => 'Confirmed wrong identity/fraud.'],
