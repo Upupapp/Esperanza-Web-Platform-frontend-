@@ -109,7 +109,7 @@
             this.incidentsLoading = true;
             this.incidentsFailed = false;
             try {
-                const res = await $api.get('/sakuna/incidents', { params: { per_page: 100 } });
+                const res = await $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } });
                 this.incidentsList = res.data || [];
             } catch { this.incidentsFailed = true; } finally { this.incidentsLoading = false; }
         },
@@ -125,7 +125,7 @@
             if (this.incidentSaving || !this.incidentForm.title || !this.incidentForm.type || !this.incidentForm.barangay || !this.incidentForm.severity) return;
             this.incidentSaving = true;
             try {
-                const res = await $api.post('/sakuna/incidents', this.incidentForm);
+                const res = await $api.post('/admin/sakuna/incidents', this.incidentForm);
                 this.incidentsList.unshift(res.data);
                 this.showCreateIncident = false;
                 this.toast(res.data.ref + ' reported.', 'success');
@@ -153,7 +153,7 @@
             this.vulLoading = true;
             this.vulFailed = false;
             try {
-                const res = await $api.get('/sakuna/vulnerability', { params: { per_page: 100 } });
+                const res = await $api.get('/admin/sakuna/vulnerability', { params: { per_page: 100 } });
                 this.vulProfiles = res.data || [];
             } catch { this.vulFailed = true; } finally { this.vulLoading = false; }
         },
@@ -197,8 +197,8 @@
             if (!payload.last_assessed) delete payload.last_assessed;
             try {
                 const res = this.vulFormMode === 'create'
-                    ? await $api.post('/sakuna/vulnerability', payload)
-                    : await $api.put('/sakuna/vulnerability/' + this.vulForm.ref, payload);
+                    ? await $api.post('/admin/sakuna/vulnerability', payload)
+                    : await $api.put('/admin/sakuna/vulnerability/' + this.vulForm.ref, payload);
                 const idx = this.vulProfiles.findIndex(p => p.ref === res.data.ref);
                 if (idx !== -1) this.vulProfiles[idx] = res.data; else this.vulProfiles.push(res.data);
                 if (this.selectedBarangayVul?.ref === res.data.ref) this.selectedBarangayVul = res.data;
@@ -210,7 +210,7 @@
         },
         async approveVulnerabilityAssessment(p) {
             try {
-                const res = await $api.post('/sakuna/vulnerability/' + p.ref + '/approve', {});
+                const res = await $api.post('/admin/sakuna/vulnerability/' + p.ref + '/approve', {});
                 Object.assign(p, res.data);
                 if (this.selectedBarangayVul?.ref === p.ref) this.selectedBarangayVul = { ...this.selectedBarangayVul, ...res.data };
                 this.toast(p.barangay + "'s assessment approved.", 'success');
@@ -252,7 +252,7 @@
             this.centersLoading = true;
             this.centersFailed = false;
             try {
-                const res = await $api.get('/sakuna/centers', { params: { per_page: 100 } });
+                const res = await $api.get('/admin/sakuna/centers', { params: { per_page: 100 } });
                 this.centersList = res.data || [];
             } catch { this.centersFailed = true; } finally { this.centersLoading = false; }
         },
@@ -282,8 +282,8 @@
             const payload = { name: this.centerForm.name, barangay: this.centerForm.barangay, address: this.centerForm.address || null, capacity: Number(this.centerForm.capacity), services: this.centerForm.services };
             try {
                 const res = this.centerFormMode === 'create'
-                    ? await $api.post('/sakuna/centers', payload)
-                    : await $api.put('/sakuna/centers/' + this.centerForm.ref, payload);
+                    ? await $api.post('/admin/sakuna/centers', payload)
+                    : await $api.put('/admin/sakuna/centers/' + this.centerForm.ref, payload);
                 const idx = this.centersList.findIndex(c => c.ref === res.data.ref);
                 if (idx !== -1) this.centersList[idx] = res.data; else this.centersList.unshift(res.data);
                 if (this.selectedCenter?.ref === res.data.ref) this.selectedCenter = res.data;
@@ -301,14 +301,14 @@
             this.centerEvacuees = [];
             this.$nextTick(() => window.renderIcons?.());
             try {
-                const res = await $api.get('/sakuna/evacuees', { params: { center: c.ref, per_page: 100 } });
+                const res = await $api.get('/admin/sakuna/evacuees', { params: { center: c.ref, per_page: 100 } });
                 this.centerEvacuees = res.data || [];
             } catch { /* the tab just shows no families rather than failing the modal */ }
         },
         async confirmOpenCenter() {
             if (!this.pendingCenterAction) return;
             try {
-                const res = await $api.post('/sakuna/centers/' + this.pendingCenterAction.ref + '/open', {});
+                const res = await $api.post('/admin/sakuna/centers/' + this.pendingCenterAction.ref + '/open', {});
                 const idx = this.centersList.findIndex(c => c.ref === res.data.ref);
                 if (idx !== -1) this.centersList[idx] = res.data;
                 if (this.selectedCenter?.ref === res.data.ref) this.selectedCenter = res.data;
@@ -324,7 +324,7 @@
         async confirmCloseCenter() {
             if (!this.pendingCenterAction) return;
             try {
-                const res = await $api.post('/sakuna/centers/' + this.pendingCenterAction.ref + '/close', {});
+                const res = await $api.post('/admin/sakuna/centers/' + this.pendingCenterAction.ref + '/close', {});
                 const idx = this.centersList.findIndex(c => c.ref === res.data.ref);
                 if (idx !== -1) this.centersList[idx] = res.data;
                 if (this.selectedCenter?.ref === res.data.ref) this.selectedCenter = res.data;
@@ -355,8 +355,8 @@
             this.evacueesFailed = false;
             try {
                 const [ev, centers] = await Promise.all([
-                    $api.get('/sakuna/evacuees', { params: { per_page: 100 } }),
-                    $api.get('/sakuna/centers', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.get('/admin/sakuna/evacuees', { params: { per_page: 100 } }),
+                    $api.get('/admin/sakuna/centers', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
                 ]);
                 this.evacueesList = ev.data || [];
                 this.evacueeCentersOpen = (centers.data || []).filter(c => c.status === 'Processing');
@@ -389,7 +389,7 @@
                 }));
             const payload = { head_name: this.checkInForm.head_name, barangay: this.checkInForm.barangay, sitio: this.checkInForm.sitio || null, members };
             try {
-                const res = await $api.post('/sakuna/centers/' + this.checkInForm.center + '/check-in', payload);
+                const res = await $api.post('/admin/sakuna/centers/' + this.checkInForm.center + '/check-in', payload);
                 this.evacueesList.unshift(res.data);
                 this.showEvacueeReg = false;
                 this.toast(res.data.ref + ' checked in.', 'success');
@@ -404,14 +404,14 @@
             // The list row has no members/movements; GET /sakuna/evacuees/{ref}
             // (added because it never existed before) has both.
             try {
-                const res = await $api.get('/sakuna/evacuees/' + row.ref);
+                const res = await $api.get('/admin/sakuna/evacuees/' + row.ref);
                 this.selectedEvacuee = { ...row, ...res.data };
             } catch { /* keep the list row's fields if the detail fetch fails */ }
         },
         async transferEvacuee(ev, toCenterRef) {
             if (!toCenterRef) return;
             try {
-                const res = await $api.post('/sakuna/evacuees/' + ev.ref + '/transfer', { to_center: toCenterRef });
+                const res = await $api.post('/admin/sakuna/evacuees/' + ev.ref + '/transfer', { to_center: toCenterRef });
                 const idx = this.evacueesList.findIndex(e => e.ref === res.data.ref);
                 if (idx !== -1) this.evacueesList[idx] = { ...this.evacueesList[idx], ...res.data };
                 if (this.selectedEvacuee?.ref === res.data.ref) this.selectedEvacuee = { ...this.selectedEvacuee, ...res.data };
@@ -422,7 +422,7 @@
         },
         async checkOutEvacuee(ev) {
             try {
-                const res = await $api.post('/sakuna/evacuees/' + ev.ref + '/check-out', {});
+                const res = await $api.post('/admin/sakuna/evacuees/' + ev.ref + '/check-out', {});
                 const idx = this.evacueesList.findIndex(e => e.ref === res.data.ref);
                 if (idx !== -1) this.evacueesList[idx] = { ...this.evacueesList[idx], ...res.data };
                 if (this.selectedEvacuee?.ref === res.data.ref) this.selectedEvacuee = { ...this.selectedEvacuee, ...res.data };
@@ -456,8 +456,8 @@
             this.resourcesFailed = false;
             try {
                 const [res, incidents] = await Promise.all([
-                    $api.get('/sakuna/resources', { params: { per_page: 100 } }),
-                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.get('/admin/sakuna/resources', { params: { per_page: 100 } }),
+                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
                 ]);
                 this.resourcesList = res.data || [];
                 this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived'].includes(i.status));
@@ -490,8 +490,8 @@
             const payload = { name: this.resourceForm.name, category: this.resourceForm.category, quantity: Number(this.resourceForm.quantity), unit: this.resourceForm.unit || null, readiness: this.resourceForm.readiness || null, barangay: this.resourceForm.barangay || null };
             try {
                 const res = this.resourceFormMode === 'create'
-                    ? await $api.post('/sakuna/resources', payload)
-                    : await $api.put('/sakuna/resources/' + this.resourceForm.ref, payload);
+                    ? await $api.post('/admin/sakuna/resources', payload)
+                    : await $api.put('/admin/sakuna/resources/' + this.resourceForm.ref, payload);
                 const idx = this.resourcesList.findIndex(r => r.ref === res.data.ref);
                 if (idx !== -1) this.resourcesList[idx] = { ...this.resourcesList[idx], ...res.data }; else this.resourcesList.unshift(res.data);
                 if (this.selectedResource?.ref === res.data.ref) this.selectedResource = { ...this.selectedResource, ...res.data };
@@ -509,7 +509,7 @@
             this.showResourceDetail = true;
             this.$nextTick(() => window.renderIcons?.());
             try {
-                const res = await $api.get('/sakuna/resources/' + row.ref);
+                const res = await $api.get('/admin/sakuna/resources/' + row.ref);
                 this.selectedResource = { ...row, ...res.data };
             } catch { /* keep the list row's fields if the detail fetch fails */ }
         },
@@ -528,7 +528,7 @@
             const payload = { quantity: Number(this.deployForm.quantity) };
             if (verb === 'deploy' && this.deployForm.incident_id) payload.incident_id = Number(this.deployForm.incident_id);
             try {
-                const res = await $api.post('/sakuna/resources/' + this.selectedResource.ref + '/' + verb, payload);
+                const res = await $api.post('/admin/sakuna/resources/' + this.selectedResource.ref + '/' + verb, payload);
                 const idx = this.resourcesList.findIndex(r => r.ref === res.data.ref);
                 if (idx !== -1) this.resourcesList[idx] = { ...this.resourcesList[idx], ...res.data };
                 if (this.selectedResource?.ref === res.data.ref) this.selectedResource = { ...this.selectedResource, ...res.data };
@@ -557,7 +557,7 @@
             this.reliefLoading = true;
             this.reliefFailed = false;
             try {
-                const res = await $api.get('/sakuna/relief', { params: { per_page: 100 } });
+                const res = await $api.get('/admin/sakuna/relief', { params: { per_page: 100 } });
                 this.reliefList = res.data || [];
             } catch { this.reliefFailed = true; } finally { this.reliefLoading = false; }
         },
@@ -580,7 +580,7 @@
             this.distributionSaving = true;
             const payload = { ...this.distributionForm, quantity: this.distributionForm.quantity === '' ? undefined : Number(this.distributionForm.quantity) };
             try {
-                const res = await $api.post('/sakuna/relief', payload);
+                const res = await $api.post('/admin/sakuna/relief', payload);
                 this.reliefList.unshift(res.data);
                 this.showCreateDistribution = false;
                 this.toast(res.data.ref + ' recorded.', 'success');
@@ -590,7 +590,7 @@
         },
         async releaseDistribution(d) {
             try {
-                const res = await $api.post('/sakuna/relief/' + d.ref + '/release', {});
+                const res = await $api.post('/admin/sakuna/relief/' + d.ref + '/release', {});
                 const idx = this.reliefList.findIndex(x => x.ref === res.data.ref);
                 if (idx !== -1) this.reliefList[idx] = { ...this.reliefList[idx], ...res.data };
                 this.toast(d.ref + ' released.', 'success');
@@ -622,8 +622,8 @@
             this.damagesFailed = false;
             try {
                 const [res, incidents] = await Promise.all([
-                    $api.get('/sakuna/damage', { params: { per_page: 100 } }),
-                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
+                    $api.get('/admin/sakuna/damage', { params: { per_page: 100 } }),
+                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
                 ]);
                 this.damagesList = res.data || [];
                 this.damageIncidentsOpen = incidents.data || [];
@@ -664,10 +664,10 @@
             try {
                 let res;
                 if (this.damageFormMode === 'create') {
-                    res = await $api.post('/sakuna/damage', body);
+                    res = await $api.post('/admin/sakuna/damage', body);
                 } else {
                     body.append('_method', 'PUT');
-                    res = await $api.post('/sakuna/damage/' + this.damageForm.ref, body);
+                    res = await $api.post('/admin/sakuna/damage/' + this.damageForm.ref, body);
                 }
                 const idx = this.damagesList.findIndex(d => d.ref === res.data.ref);
                 if (idx !== -1) this.damagesList[idx] = { ...this.damagesList[idx], ...res.data }; else this.damagesList.unshift(res.data);
@@ -685,7 +685,7 @@
             this.showAssessmentDetail = true;
             this.$nextTick(() => window.renderIcons?.());
             try {
-                const res = await $api.get('/sakuna/damage/' + row.ref);
+                const res = await $api.get('/admin/sakuna/damage/' + row.ref);
                 this.selectedAssessment = { ...row, ...res.data };
             } catch { /* keep the list row's fields if the detail fetch fails */ }
         },
@@ -718,7 +718,7 @@
             this.alertsLoading = true;
             this.alertsFailed = false;
             try {
-                const res = await $api.get('/sakuna/alerts', { params: { per_page: 100 } });
+                const res = await $api.get('/admin/sakuna/alerts', { params: { per_page: 100 } });
                 this.alertsList = res.data || [];
             } catch { this.alertsFailed = true; } finally { this.alertsLoading = false; }
         },
@@ -759,8 +759,8 @@
             const payload = { type: this.alertForm.type, level: this.alertForm.level, title_fil: this.alertForm.title_fil, title_en: this.alertForm.title_en, body_fil: this.alertForm.body_fil, body_en: this.alertForm.body_en, target_barangays: this.alertForm.target_barangays, channels: this.alertForm.channels };
             try {
                 const res = this.alertFormMode === 'create'
-                    ? await $api.post('/sakuna/alerts', payload)
-                    : await $api.put('/sakuna/alerts/' + this.alertForm.ref, payload);
+                    ? await $api.post('/admin/sakuna/alerts', payload)
+                    : await $api.put('/admin/sakuna/alerts/' + this.alertForm.ref, payload);
                 const idx = this.alertsList.findIndex(a => a.ref === res.data.ref);
                 if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data }; else this.alertsList.unshift(res.data);
                 if (this.selectedAlert?.ref === res.data.ref) this.selectedAlert = { ...this.selectedAlert, ...res.data };
@@ -777,7 +777,7 @@
             this.showAlertDetail = true;
             this.$nextTick(() => window.renderIcons?.());
             try {
-                const res = await $api.get('/sakuna/alerts/' + row.ref);
+                const res = await $api.get('/admin/sakuna/alerts/' + row.ref);
                 this.selectedAlert = { ...row, ...res.data };
             } catch { /* keep the list row's fields if the detail fetch fails */ }
         },
@@ -785,7 +785,7 @@
         // rows a cancellation later has to reach exactly.
         async publishAlert(a) {
             try {
-                const res = await $api.post('/sakuna/alerts/' + a.ref + '/publish', {});
+                const res = await $api.post('/admin/sakuna/alerts/' + a.ref + '/publish', {});
                 const idx = this.alertsList.findIndex(x => x.ref === res.data.ref);
                 if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data };
                 if (this.selectedAlert?.ref === res.data.ref) this.selectedAlert = { ...this.selectedAlert, ...res.data };
@@ -804,7 +804,7 @@
             if (this.cancelSaving || !this.cancelReason.trim()) return;
             this.cancelSaving = true;
             try {
-                const res = await $api.post('/sakuna/alerts/' + this.selectedAlert.ref + '/cancel', { reason: this.cancelReason });
+                const res = await $api.post('/admin/sakuna/alerts/' + this.selectedAlert.ref + '/cancel', { reason: this.cancelReason });
                 const idx = this.alertsList.findIndex(x => x.ref === res.data.ref);
                 if (idx !== -1) this.alertsList[idx] = { ...this.alertsList[idx], ...res.data };
                 this.showCancelAlert = false;
@@ -843,8 +843,8 @@
             this.commandFailed = false;
             try {
                 const [board, incidents, personnel] = await Promise.all([
-                    $api.get('/sakuna/command-center'),
-                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }),
+                    $api.get('/admin/sakuna/command-center'),
+                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }),
                     $api.get('/admin/users', { params: { per_page: 100 } }).catch(() => ({ data: [] })),
                 ]);
                 this.commandBoard = board.data;
@@ -864,7 +864,7 @@
             this.$nextTick(() => window.renderIcons?.());
             // The list row is lean; the detail fetch adds description/timeline.
             try {
-                const res = await $api.get('/sakuna/incidents/' + row.ref);
+                const res = await $api.get('/admin/sakuna/incidents/' + row.ref);
                 this.selectedIncident = { ...row, ...res.data };
             } catch { /* keep the list row's fields if the detail fetch fails */ }
         },
@@ -873,7 +873,7 @@
         // too, so this mirrors that exactly rather than having six near-copies.
         async actIncidentVerb(inc, verb, payload = {}) {
             try {
-                const res = await $api.post('/sakuna/incidents/' + inc.ref + '/' + verb, payload);
+                const res = await $api.post('/admin/sakuna/incidents/' + inc.ref + '/' + verb, payload);
                 Object.assign(inc, res.data);
                 if (this.selectedIncident?.ref === inc.ref) this.selectedIncident = { ...this.selectedIncident, ...res.data };
                 this.showEscalateForm = false;
@@ -899,9 +899,9 @@
             this.reportsFailed = false;
             try {
                 const [inc, centers, vul] = await Promise.all([
-                    $api.get('/sakuna/incidents', { params: { per_page: 100 } }),
-                    $api.get('/sakuna/centers', { params: { per_page: 100 } }),
-                    $api.get('/sakuna/vulnerability', { params: { per_page: 100 } }),
+                    $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } }),
+                    $api.get('/admin/sakuna/centers', { params: { per_page: 100 } }),
+                    $api.get('/admin/sakuna/vulnerability', { params: { per_page: 100 } }),
                 ]);
                 this.reportIncidents = inc.data || [];
                 this.reportCenters = centers.data || [];

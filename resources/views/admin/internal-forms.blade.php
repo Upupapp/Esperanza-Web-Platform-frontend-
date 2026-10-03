@@ -23,8 +23,8 @@
                 this.failed = false;
                 try {
                     const [defsRes, subsRes] = await Promise.all([
-                        $api.get('/internal-forms'),
-                        $api.get('/internal-forms/submissions', { params: { per_page: 100 } }),
+                        $api.get('/admin/internal-forms'),
+                        $api.get('/admin/internal-forms/submissions', { params: { per_page: 100 } }),
                     ]);
                     const grouped = {};
                     (defsRes.data || []).forEach(d => {
@@ -113,7 +113,7 @@
                 if (this.submitting) return;
                 this.submitting = true;
                 try {
-                    const res = await $api.post('/internal-forms/' + this.selectedForm.key + '/submit', { data: this.formData });
+                    const res = await $api.post('/admin/internal-forms/' + this.selectedForm.key + '/submit', { data: this.formData });
                     this.submissions.unshift(res.data);
                     this.doneSubmit = true;
                     setTimeout(() => { this.open = false; this.reset(); this.$dispatch('toast', { message: 'Form submitted — routed for processing.', variant: 'success' }); }, 1400);
