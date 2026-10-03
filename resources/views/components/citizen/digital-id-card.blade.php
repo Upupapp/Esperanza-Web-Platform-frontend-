@@ -10,7 +10,7 @@
      ("Republic of the Philippines", "Civil Status") and they are part of
      the credential, not UI chrome -- translating them would render an ID
      that does not match the physical one it mirrors. The chrome AROUND the
-     card (the flip hint, the simulation disclaimer, the control's
+     card (the flip hint, the verification note, the control's
      accessible name) IS bilingual. --}}
 <div
     x-data="{
@@ -150,7 +150,7 @@
                                     <p class="text-[9.5px] font-semibold text-navy-900 truncate" x-text="card.valid ? ($store.lang.current === 'en' ? 'Valid credential' : 'Balidong kredensyal') : ($store.lang.current === 'en' ? 'Not yet a valid credential' : 'Hindi pa balidong kredensyal')"></p>
                                     <p class="text-[7.5px] text-slate-400" x-text="card.qr"></p>
                                 </div>
-                                <p class="text-[7px] text-slate-300 text-right max-w-[110px] leading-tight"><x-ui.t fil="Simulation lamang — hindi tunay na ID mula sa pamahalaan." en="Frontend simulation — not a real government-issued ID." /></p>
+                                <p class="text-[7px] text-slate-300 text-right max-w-[110px] leading-tight"><x-ui.t fil="Mula sa talaan ng Munisipyo. I-scan ang QR para i-verify." en="From the Municipality's records. Scan the QR to verify." /></p>
                             </div>
                         </div>
                     </div>

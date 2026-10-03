@@ -45,6 +45,10 @@
             ticketCategories: ['Account & Login', 'Dokyu', 'Tulong', 'Technical Issue', 'App Problem', 'Other'],
             ticketForm: { category: 'Account & Login', subject: '', message: '' },
             ticketAttachment: null,
+            // The screenshot itself. The picker used to set a made-up
+            // 'New screenshot.png' name and send nothing; the ticket endpoint
+            // takes a real file (attachment), which this now sends.
+            ticketFile: null,
             showAttachPicker: false,
             availableFiles: [],
             submitting: false,
@@ -78,11 +82,14 @@
                 if (this.submitting || !this.ticketForm.subject || !this.ticketForm.message) return;
                 this.submitting = true;
                 try {
-                    const result = await $api.post('/citizen/support/tickets', {
-                        category: this.ticketForm.category,
-                        subject: this.ticketForm.subject,
-                        body: this.ticketForm.message,
-                    });
+                    const fields = { category: this.ticketForm.category, subject: this.ticketForm.subject, body: this.ticketForm.message };
+                    let payload = fields;
+                    if (this.ticketFile) {
+                        payload = new FormData();
+                        Object.entries(fields).forEach(([k, v]) => payload.append(k, v));
+                        payload.append('attachment', this.ticketFile);
+                    }
+                    const result = await $api.post('/citizen/support/tickets', payload);
                     const t = result.data;
                     this.tickets.unshift({
                         ref: t.ref, subject: t.subject, status: t.status,
@@ -90,6 +97,7 @@
                     });
                     this.ticketForm = { category: this.ticketCategories[0], subject: '', message: '' };
                     this.ticketAttachment = null;
+                    this.ticketFile = null;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Support ticket submitted — our team will respond within 24 hours.' : 'Naisumite ang support ticket — sasagutin ng aming team sa loob ng 24 oras.', variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised($store.lang.current) : 'Could not submit ticket.', variant: 'error' });
@@ -271,17 +279,15 @@
                                     <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
                                         <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="ticketAttachment"></span>
                                     </span>
-                                    <button type="button" @click="ticketAttachment = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                    <button type="button" @click="ticketAttachment = null; ticketFile = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                 </div>
                             </div>
                             <div x-show="showAttachPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
-                                <x-ui.file-picker
-                                    files="availableFiles"
-                                    onSelect="ticketAttachment = file.name; showAttachPicker = false"
-                                    uploadAction="ticketAttachment = 'New screenshot.png'; showAttachPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                    :columns="2"
-                                    :search="false"
-                                />
+                                <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer">
+                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i><x-ui.t fil="Pumili ng larawan o PDF" en="Choose an image or PDF" />
+                                    <input type="file" class="sr-only" accept="image/*,application/pdf"
+                                           @change="ticketFile = $event.target.files[0] || null; ticketAttachment = ticketFile ? ticketFile.name : null; showAttachPicker = false; $event.target.value = ''">
+                                </label>
                             </div>
                         </div>
 

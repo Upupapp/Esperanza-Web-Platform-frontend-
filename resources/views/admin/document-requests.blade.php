@@ -1528,6 +1528,7 @@
                 return {
                     ref: p.ref, receipt: p.receipt_no, method: p.method, status: p.status,
                     citizen: this.selected.citizen, item: this.selected.type,
+                    date: p.date ? new Date(p.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
                     amount: '₱' + Number(p.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 }),
                 };
             },
