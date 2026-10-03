@@ -1,301 +1,33 @@
 @php
     $barangays = config('esperanza.barangays');
-    // Citizen name -> avatar + biographical-fact maps. ONE seam, shared with
-    // the other admin screens that show a resident by name -- see
-    // resources/data/citizen-directory.php, which also explains why this is a
-    // render-time data file rather than a config file.
-    $citizenDirectory = require base_path('resources/data/citizen-directory.php');
-    $citizenAvatars = $citizenDirectory['avatars'];
-    $citizenBio = $citizenDirectory['bio'];
-    // Same barangayCatalog build as citizen/document-requests.blade.php,
-    // used by the Document panel's fallback resolver to look up real
-    // officials by barangay name for any request that never had
-    // barangayOfficials hand-authored onto it directly.
-    // TAB 04: fixtures live in resources/data/admin/document-requests.php so this view stays presentation only.
+    // Lookup tables only. The queue itself comes from the API after paint
+    // (GET /admin/dokyu/requests). This page used to render a fixture queue
+    // with requirements and form answers synthesized here at build time, so
+    // staff never saw, and could never process, a request a resident had
+    // actually filed from the app or the portal.
     $__fixtures = require base_path('resources/data/admin/document-requests.php');
     $barangayCatalog = $__fixtures['barangayCatalog'];
     foreach (config('esperanza_barangay_documents') as $info) {
         $barangayCatalog[$info['label']] = ['label' => $info['label'], 'seal' => $info['seal'], 'officials' => $info['officials']];
     }
-    $requests = $__fixtures['requests'];
-
-    // Manual Document Validation & Application Decision Guide — maps each
-    // request's 'type' string to its checklist key in
-    // config/esperanza_validation_guide.php. A handful of mock types have
-    // no service defined in the LGU-supplied guide yet (e.g. Certificate of
-    // Good Moral Character); those fall back to the general Dokyu checklist
-    // in the validation-guide panel rather than inventing criteria the guide
-    // never specified.
+    $requests = [];
     $validationGuide = config('esperanza_validation_guide');
-    // Payment method + receipt — same source of truth as admin/payments.blade.php
-    // (config/esperanza_payments.php), keyed by ref so a request's own process
-    // modal can show its payment/receipt inline instead of only on the
-    // separate Payments page. Absent for any ref with no payment record
-    // (nothing due yet, or the service is free) — the shared receipt
-    // component itself renders nothing in that case.
-    $paymentByRef = collect(config('esperanza_payments'))->keyBy('ref')->all();
     $typeToServiceGuideKey = $__fixtures['typeToServiceGuideKey'];
-
-    // Classification lookup for the mock request rows above -- keyed by the
-    // exact (sometimes shortened) 'type' string already used in $requests, per
-    // the Dokyu & Tulong routing plan. Kept centralized here rather than
-    // hand-edited per row so every row's category/office/level stays correct
-    // and traceable to one source instead of 27 separate literals.
     $dokyuClassification = $__fixtures['dokyuClassification'];
-    // Assigned-personnel is only populated for requests already picked up by
-    // a processor (mid-pipeline statuses) -- unassigned is the realistic
-    // default for a fresh queue, not every row needs one.
-    $assignedByRef = $__fixtures['assignedByRef'];
-    // Every request needs to open as a complete, filled-in record — the
-    // purpose line and requirement documents the citizen actually submitted
-    // — not just a status row. Rows without hand-authored purpose/requirements
-    // (most of them) get realistic ones synthesized from their category below,
-    // so "Process Document Request" never opens on an empty application.
-    $purposeByCategory = $__fixtures['purposeByCategory'];
-    $defaultRequirementsByCategory = $__fixtures['defaultRequirementsByCategory'];
-    // Requirement names that are literally "the citizen's ID" rather than a
-    // different supporting document — the only ones a real placeholder scan
-    // (see $idRequirementNames use below) can honestly stand in for.
-    $idRequirementNames = $__fixtures['idRequirementNames'];
-    $synthesizeRequirements = function (array $names, string $status, ?string $remarks, string $citizenFirst, ?string $idPreviewAsset = null) use ($idRequirementNames) {
-        $total = count($names);
-        return collect($names)->map(function ($name, $i) use ($status, $remarks, $citizenFirst, $total, $idPreviewAsset, $idRequirementNames) {
-            $slug = str($name)->slug('-');
-            // Every requirement the citizen was asked for gets a real
-            // attached file — submitting the request on mobile means they
-            // actually uploaded something for each one, whether or not an
-            // admin has reviewed it yet. Only the review $reqStatus (and,
-            // for the one item that actually failed, its reject reason)
-            // tracks what's been checked.
-            $file = "{$citizenFirst}-{$slug}.jpg";
-            $reqStatus = 'Approved';
-            $rejectReason = null; $reqRemarks = null;
-            if ($status === 'Rejected' && $i === 0) {
-                $reqStatus = 'Rejected'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
-            } elseif ($status === 'Under Review' && $i === $total - 1) {
-                // The specific document standing in the way of approval —
-                // matches the per-requirement "Flag for Replacement"
-                // vocabulary, so the checklist stays consistent with the
-                // rest of the request-correction flow.
-                $reqStatus = 'Flagged for Replacement'; $rejectReason = 'Missing information'; $reqRemarks = $remarks;
-            } elseif (in_array($status, ['Submitted', 'Under Verification'], true)) {
-                // Under Verification is the whole point of the review queue
-                // — nothing has been decided on any requirement yet, so
-                // Approve / Flag for Replacement / Reject need to actually
-                // be available here, not silently pre-approved.
-                $reqStatus = 'Submitted';
-            }
-            // A real supplied ID scan (currently only wired up for a couple
-            // of residents with an actual photo/ID pair on file, e.g.
-            // Cristy) is worth actually being able to open even before it's
-            // been reviewed — unlike every other mock requirement, there's
-            // a genuine file behind this one.
-            $previewAsset = null;
-            if ($idPreviewAsset && in_array($name, $idRequirementNames, true)) {
-                $file = "{$citizenFirst}-Valid-ID.jpg";
-                $previewAsset = $idPreviewAsset;
-            }
-            return [
-                'key' => 'req_' . $slug, 'name' => $name, 'file' => $file, 'status' => $reqStatus,
-                'reject_reason' => $rejectReason, 'remarks' => $reqRemarks, 'versions' => [], 'preview_asset' => $previewAsset,
-            ];
-        })->all();
-    };
-    // Full mobile-form preview — ported field-for-field from the Esperanza
-    // Mobile app's own ServiceFormSpec definitions (see
-    // config/esperanza_service_form_specs.php's own header comment). The
-    // admin doesn't persist a citizen's literal typed answers anywhere, so
-    // each field's displayed value is synthesized deterministically (same
-    // ref number -> same answer, every reload) rather than re-randomized —
-    // a real backend would simply store what the citizen actually typed.
+    // The question set per service, keyed by service name, aliases resolved:
+    // the same specs the app's wizard asks, so the Process screen can label
+    // every answer in a request's form_data.
     $formSpecs = config('esperanza_service_form_specs');
-    // Every educationalAttainment/highestEducationalAttainment/
-    // educationalAttainmentBeforeTraining field in the form specs uses the
-    // same short bucket list (None/Elementary/High School/Vocational/
-    // College/Post Graduate) — never the Constituents profile's own more
-    // specific wording ("Senior High School Graduate", "College Graduate",
-    // etc.), so an exact-match guard (like the one used for sex/civil
-    // status above) would never fire. This maps a real education value to
-    // whichever bucket it actually belongs in.
-    $resolveEducationOption = function (string $raw, array $options) {
-        $r = strtolower($raw);
-        $buckets = [
-            'post grad' => 'Post Graduate',
-            'vocational' => 'Vocational',
-            'college' => 'College',
-            'senior high' => 'High School',
-            'junior high' => 'High School',
-            'high school' => 'High School',
-            'elementary' => 'Elementary',
-            'no grade' => 'None',
-        ];
-        foreach ($buckets as $needle => $bucket) {
-            if (str_contains($r, $needle) && in_array($bucket, $options, true)) {
-                return $bucket;
-            }
-        }
-        return null;
-    };
-    $synthesizeFormAnswer = function (array $field, string $ref, string $citizenFirst, string $barangay, ?array $bio = null) use ($resolveEducationOption) {
-        $seed = crc32($ref . '|' . $field['key']);
-        // Fields that describe the citizen themselves must agree with their
-        // real Constituents profile wherever we actually know it — an
-        // applicant can't be one age on their profile and a different age
-        // on their own scholarship application.
-        if ($bio) {
-            if ($field['key'] === 'dateOfBirth' && $field['type'] === 'date' && !empty($bio['dob'])) {
-                return $bio['dob'];
-            }
-            if ($field['key'] === 'sex' && $field['type'] === 'select' && !empty($bio['sex']) && in_array($bio['sex'], $field['options'] ?? [], true)) {
-                return $bio['sex'];
-            }
-            if ($field['key'] === 'civilStatus' && $field['type'] === 'select' && !empty($bio['civil_status']) && in_array($bio['civil_status'], $field['options'] ?? [], true)) {
-                return $bio['civil_status'];
-            }
-            if (in_array($field['key'], ['occupation', 'presentOccupation'], true) && $field['type'] === 'text' && !empty($bio['occupation'])) {
-                return $bio['occupation'];
-            }
-            if ($field['key'] === 'emergencyContactName' && $field['type'] === 'text' && !empty($bio['emergency_name'])) {
-                return $bio['emergency_name'];
-            }
-            if ($field['key'] === 'emergencyContactNumber' && $field['type'] === 'text' && !empty($bio['emergency_contact'])) {
-                return $bio['emergency_contact'];
-            }
-            if (in_array($field['key'], ['fatherName', 'fatherFullName'], true) && $field['type'] === 'text' && !empty($bio['father_name'])) {
-                return $bio['father_name'];
-            }
-            if ($field['key'] === 'motherName' && $field['type'] === 'text' && !empty($bio['mother_name'])) {
-                return $bio['mother_name'];
-            }
-            if ($field['key'] === 'motherMaidenName' && $field['type'] === 'text' && !empty($bio['mother_maiden_name'])) {
-                return $bio['mother_maiden_name'];
-            }
-            if (in_array($field['key'], ['educationalAttainment', 'highestEducationalAttainment', 'educationalAttainmentBeforeTraining'], true) && $field['type'] === 'select' && !empty($bio['education'])) {
-                $resolved = $resolveEducationOption($bio['education'], $field['options'] ?? []);
-                if ($resolved) return $resolved;
-            }
-        }
-        $textPool = [
-            'businessName' => ["{$citizenFirst}'s Sari-Sari Store", "{$citizenFirst}'s Trading", "{$citizenFirst}'s Enterprises"],
-            'businessNature' => ['Retail / Sari-Sari Store', 'Food Stall / Carinderia', 'Buy-and-Sell Trading', 'Home-Based Tailoring'],
-            'placeOfBirth' => ["Brgy. {$barangay}, Esperanza, Masbate", 'Masbate City, Masbate', 'Milagros, Masbate'],
-            'schoolName' => ['Esperanza National High School', 'Masbate National Comprehensive High School', 'Naval State University'],
-            'yearOrGradeLevel' => ['Grade 11', 'Grade 12', '1st Year College', '2nd Year College', '3rd Year College', '4th Year College'],
-            'degreeProgramOrCourse' => ['BS Education', 'BS Business Administration', 'BS Criminology', 'BS Information Technology'],
-            'lastSchoolAverageGrade' => ['88', '90', '92', '85'],
-            'fatherName' => ['Ernesto ' . $citizenFirst, 'Ramon ' . $citizenFirst, 'Domingo ' . $citizenFirst],
-            'fatherOccupation' => ['Farmer', 'Fisherman', 'Tricycle Driver', 'Construction Worker'],
-            'motherName' => ['Corazon ' . $citizenFirst, 'Remedios ' . $citizenFirst, 'Leticia ' . $citizenFirst],
-            'motherOccupation' => ['Housewife', 'Sari-Sari Store Vendor', 'Laundrywoman'],
-            'communityInvolvement' => ['Active member of the school\'s Supreme Student Council.', 'Volunteers at barangay youth council activities.', 'Member of the church youth ministry.'],
-            'postGraduationPlans' => ['Plans to work locally and support the family.', 'Plans to pursue a teaching career in Esperanza.', 'Plans to apply for government service after graduation.'],
-            'purpose' => ["For proof of residency and identification purposes in Brgy. {$barangay}.", 'For submission as a TESDA/scholarship requirement.', 'For local employment application requirement.'],
-            'familyComposition' => ["Juan {$citizenFirst} Jr., 8, Son; Maria {$citizenFirst}, 5, Daughter", "Pedro {$citizenFirst}, 12, Son"],
-            'needsOrProblems' => ['Needs assistance with school supplies and daily food expenses for the children.', 'Needs support with monthly rent and utility bills.'],
-            'emergencyContactName' => ['Rosario ' . $citizenFirst, 'Teresita ' . $citizenFirst, 'Bienvenido ' . $citizenFirst],
-            'emergencyContactNumber' => ['0917 4' . str_pad((string) ($seed % 100000), 6, '0', STR_PAD_LEFT), '0918 3' . str_pad((string) ($seed % 100000), 6, '0', STR_PAD_LEFT)],
-            'occupation' => ['Market Vendor', 'Farmer', 'Fisherman', 'Sari-Sari Store Owner', 'Tricycle Driver'],
-            'presentOccupation' => ['Retired', 'Sari-Sari Store Owner', 'Farmer (Retired)', 'Housekeeper'],
-            'personFullName' => [$citizenFirst . ' (as printed on record)'],
-            'deceasedFullName' => [$citizenFirst . ' (as printed on record)'],
-            'motherMaidenName' => ['Reyes', 'Santos', 'Villanueva', 'Bautista'],
-            'citizenship' => ['Filipino'],
-            'spouseName' => ['Not applicable', $citizenFirst . "'s spouse"],
-            'placeOfDeath' => ["Brgy. {$barangay}, Esperanza, Masbate", 'Masbate Provincial Hospital, Masbate City'],
-            'religion' => ['Roman Catholic', 'Iglesia ni Cristo', 'Born Again Christian'],
-            'philsysIdNumber' => ['1234-5678-9012-' . str_pad((string) ($seed % 10000), 4, '0', STR_PAD_LEFT)],
-            'lastGovtOffice' => ['Barangay Hall (Brgy. ' . $barangay . ')', 'Municipal Treasurer\'s Office', 'Not applicable'],
-            'lastGovtPosition' => ['Barangay Tanod', 'Barangay Health Worker', 'Not applicable'],
-            'lastGovtYear' => ['2015', '2018', '2020', 'Not applicable'],
-        ];
-        switch ($field['type']) {
-            case 'date':
-                $age = 20 + ($seed % 35);
-                $year = 2026 - $age;
-                $month = 1 + ($seed % 12);
-                $day = 1 + ($seed % 28);
-                return sprintf('%04d-%02d-%02d', $year, $month, $day);
-            case 'derivedAge':
-                return null; // computed client-side from the dateOfBirth answer, per ServiceFieldType.derivedAge's own contract
-            case 'select':
-                $opts = $field['options'] ?? [];
-                return $opts ? $opts[$seed % count($opts)] : null;
-            case 'multiselect':
-                $opts = $field['options'] ?? [];
-                if (!$opts) return [];
-                $total = count($opts);
-                $count = 1 + ($seed % min(3, $total));
-                $picked = [];
-                for ($i = 0; $i < $count; $i++) {
-                    $picked[] = $opts[($seed + $i * 7) % $total];
-                }
-                return array_values(array_unique($picked));
-            case 'checkbox':
-                return $seed % 2 === 0;
-            case 'number':
-                if (str_contains(strtolower($field['label']), 'income') || str_contains(strtolower($field['label']), 'capital')) {
-                    return 3000 + ($seed % 12000);
-                }
-                return 1 + ($seed % 15);
-            case 'textarea':
-            case 'text':
-            default:
-                // No curated pool for this field key — an honest "Not
-                // provided" placeholder (see request-form-review.blade.php)
-                // beats fabricating a specific-sounding answer (e.g. a
-                // made-up father's name, business name, address) for a
-                // field this mock dataset has no real basis for.
-                $pool = $textPool[$field['key']] ?? null;
-                return $pool ? $pool[$seed % count($pool)] : null;
-        }
-    };
-    $resolveFormSpec = function (?string $type) use ($formSpecs) {
-        if (!$type || !isset($formSpecs[$type])) return null;
-        $spec = $formSpecs[$type];
-        return $spec['alias'] ?? null ? ($formSpecs[$spec['alias']] ?? null) : $spec;
-    };
-    // The only residents with a real supplied ID photo on file (see
-    // constituents.blade.php's own $residentIdImageAsset) — everyone else's
-    // "Valid ID" requirement stays the plain mock filename, since there's
-    // no real scan behind it to show.
-    $idPreviewAssetByCitizen = $__fixtures['idPreviewAssetByCitizen'];
-    // Official reference-form PDF per service, for the "Reference Form" panel
-    // shown once a request reaches Mark to Release (see admin/document-
-    // requests.blade.php's process modal). Not every service has one on
-    // file — those simply resolve to null and the panel shows a fallback.
+    $formSpecsByType = collect($formSpecs)
+        ->map(fn ($spec) => ($spec['alias'] ?? null) ? ($formSpecs[$spec['alias']] ?? null) : $spec)
+        ->filter()
+        ->all();
     $referencePdfByType = collect(config('esperanza_municipal_documents.documents'))
         ->concat(config('esperanza_barangay_documents.labangtaytay.documents'))
         ->concat(config('esperanza_tulong_types.types'))
         ->filter(fn ($d) => !empty($d['reference_pdf']))
         ->pluck('reference_pdf', 'name')
         ->map(fn ($path) => asset($path));
-    foreach ($requests as &$r) {
-        $r = array_merge($r, $dokyuClassification[$r['type']] ?? ['category' => 'Other Municipal Services', 'office' => $r['office'], 'level' => 'Municipal']);
-        $r['reference_pdf'] = $referencePdfByType[$r['type']] ?? null;
-        $r['assigned'] = $assignedByRef[$r['ref']] ?? null;
-        $r['service_guide_key'] = $typeToServiceGuideKey[$r['type']] ?? null;
-        $r['purpose'] = $r['purpose'] ?? ($purposeByCategory[$r['category']] ?? 'For general legal/administrative purposes');
-        if (!isset($r['requirements'])) {
-            $names = $defaultRequirementsByCategory[$r['category']] ?? ['Valid Government-Issued ID'];
-            $r['requirements'] = $synthesizeRequirements($names, $r['status'], $r['remarks'] ?? null, explode(' ', $r['citizen'])[0], $idPreviewAssetByCitizen[$r['citizen']] ?? null);
-        }
-        $spec = $resolveFormSpec($r['type']);
-        if ($spec) {
-            $citizenFirst = explode(' ', $r['citizen'])[0];
-            $bio = $citizenBio[$r['citizen']] ?? null;
-            $r['form_source'] = $spec['source'];
-            $r['form_steps'] = collect($spec['steps'])->map(function ($step) use ($synthesizeFormAnswer, $r, $citizenFirst, $bio) {
-                return [
-                    'label' => $step['label'],
-                    'description' => $step['description'] ?? null,
-                    'fields' => collect($step['fields'])->map(function ($field) use ($synthesizeFormAnswer, $r, $citizenFirst, $bio) {
-                        return $field + ['answer' => $synthesizeFormAnswer($field, $r['ref'], $citizenFirst, $r['barangay'], $bio)];
-                    })->all(),
-                ];
-            })->all();
-        }
-    }
-    unset($r);
 
     $tabs = $__fixtures['tabs'];
     $actionStatuses = $__fixtures['actionStatuses'];
@@ -479,7 +211,7 @@
                 // instead of leaving them blank just because this request
                 // never had its own formSnapshot. Never overwrites a field
                 // the name/purpose mapping above already set.
-                const bio = this.citizenBio[r.citizen];
+                const bio = null;
                 if (bio) {
                     const purokMatch = /Purok\s+([^,]+)/i.exec(bio.address || '');
                     const bioFields = {
@@ -1753,14 +1485,28 @@
                     document.body.classList.remove('dp-printing');
                 }
             },
-            requests: @js($requests),
-            citizenAvatars: @js($citizenAvatars),
-            citizenBio: @js($citizenBio),
+            requests: [],
+            requestsLoading: true,
+            requestsFailed: false,
+            detailLoading: false,
+            citizenAvatars: {},
             actionStatuses: @js($actionStatuses),
             doneStatuses: @js($doneStatuses),
-            paymentByRef: @js($paymentByRef),
+            formSpecsByType: @js($formSpecsByType),
+            dokyuClassification: @js($dokyuClassification),
+            referencePdfByType: @js($referencePdfByType),
+            typeToServiceGuideKey: @js($typeToServiceGuideKey),
+            requestType: 'dokyu',
+            // The request's own assessment (detail.payment), in the shape
+            // x-admin.payment-receipt reads; it renders once a receipt exists.
             get selectedPayment() {
-                return this.selected?.ref ? this.paymentByRef[this.selected.ref] : null;
+                const p = this.selected?.payment;
+                if (!p) return null;
+                return {
+                    ref: p.ref, receipt: p.receipt_no, method: p.method, status: p.status,
+                    citizen: this.selected.citizen, item: this.selected.type,
+                    amount: '₱' + Number(p.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 }),
+                };
             },
             standardReasons: @js($validationGuide['standard_reasons']),
             decisionOutcomes: @js($validationGuide['decision_outcomes']),
@@ -1843,57 +1589,153 @@
                     try { this.returnToProfile = JSON.parse(stored); } catch (e) { this.returnToProfile = null; }
                     sessionStorage.removeItem('returnToProfile');
                 }
-                this.restoreProgress();
-                // Arriving from a notification (see components/admin/topbar.blade.php)
-                // — jump straight into that exact request, not just the filtered list.
-                if (ref) {
+                this.loadOfficials();
+                this.loadRequests().then(() => {
+                    // Arriving from a notification (see components/admin/topbar.blade.php)
+                    // — jump straight into that exact request, not just the filtered list.
+                    if (!ref) return;
                     const match = this.requests.find(r => r.ref === ref);
                     if (match) this.$nextTick(() => this.openRequest(match));
+                });
+            },
+            // ---- The queue, from the API -----------------------------------
+            // Every action below calls the lifecycle endpoint it names and then
+            // takes the server's answer as the new state. The old localStorage
+            // "progress" layer, the demo reset and the simulated resubmission
+            // are gone: the server is the record, and a reload shows it.
+            apiBase(ref) {
+                return '/admin/' + this.requestType + '/requests/' + encodeURIComponent(ref);
+            },
+            apiMessage(err, fallback) {
+                return err && err.localised ? err.localised('en') : fallback;
+            },
+            formatDay(iso) {
+                if (!iso) return '';
+                const d = new Date(iso);
+                return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            },
+            async loadRequests() {
+                this.requestsLoading = true;
+                this.requestsFailed = false;
+                try {
+                    const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params: { sort: '-submitted_at' } });
+                    this.requests = (res.data || []).map((row) => this.fromApi(row));
+                } catch (err) {
+                    this.requestsFailed = true;
+                } finally {
+                    this.requestsLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
                 }
-                // Closing the process modal is the signal that time has
-                // passed in this simulation — see resolvePendingResubmissions.
-                this.$watch('open', (isOpen) => { if (!isOpen) this.resolvePendingResubmissions(); });
             },
-            // Verification is a resumable flow, not a single sitting — an
-            // admin who closes the tab mid-review (or mid-multi-step
-            // requirement decision) comes back to exactly the stage/status
-            // they left, not a reset request. FRONTEND SIMULATION ONLY:
-            // localStorage stands in for what a real backend would persist
-            // server-side; this project has no database. Keyed per-ref so
-            // it survives the mock $requests array being edited/extended
-            // between sessions — only the progress fields below get
-            // overlaid onto whatever the current mock data defines, never
-            // the whole record.
-            restoreProgress() {
-                let saved = {};
-                try { saved = JSON.parse(localStorage.getItem('esperanza_dokyu_progress') || '{}'); } catch (e) { saved = {}; }
-                this.requests.forEach((r) => {
-                    if (saved[r.ref]) Object.assign(r, saved[r.ref]);
-                });
+            // Real officials per barangay (GET /barangays), over the config
+            // defaults the prepared-document letterhead falls back to.
+            async loadOfficials() {
+                try {
+                    const res = await $api.get('/barangays');
+                    (res.data || []).forEach((b) => {
+                        if (!b.name || !b.officials) return;
+                        this.barangayCatalog[b.name] = { ...(this.barangayCatalog[b.name] || { label: b.name }), officials: b.officials };
+                    });
+                } catch { /* the config officials stay */ }
             },
-            // Escape hatch for stale saved progress — every status change,
-            // flag, or resubmission an admin makes gets written to
-            // localStorage (see persistProgress) so review work survives a
-            // reload. That is normally exactly what you want, but it also
-            // means old demo interactions never age out on their own and
-            // can end up showing status labels or documents that no longer
-            // match the current mock data. This clears the saved progress
-            // for both Dokyu and Tulong and reloads clean.
-            resetDemoData() {
-                localStorage.removeItem('esperanza_dokyu_progress');
-                localStorage.removeItem('esperanza_tulong_progress');
-                window.location.href = window.location.pathname;
+            fromApi(row) {
+                const type = row.service || row.service_key || 'Request';
+                const cls = this.dokyuClassification[type] || {};
+                return {
+                    ref: row.ref,
+                    citizen: row.applicant || '—',
+                    type,
+                    service_key: row.service_key,
+                    office: row.office || cls.office || '—',
+                    barangay: row.barangay || '',
+                    submitted: this.formatDay(row.submitted),
+                    submitted_at: row.submitted,
+                    status: row.status,
+                    category: cls.category || 'Other Municipal Services',
+                    level: cls.level || 'Municipal',
+                    reference_pdf: this.referencePdfByType[type] || null,
+                    service_guide_key: this.typeToServiceGuideKey[type] || null,
+                    assigned: null,
+                    purpose: '',
+                    requirements: null,
+                    remarks: null,
+                    payment: null,
+                    release_evidence: null,
+                    release_evidence_at: null,
+                };
             },
-            persistProgress() {
-                const data = {};
-                this.requests.forEach((r) => {
-                    data[r.ref] = {
-                        status: r.status, remarks: r.remarks ?? null, assigned: r.assigned ?? null,
-                        release_evidence: r.release_evidence ?? null, release_evidence_at: r.release_evidence_at ?? null,
-                        requirements: r.requirements ?? undefined,
-                    };
-                });
-                try { localStorage.setItem('esperanza_dokyu_progress', JSON.stringify(data)); } catch (e) {}
+            // The request's form answers, labelled by the same spec the app's
+            // wizard asked them from. A key the spec does not know is still
+            // shown, under its own name, rather than dropped.
+            formStepsFor(type, formData) {
+                const data = formData || {};
+                const spec = this.formSpecsByType[type];
+                const seen = new Set();
+                const steps = (spec?.steps || []).map((step) => ({
+                    label: step.label,
+                    description: step.description || null,
+                    fields: (step.fields || []).map((f) => { seen.add(f.key); return { ...f, answer: data[f.key] ?? null }; }),
+                }));
+                const extra = Object.keys(data).filter((k) => !seen.has(k) && k !== 'purpose');
+                if (extra.length) {
+                    steps.push({
+                        label: 'Other details',
+                        description: null,
+                        fields: extra.map((k) => ({ key: k, label: k.replace(/([A-Z])/g, ' $1').replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase()), type: 'text', answer: data[k] })),
+                    });
+                }
+                return steps;
+            },
+            fromApiRequirement(q) {
+                return {
+                    key: q.key,
+                    name: q.label,
+                    // The API's Pending Review is what this screen calls Submitted.
+                    status: q.status === 'Pending Review' ? 'Submitted' : q.status,
+                    reject_reason: q.reason,
+                    remarks: q.remarks,
+                    file: q.file?.name || null,
+                    file_url: q.file?.url || null,
+                    file_mime: q.file?.mime || null,
+                    preview_asset: q.file?.url && (q.file?.mime || '').startsWith('image/') ? q.file.url : null,
+                    versions: (q.versions || []).map((v) => ({
+                        file: v.file?.name || null,
+                        file_url: v.file?.url || null,
+                        status: v.status === 'Pending Review' ? 'Submitted' : v.status,
+                        date: this.formatDay(v.archived_at),
+                        reject_reason: v.reason,
+                        remarks: v.remarks,
+                    })),
+                    _decidingOutcome: null,
+                    _reason: '',
+                    _remarks: '',
+                    _showVersions: false,
+                };
+            },
+            applyDetail(r, d) {
+                r.status = d.status;
+                r.office = d.office || r.office;
+                r.remarks = d.decision_remarks || null;
+                r.form_data = d.form_data || {};
+                r.purpose = (d.form_data && d.form_data.purpose) || '';
+                r.form_steps = this.formStepsFor(r.type, d.form_data);
+                r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
+                r.payment = d.payment || null;
+                r.remarks_log = d.remarks || [];
+                r.history = (d.history || []).map((h) => ({ stage: h.to, date: this.formatDay(h.at), by: h.actor_name || '—', note: h.trigger || '' }));
+                const proof = d.proof_of_release || {};
+                if (proof.captured) {
+                    r.release_evidence = proof.file?.url || r.release_evidence || null;
+                    r.release_evidence_at = proof.note || 'on file';
+                    r._proofOnFile = true;
+                }
+            },
+            async refreshSelected() {
+                if (!this.selected) return;
+                const r = this.selected;
+                const res = await $api.get(this.apiBase(r.ref));
+                this.applyDetail(r, res.data);
+                this.$nextTick(() => window.renderIcons?.());
             },
             backToProfile() {
                 if (!this.returnToProfile) return;
@@ -1950,16 +1792,22 @@
             // Submitted request auto-advances to Under Verification the
             // moment an admin actually opens it; anything already past
             // that stays exactly where it is.
-            openRequest(r) {
-                if (r.status === 'Submitted') {
-                    r.status = this.statusOrder[this.stepIndex(r.status) + 1];
-                    this.persistProgress();
-                }
+            // Opening is itself the server's trigger: GET on a Submitted
+            // request moves it to Under Verification (RequestLifecycle::open).
+            async openRequest(r) {
                 this.selected = r;
                 this.rejectRemarks = '';
                 this.previewDoc = null;
                 this.open = true;
-                this.$nextTick(() => window.renderIcons?.());
+                this.detailLoading = true;
+                try {
+                    await this.refreshSelected();
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not open ' + r.ref + '.'), variant: 'error' });
+                } finally {
+                    this.detailLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             },
             // Every status transition below still writes to local Alpine
             // state instead of calling the real lifecycle endpoints (see
@@ -1972,19 +1820,20 @@
             // load() for free, from NotificationService::notifyTransition(),
             // and this no-op (kept only so every existing call site below
             // still resolves) should be deleted along with its calls.
-            notifyStatus() {},
-            reject() {
+            // The resident is notified by the server on every transition
+            // (NotificationService::notifyTransition); nothing to send here.
+            async reject() {
                 if (this.processing || !this.rejectRemarks.trim()) return;
                 this.processing = true;
-                setTimeout(() => {
-                    this.selected.status = 'Rejected';
-                    this.selected.remarks = this.rejectRemarks.trim();
+                const r = this.selected;
+                try {
+                    const res = await $api.post(this.apiBase(r.ref) + '/reject', { decision_remarks: this.rejectRemarks.trim() });
+                    this.applyDetail(r, res.data);
                     this.rejectRemarks = '';
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: 'Request ' + this.selected.ref + ' rejected.', variant: 'error' });
-                    this.notifyStatus('Request Rejected', 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') was rejected: ' + this.selected.remarks, 'circle-x', 'rose');
-                }, 700);
+                    this.$dispatch('toast', { message: 'Request ' + r.ref + ' rejected.', variant: 'error' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not reject ' + r.ref + '.'), variant: 'error' });
+                } finally { this.processing = false; }
             },
             rejectReasons: ['Invalid document', 'Incorrect document', 'Unreadable', 'Expired', 'Wrong document', 'Missing information', 'Does not meet requirement', 'Other'],
             // Plain-language read on what to do next, shown in the System
@@ -2048,12 +1897,16 @@
             get canReject() {
                 return this.selected && ['Under Verification', 'Under Review'].includes(this.selected.status);
             },
-            verifyRequirement(req) {
-                req.status = 'Approved';
-                req.reject_reason = null;
-                req.remarks = null;
-                this.persistProgress();
-                this.$dispatch('toast', { message: req.name + ' verified.', variant: 'success' });
+            async verifyRequirement(req) {
+                if (req._busy) return;
+                req._busy = true;
+                try {
+                    await $api.post(this.apiBase(this.selected.ref) + '/requirements/' + encodeURIComponent(req.key) + '/approve');
+                    await this.refreshSelected();
+                    this.$dispatch('toast', { message: req.name + ' verified.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not verify ' + req.name + '.'), variant: 'error' });
+                } finally { req._busy = false; }
             },
             // Requirement-level decision flow covering the guide's other
             // three outcomes — Needs Additional Documents, Needs Manual
@@ -2064,59 +1917,24 @@
                 req._reason = '';
                 req._remarks = '';
             },
-            // Flagging a requirement stays flagged while this modal is open
-            // — the citizen resubmitting only happens once you leave (see
-            // resolvePendingResubmissions, fired by the open-state watcher
-            // in init()). Without that delay, flagging and the citizen
-            // fixing it would appear to happen in the same instant, which
-            // reads as if the citizen were watching the admin's screen.
-            confirmRequirementDecision(req) {
-                if (!req._reason) return;
+            // Flag for Replacement or Reject, with the reason (and remarks)
+            // the resident will read. Flagging any one requirement moves the
+            // whole request to Under Review on the server; the resident then
+            // replaces the file from their own device, and it shows here as
+            // Resubmitted the next time this request is opened.
+            async confirmRequirementDecision(req) {
+                if (!req._reason || req._busy) return;
                 const outcome = req._decidingOutcome;
-                req.versions = req.versions || [];
-                req.versions.push({ file: req.file, status: outcome, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), reject_reason: req._reason, remarks: req._remarks || '' });
-                req.status = outcome;
-                req.reject_reason = req._reason;
-                req.remarks = req._remarks || '';
-                req._pendingResubmit = outcome === 'Flagged for Replacement';
-                req._decidingOutcome = null;
-                req._reason = '';
-                req._remarks = '';
-                // A single requirement needing more work never silently
-                // rejects the whole request — it rolls the request up into
-                // whichever review state that requirement now needs.
-                if (this.selected.status !== 'Rejected') {
-                    this.selected.status = (outcome === 'Rejected' || outcome === 'Flagged for Replacement') ? 'Under Review' : outcome;
-                }
-                const variant = outcome === 'Rejected' ? 'error' : outcome === 'Flagged for Replacement' ? 'warning' : 'info';
-                this.persistProgress();
-                this.$dispatch('toast', { message: req.name + ' marked ' + outcome + '.', variant });
-            },
-            // Resolves any requirement flagged during this viewing into
-            // Resubmitted — called when the process modal closes (see the
-            // $watch('open', ...) in init()), so the citizen's correction
-            // only becomes visible on the NEXT time this request is opened,
-            // not instantly while the admin is still looking at it.
-            resolvePendingResubmissions() {
-                if (!this.selected) return;
-                const request = this.selected;
-                let changed = false;
-                (request.requirements || []).forEach((req) => {
-                    if (!req._pendingResubmit) return;
-                    changed = true;
-                    const ext = (req.file || '').toLowerCase().endsWith('.pdf') ? '.pdf' : '.jpg';
-                    req.file = req.name.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_revised' + ext;
-                    req.status = 'Resubmitted';
-                    req.reject_reason = null;
-                    req.remarks = null;
-                    req._pendingResubmit = false;
-                    // This processing modal still mutates local Alpine state
-                    // rather than calling the real requirement-resubmit
-                    // endpoint (see PRODUCTION_READINESS.md), so there is no
-                    // server-side notification to reflect. $store.adminNotifications
-                    // now reads real rows from GET /admin/notifications.
-                });
-                if (changed) this.persistProgress();
+                const action = outcome === 'Rejected' ? 'reject' : 'flag';
+                const remarks = (req._remarks || '').trim() || req._reason;
+                req._busy = true;
+                try {
+                    await $api.post(this.apiBase(this.selected.ref) + '/requirements/' + encodeURIComponent(req.key) + '/' + action, { reason: req._reason, remarks });
+                    await this.refreshSelected();
+                    this.$dispatch('toast', { message: req.name + ' marked ' + outcome + '.', variant: outcome === 'Rejected' ? 'error' : 'warning' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not save the decision on ' + req.name + '.'), variant: 'error' });
+                } finally { req._busy = false; }
             },
             statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             terminalStatuses: ['Rejected', 'Released', 'Completed', 'Archived', 'Cancelled'],
@@ -2143,41 +1961,75 @@
             // fabricated one) since a genuine handover snapshot isn't
             // available in this mock dataset; a real backend would store
             // whatever image the admin actually captured/uploaded.
+            // A real photo from the device camera or files. It is held here
+            // and sent with the release itself (POST .../release, proof_file):
+            // the server refuses a release without proof.
             captureReleaseEvidence(source) {
-                this.selected.release_evidence = this.citizenAvatars[this.selected.citizen] || `https://api.dicebear.com/9.x/personas/svg?seed=${encodeURIComponent(this.selected.citizen)}`;
-                this.selected.release_evidence_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                this.persistProgress();
-                this.$dispatch('toast', { message: (source === 'camera' ? 'Photo captured' : 'Photo uploaded') + ' — frontend preview only, no data is saved.', variant: 'info' });
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                if (source === 'camera') input.setAttribute('capture', 'environment');
+                input.onchange = () => {
+                    const file = input.files && input.files[0];
+                    if (!file || !this.selected) return;
+                    if (this.selected._proofPreview) URL.revokeObjectURL(this.selected._proofPreview);
+                    this.selected._proofFile = file;
+                    this.selected._proofPreview = URL.createObjectURL(file);
+                    this.selected.release_evidence = this.selected._proofPreview;
+                    this.selected.release_evidence_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                    this.$nextTick(() => window.renderIcons?.());
+                };
+                input.click();
             },
             clearReleaseEvidence() {
+                if (this.selected._proofPreview) URL.revokeObjectURL(this.selected._proofPreview);
+                this.selected._proofFile = null;
+                this.selected._proofPreview = null;
                 this.selected.release_evidence = null;
                 this.selected.release_evidence_at = null;
-                this.persistProgress();
             },
             // Generic advance-to-next-stage action. From Under Review this
             // approves the request directly — once the admin has approved
             // every resubmitted requirement at the per-requirement level
             // (see confirmRequirementDecision), there is no further
             // whole-request gate to pass.
-            approve() {
+            // The one advance button, per stage, each a real endpoint:
+            //   Under Verification / Under Review / Resubmitted -> approve
+            //   Approved        -> mark-to-release, then issue the document
+            //                      (control number + verification token)
+            //   Mark to Release -> release, carrying the proof-of-release photo
+            async approve() {
                 if (this.processing) return;
+                const r = this.selected;
                 this.processing = true;
-                setTimeout(() => {
-                    const next = Math.min(this.stepIndex(this.selected.status) + 1, this.statusOrder.length - 1);
-                    this.selected.status = this.statusOrder[next];
-                    this.processing = false;
-                    this.persistProgress();
-                    this.$dispatch('toast', { message: this.selected.ref + ' moved to next stage: ' + this.selected.status + '.', variant: 'success' });
-                    const stageNotice = {
-                        'Under Verification': ['Request Under Verification', 'is now being verified.', 'search-check', 'indigo'],
-                        'Approved': ['Request Approved', 'has been approved and is being prepared.', 'package-check', 'emerald'],
-                        'Mark to Release': ['Ready for Release', 'is ready for release! Visit the office to claim it.', 'circle-check', 'teal'],
-                        'Released': ['Request Released', 'has been released. Thank you!', 'check-check', 'cyan'],
-                    }[this.selected.status];
-                    if (stageNotice) {
-                        this.notifyStatus(stageNotice[0], 'Your ' + this.selected.type + ' request (' + this.selected.ref + ') ' + stageNotice[1], stageNotice[2], stageNotice[3]);
+                try {
+                    let res;
+                    if (['Under Verification', 'Under Review', 'Resubmitted'].includes(r.status)) {
+                        res = await $api.post(this.apiBase(r.ref) + '/approve');
+                    } else if (r.status === 'Approved') {
+                        res = await $api.post(this.apiBase(r.ref) + '/mark-to-release');
+                        try {
+                            const issued = await $api.post('/admin/requests/' + encodeURIComponent(r.ref) + '/issue');
+                            r.issued = issued.data;
+                        } catch (err) {
+                            this.$dispatch('toast', { message: 'Marked to release, but the document could not be issued: ' + this.apiMessage(err, 'unknown error') + '.', variant: 'warning' });
+                        }
+                    } else if (r.status === 'Mark to Release') {
+                        const form = new FormData();
+                        if (r._proofFile) form.append('proof_file', r._proofFile);
+                        form.append('proof_note', 'Released to ' + r.citizen + ' at the office. Recorded by ' + (this.$store.session.account?.name || 'staff') + '.');
+                        res = await $api.post(this.apiBase(r.ref) + '/release', form);
+                    } else {
+                        return;
                     }
-                }, 700);
+                    this.applyDetail(r, res.data);
+                    this.$dispatch('toast', { message: r.ref + ' moved to: ' + r.status + '.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not update ' + r.ref + '.'), variant: 'error' });
+                } finally {
+                    this.processing = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             },
         }"
         class="animate-fade-up"
@@ -2245,11 +2097,11 @@
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
                 </button>
                 <button
-                    type="button" @click="resetDemoData()"
-                    title="Clears saved review progress for every Dokyu/Tulong request in this browser and reloads with the current mock data — use this if a request's status or documents look out of date."
-                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors shrink-0"
+                    type="button" @click="loadRequests()"
+                    title="Reload the queue from the server."
+                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors shrink-0"
                 >
-                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Demo Data
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
                 </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -2355,9 +2207,11 @@
             </tbody>
         </x-ui.table>
 
-        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredRequests.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
-            <p class="text-sm font-medium text-slate-600">No requests match these filters.</p>
+        <div x-show="requestsLoading" class="space-y-2 mt-3"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
+        <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="'Could not load document requests.'" retryExpr="loadRequests()" :retryable="true" /></div>
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+            <p class="text-sm font-medium text-slate-600" x-text="requests.length ? 'No requests match these filters.' : 'No document requests yet.'"></p>
         </div>
 
         <x-ui.modal title="Process Document Request" maxWidth="4xl">
@@ -2627,6 +2481,19 @@
                         </div>
                     </div>
 
+                    {{-- Status history: every transition the server recorded, newest first. --}}
+                    <div class="rounded-xl border border-slate-200 p-4 mt-3" x-show="(selected.history || []).length" x-cloak>
+                        <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide flex items-center gap-1.5 mb-2"><i data-lucide="history" class="w-3.5 h-3.5"></i> Status History</p>
+                        <ul class="space-y-2">
+                            <template x-for="(h, hi) in (selected.history || []).slice().reverse()" :key="hi">
+                                <li class="text-xs border-l-2 border-slate-200 pl-2.5">
+                                    <p class="font-medium text-navy-900" x-text="h.stage + (h.note ? ' — ' + h.note : '')"></p>
+                                    <p class="text-[11px] text-slate-500" x-text="h.date + (h.by ? ' · ' + h.by : '')"></p>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
                     <div class="mt-3" x-show="canReject">
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Decision Remarks <span class="text-slate-400 font-normal">(required for Reject — this is what the citizen will see)</span></label>
                         <p class="text-[11px] text-slate-400 mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
@@ -2818,9 +2685,15 @@
                              still falls back to the plain icon + filename, since no
                              real file exists behind those. --}}
                         <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/2] overflow-hidden mb-3" x-show="previewDoc?.preview_asset">
-                            <img :src="previewDoc?.preview_asset" :alt="previewDoc?.name" class="w-full h-full object-cover">
+                            <img :src="previewDoc?.preview_asset" :alt="previewDoc?.name" class="w-full h-full object-contain">
                         </div>
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden mb-3" style="height: 320px;" x-show="!previewDoc?.preview_asset && previewDoc?.file_url && previewDoc?.file_mime === 'application/pdf'">
+                            <iframe :src="previewDoc?.file_url" class="w-full h-full" :title="previewDoc?.name"></iframe>
+                        </div>
+                        <a x-show="previewDoc?.file_url" :href="previewDoc?.file_url" target="_blank" rel="noopener" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium inline-flex items-center gap-1 mb-3">
+                            <i data-lucide="external-link" class="w-3 h-3"></i> Open the file in a new tab
+                        </a>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset && !(previewDoc?.file_url && previewDoc?.file_mime === 'application/pdf')">
                             <span
                                 class="w-14 h-14 rounded-2xl flex items-center justify-center"
                                 :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'"

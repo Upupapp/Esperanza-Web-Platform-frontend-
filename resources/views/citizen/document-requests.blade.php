@@ -1,18 +1,14 @@
 @php
-    // All of Cristy's own Dokyu requests are seeded fresh as Submitted —
-    // a clean baseline to walk through the Process tab workflow end to end
-    // (Submitted -> open -> Under Verification -> ... ) rather than
-    // starting from a mix of already-resolved statuses. The one exception
-    // is DR-2026-2098 below: the dashboard's own "Mark to Release" stat
-    // card (see the stat-card row further down this file) has always
-    // claimed a count of 1, with nothing behind it — this gives that
-    // number a real request, already carrying the same formSnapshot/docKey
-    // a citizen's own submission captures, so the Track Request modal's
-    // Preview/Download/Print of the actual issued document is demonstrable
-    // without needing devtools to hand-edit a request's status.
+    // The resident's requests, their documents and every action on them go
+    // through the API (see the x-data below); this block only builds the
+    // catalog and lookup tables the wizard and tracker render from.
     // TAB 04: fixtures live in resources/data/citizen/document-requests.php so this view stays presentation only.
     $__fixtures = require base_path('resources/data/citizen/document-requests.php');
-    $requests = $__fixtures['requests'];
+    // The resident's own requests come from the API after paint
+    // (GET /citizen/requests). This used to be a fixture list, and the New
+    // Request wizard only added a row to the page: nothing reached the
+    // Municipality.
+    $requests = [];
 
     // The 6 core municipal Dokyu types (Cedula, Certificate of Residency,
     // Certificate of Indigency, Business Permit New/Renewal, Real Property
@@ -92,19 +88,12 @@
     // merged here for this lookup only — $documentTypes itself stays municipal-only.
     $daysByType = collect($documentTypes)->pluck('days', 'name')
         ->union(collect($barangayDocTemplate)->pluck('days', 'name'));
-    foreach ($requests as &$r) {
-        $r['days'] = $daysByType[$r['type']] ?? '3-5 working days';
-    }
-    unset($r);
+    $officeByType = collect($documentTypes)->pluck('office', 'name');
 
     // Where to follow up / claim a released document, keyed by office name.
     // Barangay Hall entries vary per barangay (the office string already
     // carries "Barangay Hall (Brgy. X)"), so those are matched by prefix.
     $pickupDirectory = $__fixtures['pickupDirectory'];
-
-    $submittedDocs = $__fixtures['submittedDocs'];
-
-    $availableFiles = $__fixtures['availableFiles'];
 
     $fileCardStyle = $__fixtures['fileCardStyle'];
 @endphp
@@ -113,7 +102,13 @@
     <div
         x-data="{
             tab: 'all',
-            requests: @js($requests),
+            requests: [],
+            requestsLoading: true,
+            requestsFailed: false,
+            daysByType: @js($daysByType),
+            officeByType: @js($officeByType),
+            papeles: [],
+            papelesLoading: true,
             doneStatuses: ['Completed', 'Released', 'Rejected', 'Cancelled', 'Archived'],
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
@@ -137,7 +132,6 @@
                 });
             },
             pickupDirectory: @js($pickupDirectory),
-            files: @js($submittedDocs),
             // Same lookup the New Request wizard uses for its live preview's
             // letterhead (seal/officials per barangay) — duplicated here (it's
             // a small array, already computed once server-side) so the Track
@@ -151,51 +145,107 @@
             selectedRequest: null,
             resubmitNote: '',
             resubmitting: false,
-            openProgress(r) { this.selectedRequest = r; this.resubmitNote = ''; this.progressOpen = true; },
-            resubmitRequest() {
-                if (this.resubmitting || !this.resubmitNote.trim()) return;
-                this.resubmitting = true;
-                setTimeout(() => {
-                    this.selectedRequest.status = 'Submitted';
-                    this.selectedRequest.purpose = this.resubmitNote.trim();
-                    this.selectedRequest.submitted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    delete this.selectedRequest.remarks;
-                    this.resubmitting = false;
-                    this.progressOpen = false;
-                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
-                }, 800);
+            // ---- From the API -----------------------------------------------
+            lang(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+            apiMessage(err, fallback) { return err && err.localised ? err.localised(this.$store.lang.current) : fallback; },
+            formatDay(iso) {
+                if (!iso) return '';
+                const d = new Date(iso);
+                return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
-            replaceRequirementFile(req, fileName) {
-                req.versions = req.versions || [];
-                req.versions.push({ file: req.file, status: req.status, date: req._flaggedDate || '', reject_reason: req.reject_reason, remarks: req.remarks });
-                req.file = fileName;
-                req.status = 'Resubmitted';
-                req.reject_reason = null;
-                req.remarks = null;
-                req._showPicker = false;
-                this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Replacement uploaded — awaiting review.' : 'Na-upload ang kapalit — hinihintay ang pagsusuri.', variant: 'success' });
+            async loadRequests() {
+                this.requestsLoading = true;
+                this.requestsFailed = false;
+                try {
+                    const res = await $api.getAll('/citizen/requests', { params: { sort: '-submitted_at' } });
+                    this.requests = (res.data || []).filter((r) => r.type === 'dokyu').map((r) => ({
+                        ref: r.ref,
+                        type: r.service || '—',
+                        office: this.officeByType[r.service] || '',
+                        purpose: '',
+                        days: this.daysByType[r.service] || '3-5 working days',
+                        submitted: this.formatDay(r.submitted),
+                        submitted_at: r.submitted,
+                        status: r.status,
+                        requirements: null,
+                    }));
+                } catch { this.requestsFailed = true; } finally {
+                    this.requestsLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
             },
+            async loadPapeles() {
+                this.papelesLoading = true;
+                try {
+                    const res = await $api.get('/citizen/papeles');
+                    this.papeles = res.data || [];
+                } catch { this.papeles = []; } finally { this.papelesLoading = false; }
+            },
+            applyDetail(r, d) {
+                r.status = d.status;
+                r.office = d.office || r.office;
+                r.remarks = d.decision_remarks || null;
+                r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose;
+                r.formSnapshot = d.form_data || {};
+                r.canResubmit = !!d.can_resubmit;
+                r.payment = d.payment || null;
+                r.history = d.history || [];
+                r.requirements = (d.requirements || []).map((q) => ({
+                    key: q.key,
+                    name: q.label,
+                    status: q.status === 'Pending Review' ? 'Submitted' : q.status,
+                    reject_reason: q.reason,
+                    remarks: q.remarks,
+                    file: q.file?.name || null,
+                    file_url: q.file?.url || null,
+                    attachable: !!q.attachable,
+                    _busy: false,
+                }));
+            },
+            async openProgress(r) {
+                this.selectedRequest = r;
+                this.progressOpen = true;
+                try {
+                    const res = await $api.get('/citizen/requests/' + encodeURIComponent(r.ref));
+                    this.applyDetail(r, res.data);
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not load ' + r.ref + '.'), variant: 'error' });
+                } finally { this.$nextTick(() => window.renderIcons?.()); }
+            },
+            // Attach the document for a requirement the office has not decided
+            // yet, or replace one it flagged. Both are real uploads now.
+            async sendRequirementFile(req, file, action) {
+                if (!file || req._busy) return;
+                const r = this.selectedRequest;
+                const form = new FormData();
+                form.append('file', file);
+                req._busy = true;
+                try {
+                    const res = await $api.post('/citizen/requests/' + encodeURIComponent(r.ref) + '/requirements/' + encodeURIComponent(req.key) + '/' + action, form);
+                    this.applyDetail(r, res.data);
+                    this.$dispatch('toast', { message: action === 'replace' ? this.lang('Replacement uploaded — awaiting review.', 'Na-upload ang kapalit — hinihintay ang pagsusuri.') : this.lang('Document attached.', 'Naikabit ang dokumento.'), variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, this.lang('Could not upload the file.', 'Hindi ma-upload ang file.')), variant: 'error' });
+                } finally { req._busy = false; this.$nextTick(() => window.renderIcons?.()); }
+            },
+            replaceRequirementFile(req, file) { return this.sendRequirementFile(req, file, 'replace'); },
+            attachRequirementFile(req, file) { return this.sendRequirementFile(req, file, 'attach'); },
             get canResubmitRequirements() {
-                return this.selectedRequest && (this.selectedRequest.requirements || []).every(r => r.status !== 'Flagged for Replacement');
+                return !!(this.selectedRequest && this.selectedRequest.canResubmit);
             },
-            // The SAME request moves Under Review -> Resubmitted here — it
-            // never goes back to Submitted, never resets, and keeps its ref,
-            // original documents, and review remarks (see replaceRequirementFile
-            // above, which preserves the flagged version in req.versions
-            // rather than overwriting it). On the admin side there's no
-            // matching mark-resubmitted click needed — once flagged
-            // requirements are checked and approved, the whole request can
-            // be approved directly (see admin/document-requests.blade.php).
-            resubmitRequirements() {
+            // Under Review -> Resubmitted on the server: the same request, the
+            // same ref, its history kept.
+            async resubmitRequirements() {
                 if (this.resubmitting || !this.canResubmitRequirements) return;
+                const r = this.selectedRequest;
                 this.resubmitting = true;
-                setTimeout(() => {
-                    this.selectedRequest.status = 'Resubmitted';
-                    this.selectedRequest.resubmitted_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    this.resubmitting = false;
-                    this.progressOpen = false;
-                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? this.selectedRequest.ref + ' resubmitted for review.' : 'Naisumite muli ang ' + this.selectedRequest.ref + ' para sa pagsusuri.', variant: 'success' });
-                }, 800);
+                try {
+                    const res = await $api.post('/citizen/requests/' + encodeURIComponent(r.ref) + '/resubmit');
+                    this.applyDetail(r, res.data);
+                    this.$dispatch('toast', { message: this.lang(r.ref + ' resubmitted for review.', 'Naisumite muli ang ' + r.ref + ' para sa pagsusuri.'), variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not resubmit.'), variant: 'error' });
+                } finally { this.resubmitting = false; }
             },
             stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             stepIndex(status) {
@@ -307,7 +357,7 @@
                     document.body.classList.remove('dp-printing');
                 }
             },
-            // Deep-link landing: a notification click appends ?ref=DR-2026-xxxx
+            // Deep-link landing: a notification click appends ?ref=DOK-2026-xxxx
             // (see citizen/notifications.blade.php) — open that exact
             // request's tracking modal instead of just landing on the list.
             init() {
@@ -315,25 +365,28 @@
                 // the backend lifecycle itself creates one on every status
                 // change, so there is nothing left to backfill here.
                 const ref = new URLSearchParams(window.location.search).get('ref');
-                if (!ref) return;
-                const match = this.requests.find(r => r.ref === ref);
-                if (match) this.openProgress(match);
+                this.loadPapeles();
+                this.loadRequests().then(() => {
+                    if (!ref) return;
+                    const match = this.requests.find(r => r.ref === ref);
+                    if (match) this.openProgress(match);
+                });
             },
         }"
         class="animate-fade-up"
     >
 
         <x-ui.page-intro id="dokyu" icon="file-text" title="Paano gumagana ang Dokyu" titleEn="How Dokyu works">
-            <span x-show="tab === 'all'"><x-ui.t fil="Pumili ng dokumento, kumpirmahin ang iyong detalye, bayaran ang bayarin kung meron (marami, tulad ng Certificate of Indigency, ay libre), pagkatapos i-submit. Nagsisimula sa" en="Pick a document, confirm your details, pay the fee if there is one (many, like the Certificate of Indigency, are free), then submit. Reference numbers start with" /> <span class="font-mono">DR-</span> <x-ui.t fil="ang reference number." en="." /></span>
+            <span x-show="tab === 'all'"><x-ui.t fil="Pumili ng dokumento, kumpirmahin ang iyong detalye, bayaran ang bayarin kung meron (marami, tulad ng Certificate of Indigency, ay libre), pagkatapos i-submit. Nagsisimula sa" en="Pick a document, confirm your details, pay the fee if there is one (many, like the Certificate of Indigency, are free), then submit. Reference numbers start with" /> <span class="font-mono">DOK-</span> <x-ui.t fil="ang reference number." en="." /></span>
             <span x-show="tab === 'active'" x-cloak><x-ui.t fil="Ang mga kahilingang ito ay nire-review, vine-verify, o inihahanda pa. Aabisuhan ka namin kapag may update — hindi na kailangang sumunod pa sa opisina." en="These requests are still being reviewed, verified, or prepared. We'll notify you the moment there's an update — no need to follow up in person." /></span>
             <span x-show="tab === 'done'" x-cloak><x-ui.t fil="Ang mga kahilingang ito ay na-release o kumpleto na. Puwede mo pa ring balikan ang mga ito rito anumang oras kung kailangan mo ng kopya ng detalye." en="These requests have been released or fully completed. You can revisit any of them here anytime you need a copy of the details." /></span>
         </x-ui.page-intro>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="6" icon="file-text" color="brand" :delay="0" />
-            <x-ui.stat-card label="Isinasagawa" labelEn="In Progress" value="1" icon="loader" color="orange" :delay="40" />
-            <x-ui.stat-card label="Handa nang Kunin" labelEn="Mark to Release" value="1" icon="package-check" color="green" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="3" icon="circle-check" color="purple" :delay="120" />
+            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
+            <x-ui.stat-card label="Isinasagawa" labelEn="In Progress" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="orange" :delay="40" />
+            <x-ui.stat-card label="Handa nang Kunin" labelEn="Mark to Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed'].includes(r.status)).length" icon="circle-check" color="purple" :delay="120" />
         </div>
 
         <div class="flex items-center gap-3 mb-3">
@@ -356,12 +409,43 @@
                     <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredRequests.length + ' ' + ($store.lang.current === 'en' ? 'of ' + requests.length + ' requests' : 'sa ' + requests.length + ' kahilingan')"></p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                <div x-data="{ open: false, fileTab: 'all', showAdd: false, availableFiles: @js($availableFiles) }" class="contents">
-                    <x-ui.button @click="open = true" variant="secondary" icon="folder-open" size="sm" class="shrink-0"><x-ui.t fil="Aking mga Isinumiteng Dokyu" en="My Submitted Dokyus" /></x-ui.button>
-                    <x-ui.modal title="Aking mga Isinumiteng Dokyu" titleEn="My Submitted Dokyus" maxWidth="2xl">
-                        <p class="text-sm text-slate-500 mb-4"><x-ui.t fil="Mga dokumentong na-upload mo para sa iyong mga kahilingan sa Dokyu at Tulong." en="Documents you've uploaded for your Dokyu and Tulong requests." /></p>
+                <div x-data="{ open: false, fileTab: 'all', uploading: false,
+                    fileKind(doc) {
+                        const t = (doc.file_type || '').toLowerCase();
+                        if (t.includes('pdf')) return 'PDF';
+                        if (t.includes('word') || t.includes('docx')) return 'DOCX';
+                        return 'IMG';
+                    },
+                    async upload(file) {
+                        if (!file || this.uploading) return;
+                        this.uploading = true;
+                        const form = new FormData();
+                        form.append('file', file);
+                        form.append('name', file.name);
+                        form.append('type', 'Supporting document');
+                        form.append('category', 'Supporting Documents');
+                        try {
+                            await $api.post('/citizen/papeles', form);
+                            await loadPapeles();
+                            $dispatch('toast', { message: lang('Saved to your documents.', 'Naimbak sa iyong mga dokumento.'), variant: 'success' });
+                        } catch (err) {
+                            $dispatch('toast', { message: apiMessage(err, 'Could not upload the file.'), variant: 'error' });
+                        } finally { this.uploading = false; }
+                    },
+                    async download(doc) {
+                        try {
+                            const res = await $api.get('/citizen/papeles/' + doc.id + '/download');
+                            const url = res.data?.url || res.data?.download_url;
+                            if (url) window.open(url, '_blank', 'noopener');
+                        } catch (err) {
+                            $dispatch('toast', { message: apiMessage(err, 'Could not open the file.'), variant: 'error' });
+                        }
+                    },
+                }" class="contents">
+                    <x-ui.button @click="open = true; loadPapeles()" variant="secondary" icon="folder-open" size="sm" class="shrink-0"><x-ui.t fil="Aking mga Dokumento" en="My Documents" /></x-ui.button>
+                    <x-ui.modal title="Aking mga Dokumento" titleEn="My Documents" maxWidth="2xl">
+                        <p class="text-sm text-slate-500 mb-4"><x-ui.t fil="Ang mga dokumentong naka-imbak sa iyong Papeles. Maaari mong gamitin muli ang mga ito sa iyong mga kahilingan." en="The documents kept in your Papeles. You can reuse them for your requests." /></p>
 
-                        <!-- Add file toolbar -->
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                             <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
                                 @foreach(['all' => 'All', 'IMG' => 'Images', 'PDF' => 'PDF', 'DOCX' => 'DOCX'] as $key => $label)
@@ -372,43 +456,30 @@
                                     >{{ $label }}</button>
                                 @endforeach
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button
-                                    @click="$dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-1.5 hover:border-slate-300 transition-colors"
-                                ><i data-lucide="image-plus" class="w-3.5 h-3.5"></i><x-ui.t fil="Magdagdag ng Larawan" en="Add Image" /></button>
-                                <button
-                                    @click="showAdd = !showAdd"
-                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-brand-600 rounded-lg px-3 py-1.5 hover:bg-brand-700 transition-colors"
-                                ><i data-lucide="folder-plus" class="w-3.5 h-3.5"></i><x-ui.t fil="Magdagdag ng Naka-upload na File" en="Add Pre-uploaded File" /></button>
-                            </div>
+                            <label class="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-brand-600 rounded-lg px-3 py-1.5 hover:bg-brand-700 transition-colors cursor-pointer" :class="uploading && 'opacity-60 pointer-events-none'">
+                                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                                <span x-text="uploading ? lang('Uploading…', 'Ina-upload…') : lang('Upload a Document', 'Mag-upload ng Dokumento')"></span>
+                                <input type="file" class="sr-only" accept="image/*,application/pdf" @change="upload($event.target.files[0]); $event.target.value = ''">
+                            </label>
                         </div>
 
-                        <!-- Pre-uploaded file picker -->
-                        <div x-show="showAdd" x-cloak x-transition class="mb-4">
-                            <x-ui.file-picker
-                                files="availableFiles"
-                                onSelect="showAdd = false; $dispatch('toast', { message: file.name + ' attached — this is a frontend preview, no data is saved.', variant: 'success' })"
-                                :columns="3"
-                            />
-                        </div>
-
-                        <!-- File gallery -->
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            @foreach($submittedDocs as $doc)
-                                @php $style = $fileCardStyle[$doc['category']]; @endphp
-                                <div x-show="fileTab === 'all' || fileTab === '{{ $doc['category'] }}'" class="rounded-xl border border-slate-100 overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard group">
-                                    <div class="relative aspect-square bg-gradient-to-br {{ $style['ring'] }} flex items-center justify-center">
-                                        <i data-lucide="{{ $style['icon'] }}" class="w-9 h-9 {{ $style['iconColor'] }} transition-transform duration-[220ms] ease-standard group-hover:scale-110"></i>
-                                        <span class="absolute top-1.5 left-1.5 text-[9px] font-bold {{ $style['badge'] }} rounded px-1.5 py-0.5">{{ $doc['category'] }}</span>
-                                        <span class="absolute top-1.5 right-1.5"><x-ui.badge :status="$doc['status']" class="!px-1.5 !py-0.5 !text-[9px]" /></span>
+                        <div x-show="papelesLoading" class="grid grid-cols-2 sm:grid-cols-3 gap-3"><x-ui.skeleton class="h-32" /><x-ui.skeleton class="h-32 opacity-80" /></div>
+                        <p x-show="!papelesLoading && !papeles.length" class="text-sm text-slate-500 py-6 text-center"><x-ui.t fil="Wala ka pang naka-imbak na dokumento." en="You have no saved documents yet." /></p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-show="!papelesLoading">
+                            <template x-for="doc in papeles" :key="doc.id">
+                                <div x-show="fileTab === 'all' || fileTab === fileKind(doc)" class="rounded-xl border border-slate-100 overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard group">
+                                    <div class="relative aspect-square bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+                                        <i :data-lucide="fileKind(doc) === 'PDF' ? 'file-text' : (fileKind(doc) === 'DOCX' ? 'file-type' : 'image')" class="w-9 h-9 text-slate-400"></i>
+                                        <span class="absolute top-1.5 left-1.5 text-[9px] font-bold bg-white/90 text-slate-600 rounded px-1.5 py-0.5" x-text="fileKind(doc)"></span>
+                                        <span class="absolute top-1.5 right-1.5"><x-ui.badge statusBind="doc.status" class="!px-1.5 !py-0.5 !text-[9px]" /></span>
                                     </div>
                                     <div class="p-2.5 bg-white">
-                                        <p class="text-xs font-medium text-slate-700 truncate">{{ $doc['name'] }}</p>
-                                        <p class="text-[10px] text-slate-400 mt-0.5">{{ $doc['size'] }} · {{ $doc['uploaded'] }}</p>
+                                        <p class="text-xs font-medium text-slate-700 truncate" x-text="doc.name"></p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5" x-text="formatDay(doc.uploaded_at)"></p>
+                                        <button type="button" x-show="doc.downloadable" @click="download(doc)" class="mt-1 text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Buksan" en="Open" /></button>
                                     </div>
                                 </div>
-                            @endforeach
+                            </template>
                         </div>
 
                         <x-slot:footer>
@@ -425,10 +496,6 @@
                         showFilePicker: null,
                         submitted: false,
                         submitting: false,
-                        paymentMethod: null,
-                        alreadyPaid: false,
-                        receipt: null,
-                        showReceiptPicker: false,
                         // Municipal docs come pre-built from the server; barangay docs are
                         // expanded here from a single shared template ($barangayDocTemplate)
                         // across every barangay name ($barangayNames) — same final shape/order/
@@ -455,9 +522,22 @@
                             })));
                             return [...municipal, ...barangayDocs];
                         })(),
-                        files: @js($submittedDocs),
                         barangayCatalog: @js($barangayCatalog),
                         catalogTab: 'barangay',
+                        // The backend's own catalog (GET /services?type=dokyu): a
+                        // document it does not list cannot be filed, and a
+                        // policy-blocked one has a fee the LGU has not ruled on.
+                        serviceMeta: {},
+                        catalogLoaded: false,
+                        async loadCatalog() {
+                            try {
+                                const res = await $api.get('/services', { params: { type: 'dokyu' } });
+                                const meta = {};
+                                (res.data || []).forEach((sv) => { meta[sv.key] = sv; });
+                                this.serviceMeta = meta;
+                            } catch { this.serviceMeta = {}; } finally { this.catalogLoaded = true; }
+                        },
+                        canFile(doc) { return !this.catalogLoaded || !Object.keys(this.serviceMeta).length || !!this.serviceMeta[doc?.key]; },
                         selectedCategory: null,
                         categoryIcons: {
                             'Civil Registry': 'file-badge', 'Tax & Property': 'receipt', 'Business & Permits': 'briefcase',
@@ -516,62 +596,60 @@
                                 firstName: a.firstName, lastName: a.lastName, address: a.address, mobile: a.mobile, email: a.email,
                             } : { firstName: '', lastName: '', address: '', mobile: '', email: '' };
                         },
-                        paymentMethods: [
-                            { key: 'gcash', label: 'GCash', hint: 'Send to 0917-000-0000', hintFil: 'Ipadala sa 0917-000-0000', icon: 'smartphone' },
-                            { key: 'paymaya', label: 'Maya', hint: 'Send to 0918-000-0000', hintFil: 'Ipadala sa 0918-000-0000', icon: 'wallet' },
-                            { key: 'center', label: 'Onsite', labelFil: 'Bayad sa Opisina', hint: 'Pay at the Treasurer\'s Office', hintFil: 'Magbayad sa Treasurer\'s Office', icon: 'landmark' },
-                        ],
+                        // No online payment exists (open LGU question Q3): the fee is
+                        // assessed when the request is filed and paid at the office,
+                        // which issues the official receipt. The GCash and Maya
+                        // 'numbers' this listed were placeholders a resident could
+                        // have sent real money to.
                         stepLabels: {
                             fil: ['Pumili ng Dokumento', 'Detalye ng Aplikasyon', 'Bayad', 'I-review at I-submit'],
                             en: ['Choose Document', 'Application Details', 'Payment', 'Review & Submit'],
                         },
                         stepIcons: ['file-text', 'user-round', 'credit-card', 'clipboard-check'],
-                        reset() { this.step = 1; this.selectedDoc = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.paymentMethod = null; this.alreadyPaid = false; this.receipt = null; this.showReceiptPicker = false; this.formData = {}; this.otherPurposeText = {}; this.search = ''; },
-                        submitRequest() {
+                        reset() { this.step = 1; this.selectedDoc = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.submittedRef = null; this.formData = {}; this.otherPurposeText = {}; this.search = ''; },
+                        submittedRef: null,
+                        // One requirement's attachment: a new upload, or a document
+                        // the resident already keeps in Papeles.
+                        attachFile(i, file) { if (file) this.attachments[i] = { kind: 'file', file, name: file.name }; this.showFilePicker = null; },
+                        attachPapeles(i, doc) { this.attachments[i] = { kind: 'papeles', id: doc.id, name: doc.name }; this.showFilePicker = null; },
+                        // POST /citizen/requests, then each attachment onto its
+                        // requirement (POST .../requirements/{key}/attach). The
+                        // server assigns the ref, assesses the fee and notifies
+                        // the office; an attachment that fails is reported and can
+                        // be added from Track Request.
+                        async submitRequest() {
                             const doc = this.docs[this.selectedDoc];
-                            const purpose = Array.isArray(this.formData.purpose) ? this.formData.purpose.join(', ') : (doc?.name || 'Personal use');
-                            const ref = 'DR-2026-' + Math.floor(1000 + Math.random() * 9000);
-                            this.requests.unshift({
-                                ref,
-                                type: doc?.name || '—',
-                                office: doc?.office || '—',
-                                purpose,
-                                days: doc?.days || '3-5 working days',
-                                submitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                                status: 'Submitted',
-                                // Snapshot of exactly what the citizen typed + which template
-                                // rendered it, taken now while formData is still live — this is
-                                // what powers the Preview/Download/Print of the actual issued
-                                // document once the request reaches Approved. A deep clone, not
-                                // a reference, so later edits to the wizard's formData (the next
-                                // request) can never bleed into an already-submitted one.
-                                previewType: doc?.previewType || null,
-                                docKey: doc?.key || null,
-                                certTitle: doc?.certTitle || null,
-                                certSubtitle: doc?.certSubtitle || null,
-                                barangay: doc?.barangay || null,
-                                formNo: doc?.formNo || null,
-                                officiant: doc?.officiant || null,
-                                officiantTitle: doc?.officiantTitle || null,
-                                technician: doc?.technician || null,
-                                technicianTitle: doc?.technicianTitle || null,
-                                verifier: doc?.verifier || null,
-                                verifierTitle: doc?.verifierTitle || null,
-                                formSnapshot: JSON.parse(JSON.stringify(this.formData || {})),
+                            const formData = JSON.parse(JSON.stringify(this.formData || {}));
+                            Object.entries(this.otherPurposeText || {}).forEach(([k, v]) => {
+                                if (v && Array.isArray(formData[k])) formData[k] = formData[k].map((o) => /^others/i.test(o) ? 'Others: ' + v : o);
                             });
-                            // This wizard still writes the new request into local
-                            // Alpine state rather than POST /requests (see
-                            // PRODUCTION_READINESS.md) — submission is not yet on
-                            // the real backend, so there is no server-side
-                            // NotificationService.notifyTransition() call to
-                            // reflect here. $store.citizenNotifications and
-                            // $store.adminNotifications now read real rows from
-                            // GET {citizen,admin}/notifications; a client-side
-                            // push() into either would show a notification for a
-                            // request the server has never heard of.
+                            const res = await $api.post('/citizen/requests', { service_key: doc.key, form_data: formData });
+                            const created = res.data || {};
+                            const serverReqs = created.requirements || [];
+                            const failed = [];
+                            const names = doc.requirements || [];
+                            for (const [i, att] of Object.entries(this.attachments)) {
+                                if (!att) continue;
+                                const label = names[i];
+                                const target = serverReqs.find((q) => q.label === label) || serverReqs[Number(i)];
+                                if (!target) { failed.push(label); continue; }
+                                try {
+                                    const url = '/citizen/requests/' + encodeURIComponent(created.ref) + '/requirements/' + encodeURIComponent(target.key) + '/attach';
+                                    if (att.kind === 'papeles') {
+                                        await $api.post(url, { papeles_id: att.id });
+                                    } else {
+                                        const form = new FormData();
+                                        form.append('file', att.file);
+                                        await $api.post(url, form);
+                                    }
+                                } catch { failed.push(label); }
+                            }
+                            this.submittedRef = created.ref;
+                            await this.loadRequests();
+                            return { ref: created.ref, failed };
                         },
                     }"
-                    x-init="catalogTab = myBarangayInfo ? 'barangay' : 'municipal'; seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant())"
+                    x-init="catalogTab = myBarangayInfo ? 'barangay' : 'municipal'; seedApplicant(); loadCatalog(); $watch('$store.citizenSession.account', () => seedApplicant())"
                     x-effect="!open && reset()"
                     class="contents"
                 >
@@ -887,7 +965,7 @@
                             <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
                                 <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((docs[selectedDoc]?.requirements || []).length ? (Object.keys(attachments).filter(k => attachments[k]).length / (docs[selectedDoc]?.requirements || []).length) : 0) * 100) + '%'"></div>
                             </div>
-                            <p class="text-xs text-slate-400 mb-3"><x-ui.t fil="Ikabit mula sa mga file na na-upload mo na, o mag-upload ng bago." en="Attach from your already-uploaded files, or upload a new one." /></p>
+                            <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                 <template x-for="(req, i) in docs[selectedDoc]?.requirements || []" :key="i">
                                     <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
@@ -900,19 +978,22 @@
                                             ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
                                             <div class="flex items-center gap-1.5 shrink-0" x-show="attachments[i]">
                                                 <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
-                                                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="attachments[i]"></span>
+                                                    <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span class="truncate max-w-[140px]" x-text="attachments[i]?.name"></span>
                                                 </span>
                                                 <button type="button" @click="attachments[i] = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                             </div>
                                         </div>
-                                        <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
-                                            <x-ui.file-picker
-                                                files="files"
-                                                onSelect="attachments[i] = file.name; showFilePicker = null"
-                                                uploadAction="attachments[i] = 'New upload.jpg'; showFilePicker = null; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                                :columns="2"
-                                                :search="false"
-                                            />
+                                        <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
+                                            <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-white bg-brand-600 rounded-lg px-2.5 py-1.5 hover:bg-brand-700 transition-colors cursor-pointer">
+                                                <i data-lucide="upload" class="w-3.5 h-3.5"></i><x-ui.t fil="Mag-upload ng file" en="Upload a file" />
+                                                <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachFile(i, $event.target.files[0]); $event.target.value = ''">
+                                            </label>
+                                            <div x-show="papeles.length" class="space-y-1">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500"><x-ui.t fil="O gamitin mula sa Papeles" en="Or reuse from Papeles" /></p>
+                                                <template x-for="doc in papeles" :key="doc.id">
+                                                    <button type="button" @click="attachPapeles(i, doc)" class="w-full text-left text-[11px] text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg px-2 py-1 truncate" x-text="doc.name"></button>
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
@@ -934,63 +1015,13 @@
                             <template x-if="docs[selectedDoc]?.fee !== 'Free'">
                                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
                                     <div class="lg:col-span-3 order-2 lg:order-1">
-                                        <template x-if="!alreadyPaid">
-                                            <div>
-                                                <p class="text-sm font-semibold text-navy-900 mb-3"><x-ui.t fil="Piliin ang Paraan ng Pagbabayad" en="Choose Payment Method" /></p>
-                                                <div class="space-y-2 mb-4">
-                                                    <template x-for="m in paymentMethods" :key="m.key">
-                                                        <label
-                                                            class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                                            :class="paymentMethod === m.key ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
-                                                        >
-                                                            <input type="radio" name="payment_method" class="text-brand-600 focus:ring-brand-200" :checked="paymentMethod === m.key" @change="paymentMethod = m.key">
-                                                            <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                                                                <i :data-lucide="m.icon" class="w-4 h-4"></i>
-                                                            </span>
-                                                            <div class="min-w-0">
-                                                                <p class="text-sm font-medium text-slate-700" x-text="$store.lang.current === 'en' ? m.label : (m.labelFil || m.label)"></p>
-                                                                <p class="text-xs text-slate-400" x-text="$store.lang.current === 'en' ? m.hint : (m.hintFil || m.hint)"></p>
-                                                            </div>
-                                                        </label>
-                                                    </template>
-                                                </div>
-                                                <button type="button" @click="alreadyPaid = true" class="text-xs font-medium text-brand-600 hover:underline"><x-ui.t fil="Nakabayad na ako — ikakabit ang resibo" en="I've already paid — attach my receipt instead" /></button>
-                                            </div>
-                                        </template>
-
-                                        <template x-if="alreadyPaid">
-                                            <div>
-                                                <div class="flex items-center justify-between mb-3">
-                                                    <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Ikabit ang Patunay ng Bayad" en="Attach Proof of Payment" /></p>
-                                                    <button type="button" @click="alreadyPaid = false; receipt = null" class="text-xs font-medium text-slate-400 hover:text-slate-600"><x-ui.t fil="Kanselahin" en="Cancel" /></button>
-                                                </div>
-                                                <div class="rounded-xl border border-slate-200 p-3">
-                                                    <div class="flex items-center justify-between gap-3">
-                                                        <p class="text-xs text-slate-600 flex-1"><x-ui.t fil="Resibo o screenshot ng kumpirmasyon ng bayad" en="Receipt or payment confirmation screenshot" /></p>
-                                                        <button
-                                                            type="button" x-show="!receipt"
-                                                            @click="showReceiptPicker = !showReceiptPicker"
-                                                            class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap"
-                                                        ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
-                                                        <div class="flex items-center gap-1.5 shrink-0" x-show="receipt">
-                                                            <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
-                                                                <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="receipt"></span>
-                                                            </span>
-                                                            <button type="button" @click="receipt = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
-                                                        </div>
-                                                    </div>
-                                                    <div x-show="showReceiptPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
-                                                        <x-ui.file-picker
-                                                            files="files"
-                                                            onSelect="receipt = file.name; showReceiptPicker = false"
-                                                            uploadAction="receipt = 'Receipt Scan.jpg'; showReceiptPicker = false; $dispatch('toast', { message: 'File upload is a frontend preview — no data is saved.', variant: 'info' })"
-                                                            :columns="2"
-                                                            :search="false"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </template>
+                                        <p class="text-sm font-semibold text-navy-900 mb-2"><x-ui.t fil="Paano magbayad" en="How to pay" /></p>
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
+                                            <p class="flex items-start gap-2"><i data-lucide="landmark" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i><x-ui.t fil="Babayaran mo ang bayarin nang personal sa tanggapang nakalista, at bibigyan ka roon ng opisyal na resibo." en="You pay the fee in person at the office listed, which gives you an official receipt." /></p>
+                                            <p class="flex items-start gap-2"><i data-lucide="calculator" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i><x-ui.t fil="Kinukuwenta ang eksaktong halaga kapag naisumite mo na ang kahilingan, at makikita mo ito sa Subaybayan." en="The exact amount is assessed when you submit, and shows on Track Request." /></p>
+                                            <p class="flex items-start gap-2" x-show="serviceMeta[docs[selectedDoc]?.key]?.policy_blocked"><i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i><x-ui.t fil="Hinihintay pa ang pagpapasya ng LGU sa bayarin ng serbisyong ito; kukumpirmahin ito ng opisina." en="The LGU has not yet ruled on this service's fee; the office will confirm it." /></p>
+                                            <p class="flex items-start gap-2 text-amber-700"><i data-lucide="shield-alert" class="w-4 h-4 shrink-0 mt-0.5"></i><x-ui.t fil="Huwag magpadala ng bayad sa anumang e-wallet o account na hindi kinumpirma ng Munisipyo." en="Never send payment to an e-wallet or account the Municipality has not confirmed." /></p>
+                                        </div>
                                     </div>
 
                                     <!-- Invoice -->
@@ -1062,8 +1093,7 @@
                                             <p class="text-[10px] text-slate-400 uppercase tracking-wide"><x-ui.t fil="Bayad" en="Payment" /></p>
                                             <p class="text-sm font-medium text-navy-900 truncate">
                                                 <template x-if="docs[selectedDoc]?.fee === 'Free'"><span><x-ui.t fil="Hindi aplikable" en="Not applicable" /></span></template>
-                                                <template x-if="docs[selectedDoc]?.fee !== 'Free' && alreadyPaid"><span x-text="$store.lang.current === 'en' ? 'Paid — receipt attached' : 'Nabayaran na — nakakabit ang resibo'"></span></template>
-                                                <template x-if="docs[selectedDoc]?.fee !== 'Free' && !alreadyPaid"><span x-text="paymentMethod ? (paymentMethods.find(m => m.key === paymentMethod)?.label || '') : ($store.lang.current === 'en' ? 'Not selected' : 'Wala pang napili')"></span></template>
+                                                <template x-if="docs[selectedDoc]?.fee !== 'Free'"><span x-text="$store.lang.current === 'en' ? 'Pay at the office (' + docs[selectedDoc]?.fee + ')' : 'Bayaran sa opisina (' + docs[selectedDoc]?.fee + ')'"></span></template>
                                             </p>
                                         </div>
                                     </div>
@@ -1135,17 +1165,20 @@
                             <x-ui.button
                                 size="sm"
                                 x-show="!submitted"
-                                ::disabled="submitting || (step === 1 && selectedDoc === null) || (step === 3 && docs[selectedDoc]?.fee !== 'Free' && !alreadyPaid && !paymentMethod) || (step === 3 && alreadyPaid && !receipt)"
+                                ::disabled="submitting || (step === 1 && (selectedDoc === null || !canFile(docs[selectedDoc])))"
                                 @click="
                                     if (step < 4) { step++ }
                                     else {
                                         submitting = true;
-                                        setTimeout(() => {
-                                            submitting = false;
+                                        submitRequest().then(({ ref, failed }) => {
                                             submitted = true;
-                                            submitRequest();
-                                            setTimeout(() => { open = false; reset(); $dispatch('toast', { message: $store.lang.current === 'en' ? 'Document request submitted — this is a frontend preview, no data is saved.' : 'Naisumite ang kahilingan sa dokumento — frontend preview lang ito, walang naiimbak na datos.', variant: 'success' }) }, 1400);
-                                        }, 700);
+                                            const msg = $store.lang.current === 'en'
+                                                ? 'Request ' + ref + ' submitted.' + (failed.length ? ' Some files did not upload (' + failed.join(', ') + ') — add them from Track Request.' : '')
+                                                : 'Naisumite ang kahilingan ' + ref + '.' + (failed.length ? ' May mga file na hindi na-upload (' + failed.join(', ') + ') — idagdag sa Subaybayan.' : '');
+                                            setTimeout(() => { open = false; reset(); $dispatch('toast', { message: msg, variant: failed.length ? 'warning' : 'success' }) }, 1200);
+                                        }).catch((err) => {
+                                            $dispatch('toast', { message: err && err.localised ? err.localised($store.lang.current) : 'Could not submit the request.', variant: 'error' });
+                                        }).finally(() => { submitting = false; });
                                     }
                                 "
                             >
@@ -1202,8 +1235,10 @@
             </tbody>
         </x-ui.table>
 
-        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredRequests.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+        <div x-show="requestsLoading" class="space-y-2 mt-3"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
+        <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="$store.lang.current === 'en' ? 'Could not load your requests.' : 'Hindi ma-load ang iyong mga kahilingan.'" retryExpr="loadRequests()" :retryable="true" /></div>
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kahilingang tumutugma dito." en="No requests in this view." /></p>
         </div>
 
@@ -1269,20 +1304,28 @@
                                 </div>
                             </div>
 
-                            <div class="mt-3 pt-3 border-t border-rose-100/70" x-show="!(selectedRequest.requirements || []).length">
-                                <label class="block text-xs font-medium text-rose-700 mb-1.5"><x-ui.t fil="Itama at Isumite Muli" en="Correct & Resubmit" /></label>
-                                <textarea aria-label="Resubmit note"
-                                    x-model="resubmitNote" rows="2"
-                                    :placeholder="$store.lang.current === 'en' ? 'Describe what you corrected, or provide the missing requirement...' : 'Ilarawan kung ano ang inayos mo, o ibigay ang kulang na requirement...'"
-                                    class="w-full rounded-xl border border-rose-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
-                                ></textarea>
-                                <x-ui.button
-                                    size="sm" icon="rotate-ccw" class="mt-2.5 w-full justify-center"
-                                    x-bind:disabled="resubmitting || !resubmitNote.trim()"
-                                    @click="resubmitRequest()"
-                                >
-                                    <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Request' : 'Isumite Muli ang Kahilingan')"></span>
-                                </x-ui.button>
+                            {{-- A rejected request is final on the server (the ref never
+                                 reopens). The old Correct & Resubmit box only changed this
+                                 page; the way forward is a new request. --}}
+                            <p class="mt-3 pt-3 border-t border-rose-100/70 text-xs text-rose-700"><x-ui.t fil="Maaari kang magsumite ng bagong kahilingan kapag naayos mo na ang dahilan sa itaas." en="You can file a new request once you've addressed the reason above." /></p>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="['Submitted', 'Under Verification', 'Resubmitted'].includes(selectedRequest.status) && (selectedRequest.requirements || []).length" x-cloak>
+                            <p class="text-xs font-semibold text-navy-900 mb-2"><x-ui.t fil="Aking mga Dokumento para dito" en="My documents for this request" /></p>
+                            <div class="space-y-2">
+                                <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
+                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-2.5">
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
+                                            <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file')"></p>
+                                        </div>
+                                        <label x-show="req.attachable" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                            <span x-text="req._busy ? '…' : (req.file ? ($store.lang.current === 'en' ? 'Change' : 'Palitan') : ($store.lang.current === 'en' ? 'Attach' : 'Ikabit'))"></span>
+                                            <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
+                                        </label>
+                                        <span x-show="!req.attachable" class="shrink-0 text-[11px] text-slate-500" x-text="req.status === 'Approved' ? 'Verified' : req.status"></span>
+                                    </div>
+                                </template>
                             </div>
                         </div>
 
@@ -1314,17 +1357,10 @@
                                         <div x-show="req.status === 'Flagged for Replacement'" class="mt-2 pt-2 border-t border-amber-100 text-[11px]">
                                             <p class="font-semibold text-amber-700" x-text="req.reject_reason"></p>
                                             <p class="text-amber-600 mt-0.5" x-show="req.remarks" x-text="req.remarks"></p>
-                                            <button type="button" x-show="!req._showPicker" @click="req._showPicker = true" class="mt-1.5 text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Palitan ang Dokumento" en="Replace Document" /></button>
-                                            <div x-show="req._showPicker" x-cloak x-transition class="mt-2 pt-2 border-t border-amber-100/70">
-                                                <x-ui.file-picker
-                                                    files="files"
-                                                    onSelect="replaceRequirementFile(req, file.name)"
-                                                    uploadAction="replaceRequirementFile(req, 'New upload.jpg')"
-                                                    :columns="2"
-                                                    :search="false"
-                                                    :bilingual="false"
-                                                />
-                                            </div>
+                                            <label class="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                                <i data-lucide="upload" class="w-3 h-3"></i><span x-text="req._busy ? ($store.lang.current === 'en' ? 'Uploading…' : 'Ina-upload…') : ($store.lang.current === 'en' ? 'Replace Document' : 'Palitan ang Dokumento')"></span>
+                                                <input type="file" class="sr-only" accept="image/*,application/pdf" @change="replaceRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
+                                            </label>
                                         </div>
                                     </div>
                                 </template>
