@@ -94,6 +94,9 @@
     // municipal services. The name maps stay as the fallback.
     $daysByKey = collect($documentTypes)->merge($barangayDocTemplate ?? [])
         ->filter(fn ($d) => ! empty($d['key']))->pluck('days', 'key');
+    // The pickup directory below is keyed by an office's SHORT name, which the
+    // API does not send; the catalog has it per service key.
+    $officeShortByKey = collect($documentTypes)->filter(fn ($d) => ! empty($d['key']))->pluck('office_short', 'key');
 
     // Where to follow up / claim a released document, keyed by office name.
     // Barangay Hall entries vary per barangay (the office string already
@@ -112,6 +115,7 @@
             requestsFailed: false,
             daysByType: @js($daysByType),
             daysByKey: @js($daysByKey),
+            officeShortByKey: @js($officeShortByKey),
             officeByType: @js($officeByType),
             papeles: [],
             papelesLoading: true,
@@ -168,6 +172,7 @@
                         ref: r.ref,
                         type: r.service || '—',
                         serviceKey: r.service_key || null,
+                        barangay: r.barangay || null,
                         office: r.office || this.officeByType[r.service] || '',
                         purpose: '',
                         days: this.daysByKey[r.service_key] || this.daysByType[r.service] || '3-5 working days',
@@ -191,6 +196,7 @@
             applyDetail(r, d) {
                 r.status = d.status;
                 r.office = d.office || r.office;
+                r.barangay = d.barangay || r.barangay;
                 r.remarks = d.decision_remarks || null;
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose;
                 r.formSnapshot = d.form_data || {};
@@ -259,13 +265,23 @@
                 const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
                 return map[status] ?? 0;
             },
+            // The resident's barangay, for a barangay document's letterhead and
+            // where to claim it (the wizard below has its own copy).
+            get myBarangay() { return this.$store.citizenSession.account?.barangay ?? null; },
             get pickupInfo() {
                 const r = this.selectedRequest;
                 if (!r) return null;
-                if (r.office.startsWith('Barangay Hall')) {
-                    return { contact: 'Visit your Barangay Hall', address: r.office + ', Esperanza, Masbate' };
+                // A barangay document is claimed at that barangay's hall; the
+                // backend names the office 'Barangay Office'.
+                if (/^Barangay (Hall|Office)/.test(r.office || '')) {
+                    const hall = r.office.startsWith('Barangay Hall') ? r.office : 'Barangay Hall (Brgy. ' + (r.barangay || this.myBarangay || '') + ')';
+                    return { contact: 'Visit your Barangay Hall', address: hall + ', Esperanza, Masbate' };
                 }
-                return this.pickupDirectory[r.office] || { contact: 'Municipal Hall Trunkline (056) 333-1000', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
+                // The directory is keyed by the office's short name; where an
+                // office is listed as 'A / B', A is where to claim it.
+                const short = (this.officeShortByKey[r.serviceKey] || r.office || '').split('/')[0].trim();
+                return this.pickupDirectory[short] || this.pickupDirectory[{ MCRO: 'Civil Registrar' }[short]]
+                    || { contact: 'Municipal Hall Trunkline (056) 333-1000', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
             },
             get expectedRelease() {
                 const r = this.selectedRequest;
@@ -319,7 +335,7 @@
                         if (!(key in snapshot) && value) snapshot[key] = value;
                     }
                 }
-                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot, barangay: this.myBarangay };
+                return { previewType: meta.previewType, docKey: meta.docKey, certTitle: meta.certTitle, certSubtitle: meta.certSubtitle || null, snapshot, barangay: r.barangay || this.myBarangay };
             },
             get documentReady() {
                 const r = this.selectedRequest;
@@ -629,6 +645,15 @@
                             Object.entries(this.otherPurposeText || {}).forEach(([k, v]) => {
                                 if (v && Array.isArray(formData[k])) formData[k] = formData[k].map((o) => /^others/i.test(o) ? 'Others: ' + v : o);
                             });
+                            // The applicant block says 'edit if needed', so what the
+                            // resident confirmed or corrected goes with the request.
+                            Object.assign(formData, {
+                                applicant_first_name: this.applicant.firstName || '',
+                                applicant_last_name: this.applicant.lastName || '',
+                                applicant_address: this.applicant.address || '',
+                                applicant_mobile: this.applicant.mobile || '',
+                                applicant_email: this.applicant.email || '',
+                            });
                             const res = await $api.post('/citizen/requests', { service_key: doc.key, form_data: formData });
                             const created = res.data || {};
                             const serverReqs = created.requirements || [];
@@ -726,7 +751,7 @@
                                             <div class="relative w-11 h-11 shrink-0">
                                                 <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-5 h-5"></i></div>
                                                 <img
-                                                    :src="'{{ rtrim(asset(''), '/') }}/' + myBarangayInfo.seal"
+                                                    :src="myBarangayInfo.seal ? '{{ rtrim(asset(''), '/') }}/' + myBarangayInfo.seal : null"
                                                     x-show="myBarangayInfo.seal" onerror="this.style.display='none'"
                                                     :alt="myBarangayInfo.name ? 'Seal of Barangay ' + myBarangayInfo.name : 'Barangay seal'"
                                                     class="relative w-11 h-11 rounded-full object-cover border-2 border-gold-400"
@@ -909,7 +934,7 @@
                             <!-- Full-width: generic purpose OR structured fields (barangay documents) — sits below the two-column grid so it isn't squeezed beside the sticky Request Summary -->
                             <div class="mb-6" x-show="!(docs[selectedDoc]?.fields?.length)">
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Layunin" en="Purpose" /></label>
-                                <textarea aria-label="e.g. Employment requirement" rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                <textarea x-model="formData.purpose" aria-label="e.g. Employment requirement" rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                             </div>
 
                             <div class="mb-6" x-show="docs[selectedDoc]?.fields?.length" x-cloak>

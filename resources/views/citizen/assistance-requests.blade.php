@@ -19,6 +19,9 @@
     // By service key too: the API's service_key is exact, and the backend's
     // display name differs from this catalog's for TUPAD and ERPAT.
     $daysByAssistKey = collect($assistanceTypes)->filter(fn ($t) => ! empty($t['key']))->pluck('days', 'key');
+    // The pickup directory is keyed by an office's SHORT name, which the API
+    // does not send; the catalog has it per service key.
+    $officeShortByAssistKey = collect($assistanceTypes)->filter(fn ($t) => ! empty($t['key']))->pluck('office_short', 'key');
 
     // Where to follow up / claim assistance, keyed by office name.
     $pickupDirectory = $__fixtures['pickupDirectory'];
@@ -35,6 +38,7 @@
             requestsFailed: false,
             daysByType: @js($daysByAssistType),
             daysByKey: @js($daysByAssistKey),
+            officeShortByKey: @js($officeShortByAssistKey),
             officeByType: @js($officeByAssistType),
             papeles: [],
             // Tulong runs the same lifecycle as Dokyu on the server; these are
@@ -174,7 +178,10 @@
             get pickupInfo() {
                 const r = this.selectedRequest;
                 if (!r) return null;
-                const primaryOffice = (r.office || '').split('/')[0].trim();
+                // The directory is keyed by the office's short name ('MSWDO'),
+                // not the full name the API sends; where an office is listed as
+                // 'A / B', A is where to claim it.
+                const primaryOffice = (this.officeShortByKey[r.serviceKey] || r.office || '').split('/')[0].trim();
                 return this.pickupDirectory[primaryOffice] || { contact: 'Municipal Hall Trunkline (056) 333-1000', address: 'Municipal Hall, Poblacion, Esperanza, Masbate' };
             },
             get expectedRelease() {
@@ -315,7 +322,17 @@
                     // office; a failed attachment can be added from Track Request.
                     async submitRequest() {
                         const type = this.types[this.selectedType];
-                        const res = await $api.post('/citizen/requests', { service_key: type.key, form_data: JSON.parse(JSON.stringify(this.formData || {})) });
+                        const formData = JSON.parse(JSON.stringify(this.formData || {}));
+                        // The applicant block says 'edit if needed', so what the
+                        // resident confirmed or corrected goes with the request.
+                        Object.assign(formData, {
+                            applicant_first_name: this.applicant.firstName || '',
+                            applicant_last_name: this.applicant.lastName || '',
+                            applicant_address: this.applicant.address || '',
+                            applicant_mobile: this.applicant.mobile || '',
+                            applicant_email: this.applicant.email || '',
+                        });
+                        const res = await $api.post('/citizen/requests', { service_key: type.key, form_data: formData });
                         const created = res.data || {};
                         const serverReqs = created.requirements || [];
                         const names = type.requirements || [];
@@ -525,7 +542,7 @@
                         <!-- Generic purpose (assistance types without structured fields) -->
                         <div class="mb-6" x-show="!(types[selectedType]?.fields?.length)">
                             <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Detalye ng Kahilingan" en="Details of Request" /></label>
-                            <textarea aria-label="Briefly describe your situation and needs" rows="3" placeholder="Briefly describe your situation and needs" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <textarea x-model="formData.purpose" aria-label="Briefly describe your situation and needs" rows="3" placeholder="Briefly describe your situation and needs" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                         </div>
 
                         <div class="mb-6" x-show="types[selectedType]?.fields?.length" x-cloak>
