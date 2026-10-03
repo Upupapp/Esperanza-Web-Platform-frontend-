@@ -121,7 +121,7 @@
     @endif
 
     @if($hint)
-        <p id="{{ $id }}-hint" class="text-xs text-slate-400">{{ $hint }}</p>
+        <p id="{{ $id }}-hint" class="text-xs text-slate-500">{{ $hint }}</p>
     @endif
 
     {{-- Server field errors land here, on the same key the spec uses. --}}

@@ -47,7 +47,7 @@
                     <img :src="tpl.thumbnail" :alt="tpl.name + ' seal'" class="w-9 h-9 rounded-full object-contain bg-white border border-slate-200 shrink-0" loading="lazy">
                     <span class="min-w-0 flex-1">
                         <span class="block text-[11px] font-semibold text-navy-900 truncate" x-text="tpl.name"></span>
-                        <span class="block text-[10px] text-slate-400 truncate" x-text="tpl.description"></span>
+                        <span class="block text-[10px] text-slate-500 truncate" x-text="tpl.description"></span>
                     </span>
                     <i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 shrink-0" x-show="activeTemplateKey === tpl.key"></i>
                 </button>

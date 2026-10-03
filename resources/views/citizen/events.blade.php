@@ -92,10 +92,10 @@
             <div class="flex items-center justify-between mb-3">
                 <p class="text-sm font-semibold text-navy-900" x-text="monthLabel"></p>
                 <div class="flex items-center gap-1">
-                    <button type="button" @click="prevMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button type="button" @click="prevMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-left" class="w-4 h-4"></i>
                     </button>
-                    <button type="button" @click="nextMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button type="button" @click="nextMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -103,7 +103,7 @@
 
             <div class="grid grid-cols-7 mb-1.5">
                 <template x-for="(d, i) in ['S','M','T','W','T','F','S']" :key="i">
-                    <p class="text-center text-[10px] font-semibold uppercase text-slate-400" x-text="d"></p>
+                    <p class="text-center text-[10px] font-semibold uppercase text-slate-500" x-text="d"></p>
                 </template>
             </div>
 
@@ -129,7 +129,7 @@
             </template>
 
             <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-100" x-show="selectedDate">
-                <p class="text-[11px] text-slate-400" x-text="$store.lang.current === 'en' ? 'Showing events for the selected date' : 'Ipinapakita ang mga kaganapan sa napiling petsa'"></p>
+                <p class="text-[11px] text-slate-500" x-text="$store.lang.current === 'en' ? 'Showing events for the selected date' : 'Ipinapakita ang mga kaganapan sa napiling petsa'"></p>
                 <button type="button" @click="selectedDate = null" class="text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="I-clear" en="Clear" /></button>
             </div>
         </div>
@@ -137,7 +137,7 @@
         <!-- Event list -->
         <div class="space-y-3.5 min-w-0">
             <div class="flex items-center justify-between" x-show="$store.barangay.mine">
-                <p class="text-xs text-slate-400" x-text="selectedEvents.length + ' ' + ($store.lang.current === 'en' ? 'events' : 'kaganapan')"></p>
+                <p class="text-xs text-slate-500" x-text="selectedEvents.length + ' ' + ($store.lang.current === 'en' ? 'events' : 'kaganapan')"></p>
                 <button
                     type="button" @click="myBarangayOnly = !myBarangayOnly"
                     class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-lg px-2.5 py-1.5 transition-colors"
@@ -172,7 +172,7 @@
                                             x-show="event.barangay && event.barangay === $store.citizenSession.account?.barangay"
                                         ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Sa Aking Barangay" en="In My Barangay" /></span>
                                     </div>
-                                    <p class="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                    <p class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
                                         <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i><span x-text="event.time"></span></span>
                                         <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="event.venue"></span></span>
                                     </p>
@@ -195,7 +195,7 @@
                     </template>
 
                     <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="selectedEvents.length === 0">
-                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="calendar-x" class="w-7 h-7"></i></span>
+                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="calendar-x" class="w-7 h-7"></i></span>
                         <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kaganapan sa buwang ito." en="No events this month." /></p>
                     </div>
                 </div>

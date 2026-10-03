@@ -76,7 +76,7 @@
             {{-- Close X --}}
             <button
                 @click="showMerge = false"
-                class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition shrink-0"
+                class="p-1.5 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition shrink-0"
                 aria-label="Cancel merge and close"
             >
                 <i data-lucide="x" class="w-5 h-5"></i>

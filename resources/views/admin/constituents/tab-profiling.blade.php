@@ -155,7 +155,7 @@
                 </div>
             </div>
 
-            <p class="text-[11px] text-slate-400 mt-auto pt-2 border-t border-slate-100" x-data="{ today: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }">
+            <p class="text-[11px] text-slate-500 mt-auto pt-2 border-t border-slate-100" x-data="{ today: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }">
                 <i data-lucide="info" class="w-3 h-3 inline -mt-0.5 mr-0.5"></i>
                 Data as of <span x-text="today"></span>. Figures are computed live from resident, household and barangay-profiling records.
             </p>
@@ -210,13 +210,13 @@
                             {{-- Residents --}}
                             <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums hidden xl:table-cell">
                                 <span class="font-semibold text-navy-900" x-text="b.profiled.toLocaleString()"></span>
-                                <span class="text-slate-400 text-xs" x-text="' / ' + b.residents.toLocaleString()"></span>
+                                <span class="text-slate-500 text-xs" x-text="' / ' + b.residents.toLocaleString()"></span>
                             </td>
 
                             {{-- Households --}}
                             <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums hidden 2xl:table-cell">
                                 <span class="font-semibold text-navy-900" x-text="b.hh_profiled.toLocaleString()"></span>
-                                <span class="text-slate-400 text-xs" x-text="' / ' + b.hh.toLocaleString()"></span>
+                                <span class="text-slate-500 text-xs" x-text="' / ' + b.hh.toLocaleString()"></span>
                             </td>
 
                             {{-- Coverage % with progress bar --}}
@@ -246,7 +246,7 @@
                                           x-text="b.encoder ? b.encoder.charAt(0) : '?'"></span>
                                     <span class="text-xs text-slate-700" x-text="b.encoder"></span>
                                 </div>
-                                <span class="text-xs text-slate-400" x-show="!b.encoder">Unassigned</span>
+                                <span class="text-xs text-slate-500" x-show="!b.encoder">Unassigned</span>
                             </td>
 
                             {{-- Status chip --}}

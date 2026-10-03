@@ -59,14 +59,14 @@
         <div class="min-w-0">
             <h1 class="text-base lg:text-lg font-semibold text-navy-900 truncate" x-text="$store.lang.current === 'en' ? @js($title) : @js($filTitle)">{{ $filTitle }}</h1>
             @if($subtitle)
-                <p class="text-xs text-slate-400 truncate" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
+                <p class="text-xs text-slate-500 truncate" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
             @endif
         </div>
 
     </div>
 
     <div class="flex items-center gap-1.5 lg:gap-2.5">
-        <div class="hidden xl:flex items-center gap-1.5 font-mono text-xs text-slate-400 tabular-nums px-2.5 py-1.5 rounded-xl bg-slate-100/70">
+        <div class="hidden xl:flex items-center gap-1.5 font-mono text-xs text-slate-500 tabular-nums px-2.5 py-1.5 rounded-xl bg-slate-100/70">
             <i data-lucide="clock" class="w-3.5 h-3.5"></i>
             <span x-text="time"></span>
         </div>
@@ -141,8 +141,8 @@
                         </div>
                     </template>
                     <div class="flex flex-col items-center text-center py-8" x-show="filteredIds.length === 0">
-                        <span class="w-11 h-11 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="id-card" class="w-5 h-5"></i></span>
-                        <p class="text-xs text-slate-400"><x-ui.t fil="Walang ID sa filter na ito." en="No IDs match this filter." /></p>
+                        <span class="w-11 h-11 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="id-card" class="w-5 h-5"></i></span>
+                        <p class="text-xs text-slate-500"><x-ui.t fil="Walang ID sa filter na ito." en="No IDs match this filter." /></p>
                     </div>
                 </div>
                 <a href="{{ route('citizen.profile') }}" class="block text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
@@ -153,7 +153,7 @@
 
         <div class="hidden md:block relative" @click.outside="searchOpen = false">
             <div class="flex items-center relative">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"></i>
+                <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none"></i>
                 <input aria-label="Search query"
                     type="text"
                     x-model="searchQuery"
@@ -172,7 +172,7 @@
             >
                 <template x-for="item in filteredSearch" :key="item.href">
                     <a :href="item.href" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                        <i :data-lucide="item.icon" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                        <i :data-lucide="item.icon" class="w-4 h-4 text-slate-500 shrink-0"></i>
                         <span x-text="$store.lang.current === 'en' ? item.en : item.fil"></span>
                     </a>
                 </template>
@@ -180,7 +180,7 @@
                     <p class="text-xs font-medium text-slate-500">
                         <x-ui.t fil="Walang nahanap." en="No matches found." />
                     </p>
-                    <p class="text-[11px] text-slate-400 mt-0.5">
+                    <p class="text-[11px] text-slate-500 mt-0.5">
                         <x-ui.t fil="Subukan ang ibang salita." en="Try a different search term." />
                     </p>
                 </div>
@@ -225,7 +225,7 @@
                                 </span>
                                 <span class="min-w-0">
                                     <span class="block text-sm font-medium text-slate-700 truncate" x-text="n.title"></span>
-                                    <span class="block text-xs text-slate-400 mt-0.5 line-clamp-2" x-text="n.body"></span>
+                                    <span class="block text-xs text-slate-500 mt-0.5 line-clamp-2" x-text="n.body"></span>
                                 </span>
                             </a>
                             <button
@@ -235,7 +235,7 @@
                             ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </template>
-                    <p class="px-4 py-8 text-center text-sm text-slate-400" x-show="!$store.citizenNotifications.loading && !$store.citizenNotifications.visible.length">
+                    <p class="px-4 py-8 text-center text-sm text-slate-500" x-show="!$store.citizenNotifications.loading && !$store.citizenNotifications.visible.length">
                         <x-ui.t fil="Wala pang abiso." en="No notifications yet." />
                     </p>
                 </div>
@@ -252,9 +252,9 @@
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-xs" x-text="$store.citizenSession.initials()"></div>
                 <span class="hidden lg:block text-left max-w-[130px]">
                     <span class="block text-sm font-medium text-navy-900 leading-tight truncate" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></span>
-                    <span class="block text-xs text-slate-400 leading-tight truncate" x-text="$store.citizenSession.account ? (($store.lang.current === 'en' ? 'Resident — Brgy. ' : 'Residente — Brgy. ') + $store.citizenSession.account.barangay) : ($store.lang.current === 'en' ? 'Not signed in' : 'Hindi naka-sign in')"></span>
+                    <span class="block text-xs text-slate-500 leading-tight truncate" x-text="$store.citizenSession.account ? (($store.lang.current === 'en' ? 'Resident — Brgy. ' : 'Residente — Brgy. ') + $store.citizenSession.account.barangay) : ($store.lang.current === 'en' ? 'Not signed in' : 'Hindi naka-sign in')"></span>
                 </span>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 hidden lg:block transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 hidden lg:block transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
             </button>
 
             <div
@@ -267,13 +267,13 @@
             >
                 <div class="px-4 py-3 border-b border-slate-100">
                     <p class="text-sm font-semibold text-navy-900" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></p>
-                    <p class="text-xs text-slate-400" x-text="$store.citizenSession.account?.email ?? 'No account selected'"></p>
+                    <p class="text-xs text-slate-500" x-text="$store.citizenSession.account?.email ?? 'No account selected'"></p>
                 </div>
                 <a href="{{ route('citizen.profile') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="user" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Aking Profile" en="My Profile" />
+                    <i data-lucide="user" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Aking Profile" en="My Profile" />
                 </a>
                 <a href="{{ route('citizen.settings') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Mga Setting" en="Settings" />
+                    <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Mga Setting" en="Settings" />
                 </a>
                 <div class="border-t border-slate-100 my-1.5"></div>
                 <a href="{{ route('logout') }}" @click="$store.citizenSession.logout()" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors">

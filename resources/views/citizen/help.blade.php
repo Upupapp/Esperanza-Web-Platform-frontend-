@@ -142,7 +142,7 @@
                             x-text="c === 'all' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : c"
                         ></button>
                     </template>
-                    <span class="text-[11px] text-slate-400 ml-auto" x-text="filteredFaqs.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
+                    <span class="text-[11px] text-slate-500 ml-auto" x-text="filteredFaqs.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
                 </div>
             </div>
 
@@ -151,7 +151,7 @@
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
                         <button @click="activeIndex = activeIndex === faq.i ? null : faq.i" class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
                             <span class="text-sm font-medium text-slate-700" x-text="faq.q"></span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-[160ms] ease-standard" :class="activeIndex === faq.i && 'rotate-180'"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 shrink-0 transition-transform duration-[160ms] ease-standard" :class="activeIndex === faq.i && 'rotate-180'"></i>
                         </button>
                         <div
                             x-show="activeIndex === faq.i"
@@ -163,7 +163,7 @@
                         >
                             <p class="text-sm text-slate-500 leading-relaxed" x-text="faq.a"></p>
                             <div class="flex items-center gap-2.5 mt-3 pt-3 border-t border-slate-50">
-                                <span class="text-[11px] text-slate-400"><x-ui.t fil="Nakatulong ba ito?" en="Was this helpful?" /></span>
+                                <span class="text-[11px] text-slate-500"><x-ui.t fil="Nakatulong ba ito?" en="Was this helpful?" /></span>
                                 <button
                                     @click="markHelpful(faq.i, true)"
                                     class="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
@@ -180,7 +180,7 @@
                 </template>
 
                 <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="filteredFaqs.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang tanong na tumutugma." en="No FAQs match your search." /></p>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                             x-text="c === 'all' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : c"
                         ></button>
                     </template>
-                    <span class="text-[11px] text-slate-400 ml-auto" x-text="filteredTutorials.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
+                    <span class="text-[11px] text-slate-500 ml-auto" x-text="filteredTutorials.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
                 </div>
             </div>
 
@@ -233,13 +233,13 @@
                                 <i :data-lucide="tut.icon" class="w-3 h-3"></i><span x-text="tut.category"></span>
                             </span>
                             <p class="text-sm font-medium text-slate-700 leading-snug" x-text="tut.title"></p>
-                            <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="tut.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
+                            <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="tut.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
                         </div>
                     </div>
                 </template>
 
                 <div class="sm:col-span-2 xl:col-span-3 flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="filteredTutorials.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang gabay na tumutugma." en="No tutorials match your search." /></p>
                 </div>
             </div>
@@ -306,14 +306,14 @@
                 <x-ui.card padded="false">
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
                         <h3 class="text-sm font-semibold text-navy-900"><x-ui.t fil="Aking mga Support Ticket" en="My Support Tickets" /></h3>
-                        <span class="text-[11px] text-slate-400" x-text="tickets.length + ' ' + ($store.lang.current === 'en' ? 'total' : 'kabuuan')"></span>
+                        <span class="text-[11px] text-slate-500" x-text="tickets.length + ' ' + ($store.lang.current === 'en' ? 'total' : 'kabuuan')"></span>
                     </div>
                     <div class="divide-y divide-slate-50">
                         <template x-for="t in tickets" :key="t.ref">
                             <div class="flex items-center justify-between gap-4 px-4 py-3">
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700 truncate" x-text="t.subject"></p>
-                                    <p class="text-xs text-slate-400 mt-0.5 font-mono" x-text="t.ref + ' · ' + t.time"></p>
+                                    <p class="text-xs text-slate-500 mt-0.5 font-mono" x-text="t.ref + ' · ' + t.time"></p>
                                 </div>
                                 <span
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
@@ -336,8 +336,8 @@
                             </div>
                         </template>
                         <div class="flex flex-col items-center text-center py-10" x-show="tickets.length === 0">
-                            <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="inbox" class="w-4.5 h-4.5"></i></span>
-                            <p class="text-xs text-slate-400"><x-ui.t fil="Wala ka pang support ticket." en="You have no support tickets yet." /></p>
+                            <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="inbox" class="w-4.5 h-4.5"></i></span>
+                            <p class="text-xs text-slate-500"><x-ui.t fil="Wala ka pang support ticket." en="You have no support tickets yet." /></p>
                         </div>
                     </div>
                 </x-ui.card>
@@ -348,7 +348,7 @@
                     <x-ui.card class="flex items-center gap-3.5">
                         <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="ch.color"><i :data-lucide="ch.icon" class="w-5 h-5"></i></span>
                         <div class="min-w-0">
-                            <p class="text-xs text-slate-400" x-text="$store.lang.current === 'en' ? ch.label : (ch.label_fil || ch.label)"></p>
+                            <p class="text-xs text-slate-500" x-text="$store.lang.current === 'en' ? ch.label : (ch.label_fil || ch.label)"></p>
                             <p class="text-sm font-medium text-navy-900 truncate" x-text="ch.value"></p>
                         </div>
                     </x-ui.card>
@@ -375,8 +375,8 @@
                         <i :data-lucide="activeTutorial.icon" class="w-3 h-3"></i><span x-text="activeTutorial.category"></span>
                     </span>
                     <p class="text-sm font-semibold text-navy-900 leading-snug" x-text="activeTutorial.title"></p>
-                    <p class="text-xs text-slate-400 mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="activeTutorial.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
-                    <p class="text-xs text-slate-400 mt-3"><x-ui.t fil="Ito ay isang frontend preview — walang aktwal na video na naka-play." en="This is a frontend preview — no actual video plays here." /></p>
+                    <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="activeTutorial.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
+                    <p class="text-xs text-slate-500 mt-3"><x-ui.t fil="Ito ay isang frontend preview — walang aktwal na video na naka-play." en="This is a frontend preview — no actual video plays here." /></p>
                 </div>
             </template>
 

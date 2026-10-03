@@ -95,7 +95,7 @@
                     <span x-text="markingAll ? ($store.lang.current === 'en' ? 'Marking…' : 'Minamarkahan…') : ($store.lang.current === 'en' ? 'Mark all as read' : 'Markahan Lahat na Nabasa')"></span>
                 </button>
             </div>
-            <p class="text-[11px] text-slate-400" x-text="visible.length + ' ' + ($store.lang.current === 'en' ? 'shown' : 'ipinapakita')"></p>
+            <p class="text-[11px] text-slate-500" x-text="visible.length + ' ' + ($store.lang.current === 'en' ? 'shown' : 'ipinapakita')"></p>
         </div>
 
         <x-ui.data-panel empty-title="Walang abisong tumutugma dito" empty-title-en="No notifications here" empty-icon="inbox">
@@ -117,7 +117,7 @@
                                         <p class="text-sm font-medium text-slate-700 leading-snug" x-text="n.title"></p>
                                         <span class="text-[9px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 shrink-0" x-show="n.portal === 'dokyu' || n.portal === 'tulong'" :class="n.portal === 'tulong' ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'" x-text="n.portal === 'tulong' ? 'Tulong' : 'Dokyu'"></span>
                                     </div>
-                                    <p class="text-xs text-slate-400 mt-0.5" x-text="n.body"></p>
+                                    <p class="text-xs text-slate-500 mt-0.5" x-text="n.body"></p>
                                     <p class="text-[11px] text-slate-300 mt-1.5" x-text="timeAgo(n.createdAt)"></p>
                                 </div>
                                 <span class="text-[10px] font-medium text-slate-300 shrink-0 mt-0.5 whitespace-nowrap" x-show="n.pinned"><x-ui.t fil="Awtomatiko" en="Automated" /></span>

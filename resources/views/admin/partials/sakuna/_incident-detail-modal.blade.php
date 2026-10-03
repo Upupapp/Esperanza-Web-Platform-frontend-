@@ -37,12 +37,12 @@
                 </div>
                 <div>
                     <h2 class="text-base font-semibold text-slate-800" x-text="selectedIncident?.ref ?? '—'"></h2>
-                    <p class="text-xs text-slate-400 mt-0.5" x-text="(selectedIncident?.type ?? '') + ' — Brgy. ' + (selectedIncident?.barangay ?? '')"></p>
+                    <p class="text-xs text-slate-500 mt-0.5" x-text="(selectedIncident?.type ?? '') + ' — Brgy. ' + (selectedIncident?.barangay ?? '')"></p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
                 <span :class="statusBadge(selectedIncident?.status ?? '')" x-text="selectedIncident?.status ?? ''"></span>
-                <button @click="showIncidentDetail = false" class="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors ml-2">
+                <button @click="showIncidentDetail = false" class="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-600 transition-colors ml-2">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -121,14 +121,14 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <span class="text-xs font-semibold text-slate-700 capitalize" x-text="entry.verb"></span>
-                                    <span class="text-[11px] text-slate-400" x-text="entry.from + (entry.to && entry.to !== entry.from ? ' → ' + entry.to : '')"></span>
+                                    <span class="text-[11px] text-slate-500" x-text="entry.from + (entry.to && entry.to !== entry.from ? ' → ' + entry.to : '')"></span>
                                 </div>
                                 <p class="text-[11px] text-slate-500 mt-0.5" x-show="entry.note" x-text="entry.note"></p>
                             </div>
-                            <span class="text-[11px] text-slate-400 whitespace-nowrap flex-shrink-0 mt-0.5" x-text="entry.at ? new Date(entry.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span>
+                            <span class="text-[11px] text-slate-500 whitespace-nowrap flex-shrink-0 mt-0.5" x-text="entry.at ? new Date(entry.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span>
                         </div>
                     </template>
-                    <p x-show="!(selectedIncident?.timeline || []).length" class="text-xs text-slate-400 py-2">No actions recorded yet — reported, awaiting validation.</p>
+                    <p x-show="!(selectedIncident?.timeline || []).length" class="text-xs text-slate-500 py-2">No actions recorded yet — reported, awaiting validation.</p>
                 </div>
             </div>
 

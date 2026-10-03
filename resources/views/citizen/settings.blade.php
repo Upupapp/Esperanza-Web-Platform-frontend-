@@ -171,7 +171,7 @@
             <div x-show="tab === 'privacy'" x-cloak>
                 <x-ui.card>
                     <h3 class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Pribasiya ng Datos" en="Data Privacy" /></h3>
-                    <p class="text-xs text-slate-400 mb-4"><x-ui.t fil="Pamahalaan kung paano ginagamit ang iyong datos bilang residente sa buong platform, alinsunod sa Data Privacy Act of 2012." en="Manage how your resident data is used across the platform, in line with the Data Privacy Act of 2012." /></p>
+                    <p class="text-xs text-slate-500 mb-4"><x-ui.t fil="Pamahalaan kung paano ginagamit ang iyong datos bilang residente sa buong platform, alinsunod sa Data Privacy Act of 2012." en="Manage how your resident data is used across the platform, in line with the Data Privacy Act of 2012." /></p>
                     <div class="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-100 p-4">
                         <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
                         <p class="text-xs text-slate-500 leading-relaxed">
@@ -243,7 +243,7 @@
                     <div class="space-y-4 max-w-md">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Wika" en="Language" /></label>
-                            <p class="text-xs text-slate-400 mb-2.5"><x-ui.t fil="Piliin ang wikang gagamitin sa Citizen Portal." en="Choose the language used across the Citizen Portal." /></p>
+                            <p class="text-xs text-slate-500 mb-2.5"><x-ui.t fil="Piliin ang wikang gagamitin sa Citizen Portal." en="Choose the language used across the Citizen Portal." /></p>
                             <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
                                 <button
                                     type="button"

@@ -47,7 +47,7 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredCenters, 'evacuation-centers-export.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
         </button>
         <button x-show="can('sakuna_centers', 'create')" @click="openCreateCenter()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
@@ -86,7 +86,7 @@
 {{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap gap-2 items-center">
     <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
         <input aria-label="Search by name or barangay" type="text" x-model="centerSearch"
             placeholder="Search by name or barangay..."
             class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-60 transition-colors">
@@ -110,10 +110,10 @@
         <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
     </button>
     <div class="ml-auto flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-card">
-        <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'" class="px-3 py-2 transition-colors">
+        <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-slate-600'" class="px-3 py-2 transition-colors">
             <i data-lucide="layout-grid" class="w-4 h-4"></i>
         </button>
-        <button @click="viewMode = 'table'" :class="viewMode === 'table' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'" class="px-3 py-2 border-l border-slate-200 transition-colors">
+        <button @click="viewMode = 'table'" :class="viewMode === 'table' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-slate-600'" class="px-3 py-2 border-l border-slate-200 transition-colors">
             <i data-lucide="table" class="w-4 h-4"></i>
         </button>
     </div>
@@ -141,16 +141,16 @@
                 </div>
                 <p class="text-xs text-slate-500" x-text="c.individuals.toLocaleString() + ' / ' + c.capacity.toLocaleString() + ' persons'"></p>
             </div>
-            <p class="text-xs text-slate-400 italic" x-show="c.status !== 'Processing'" x-text="'Capacity: ' + c.capacity.toLocaleString()"></p>
+            <p class="text-xs text-slate-500 italic" x-show="c.status !== 'Processing'" x-text="'Capacity: ' + c.capacity.toLocaleString()"></p>
 
             <div class="grid grid-cols-2 gap-2 border-t border-slate-50 pt-3">
                 <div class="text-center">
                     <p class="text-sm font-semibold text-slate-800" x-text="c.families"></p>
-                    <p class="text-xs text-slate-400">Families</p>
+                    <p class="text-xs text-slate-500">Families</p>
                 </div>
                 <div class="text-center border-l border-slate-100">
                     <p class="text-sm font-semibold" :class="(c.capacity - c.individuals) > 0 ? 'text-emerald-600' : 'text-rose-600'" x-text="(c.capacity - c.individuals).toLocaleString()"></p>
-                    <p class="text-xs text-slate-400">Available</p>
+                    <p class="text-xs text-slate-500">Available</p>
                 </div>
             </div>
 
@@ -195,7 +195,7 @@
                     <tr class="hover:bg-slate-50/60 transition-colors">
                         <td class="px-4 py-3">
                             <p class="text-sm font-medium text-slate-800" x-text="c.name"></p>
-                            <p class="text-xs text-slate-400" x-text="c.address || ''"></p>
+                            <p class="text-xs text-slate-500" x-text="c.address || ''"></p>
                         </td>
                         <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap" x-text="c.barangay"></td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(c.status)" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span></td>
@@ -259,12 +259,12 @@
                 </div>
                 <div>
                     <h3 class="text-base font-semibold text-slate-800" x-text="selectedCenter?.name || '—'"></h3>
-                    <p class="text-xs text-slate-400 mt-0.5" x-text="selectedCenter?.ref + ' · ' + (selectedCenter?.barangay || '')"></p>
+                    <p class="text-xs text-slate-500 mt-0.5" x-text="selectedCenter?.ref + ' · ' + (selectedCenter?.barangay || '')"></p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
                 <span :class="statusBadge(selectedCenter?.status ?? '')" x-text="selectedCenter?.status === 'Processing' ? 'Open' : (selectedCenter?.status === 'Archived' ? 'Closed' : 'Registered')"></span>
-                <button @click="showCenterDetail = false" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+                <button @click="showCenterDetail = false" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -310,7 +310,7 @@
                 <template x-for="s in (selectedCenter?.services || [])" :key="s">
                     <span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200" x-text="s"></span>
                 </template>
-                <span x-show="!(selectedCenter?.services || []).length" class="text-xs text-slate-400 italic">No services recorded for this center.</span>
+                <span x-show="!(selectedCenter?.services || []).length" class="text-xs text-slate-500 italic">No services recorded for this center.</span>
             </div>
         </div>
 
@@ -322,12 +322,12 @@
                     <div class="flex items-center justify-between px-4 py-2.5">
                         <div class="min-w-0">
                             <p class="text-sm font-medium text-slate-700 truncate" x-text="f.head_name"></p>
-                            <p class="text-xs text-slate-400" x-text="f.sitio || f.barangay"></p>
+                            <p class="text-xs text-slate-500" x-text="f.sitio || f.barangay"></p>
                         </div>
                         <span class="text-xs text-slate-500 shrink-0" x-text="f.member_count + ' member(s)'"></span>
                     </div>
                 </template>
-                <div x-show="centerEvacuees.length === 0" class="px-4 py-8 text-center text-xs text-slate-400">No families currently checked in here.</div>
+                <div x-show="centerEvacuees.length === 0" class="px-4 py-8 text-center text-xs text-slate-500">No families currently checked in here.</div>
             </div>
             <div class="flex justify-end">
                 <button @click="setTab('evacuees')" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-4 py-2 rounded-xl transition-colors">
@@ -415,7 +415,7 @@
 
         <div class="flex items-center justify-end gap-3">
             <button @click="showCloseCenterConfirm = false; closeCenterConfirmed = false;" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-xl transition-colors">Cancel</button>
-            <button :disabled="!closeCenterConfirmed" :class="closeCenterConfirmed ? 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer' : 'bg-slate-100 text-slate-400 cursor-not-allowed'"
+            <button :disabled="!closeCenterConfirmed" :class="closeCenterConfirmed ? 'bg-rose-600 hover:bg-rose-700 text-white cursor-pointer' : 'bg-slate-100 text-slate-500 cursor-not-allowed'"
                 @click="if (closeCenterConfirmed) { confirmCloseCenter(); closeCenterConfirmed = false; }"
                 class="inline-flex items-center gap-1.5 text-sm font-medium px-5 py-2 rounded-xl transition-colors">
                 <i data-lucide="circle-x" class="w-4 h-4"></i> Confirm Close
@@ -446,10 +446,10 @@
                 <span class="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center"><i data-lucide="building-2" class="w-5 h-5 text-brand-600"></i></span>
                 <div>
                     <h3 class="text-base font-semibold text-slate-800" x-text="centerFormMode === 'create' ? 'Register Evacuation Center' : 'Edit Center — ' + centerForm.ref"></h3>
-                    <p class="text-xs text-slate-400">Facility name, barangay and capacity, plus optional services.</p>
+                    <p class="text-xs text-slate-500">Facility name, barangay and capacity, plus optional services.</p>
                 </div>
             </div>
-            <button @click="showCreateCenter = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button @click="showCreateCenter = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
         <div class="px-6 py-5 space-y-4">

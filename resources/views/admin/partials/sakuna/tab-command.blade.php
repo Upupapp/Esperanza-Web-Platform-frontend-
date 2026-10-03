@@ -99,7 +99,7 @@
                 <i data-lucide="flame" class="w-5 h-5 text-rose-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight" x-text="commandBoard.counts.incidents_open"></p>
-            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">Open Incidents</p>
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mt-0.5">Open Incidents</p>
             <p class="text-xs text-rose-600 mt-0.5 font-medium" x-text="commandBoard.counts.incidents_total + ' total'"></p>
         </div>
 
@@ -108,7 +108,7 @@
                 <i data-lucide="building-2" class="w-5 h-5 text-emerald-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight" x-text="commandBoard.counts.centers_open"></p>
-            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">Evac. Centers Open</p>
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mt-0.5">Evac. Centers Open</p>
             <p class="text-xs text-amber-600 mt-0.5 font-medium" x-text="commandBoard.centers.filter(c => c.pct >= 75).length + ' near/over capacity'"></p>
         </div>
 
@@ -117,7 +117,7 @@
                 <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight" x-text="commandBoard.counts.families_sheltered"></p>
-            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">Families Sheltered</p>
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mt-0.5">Families Sheltered</p>
             <p class="text-xs text-blue-600 mt-0.5 font-medium" x-text="commandBoard.counts.individuals_sheltered + ' individuals'"></p>
         </div>
 
@@ -126,7 +126,7 @@
                 <i data-lucide="package" class="w-5 h-5 text-amber-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight" x-text="commandBoard.counts.relief_released"></p>
-            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">Relief Released</p>
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mt-0.5">Relief Released</p>
         </div>
 
         <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('damage-assessment')">
@@ -134,7 +134,7 @@
                 <i data-lucide="clipboard-list" class="w-5 h-5 text-purple-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight" x-text="commandBoard.counts.damage_reports"></p>
-            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">Damage Reports</p>
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mt-0.5">Damage Reports</p>
         </div>
 
         <div class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('alerts')">
@@ -142,7 +142,7 @@
                 <i data-lucide="bell-ring" class="w-5 h-5 text-orange-600"></i>
             </div>
             <p class="mt-3 text-2xl font-bold text-slate-800 tabular-nums tracking-tight" x-text="commandBoard.counts.alerts_live"></p>
-            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">Active Public Alerts</p>
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mt-0.5">Active Public Alerts</p>
         </div>
 
     </div>{{-- /KPI Cards --}}
@@ -152,7 +152,7 @@
     <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
         <div class="px-5 py-4 border-b border-slate-100">
             <h3 class="text-sm font-semibold text-slate-800">Active Incident Locations</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Barangays with at least one open incident that carries coordinates</p>
+            <p class="text-xs text-slate-500 mt-0.5">Barangays with at least one open incident that carries coordinates</p>
         </div>
 
         <div class="p-5">
@@ -177,7 +177,7 @@
                             </div>
                         </div>
                     </template>
-                    <div x-show="groupedMarkers.length === 0" class="col-span-full flex items-center justify-center text-xs text-slate-400 py-10">
+                    <div x-show="groupedMarkers.length === 0" class="col-span-full flex items-center justify-center text-xs text-slate-500 py-10">
                         No open incidents currently carry map coordinates.
                     </div>
                 </div>
@@ -187,11 +187,11 @@
                     <span class="flex items-center gap-1.5 text-xs text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0"></span>High</span>
                     <span class="flex items-center gap-1.5 text-xs text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0"></span>Medium</span>
                     <span class="flex items-center gap-1.5 text-xs text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-slate-300 flex-shrink-0"></span>Low</span>
-                    <span class="ml-auto text-[10px] text-slate-400 italic">Dot badge = open incident count in that barangay</span>
+                    <span class="ml-auto text-[10px] text-slate-500 italic">Dot badge = open incident count in that barangay</span>
                 </div>
             </div>
 
-            <p class="text-[11px] text-slate-400 mt-2 text-center italic">
+            <p class="text-[11px] text-slate-500 mt-2 text-center italic">
                 Note: this is a schematic panel, not a GIS map — evacuation centers have no stored coordinates yet, so only incidents are plotted.
             </p>
         </div>
@@ -206,7 +206,7 @@
             <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                 <div>
                     <h3 class="text-sm font-semibold text-slate-800">Priority Incident Queue</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Top 6 open incidents by severity</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Top 6 open incidents by severity</p>
                 </div>
                 <button @click="setTab('incidents')" class="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1 transition-colors">
                     View all <i data-lucide="eye" class="w-3.5 h-3.5"></i>
@@ -216,12 +216,12 @@
                 <table class="w-full text-sm min-w-[640px]">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">Ref</th>
-                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">Type</th>
-                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">Barangay</th>
-                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">Severity</th>
-                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">Status</th>
-                            <th class="text-right px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">Actions</th>
+                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Ref</th>
+                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Barangay</th>
+                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Severity</th>
+                            <th class="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                            <th class="text-right px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -234,10 +234,10 @@
                                 <td class="px-4 py-3"><span :class="statusBadge(inc.status)" x-text="inc.status"></span></td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <button @click="openIncidentDetail(inc)" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="View Details">
+                                        <button @click="openIncidentDetail(inc)" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="View Details">
                                             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                                         </button>
-                                        <button x-show="inc.available_verbs.includes('validate')" @click="actIncidentVerb(inc, 'validate')" class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Validate">
+                                        <button x-show="inc.available_verbs.includes('validate')" @click="actIncidentVerb(inc, 'validate')" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Validate">
                                             <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>
                                         </button>
                                     </div>
@@ -245,7 +245,7 @@
                             </tr>
                         </template>
                         <tr x-show="priorityIncidents.length === 0">
-                            <td colspan="6" class="px-4 py-8 text-center text-xs text-slate-400">No open incidents.</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-xs text-slate-500">No open incidents.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -257,7 +257,7 @@
             <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                 <div>
                     <h3 class="text-sm font-semibold text-slate-800">Evacuation Center Status</h3>
-                    <p class="text-xs text-slate-400 mt-0.5" x-text="commandBoard.centers.length + ' open centers'"></p>
+                    <p class="text-xs text-slate-500 mt-0.5" x-text="commandBoard.centers.length + ' open centers'"></p>
                 </div>
                 <button @click="setTab('evacuation-centers')" class="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1 transition-colors">
                     Manage <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
@@ -269,7 +269,7 @@
                         <div class="flex items-start justify-between gap-2 mb-2">
                             <div class="min-w-0">
                                 <p class="text-xs font-semibold text-slate-700 truncate" x-text="c.name"></p>
-                                <p class="text-[11px] text-slate-400 truncate" x-text="c.barangay + ' · ' + c.families + ' families'"></p>
+                                <p class="text-[11px] text-slate-500 truncate" x-text="c.barangay + ' · ' + c.families + ' families'"></p>
                             </div>
                             <span x-show="c.over_capacity" class="px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700">Over Capacity</span>
                         </div>
@@ -279,10 +279,10 @@
                             </div>
                             <span class="text-[11px] font-semibold text-slate-500 tabular-nums w-10 text-right" x-text="c.pct + '%'"></span>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-0.5" x-text="c.individuals + ' / ' + c.capacity + ' occupants'"></p>
+                        <p class="text-[10px] text-slate-500 mt-0.5" x-text="c.individuals + ' / ' + c.capacity + ' occupants'"></p>
                     </div>
                 </template>
-                <div x-show="commandBoard.centers.length === 0" class="px-4 py-8 text-center text-xs text-slate-400">No centers currently open.</div>
+                <div x-show="commandBoard.centers.length === 0" class="px-4 py-8 text-center text-xs text-slate-500">No centers currently open.</div>
             </div>
         </div>
 
@@ -306,12 +306,12 @@
                     <span :class="alertLevelBadge(a.level)" x-text="a.level" class="shrink-0 mt-0.5"></span>
                     <div class="flex-1 min-w-0">
                         <p class="text-xs font-medium text-slate-700" x-text="a.title.en"></p>
-                        <p class="text-[11px] text-slate-400 mt-0.5" x-text="a.type + ' · ' + a.ref"></p>
+                        <p class="text-[11px] text-slate-500 mt-0.5" x-text="a.type + ' · ' + a.ref"></p>
                     </div>
-                    <span class="text-[10px] text-slate-400 whitespace-nowrap flex-shrink-0 mt-0.5" x-text="a.published_at ? new Date(a.published_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></span>
+                    <span class="text-[10px] text-slate-500 whitespace-nowrap flex-shrink-0 mt-0.5" x-text="a.published_at ? new Date(a.published_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></span>
                 </div>
             </template>
-            <div x-show="commandBoard.alerts.length === 0" class="px-5 py-8 text-center text-xs text-slate-400">No active public alerts.</div>
+            <div x-show="commandBoard.alerts.length === 0" class="px-5 py-8 text-center text-xs text-slate-500">No active public alerts.</div>
         </div>
     </div>{{-- /Active Public Alerts --}}
 
@@ -323,7 +323,7 @@
         <div class="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                 <h3 class="text-sm font-semibold text-slate-800">Recent Activity Feed</h3>
-                <span class="text-[11px] text-slate-400">Last 25 incident actions</span>
+                <span class="text-[11px] text-slate-500">Last 25 incident actions</span>
             </div>
             <div class="px-5 py-4 space-y-0 max-h-[420px] overflow-y-auto">
                 <template x-for="(item, idx) in commandBoard.feed" :key="item.incident + '-' + item.at + '-' + idx">
@@ -336,12 +336,12 @@
                                 <span class="font-mono font-medium" x-text="item.incident"></span>
                                 <span x-text="' — ' + item.verb + 'd (' + item.from + (item.to && item.to !== item.from ? ' → ' + item.to : '') + ')'"></span>
                             </p>
-                            <p class="text-[11px] text-slate-400 mt-0.5" x-show="item.note" x-text="item.note"></p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" x-show="item.note" x-text="item.note"></p>
                         </div>
-                        <span class="text-[10px] text-slate-400 whitespace-nowrap flex-shrink-0 mt-0.5" x-text="item.at ? new Date(item.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></span>
+                        <span class="text-[10px] text-slate-500 whitespace-nowrap flex-shrink-0 mt-0.5" x-text="item.at ? new Date(item.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></span>
                     </div>
                 </template>
-                <div x-show="commandBoard.feed.length === 0" class="text-center text-xs text-slate-400 py-8">No incident activity recorded yet.</div>
+                <div x-show="commandBoard.feed.length === 0" class="text-center text-xs text-slate-500 py-8">No incident activity recorded yet.</div>
             </div>
         </div>
 
@@ -358,13 +358,13 @@
                     <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/40">
                         <div class="flex items-center justify-between gap-2 mb-1">
                             <p class="text-xs font-semibold text-slate-700 truncate" x-text="r.name"></p>
-                            <span class="text-[10px] text-slate-400" x-text="r.readiness || '—'"></span>
+                            <span class="text-[10px] text-slate-500" x-text="r.readiness || '—'"></span>
                         </div>
                         <p class="text-[11px] text-slate-500" x-text="r.category"></p>
-                        <p class="text-[11px] text-slate-400 mt-1" x-text="r.available + ' / ' + r.quantity + ' available'"></p>
+                        <p class="text-[11px] text-slate-500 mt-1" x-text="r.available + ' / ' + r.quantity + ' available'"></p>
                     </div>
                 </template>
-                <div x-show="commandBoard.resources.length === 0" class="text-center text-xs text-slate-400 py-8">No resources recorded.</div>
+                <div x-show="commandBoard.resources.length === 0" class="text-center text-xs text-slate-500 py-8">No resources recorded.</div>
             </div>
         </div>
 

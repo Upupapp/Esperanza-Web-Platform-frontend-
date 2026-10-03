@@ -52,7 +52,7 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredAlerts.map(a => ({ ref: a.ref, type: a.type, level: a.level, title_en: a.title?.en, status: a.status, recipients: a.recipients })), 'alerts-export.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
         </button>
         <button x-show="can('sakuna_alerts', 'create')" @click="openCreateAlert()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
@@ -90,7 +90,7 @@
 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
             <input aria-label="Search by title or ref" type="text" x-model="alertSearch" placeholder="Search by title or ref…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
@@ -127,7 +127,7 @@
             <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap mb-1">
-                        <span class="text-xs font-mono text-slate-400" x-text="a.ref"></span>
+                        <span class="text-xs font-mono text-slate-500" x-text="a.ref"></span>
                         <span :class="alertLevelBadge(a.level)" x-text="a.level"></span>
                         <span :class="statusBadge(a.status)" x-text="a.status"></span>
                         <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full" x-text="a.type"></span>
@@ -142,7 +142,7 @@
                             <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full" x-text="ch"></span>
                         </template>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1.5">
+                    <p class="text-xs text-slate-500 mt-1.5">
                         <span x-text="a.status === 'Released' ? ('Published ' + new Date(a.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + ' — ' + a.recipients + ' recipient(s)') : 'Not yet published'"></span>
                     </p>
                 </div>
@@ -155,7 +155,7 @@
             </div>
         </div>
     </template>
-    <div x-show="filteredAlerts.length === 0" class="flex flex-col items-center gap-3 text-slate-400 bg-white rounded-2xl border border-slate-100 shadow-card py-12">
+    <div x-show="filteredAlerts.length === 0" class="flex flex-col items-center gap-3 text-slate-500 bg-white rounded-2xl border border-slate-100 shadow-card py-12">
         <i data-lucide="siren" class="w-10 h-10 opacity-30"></i>
         <p class="text-sm font-medium text-slate-500">No alerts match your filters.</p>
         <button @click="alertSearch = ''; alertTypeFilter = ''; alertLevelFilter = ''; alertStatusFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
@@ -179,13 +179,13 @@
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <div>
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-mono text-xs text-slate-400" x-text="selectedAlert?.ref"></span>
+                    <span class="font-mono text-xs text-slate-500" x-text="selectedAlert?.ref"></span>
                     <span :class="alertLevelBadge(selectedAlert?.level ?? '')" x-text="selectedAlert?.level"></span>
                     <span :class="statusBadge(selectedAlert?.status ?? '')" x-text="selectedAlert?.status"></span>
                 </div>
                 <h3 class="font-semibold text-slate-800 mt-1" x-text="selectedAlert?.title?.en"></h3>
             </div>
-            <button @click="showAlertDetail = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showAlertDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">
@@ -200,10 +200,10 @@
                 <p class="text-sm text-slate-600 mt-1 whitespace-pre-line" x-text="selectedAlert?.body?.fil"></p>
             </div>
             <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
-                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Target</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedAlert?.barangays && selectedAlert.barangays.length) ? selectedAlert.barangays.join(', ') : 'Municipality-Wide'"></p></div>
-                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Channels</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedAlert?.channels || []).join(', ')"></p></div>
-                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Recipients Reached</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAlert?.recipients ?? 0"></p></div>
-                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Published</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAlert?.published_at ? new Date(selectedAlert.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></p></div>
+                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Target</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedAlert?.barangays && selectedAlert.barangays.length) ? selectedAlert.barangays.join(', ') : 'Municipality-Wide'"></p></div>
+                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Channels</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedAlert?.channels || []).join(', ')"></p></div>
+                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Recipients Reached</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAlert?.recipients ?? 0"></p></div>
+                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Published</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAlert?.published_at ? new Date(selectedAlert.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></p></div>
             </div>
         </div>
 
@@ -274,7 +274,7 @@
                 <h3 class="font-semibold text-slate-800" x-text="alertFormMode === 'create' ? 'Create Alert' : 'Edit Draft Alert'"></h3>
                 <p class="text-xs text-slate-500 mt-0.5">Both languages are required — an emergency is the worst moment to send someone a language they don't read.</p>
             </div>
-            <button @click="showCreateAlert = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showCreateAlert = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">

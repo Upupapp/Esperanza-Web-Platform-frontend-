@@ -58,7 +58,7 @@
 
     <div x-show="!floatingPanels.spacing.collapsed">
         <div class="doc-floating-panel-body">
-            <p class="text-[11px] text-slate-400 leading-relaxed" x-show="!selectedSectionEl"><x-ui.t fil="I-click ang alinmang bahagi ng dokumento para piliin ito." en="Click any part of the document to select it." /></p>
+            <p class="text-[11px] text-slate-500 leading-relaxed" x-show="!selectedSectionEl"><x-ui.t fil="I-click ang alinmang bahagi ng dokumento para piliin ito." en="Click any part of the document to select it." /></p>
 
             <template x-if="selectedSectionEl">
                 <div class="space-y-2.5">
@@ -128,7 +128,7 @@
 
                     <div class="flex items-center justify-between pt-0.5">
                         <button type="button" class="doc-spacing-mini-btn" @click="resetSectionSpacing()"><x-ui.t fil="I-reset ang Posisyon" en="Reset Position" /></button>
-                        <button type="button" class="doc-spacing-mini-btn text-slate-400" @click="deselectSection()"><x-ui.t fil="Alisin sa pagkakapili" en="Deselect" /></button>
+                        <button type="button" class="doc-spacing-mini-btn text-slate-500" @click="deselectSection()"><x-ui.t fil="Alisin sa pagkakapili" en="Deselect" /></button>
                     </div>
 
                     <div x-show="canRemoveSelectedBlock" x-cloak class="pt-0.5">

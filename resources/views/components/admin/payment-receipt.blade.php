@@ -32,7 +32,7 @@
             <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="receipt" class="w-4 h-4"></i></span>
             <div class="min-w-0">
                 <p class="text-xs font-medium text-slate-700 truncate" x-text="'Official Receipt ' + (__receipt?.receipt || '')"></p>
-                <p class="text-[11px] text-slate-400" x-text="'Paid via ' + (__receipt?.method || 'unspecified method')"></p>
+                <p class="text-[11px] text-slate-500" x-text="'Paid via ' + (__receipt?.method || 'unspecified method')"></p>
             </div>
         </div>
         <div class="flex items-center gap-3 shrink-0">
@@ -55,23 +55,23 @@
                 </div>
                 <dl class="space-y-2.5">
                     <div class="flex items-start justify-between gap-3">
-                        <dt class="text-xs text-slate-400">Resident Name</dt>
+                        <dt class="text-xs text-slate-500">Resident Name</dt>
                         <dd class="text-xs font-bold text-navy-900 text-right" x-text="__receipt?.citizen"></dd>
                     </div>
                     <div class="flex items-start justify-between gap-3">
-                        <dt class="text-xs text-slate-400">Service</dt>
+                        <dt class="text-xs text-slate-500">Service</dt>
                         <dd class="text-xs font-bold text-navy-900 text-right" x-text="__receipt?.item"></dd>
                     </div>
                     <div class="flex items-start justify-between gap-3">
-                        <dt class="text-xs text-slate-400">Request Reference No.</dt>
+                        <dt class="text-xs text-slate-500">Request Reference No.</dt>
                         <dd class="text-xs font-bold text-navy-900 text-right" x-text="__receipt?.ref"></dd>
                     </div>
                     <div class="flex items-start justify-between gap-3">
-                        <dt class="text-xs text-slate-400">Amount Paid</dt>
+                        <dt class="text-xs text-slate-500">Amount Paid</dt>
                         <dd class="text-base font-bold text-brand-700 text-right" x-text="__receipt?.amount"></dd>
                     </div>
                     <div class="flex items-start justify-between gap-3">
-                        <dt class="text-xs text-slate-400">Mode of Payment</dt>
+                        <dt class="text-xs text-slate-500">Mode of Payment</dt>
                         <dd class="flex items-center justify-end gap-1.5 text-right">
                             {{-- Official GCash/PayMaya brand marks — same source
                                  assets as the Esperanza Mobile app's own receipt
@@ -98,12 +98,12 @@
                         </dd>
                     </div>
                     <div class="flex items-start justify-between gap-3">
-                        <dt class="text-xs text-slate-400">Date &amp; Time</dt>
+                        <dt class="text-xs text-slate-500">Date &amp; Time</dt>
                         <dd class="text-xs font-bold text-navy-900 text-right" x-text="__receipt?.date"></dd>
                     </div>
                     <div class="border-t border-dashed border-slate-200 my-1"></div>
                     <div class="flex items-start justify-between gap-3">
-                        <dt class="text-xs text-slate-400">Official Receipt No.</dt>
+                        <dt class="text-xs text-slate-500">Official Receipt No.</dt>
                         <dd class="text-xs font-bold text-navy-900 text-right font-mono" x-text="__receipt?.receipt"></dd>
                     </div>
                 </dl>

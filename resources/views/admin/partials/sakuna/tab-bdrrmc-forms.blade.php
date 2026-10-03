@@ -72,7 +72,7 @@
                         <i data-lucide="{{ $f['icon'] }}" class="w-4 h-4"></i>
                     </div>
                     <div class="min-w-0">
-                        <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{{ $f['code'] }}</p>
+                        <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{{ $f['code'] }}</p>
                         <p class="text-sm font-semibold text-slate-800 leading-snug">{{ $f['name'] }}</p>
                     </div>
                 </div>
@@ -99,17 +99,17 @@
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dromic Form 1.2</p>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Dromic Form 1.2</p>
                     <h3 class="font-semibold text-slate-800">Profile of Evacuees Inside the Evacuation Center</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Region</label><input aria-label="Region" type="text" value="Region V" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" placeholder="e.g. Labangtaytay Barangay Hall" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Region</label><input aria-label="Region" type="text" value="Region V" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" placeholder="e.g. Labangtaytay Barangay Hall" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -198,16 +198,16 @@
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">BDRRMC Capture Form</p>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Human, Housing & Flooding" Calamity/Damages Capture and Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -271,7 +271,7 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="text-[10px] text-slate-400">*Levels of flood height: (1) Ankle; (2) Knee; (3) Waist; (4) Chest; (5) Head</p>
+                <p class="text-[10px] text-slate-500">*Levels of flood height: (1) Ankle; (2) Knee; (3) Waist; (4) Chest; (5) Head</p>
                 <button @click="addHousingRow(); $nextTick(() => window.renderIcons?.())" class="w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-slate-500 hover:text-brand-600 py-2 transition-all duration-[160ms] ease-standard">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Household Row
                 </button>
@@ -299,16 +299,16 @@
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">BDRRMC Capture Form</p>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Agricultural Crops & Livestock" Calamity Damages Captured Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Name of Disaster</label><input aria-label="Name of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Disaster</label><input aria-label="Name of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -388,17 +388,17 @@
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">BDRRMC Capture Form</p>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Fishing" Calamity Damages Captured Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Name & Type of Disaster</label><input aria-label="Name & Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name & Type of Disaster</label><input aria-label="Name & Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -463,17 +463,17 @@
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">BDRRMC Capture Form</p>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Business" Calamity Damages Captured Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Disaster</label><input aria-label="Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Disaster</label><input aria-label="Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -529,7 +529,7 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="text-[10px] text-slate-400">*Levels of flood height: (1) Ankle; (2) Knee; (3) Waist; (4) Chest; (5) Head</p>
+                <p class="text-[10px] text-slate-500">*Levels of flood height: (1) Ankle; (2) Knee; (3) Waist; (4) Chest; (5) Head</p>
                 <button @click="addBusinessRow(); $nextTick(() => window.renderIcons?.())" class="w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-slate-500 hover:text-brand-600 py-2 transition-all duration-[160ms] ease-standard">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Business Row
                 </button>
@@ -557,17 +557,17 @@
         <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">RDS</p>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">RDS</p>
                     <h3 class="font-semibold text-slate-800">Relief Distribution Sheet</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1">Date of Relief Distribution</label><input aria-label="Date of Relief Distribution" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Relief Distribution</label><input aria-label="Date of Relief Distribution" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">

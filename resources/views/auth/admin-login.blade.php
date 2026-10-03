@@ -52,7 +52,7 @@
             },
         }"
     >
-        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 mb-4 transition-colors">
+        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-600 mb-4 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
         </a>
 
@@ -77,12 +77,12 @@
                 <span class="w-8 h-8 rounded-lg bg-navy-50 text-navy-700 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                 <span>
                     <span class="block text-xs font-semibold text-navy-900">Municipal-wide</span>
-                    <span class="block text-[10.5px] text-slate-400">Municipal Hall departments &amp; offices</span>
+                    <span class="block text-[10.5px] text-slate-500">Municipal Hall departments &amp; offices</span>
                 </span>
             </button>
 
             <div class="relative mb-2.5">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                 <input aria-label="Search your barangay" type="text" x-model="scopeSearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-navy-300 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard">
             </div>
             <div class="grid grid-cols-2 gap-1.5 max-h-56 overflow-y-auto scrollbar-thin pr-0.5">
@@ -91,12 +91,12 @@
                         type="button" @click="chooseScope(b)"
                         class="flex items-center gap-1.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-navy-800 shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard"
                     >
-                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i><span class="truncate" x-text="b"></span>
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i><span class="truncate" x-text="b"></span>
                     </button>
                 </template>
                 <div class="col-span-2 flex flex-col items-center text-center py-6" x-show="filteredScopes.length === 0">
-                    <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4 h-4"></i></span>
-                    <p class="text-[11px] text-slate-400">No barangay matches "<span x-text="scopeSearch"></span>".</p>
+                    <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4 h-4"></i></span>
+                    <p class="text-[11px] text-slate-500">No barangay matches "<span x-text="scopeSearch"></span>".</p>
                 </div>
             </div>
         </div>
@@ -122,14 +122,14 @@
                 <div class="animate-fade-up" style="animation-delay: 80ms" x-data="passwordField">
                     <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
                     <div class="relative">
-                        <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none"></i>
+                        <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500 pointer-events-none"></i>
                         <input
                             :type="visible ? 'text' : 'password'"
                             name="password" id="password" placeholder="••••••••" required
                             x-model="password"
                             class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-navy-400 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
-                        <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                        <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 transition-colors">
                             <i data-lucide="eye" class="w-[18px] h-[18px]" x-show="!visible"></i>
                             <i data-lucide="eye-off" class="w-[18px] h-[18px]" x-show="visible" x-cloak></i>
                         </button>
@@ -181,7 +181,7 @@
             </form>
         </div>
 
-        <p class="text-center text-xs text-slate-400 mt-4">
+        <p class="text-center text-xs text-slate-500 mt-4">
             Personnel accounts cannot self-register — contact the ICT Office for access.
         </p>
     </div>

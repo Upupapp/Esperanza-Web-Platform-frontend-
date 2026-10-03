@@ -52,7 +52,7 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredEvacuees, 'evacuees-export.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
         </button>
         <button x-show="can('sakuna_evacuees', 'check_in')" @click="openEvacueeReg()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
@@ -71,7 +71,7 @@
     <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
         <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Total Individuals</p>
         <p class="text-2xl font-bold text-slate-800 mt-1" x-text="evacueesList.reduce((s,e) => s + e.member_count, 0)"></p>
-        <p class="text-xs text-slate-400 mt-0.5" x-text="evacueesList.filter(e => e.status === 'Processing').length + ' families sheltered'"></p>
+        <p class="text-xs text-slate-500 mt-0.5" x-text="evacueesList.filter(e => e.status === 'Processing').length + ' families sheltered'"></p>
     </div>
     <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
         <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Currently Sheltered</p>
@@ -84,7 +84,7 @@
     <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
         <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Unregistered</p>
         <p class="text-2xl font-bold text-amber-600 mt-1" x-text="evacueesList.filter(e => !e.registered).length"></p>
-        <p class="text-xs text-slate-400 mt-0.5">Not linked to a resident record</p>
+        <p class="text-xs text-slate-500 mt-0.5">Not linked to a resident record</p>
     </div>
 </div>
 
@@ -92,7 +92,7 @@
 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
             <input aria-label="Search by name or ID" type="text" x-model="evacueeSearch" placeholder="Search by name or ref…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
@@ -139,13 +139,13 @@
                                      x-text="(ev.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                 <div class="min-w-0">
                                     <div class="font-medium text-slate-800 group-hover:text-brand-600 transition-colors truncate" x-text="ev.head_name"></div>
-                                    <div class="text-xs text-slate-400" x-text="ev.member_count + (ev.member_count === 1 ? ' member' : ' members')"></div>
+                                    <div class="text-xs text-slate-500" x-text="ev.member_count + (ev.member_count === 1 ? ' member' : ' members')"></div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <div class="text-slate-700" x-text="ev.barangay"></div>
-                            <div class="text-xs text-slate-400" x-text="ev.sitio || ''"></div>
+                            <div class="text-xs text-slate-500" x-text="ev.sitio || ''"></div>
                         </td>
                         <td class="px-4 py-3"><div class="text-slate-700 max-w-[180px] truncate" x-text="ev.center || '—'"></div></td>
                         <td class="px-4 py-3 whitespace-nowrap text-slate-600 text-xs" x-text="ev.checked_in ? new Date(ev.checked_in).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—'"></td>
@@ -172,7 +172,7 @@
                 </template>
                 <tr x-show="filteredEvacuees.length === 0">
                     <td colspan="7" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-slate-400">
+                        <div class="flex flex-col items-center gap-3 text-slate-500">
                             <i data-lucide="users" class="w-10 h-10 opacity-30"></i>
                             <p class="text-sm font-medium text-slate-500">No evacuees match your filters.</p>
                             <button @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
@@ -269,13 +269,13 @@
                 <div>
                     <h3 class="font-semibold text-slate-800" x-text="selectedEvacuee?.head_name ?? '—'"></h3>
                     <div class="flex items-center gap-2 mt-0.5">
-                        <span class="font-mono text-xs text-slate-400" x-text="selectedEvacuee?.ref ?? ''"></span>
+                        <span class="font-mono text-xs text-slate-500" x-text="selectedEvacuee?.ref ?? ''"></span>
                         <span class="text-slate-300">·</span>
                         <span :class="statusBadge(selectedEvacuee?.status ?? '')" x-text="selectedEvacuee?.status === 'Processing' ? 'Checked In' : 'Checked Out'"></span>
                     </div>
                 </div>
             </div>
-            <button @click="showEvacueeDetail = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showEvacueeDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
@@ -283,19 +283,19 @@
             <div>
                 <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5"></i> Household</h4>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Household Head</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.head_name ?? '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Total Members</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedEvacuee?.member_count ?? 0) + ' persons'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Home Barangay</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.barangay ?? '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Home Sitio/Purok</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.sitio || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-slate-400">Resident Record</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.registered ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.registered ? 'Linked' : 'Unregistered household'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Household Head</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.head_name ?? '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Total Members</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedEvacuee?.member_count ?? 0) + ' persons'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Home Barangay</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.barangay ?? '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Home Sitio/Purok</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.sitio || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-slate-500">Resident Record</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.registered ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.registered ? 'Linked' : 'Unregistered household'"></p></div>
                 </div>
             </div>
 
             <div>
                 <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Current Location</h4>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Evacuation Center</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.center || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Checked In</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.checked_in ? new Date(selectedEvacuee.checked_in).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Evacuation Center</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.center || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Checked In</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedEvacuee?.checked_in ? new Date(selectedEvacuee.checked_in).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></p></div>
                 </div>
             </div>
 
@@ -306,7 +306,7 @@
                         <div class="flex items-center justify-between px-4 py-2.5">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium text-slate-700 truncate" x-text="m.name"></p>
-                                <p class="text-xs text-slate-400" x-text="[m.relation, m.age ? m.age + ' yrs' : null, m.sex].filter(Boolean).join(' · ') || '—'"></p>
+                                <p class="text-xs text-slate-500" x-text="[m.relation, m.age ? m.age + ' yrs' : null, m.sex].filter(Boolean).join(' · ') || '—'"></p>
                             </div>
                             <div class="flex flex-wrap gap-1 justify-end shrink-0 max-w-[50%]">
                                 <template x-for="n in (m.needs || [])" :key="n">
@@ -315,7 +315,7 @@
                             </div>
                         </div>
                     </template>
-                    <p x-show="!(selectedEvacuee?.members || []).length" class="text-xs text-slate-400 italic px-4 py-4">No individual member records — only the household count was captured at check-in.</p>
+                    <p x-show="!(selectedEvacuee?.members || []).length" class="text-xs text-slate-500 italic px-4 py-4">No individual member records — only the household count was captured at check-in.</p>
                 </div>
             </div>
 
@@ -327,12 +327,12 @@
                             <div class="w-2 h-2 rounded-full bg-brand-400 mt-2 flex-shrink-0"></div>
                             <div class="flex-1 min-w-0">
                                 <span class="text-xs font-semibold text-slate-700 capitalize" x-text="mv.verb.replace('_',' ')"></span>
-                                <span class="text-[11px] text-slate-400" x-text="(mv.from ? ' from ' + mv.from : '') + (mv.to ? ' to ' + mv.to : '')"></span>
+                                <span class="text-[11px] text-slate-500" x-text="(mv.from ? ' from ' + mv.from : '') + (mv.to ? ' to ' + mv.to : '')"></span>
                             </div>
-                            <span class="text-[11px] text-slate-400 whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
+                            <span class="text-[11px] text-slate-500 whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
                         </div>
                     </template>
-                    <p x-show="!(selectedEvacuee?.movements || []).length" class="text-xs text-slate-400 py-2">No movements recorded yet.</p>
+                    <p x-show="!(selectedEvacuee?.movements || []).length" class="text-xs text-slate-500 py-2">No movements recorded yet.</p>
                 </div>
             </div>
         </div>
@@ -367,7 +367,7 @@
                 <h3 class="font-semibold text-slate-800">Register Evacuee Household</h3>
                 <p class="text-xs text-slate-500 mt-0.5">Unregistered households are accepted — a disaster is not the moment to require an account.</p>
             </div>
-            <button @click="showEvacueeReg = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showEvacueeReg = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
@@ -418,7 +418,7 @@
                                 <option value="">Sex</option><option>Male</option><option>Female</option>
                             </select>
                             <input type="text" x-model="m.needs" :aria-label="'Member ' + (idx+1) + ' needs'" placeholder="Needs (comma-separated)" class="flex-1 min-w-[140px] text-xs border border-slate-200 rounded-lg px-2 py-1.5">
-                            <button type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                            <button type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-slate-500 hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </template>
                 </div>

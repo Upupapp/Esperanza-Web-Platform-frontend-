@@ -49,7 +49,7 @@
                     <h2 class="text-lg font-bold text-navy-900">Add New Family</h2>
                     <p class="text-sm text-slate-500 mt-0.5">Municipality of Esperanza, Masbate</p>
                 </div>
-                <button @click="showAddFamily = false; addFamilyStep = 1" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                <button @click="showAddFamily = false; addFamilyStep = 1" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -65,7 +65,7 @@
                                     ? 'bg-emerald-500 text-white'
                                     : addFamilyStep === step.n
                                         ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                        : 'bg-slate-100 text-slate-400'"
+                                        : 'bg-slate-100 text-slate-500'"
                             >
                                 <template x-if="addFamilyStep > step.n">
                                     <i data-lucide="check" class="w-3.5 h-3.5"></i>
@@ -76,7 +76,7 @@
                             </div>
                             <span
                                 class="text-xs font-medium hidden sm:block transition-colors"
-                                :class="addFamilyStep === step.n ? 'text-blue-600' : addFamilyStep > step.n ? 'text-emerald-600' : 'text-slate-400'"
+                                :class="addFamilyStep === step.n ? 'text-blue-600' : addFamilyStep > step.n ? 'text-emerald-600' : 'text-slate-500'"
                                 x-text="step.label"
                             ></span>
                         </div>
@@ -125,9 +125,9 @@
                                     : 'border-slate-200 bg-white hover:border-slate-300'"
                             >
                                 <input type="radio" x-model="form.family_type" :value="ft.val" class="sr-only" />
-                                <i :data-lucide="ft.icon" class="w-5 h-5" :class="form.family_type === ft.val ? 'text-blue-600' : 'text-slate-400'"></i>
+                                <i :data-lucide="ft.icon" class="w-5 h-5" :class="form.family_type === ft.val ? 'text-blue-600' : 'text-slate-500'"></i>
                                 <span class="text-xs font-semibold" :class="form.family_type === ft.val ? 'text-blue-700' : 'text-slate-600'" x-text="ft.val"></span>
-                                <span class="text-xs text-slate-400 leading-tight" x-text="ft.desc"></span>
+                                <span class="text-xs text-slate-500 leading-tight" x-text="ft.desc"></span>
                                 <template x-if="form.family_type === ft.val">
                                     <div class="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-blue-600 rounded-full flex items-center justify-center">
                                         <i data-lucide="check" class="w-2.5 h-2.5 text-white"></i>
@@ -175,10 +175,10 @@
                             placeholder="Full name of head"
                             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         />
-                        <p class="text-[10.5px] text-slate-400 mt-1">If they aren't already a resident on file, a new resident record is created for them.</p>
+                        <p class="text-[10.5px] text-slate-500 mt-1">If they aren't already a resident on file, a new resident record is created for them.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="link-to-household-ref-optional">Link to Household <span class="text-slate-400 font-normal">(optional)</span></label>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="link-to-household-ref-optional">Link to Household <span class="text-slate-500 font-normal">(optional)</span></label>
                         <input id="link-to-household-ref-optional"
                             type="text"
                             x-model="form.household_ref"
@@ -192,7 +192,7 @@
             {{-- ── STEP 2: Programs & Notes ── --}}
             <div x-show="addFamilyStep === 2" x-cloak class="space-y-5">
                 <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex items-start gap-2">
-                    <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0"></i>
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-slate-500 mt-0.5 flex-shrink-0"></i>
                     Optionally enroll this family in government programs and add any relevant remarks.
                 </p>
 
@@ -226,11 +226,11 @@
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">Summary</h4>
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                        <div><dt class="text-slate-400">Surname</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.surname || '—'"></dd></div>
-                        <div><dt class="text-slate-400">Type</dt><dd class="font-semibold text-navy-900" x-text="form.family_type"></dd></div>
-                        <div><dt class="text-slate-400">Barangay</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.barangay || '—'"></dd></div>
-                        <div><dt class="text-slate-400">Head</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.head_name || '—'"></dd></div>
-                        <div class="col-span-2"><dt class="text-slate-400">Programs</dt><dd class="font-semibold text-navy-900" x-text="form.programs.length > 0 ? form.programs.length + ' selected' : 'None'"></dd></div>
+                        <div><dt class="text-slate-500">Surname</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.surname || '—'"></dd></div>
+                        <div><dt class="text-slate-500">Type</dt><dd class="font-semibold text-navy-900" x-text="form.family_type"></dd></div>
+                        <div><dt class="text-slate-500">Barangay</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.barangay || '—'"></dd></div>
+                        <div><dt class="text-slate-500">Head</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.head_name || '—'"></dd></div>
+                        <div class="col-span-2"><dt class="text-slate-500">Programs</dt><dd class="font-semibold text-navy-900" x-text="form.programs.length > 0 ? form.programs.length + ' selected' : 'None'"></dd></div>
                     </dl>
                 </div>
             </div>

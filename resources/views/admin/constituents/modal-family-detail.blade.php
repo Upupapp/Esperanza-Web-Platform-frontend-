@@ -117,7 +117,7 @@
                             class="shrink-0 sm:w-full flex items-center gap-2 sm:gap-2.5 px-3 py-2 sm:py-2.5 rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap sm:whitespace-normal text-left"
                             :class="familyTab === tab.id ? 'bg-white text-brand-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'"
                         >
-                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="familyTab === tab.id ? 'text-brand-600' : 'text-slate-400'"></i>
+                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="familyTab === tab.id ? 'text-brand-600' : 'text-slate-500'"></i>
                             <span class="flex-1 min-w-0 sm:truncate" x-text="tab.label"></span>
                             <span
                                 x-show="tab.count"
@@ -139,7 +139,7 @@
                         {{-- Left column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Family Details</h4>
+                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Family Details</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-slate-500">Family Type</dt>
@@ -172,7 +172,7 @@
                         {{-- Right column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Status & Verification</h4>
+                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Status & Verification</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-center gap-2">
                                         <dt class="text-xs text-slate-500">Record Status</dt>
@@ -195,10 +195,10 @@
 
                             {{-- Programs chips --}}
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Enrolled Programs</h4>
+                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Enrolled Programs</h4>
                                 <div class="flex flex-wrap gap-1.5">
                                     <template x-if="!selectedFamily.programs || selectedFamily.programs.length === 0">
-                                        <span class="text-xs text-slate-400 italic">No enrolled programs</span>
+                                        <span class="text-xs text-slate-500 italic">No enrolled programs</span>
                                     </template>
                                     <template x-for="prog in (selectedFamily.programs || [])" :key="prog">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700" x-text="prog"></span>
@@ -208,7 +208,7 @@
 
                             {{-- Notes --}}
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Notes / Remarks</h4>
+                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Notes / Remarks</h4>
                                 <p class="text-xs text-slate-600 leading-relaxed" x-text="selectedFamily.notes || 'No notes recorded.'"></p>
                             </x-ui.card>
                         </div>
@@ -260,7 +260,7 @@
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <i data-lucide="user-x" class="w-8 h-8 text-slate-300"></i>
-                                    <p class="text-sm text-slate-400">No members linked to this family yet.</p>
+                                    <p class="text-sm text-slate-500">No members linked to this family yet.</p>
                                 </div>
                             </div>
                         </template>
@@ -278,7 +278,7 @@
                                     <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
-                                        <p class="text-xs text-slate-400">
+                                        <p class="text-xs text-slate-500">
                                             <span x-text="r.age ? r.age + ' yrs' : ''"></span>
                                             <template x-if="r.relation"><span> · <span x-text="r.relation"></span></span></template>
                                         </p>
@@ -303,7 +303,7 @@
                         <x-ui.card class="py-10 text-center">
                             <div class="flex flex-col items-center gap-2">
                                 <i data-lucide="heart-handshake" class="w-8 h-8 text-slate-300"></i>
-                                <p class="text-sm text-slate-400">No programs enrolled.</p>
+                                <p class="text-sm text-slate-500">No programs enrolled.</p>
                             </div>
                         </x-ui.card>
                     </template>
@@ -339,7 +339,7 @@
 
     {{-- Placeholder when no family selected --}}
     <template x-if="!selectedFamily">
-        <div class="flex items-center justify-center h-48 text-slate-400 text-sm">
+        <div class="flex items-center justify-center h-48 text-slate-500 text-sm">
             <i data-lucide="loader-circle" class="w-6 h-6 animate-spin mr-2"></i>
             Loading family details…
         </div>

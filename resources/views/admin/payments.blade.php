@@ -96,7 +96,7 @@
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input aria-label="Search reference or citizen" type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
                 <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
@@ -114,7 +114,7 @@
                     <button type="button" @click="tab = 'paid'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'paid' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">Paid</button>
                     <button type="button" @click="tab = 'rejected'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'rejected' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">Rejected</button>
                 </div>
-                <p class="text-[11px] text-slate-400 shrink-0" x-text="visibleCount + ' of ' + payments.length + ' payments'"></p>
+                <p class="text-[11px] text-slate-500 shrink-0" x-text="visibleCount + ' of ' + payments.length + ' payments'"></p>
             </div>
         </div>
 
@@ -125,13 +125,13 @@
         <x-ui.table>
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Reference</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Citizen</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Item</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Amount</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Method</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Date</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden xl:table-cell">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Citizen</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Item</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Amount</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Method</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden xl:table-cell">Date</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
                     <th class="px-4 py-2.5"></th>
                 </tr>
             </thead>
@@ -154,7 +154,7 @@
                     </td>
                     <td class="px-4 py-3 hidden 2xl:table-cell">
                         <p class="text-slate-700" x-text="p.item"></p>
-                        <p class="text-[11px] text-slate-400 mt-0.5" x-text="p.type"></p>
+                        <p class="text-[11px] text-slate-500 mt-0.5" x-text="p.type"></p>
                     </td>
                     <td class="px-4 py-3 text-slate-700 font-semibold whitespace-nowrap" x-text="'₱' + Number(p.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></td>
                     <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell" x-text="p.method || '—'"></td>
@@ -174,7 +174,7 @@
         </x-ui.table>
 
         <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="visibleCount === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600">No payments match these filters.</p>
         </div>
         </div>
@@ -183,7 +183,7 @@
             <template x-if="selected !== null">
                 <div>
                     <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-mono text-slate-400" x-text="payments[selected].ref"></span>
+                        <span class="text-xs font-mono text-slate-500" x-text="payments[selected].ref"></span>
                         <span class="text-[11px] font-medium px-2 py-0.5 rounded-full" :class="payments[selected].type === 'Dokyu' ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'" x-text="payments[selected].type"></span>
                     </div>
 
@@ -208,21 +208,21 @@
                             <div class="flex items-start gap-2.5">
                                 <span class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                 <div class="min-w-0 flex-1">
-                                    <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Citizen</label>
+                                    <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-0.5">Citizen</label>
                                     <p class="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-700 truncate" x-text="payments[selected].citizen"></p>
                                 </div>
                             </div>
                             <div class="flex items-start gap-2.5">
                                 <span class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="calendar-days" class="w-4 h-4"></i></span>
                                 <div class="min-w-0 flex-1">
-                                    <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Date Invoiced</label>
+                                    <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-0.5">Date Invoiced</label>
                                     <p class="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-700" x-text="payments[selected].date"></p>
                                 </div>
                             </div>
                             <div class="flex items-start gap-2.5 sm:col-span-2">
                                 <span class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></span>
                                 <div class="min-w-0 flex-1">
-                                    <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Item</label>
+                                    <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-0.5">Item</label>
                                     <p class="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm text-slate-700" x-text="payments[selected].item"></p>
                                 </div>
                             </div>
@@ -248,7 +248,7 @@
                             <span class="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-brand-100 text-slate-500 group-hover:text-brand-600 flex items-center justify-center shrink-0 transition-colors"><i data-lucide="file-text" class="w-4 h-4"></i></span>
                             <span class="min-w-0">
                                 <span class="block text-xs font-semibold text-navy-900">View Full Application</span>
-                                <span class="block text-[11px] text-slate-400">Submitted form and documents in <span x-text="payments[selected].type"></span></span>
+                                <span class="block text-[11px] text-slate-500">Submitted form and documents in <span x-text="payments[selected].type"></span></span>
                             </span>
                         </span>
                         <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all shrink-0"></i>
@@ -272,7 +272,7 @@
                     <!-- Admin: issue the official receipt (Pending Review rows) -->
                     <div x-show="payments[selected].status === 'Pending Review'" x-cloak>
                         <p class="text-sm font-semibold text-navy-900 mb-3 mt-4">Issue Receipt</p>
-                        <p class="text-xs text-slate-400 mb-3">Select how the citizen paid, then issue the official receipt.</p>
+                        <p class="text-xs text-slate-500 mb-3">Select how the citizen paid, then issue the official receipt.</p>
                         <div class="space-y-2 mb-4">
                             <template x-for="m in [{ name: 'GCash', icon: 'smartphone' }, { name: 'PayMaya', icon: 'wallet' }, { name: 'Payment in Center', icon: 'building-2' }]" :key="m.name">
                                 <label
@@ -280,7 +280,7 @@
                                     :class="method === m.name ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100' : 'border-slate-200 hover:border-slate-300'"
                                 >
                                     <input type="radio" name="admin_payment_method" class="text-brand-600 focus:ring-brand-200" :checked="method === m.name" @change="method = m.name">
-                                    <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors" :class="method === m.name ? 'bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-400'"><i :data-lucide="m.icon" class="w-3.5 h-3.5"></i></span>
+                                    <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors" :class="method === m.name ? 'bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-500'"><i :data-lucide="m.icon" class="w-3.5 h-3.5"></i></span>
                                     <span class="text-sm font-medium text-slate-700" x-text="m.name"></span>
                                 </label>
                             </template>
@@ -290,7 +290,7 @@
                             <label class="block text-[11px] font-medium text-rose-700 uppercase tracking-wide mb-1.5">Reason for Rejection</label>
                             <textarea aria-label="Reason for Rejection" x-model="rejectReason" rows="2" placeholder="Explain why this payment could not be verified (min. 5 characters)..." class="w-full text-xs rounded-lg border border-rose-200 bg-white px-3 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                             <div class="flex items-center justify-end gap-2 mt-2">
-                                <button type="button" @click="showRejectReason = false; rejectReason = ''" class="text-[11px] text-slate-400 hover:text-slate-600">Cancel</button>
+                                <button type="button" @click="showRejectReason = false; rejectReason = ''" class="text-[11px] text-slate-500 hover:text-slate-600">Cancel</button>
                                 <button type="button" :disabled="rejectReason.trim().length < 5 || processing" @click="rejectPayment()" class="text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:pointer-events-none rounded-lg px-3 py-1.5">Confirm Rejection</button>
                             </div>
                         </div>

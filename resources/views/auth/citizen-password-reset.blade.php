@@ -41,7 +41,7 @@
             },
         }"
     >
-        <a href="{{ route('citizen.login') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 mb-6 transition-colors">
+        <a href="{{ route('citizen.login') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-600 mb-6 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik sa login" en="Back to login" />
         </a>
 
@@ -82,7 +82,7 @@
                 <i data-lucide="check" class="w-6 h-6"></i>
             </div>
             <p class="text-sm font-medium text-navy-900 mb-1"><x-ui.t fil="Na-reset na ang password" en="Password reset" /></p>
-            <p class="text-xs text-slate-400 mb-4"><x-ui.t fil="Puwede ka nang mag-sign in gamit ang bagong password." en="You can now sign in with your new password." /></p>
+            <p class="text-xs text-slate-500 mb-4"><x-ui.t fil="Puwede ka nang mag-sign in gamit ang bagong password." en="You can now sign in with your new password." /></p>
             <a href="{{ route('citizen.login') }}" class="text-sm font-medium text-brand-600 hover:underline"><x-ui.t fil="Bumalik sa Sign In" en="Back to Sign In" /></a>
         </div>
     </div>

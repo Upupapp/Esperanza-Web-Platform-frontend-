@@ -25,9 +25,9 @@
         >
         <div x-show="!collapsed" x-transition.opacity.duration.150ms class="min-w-0">
             <p class="text-[13px] font-semibold tracking-wide leading-tight truncate">Esperanza LGU</p>
-            <p class="text-[10.5px] text-slate-400 truncate" x-text="$store.lang.current === 'en' ? 'Citizen Portal' : 'Portal ng Mamamayan'"></p>
+            <p class="text-[10.5px] text-slate-500 truncate" x-text="$store.lang.current === 'en' ? 'Citizen Portal' : 'Portal ng Mamamayan'"></p>
         </div>
-        <button @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white">
+        <button @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-white/10 hover:text-white">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
     </div>
@@ -60,7 +60,7 @@
     <div class="border-t border-white/10 p-2.5 shrink-0">
         <button
             @click="collapsed = !collapsed"
-            class="w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"
+            class="w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"
         >
             <i data-lucide="panel-left-close" class="w-4 h-4 transition-transform duration-[160ms] ease-standard" :class="collapsed && 'rotate-180'"></i>
             <span x-show="!collapsed" x-text="$store.lang.current === 'en' ? 'Collapse' : 'I-collapse'"></span>

@@ -74,7 +74,7 @@
                 </div>
                 <button
                     @click="open = false; resetForm()"
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
                     title="Close"
                 >
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -94,7 +94,7 @@
                                 ? 'border-brand-500 bg-brand-500 text-white'
                                 : addIndividualStep > 1
                                 ? 'border-brand-500 bg-brand-500 text-white'
-                                : 'border-slate-200 bg-white text-slate-400'"
+                                : 'border-slate-200 bg-white text-slate-500'"
                         >
                             <template x-if="addIndividualStep > 1">
                                 <i data-lucide="check" class="w-4 h-4"></i>
@@ -105,7 +105,7 @@
                         </div>
                         <div class="flex-1 h-0.5" :class="addIndividualStep > 1 ? 'bg-brand-500' : 'bg-slate-200'"></div>
                     </div>
-                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 1 ? 'text-brand-600' : addIndividualStep > 1 ? 'text-brand-500' : 'text-slate-400'">
+                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 1 ? 'text-brand-600' : addIndividualStep > 1 ? 'text-brand-500' : 'text-slate-500'">
                         Personal
                     </span>
                 </div>
@@ -120,7 +120,7 @@
                                 ? 'border-brand-500 bg-brand-500 text-white'
                                 : addIndividualStep > 2
                                 ? 'border-brand-500 bg-brand-500 text-white'
-                                : 'border-slate-200 bg-white text-slate-400'"
+                                : 'border-slate-200 bg-white text-slate-500'"
                         >
                             <template x-if="addIndividualStep > 2">
                                 <i data-lucide="check" class="w-4 h-4"></i>
@@ -131,7 +131,7 @@
                         </div>
                         <div class="flex-1 h-0.5" :class="addIndividualStep > 2 ? 'bg-brand-500' : 'bg-slate-200'"></div>
                     </div>
-                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 2 ? 'text-brand-600' : addIndividualStep > 2 ? 'text-brand-500' : 'text-slate-400'">
+                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 2 ? 'text-brand-600' : addIndividualStep > 2 ? 'text-brand-500' : 'text-slate-500'">
                         Address
                     </span>
                 </div>
@@ -144,13 +144,13 @@
                             class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all flex-shrink-0"
                             :class="addIndividualStep === 3
                                 ? 'border-brand-500 bg-brand-500 text-white'
-                                : 'border-slate-200 bg-white text-slate-400'"
+                                : 'border-slate-200 bg-white text-slate-500'"
                         >
                             <span>3</span>
                         </div>
                         <div class="flex-1 h-0.5 bg-transparent"></div>
                     </div>
-                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 3 ? 'text-brand-600' : 'text-slate-400'">
+                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 3 ? 'text-brand-600' : 'text-slate-500'">
                         Profile
                     </span>
                 </div>
@@ -311,7 +311,7 @@
                         Contact Number <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">+63</span>
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">+63</span>
                         <input aria-label="9XXXXXXXXX"
                             type="tel"
                             x-model="form.contact"
@@ -372,10 +372,10 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                             Household Reference
-                            <span class="text-slate-400 font-normal ml-1">(optional — link to existing)</span>
+                            <span class="text-slate-500 font-normal ml-1">(optional — link to existing)</span>
                         </label>
                         <div class="relative">
-                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <input aria-label="e.g. HH-2026-0001"
                                 type="text"
                                 x-model="form.household_ref"
@@ -387,7 +387,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="family-ref-optional">
                             Family Reference
-                            <span class="text-slate-400 font-normal ml-1">(optional)</span>
+                            <span class="text-slate-500 font-normal ml-1">(optional)</span>
                         </label>
                         <input id="family-ref-optional"
                             type="text"
@@ -488,7 +488,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-2">
                         Vulnerable Sector Classification
-                        <span class="text-slate-400 font-normal ml-1">(check all that apply)</span>
+                        <span class="text-slate-500 font-normal ml-1">(check all that apply)</span>
                     </label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <template x-for="sector in [
@@ -571,7 +571,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-semibold text-slate-700">For Validation</p>
-                                    <p class="text-xs text-slate-400">Documents pending review</p>
+                                    <p class="text-xs text-slate-500">Documents pending review</p>
                                 </div>
                             </div>
                         </label>
@@ -594,7 +594,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-semibold text-slate-700">Unverified</p>
-                                    <p class="text-xs text-slate-400">No documents on file</p>
+                                    <p class="text-xs text-slate-500">No documents on file</p>
                                 </div>
                             </div>
                         </label>
@@ -656,7 +656,7 @@
 
             <div class="flex items-center gap-1.5 ml-auto">
                 {{-- Step indicator --}}
-                <span class="text-xs text-slate-400 mr-2">
+                <span class="text-xs text-slate-500 mr-2">
                     Step <span x-text="addIndividualStep"></span> of 3
                 </span>
 

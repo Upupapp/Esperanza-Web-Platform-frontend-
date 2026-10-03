@@ -53,7 +53,7 @@
                     'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
                     'Pending Review': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                     'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
-                    'Archived': ['bg-slate-100 text-slate-400 ring-slate-200', 'bg-slate-300'],
+                    'Archived': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-300'],
                 },
                 roleNamesByKey: {},
                 roleName(key) { return this.roleNamesByKey[key] || key; },
@@ -94,10 +94,10 @@
 
             <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input aria-label="Search personnel" type="text" x-model="search" placeholder="Search personnel..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
-                <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredUsers.length + ' of ' + users.length + ' personnel'"></p>
+                <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredUsers.length + ' of ' + users.length + ' personnel'"></p>
                 <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
                 <x-ui.button @click="open = true" icon="user-plus" size="sm" class="shrink-0">Add Personnel</x-ui.button>
             </div>
@@ -109,12 +109,12 @@
             <x-ui.table>
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/60">
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Personnel</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Employee ID</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Role</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Department</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Access Scope</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Personnel</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell">Employee ID</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Role</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell">Department</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Access Scope</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
                         <th class="px-4 py-2.5"></th>
                     </tr>
                 </thead>
@@ -147,7 +147,7 @@
                                 <button
                                     x-show="u.status !== 'Archived'"
                                     @click="if (confirm('Archive ' + u.name + '\'s account? They will be signed out everywhere and can no longer log in.')) { $api.post('/admin/users/' + u.id + '/archive').then(() => loadUsers()).catch((e) => $dispatch('toast', { message: e.localised ? e.localised('en') : 'Could not archive.', variant: 'error' })); }"
-                                    class="text-slate-400 hover:text-rose-600 transition-colors" title="Archive"
+                                    class="text-slate-500 hover:text-rose-600 transition-colors" title="Archive"
                                 ><i data-lucide="user-x" class="w-4 h-4"></i></button>
                             </td>
                         </tr>
@@ -156,7 +156,7 @@
             </x-ui.table>
 
             <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredUsers.length === 0">
-                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600">No personnel match this search.</p>
             </div>
             </div>
@@ -227,12 +227,12 @@
                                     <div class="flex items-center gap-2 flex-1">
                                         <span
                                             class="w-6 h-6 rounded-full flex items-center justify-center text-[10.5px] font-semibold shrink-0 transition-colors duration-[160ms] ease-standard"
-                                            :class="step > i + 1 ? 'bg-emerald-500 text-white' : (step === i + 1 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400')"
+                                            :class="step > i + 1 ? 'bg-emerald-500 text-white' : (step === i + 1 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500')"
                                         >
                                             <i data-lucide="check" class="w-3 h-3" x-show="step > i + 1"></i>
                                             <span x-show="step <= i + 1" x-text="i + 1"></span>
                                         </span>
-                                        <span class="text-[11px] font-medium hidden sm:inline" :class="step === i + 1 ? 'text-navy-900' : 'text-slate-400'" x-text="label"></span>
+                                        <span class="text-[11px] font-medium hidden sm:inline" :class="step === i + 1 ? 'text-navy-900' : 'text-slate-500'" x-text="label"></span>
                                     </div>
                                     <div class="h-px flex-1 bg-slate-100" x-show="i < 3"></div>
                                 </div>
@@ -310,7 +310,7 @@
                                         <option :value="b" x-text="'Brgy. ' + b"></option>
                                     </template>
                                 </select>
-                                <p class="text-[11px] text-slate-400 mt-1.5">This account will only be able to view and manage data belonging to Brgy. <span x-text="form.barangay" class="font-medium text-slate-600"></span>.</p>
+                                <p class="text-[11px] text-slate-500 mt-1.5">This account will only be able to view and manage data belonging to Brgy. <span x-text="form.barangay" class="font-medium text-slate-600"></span>.</p>
                             </div>
                         </div>
 
@@ -320,7 +320,7 @@
                                 <x-ui.avatar name="New Personnel" size="sm" />
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-slate-700" x-text="(form.firstName || 'First') + ' ' + (form.lastName || 'Last')"></p>
-                                    <p class="text-xs text-slate-400" x-text="form.dept + ' · ' + (selectedRole ? selectedRole.name : '')"></p>
+                                    <p class="text-xs text-slate-500" x-text="form.dept + ' · ' + (selectedRole ? selectedRole.name : '')"></p>
                                 </div>
                                 <span class="text-xs font-semibold text-brand-600 shrink-0" x-text="selectedRole ? grantedCount(selectedRole) + ' permissions' : ''"></span>
                             </div>
@@ -334,7 +334,7 @@
                             </div>
 
                             <div>
-                                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Accessible Modules</p>
+                                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Accessible Modules</p>
                                 <div class="flex flex-wrap gap-1.5 mb-3.5">
                                     <template x-for="mod in (selectedRole ? accessedModules(selectedRole) : [])" :key="mod.key">
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-[11px] font-medium">
@@ -351,7 +351,7 @@
                         </div>
 
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5">
-                            <i data-lucide="info" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                            <i data-lucide="info" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                             <p class="text-xs text-slate-500">A temporary password will be sent to the personnel's work email upon account creation.</p>
                         </div>
                     </div>
@@ -411,14 +411,14 @@
                                 </span>
                                 <div>
                                     <p class="text-sm font-semibold text-navy-900 flex items-center gap-1.5" x-text="role.name"></p>
-                                    <p class="text-xs text-slate-400" x-text="(role.accounts || 0) + ' personnel'"></p>
+                                    <p class="text-xs text-slate-500" x-text="(role.accounts || 0) + ' personnel'"></p>
                                 </div>
                             </div>
                             <span x-show="!role.editable" class="text-slate-300" title="System role — not editable"><i data-lucide="lock" class="w-3.5 h-3.5"></i></span>
                         </div>
                         <p class="text-xs text-slate-500 mt-3.5 leading-relaxed line-clamp-3" x-text="role.description"></p>
                         <div class="mt-3.5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-[11px] text-slate-400"><span class="font-semibold text-slate-600" x-text="moduleCount(role)"></span> modules · <span class="font-semibold text-slate-600" x-text="grantedCount(role)"></span> permissions</span>
+                            <span class="text-[11px] text-slate-500"><span class="font-semibold text-slate-600" x-text="moduleCount(role)"></span> modules · <span class="font-semibold text-slate-600" x-text="grantedCount(role)"></span> permissions</span>
                             <button
                                 @click="tab = 'permissions'; window.dispatchEvent(new CustomEvent('select-role', { detail: role.key }))"
                                 class="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1"
@@ -498,7 +498,7 @@
 
             <!-- Sticky role sidebar -->
             <div class="lg:col-span-3 lg:sticky lg:top-4 space-y-1.5" x-show="!loading && !failed">
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1 mb-2">System Roles</p>
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 px-1 mb-2">System Roles</p>
                 <template x-for="role in roles" :key="role.key">
                     <button
                         type="button" @click="selectRole(role.key)"
@@ -510,7 +510,7 @@
                         </span>
                         <div class="min-w-0 flex-1">
                             <p class="text-xs font-semibold truncate" :class="selectedRoleKey === role.key ? 'text-brand-700' : 'text-navy-900'" x-text="role.name"></p>
-                            <p class="text-[10.5px] text-slate-400" x-text="(role.accounts || 0) + ' personnel'"></p>
+                            <p class="text-[10.5px] text-slate-500" x-text="(role.accounts || 0) + ' personnel'"></p>
                         </div>
                         <i data-lucide="lock" class="w-3 h-3 text-slate-300 shrink-0" x-show="!role.editable"></i>
                     </button>
@@ -530,7 +530,7 @@
                                     <span x-text="selectedRole?.name"></span>
                                     <span x-show="!selectedRole?.editable" class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5"><i data-lucide="lock" class="w-2.5 h-2.5"></i>System</span>
                                 </p>
-                                <p class="text-xs text-slate-400" x-text="(selectedRole?.accounts || 0) + ' personnel assigned'"></p>
+                                <p class="text-xs text-slate-500" x-text="(selectedRole?.accounts || 0) + ' personnel assigned'"></p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
@@ -550,7 +550,7 @@
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-xs font-semibold text-navy-900">Module Permissions</p>
-                        <p class="text-[11px] text-slate-400" x-show="!selectedRole?.editable">Read-only — system role</p>
+                        <p class="text-[11px] text-slate-500" x-show="!selectedRole?.editable">Read-only — system role</p>
                     </div>
                     <x-admin.permission-tree modules="modules" bind="workingPerms" locked="!selectedRole?.editable" />
                 </div>
@@ -559,10 +559,10 @@
             <!-- Sticky permission summary -->
             <div class="lg:col-span-3 lg:sticky lg:top-4 space-y-4" x-show="!loading && !failed && selectedRole">
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Permission Summary</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Permission Summary</p>
                     <div class="flex items-end gap-1.5 mb-1">
                         <span class="text-2xl font-semibold text-navy-900" x-text="totalGranted()"></span>
-                        <span class="text-xs text-slate-400 mb-1">/ <span x-text="totalAvailable()"></span> granted</span>
+                        <span class="text-xs text-slate-500 mb-1">/ <span x-text="totalAvailable()"></span> granted</span>
                     </div>
                     <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden mb-4">
                         <div class="h-full bg-brand-500 rounded-full transition-all duration-[600ms] ease-standard" :style="`width: ${totalAvailable() ? (totalGranted() / totalAvailable() * 100) : 0}%`"></div>
@@ -572,8 +572,8 @@
                         <template x-for="mod in modules" :key="mod.key">
                             <div>
                                 <div class="flex items-center justify-between text-[11px] mb-1">
-                                    <span class="text-slate-600 flex items-center gap-1.5 truncate"><i :data-lucide="mod.icon" class="w-3 h-3 text-slate-400 shrink-0"></i><span class="truncate" x-text="mod.name"></span></span>
-                                    <span class="text-slate-400 shrink-0 ml-2" x-text="moduleGranted(mod) + '/' + moduleTotal(mod)"></span>
+                                    <span class="text-slate-600 flex items-center gap-1.5 truncate"><i :data-lucide="mod.icon" class="w-3 h-3 text-slate-500 shrink-0"></i><span class="truncate" x-text="mod.name"></span></span>
+                                    <span class="text-slate-500 shrink-0 ml-2" x-text="moduleGranted(mod) + '/' + moduleTotal(mod)"></span>
                                 </div>
                                 <div class="h-1 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full bg-brand-400 rounded-full transition-all duration-[600ms] ease-standard" :style="`width: ${moduleTotal(mod) ? (moduleGranted(mod) / moduleTotal(mod) * 100) : 0}%`"></div>
@@ -584,7 +584,7 @@
                 </div>
 
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Accessible Modules</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Accessible Modules</p>
                     <div class="flex flex-wrap gap-1.5" x-show="accessedModules().length > 0">
                         <template x-for="mod in accessedModules()" :key="mod.key">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 text-[10.5px] font-medium">
@@ -593,7 +593,7 @@
                             </span>
                         </template>
                     </div>
-                    <p class="text-[11px] text-slate-400" x-show="accessedModules().length === 0">No module access granted.</p>
+                    <p class="text-[11px] text-slate-500" x-show="accessedModules().length === 0">No module access granted.</p>
                 </div>
             </div>
         </div>
@@ -608,15 +608,15 @@
             <x-ui.table>
                 <thead>
                     <tr class="border-b border-slate-100 bg-slate-50/60">
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Role</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Dokyu / Tulong Grant</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Scope</th>
-                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assign</th>
-                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Review</th>
-                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Approve</th>
-                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reject</th>
-                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Release</th>
-                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reports</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Role</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Dokyu / Tulong Grant</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Scope</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Assign</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Review</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Approve</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Reject</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Release</th>
+                        <th class="px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">Reports</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">

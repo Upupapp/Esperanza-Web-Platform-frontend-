@@ -64,7 +64,7 @@
                             </div>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-navy-900 truncate" x-text="h.label"></p>
-                                <p class="text-xs text-slate-400 font-mono" x-text="h.ref"></p>
+                                <p class="text-xs text-slate-500 font-mono" x-text="h.ref"></p>
                                 {{-- Flood risk chip --}}
                                 <span
                                     class="inline-flex items-center mt-0.5 gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
@@ -84,7 +84,7 @@
                     {{-- Barangay / Sitio --}}
                     <td class="px-4 py-3 hidden xl:table-cell">
                         <p class="text-sm text-navy-900 font-medium" x-text="h.barangay"></p>
-                        <p class="text-xs text-slate-400" x-text="h.sitio ? ('Sitio ' + h.sitio) : '—'"></p>
+                        <p class="text-xs text-slate-500" x-text="h.sitio ? ('Sitio ' + h.sitio) : '—'"></p>
                     </td>
 
                     {{-- Head --}}
@@ -105,7 +105,7 @@
                     {{-- Dwelling type --}}
                     <td class="px-4 py-3 hidden 2xl:table-cell">
                         <p class="text-sm text-navy-900 leading-tight" x-text="h.dwelling_type || '—'"></p>
-                        <p class="text-xs text-slate-400 mt-0.5" x-text="h.housing_tenure || ''"></p>
+                        <p class="text-xs text-slate-500 mt-0.5" x-text="h.housing_tenure || ''"></p>
                     </td>
 
                     {{-- Amenities: electricity / water / toilet icons --}}
@@ -138,7 +138,7 @@
                             <button
                                 @click="openHousehold(h)"
                                 title="View household detail"
-                                class="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                class="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             >
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
@@ -152,7 +152,7 @@
 
     {{-- Footer pagination hint --}}
     <template x-if="filteredHouseholds.length > 0">
-        <p class="text-xs text-slate-400 text-right pt-1">
+        <p class="text-xs text-slate-500 text-right pt-1">
             <span x-text="filteredHouseholds.length"></span> record<span x-text="filteredHouseholds.length===1?'':'s'"></span> shown
         </p>
     </template>

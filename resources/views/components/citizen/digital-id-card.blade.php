@@ -46,7 +46,7 @@
 
     <template x-if="!loading && !failed && card">
         <div>
-            <p class="text-center text-[11px] text-slate-400 mb-3 flex items-center justify-center gap-1.5">
+            <p class="text-center text-[11px] text-slate-500 mb-3 flex items-center justify-center gap-1.5">
                 <i data-lucide="hand-pointer" class="w-3 h-3"></i>
                 <x-ui.t fil="I-tap ang card para baligtarin" en="Tap the card to flip" />
             </p>
@@ -121,19 +121,19 @@
 
                             <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-1.5">
                                 <div>
-                                    <p class="text-[7.5px] text-slate-400 uppercase tracking-wide">Purok / Sitio</p>
+                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Purok / Sitio</p>
                                     <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.purok || '—'"></p>
                                 </div>
                                 <div>
-                                    <p class="text-[7.5px] text-slate-400 uppercase tracking-wide">Account Status</p>
+                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Account Status</p>
                                     <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.status || '—'"></p>
                                 </div>
                                 <div class="col-span-2">
-                                    <p class="text-[7.5px] text-slate-400 uppercase tracking-wide">Full Address</p>
+                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Full Address</p>
                                     <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.address || '—'"></p>
                                 </div>
                                 <div class="col-span-2">
-                                    <p class="text-[7.5px] text-slate-400 uppercase tracking-wide">Issued</p>
+                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Issued</p>
                                     <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.issued_at || '—'"></p>
                                 </div>
                             </div>
@@ -148,7 +148,7 @@
                             <div class="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                                 <div class="min-w-0">
                                     <p class="text-[9.5px] font-semibold text-navy-900 truncate" x-text="card.valid ? ($store.lang.current === 'en' ? 'Valid credential' : 'Balidong kredensyal') : ($store.lang.current === 'en' ? 'Not yet a valid credential' : 'Hindi pa balidong kredensyal')"></p>
-                                    <p class="text-[7.5px] text-slate-400" x-text="card.qr"></p>
+                                    <p class="text-[7.5px] text-slate-500" x-text="card.qr"></p>
                                 </div>
                                 <p class="text-[7px] text-slate-300 text-right max-w-[110px] leading-tight"><x-ui.t fil="Mula sa talaan ng Munisipyo. I-scan ang QR para i-verify." en="From the Municipality's records. Scan the QR to verify." /></p>
                             </div>

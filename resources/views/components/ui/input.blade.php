@@ -14,7 +14,7 @@
 
     <div class="relative">
         @if($icon)
-            <i data-lucide="{{ $icon }}" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400"></i>
+            <i data-lucide="{{ $icon }}" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500"></i>
         @endif
 
         <input
@@ -33,7 +33,7 @@
     </div>
 
     @if($hint && ! $error)
-        <p id="{{ $name }}-hint" class="mt-1.5 text-xs text-slate-400">{{ $hint }}</p>
+        <p id="{{ $name }}-hint" class="mt-1.5 text-xs text-slate-500">{{ $hint }}</p>
     @endif
 
     @if($error)

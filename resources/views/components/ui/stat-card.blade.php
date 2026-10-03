@@ -60,7 +60,7 @@
         @endif
     </div>
     <p class="mt-2.5 text-xl font-semibold text-navy-900 tabular-nums tracking-tight" @if($valueBind) x-text="{{ $valueBind }}" @endif>{{ $value }}</p>
-    <p class="text-xs font-medium text-slate-400 uppercase tracking-wide mt-1" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</p>
+    <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mt-1" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</p>
     @if($sublabelBind)
         <p class="text-[11px] text-slate-500 mt-0.5" x-text="{{ $sublabelBind }}"></p>
     @elseif($sublabel)

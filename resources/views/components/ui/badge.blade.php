@@ -40,8 +40,8 @@
         'Mark to Release' => ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
         'Released' => ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
         'Completed' => ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
-        'Cancelled' => ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-400'],
-        'Archived' => ['bg-slate-100 text-slate-400 ring-slate-200', 'bg-slate-300'],
+        'Cancelled' => ['bg-slate-50 text-slate-500 ring-slate-200', 'bg-slate-400'],
+        'Archived' => ['bg-slate-200 text-slate-600 ring-slate-300', 'bg-slate-400'],
     ];
 
     // An unlisted status used to fall through to Draft's styling, which is the

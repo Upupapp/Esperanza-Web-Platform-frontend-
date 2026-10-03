@@ -150,7 +150,7 @@
                     <p class="col-span-2 flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Husband/Wife (if married):</span><x-citizen.doc-field :bind="$bind" field="spouse_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                 </div>
                 <p>Issued upon request of the herein interested party for the <span class="font-semibold">LATE REGISTRATION of Birth</span> at the Municipal Registry Office of Esperanza, Masbate.</p>
-                <div class="flex items-center gap-6 pt-2 text-[10px] text-slate-400">
+                <div class="flex items-center gap-6 pt-2 text-[10px] text-slate-500">
                     <span class="border border-slate-300 rounded px-4 py-3">Right Thumbmark</span>
                     <span class="border border-slate-300 rounded px-4 py-3">Left Thumbmark</span>
                     <span class="border border-slate-300 rounded px-6 py-3">Picture</span>
@@ -297,7 +297,7 @@
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Amount Paid:</span><x-citizen.doc-field :bind="$bind" field="amount_paid" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                 </div>
                 <p>This Permit is being issued subject to existing rules and regulations, provided however, that the necessary fees are paid to the Treasurer of the Barangay as assessed. This is non-transferable and shall be deemed null and void upon failure by the owner to follow the said rules and regulations set forth by the Local Government Unit of Esperanza, Masbate.</p>
-                <p class="text-[10px] text-slate-400 italic">This License, while in force, shall be posted in a conspicuous place in the business premises.</p>
+                <p class="text-[10px] text-slate-500 italic">This License, while in force, shall be posted in a conspicuous place in the business premises.</p>
             </div>
         </template>
 
@@ -316,7 +316,7 @@
             </div>
         </template>
 
-        <p class="text-[11px] text-slate-400 pt-1" x-show="{{ $bind }}.__validity" x-text="{{ $bind }}.__validity"></p>
+        <p class="text-[11px] text-slate-500 pt-1" x-show="{{ $bind }}.__validity" x-text="{{ $bind }}.__validity"></p>
 
         {{-- Issuance-date sentence — every one of the "TO WHOM IT MAY
              CONCERN" reference forms (Clearance, Residency, Indigency,
@@ -362,6 +362,6 @@
         Released by: <span class="font-semibold text-slate-700" x-text="{{ $barangaySecretary }}"></span> — Barangay Secretary
     </div>
 
-    <p class="relative text-center text-[10px] italic text-slate-400 mt-5">Not Valid without Barangay Seal</p>
+    <p class="relative text-center text-[10px] italic text-slate-500 mt-5">Not Valid without Barangay Seal</p>
     </div>
 </div>

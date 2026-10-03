@@ -57,7 +57,7 @@
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
             <div class="relative flex-1 min-w-0">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </span>
                 <input aria-label="Citizen verification search"
@@ -69,7 +69,7 @@
             </div>
 
             <div class="relative">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                 </span>
                 <select aria-label="Citizen verification status filter"
@@ -88,7 +88,7 @@
                         </template>
                     </template>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -106,7 +106,7 @@
                         <option value="{{ $b }}">{{ $b }}</option>
                     @endforeach
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -133,7 +133,7 @@
                     <option value="farmer">Farmer</option>
                     <option value="high_risk">High Risk</option>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -216,7 +216,7 @@
                                     <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold text-xs ring-2 ring-white shadow-sm shrink-0" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="i.name"></p>
-                                        <p class="text-xs text-slate-400 truncate" x-text="i.citizen_account ? i.citizen_account.email : 'Not registered on Citizen Portal'"></p>
+                                        <p class="text-xs text-slate-500 truncate" x-text="i.citizen_account ? i.citizen_account.email : 'Not registered on Citizen Portal'"></p>
                                     </div>
                                 </div>
                             </td>
@@ -228,7 +228,7 @@
                                     <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden shrink-0">
                                         <div class="h-full rounded-full bg-brand-500" :style="'width:' + (i.citizen_account?.profile_completeness || 0) + '%'"></div>
                                     </div>
-                                    <span class="text-xs text-slate-400" x-text="(i.citizen_account?.profile_completeness || 0) + '%'"></span>
+                                    <span class="text-xs text-slate-500" x-text="(i.citizen_account?.profile_completeness || 0) + '%'"></span>
                                 </div>
                                 <span class="text-xs text-slate-300" x-show="!i.citizen_account">—</span>
                             </td>
@@ -287,7 +287,7 @@
                                      added, and re-sends periodically until they register. --}}
                                 <span
                                     x-show="!i.citizen_account"
-                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 cursor-default"
+                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 cursor-default"
                                     title="An automated Citizen Portal registration reminder was sent to this resident's contact on file."
                                 >
                                     <i data-lucide="send" class="w-3.5 h-3.5"></i> Already Notified for Account Verification
@@ -330,7 +330,7 @@
                                     <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold shrink-0 text-xs text-blue-700 ring-2 ring-white shadow-sm" x-text="(f.surname || '').substring(0,2).toUpperCase()"></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="f.label"></p>
-                                        <p class="text-xs text-slate-400 font-mono truncate" x-text="f.ref"></p>
+                                        <p class="text-xs text-slate-500 font-mono truncate" x-text="f.ref"></p>
                                     </div>
                                 </div>
                             </td>
@@ -400,7 +400,7 @@
                                     <span class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm"><i data-lucide="house" class="w-4 h-4 text-indigo-600"></i></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="h.label"></p>
-                                        <p class="text-xs text-slate-400 font-mono truncate" x-text="h.ref"></p>
+                                        <p class="text-xs text-slate-500 font-mono truncate" x-text="h.ref"></p>
                                     </div>
                                 </div>
                             </td>

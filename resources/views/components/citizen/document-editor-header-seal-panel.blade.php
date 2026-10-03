@@ -40,7 +40,7 @@
         <div class="doc-floating-panel-body space-y-4">
             <template x-for="side in ['left', 'right']" :key="side">
                 <div class="space-y-2.5 pb-3 border-b border-slate-100 last:border-0 last:pb-0" x-show="side === 'left' || hasRightSeal()">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400" x-text="$store.lang.current === 'en'
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500" x-text="$store.lang.current === 'en'
                         ? side + ' seal'
                         : 'selyo sa ' + (side === 'left' ? 'kaliwa' : 'kanan')"></p>
 

@@ -351,7 +351,7 @@
                             >
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700 truncate" x-text="req.service"></p>
-                                    <p class="text-xs text-slate-400 mt-0.5 font-mono">
+                                    <p class="text-xs text-slate-500 mt-0.5 font-mono">
                                         <span x-text="req.ref"></span> ·
                                         <x-ui.t fil="Isinumite" en="Submitted" />
                                         <span x-text="req.submitted ? new Date(req.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></span>
@@ -361,7 +361,7 @@
                             </a>
                         </template>
 
-                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!requests.length">
+                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!requests.length">
                             <x-ui.t fil="Wala ka pang kahilingan." en="You have no requests yet." />
                         </p>
 
@@ -428,7 +428,7 @@
                                         ></p>
 
                                         <p
-                                            class="text-[10.5px] text-slate-400 mt-1"
+                                            class="text-[10.5px] text-slate-500 mt-1"
                                             x-text="post.time"
                                         ></p>
 
@@ -442,7 +442,7 @@
                                         type="button"
                                         @click="toggleBalitaLike(post)"
                                         class="flex items-center gap-1 text-[10.5px] font-medium transition-colors"
-                                        :class="post.liked ? 'text-rose-600' : 'text-slate-400 hover:text-slate-600'"
+                                        :class="post.liked ? 'text-rose-600' : 'text-slate-500 hover:text-slate-600'"
                                     >
                                         <i
                                             data-lucide="heart"
@@ -456,7 +456,7 @@
 
                                     <a
                                         :href="'{{ route('citizen.announcements') }}'"
-                                        class="flex items-center gap-1 text-[10.5px] font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                                        class="flex items-center gap-1 text-[10.5px] font-medium text-slate-500 hover:text-slate-600 transition-colors"
                                         x-show="post.commentCount > 0"
                                     >
                                         <i data-lucide="message-circle" class="w-3 h-3"></i>
@@ -469,7 +469,7 @@
 
                         </template>
 
-                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!balitaPreview.length">
+                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!balitaPreview.length">
                             <x-ui.t fil="Wala pang balita." en="No announcements yet." />
                         </p>
 
@@ -507,14 +507,14 @@
                                 <span x-text="event.date + ' · ' + event.time"></span>
                             </div>
                             <p class="text-sm font-medium text-slate-700 leading-snug" x-text="event.title"></p>
-                            <p class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                            <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
                                 <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                                 <span x-text="event.venue"></span>
                             </p>
                         </a>
                     </template>
 
-                    <p class="col-span-3 py-6 text-center text-xs text-slate-400" x-show="!events.length">
+                    <p class="col-span-3 py-6 text-center text-xs text-slate-500" x-show="!events.length">
                         <x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." />
                     </p>
 

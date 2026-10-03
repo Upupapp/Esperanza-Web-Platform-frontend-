@@ -9,7 +9,7 @@
     :title="collapsed ? (($store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label))) : ''"
     @if($moduleKey) x-show="$store.session.can('{{ $moduleKey }}')" x-cloak @endif
 >
-    <i data-lucide="{{ $icon }}" class="{{ $dense ? 'w-4 h-4' : 'w-[18px] h-[18px]' }} shrink-0 {{ $active ? 'text-white' : 'text-slate-400 group-hover:text-white' }} transition-colors"></i>
+    <i data-lucide="{{ $icon }}" class="{{ $dense ? 'w-4 h-4' : 'w-[18px] h-[18px]' }} shrink-0 {{ $active ? 'text-white' : 'text-slate-500 group-hover:text-white' }} transition-colors"></i>
     <span x-show="!collapsed" x-transition.opacity.duration.150ms class="truncate" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</span>
     {{-- badgeBind: a live count (an Alpine expression), hidden while it is
          unknown or zero. --}}

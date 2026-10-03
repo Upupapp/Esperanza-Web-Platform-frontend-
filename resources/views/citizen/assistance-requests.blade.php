@@ -246,7 +246,7 @@
                             ><x-ui.t :fil="$labelFil" :en="$labelEn" /></button>
                         @endforeach
                     </div>
-                    <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredRequests.length + ' ' + ($store.lang.current === 'en' ? 'of ' + requests.length + ' requests' : 'sa ' + requests.length + ' kahilingan')"></p>
+                    <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredRequests.length + ' ' + ($store.lang.current === 'en' ? 'of ' + requests.length + ' requests' : 'sa ' + requests.length + ' kahilingan')"></p>
                 </div>
 
             <div
@@ -378,7 +378,7 @@
                             <x-ui.t fil="Naisumite ang Kahilingan!" en="Request Submitted!" />
                             <span class="inline-block animate-check-pop" style="animation-delay: 0.3s;">🙂</span>
                         </p>
-                        <p class="text-xs text-slate-400 mt-1 max-w-[220px]"><x-ui.t fil="Aabisuhan ka namin kapag na-review na ang iyong kahilingan sa Tulong." en="We'll notify you once your Tulong request is reviewed." /></p>
+                        <p class="text-xs text-slate-500 mt-1 max-w-[220px]"><x-ui.t fil="Aabisuhan ka namin kapag na-review na ang iyong kahilingan sa Tulong." en="We'll notify you once your Tulong request is reviewed." /></p>
                     </div>
 
                     <div x-show="!submitted">
@@ -389,12 +389,12 @@
                                 <div class="flex flex-col items-center gap-2 text-center">
                                     <span
                                         class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
-                                        :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-slate-400')"
+                                        :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-slate-500')"
                                     >
                                         <i data-lucide="check" class="w-4 h-4" x-show="step > i + 1" x-cloak></i>
                                         <i :data-lucide="stepIcons[i]" class="w-4 h-4" x-show="step <= i + 1"></i>
                                     </span>
-                                    <span class="text-[11px] max-w-[100px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-navy-900 font-semibold' : 'text-slate-400'" x-text="label"></span>
+                                    <span class="text-[11px] max-w-[100px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-navy-900 font-semibold' : 'text-slate-500'" x-text="label"></span>
                                 </div>
                                 <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < 3"></div>
                             </div>
@@ -426,7 +426,7 @@
                                             </span>
                                             <span class="min-w-0 flex-1">
                                                 <span class="block text-sm font-medium text-slate-700 truncate" x-text="cat.name"></span>
-                                                <span class="block text-xs text-slate-400 mt-0.5" x-text="cat.count + (cat.count === 1 ? ' program' : ' programs')"></span>
+                                                <span class="block text-xs text-slate-500 mt-0.5" x-text="cat.count + (cat.count === 1 ? ' program' : ' programs')"></span>
                                             </span>
                                             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
                                         </button>
@@ -442,13 +442,13 @@
                                         >
                                             <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
                                             <div class="flex items-center justify-between mb-2.5">
-                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'">
+                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-500'">
                                                     <i :data-lucide="type.icon" class="w-4 h-4"></i>
                                                 </span>
                                                 <i data-lucide="circle-check" class="w-4 h-4 text-purple-500" x-show="selectedType === type.i" x-cloak></i>
                                             </div>
                                             <p class="text-sm font-medium text-slate-700 leading-snug" x-text="type.name"></p>
-                                            <p class="text-xs text-slate-400 mt-1 truncate" x-text="type.category + ' · ' + type.office_short"></p>
+                                            <p class="text-xs text-slate-500 mt-1 truncate" x-text="type.category + ' · ' + type.office_short"></p>
                                             <span
                                                 class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
                                                 :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
@@ -457,8 +457,8 @@
                                         </label>
                                     </template>
                                     <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredTypes.length === 0">
-                                        <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
-                                        <p class="text-xs text-slate-400"><x-ui.t fil="Walang programang tumutugma." en="No assistance programs match your search." /></p>
+                                        <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
+                                        <p class="text-xs text-slate-500"><x-ui.t fil="Walang programang tumutugma." en="No assistance programs match your search." /></p>
                                     </div>
                                 </div>
                             </div>
@@ -480,13 +480,13 @@
                                         >
                                             <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
                                             <div class="flex items-center justify-between mb-2.5">
-                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'">
+                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-500'">
                                                     <i :data-lucide="type.icon" class="w-4 h-4"></i>
                                                 </span>
                                                 <i data-lucide="circle-check" class="w-4 h-4 text-purple-500" x-show="selectedType === type.i" x-cloak></i>
                                             </div>
                                             <p class="text-sm font-medium text-slate-700 leading-snug" x-text="type.name"></p>
-                                            <p class="text-xs text-slate-400 mt-1 truncate" x-text="type.office_short"></p>
+                                            <p class="text-xs text-slate-500 mt-1 truncate" x-text="type.office_short"></p>
                                             <span
                                                 class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
                                                 :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
@@ -504,7 +504,7 @@
                         <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start mb-6">
                             <div class="lg:col-span-3">
                                 <p class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Impormasyon ng Aplikante" en="Applicant Information" /></p>
-                                <p class="text-xs text-slate-400 mb-3"><x-ui.t fil="Naka-prefill mula sa iyong resident profile — i-edit kung kailangan." en="Pre-filled from your resident profile — edit if needed." /></p>
+                                <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Naka-prefill mula sa iyong resident profile — i-edit kung kailangan." en="Pre-filled from your resident profile — edit if needed." /></p>
                                 <div class="grid grid-cols-2 gap-3 mb-3">
                                     <x-ui.input name="assist_first_name" label="First Name" x-model="applicant.firstName" />
                                     <x-ui.input name="assist_last_name" label="Last Name" x-model="applicant.lastName" />
@@ -526,13 +526,13 @@
                                         <span class="w-10 h-10 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0"><i :data-lucide="types[selectedType]?.icon || 'hand-heart'" class="w-4.5 h-4.5"></i></span>
                                         <div class="min-w-0">
                                             <p class="text-sm font-medium text-navy-900 leading-snug" x-text="types[selectedType]?.name"></p>
-                                            <p class="text-xs text-slate-400 truncate" x-text="types[selectedType]?.office"></p>
+                                            <p class="text-xs text-slate-500 truncate" x-text="types[selectedType]?.office"></p>
                                         </div>
                                     </div>
                                     <div class="space-y-1.5 text-xs border-t border-purple-100/70 pt-3">
-                                        <div class="flex items-center justify-between"><span class="text-slate-400"><x-ui.t fil="Tinatayang Halaga" en="Estimated Amount" /></span><span class="font-semibold text-navy-900 text-right" x-text="types[selectedType]?.amount"></span></div>
-                                        <div class="flex items-center justify-between"><span class="text-slate-400"><x-ui.t fil="Oras ng Pagproseso" en="Processing Time" /></span><span class="font-medium text-slate-600" x-text="types[selectedType]?.days"></span></div>
-                                        <div class="flex items-center justify-between"><span class="text-slate-400"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).length + ' attached'"></span></div>
+                                        <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Tinatayang Halaga" en="Estimated Amount" /></span><span class="font-semibold text-navy-900 text-right" x-text="types[selectedType]?.amount"></span></div>
+                                        <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Oras ng Pagproseso" en="Processing Time" /></span><span class="font-medium text-slate-600" x-text="types[selectedType]?.days"></span></div>
+                                        <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).length + ' attached'"></span></div>
                                     </div>
                                 </div>
                             </div>
@@ -547,7 +547,7 @@
 
                         <div class="mb-6" x-show="types[selectedType]?.fields?.length" x-cloak>
                             <p class="text-sm font-semibold text-navy-900 mb-1" x-text="types[selectedType]?.certTitle || ''"></p>
-                            <p class="text-xs text-slate-400 mb-3" x-show="types[selectedType]?.certSubtitle" x-text="types[selectedType]?.certSubtitle"></p>
+                            <p class="text-xs text-slate-500 mb-3" x-show="types[selectedType]?.certSubtitle" x-text="types[selectedType]?.certSubtitle"></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type !== 'table')" :key="f.key">
                                     <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2 lg:col-span-3' : ''">
@@ -593,9 +593,9 @@
                                 <div class="flex items-center justify-between mb-2.5">
                                     <div>
                                         <p class="text-sm font-semibold text-navy-900" x-text="f.label"></p>
-                                        <p class="text-xs text-slate-400 mt-0.5"><x-ui.t fil="Idagdag ang bawat miyembro ng sambahayan." en="Add each member of the household." /></p>
+                                        <p class="text-xs text-slate-500 mt-0.5"><x-ui.t fil="Idagdag ang bawat miyembro ng sambahayan." en="Add each member of the household." /></p>
                                     </div>
-                                    <span class="text-[11px] text-slate-400 shrink-0" x-text="(formData[f.key] || []).length + ' ' + ($store.lang.current === 'en' ? 'added' : 'nadagdag')"></span>
+                                    <span class="text-[11px] text-slate-500 shrink-0" x-text="(formData[f.key] || []).length + ' ' + ($store.lang.current === 'en' ? 'added' : 'nadagdag')"></span>
                                 </div>
                                 <div class="space-y-2.5">
                                     <template x-for="(row, ri) in (formData[f.key] || [])" :key="ri">
@@ -612,7 +612,7 @@
                                             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                                                 <template x-for="col in f.columns" :key="col.key">
                                                     <div>
-                                                        <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1" x-text="col.label"></label>
+                                                        <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1" x-text="col.label"></label>
                                                         <template x-if="col.options">
                                                             <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard">
                                                                 <option value="">—</option>
@@ -629,8 +629,8 @@
                                     </template>
 
                                     <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[f.key] || []).length === 0">
-                                        <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i :data-lucide="f.rowIcon || 'list'" class="w-4 h-4"></i></span>
-                                        <p class="text-xs text-slate-400"><x-ui.t fil="Wala pang idinagdag na miyembro." en="No members added yet." /></p>
+                                        <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i :data-lucide="f.rowIcon || 'list'" class="w-4 h-4"></i></span>
+                                        <p class="text-xs text-slate-500"><x-ui.t fil="Wala pang idinagdag na miyembro." en="No members added yet." /></p>
                                     </div>
 
                                     <button
@@ -646,7 +646,7 @@
 
                         <div class="flex items-center justify-between mb-1">
                             <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Mga Requirement" en="Requirements" /></p>
-                            <p class="text-[11px] font-medium text-slate-400" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).length"></p>
+                            <p class="text-[11px] font-medium text-slate-500" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).length"></p>
                         </div>
                         <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
                             <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((types[selectedType]?.requirements || []).length ? (Object.keys(attachments).filter(k => attachments[k]).length / (types[selectedType]?.requirements || []).length) : 0) * 100) + '%'"></div>
@@ -694,7 +694,7 @@
                                     <i data-lucide="badge-check" class="w-6 h-6"></i>
                                 </span>
                                 <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Walang Kailangang Bayaran" en="No Payment Required" /></p>
-                                <p class="text-xs text-slate-400 mt-1 max-w-[280px]" x-text="types[selectedType]?.name + ($store.lang.current === 'en' ? ' has no application fee under municipal ordinance.' : ' ay walang bayarin sa pag-apply ayon sa municipal ordinance.')"></p>
+                                <p class="text-xs text-slate-500 mt-1 max-w-[280px]" x-text="types[selectedType]?.name + ($store.lang.current === 'en' ? ' has no application fee under municipal ordinance.' : ' ay walang bayarin sa pag-apply ayon sa municipal ordinance.')"></p>
                             </div>
                         </template>
 
@@ -715,7 +715,7 @@
                                             <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide"><x-ui.t fil="Buod ng Invoice" en="Invoice Summary" /></p>
                                         </div>
                                         <div class="px-4 py-3.5 text-sm">
-                                            <p class="text-[10px] font-mono text-slate-400 mb-2">Municipality of Esperanza</p>
+                                            <p class="text-[10px] font-mono text-slate-500 mb-2">Municipality of Esperanza</p>
                                             <div class="flex items-center justify-between py-1.5">
                                                 <span class="text-slate-500"><x-ui.t fil="Sisingilin" en="Bill To" /></span>
                                                 <span class="text-slate-700 font-medium" x-text="applicant.firstName + ' ' + applicant.lastName"></span>
@@ -757,28 +757,28 @@
                                 <div class="flex items-center gap-2.5 px-4 py-3">
                                     <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i :data-lucide="types[selectedType]?.icon || 'hand-heart'" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
-                                        <p class="text-[10px] text-slate-400 uppercase tracking-wide"><x-ui.t fil="Uri ng Tulong" en="Assistance Type" /></p>
+                                        <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Uri ng Tulong" en="Assistance Type" /></p>
                                         <p class="text-sm font-medium text-navy-900 truncate" x-text="types[selectedType]?.name || ''"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2.5 px-4 py-3">
                                     <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
-                                        <p class="text-[10px] text-slate-400 uppercase tracking-wide"><x-ui.t fil="Nangangasiwang Opisina" en="Handling Office" /></p>
+                                        <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Nangangasiwang Opisina" en="Handling Office" /></p>
                                         <p class="text-sm font-medium text-navy-900 truncate" x-text="types[selectedType]?.office || ''"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2.5 px-4 py-3">
                                     <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
-                                        <p class="text-[10px] text-slate-400 uppercase tracking-wide"><x-ui.t fil="Aplikante" en="Applicant" /></p>
+                                        <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Aplikante" en="Applicant" /></p>
                                         <p class="text-sm font-medium text-navy-900 truncate" x-text="applicant.firstName + ' ' + applicant.lastName"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2.5 px-4 py-3">
                                     <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="wallet" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
-                                        <p class="text-[10px] text-slate-400 uppercase tracking-wide"><x-ui.t fil="Bayarin sa Dokumento" en="Documentary Fee" /></p>
+                                        <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Bayarin sa Dokumento" en="Documentary Fee" /></p>
                                         <p class="text-sm font-medium text-navy-900 truncate">
                                             <template x-if="types[selectedType]?.fee === 'Free'"><span><x-ui.t fil="Hindi aplikable" en="Not applicable" /></span></template>
                                             <template x-if="types[selectedType]?.fee !== 'Free'"><span x-text="$store.lang.current === 'en' ? 'Pay at the office (' + types[selectedType]?.fee + ')' : 'Bayaran sa opisina (' + types[selectedType]?.fee + ')'"></span></template>
@@ -794,7 +794,7 @@
                             <div class="rounded-xl border border-slate-200 divide-y divide-slate-100">
                                 <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type !== 'table')" :key="f.key">
                                     <div class="flex items-center justify-between gap-3 px-3.5 py-2 text-xs" x-show="formData[f.key] && (!Array.isArray(formData[f.key]) || formData[f.key].length)">
-                                        <span class="text-slate-400 shrink-0" x-text="f.label"></span>
+                                        <span class="text-slate-500 shrink-0" x-text="f.label"></span>
                                         <span class="font-medium text-slate-700 text-right truncate" x-text="Array.isArray(formData[f.key]) ? formData[f.key].join(', ') : formData[f.key]"></span>
                                     </div>
                                 </template>
@@ -835,7 +835,7 @@
                             <template x-for="(req, i) in types[selectedType]?.requirements || []" :key="i">
                                 <li class="flex items-center gap-2 text-xs">
                                     <i data-lucide="circle-check" class="w-3.5 h-3.5 shrink-0" :class="attachments[i] ? 'text-emerald-500' : 'text-slate-300'"></i>
-                                    <span :class="attachments[i] ? 'text-slate-600' : 'text-slate-400'" class="truncate" x-text="req"></span>
+                                    <span :class="attachments[i] ? 'text-slate-600' : 'text-slate-500'" class="truncate" x-text="req"></span>
                                 </li>
                             </template>
                         </ul>
@@ -892,12 +892,12 @@
         <x-ui.table>
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"><x-ui.t fil="Reference" en="Reference" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"><x-ui.t fil="Uri ng Tulong" en="Assistance Type" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell"><x-ui.t fil="Opisina" en="Office" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell"><x-ui.t fil="Layunin" en="Purpose" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell"><x-ui.t fil="Isinumite" en="Submitted" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"><x-ui.t fil="Status" en="Status" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Reference" en="Reference" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Uri ng Tulong" en="Assistance Type" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell"><x-ui.t fil="Opisina" en="Office" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell"><x-ui.t fil="Layunin" en="Purpose" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell"><x-ui.t fil="Isinumite" en="Submitted" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Status" en="Status" /></th>
                     <th class="px-4 py-2.5"></th>
                 </tr>
             </thead>
@@ -944,9 +944,9 @@
             <x-ui.modal title="Subaybayan ang Kahilingan" titleEn="Track Request" maxWidth="md">
                 <template x-if="selectedRequest">
                     <div>
-                        <p class="text-xs font-mono text-slate-400" x-text="selectedRequest.ref"></p>
+                        <p class="text-xs font-mono text-slate-500" x-text="selectedRequest.ref"></p>
                         <p class="text-sm font-semibold text-navy-900" x-text="selectedRequest.type"></p>
-                        <p class="text-xs text-slate-400 mt-0.5" x-text="selectedRequest.purpose"></p>
+                        <p class="text-xs text-slate-500 mt-0.5" x-text="selectedRequest.purpose"></p>
 
                         <!-- Progress stepper -->
                         <div class="flex items-center mt-6 mb-2" x-show="selectedRequest.status !== 'Rejected' && selectedRequest.status !== 'Cancelled'">
@@ -955,12 +955,12 @@
                                     <div class="flex flex-col items-center gap-1.5 text-center">
                                         <span
                                             class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-[300ms] ease-standard"
-                                            :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-500 text-white' : (stepIndex(selectedRequest.status) === i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400')"
+                                            :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-500 text-white' : (stepIndex(selectedRequest.status) === i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-500')"
                                         >
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
                                             <span x-show="stepIndex(selectedRequest.status) <= i" x-text="i + 1"></span>
                                         </span>
-                                        <span class="text-[9px] max-w-[60px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-navy-900 font-medium' : 'text-slate-400'" x-text="label"></span>
+                                        <span class="text-[9px] max-w-[60px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-navy-900 font-medium' : 'text-slate-500'" x-text="label"></span>
                                     </div>
                                     <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
                                 </div>
@@ -982,7 +982,7 @@
 
                         <div class="rounded-xl bg-slate-100 border border-slate-200 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Cancelled'">
                             <div class="flex items-start gap-2.5">
-                                <i data-lucide="ban" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                                <i data-lucide="ban" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
                                     <p class="text-xs font-semibold text-slate-600"><x-ui.t fil="Kinansela ang kahilingang ito" en="This request was cancelled" /></p>
                                 </div>
@@ -1021,10 +1021,10 @@
                                     <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-2.5 min-w-0">
-                                                <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                                                <i data-lucide="file-text" class="w-4 h-4 text-slate-500 shrink-0"></i>
                                                 <div class="min-w-0">
                                                     <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
-                                                    <p class="text-[11px] text-slate-400 truncate" x-text="req.file || 'Not yet submitted'"></p>
+                                                    <p class="text-[11px] text-slate-500 truncate" x-text="req.file || 'Not yet submitted'"></p>
                                                 </div>
                                             </div>
                                             <span
@@ -1055,17 +1055,17 @@
 
                         <div class="grid grid-cols-2 gap-3 mt-5">
                             <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1"><x-ui.t fil="Inaasahang Petsa ng Release" en="Expected Release" /></p>
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><x-ui.t fil="Inaasahang Petsa ng Release" en="Expected Release" /></p>
                                 <p class="text-sm font-semibold text-navy-900" x-text="expectedRelease"></p>
                             </div>
                             <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1"><x-ui.t fil="Isinumite" en="Submitted" /></p>
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><x-ui.t fil="Isinumite" en="Submitted" /></p>
                                 <p class="text-sm font-semibold text-navy-900" x-text="selectedRequest.submitted"></p>
                             </div>
                         </div>
 
                         <div class="rounded-xl border border-slate-200 p-3.5 mt-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
                             <p class="text-sm font-medium text-navy-900" x-text="selectedRequest.office"></p>
                             <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i><span x-text="pickupInfo?.address"></span></p>
                             <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="phone" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>

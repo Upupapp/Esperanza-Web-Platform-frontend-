@@ -76,7 +76,7 @@
 
     <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5">
         <h3 class="text-sm font-bold text-slate-800 mb-0.5">Incident Trend</h3>
-        <p class="text-xs text-slate-400 mb-4">Last 14 days · <span x-text="reportBarangayFilter || 'All Barangays'"></span></p>
+        <p class="text-xs text-slate-500 mb-4">Last 14 days · <span x-text="reportBarangayFilter || 'All Barangays'"></span></p>
         <div x-data="lineChart({ labels: reportTrendLabels(), datasets: [{ label: 'Incidents', data: reportTrendData(), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' }] })" class="relative">
             <canvas x-ref="canvas" style="height:200px"></canvas>
         </div>
@@ -84,7 +84,7 @@
 
     <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5">
         <h3 class="text-sm font-bold text-slate-800 mb-0.5">Incidents by Type</h3>
-        <p class="text-xs text-slate-400 mb-4">Current data</p>
+        <p class="text-xs text-slate-500 mb-4">Current data</p>
         <template x-if="reportTypeBreakdown().length">
             <div x-data="donutChart({ labels: reportTypeBreakdown().map(t => t[0]), values: reportTypeBreakdown().map(t => t[1]), colors: ['#2f62f5','#f59e0b','#f97316','#ec4899','#22c55e','#8b5cf6','#64748b','#94a3b8','#14b8a6','#e11d48'] })" class="relative">
                 <canvas x-ref="canvas" style="height:180px"></canvas>
@@ -98,29 +98,29 @@
                 </div>
             </template>
         </div>
-        <p x-show="!reportTypeBreakdown().length" class="text-xs text-slate-400 italic">No incidents to chart.</p>
+        <p x-show="!reportTypeBreakdown().length" class="text-xs text-slate-500 italic">No incidents to chart.</p>
     </div>
 
     <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5">
         <h3 class="text-sm font-bold text-slate-800 mb-0.5">Center Occupancy vs Capacity</h3>
-        <p class="text-xs text-slate-400 mb-4" x-text="reportScopedCenters.length + ' center(s)'"></p>
+        <p class="text-xs text-slate-500 mb-4" x-text="reportScopedCenters.length + ' center(s)'"></p>
         <template x-if="reportScopedCenters.length">
             <div x-data="barChart({ labels: reportScopedCenters.map(c => c.name), datasets: [{ label: 'Occupancy', data: reportScopedCenters.map(c => c.individuals || 0), color: '#2f62f5' }, { label: 'Capacity', data: reportScopedCenters.map(c => c.capacity || 0), color: '#e2e8f0' }], showLegend: true })" class="relative">
                 <canvas x-ref="canvas" style="height:200px"></canvas>
             </div>
         </template>
-        <p x-show="!reportScopedCenters.length" class="text-xs text-slate-400 italic">No centers to chart.</p>
+        <p x-show="!reportScopedCenters.length" class="text-xs text-slate-500 italic">No centers to chart.</p>
     </div>
 
     <div class="bg-white rounded-2xl shadow-card border border-slate-100 p-5">
         <h3 class="text-sm font-bold text-slate-800 mb-0.5">Readiness Score — Lowest Barangays</h3>
-        <p class="text-xs text-slate-400 mb-4">Score out of 100</p>
+        <p class="text-xs text-slate-500 mb-4">Score out of 100</p>
         <template x-if="reportLowestReadiness(8).length">
             <div x-data="barChart({ horizontal: true, labels: reportLowestReadiness(8).map(v => v.barangay), values: reportLowestReadiness(8).map(v => v.readiness_score), colors: reportLowestReadiness(8).map(v => v.readiness_score < 50 ? '#f43f5e' : v.readiness_score < 70 ? '#f59e0b' : '#2f62f5'), label: 'Readiness Score' })" class="relative">
                 <canvas x-ref="canvas" style="height:220px"></canvas>
             </div>
         </template>
-        <p x-show="!reportLowestReadiness(8).length" class="text-xs text-slate-400 italic">No assessed barangays to chart.</p>
+        <p x-show="!reportLowestReadiness(8).length" class="text-xs text-slate-500 italic">No assessed barangays to chart.</p>
     </div>
 </div>
 
@@ -133,7 +133,7 @@
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="flame" class="w-4 h-4"></i></span>
             <span>
                 <span class="block text-sm font-medium text-slate-700">Incidents</span>
-                <span class="block text-xs text-slate-400" x-text="reportScopedIncidents.length + ' records'"></span>
+                <span class="block text-xs text-slate-500" x-text="reportScopedIncidents.length + ' records'"></span>
             </span>
         </button>
         <button @click="exportCSV(reportScopedCenters, 'centers-report.csv')"
@@ -141,7 +141,7 @@
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="house" class="w-4 h-4"></i></span>
             <span>
                 <span class="block text-sm font-medium text-slate-700">Evacuation Centers</span>
-                <span class="block text-xs text-slate-400" x-text="reportScopedCenters.length + ' records'"></span>
+                <span class="block text-xs text-slate-500" x-text="reportScopedCenters.length + ' records'"></span>
             </span>
         </button>
         <button @click="exportCSV(reportScopedVulnerability, 'vulnerability-report.csv')"
@@ -149,7 +149,7 @@
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="shield-alert" class="w-4 h-4"></i></span>
             <span>
                 <span class="block text-sm font-medium text-slate-700">Vulnerability Assessments</span>
-                <span class="block text-xs text-slate-400" x-text="reportScopedVulnerability.length + ' records'"></span>
+                <span class="block text-xs text-slate-500" x-text="reportScopedVulnerability.length + ' records'"></span>
             </span>
         </button>
     </div>

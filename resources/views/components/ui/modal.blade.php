@@ -66,11 +66,11 @@
                         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                             <h3 id="{{ $titleId }}" class="text-base font-semibold text-navy-900" x-text="$store.lang.current === 'en' ? @js($titleEn ?? $title) : @js($title)">{{ $title }}</h3>
                             <div class="flex items-center gap-1">
-                                <button type="button" @click="compact = !compact" :aria-label="compact ? 'Expand to full screen' : 'Shrink to popup'" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
+                                <button type="button" @click="compact = !compact" :aria-label="compact ? 'Expand to full screen' : 'Shrink to popup'" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
                                     <span x-show="compact"><i data-lucide="maximize-2" class="w-4 h-4"></i></span>
                                     <span x-show="!compact"><i data-lucide="minimize-2" class="w-4 h-4"></i></span>
                                 </button>
-                                <button type="button" @click="open = false" aria-label="Close dialog" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                                <button type="button" @click="open = false" aria-label="Close dialog" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                                     <i data-lucide="x" class="w-5 h-5"></i>
                                 </button>
                             </div>
@@ -111,7 +111,7 @@
                     @else
                         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
                             <h3 id="{{ $titleId }}" class="text-sm font-semibold text-navy-900" x-text="$store.lang.current === 'en' ? @js($titleEn ?? $title) : @js($title)">{{ $title }}</h3>
-                            <button type="button" @click="open = false" aria-label="Close dialog" class="text-slate-400 hover:text-slate-600 transition-colors">
+                            <button type="button" @click="open = false" aria-label="Close dialog" class="text-slate-500 hover:text-slate-600 transition-colors">
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>

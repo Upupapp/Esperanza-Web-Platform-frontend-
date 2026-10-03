@@ -58,7 +58,7 @@
             {{-- Close X --}}
             <button
                 @click="showDQDetail = false"
-                class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition shrink-0"
+                class="p-1.5 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition shrink-0"
                 aria-label="Close modal"
             >
                 <i data-lucide="x" class="w-5 h-5"></i>
@@ -117,7 +117,7 @@
 
                     {{-- Type --}}
                     <div class="bg-white px-4 py-3">
-                        <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Type</dt>
+                        <dt class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Type</dt>
                         <dd
                             class="text-xs font-semibold text-navy-900"
                             x-text="selectedDQIssue?.type"
@@ -126,7 +126,7 @@
 
                     {{-- Severity --}}
                     <div class="bg-white px-4 py-3">
-                        <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Severity</dt>
+                        <dt class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Severity</dt>
                         <dd>
                             <span
                                 class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1"
@@ -138,7 +138,7 @@
 
                     {{-- Barangay --}}
                     <div class="bg-white px-4 py-3">
-                        <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Barangay</dt>
+                        <dt class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Barangay</dt>
                         <dd
                             class="text-xs font-medium text-slate-700"
                             x-text="selectedDQIssue?.barangay"
@@ -147,7 +147,7 @@
 
                     {{-- Assigned To + Assign action --}}
                     <div class="bg-white px-4 py-3 col-span-2 md:col-span-1">
-                        <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Assigned To</dt>
+                        <dt class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Assigned To</dt>
                         <dd class="flex items-center gap-1.5 mb-2">
                             <span
                                 class="w-5 h-5 rounded-full bg-brand-100 text-brand-700 text-[9px] font-bold flex items-center justify-center uppercase shrink-0"
@@ -176,7 +176,7 @@
 
                     {{-- Created --}}
                     <div class="bg-white px-4 py-3">
-                        <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Created</dt>
+                        <dt class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Created</dt>
                         <dd
                             class="text-xs text-slate-700"
                             x-text="selectedDQIssue?.created ? new Date(selectedDQIssue.created).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"
@@ -185,7 +185,7 @@
 
                     {{-- Current Status --}}
                     <div class="bg-white px-4 py-3">
-                        <dt class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</dt>
+                        <dt class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</dt>
                         <dd>
                             <span
                                 class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ring-1"

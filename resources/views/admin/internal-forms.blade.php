@@ -158,7 +158,7 @@
                 </template>
             </div>
             <div class="relative">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                 <input aria-label="Search forms" type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
             </div>
         </div>
@@ -175,11 +175,11 @@
                         <span x-show="f.sensitive" class="text-[10px] font-medium text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">Sensitive</span>
                     </div>
                     <p class="text-sm font-medium text-slate-700 leading-snug" x-text="f.form"></p>
-                    <p class="text-xs text-slate-400 mt-1 truncate" x-text="f.print_template || ''"></p>
+                    <p class="text-xs text-slate-500 mt-1 truncate" x-text="f.print_template || ''"></p>
                 </button>
             </template>
             <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl" x-show="filteredForms.length === 0">
-                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600">No forms match this search.</p>
             </div>
         </div>
@@ -187,17 +187,17 @@
         <!-- My Submitted Forms -->
         <div class="flex items-center gap-3 mb-3">
             <h3 class="text-sm font-semibold text-navy-900" x-text="isAuthority ? 'Recent Submissions' : 'My Submissions'"></h3>
-            <span class="text-[11px] text-slate-400" x-text="filteredSubmitted.length + (isAuthority ? ' total' : ' submitted by you')"></span>
+            <span class="text-[11px] text-slate-500" x-text="filteredSubmitted.length + (isAuthority ? ' total' : ' submitted by you')"></span>
         </div>
         <x-ui.table>
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Reference</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Form</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Office</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Submitted By</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Date</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Form</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Office</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell">Submitted By</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell">Date</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-50">
@@ -216,7 +216,7 @@
             </tbody>
         </x-ui.table>
         <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredSubmitted.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600">No submissions in this view.</p>
         </div>
         </div>
@@ -234,7 +234,7 @@
                             </span>
                         </div>
                         <p class="text-sm font-semibold text-navy-900">Form Submitted!</p>
-                        <p class="text-xs text-slate-400 mt-1 max-w-[240px]">Your submission has been logged and routed for processing.</p>
+                        <p class="text-xs text-slate-500 mt-1 max-w-[240px]">Your submission has been logged and routed for processing.</p>
                     </div>
 
                     <div x-show="!doneSubmit">
@@ -242,7 +242,7 @@
                             <span class="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4.5 h-4.5"></i></span>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-navy-900 truncate" x-text="selectedForm.form"></p>
-                                <p class="text-xs text-slate-400 truncate" x-text="selectedForm.print_template || ''"></p>
+                                <p class="text-xs text-slate-500 truncate" x-text="selectedForm.print_template || ''"></p>
                             </div>
                         </div>
 
@@ -265,14 +265,14 @@
                                         <div class="flex-1 h-0.5" :class="formStep > idx + 1 ? 'bg-brand-500' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
                                         <div
                                             class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
-                                            :class="formStep >= idx + 1 ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-400'"
+                                            :class="formStep >= idx + 1 ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-500'"
                                         >
                                             <template x-if="formStep > idx + 1"><i data-lucide="check" class="w-3.5 h-3.5"></i></template>
                                             <template x-if="formStep <= idx + 1"><span x-text="idx + 1"></span></template>
                                         </div>
                                         <div class="flex-1 h-0.5" :class="[formStep > idx + 1 ? 'bg-brand-500' : 'bg-slate-200', idx === totalFormSteps - 1 ? '!bg-transparent' : '']"></div>
                                     </div>
-                                    <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="formStep === idx + 1 ? 'text-brand-600' : formStep > idx + 1 ? 'text-brand-500' : 'text-slate-400'" x-text="step.label"></span>
+                                    <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="formStep === idx + 1 ? 'text-brand-600' : formStep > idx + 1 ? 'text-brand-500' : 'text-slate-500'" x-text="step.label"></span>
                                 </div>
                             </template>
                         </nav>
@@ -324,7 +324,7 @@
                                     <div>
                                         <div class="flex items-center justify-between mb-2.5">
                                             <label class="block text-xs font-medium text-slate-700" x-text="currentFormStep.field.label"></label>
-                                            <span class="text-[11px] text-slate-400" x-text="(formData[currentFormStep.field.key] || []).length + ' added'"></span>
+                                            <span class="text-[11px] text-slate-500" x-text="(formData[currentFormStep.field.key] || []).length + ' added'"></span>
                                         </div>
                                         <div class="space-y-2.5">
                                             <template x-for="(row, ri) in (formData[currentFormStep.field.key] || [])" :key="ri">
@@ -341,7 +341,7 @@
                                                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                                                         <template x-for="col in currentFormStep.field.columns" :key="col.key">
                                                             <div>
-                                                                <label class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-1" x-text="col.label"></label>
+                                                                <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1" x-text="col.label"></label>
                                                                 <input :aria-label="col.label" type="text" x-model="row[col.key]" class="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                             </div>
                                                         </template>
@@ -350,8 +350,8 @@
                                             </template>
 
                                             <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[currentFormStep.field.key] || []).length === 0">
-                                                <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2"><i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-4 h-4"></i></span>
-                                                <p class="text-xs text-slate-400">No entries yet.</p>
+                                                <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-4 h-4"></i></span>
+                                                <p class="text-xs text-slate-500">No entries yet.</p>
                                             </div>
 
                                             <button
@@ -375,7 +375,7 @@
                 <x-ui.button variant="secondary" size="sm" x-show="!doneSubmit && formStep > 1" @click="formStep--">
                     <span class="inline-flex items-center gap-1.5"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>Back</span>
                 </x-ui.button>
-                <span class="text-xs text-slate-400 mr-auto ml-3" x-show="!doneSubmit && totalFormSteps > 1" x-text="'Step ' + formStep + ' of ' + totalFormSteps"></span>
+                <span class="text-xs text-slate-500 mr-auto ml-3" x-show="!doneSubmit && totalFormSteps > 1" x-text="'Step ' + formStep + ' of ' + totalFormSteps"></span>
                 <x-ui.button size="sm" x-show="!doneSubmit && formStep < totalFormSteps" @click="formStep++; $nextTick(() => window.renderIcons?.())">
                     <span class="inline-flex items-center gap-1.5">Next<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></span>
                 </x-ui.button>

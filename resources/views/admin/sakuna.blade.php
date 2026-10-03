@@ -1097,9 +1097,9 @@
 
         <div class="relative" x-data="{ open: false, label: 'Southwest Monsoon & Flooding — July 2026' }" @click.outside="open = false">
             <button @click="open = !open" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
-                <i data-lucide="radio-tower" class="w-4 h-4 text-slate-400"></i>
+                <i data-lucide="radio-tower" class="w-4 h-4 text-slate-500"></i>
                 <span x-text="label" class="max-w-48 truncate"></span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500"></i>
             </button>
             <div x-show="open" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-float border border-slate-100 z-30 py-1.5">
                 @foreach($periods as $p)
@@ -1113,11 +1113,11 @@
             </div>
         </div>
 
-        <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i>Updated Jul 15, 2026 — 08:26 AM</span>
+        <span class="text-xs text-slate-500 flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i>Updated Jul 15, 2026 — 08:26 AM</span>
 
         <div class="ml-auto flex items-center gap-2">
             <button @click="toast('Situation report exported.', 'success')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
-                <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export SitRep
+                <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export SitRep
             </button>
             <button @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-1.5 shadow-card transition-colors">
                 <i data-lucide="siren" class="w-4 h-4"></i> Activate EOC

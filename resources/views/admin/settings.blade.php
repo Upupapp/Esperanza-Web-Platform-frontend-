@@ -66,7 +66,7 @@
                         x-show="!can('set_general','edit')"
                         class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
                     >
-                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                         <p class="text-xs text-slate-500">
                             <span class="font-semibold text-slate-600">View only.</span>
                             Only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change general settings.
@@ -134,13 +134,13 @@
 
                 <x-ui.card x-show="!loading && !failed">
                     <h3 class="text-sm font-semibold text-navy-900 mb-1">Notification Settings</h3>
-                    <p class="text-xs text-slate-400 mb-4">Choose which system events trigger notifications for administrators.</p>
+                    <p class="text-xs text-slate-500 mb-4">Choose which system events trigger notifications for administrators.</p>
                     <div class="divide-y divide-slate-50">
                         <template x-for="pref in prefs" :key="pref.key">
                             <label class="flex items-center justify-between gap-4 py-2.5" :class="can('set_general','edit') ? 'cursor-pointer' : 'cursor-not-allowed'">
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700" x-text="pref.label"></p>
-                                    <p class="text-xs text-slate-400 mt-0.5" x-text="pref.desc"></p>
+                                    <p class="text-xs text-slate-500 mt-0.5" x-text="pref.desc"></p>
                                 </div>
                                 <div class="relative shrink-0">
                                     <button
@@ -166,14 +166,14 @@
                 <x-ui.card class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm font-medium text-navy-900">Two-Factor Authentication</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Require 2FA for all personnel accounts.</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Require 2FA for all personnel accounts.</p>
                     </div>
                     <x-ui.button variant="secondary" size="sm" @click="$dispatch('toast', { message: '2FA enforcement is a frontend preview — no policy store exists on the backend yet.', variant: 'info' })">Enforce for All</x-ui.button>
                 </x-ui.card>
                 <x-ui.card class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm font-medium text-navy-900">Session Timeout</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Automatically sign out inactive sessions.</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Automatically sign out inactive sessions.</p>
                     </div>
                     <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option>15 minutes</option>
@@ -225,7 +225,7 @@
                         x-show="!can('set_branding','edit')"
                         class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
                     >
-                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                         <p class="text-xs text-slate-500">
                             <span class="font-semibold text-slate-600">View only.</span>
                             Branding ships to both portals, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change it.
@@ -238,7 +238,7 @@
                             <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipal Seal" class="w-20 h-20 rounded-full ring-4 ring-slate-100 object-cover">
                             <div>
                                 <p class="text-sm text-slate-600">esperanza-seal.png</p>
-                                <p class="text-xs text-slate-400 mt-0.5">512×512px · PNG · Used across both portals</p>
+                                <p class="text-xs text-slate-500 mt-0.5">512×512px · PNG · Used across both portals</p>
                                 <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5" @click="$dispatch('toast', { message: 'Seal upload is a frontend preview — no upload endpoint exists on the backend yet.', variant: 'info' })" x-show="can('set_branding','edit')">Replace Seal</x-ui.button>
                             </div>
                         </div>
@@ -254,7 +254,7 @@
                                 </select>
                             </div>
                             <x-ui.input name="municipality_name" label="Municipality Name" x-model="municipalityName" x-bind:disabled="!can('set_branding','edit')" class="disabled:opacity-60 disabled:cursor-not-allowed" />
-                            <p class="text-[11px] text-slate-400" x-show="current?.version">Current version <span x-text="current?.version"></span><span x-show="current?.effective_date"> · effective <span x-text="current?.effective_date"></span></span></p>
+                            <p class="text-[11px] text-slate-500" x-show="current?.version">Current version <span x-text="current?.version"></span><span x-show="current?.effective_date"> · effective <span x-text="current?.effective_date"></span></span></p>
                             <x-ui.button icon="check" x-bind:disabled="saving" @click="save()" x-show="can('set_branding','edit')" x-text="saving ? 'Publishing…' : 'Publish New Version'"></x-ui.button>
                         </div>
                     </x-ui.card>
@@ -262,7 +262,7 @@
                     <x-ui.card class="flex items-center justify-between gap-4">
                         <div>
                             <p class="text-sm font-medium text-navy-900">Municipality Information</p>
-                            <p class="text-xs text-slate-400 mt-0.5">{{ config('esperanza.municipality') }}, {{ config('esperanza.province') }} · {{ count(config('esperanza.barangays')) }} barangays</p>
+                            <p class="text-xs text-slate-500 mt-0.5">{{ config('esperanza.municipality') }}, {{ config('esperanza.province') }} · {{ count(config('esperanza.barangays')) }} barangays</p>
                         </div>
                     </x-ui.card>
                 </div>
@@ -333,7 +333,7 @@
                         <button type="button" @click="typeFilter = 'tulong'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="typeFilter === 'tulong' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><i data-lucide="hand-heart" class="w-3.5 h-3.5"></i>Tulong</button>
                     </div>
                     <div class="relative">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Search services" type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                     </div>
                 </div>
@@ -345,7 +345,7 @@
                     x-show="!can('set_service_catalog','edit')"
                     class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
                 >
-                    <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                     <p class="text-xs text-slate-500">
                         <span class="font-semibold text-slate-600">View only.</span>
                         The Service Catalog controls what every citizen pays and submits for Dokyu and Tulong, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can edit it.
@@ -356,16 +356,16 @@
                 <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the service catalog.'" retryExpr="loadServices()" :retryable="true" /></div>
 
                 <div x-show="!loading && !failed">
-                <p class="text-xs text-slate-400 mb-3" x-text="filteredServices.length + ' ' + (filteredServices.length === 1 ? 'service' : 'services') + ' in ' + (typeFilter === 'dokyu' ? 'Dokyu' : 'Tulong')"></p>
+                <p class="text-xs text-slate-500 mb-3" x-text="filteredServices.length + ' ' + (filteredServices.length === 1 ? 'service' : 'services') + ' in ' + (typeFilter === 'dokyu' ? 'Dokyu' : 'Tulong')"></p>
 
                 <x-ui.table>
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/60">
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Service</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Category</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Office</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Fee</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Level</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Service</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Category</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell">Office</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Fee</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell">Level</th>
                             <th class="px-4 py-2.5"></th>
                         </tr>
                     </thead>
@@ -377,7 +377,7 @@
         @keydown.space.prevent="editService(s)">
                                 <td class="px-4 py-3">
                                     <p class="text-slate-700 font-medium group-hover:text-brand-600 transition-colors" x-text="s.name"></p>
-                                    <p class="text-[11px] text-slate-400" x-text="(s.requirements||[]).length + ' requirement' + ((s.requirements||[]).length === 1 ? '' : 's')"></p>
+                                    <p class="text-[11px] text-slate-500" x-text="(s.requirements||[]).length + ' requirement' + ((s.requirements||[]).length === 1 ? '' : 's')"></p>
                                 </td>
                                 <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="s.category"></td>
                                 <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="s.office"></td>
@@ -388,7 +388,7 @@
                                     <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="{ 'bg-teal-50 text-teal-600': s.level === 'Barangay', 'bg-brand-50 text-brand-600': s.level === 'Municipal', 'bg-purple-50 text-purple-600': s.level === 'Multi-Office' }" x-text="s.level"></span>
                                 </td>
                                 <td class="px-4 py-3 text-right" @click.stop x-show="can('set_service_catalog','edit')">
-                                    <button @click="editService(s)" class="text-slate-400 hover:text-brand-600 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                    <button @click="editService(s)" class="text-slate-500 hover:text-brand-600 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
                         </template>
@@ -396,7 +396,7 @@
                 </x-ui.table>
 
                 <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredServices.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No services match this search.</p>
                 </div>
                 </div>
@@ -426,7 +426,7 @@
                                 <ul class="space-y-1.5 mb-2">
                                     <template x-for="(req, i) in selected.requirements" :key="i">
                                         <li class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5 transition-colors duration-[160ms] ease-standard focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
-                                            <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                            <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
                                             <input aria-label="Requirements"
                                                 type="text" x-model="selected.requirements[i]" :disabled="!can('set_service_catalog','edit') || selected.policy_blocked"
                                                 class="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm text-slate-600 focus:outline-none focus:ring-0 disabled:opacity-60"
@@ -445,7 +445,7 @@
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Workflow</label>
                                 <div class="flex flex-wrap items-center gap-1.5">
                                     <template x-for="(step, i) in (selected.process || [])" :key="i">
-                                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 rounded-full px-2.5 py-1"><span class="text-slate-400" x-text="(i+1) + '.'"></span><span x-text="step"></span></span>
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 rounded-full px-2.5 py-1"><span class="text-slate-500" x-text="(i+1) + '.'"></span><span x-text="step"></span></span>
                                     </template>
                                 </div>
                             </div>
@@ -546,7 +546,7 @@
                     x-show="!can('set_site_content','edit')"
                     class="mb-4 flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3"
                 >
-                    <i data-lucide="lock" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                     <p class="text-xs text-slate-500">
                         <span class="font-semibold text-slate-600">View only.</span>
                         Site Content is published straight to the Citizen Portal, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can edit it.
@@ -568,7 +568,7 @@
                         </div>
                         <div class="mt-4">
                             <label class="block text-xs font-medium text-slate-700 mb-1">Introduction</label>
-                            <p class="text-[11px] text-slate-400 mb-1.5">The opening paragraph citizens read before the numbered sections below.</p>
+                            <p class="text-[11px] text-slate-500 mb-1.5">The opening paragraph citizens read before the numbered sections below.</p>
                             <textarea aria-label="Intro" rows="3" x-model="doc.intro" :disabled="!can('set_site_content','edit')" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 leading-relaxed focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
                         </div>
                     </x-ui.card>
@@ -584,14 +584,14 @@
         tabindex="0"
         @keydown.enter.prevent="expandedSection = expandedSection === i ? null : i"
         @keydown.space.prevent="expandedSection = expandedSection === i ? null : i">
-                                    <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-400 text-[11px] font-bold flex items-center justify-center shrink-0" x-text="i + 1"></span>
+                                    <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 text-[11px] font-bold flex items-center justify-center shrink-0" x-text="i + 1"></span>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="section.heading || 'Untitled section'"></p>
-                                        <p class="text-xs text-slate-400 truncate" x-show="expandedSection !== i" x-text="section.body || 'No content yet'"></p>
+                                        <p class="text-xs text-slate-500 truncate" x-show="expandedSection !== i" x-text="section.body || 'No content yet'"></p>
                                     </div>
                                     <div class="flex items-center gap-0.5 shrink-0" x-show="can('set_site_content','edit')" @click.stop>
-                                        <button type="button" @click="moveSection(i, -1)" :disabled="i === 0" title="Move up" class="p-1.5 rounded-lg text-slate-400 hover:text-navy-700 hover:bg-slate-100 disabled:opacity-25 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
-                                        <button type="button" @click="moveSection(i, 1)" :disabled="i === doc.sections.length - 1" title="Move down" class="p-1.5 rounded-lg text-slate-400 hover:text-navy-700 hover:bg-slate-100 disabled:opacity-25 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="moveSection(i, -1)" :disabled="i === 0" title="Move up" class="p-1.5 rounded-lg text-slate-500 hover:text-navy-700 hover:bg-slate-100 disabled:opacity-25 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="moveSection(i, 1)" :disabled="i === doc.sections.length - 1" title="Move down" class="p-1.5 rounded-lg text-slate-500 hover:text-navy-700 hover:bg-slate-100 disabled:opacity-25 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
                                         <button type="button" @click="removeSection(i)" title="Remove section" class="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                                     </div>
                                     <i data-lucide="chevron-down" class="w-4 h-4 text-slate-300 shrink-0 transition-transform duration-[160ms] ease-standard" :class="expandedSection === i && 'rotate-180'"></i>
@@ -603,22 +603,22 @@
                                     x-transition:enter-end="opacity-100 translate-y-0"
                                     class="px-4 pb-4 bg-slate-50/40"
                                 >
-                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-1">Section Heading</label>
+                                    <label class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1 mt-1">Section Heading</label>
                                     <input aria-label="Section Heading"
                                         type="text" x-model="section.heading" placeholder="Section heading" :disabled="!can('set_site_content','edit')"
                                         class="w-full bg-transparent border-0 border-b-2 border-slate-200 px-0.5 py-1.5 text-base font-bold text-navy-900 placeholder:text-slate-300 placeholder:font-normal focus:border-brand-400 outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 mt-4">Section Content</label>
+                                    <label class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1 mt-4">Section Content</label>
                                     <textarea aria-label="Section Content"
                                         rows="5" x-model="section.body" placeholder="Write what citizens need to know in this section…" :disabled="!can('set_site_content','edit')"
                                         class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 leading-relaxed focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none disabled:opacity-60 disabled:cursor-not-allowed"
                                     ></textarea>
-                                    <p class="text-[11px] text-slate-400 mt-1.5" x-text="(section.body || '').length + ' characters'"></p>
+                                    <p class="text-[11px] text-slate-500 mt-1.5" x-text="(section.body || '').length + ' characters'"></p>
                                 </div>
                             </div>
                         </template>
                         <div class="px-4 py-8 text-center" x-show="doc.sections.length === 0">
-                            <p class="text-xs text-slate-400">No sections yet.</p>
+                            <p class="text-xs text-slate-500">No sections yet.</p>
                         </div>
                     </div>
 
@@ -664,7 +664,7 @@
                                             <button
                                                 type="button" @click="ch.icon = opt; iconOpen = false; $nextTick(() => window.renderIcons?.())" :title="opt"
                                                 class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-                                                :class="ch.icon === opt ? 'bg-brand-50 text-brand-600 ring-1 ring-brand-200' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'"
+                                                :class="ch.icon === opt ? 'bg-brand-50 text-brand-600 ring-1 ring-brand-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-600'"
                                             >
                                                 <i :data-lucide="opt" class="w-4 h-4"></i>
                                             </button>
@@ -697,11 +697,11 @@
                     <x-ui.modal :bare="true" maxWidth="lg">
                         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
                             <h3 class="text-sm font-semibold text-navy-900" x-text="contentTab === 'privacy' ? 'Preview — Privacy Policy' : 'Preview — Terms &amp; Conditions'"></h3>
-                            <button @click="previewOpen = false" class="text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                            <button @click="previewOpen = false" class="text-slate-500 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
                         </div>
                         <div class="p-5 max-h-[65vh] overflow-y-auto scrollbar-thin">
                             <h2 class="text-base font-bold text-navy-900" x-text="doc.title"></h2>
-                            <p class="text-xs text-slate-400 mt-0.5 mb-4" x-text="'Effective ' + doc.effective_date"></p>
+                            <p class="text-xs text-slate-500 mt-0.5 mb-4" x-text="'Effective ' + doc.effective_date"></p>
                             <p class="text-sm text-slate-600 leading-relaxed pb-4 border-b border-slate-100" x-text="doc.intro"></p>
                             <div class="space-y-4 mt-4">
                                 <template x-for="section in doc.sections" :key="section.heading">
@@ -783,7 +783,7 @@
             >
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Search actions or personnel" type="text" x-model="search" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
                     </div>
                     <select aria-label="Module filter" x-model="moduleFilter" @change="load()" class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
@@ -811,11 +811,11 @@
                 <x-ui.table>
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/60">
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Personnel</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Action</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden md:table-cell">Module</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden lg:table-cell">Target</th>
-                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden sm:table-cell">Timestamp</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Personnel</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Action</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Module</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell">Target</th>
+                            <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell">Timestamp</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -824,7 +824,7 @@
                                 <td class="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap" x-text="log.user"></td>
                                 <td class="px-4 py-2.5 text-slate-600" x-text="log.action"></td>
                                 <td class="px-4 py-2.5 hidden md:table-cell"><span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md" x-text="log.module"></span></td>
-                                <td class="px-4 py-2.5 text-slate-400 hidden lg:table-cell text-xs" x-text="log.target || '—'"></td>
+                                <td class="px-4 py-2.5 text-slate-500 hidden lg:table-cell text-xs" x-text="log.target || '—'"></td>
                                 <td class="px-4 py-2.5 text-slate-500 hidden sm:table-cell whitespace-nowrap" x-text="log.time ? new Date(log.time).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'"></td>
                             </tr>
                         </template>

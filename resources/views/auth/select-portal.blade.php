@@ -3,7 +3,7 @@
         <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" class="w-11 h-11 rounded-full ring-2 ring-slate-200 object-cover" alt="Seal">
         <div>
             <p class="font-semibold text-navy-900 leading-tight">Municipality of Esperanza</p>
-            <p class="text-xs text-slate-400">Province of Masbate</p>
+            <p class="text-xs text-slate-500">Province of Masbate</p>
         </div>
     </div>
 
@@ -18,7 +18,7 @@
             </div>
             <div class="relative flex-1 min-w-0">
                 <p class="font-semibold text-navy-900"><x-ui.t fil="Portal ng Mamamayan" en="Citizen Portal" /></p>
-                <p class="text-sm text-slate-400"><x-ui.t fil="Humiling ng dokumento, subaybayan ang aplikasyon, at manatiling updated." en="Request documents, track applications, and stay updated." /></p>
+                <p class="text-sm text-slate-500"><x-ui.t fil="Humiling ng dokumento, subaybayan ang aplikasyon, at manatiling updated." en="Request documents, track applications, and stay updated." /></p>
             </div>
             <i data-lucide="chevron-right" class="relative w-5 h-5 text-slate-300 transition-all duration-[220ms] ease-standard group-hover:text-brand-500 group-hover:translate-x-1"></i>
         </a>
@@ -30,13 +30,13 @@
             </div>
             <div class="relative flex-1 min-w-0">
                 <p class="font-semibold text-navy-900">LGU Personnel</p>
-                <p class="text-sm text-slate-400">Manage requests, residents, and municipal operations.</p>
+                <p class="text-sm text-slate-500">Manage requests, residents, and municipal operations.</p>
             </div>
             <i data-lucide="chevron-right" class="relative w-5 h-5 text-slate-300 transition-all duration-[220ms] ease-standard group-hover:text-navy-600 group-hover:translate-x-1"></i>
         </a>
     </div>
 
-    <p class="text-center text-sm text-slate-400 mt-7">
+    <p class="text-center text-sm text-slate-500 mt-7">
         <x-ui.t fil="Bago sa Esperanza LGU?" en="New to Esperanza LGU?" /> <a href="{{ route('citizen.register') }}" class="text-brand-600 font-medium hover:underline"><x-ui.t fil="Gumawa ng account ng mamamayan" en="Create a citizen account" /></a>
     </p>
 </x-layouts.guest>

@@ -20,7 +20,7 @@
             },
         }"
     >
-        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 mb-6 transition-colors">
+        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-600 mb-6 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik" en="Back" />
         </a>
 
@@ -44,14 +44,14 @@
             <div class="animate-fade-up" style="animation-delay: 120ms" x-data="passwordField">
                 <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Password" en="Password" /></label>
                 <div class="relative">
-                    <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none"></i>
+                    <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500 pointer-events-none"></i>
                     <input
                         :type="visible ? 'text' : 'password'"
                         name="password" id="password" placeholder="••••••••" required
                         x-model="password"
                         class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                     >
-                    <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                    <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 transition-colors">
                         <i data-lucide="eye" class="w-[18px] h-[18px]" x-show="!visible"></i>
                         <i data-lucide="eye-off" class="w-[18px] h-[18px]" x-show="visible" x-cloak></i>
                     </button>
@@ -85,7 +85,7 @@
             </x-ui.button>
         </form>
 
-        <p class="text-center text-sm text-slate-400 mt-4">
+        <p class="text-center text-sm text-slate-500 mt-4">
             <x-ui.t fil="Wala ka pang account?" en="Don't have an account?" /> <a href="{{ route('citizen.register') }}" class="text-brand-600 font-medium hover:underline"><x-ui.t fil="Magrehistro rito" en="Register here" /></a>
         </p>
     </div>

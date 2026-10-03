@@ -48,7 +48,7 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredResources, 'resources-export.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
         </button>
         <button x-show="can('sakuna_resources', 'create')" @click="openCreateResource()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
@@ -86,7 +86,7 @@
 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
             <input aria-label="Search by name, ref or category" type="text" x-model="resourceSearch" placeholder="Search by name, ref or category…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
@@ -127,8 +127,8 @@
                         <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="r.category"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="r.barangay || '—'"></td>
                         <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700" x-text="r.quantity + (r.unit ? ' ' + r.unit : '')"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right" :class="r.deployed > 0 ? 'text-orange-600 font-medium' : 'text-slate-400'" x-text="r.deployed"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right" :class="r.available > 0 ? 'text-emerald-600 font-medium' : 'text-slate-400'" x-text="r.available"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right" :class="r.deployed > 0 ? 'text-orange-600 font-medium' : 'text-slate-500'" x-text="r.deployed"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right" :class="r.available > 0 ? 'text-emerald-600 font-medium' : 'text-slate-500'" x-text="r.available"></td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span x-show="r.readiness" class="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full text-xs font-medium" x-text="r.readiness"></span>
                             <span x-show="!r.readiness" class="text-slate-300 text-xs">—</span>
@@ -154,7 +154,7 @@
                 </template>
                 <tr x-show="filteredResources.length === 0">
                     <td colspan="9" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-slate-400">
+                        <div class="flex flex-col items-center gap-3 text-slate-500">
                             <i data-lucide="package" class="w-10 h-10 opacity-30"></i>
                             <p class="text-sm font-medium text-slate-500">No resources match your filters.</p>
                             <button @click="resourceSearch = ''; resourceCategoryFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
@@ -188,10 +188,10 @@
                 <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center"><i data-lucide="send" class="w-5 h-5 text-brand-600"></i></div>
                 <div>
                     <h3 class="font-semibold text-slate-800">Deploy or Return</h3>
-                    <p class="text-xs text-slate-400" x-text="selectedResource?.name ?? '—'"></p>
+                    <p class="text-xs text-slate-500" x-text="selectedResource?.name ?? '—'"></p>
                 </div>
             </div>
-            <button @click="showDeployModal = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showDeployModal = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">
@@ -248,13 +248,13 @@
                 <div>
                     <h3 class="font-semibold text-slate-800" x-text="selectedResource?.name ?? '—'"></h3>
                     <div class="flex items-center gap-2 mt-0.5">
-                        <span class="font-mono text-xs text-slate-400" x-text="selectedResource?.ref ?? ''"></span>
+                        <span class="font-mono text-xs text-slate-500" x-text="selectedResource?.ref ?? ''"></span>
                         <span class="text-slate-300">·</span>
                         <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium" x-text="selectedResource?.category"></span>
                     </div>
                 </div>
             </div>
-            <button @click="showResourceDetail = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showResourceDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
@@ -262,10 +262,10 @@
             <div>
                 <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Barangay</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.barangay || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Readiness</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.readiness || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Unit</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.unit || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-400">Total Quantity</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.quantity"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Barangay</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.barangay || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Readiness</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.readiness || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Unit</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.unit || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Total Quantity</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedResource?.quantity"></p></div>
                 </div>
             </div>
 
@@ -288,16 +288,16 @@
                     <template x-for="(mv, idx) in (selectedResource?.movements || [])" :key="idx">
                         <div class="flex items-start gap-3 py-2.5" :class="idx < (selectedResource.movements.length - 1) ? 'border-b border-slate-50' : ''">
                             <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                                <i :data-lucide="mv.verb === 'deploy' ? 'send' : 'undo-2'" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <i :data-lucide="mv.verb === 'deploy' ? 'send' : 'undo-2'" class="w-3.5 h-3.5 text-slate-500"></i>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-medium text-slate-700 capitalize" x-text="mv.verb + ' — ' + mv.quantity + (selectedResource?.unit ? ' ' + selectedResource.unit : ' unit(s)')"></p>
-                                <p class="text-xs text-slate-400" x-text="[mv.incident_ref ? mv.incident_ref + ' (' + mv.incident_title + ')' : null, mv.actor_name].filter(Boolean).join(' · ')"></p>
+                                <p class="text-xs text-slate-500" x-text="[mv.incident_ref ? mv.incident_ref + ' (' + mv.incident_title + ')' : null, mv.actor_name].filter(Boolean).join(' · ')"></p>
                             </div>
-                            <span class="text-[11px] text-slate-400 whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
+                            <span class="text-[11px] text-slate-500 whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
                         </div>
                     </template>
-                    <p x-show="!(selectedResource?.movements || []).length" class="text-xs text-slate-400 py-2">No deployments or returns recorded yet.</p>
+                    <p x-show="!(selectedResource?.movements || []).length" class="text-xs text-slate-500 py-2">No deployments or returns recorded yet.</p>
                 </div>
             </div>
         </div>
@@ -329,7 +329,7 @@
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <h3 class="font-semibold text-slate-800" x-text="resourceFormMode === 'create' ? 'Add Resource to Inventory' : 'Edit Resource'"></h3>
-            <button @click="showCreateResource = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showCreateResource = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-2 gap-4">

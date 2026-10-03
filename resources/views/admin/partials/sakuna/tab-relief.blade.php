@@ -53,7 +53,7 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredRelief, 'relief-distributions.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
         </button>
         <button x-show="can('sakuna_relief', 'create')" @click="openCreateDistribution()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
@@ -91,7 +91,7 @@
 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
             <input aria-label="Search by beneficiary, ref or item" type="text" x-model="reliefSearch" placeholder="Search by beneficiary, ref or item…"
                 class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
@@ -152,7 +152,7 @@
                 </template>
                 <tr x-show="filteredRelief.length === 0">
                     <td colspan="9" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-slate-400">
+                        <div class="flex flex-col items-center gap-3 text-slate-500">
                             <i data-lucide="package" class="w-10 h-10 opacity-30"></i>
                             <p class="text-sm font-medium text-slate-500">No distributions match your filters.</p>
                             <button @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
@@ -186,7 +186,7 @@
                 <h3 class="font-semibold text-slate-800">Record Distribution</h3>
                 <p class="text-xs text-slate-500 mt-0.5">A duplicate for the same operation and beneficiary is refused automatically.</p>
             </div>
-            <button @click="showCreateDistribution = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="showCreateDistribution = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

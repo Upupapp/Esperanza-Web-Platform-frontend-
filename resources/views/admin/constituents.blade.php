@@ -438,7 +438,7 @@
             return { class: m[v]||m['Unverified'], label: v || 'Unverified' };
         },
         statusBadge(s) {
-            const m={'Active':'text-emerald-700 bg-emerald-50','New Resident':'text-brand-700 bg-brand-50','Transferred':'text-indigo-700 bg-indigo-50','Temporarily Away':'text-amber-700 bg-amber-50','Overseas':'text-teal-700 bg-teal-50','Deceased':'text-slate-500 bg-slate-100','Archived':'text-slate-400 bg-slate-50','Under Review':'text-purple-700 bg-purple-50'};
+            const m={'Active':'text-emerald-700 bg-emerald-50','New Resident':'text-brand-700 bg-brand-50','Transferred':'text-indigo-700 bg-indigo-50','Temporarily Away':'text-amber-700 bg-amber-50','Overseas':'text-teal-700 bg-teal-50','Deceased':'text-slate-500 bg-slate-100','Archived':'text-slate-500 bg-slate-50','Under Review':'text-purple-700 bg-purple-50'};
             return m[s]||m['Active'];
         },
         severityBadge(s) {
@@ -476,7 +476,7 @@
         <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
             <div>
                 <h2 class="text-lg font-bold text-navy-900">Constituent Registry</h2>
-                <p class="text-xs text-slate-400 mt-0.5">Municipality of Esperanza · 20 barangays · <span x-text="isMunicipalScope?'Municipality-wide view':'Brgy. '+$store.session.account?.scope+' view'"></span></p>
+                <p class="text-xs text-slate-500 mt-0.5">Municipality of Esperanza · 20 barangays · <span x-text="isMunicipalScope?'Municipality-wide view':'Brgy. '+$store.session.account?.scope+' view'"></span></p>
             </div>
             <div class="flex items-center gap-2 relative" x-show="can('const_resident','create') || can('const_family','create') || can('const_household','create')">
                 <button @click="showAddMenu=!showAddMenu" @click.outside="showAddMenu=false"
@@ -586,7 +586,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Search" x-model="search" type="text"
                                :placeholder="view==='individuals'?'Search residents...':view==='families'?'Search families...':'Search households...'"
                                class="w-52 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">

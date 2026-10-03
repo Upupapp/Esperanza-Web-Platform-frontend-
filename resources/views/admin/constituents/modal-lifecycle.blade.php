@@ -109,7 +109,7 @@
             {{-- Close --}}
             <button
                 @click="open = false; resetLifecycleForm()"
-                class="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white/60 transition-colors z-10"
+                class="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-600 hover:bg-white/60 transition-colors z-10"
                 title="Close"
             >
                 <i data-lucide="x" class="w-4 h-4"></i>
@@ -197,7 +197,7 @@
                             <option value="{{ $brgy }}">{{ $brgy }}</option>
                         @endforeach
                     </select>
-                    <p class="text-xs text-slate-400 mt-1">
+                    <p class="text-xs text-slate-500 mt-1">
                         Select the barangay where this resident will be formally transferred.
                     </p>
                 </div>
@@ -296,12 +296,12 @@
                         placeholder="e.g. 2026-DC-000123"
                         class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
                     />
-                    <p class="text-xs text-slate-400 mt-1">Leave blank if PSA certificate is not yet available.</p>
+                    <p class="text-xs text-slate-500 mt-1">Leave blank if PSA certificate is not yet available.</p>
                 </div>
 
                 {{-- Note --}}
                 <div class="bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 flex items-start gap-2.5 text-xs text-slate-600">
-                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-400"></i>
+                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-500"></i>
                     <span>
                         The record will be soft-deleted and removed from active views. It is not permanently erased.
                     </span>
@@ -335,7 +335,7 @@
                         class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition resize-none"
                         required
                     ></textarea>
-                    <p class="text-xs text-slate-400 mt-1">This reason will be recorded in the audit log and is required by LGU data governance policy.</p>
+                    <p class="text-xs text-slate-500 mt-1">This reason will be recorded in the audit log and is required by LGU data governance policy.</p>
                 </div>
 
             </div>{{-- /Archive --}}

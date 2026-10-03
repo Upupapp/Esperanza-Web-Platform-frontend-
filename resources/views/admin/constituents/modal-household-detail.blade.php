@@ -126,7 +126,7 @@
                             class="shrink-0 sm:w-full flex items-center gap-2 sm:gap-2.5 px-3 py-2 sm:py-2.5 rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap sm:whitespace-normal text-left"
                             :class="householdTab === tab.id ? 'bg-white text-brand-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'"
                         >
-                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="householdTab === tab.id ? 'text-brand-600' : 'text-slate-400'"></i>
+                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="householdTab === tab.id ? 'text-brand-600' : 'text-slate-500'"></i>
                             <span class="flex-1 min-w-0 sm:truncate" x-text="tab.label"></span>
                             <span
                                 x-show="tab.count"
@@ -147,7 +147,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Left column --}}
                         <x-ui.card class="p-4">
-                            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Location & Identification</h4>
+                            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Location & Identification</h4>
                             <dl class="space-y-2.5">
                                 <div class="flex justify-between items-start gap-2">
                                     <dt class="text-xs text-slate-500">Address</dt>
@@ -179,7 +179,7 @@
                         {{-- Right column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Dwelling & Tenure</h4>
+                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Dwelling & Tenure</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-slate-500">Dwelling Type</dt>
@@ -232,7 +232,7 @@
                                 <input id="hh-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-head">Head of Household <span class="text-slate-400 font-normal">(leave blank to keep current)</span></label>
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-head">Head of Household <span class="text-slate-500 font-normal">(leave blank to keep current)</span></label>
                                 <input id="hh-edit-head" type="text" x-model="edit.head_name" placeholder="Full name" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             </div>
                             <div class="grid grid-cols-2 gap-3">
@@ -292,7 +292,7 @@
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <i data-lucide="user-x" class="w-8 h-8 text-slate-300"></i>
-                                    <p class="text-sm text-slate-400">No individuals linked to this household.</p>
+                                    <p class="text-sm text-slate-500">No individuals linked to this household.</p>
                                 </div>
                             </div>
                         </template>
@@ -311,8 +311,8 @@
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
                                         <div class="flex items-center gap-2 mt-0.5">
-                                            <span class="text-xs text-slate-400" x-text="r.age ? (r.age + ' yrs') : ''"></span>
-                                            <template x-if="r.sex"><span class="text-xs text-slate-400" x-text="'· ' + r.sex"></span></template>
+                                            <span class="text-xs text-slate-500" x-text="r.age ? (r.age + ' yrs') : ''"></span>
+                                            <template x-if="r.sex"><span class="text-xs text-slate-500" x-text="'· ' + r.sex"></span></template>
                                             <template x-if="r.relation"><span class="text-xs text-slate-500 font-medium" x-text="'· ' + r.relation"></span></template>
                                         </div>
                                     </div>
@@ -451,7 +451,7 @@
 
     {{-- Loading placeholder --}}
     <template x-if="!selectedHousehold">
-        <div class="flex items-center justify-center h-48 text-slate-400 text-sm">
+        <div class="flex items-center justify-center h-48 text-slate-500 text-sm">
             <i data-lucide="loader-circle" class="w-6 h-6 animate-spin mr-2"></i>
             Loading household details…
         </div>

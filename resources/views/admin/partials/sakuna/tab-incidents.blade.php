@@ -57,7 +57,7 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredIncidents, 'incidents-export.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
         </button>
         <button x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
@@ -82,7 +82,7 @@
 {{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap gap-2 items-center">
     <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
         <input aria-label="Search by ID, type, or barangay" type="text" x-model="incidentSearch"
             placeholder="Search by ID, type, or barangay..."
             class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-64 transition-colors">
@@ -157,11 +157,11 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="text-xs text-slate-600" x-text="inc.reported ? new Date(inc.reported).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></span><br>
-                            <span class="text-xs text-slate-400" x-text="inc.reported ? new Date(inc.reported).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''"></span>
+                            <span class="text-xs text-slate-500" x-text="inc.reported ? new Date(inc.reported).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''"></span>
                         </td>
                         <td class="px-4 py-3">
                             <span class="text-sm font-medium text-slate-700" x-text="inc.barangay"></span><br>
-                            <span class="text-xs text-slate-400" x-text="inc.sitio || '—'"></span>
+                            <span class="text-xs text-slate-500" x-text="inc.sitio || '—'"></span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="severityBadge(inc.severity)" class="px-2.5 py-0.5 rounded-full text-xs font-medium" x-text="inc.severity"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -188,7 +188,7 @@
                     <td colspan="9" class="px-4 py-12 text-center">
                         <div class="flex flex-col items-center gap-2">
                             <span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-1">
-                                <i data-lucide="search-x" class="w-5 h-5 text-slate-400"></i>
+                                <i data-lucide="search-x" class="w-5 h-5 text-slate-500"></i>
                             </span>
                             <p class="text-sm text-slate-500 font-medium">No incidents match your filters.</p>
                             <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter='';"
@@ -234,10 +234,10 @@
                 </span>
                 <div>
                     <h3 class="text-base font-semibold text-slate-800">Report New Incident</h3>
-                    <p class="text-xs text-slate-400">The reporting officer is recorded automatically from your session.</p>
+                    <p class="text-xs text-slate-500">The reporting officer is recorded automatically from your session.</p>
                 </div>
             </div>
-            <button @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+            <button @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>

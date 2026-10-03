@@ -63,7 +63,7 @@
                             </div>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-navy-900 truncate" x-text="f.label"></p>
-                                <p class="text-xs text-slate-400 font-mono" x-text="f.ref"></p>
+                                <p class="text-xs text-slate-500 font-mono" x-text="f.ref"></p>
                                 {{-- Family type chip --}}
                                 <span
                                     class="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded text-xs font-medium"
@@ -81,7 +81,7 @@
                     {{-- Barangay --}}
                     <td class="px-4 py-3 hidden xl:table-cell">
                         <p class="text-sm text-navy-900 font-medium" x-text="f.barangay"></p>
-                        <p class="text-xs text-slate-400" x-text="f.sitio ? ('Sitio ' + f.sitio) : '—'"></p>
+                        <p class="text-xs text-slate-500" x-text="f.sitio ? ('Sitio ' + f.sitio) : '—'"></p>
                     </td>
 
                     {{-- Household link --}}
@@ -93,7 +93,7 @@
                             </span>
                         </template>
                         <template x-if="!f.household_ref">
-                            <span class="text-xs text-slate-400 italic">Unlinked</span>
+                            <span class="text-xs text-slate-500 italic">Unlinked</span>
                         </template>
                     </td>
 
@@ -127,7 +127,7 @@
                             <button
                                 @click="openFamily(f)"
                                 title="View family detail"
-                                class="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                class="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             >
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
@@ -141,7 +141,7 @@
 
     {{-- Footer pagination hint --}}
     <template x-if="filteredFamilies.length > 0">
-        <p class="text-xs text-slate-400 text-right pt-1">
+        <p class="text-xs text-slate-500 text-right pt-1">
             <span x-text="filteredFamilies.length"></span> record<span x-text="filteredFamilies.length===1?'':'s'"></span> shown
         </p>
     </template>

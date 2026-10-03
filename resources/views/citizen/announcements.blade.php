@@ -153,7 +153,7 @@
                         :class="cat === 'MyBarangay' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
                     ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></button>
                 </div>
-                <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredPostCount + ' ' + ($store.lang.current === 'en' ? 'of ' + posts.length + ' posts' : 'sa ' + posts.length + ' post')"></p>
+                <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredPostCount + ' ' + ($store.lang.current === 'en' ? 'of ' + posts.length + ' posts' : 'sa ' + posts.length + ' post')"></p>
                 </div>
 
                 <!-- Feed -->
@@ -190,7 +190,7 @@
                                                     <span x-text="post.author"></span>
                                                     <i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500 shrink-0" x-show="post.official"></i>
                                                 </p>
-                                                <p class="text-xs text-slate-400 truncate" x-text="post.official ? 'Opisyal na Account ng LGU' : ('Residente — Brgy. ' + post.barangay)"></p>
+                                                <p class="text-xs text-slate-500 truncate" x-text="post.official ? 'Opisyal na Account ng LGU' : ('Residente — Brgy. ' + post.barangay)"></p>
                                             </div>
                                         </div>
                                         <div class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 flex items-center gap-2.5">
@@ -211,14 +211,14 @@
                                         <span x-text="post.author"></span>
                                         <i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500 shrink-0" x-show="post.official"></i>
                                     </p>
-                                    <p class="text-[11px] text-slate-400" x-text="(post.barangay ? 'Brgy. ' + post.barangay + ' · ' : '') + fmtTime(post.at) + (post.mine && !post.visible ? ' · ' + ($store.lang.current === 'en' ? 'Pending review — only visible to you' : 'Hinihintay ang pag-apruba — ikaw lang ang nakakakita nito') : '')"></p>
+                                    <p class="text-[11px] text-slate-500" x-text="(post.barangay ? 'Brgy. ' + post.barangay + ' · ' : '') + fmtTime(post.at) + (post.mine && !post.visible ? ' · ' + ($store.lang.current === 'en' ? 'Pending review — only visible to you' : 'Hinihintay ang pag-apruba — ikaw lang ang nakakakita nito') : '')"></p>
                                 </div>
 
                                 <!-- Post options -->
                                 <div class="relative shrink-0" x-show="post.kind === 'community' && !post.mine" x-data="{ menuOpen: false }" @click.outside="menuOpen = false; reportOpenFor === post.id && (reportOpenFor = null)">
                                     <button
                                         type="button" @click="menuOpen = !menuOpen"
-                                        class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                                        class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                                     ><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
                                     <div
                                         x-show="menuOpen"
@@ -240,7 +240,7 @@
                                                 <label class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Reason</label>
                                                 <textarea aria-label="Reason for report" x-model="reportReason[post.id]" rows="2" placeholder="Bakit mo ini-report ang post na ito?" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                                                 <div class="flex items-center justify-end gap-2 mt-1.5">
-                                                    <button type="button" @click="reportOpenFor = null; menuOpen = false" class="text-[11px] text-slate-400 hover:text-slate-600">Cancel</button>
+                                                    <button type="button" @click="reportOpenFor = null; menuOpen = false" class="text-[11px] text-slate-500 hover:text-slate-600">Cancel</button>
                                                     <button type="button" :disabled="!((reportReason[post.id]||'').trim()) || reportSubmitting[post.id]" @click="submitReport(post); menuOpen = false" class="text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg px-2.5 py-1">Submit</button>
                                                 </div>
                                             </div>
@@ -258,7 +258,7 @@
                             </div>
 
                             <!-- Stats -->
-                            <div class="flex items-center justify-between px-3.5 pt-2.5 text-[11px] text-slate-400" x-show="post.likes > 0 || post.comments_count > 0">
+                            <div class="flex items-center justify-between px-3.5 pt-2.5 text-[11px] text-slate-500" x-show="post.likes > 0 || post.comments_count > 0">
                                 <span class="flex items-center gap-1" x-show="post.likes > 0">
                                     <span class="w-3.5 h-3.5 rounded-full bg-rose-500 flex items-center justify-center"><i data-lucide="heart" class="w-2 h-2 text-white" style="fill: white;"></i></span>
                                     <span x-text="post.likes"></span>
@@ -286,7 +286,7 @@
                             <!-- Comments -->
                             <div x-show="post.showComments" x-cloak x-transition class="bg-slate-50/70 border-t border-slate-100 px-3.5 py-3 space-y-3">
                                 <template x-if="post.comments === null">
-                                    <p class="text-[11px] text-slate-400 text-center py-2">Loading…</p>
+                                    <p class="text-[11px] text-slate-500 text-center py-2">Loading…</p>
                                 </template>
                                 <template x-for="c in (post.comments || [])" :key="c.id">
                                     <div class="flex items-start gap-2.5">
@@ -305,7 +305,7 @@
                                     </div>
                                 </template>
                                 <template x-if="post.comments !== null && post.comments.length === 0">
-                                    <p class="text-[11px] text-slate-400 text-center py-2"><x-ui.t fil="Wala pang komento." en="No comments yet." /></p>
+                                    <p class="text-[11px] text-slate-500 text-center py-2"><x-ui.t fil="Wala pang komento." en="No comments yet." /></p>
                                 </template>
 
                                 <div class="flex items-center gap-2.5">
@@ -328,7 +328,7 @@
                         </div>
                     </template>
                     <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="filteredPostCount === 0">
-                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4"><i data-lucide="megaphone-off" class="w-7 h-7"></i></span>
+                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="megaphone-off" class="w-7 h-7"></i></span>
                         <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Wala pang balita sa kategoryang ito." en="No Balita posts in this category yet." /></p>
                     </div>
                 </div>
@@ -338,7 +338,7 @@
             <div class="hidden lg:block sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin space-y-4 pr-1">
                 <x-ui.card padded="false" class="p-3.5">
                     <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
-                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i><x-ui.t fil="Kamakailang Post" en="Recent Posts" />
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-500"></i><x-ui.t fil="Kamakailang Post" en="Recent Posts" />
                     </p>
                     <div class="space-y-2.5">
                         <template x-for="rp in recentPosts" :key="'recent-' + rp.kind + rp.id">
@@ -347,7 +347,7 @@
                                 <div x-show="!rp.official" class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(rp.author)"></div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-navy-900 truncate" x-text="rp.author"></p>
-                                    <p class="text-[11px] text-slate-400 leading-snug" x-text="rp.body.length > 62 ? rp.body.slice(0, 62) + '…' : rp.body"></p>
+                                    <p class="text-[11px] text-slate-500 leading-snug" x-text="rp.body.length > 62 ? rp.body.slice(0, 62) + '…' : rp.body"></p>
                                 </div>
                             </div>
                         </template>
@@ -365,7 +365,7 @@
                                 <div x-show="!tp.official" class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(tp.author)"></div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-medium text-navy-900 truncate" x-text="tp.author"></p>
-                                    <p class="text-[11px] text-slate-400 leading-snug" x-text="tp.body.length > 50 ? tp.body.slice(0, 50) + '…' : tp.body"></p>
+                                    <p class="text-[11px] text-slate-500 leading-snug" x-text="tp.body.length > 50 ? tp.body.slice(0, 50) + '…' : tp.body"></p>
                                     <p class="text-[10px] text-rose-500 font-medium mt-0.5 flex items-center gap-1"><i data-lucide="heart" class="w-2.5 h-2.5" style="fill: currentColor"></i><span x-text="tp.likes + ' likes'"></span></p>
                                 </div>
                             </div>
@@ -375,7 +375,7 @@
 
                 <x-ui.card padded="false" class="p-3.5">
                     <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
-                        <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-slate-400"></i><x-ui.t fil="Paparating na Kaganapan" en="Upcoming Events" />
+                        <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-slate-500"></i><x-ui.t fil="Paparating na Kaganapan" en="Upcoming Events" />
                     </p>
                     <div class="space-y-2.5">
                         <template x-for="ev in events" :key="ev.key">
@@ -386,11 +386,11 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-navy-900 truncate" x-text="ev.title || ev.name"></p>
-                                    <p class="text-[11px] text-slate-400 truncate" x-text="ev.venue"></p>
+                                    <p class="text-[11px] text-slate-500 truncate" x-text="ev.venue"></p>
                                 </div>
                             </div>
                         </template>
-                        <p class="text-[11px] text-slate-400" x-show="!events.length">No upcoming events.</p>
+                        <p class="text-[11px] text-slate-500" x-show="!events.length">No upcoming events.</p>
                     </div>
                     <a href="{{ route('citizen.events') }}" class="block text-center text-[11px] font-medium text-brand-600 hover:underline mt-2.5 pt-2.5 border-t border-slate-100">
                         <x-ui.t fil="Tingnan Lahat" en="View All" />

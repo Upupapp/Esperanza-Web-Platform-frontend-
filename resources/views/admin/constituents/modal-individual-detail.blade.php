@@ -142,37 +142,37 @@
                     <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Personal Information</h3>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="user" class="w-3 h-3"></i>Full Name</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="user" class="w-3 h-3"></i>Full Name</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.name || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="calendar-days" class="w-3 h-3"></i>Date of Birth</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="calendar-days" class="w-3 h-3"></i>Date of Birth</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.dob || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="venus-and-mars" class="w-3 h-3"></i>Sex</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="venus-and-mars" class="w-3 h-3"></i>Sex</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.sex || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="heart-handshake" class="w-3 h-3"></i>Civil Status</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="heart-handshake" class="w-3 h-3"></i>Civil Status</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.civil_status || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="phone" class="w-3 h-3"></i>Contact Number</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="phone" class="w-3 h-3"></i>Contact Number</dt>
                             <dd class="text-sm font-semibold text-navy-900">
                                 <a :href="'tel:' + selectedIndividual?.contact" class="text-brand-600 hover:underline" x-text="selectedIndividual?.contact || '—'"></a>
                             </dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="briefcase" class="w-3 h-3"></i>Occupation</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="briefcase" class="w-3 h-3"></i>Occupation</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.occupation || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="graduation-cap" class="w-3 h-3"></i>Highest Education</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="graduation-cap" class="w-3 h-3"></i>Highest Education</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.education || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="wallet" class="w-3 h-3"></i>Income Range</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="wallet" class="w-3 h-3"></i>Income Range</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.income_range || '—'"></dd>
                         </div>
                     </dl>
@@ -193,23 +193,23 @@
                     </div>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="map-pin" class="w-3 h-3"></i>Barangay</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="map-pin" class="w-3 h-3"></i>Barangay</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="'Brgy. ' + (selectedIndividual?.barangay || '—')"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="signpost" class="w-3 h-3"></i>Sitio / Purok</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="signpost" class="w-3 h-3"></i>Sitio / Purok</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.sitio || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="hash" class="w-3 h-3"></i>Household</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="hash" class="w-3 h-3"></i>Household</dt>
                             <dd class="text-sm font-mono font-semibold text-navy-900" x-text="selectedIndividual?.household?.ref || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="hash" class="w-3 h-3"></i>Family</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="hash" class="w-3 h-3"></i>Family</dt>
                             <dd class="text-sm font-mono font-semibold text-navy-900" x-text="selectedIndividual?.family?.ref || '—'"></dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-1 text-xs text-slate-400 uppercase tracking-wide mb-0.5"><i data-lucide="users" class="w-3 h-3"></i>Relation in Household</dt>
+                            <dt class="flex items-center gap-1 text-xs text-slate-500 uppercase tracking-wide mb-0.5"><i data-lucide="users" class="w-3 h-3"></i>Relation in Household</dt>
                             <dd class="text-sm font-semibold text-navy-900" x-text="selectedIndividual?.relation || '—'"></dd>
                         </div>
                     </dl>

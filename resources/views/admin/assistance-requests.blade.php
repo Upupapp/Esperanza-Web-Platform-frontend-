@@ -654,7 +654,7 @@
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                     <input aria-label="Search reference or citizen" type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
                 <select aria-label="Category filter" x-model="categoryFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
@@ -686,7 +686,7 @@
                         >{{ $label }}</button>
                     @endforeach
                 </div>
-                <p class="text-[11px] text-slate-400 shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' cases'"></p>
+                <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' cases'"></p>
             </div>
 
             <div
@@ -721,21 +721,21 @@
                     <option value="">Anyone / Unassigned</option>
                     <option value="unassigned">Unassigned only</option>
                 </select>
-                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-400 hover:text-slate-600 transition-colors" x-show="statusFilter || officeFilter || levelFilter || assignedFilter || barangayFilter">Clear</button>
+                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-500 hover:text-slate-600 transition-colors" x-show="statusFilter || officeFilter || levelFilter || assignedFilter || barangayFilter">Clear</button>
             </div>
         </div>
 
         <x-ui.table>
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Reference</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Citizen</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Assistance Type</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Office</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Barangay</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden 2xl:table-cell">Assigned</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 hidden xl:table-cell">Submitted</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden xl:table-cell">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Citizen</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Assistance Type</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Office</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Barangay</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Assigned</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden xl:table-cell">Submitted</th>
+                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
                     <th class="px-4 py-2.5"></th>
                 </tr>
             </thead>
@@ -755,7 +755,7 @@
                         </td>
                         <td class="px-4 py-3">
                             <p class="text-slate-700" x-text="r.type"></p>
-                            <p class="text-[11px] text-slate-400 mt-0.5" x-text="r.category"></p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" x-text="r.category"></p>
                         </td>
                         <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell">
                             <span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap" x-text="r.office"></span>
@@ -809,14 +809,14 @@
                          under whichever step they branch from (Initial
                          Screening / For Approval), per Milestone 3. --}}
                     <div class="sm:w-44 shrink-0">
-                        <p class="text-xs text-slate-400 mb-3 font-mono" x-text="selected.ref"></p>
+                        <p class="text-xs text-slate-500 mb-3 font-mono" x-text="selected.ref"></p>
                         <div class="flex flex-col">
                             @foreach(['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'] as $i => $step)
                                 <div class="flex items-start gap-3">
                                     <div class="flex flex-col items-center shrink-0">
                                         <span
                                             class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold transition-all duration-[600ms] ease-standard shrink-0"
-                                            :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-500 text-white shadow-sm' : (stepIndex(selected.status) === {{ $i }} ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-slate-400')"
+                                            :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-500 text-white shadow-sm' : (stepIndex(selected.status) === {{ $i }} ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-slate-500')"
                                         >
                                             <i data-lucide="check" class="w-3.5 h-3.5" x-show="stepIndex(selected.status) > {{ $i }}" x-cloak></i>
                                             <span x-show="stepIndex(selected.status) <= {{ $i }}">{{ $i + 1 }}</span>
@@ -826,7 +826,7 @@
                                         @endif
                                     </div>
                                     <div class="pt-1.5 pb-2 min-w-0">
-                                        <span class="block text-[11px] leading-tight transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) === {{ $i }} ? 'text-navy-900 font-semibold' : 'text-slate-400'">{{ $step }}</span>
+                                        <span class="block text-[11px] leading-tight transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) === {{ $i }} ? 'text-navy-900 font-semibold' : 'text-slate-500'">{{ $step }}</span>
                                         @if($step === 'Initial Screening')
                                             <span x-show="selected.status === 'Needs Requirements'" x-cloak class="inline-block mt-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">Needs Requirements</span>
                                         @endif
@@ -852,35 +852,35 @@
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Citizen</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Citizen</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.citizen"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="hand-heart" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Assistance Type</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Assistance Type</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.type"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Handling Office</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Handling Office</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.office"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Barangay</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Barangay</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="'Brgy. ' + selected.barangay"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="folder" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Category</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Category</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.category"></p>
                                 </div>
                             </div>
@@ -890,21 +890,21 @@
                                     :class="{ 'bg-brand-50 text-brand-600 border-brand-100': selected.level === 'Municipal', 'bg-purple-50 text-purple-600 border-purple-100': selected.level === 'Multi-Office' }"
                                 ><i data-lucide="route" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Processing Level</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Processing Level</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.level"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user-check" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Assigned Social Worker</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Assigned Social Worker</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.assigned || 'Unassigned'"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="calendar" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-wide">Submitted</p>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Submitted</p>
                                     <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.submitted"></p>
                                 </div>
                             </div>
@@ -915,7 +915,7 @@
                         class="flex items-center justify-between gap-2 mt-3"
                         x-show="!selected.assigned && (!$store.session.account || ['department_head', 'municipal_admin', 'super_admin'].includes($store.session.account?.roleKey))"
                     >
-                        <p class="text-xs text-slate-400">This case hasn't been routed to a processor yet.</p>
+                        <p class="text-xs text-slate-500">This case hasn't been routed to a processor yet.</p>
                         <x-ui.button
                             variant="secondary" size="sm" icon="user-plus"
                             @click="selected.assigned = $store.session.account?.name || 'You'; $dispatch('toast', { message: 'Assigned to yourself.', variant: 'success' })"
@@ -927,7 +927,7 @@
                     <div class="mt-4" x-show="(selected.requirements || []).length">
                         <div class="flex items-center justify-between mb-2">
                             <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Submitted Documents</p>
-                            <p class="text-[11px] text-slate-400" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
+                            <p class="text-[11px] text-slate-500" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
                         </div>
                         <div class="space-y-2">
                             <template x-for="req in (selected.requirements || [])" :key="req.key">
@@ -949,7 +949,7 @@
                                                         :title="'Evidence Strength: Level ' + evidenceTier(req.name)"
                                                     >L<span x-text="evidenceTier(req.name)"></span></span>
                                                 </div>
-                                                <p class="text-[11px] text-slate-400 truncate" x-text="req.file || 'Not yet submitted'"></p>
+                                                <p class="text-[11px] text-slate-500 truncate" x-text="req.file || 'Not yet submitted'"></p>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
@@ -975,12 +975,12 @@
                                         <p class="font-semibold" x-show="req.reject_reason" :class="req.status === 'Rejected' ? 'text-rose-700' : 'text-amber-700'" x-text="req.reject_reason"></p>
                                         <p class="mt-0.5" :class="req.status === 'Rejected' ? 'text-rose-600' : 'text-amber-600'" x-show="req.remarks" x-text="req.remarks"></p>
                                         <p class="font-medium text-sky-700 flex items-center gap-1" x-show="req.status === 'Resubmitted'"><i data-lucide="refresh-ccw" class="w-3 h-3"></i> Citizen replaced this file — compare with the flagged version below.</p>
-                                        <button type="button" x-show="(req.versions || []).length" @click="req._showVersions = !req._showVersions" class="mt-1.5 text-slate-400 hover:text-slate-600 transition-colors">
+                                        <button type="button" x-show="(req.versions || []).length" @click="req._showVersions = !req._showVersions" class="mt-1.5 text-slate-500 hover:text-slate-600 transition-colors">
                                             <span x-text="(req._showVersions ? 'Hide' : 'Show') + ' version history (' + req.versions.length + ')'"></span>
                                         </button>
                                         <div x-show="req._showVersions" x-cloak class="mt-1.5 space-y-1 pl-2 border-l-2 border-slate-100">
                                             <template x-for="(v, vi) in (req.versions || [])" :key="vi">
-                                                <p class="text-slate-400">Version <span x-text="vi + 1"></span> — <span x-text="v.status"></span> · <span x-text="v.date"></span><span x-show="v.reject_reason"> · <span x-text="v.reject_reason"></span></span></p>
+                                                <p class="text-slate-500">Version <span x-text="vi + 1"></span> — <span x-text="v.status"></span> · <span x-text="v.date"></span><span x-show="v.reject_reason"> · <span x-text="v.reject_reason"></span></span></p>
                                             </template>
                                         </div>
                                     </div>
@@ -1011,7 +1011,7 @@
                                                 class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none rounded-lg px-2.5 py-1.5 transition-colors"
                                                 :class="req._decidingOutcome === 'Rejected' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-500 hover:bg-amber-600'"
                                             >Confirm</button>
-                                            <button type="button" @click="req._decidingOutcome = null" class="text-[11px] font-medium text-slate-400 hover:text-slate-600">Cancel</button>
+                                            <button type="button" @click="req._decidingOutcome = null" class="text-[11px] font-medium text-slate-500 hover:text-slate-600">Cancel</button>
                                         </div>
                                     </div>
                                 </div>
@@ -1063,7 +1063,7 @@
                             <template x-for="(h, hi) in (selected.history || []).slice().reverse()" :key="hi">
                                 <li class="text-xs border-l-2 border-slate-200 pl-2.5">
                                     <p class="font-medium text-navy-900" x-text="h.stage + (h.note ? ' — ' + h.note : '')"></p>
-                                    <p class="text-[11px] text-slate-400" x-text="h.date + (h.by ? ' · ' + h.by : '')"></p>
+                                    <p class="text-[11px] text-slate-500" x-text="h.date + (h.by ? ' · ' + h.by : '')"></p>
                                 </li>
                             </template>
                         </ul>
@@ -1073,8 +1073,8 @@
 
 
                     <div class="mt-3" x-show="canReject">
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Rejection Reason <span class="text-slate-400 font-normal">(required for Reject — this is what the citizen will see)</span></label>
-                        <p class="text-[11px] text-slate-400 mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Rejection Reason <span class="text-slate-500 font-normal">(required for Reject — this is what the citizen will see)</span></label>
+                        <p class="text-[11px] text-slate-500 mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
                         <div class="flex items-center gap-2 mb-1.5">
                             <select
                                 @change="insertStandardReason($event.target.value); $event.target.value = ''"
@@ -1154,7 +1154,7 @@
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
                                 <i data-lucide="camera" class="w-3.5 h-3.5"></i> Proof of Release
                             </p>
-                            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed" x-show="!selected.release_evidence">Photo evidence that the citizen actually received this assistance — required before confirming release.</p>
+                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!selected.release_evidence">Photo evidence that the citizen actually received this assistance — required before confirming release.</p>
 
                             <template x-if="selected.release_evidence">
                                 <div class="mt-2.5">
@@ -1163,7 +1163,7 @@
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <span class="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3 h-3"></i> Captured <span x-text="selected.release_evidence_at"></span></span>
-                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-400 hover:text-rose-500" x-show="selected.status === 'Mark to Release'">Retake</button>
+                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-500 hover:text-rose-500" x-show="selected.status === 'Mark to Release'">Retake</button>
                                     </div>
                                 </div>
                             </template>
@@ -1198,7 +1198,7 @@
                                     </a>
                                 </div>
                             </template>
-                            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this service.</p>
+                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this service.</p>
                         </div>
                     </div>
                 </div>
@@ -1234,7 +1234,7 @@
                             :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'"
                         ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-3.5 h-3.5"></i></span>
                         <h3 class="text-sm font-semibold text-navy-900 truncate flex-1" x-text="previewDoc?.name"></h3>
-                        <button type="button" @click="previewDoc = null" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors shrink-0" title="Close">
+                        <button type="button" @click="previewDoc = null" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-600 transition-colors shrink-0" title="Close">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -1257,15 +1257,15 @@
                         </div>
                         <dl class="space-y-2 text-xs">
                             <div class="flex items-center justify-between gap-3">
-                                <dt class="text-slate-400 shrink-0">Requirement</dt>
+                                <dt class="text-slate-500 shrink-0">Requirement</dt>
                                 <dd class="font-medium text-navy-900 text-right truncate" x-text="previewDoc?.name"></dd>
                             </div>
                             <div class="flex items-center justify-between gap-3">
-                                <dt class="text-slate-400 shrink-0">Status</dt>
+                                <dt class="text-slate-500 shrink-0">Status</dt>
                                 <dd class="font-medium text-navy-900" x-text="previewDoc?.status === 'Approved' ? 'Verified' : previewDoc?.status"></dd>
                             </div>
                             <div class="flex items-start justify-between gap-3" x-show="previewDoc?.remarks">
-                                <dt class="text-slate-400 shrink-0">Remarks</dt>
+                                <dt class="text-slate-500 shrink-0">Remarks</dt>
                                 <dd class="font-medium text-right text-slate-600" x-text="previewDoc?.remarks"></dd>
                             </div>
                         </dl>
@@ -1274,7 +1274,7 @@
             </div>
 
             <x-slot:footer>
-                <p class="text-xs text-slate-400 flex-1 flex items-center gap-1.5" x-show="selected && terminalStatuses.includes(selected.status)" x-cloak>
+                <p class="text-xs text-slate-500 flex-1 flex items-center gap-1.5" x-show="selected && terminalStatuses.includes(selected.status)" x-cloak>
                     <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>This case is finalized — no further status changes.
                 </p>
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">

@@ -57,7 +57,7 @@
                     <h2 class="text-lg font-bold text-navy-900">Register New Household</h2>
                     <p class="text-sm text-slate-500 mt-0.5">Municipality of Esperanza, Masbate</p>
                 </div>
-                <button @click="showAddHousehold = false; addHouseholdStep = 1" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                <button @click="showAddHousehold = false; addHouseholdStep = 1" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -77,7 +77,7 @@
                                     ? 'bg-emerald-500 text-white'
                                     : addHouseholdStep === step.n
                                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                                        : 'bg-slate-100 text-slate-400'"
+                                        : 'bg-slate-100 text-slate-500'"
                             >
                                 <template x-if="addHouseholdStep > step.n">
                                     <i data-lucide="check" class="w-3.5 h-3.5"></i>
@@ -88,7 +88,7 @@
                             </div>
                             <span
                                 class="text-xs font-medium hidden sm:block transition-colors"
-                                :class="addHouseholdStep === step.n ? 'text-indigo-600' : addHouseholdStep > step.n ? 'text-emerald-600' : 'text-slate-400'"
+                                :class="addHouseholdStep === step.n ? 'text-indigo-600' : addHouseholdStep > step.n ? 'text-emerald-600' : 'text-slate-500'"
                                 x-text="step.label"
                             ></span>
                         </div>
@@ -161,14 +161,14 @@
                         placeholder="Full name of household head"
                         class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-navy-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     />
-                    <p class="text-xs text-slate-400 mt-1.5">This person will be listed as the primary occupant of this household. If they aren't already a resident on file, a new resident record is created for them.</p>
+                    <p class="text-xs text-slate-500 mt-1.5">This person will be listed as the primary occupant of this household. If they aren't already a resident on file, a new resident record is created for them.</p>
                 </div>
             </div>
 
             {{-- ── STEP 2: Dwelling & Risk ── --}}
             <div x-show="addHouseholdStep === 2" x-cloak class="space-y-5">
                 <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex items-start gap-2">
-                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0"></i>
+                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-500 mt-0.5 flex-shrink-0"></i>
                     Describe the dwelling type, ownership, and disaster risk classification.
                 </p>
 
@@ -191,10 +191,10 @@
                                     : 'border-slate-200 bg-white hover:border-slate-300'"
                             >
                                 <input type="radio" x-model="form.dwelling_type" :value="dt.val" class="sr-only" />
-                                <i :data-lucide="dt.icon" class="w-4 h-4 flex-shrink-0" :class="form.dwelling_type === dt.val ? 'text-indigo-600' : 'text-slate-400'"></i>
+                                <i :data-lucide="dt.icon" class="w-4 h-4 flex-shrink-0" :class="form.dwelling_type === dt.val ? 'text-indigo-600' : 'text-slate-500'"></i>
                                 <div class="min-w-0">
                                     <p class="text-xs font-semibold" :class="form.dwelling_type === dt.val ? 'text-indigo-700' : 'text-slate-700'" x-text="dt.val"></p>
-                                    <p class="text-xs text-slate-400" x-text="dt.desc"></p>
+                                    <p class="text-xs text-slate-500" x-text="dt.desc"></p>
                                 </div>
                                 <template x-if="form.dwelling_type === dt.val">
                                     <div class="absolute top-2 right-2 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center">
@@ -224,7 +224,7 @@
                                     : 'border-slate-200 bg-white hover:border-slate-300'"
                             >
                                 <input type="radio" x-model="form.housing_tenure" :value="ht.val" class="sr-only" />
-                                <i :data-lucide="ht.icon" class="w-5 h-5" :class="form.housing_tenure === ht.val ? 'text-indigo-600' : 'text-slate-400'"></i>
+                                <i :data-lucide="ht.icon" class="w-5 h-5" :class="form.housing_tenure === ht.val ? 'text-indigo-600' : 'text-slate-500'"></i>
                                 <span class="text-xs font-semibold" :class="form.housing_tenure === ht.val ? 'text-indigo-700' : 'text-slate-600'" x-text="ht.val"></span>
                                 <template x-if="form.housing_tenure === ht.val">
                                     <div class="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-indigo-600 rounded-full flex items-center justify-center">
@@ -252,7 +252,7 @@
                                 :class="form.flood_risk === fr.val ? fr.activeCls : 'border-slate-200 bg-white hover:border-slate-300'"
                             >
                                 <input type="radio" x-model="form.flood_risk" :value="fr.val" class="sr-only" />
-                                <i data-lucide="waves-horizontal" class="w-5 h-5" :class="form.flood_risk === fr.val ? fr.iconCls : 'text-slate-400'"></i>
+                                <i data-lucide="waves-horizontal" class="w-5 h-5" :class="form.flood_risk === fr.val ? fr.iconCls : 'text-slate-500'"></i>
                                 <span class="text-xs font-semibold" :class="form.flood_risk === fr.val ? fr.textCls : 'text-slate-600'" x-text="fr.val"></span>
                                 <template x-if="form.flood_risk === fr.val">
                                     <div class="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" :class="fr.dotCls">
@@ -268,7 +268,7 @@
             {{-- ── STEP 3: Amenities ── --}}
             <div x-show="addHouseholdStep === 3" x-cloak class="space-y-5">
                 <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 flex items-start gap-2">
-                    <i data-lucide="plug-zap" class="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0"></i>
+                    <i data-lucide="plug-zap" class="w-3.5 h-3.5 text-slate-500 mt-0.5 flex-shrink-0"></i>
                     Indicate available basic amenities.
                 </p>
 
@@ -283,7 +283,7 @@
                         >
                             <input type="checkbox" x-model="form.electricity" class="sr-only" />
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="form.electricity ? 'bg-amber-100' : 'bg-slate-100'">
-                                <i data-lucide="zap" class="w-5 h-5" :class="form.electricity ? 'text-amber-500' : 'text-slate-400'"></i>
+                                <i data-lucide="zap" class="w-5 h-5" :class="form.electricity ? 'text-amber-500' : 'text-slate-500'"></i>
                             </div>
                             <span class="text-xs font-semibold" :class="form.electricity ? 'text-amber-700' : 'text-slate-600'">Has Electricity</span>
                             <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
@@ -299,7 +299,7 @@
                         >
                             <input type="checkbox" x-model="form.water" class="sr-only" />
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="form.water ? 'bg-blue-100' : 'bg-slate-100'">
-                                <i data-lucide="droplets" class="w-5 h-5" :class="form.water ? 'text-blue-500' : 'text-slate-400'"></i>
+                                <i data-lucide="droplets" class="w-5 h-5" :class="form.water ? 'text-blue-500' : 'text-slate-500'"></i>
                             </div>
                             <span class="text-xs font-semibold" :class="form.water ? 'text-blue-700' : 'text-slate-600'">Has Water Source</span>
                             <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
@@ -315,7 +315,7 @@
                         >
                             <input type="checkbox" x-model="form.toilet" class="sr-only" />
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="form.toilet ? 'bg-emerald-100' : 'bg-slate-100'">
-                                <i data-lucide="toilet" class="w-5 h-5" :class="form.toilet ? 'text-emerald-500' : 'text-slate-400'"></i>
+                                <i data-lucide="toilet" class="w-5 h-5" :class="form.toilet ? 'text-emerald-500' : 'text-slate-500'"></i>
                             </div>
                             <span class="text-xs font-semibold" :class="form.toilet ? 'text-emerald-700' : 'text-slate-600'">Has Toilet Facility</span>
                             <div class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
@@ -330,11 +330,11 @@
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">Household Summary</h4>
                     <dl class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                        <div><dt class="text-slate-400">Barangay</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.barangay || '—'"></dd></div>
-                        <div><dt class="text-slate-400">Head</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.head_name || '—'"></dd></div>
-                        <div><dt class="text-slate-400">Dwelling</dt><dd class="font-semibold text-navy-900" x-text="form.dwelling_type || '—'"></dd></div>
-                        <div><dt class="text-slate-400">Flood Risk</dt><dd class="font-semibold text-navy-900" x-text="form.flood_risk || '—'"></dd></div>
-                        <div class="col-span-2"><dt class="text-slate-400">Amenities</dt>
+                        <div><dt class="text-slate-500">Barangay</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.barangay || '—'"></dd></div>
+                        <div><dt class="text-slate-500">Head</dt><dd class="font-semibold text-navy-900 truncate" x-text="form.head_name || '—'"></dd></div>
+                        <div><dt class="text-slate-500">Dwelling</dt><dd class="font-semibold text-navy-900" x-text="form.dwelling_type || '—'"></dd></div>
+                        <div><dt class="text-slate-500">Flood Risk</dt><dd class="font-semibold text-navy-900" x-text="form.flood_risk || '—'"></dd></div>
+                        <div class="col-span-2"><dt class="text-slate-500">Amenities</dt>
                             <dd class="font-semibold text-navy-900">
                                 <span x-text="[form.electricity ? 'Elec' : null, form.water ? 'Water' : null, form.toilet ? 'Toilet' : null].filter(Boolean).join(', ') || 'None'"></span>
                             </dd>
@@ -357,7 +357,7 @@
             </button>
 
             {{-- Step counter --}}
-            <span class="text-xs text-slate-400 font-medium hidden sm:block">
+            <span class="text-xs text-slate-500 font-medium hidden sm:block">
                 Step <span x-text="addHouseholdStep"></span> of 3
             </span>
 

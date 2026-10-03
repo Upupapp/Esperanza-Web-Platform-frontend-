@@ -12,19 +12,19 @@
         <div class="min-w-0">
             <h1 class="text-base lg:text-lg font-semibold text-navy-900 truncate">{{ $title }}</h1>
             @if($subtitle)
-                <p class="text-xs text-slate-400 truncate">{{ $subtitle }}</p>
+                <p class="text-xs text-slate-500 truncate">{{ $subtitle }}</p>
             @endif
         </div>
     </div>
 
     <div class="flex items-center gap-1.5 lg:gap-2.5">
-        <div class="hidden xl:flex items-center gap-1.5 font-mono text-xs text-slate-400 tabular-nums px-2.5 py-1.5 rounded-xl bg-slate-100/70">
+        <div class="hidden xl:flex items-center gap-1.5 font-mono text-xs text-slate-500 tabular-nums px-2.5 py-1.5 rounded-xl bg-slate-100/70">
             <i data-lucide="clock" class="w-3.5 h-3.5"></i>
             <span x-text="time"></span>
         </div>
 
         <div class="hidden md:flex items-center relative">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"></i>
+            <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none"></i>
             <input aria-label="Search residents, requests, barangays"
                 type="text"
                 placeholder="Search residents, requests, barangays..."
@@ -66,13 +66,13 @@
                             </span>
                             <span class="min-w-0">
                                 <span class="block text-sm font-medium text-slate-700 truncate" x-text="n.title"></span>
-                                <span class="block text-xs text-slate-400 mt-0.5 line-clamp-2" x-text="n.body"></span>
+                                <span class="block text-xs text-slate-500 mt-0.5 line-clamp-2" x-text="n.body"></span>
                                 <span class="block text-[11px] text-slate-300 mt-1" x-text="n.createdAt ? (new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(n.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })) : ''"></span>
                             </span>
                         </a>
                     </template>
-                    <p class="px-4 py-8 text-center text-sm text-slate-400" x-show="$store.adminNotifications.loading">Loading…</p>
-                    <p class="px-4 py-8 text-center text-sm text-slate-400" x-show="!$store.adminNotifications.loading && !$store.adminNotifications.visible.length">No notifications yet.</p>
+                    <p class="px-4 py-8 text-center text-sm text-slate-500" x-show="$store.adminNotifications.loading">Loading…</p>
+                    <p class="px-4 py-8 text-center text-sm text-slate-500" x-show="!$store.adminNotifications.loading && !$store.adminNotifications.visible.length">No notifications yet.</p>
                 </div>
                 <button type="button" @click="$store.adminNotifications.markAllRead()" x-show="$store.adminNotifications.unreadCount" class="block w-full text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
                     Mark all as read
@@ -87,9 +87,9 @@
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-xs" x-text="$store.session.initials()"></div>
                 <span class="hidden lg:block text-left max-w-[120px]">
                     <span class="block text-sm font-medium text-navy-900 leading-tight truncate" x-text="$store.session.account?.name ?? 'Guest Preview'"></span>
-                    <span class="block text-xs text-slate-400 leading-tight truncate" x-text="$store.session.account?.role ?? 'Not signed in'"></span>
+                    <span class="block text-xs text-slate-500 leading-tight truncate" x-text="$store.session.account?.role ?? 'Not signed in'"></span>
                 </span>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 hidden lg:block transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 hidden lg:block transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
             </button>
 
             <div
@@ -102,7 +102,7 @@
             >
                 <div class="px-4 py-3 border-b border-slate-100">
                     <p class="text-sm font-semibold text-navy-900" x-text="$store.session.account?.name ?? 'Guest Preview'"></p>
-                    <p class="text-xs text-slate-400 font-mono" x-text="$store.session.account?.id ?? 'No account selected'"></p>
+                    <p class="text-xs text-slate-500 font-mono" x-text="$store.session.account?.id ?? 'No account selected'"></p>
                     <span
                         x-show="$store.session.account"
                         x-cloak
@@ -114,10 +114,10 @@
                     </span>
                 </div>
                 <a href="#" @click.prevent="$dispatch('toast', { message: 'Personnel profile page is a frontend preview.', variant: 'info' })" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>My Profile
+                    <i data-lucide="user" class="w-4 h-4 text-slate-500"></i>My Profile
                 </a>
                 <a href="{{ route('admin.settings') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>Settings
+                    <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>Settings
                 </a>
                 <div class="border-t border-slate-100 my-1.5"></div>
                 <a href="{{ route('logout') }}" @click="$store.session.logout()" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors">

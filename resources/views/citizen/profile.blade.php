@@ -144,47 +144,47 @@
             <!-- Personal information -->
             <div class="lg:col-span-2 space-y-5">
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Personal na Impormasyon" en="Personal Information" /></h3>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-4 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Personal na Impormasyon" en="Personal Information" /></h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="signature" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Buong Pangalan" en="Full Name" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Buong Pangalan" en="Full Name" /></p>
                                 <p class="text-sm text-slate-700 font-medium truncate" x-text="$store.citizenSession.account?.fullName || '—'"></p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="cake" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Petsa ng Kapanganakan" en="Date of Birth" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Petsa ng Kapanganakan" en="Date of Birth" /></p>
                                 <p class="text-sm text-slate-700 font-medium truncate" x-text="$store.citizenSession.account?.birthdate || '—'"></p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="venus-and-mars" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Kasarian" en="Sex" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Kasarian" en="Sex" /></p>
                                 <p class="text-sm text-slate-700 font-medium truncate" x-text="$store.citizenSession.account?.sex || '—'"></p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="heart" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Katayuang Sibil" en="Civil Status" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Katayuang Sibil" en="Civil Status" /></p>
                                 <p class="text-sm text-slate-700 font-medium truncate" x-text="$store.citizenSession.account?.civilStatus || '—'"></p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="flag" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Nasyonalidad" en="Nationality" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Nasyonalidad" en="Nationality" /></p>
                                 <p class="text-sm text-slate-700 font-medium"><x-ui.t fil="Pilipino" en="Filipino" /></p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="briefcase" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Trabaho" en="Occupation" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Trabaho" en="Occupation" /></p>
                                 <p class="text-sm text-slate-700 font-medium truncate" x-text="$store.citizenSession.account?.occupation || '—'"></p>
                             </div>
                         </div>
@@ -192,26 +192,26 @@
                 </x-ui.card>
 
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4 flex items-center gap-2"><i data-lucide="contact" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Contact at Address" en="Contact & Address" /></h3>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-4 flex items-center gap-2"><i data-lucide="contact" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Contact at Address" en="Contact & Address" /></h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="mail" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Email Address" en="Email Address" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Email Address" en="Email Address" /></p>
                                 <p class="text-sm text-slate-700 font-medium truncate" x-text="$store.citizenSession.account?.email || '—'"></p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3">
                             <i data-lucide="phone" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Numero ng Mobile" en="Mobile Number" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Numero ng Mobile" en="Mobile Number" /></p>
                                 <p class="text-sm text-slate-700 font-medium truncate" x-text="$store.citizenSession.account?.mobile || '—'"></p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50/70 p-3 sm:col-span-2">
                             <i data-lucide="map-pin" class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"></i>
                             <div class="min-w-0">
-                                <p class="text-[11px] text-slate-400"><x-ui.t fil="Kumpletong Address" en="Complete Address" /></p>
+                                <p class="text-[11px] text-slate-500"><x-ui.t fil="Kumpletong Address" en="Complete Address" /></p>
                                 <p class="text-sm text-slate-700 font-medium" x-text="$store.citizenSession.account?.address || '—'"></p>
                             </div>
                         </div>
@@ -256,17 +256,17 @@
                         <h3 class="text-sm font-semibold text-navy-900 truncate"><x-ui.t fil="Barangay" en="Barangay" /> <span x-text="$store.barangay.mine?.label"></span></h3>
                     </div>
                     <div class="space-y-1.5 text-xs border-t border-brand-100/70 pt-3">
-                        <div class="flex items-center justify-between gap-2"><span class="text-slate-400 shrink-0"><x-ui.t fil="Punong Barangay" en="Punong Barangay" /></span><span class="font-medium text-slate-700 text-right truncate" x-text="$store.barangay.mine?.officials?.punong_barangay"></span></div>
-                        <div class="flex items-center justify-between gap-2"><span class="text-slate-400 shrink-0"><x-ui.t fil="Kalihim" en="Secretary" /></span><span class="font-medium text-slate-700 text-right truncate" x-text="$store.barangay.mine?.officials?.barangay_secretary"></span></div>
-                        <div class="flex items-center justify-between gap-2" x-show="$store.barangay.mine?.contact"><span class="text-slate-400 shrink-0"><x-ui.t fil="Contact" en="Contact" /></span><a class="font-medium text-brand-600 hover:underline text-right truncate" :href="'tel:' + ($store.barangay.mine?.contact || '').replace(/[^0-9+]/g, '')" x-text="$store.barangay.mine?.contact"></a></div>
+                        <div class="flex items-center justify-between gap-2"><span class="text-slate-500 shrink-0"><x-ui.t fil="Punong Barangay" en="Punong Barangay" /></span><span class="font-medium text-slate-700 text-right truncate" x-text="$store.barangay.mine?.officials?.punong_barangay"></span></div>
+                        <div class="flex items-center justify-between gap-2"><span class="text-slate-500 shrink-0"><x-ui.t fil="Kalihim" en="Secretary" /></span><span class="font-medium text-slate-700 text-right truncate" x-text="$store.barangay.mine?.officials?.barangay_secretary"></span></div>
+                        <div class="flex items-center justify-between gap-2" x-show="$store.barangay.mine?.contact"><span class="text-slate-500 shrink-0"><x-ui.t fil="Contact" en="Contact" /></span><a class="font-medium text-brand-600 hover:underline text-right truncate" :href="'tel:' + ($store.barangay.mine?.contact || '').replace(/[^0-9+]/g, '')" x-text="$store.barangay.mine?.contact"></a></div>
                     </div>
                 </div>
 
                 <!-- Household -->
                 <x-ui.card padded="false">
                     <div class="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Kasapi ng Pamilya" en="Family Members" /></h3>
-                        <span class="text-[11px] font-medium text-slate-400" x-text="familyMembers.length"></span>
+                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Kasapi ng Pamilya" en="Family Members" /></h3>
+                        <span class="text-[11px] font-medium text-slate-500" x-text="familyMembers.length"></span>
                     </div>
                     <div class="divide-y divide-slate-50">
                         <template x-for="member in familyMembers" :key="member.ref">
@@ -274,12 +274,12 @@
                                 <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0" x-text="(member.name || '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('')"></div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-slate-700 truncate" x-text="member.name"></p>
-                                    <p class="text-xs text-slate-400" x-text="member.dob ? (new Date().getFullYear() - new Date(member.dob).getFullYear()) + ' ' + ($store.lang.current === 'en' ? 'y/o' : 'taong gulang') : ''"></p>
+                                    <p class="text-xs text-slate-500" x-text="member.dob ? (new Date().getFullYear() - new Date(member.dob).getFullYear()) + ' ' + ($store.lang.current === 'en' ? 'y/o' : 'taong gulang') : ''"></p>
                                 </div>
                                 <span class="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5 shrink-0" x-text="member.relation"></span>
                             </div>
                         </template>
-                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!residentProfileLoading && !familyMembers.length">
+                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!residentProfileLoading && !familyMembers.length">
                             <x-ui.t fil="Wala pang resident profile o pamilya sa file." en="No resident profile or family on file yet." />
                         </p>
                     </div>
@@ -288,7 +288,7 @@
                 <!-- Documents on file -->
                 <x-ui.card padded="false">
                     <div class="px-4 pt-3.5 pb-2.5">
-                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="folder-check" class="w-4 h-4 text-slate-400"></i><x-ui.t fil="Mga Dokumento sa File" en="Documents on File" /></h3>
+                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="folder-check" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Mga Dokumento sa File" en="Documents on File" /></h3>
                     </div>
                     <div class="divide-y divide-slate-50">
                         <template x-for="doc in documents" :key="doc.id">
@@ -300,7 +300,7 @@
                                 <x-ui.badge status-bind="doc.status" class="shrink-0" />
                             </div>
                         </template>
-                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!documentsLoading && !documents.length">
+                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!documentsLoading && !documents.length">
                             <x-ui.t fil="Wala pang dokumento sa file." en="No documents on file yet." />
                         </p>
                     </div>
@@ -322,7 +322,7 @@
                     <x-ui.t fil="Naisumite para sa Beripikasyon!" en="Submitted for Verification!" />
                     <span class="inline-block animate-check-pop" style="animation-delay: 0.3s;">🙂</span>
                 </p>
-                <p class="text-xs text-slate-400 mt-1 max-w-[240px]"><x-ui.t fil="Susuriin ng aming staff ang iyong ID at ia-update ang iyong profile sa lalong madaling panahon." en="Our staff will review your ID and update your profile shortly." /></p>
+                <p class="text-xs text-slate-500 mt-1 max-w-[240px]"><x-ui.t fil="Susuriin ng aming staff ang iyong ID at ia-update ang iyong profile sa lalong madaling panahon." en="Our staff will review your ID and update your profile shortly." /></p>
             </div>
 
             <div x-show="!submitted">
@@ -339,7 +339,7 @@
                 </div>
 
                 <p class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Ikabit ang Larawan ng ID" en="Attach ID Photo" /></p>
-                <p class="text-xs text-slate-400 mb-3"><x-ui.t fil="Malinaw na larawan o scan ng harap ng iyong ID." en="A clear photo or scan of the front of your ID." /></p>
+                <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Malinaw na larawan o scan ng harap ng iyong ID." en="A clear photo or scan of the front of your ID." /></p>
                 <div class="rounded-xl border border-slate-200 p-3">
                     <div class="flex items-center justify-between gap-3">
                         <p class="text-xs text-slate-600 flex-1" x-text="idFile ? idFile.name : ($store.lang.current === 'en' ? 'No file chosen' : 'Walang napiling file')"></p>
@@ -381,7 +381,7 @@
                     <x-ui.input name="edit_mobile" label="Mobile Number" icon="phone" x-model="editForm.mobile" />
                     <x-ui.input name="edit_occupation" label="Occupation" icon="briefcase" x-model="editForm.occupation" />
                     <x-ui.input name="edit_address" label="Complete Address" icon="house" x-model="editForm.address" />
-                    <p class="text-xs text-slate-400"><x-ui.t fil="Ang barangay at Resident ID ay hindi maaaring baguhin dito — makipag-ugnayan sa iyong Barangay Hall." en="Barangay and Resident ID can't be changed here — contact your Barangay Hall for those." /></p>
+                    <p class="text-xs text-slate-500"><x-ui.t fil="Ang barangay at Resident ID ay hindi maaaring baguhin dito — makipag-ugnayan sa iyong Barangay Hall." en="Barangay and Resident ID can't be changed here — contact your Barangay Hall for those." /></p>
                 </div>
 
                 <x-slot:footer>

@@ -111,7 +111,7 @@
         </div>
 
         <div class="flex items-center justify-between mb-4">
-            <p class="text-sm text-slate-400">Real-time overview of citizen services and municipal operations.</p>
+            <p class="text-sm text-slate-500">Real-time overview of citizen services and municipal operations.</p>
             <x-ui.button :href="route('admin.reports')" variant="secondary" size="sm" icon="download">Export Report</x-ui.button>
         </div>
 
@@ -165,7 +165,7 @@
                         <canvas x-ref="canvas"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="docStatusTotal.toLocaleString()"></span>
-                            <span class="text-[11px] text-slate-400">Total Requests</span>
+                            <span class="text-[11px] text-slate-500">Total Requests</span>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2.5">
@@ -178,7 +178,7 @@
                                 <span class="font-medium text-navy-900 tabular-nums" x-text="row.value.toLocaleString()"></span>
                             </div>
                         </template>
-                        <p class="text-xs text-slate-400" x-show="!docStatus.length">No Dokyu requests yet.</p>
+                        <p class="text-xs text-slate-500" x-show="!docStatus.length">No Dokyu requests yet.</p>
                     </div>
                 </x-ui.card>
                 </div>
@@ -193,7 +193,7 @@
                         <canvas x-ref="canvas"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="assistStatusTotal.toLocaleString()"></span>
-                            <span class="text-[11px] text-slate-400">Active Cases</span>
+                            <span class="text-[11px] text-slate-500">Active Cases</span>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2.5">
@@ -206,7 +206,7 @@
                                 <span class="font-medium text-navy-900 tabular-nums" x-text="row.value.toLocaleString()"></span>
                             </div>
                         </template>
-                        <p class="text-xs text-slate-400" x-show="!assistStatus.length">No Tulong requests yet.</p>
+                        <p class="text-xs text-slate-500" x-show="!assistStatus.length">No Tulong requests yet.</p>
                     </div>
                 </x-ui.card>
                 </div>
@@ -222,14 +222,14 @@
                             <div>
                                 <div class="flex items-center justify-between text-sm mb-1.5">
                                     <span class="text-slate-600 font-medium" x-text="'Brgy. ' + brgy.name"></span>
-                                    <span class="text-slate-400" x-text="brgy.count + ' requests'"></span>
+                                    <span class="text-slate-500" x-text="brgy.count + ' requests'"></span>
                                 </div>
                                 <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
                                 </div>
                             </div>
                         </template>
-                        <p class="text-xs text-slate-400" x-show="!barangayRequests.length">No open requests.</p>
+                        <p class="text-xs text-slate-500" x-show="!barangayRequests.length">No open requests.</p>
                     </div>
                 </x-ui.card>
                 </div>
@@ -242,7 +242,7 @@
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="font-semibold text-navy-900">Requests Trend (Last 6 Months)</h3>
                     </div>
-                    <div class="flex items-center gap-4 text-xs text-slate-400 mb-4">
+                    <div class="flex items-center gap-4 text-xs text-slate-500 mb-4">
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
                     </div>
@@ -265,12 +265,12 @@
                                 </span>
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700 leading-snug" x-text="alert.title?.en"></p>
-                                    <p class="text-xs text-slate-400 mt-0.5" x-text="alert.type + ' · ' + alert.level"></p>
+                                    <p class="text-xs text-slate-500 mt-0.5" x-text="alert.type + ' · ' + alert.level"></p>
                                     <p class="text-[11px] text-slate-300 mt-1" x-text="alert.published_at ? new Date(alert.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></p>
                                 </div>
                             </a>
                         </template>
-                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!(dash?.sakuna?.alerts || []).length">No active alerts.</p>
+                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!(dash?.sakuna?.alerts || []).length">No active alerts.</p>
                     </div>
                 </x-ui.card>
 
@@ -287,12 +287,12 @@
                                 </span>
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700 leading-snug" x-text="activity.actor + ' — ' + activity.action"></p>
-                                    <p class="text-xs text-slate-400 mt-0.5" x-text="(activity.module || '') + (activity.target ? ' · ' + activity.target : '')"></p>
+                                    <p class="text-xs text-slate-500 mt-0.5" x-text="(activity.module || '') + (activity.target ? ' · ' + activity.target : '')"></p>
                                     <p class="text-[11px] text-slate-300 mt-1" x-text="activity.at ? new Date(activity.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></p>
                                 </div>
                             </div>
                         </template>
-                        <p class="px-4 py-6 text-center text-xs text-slate-400" x-show="!(dash?.activities || []).length">No recent activity.</p>
+                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!(dash?.activities || []).length">No recent activity.</p>
                     </div>
                 </x-ui.card>
             </div>

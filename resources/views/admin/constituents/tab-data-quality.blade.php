@@ -45,7 +45,7 @@
 
             {{-- Search --}}
             <div class="relative flex-1 min-w-0">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </span>
                 <input aria-label="Search by name, record ID, barangay"
@@ -58,7 +58,7 @@
 
             {{-- Type filter --}}
             <div class="relative">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                 </span>
                 <select aria-label="Data quality type filter"
@@ -70,14 +70,14 @@
                     <option value="Orphaned Record">Orphaned Record</option>
                     <option value="Incomplete Profile">Incomplete Profile</option>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
 
             {{-- Status filter --}}
             <div class="relative">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                 </span>
                 <select aria-label="Data quality status filter"
@@ -89,7 +89,7 @@
                     <option value="In Review">In Review</option>
                     <option value="Resolved">Resolved</option>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -194,7 +194,7 @@
                             {{-- Barangay --}}
                             <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-700 hidden 2xl:table-cell">
                                 <span class="flex items-center gap-1.5">
-                                    <i data-lucide="map-pin" class="w-3 h-3 text-slate-400 shrink-0"></i>
+                                    <i data-lucide="map-pin" class="w-3 h-3 text-slate-500 shrink-0"></i>
                                     <span x-text="issue.barangay"></span>
                                 </span>
                             </td>
@@ -202,7 +202,7 @@
                             {{-- Record --}}
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <div class="text-xs font-medium text-navy-900" x-text="dqRecordName(issue.record) || '—'"></div>
-                                <div class="text-[10px] text-slate-400 font-mono" x-text="issue.record"></div>
+                                <div class="text-[10px] text-slate-500 font-mono" x-text="issue.record"></div>
                             </td>
 
                             {{-- Assigned to --}}
@@ -292,7 +292,7 @@
                 <span class="font-semibold text-navy-900" x-text="filteredQualityIssues.length"></span> issue(s) displayed
                 &mdash; Click any row to view full issue detail
             </p>
-            <div class="flex items-center gap-3 text-[11px] text-slate-400">
+            <div class="flex items-center gap-3 text-[11px] text-slate-500">
                 <span class="flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-rose-400"></span> Open
                 </span>

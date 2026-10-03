@@ -25,18 +25,18 @@
         >
         <div x-show="!collapsed" x-transition.opacity.duration.150ms class="min-w-0">
             <p class="text-[13px] font-semibold tracking-wide leading-tight truncate">Esperanza LGU</p>
-            <p class="text-[10.5px] text-slate-400 truncate">Administrative Portal</p>
+            <p class="text-[10.5px] text-slate-500 truncate">Administrative Portal</p>
         </div>
-        <button @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white">
+        <button @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-white/10 hover:text-white">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
     </div>
 
     <!-- Signed-in account + access scope -->
     <div x-show="$store.session.account" x-cloak class="mx-2.5 mt-2.5 mb-1 px-3 py-2.5 rounded-xl bg-white/[0.06] border border-white/10">
-        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1" x-show="!collapsed">Signed in as</p>
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1" x-show="!collapsed">Signed in as</p>
         <p class="text-xs font-semibold text-white truncate" x-show="!collapsed" x-text="$store.session.account?.name"></p>
-        <p class="text-[10.5px] text-slate-400 truncate mb-1.5" x-show="!collapsed" x-text="$store.session.account?.id + ' · ' + $store.session.account?.role"></p>
+        <p class="text-[10.5px] text-slate-500 truncate mb-1.5" x-show="!collapsed" x-text="$store.session.account?.id + ' · ' + $store.session.account?.role"></p>
         <span
             class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5"
             :class="$store.session.account?.scope === 'Municipal' ? 'bg-brand-500/20 text-brand-300' : 'bg-purple-500/20 text-purple-300'"
@@ -64,7 +64,7 @@
     <div class="border-t border-white/10 p-2.5 shrink-0">
         <button
             @click="collapsed = !collapsed"
-            class="mt-0.5 w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"
+            class="mt-0.5 w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"
         >
             <i data-lucide="panel-left-close" class="w-4 h-4 transition-transform duration-[160ms] ease-standard" :class="collapsed && 'rotate-180'"></i>
             <span x-show="!collapsed">Collapse</span>

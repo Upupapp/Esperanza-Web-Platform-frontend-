@@ -13,7 +13,7 @@
         Contact your Municipal Administrator if you believe this is incorrect.
     </p>
     <div class="flex items-center gap-2.5 mt-5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5 text-xs text-slate-500">
-        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
         Signed in as <span class="font-medium text-slate-700" x-text="$store.session.account?.name + ' (' + $store.session.account?.role + ')'"></span>
     </div>
 </div>

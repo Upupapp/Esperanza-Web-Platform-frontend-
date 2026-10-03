@@ -94,7 +94,7 @@
                                         class="font-semibold text-navy-900 text-sm leading-tight truncate group-hover:text-brand-600 transition-colors"
                                         x-text="r.name"
                                     ></p>
-                                    <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                                    <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
                                         <span x-text="'ID: ' + r.ref"></span>
                                         <i x-show="r.citizen_account" data-lucide="smartphone" class="w-3 h-3 text-brand-500" title="Linked to Citizen Portal account"></i>
                                     </p>
@@ -126,7 +126,7 @@
                         <td class="px-4 py-3 hidden xl:table-cell">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium text-slate-800 truncate" x-text="'Brgy. ' + r.barangay"></p>
-                                <p class="text-xs text-slate-400 mt-0.5 truncate" x-text="r.sitio ? 'Sitio ' + r.sitio : '—'"></p>
+                                <p class="text-xs text-slate-500 mt-0.5 truncate" x-text="r.sitio ? 'Sitio ' + r.sitio : '—'"></p>
                             </div>
                         </td>
 
@@ -136,7 +136,7 @@
                                 <p class="text-xs text-slate-600 font-medium">
                                     HH: <span class="text-slate-800 font-semibold" x-text="r.household?.ref || '—'"></span>
                                 </p>
-                                <p class="text-xs text-slate-400 mt-0.5">
+                                <p class="text-xs text-slate-500 mt-0.5">
                                     Fam: <span x-text="r.family?.ref || '—'"></span>
                                 </p>
                                 <p
@@ -189,7 +189,7 @@
                                 <button
                                     @click="openIndividual(r)"
                                     title="View resident detail"
-                                    class="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                    class="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 >
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>

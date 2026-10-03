@@ -40,7 +40,7 @@
                 <legend class="text-sm font-semibold text-navy-900 mb-3">
                     {{ $step['label'] }}
                     @if(count($steps) > 1)
-                        <span class="text-xs font-normal text-slate-400">({{ $i + 1 }}/{{ count($steps) }})</span>
+                        <span class="text-xs font-normal text-slate-500">({{ $i + 1 }}/{{ count($steps) }})</span>
                     @endif
                 </legend>
             @endif

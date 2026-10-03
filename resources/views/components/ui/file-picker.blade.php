@@ -7,7 +7,7 @@
 <div x-data="{ pickerQuery: '' }" class="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
     @if($search)
         <div class="relative border-b border-slate-100 p-2">
-            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-4.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-4.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
             <input aria-label="Search files"
                 type="text"
                 x-model="pickerQuery"
@@ -57,8 +57,8 @@
             class="flex flex-col items-center text-center py-6 px-2"
             x-show="{{ $files }}.filter(f => !pickerQuery || f.name.toLowerCase().includes(pickerQuery.toLowerCase())).length === 0"
         >
-            <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mb-2" aria-hidden="true"><i data-lucide="folder-search" class="w-4 h-4"></i></span>
-            <p class="text-[11px] text-slate-400" x-text="pickerQuery ? 'No matches for &quot;' + pickerQuery + '&quot;.' : @js($empty)"></p>
+            <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2" aria-hidden="true"><i data-lucide="folder-search" class="w-4 h-4"></i></span>
+            <p class="text-[11px] text-slate-500" x-text="pickerQuery ? 'No matches for &quot;' + pickerQuery + '&quot;.' : @js($empty)"></p>
             <p class="text-[10px] text-slate-300 mt-0.5" x-show="pickerQuery">Try a different search term.</p>
         </div>
     </div>
