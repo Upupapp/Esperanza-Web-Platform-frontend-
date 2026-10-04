@@ -53,6 +53,18 @@ class QaRunFixesTest extends TestCase
         $this->assertStringContainsString('valueBind="avgProcessingLabel"', $queue);
     }
 
+    /** The BDRRMC capture forms opened with sample families and one barangay's officials, and Save stored nothing. */
+    public function test_the_bdrrmc_capture_forms_start_blank_and_save_to_the_server(): void
+    {
+        $view = $this->source('resources/views/admin/partials/sakuna/tab-bdrrmc-forms.blade.php');
+        foreach (['Rodrigo M. Panganiban', 'value="LABANGTAYTAY" readonly', 'Capture form saved.', 'Form sent to printer.', 'CACHILA', 'BRUZA'] as $fake) {
+            $this->assertStringNotContainsString($fake, $view, "still in the forms: {$fake}");
+        }
+        $this->assertStringContainsString("'/admin/sakuna/bdrrmc-forms/' + key + '/submit'", $view, 'Save submits to the server');
+        $this->assertStringContainsString('window.print()', $view, 'Print prints');
+        $this->assertStringContainsString('x-model="signoff.', $this->source('resources/views/components/admin/sakuna/bdrrmc-signoff.blade.php'));
+    }
+
     /** "Assign to me" only changed the screen; a reload showed the case unassigned. */
     public function test_assign_to_me_is_saved_on_the_server(): void
     {

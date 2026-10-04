@@ -14,53 +14,141 @@
 
 <div
     x-data="{
+        // The BDRRMC capture forms, stored on the server
+        // (POST /admin/sakuna/bdrrmc-forms/{key}/submit). They opened filled
+        // with sample families from one barangay, under hard-coded names, and
+        // Save only showed a toast: nothing was stored.
         openForm: null,
-        disasterType: 'Southwest Monsoon & Flooding',
+        disasterType: '',
         purok: '',
+        center: '',
+        occurred: '',
+        barangay: '',
+        barangayLocked: false,
+        barangays: [],
+        signoff: { prepared: '', consolidated: '', noted: '' },
+        saving: false,
+        submissions: [],
+        submissionsLoading: false,
+        formNames: @js(collect($bdrrmcForms)->pluck('name', 'key')),
+        rowsOf: { evacuees: 'evacueeRows', 'human-housing': 'housingRows', agriculture: 'agriRows', fishing: 'fishingRows', business: 'businessRows', rds: 'rdsRows' },
 
-        evacueeRows: [
-            { purok: '9', hh: 'LBT-0091', head: 'Rodrigo M. Panganiban', pre03m:0,pre03f:0,pre46m:1,pre46f:0,ch712m:1,ch712f:1,yth1317m:0,yth1317f:1,ad1859m:1,ad1859f:1,sc60m:0,sc60f:1, assist:'Food Pack, Hygiene Kit' },
-            { purok: '10', hh: 'LBT-0134', head: 'Nenita B. Cruz', pre03m:0,pre03f:1,pre46m:0,pre46f:0,ch712m:0,ch712f:0,yth1317m:1,yth1317f:0,ad1859m:1,ad1859f:1,sc60m:0,sc60f:0, assist:'Food Pack' },
-        ],
-        addEvacueeRow() { this.evacueeRows.push({ purok:'', hh:'', head:'', pre03m:0,pre03f:0,pre46m:0,pre46f:0,ch712m:0,ch712f:0,yth1317m:0,yth1317f:0,ad1859m:0,ad1859f:0,sc60m:0,sc60f:0, assist:'' }); },
+        async init() {
+            const account = this.$store.session.account || {};
+            this.barangayLocked = !!account.scope && account.scope !== 'Municipal';
+            this.barangay = this.barangayLocked ? account.scope : '';
+            this.signoff.prepared = account.name || '';
+            Object.keys(this.rowsOf).forEach((key) => this.resetRows(key));
+            try {
+                this.barangays = (await $api.get('/barangays')).data || [];
+            } catch { this.barangays = []; }
+            this.fillOfficials();
+            this.loadSubmissions();
+        },
+        // The barangay's own Punong Barangay and Secretary sign the form.
+        fillOfficials() {
+            const b = this.barangays.find((x) => x.name === this.barangay);
+            this.signoff.noted = b?.officials?.punong_barangay || b?.punong_barangay || '';
+            this.signoff.consolidated = b?.officials?.barangay_secretary || b?.barangay_secretary || '';
+        },
+        resetRows(key) {
+            const name = this.rowsOf[key];
+            this[name] = [];
+            this.blankRow(key);
+        },
+        blankRow(key) {
+            const blanks = {
+                'evacuees': () => ({ purok:'', hh:'', head:'', pre03m:0,pre03f:0,pre46m:0,pre46f:0,ch712m:0,ch712f:0,yth1317m:0,yth1317f:0,ad1859m:0,ad1859f:0,sc60m:0,sc60f:0, assist:'' }),
+                'human-housing': () => ({ hh:'', head:'', deps:0, cas_m:0,cas_f:0, miss_m:0,miss_f:0, resc_m:0,resc_f:0, roof_slight_nipa:0,roof_slight_gi:0, roof_partial_nipa:0,roof_partial_gi:0, roof_total_nipa:0,roof_total_gi:0, flood_height:'', est_partial:0, est_total:0 }),
+                'agriculture': () => ({ hh:'', owner:'', livestock_type:'', heads:'', age:'', crop:'', stage:'', area_affected:'', product:'', loss_recovery:'', metric_tons:'' }),
+                'fishing': () => ({ hh:'', owner:'', qty:'', gear:'', damage:'', est_damage:'' }),
+                'business': () => ({ code:'', owner:'', establishment:'', type:'', workers:'', merch:'', equip:'', struct:'', flood_height:'', est_damage:'' }),
+                'rds': () => ({ hh:'', beneficiary:'', deps:'', kind:'', qty:'', received:false }),
+            };
+            this[this.rowsOf[key]].push(blanks[key]());
+        },
+        evacueeRows: [],
+        addEvacueeRow() { this.blankRow('evacuees'); },
+        housingRows: [],
+        addHousingRow() { this.blankRow('human-housing'); },
+        agriRows: [],
+        addAgriRow() { this.blankRow('agriculture'); },
+        fishingRows: [],
+        addFishingRow() { this.blankRow('fishing'); },
+        businessRows: [],
+        addBusinessRow() { this.blankRow('business'); },
+        rdsRows: [],
+        addRdsRow() { this.blankRow('rds'); },
         evacueeFamTotal(r) { return (r.pre03m+r.pre03f+r.pre46m+r.pre46f+r.ch712m+r.ch712f+r.yth1317m+r.yth1317f+r.ad1859m+r.ad1859f+r.sc60m+r.sc60f) || 0; },
         evacueeGrandTotal() { return this.evacueeRows.reduce((s,r) => s + this.evacueeFamTotal(r), 0); },
 
-        housingRows: [
-            { hh:'LBT-0091', head:'Rodrigo M. Panganiban', deps:5, cas_m:0,cas_f:0, miss_m:0,miss_f:0, resc_m:0,resc_f:0, roof_slight_nipa:1,roof_slight_gi:0, roof_partial_nipa:0,roof_partial_gi:0, roof_total_nipa:0,roof_total_gi:0, floodHeight:'2', estPartial:8000, estTotal:0 },
-        ],
-        addHousingRow() { this.housingRows.push({ hh:'', head:'', deps:0, cas_m:0,cas_f:0, miss_m:0,miss_f:0, resc_m:0,resc_f:0, roof_slight_nipa:0,roof_slight_gi:0, roof_partial_nipa:0,roof_partial_gi:0, roof_total_nipa:0,roof_total_gi:0, floodHeight:'', estPartial:0, estTotal:0 }); },
-
-        agriRows: [
-            { hh:'LBT-0077', owner:'Teodato M. Rodrigo', livestockType:'Native Pig', heads:3, age:'6 mos.', crop:'Palay (Rice)', stage:'Vegetative', areaAffected:'0.5 ha', product:'Grain', lossRecovery:'With chance of recovery', metricTons:0.4 },
-        ],
-        addAgriRow() { this.agriRows.push({ hh:'', owner:'', livestockType:'', heads:'', age:'', crop:'', stage:'', areaAffected:'', product:'', lossRecovery:'', metricTons:'' }); },
-
-        fishingRows: [
-            { hh:'LBT-0102', owner:'Monie C. Bruza', qty:2, gear:'Pukot (fishnet)', damage:'Partial', estDamage:3500 },
-        ],
-        addFishingRow() { this.fishingRows.push({ hh:'', owner:'', qty:'', gear:'', damage:'', estDamage:'' }); },
-
-        businessRows: [
-            { code:'BC-04-2026', owner:'Cherry Ann S. Andales', establishment:'Andales Sari-Sari Store', type:'Store', workers:1, merch:'Partial', equip:'None', struct:'Partial', floodHeight:'2', estDamage:6500 },
-        ],
-        addBusinessRow() { this.businessRows.push({ code:'', owner:'', establishment:'', type:'', workers:'', merch:'', equip:'', struct:'', floodHeight:'', estDamage:'' }); },
-
-        rdsRows: [
-            { hh:'LBT-0091', beneficiary:'Rodrigo M. Panganiban', deps:5, kind:'Family Food Pack', qty:'1 pack', received:true },
-            { hh:'LBT-0134', beneficiary:'Nenita B. Cruz', deps:4, kind:'Family Food Pack', qty:'1 pack', received:true },
-        ],
-        addRdsRow() { this.rdsRows.push({ hh:'', beneficiary:'', deps:'', kind:'', qty:'', received:false }); },
-
-        print() { this.$dispatch('toast', { message: 'Form sent to printer.', variant: 'info' }); },
-        save() { this.$dispatch('toast', { message: 'Capture form saved.', variant: 'success' }); this.openForm = null; },
+        // A row nobody touched is not sent; the server checks each sent row's
+        // required columns and names the row and the column it lacks.
+        isBlankRow(r) { return Object.values(r).every((v) => v === '' || v === 0 || v === false || v === null); },
+        print() { window.print(); },
+        async save() {
+            const key = this.openForm;
+            const rows = (this[this.rowsOf[key]] || []).filter((r) => !this.isBlankRow(r));
+            const fail = (message) => this.$dispatch('toast', { message, variant: 'error' });
+            if (!this.barangay) return fail('Choose the barangay first.');
+            if (!rows.length) return fail('Fill in at least one row before saving.');
+            if (!this.signoff.prepared.trim()) return fail('Type the name of the person who prepared the form.');
+            this.saving = true;
+            try {
+                const res = await $api.post('/admin/sakuna/bdrrmc-forms/' + key + '/submit', {
+                    barangay: this.barangay,
+                    period: this.disasterType.trim() || null,
+                    rows,
+                    meta: {
+                        prepared_by: this.signoff.prepared.trim(),
+                        consolidated_by: this.signoff.consolidated.trim() || null,
+                        noted_by: this.signoff.noted.trim() || null,
+                        // Today in the officer's own time zone (toISOString is UTC: a
+                        // form saved before 8 AM in Manila was dated the day before).
+                        date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
+                        disaster: this.disasterType.trim() || null,
+                        purok: this.purok.trim() || null,
+                        evacuation_center: this.center.trim() || null,
+                        occurred_on: this.occurred || null,
+                        region: 'Region V',
+                    },
+                });
+                this.$dispatch('toast', { message: 'Saved as ' + res.data.ref + ' (' + rows.length + ' row' + (rows.length === 1 ? '' : 's') + '). It is listed under Submitted forms.', variant: 'success' });
+                this.resetRows(key);
+                this.openForm = null;
+                this.loadSubmissions();
+            } catch (err) {
+                fail(err && err.explain ? err.explain('en') : 'Could not save the form.');
+            } finally {
+                this.saving = false;
+            }
+        },
+        get canListSubmissions() { return this.$store.session.canPerm('sakuna_reports', 'view'); },
+        get canApprove() { return this.$store.session.canPerm('sakuna_damage', 'approve'); },
+        async loadSubmissions() {
+            if (!this.canListSubmissions) return;
+            this.submissionsLoading = true;
+            try {
+                this.submissions = (await $api.get('/admin/sakuna/bdrrmc-forms/submissions', { params: { sort: '-created_at' } })).data || [];
+            } catch { this.submissions = []; }
+            finally { this.submissionsLoading = false; this.$nextTick(() => window.renderIcons?.()); }
+        },
+        async approve(sub) {
+            try {
+                await $api.post('/admin/sakuna/bdrrmc-forms/submissions/' + encodeURIComponent(sub.ref) + '/approve');
+                this.$dispatch('toast', { message: sub.ref + ' approved.', variant: 'success' });
+                this.loadSubmissions();
+            } catch (err) {
+                this.$dispatch('toast', { message: err && err.explain ? err.explain('en') : 'Could not approve.', variant: 'error' });
+            }
+        },
     }"
     class="space-y-5"
 >
     <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
             <h2 class="text-lg font-bold text-slate-800">BDRRMC Capture Forms</h2>
-            <p class="text-sm text-slate-500 mt-0.5">Barangay Labangtaytay's official DRRM capture forms — fill out, print, and export in the exact format submitted to MDRRMO/PDRRMC.</p>
+            <p class="text-sm text-slate-500 mt-0.5">The barangay DRRM capture forms (the layout Barangay Labangtaytay files with the MDRRMO/PDRRMC): fill one out, save it to the system, and print it.</p>
         </div>
     </div>
 
@@ -87,6 +175,59 @@
         @endforeach
     </div>
 
+    <div x-show="canListSubmissions" x-cloak class="bg-white rounded-2xl shadow-card border border-slate-100">
+        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-sm font-semibold text-slate-800">Submitted forms</h3>
+                <p class="text-xs text-slate-500">Saved capture forms, newest first. The MDRRMO approves each one.</p>
+            </div>
+            <button type="button" @click="loadSubmissions()" class="inline-flex items-center gap-1.5 text-xs text-slate-600 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 hover:border-slate-300"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh</button>
+        </div>
+        <p x-show="submissionsLoading" class="px-4 py-3 text-xs text-slate-500">Loading…</p>
+        <p x-show="!submissionsLoading && !submissions.length" class="px-4 py-6 text-center text-xs text-slate-500">No capture form has been saved yet.</p>
+        <div x-show="submissions.length" class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="text-left text-[10px] uppercase tracking-wide text-slate-500 border-b border-slate-100">
+                        <th class="px-4 py-2 font-semibold">Reference</th>
+                        <th class="px-4 py-2 font-semibold">Form</th>
+                        <th class="px-4 py-2 font-semibold">Barangay</th>
+                        <th class="px-4 py-2 font-semibold">Disaster</th>
+                        <th class="px-4 py-2 font-semibold text-right">Rows</th>
+                        <th class="px-4 py-2 font-semibold">Saved</th>
+                        <th class="px-4 py-2 font-semibold">Status</th>
+                        <th class="px-4 py-2"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    <template x-for="sub in submissions" :key="sub.ref">
+                        <tr>
+                            <td class="px-4 py-2 font-mono text-slate-700" x-text="sub.ref"></td>
+                            <td class="px-4 py-2 text-slate-700" x-text="formNames[sub.form] || sub.form"></td>
+                            <td class="px-4 py-2 text-slate-700" x-text="'Brgy. ' + sub.barangay"></td>
+                            <td class="px-4 py-2 text-slate-500" x-text="sub.period || '—'"></td>
+                            <td class="px-4 py-2 text-right tabular-nums text-slate-700" x-text="sub.row_count"></td>
+                            <td class="px-4 py-2 text-slate-500" x-text="(sub.submitted_by || '—') + ' · ' + (sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')"></td>
+                            <td class="px-4 py-2"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset" :class="sub.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-blue-50 text-blue-700 ring-blue-200'" x-text="sub.status"></span></td>
+                            <td class="px-4 py-2 text-right"><button type="button" x-show="canApprove && sub.status === 'Submitted'" @click="approve(sub)" class="text-xs font-medium text-brand-600 hover:underline">Approve</button></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- Print: only the open capture form, its whole table, without the buttons. --}}
+    <style>
+        @media print {
+            body * { visibility: hidden !important; }
+            [data-print-area], [data-print-area] * { visibility: visible !important; }
+            [data-print-area] { position: absolute !important; inset: 0 !important; height: auto !important; box-shadow: none !important; }
+            [data-print-area] .overflow-y-auto, [data-print-area] .overflow-x-auto { overflow: visible !important; height: auto !important; }
+            [data-print-area] .no-print, [data-print-area] button { display: none !important; }
+        }
+    </style>
+
     {{-- ══════════════════════════════════════ 1. PROFILE OF EVACUEES ══════════════════════════════════════ --}}
     <template x-if="openForm === 'evacuees'">
     <div style="position: fixed; inset: 0; z-index: 50;">
@@ -96,7 +237,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Dromic Form 1.2</p>
@@ -107,9 +248,9 @@
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Region</label><input aria-label="Region" type="text" value="Region V" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><select aria-label="Barangay" x-model="barangay" :disabled="barangayLocked" @change="fillOfficials()" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"><option value="">Choose a barangay</option><template x-for="b in barangays" :key="b.name"><option :value="b.name" x-text="b.name"></option></template></select></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" placeholder="e.g. Labangtaytay Barangay Hall" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" x-model="center" placeholder="e.g. Barangay Hall" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -175,11 +316,11 @@
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Family Row
                 </button>
 
-                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Barangay Official (Evacuation Center)" consolidated-name="JENNETH A. CACHILA" consolidated-label="Barangay Secretary" noted-name="JORGE C. BRUZA" noted-label="Punong Barangay" />
+                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Barangay Official (Evacuation Center)" consolidated-label="Barangay Secretary" noted-label="Punong Barangay" />
             </div>
-            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
+            <div class="no-print px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
                 <button @click="print()" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button @click="save()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> Save Form</button>
+                <button @click="save()" :disabled="saving" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save Form'"></span></button>
             </div>
         </div>
         </div>
@@ -195,7 +336,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -205,7 +346,7 @@
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><select aria-label="Barangay" x-model="barangay" :disabled="barangayLocked" @change="fillOfficials()" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"><option value="">Choose a barangay</option><template x-for="b in barangays" :key="b.name"><option :value="b.name" x-text="b.name"></option></template></select></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
@@ -254,7 +395,7 @@
                                     <td class="px-0.5 py-1"><input aria-label="Roof Damage (Nipa / GI Sheets) Total-Nipa" type="number" min="0" x-model.number="r.roof_total_nipa" class="w-9 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-0.5 py-1"><input aria-label="Roof Damage (Nipa / GI Sheets) Total-GI" type="number" min="0" x-model.number="r.roof_total_gi" class="w-9 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1">
-                                        <select aria-label="Flood Height" x-model="r.floodHeight" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <select aria-label="Flood Height" x-model="r.flood_height" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                             <option value="">—</option>
                                             <option value="1">(1) Ankle</option>
                                             <option value="2">(2) Knee</option>
@@ -263,8 +404,8 @@
                                             <option value="5">(5) Head</option>
                                         </select>
                                     </td>
-                                    <td class="px-0.5 py-1"><input aria-label="Estimated Damage (₱) Partial" type="number" min="0" x-model.number="r.estPartial" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
-                                    <td class="px-0.5 py-1"><input aria-label="Estimated Damage (₱) Total" type="number" min="0" x-model.number="r.estTotal" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
+                                    <td class="px-0.5 py-1"><input aria-label="Estimated Damage (₱) Partial" type="number" min="0" x-model.number="r.est_partial" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
+                                    <td class="px-0.5 py-1"><input aria-label="Estimated Damage (₱) Total" type="number" min="0" x-model.number="r.est_total" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><button @click="housingRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
@@ -276,11 +417,11 @@
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Household Row
                 </button>
 
-                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-name="JENNETH A. CACHILA" consolidated-label="Barangay Secretary" noted-name="JORGE C. BRUZA" noted-label="Punong Barangay" />
+                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-label="Barangay Secretary" noted-label="Punong Barangay" />
             </div>
-            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
+            <div class="no-print px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
                 <button @click="print()" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button @click="save()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> Save Form</button>
+                <button @click="save()" :disabled="saving" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save Form'"></span></button>
             </div>
         </div>
         </div>
@@ -296,7 +437,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -306,9 +447,9 @@
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><select aria-label="Barangay" x-model="barangay" :disabled="barangayLocked" @change="fillOfficials()" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"><option value="">Choose a barangay</option><template x-for="b in barangays" :key="b.name"><option :value="b.name" x-text="b.name"></option></template></select></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Disaster</label><input aria-label="Name of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" x-model="occurred" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -334,7 +475,7 @@
                                 <tr :class="ri % 2 === 1 && 'bg-slate-50/50'">
                                     <td class="px-1 py-1"><input aria-label="HH Code" type="text" x-model="r.hh" class="w-20 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><input aria-label="Affected Owner/Farmer" type="text" x-model="r.owner" class="w-32 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
-                                    <td class="px-1 py-1"><input aria-label="Type of Livestock" type="text" x-model="r.livestockType" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
+                                    <td class="px-1 py-1"><input aria-label="Type of Livestock" type="text" x-model="r.livestock_type" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><input aria-label="No. of Heads" type="number" min="0" x-model.number="r.heads" class="w-14 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><input aria-label="Age" type="text" x-model="r.age" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><input aria-label="Type of Crop Planted" type="text" x-model="r.crop" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
@@ -345,16 +486,16 @@
                                             <option>Productive</option>
                                         </select>
                                     </td>
-                                    <td class="px-1 py-1"><input aria-label="Area Affected" type="text" x-model="r.areaAffected" class="w-20 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
+                                    <td class="px-1 py-1"><input aria-label="Area Affected" type="text" x-model="r.area_affected" class="w-20 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><input aria-label="Type of Product" type="text" x-model="r.product" class="w-20 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1">
-                                        <select aria-label="Production Loss" x-model="r.lossRecovery" class="w-36 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <select aria-label="Production Loss" x-model="r.loss_recovery" class="w-36 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                             <option value="">—</option>
                                             <option>With chance of recovery</option>
                                             <option>No chance of recovery</option>
                                         </select>
                                     </td>
-                                    <td class="px-1 py-1"><input aria-label="Metric Tons" type="number" step="0.1" min="0" x-model.number="r.metricTons" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
+                                    <td class="px-1 py-1"><input aria-label="Metric Tons" type="number" step="0.1" min="0" x-model.number="r.metric_tons" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><button @click="agriRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
@@ -365,11 +506,11 @@
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Farmer Row
                 </button>
 
-                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-name="JENNETH A. CACHILA" consolidated-label="Barangay Secretary" noted-name="JORGE C. BRUZA" noted-label="Punong Barangay/BDRRMC Chairperson" />
+                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-label="Barangay Secretary" noted-label="Punong Barangay/BDRRMC Chairperson" />
             </div>
-            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
+            <div class="no-print px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
                 <button @click="print()" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button @click="save()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> Save Form</button>
+                <button @click="save()" :disabled="saving" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save Form'"></span></button>
             </div>
         </div>
         </div>
@@ -385,7 +526,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -395,10 +536,10 @@
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><select aria-label="Barangay" x-model="barangay" :disabled="barangayLocked" @change="fillOfficials()" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"><option value="">Choose a barangay</option><template x-for="b in barangays" :key="b.name"><option :value="b.name" x-text="b.name"></option></template></select></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name & Type of Disaster</label><input aria-label="Name & Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" x-model="occurred" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -429,7 +570,7 @@
                                             <option>Missing</option>
                                         </select>
                                     </td>
-                                    <td class="px-1 py-1"><input aria-label="Estimated Damage (₱)" type="number" min="0" x-model.number="r.estDamage" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
+                                    <td class="px-1 py-1"><input aria-label="Estimated Damage (₱)" type="number" min="0" x-model.number="r.est_damage" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><button @click="fishingRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
@@ -440,11 +581,11 @@
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Owner Row
                 </button>
 
-                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-name="JENNETH A. CACHILA" consolidated-label="Barangay Secretary" noted-name="JORGE C. BRUZA" noted-label="Punong Barangay" />
+                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-label="Barangay Secretary" noted-label="Punong Barangay" />
             </div>
-            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
+            <div class="no-print px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
                 <button @click="print()" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button @click="save()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> Save Form</button>
+                <button @click="save()" :disabled="saving" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save Form'"></span></button>
             </div>
         </div>
         </div>
@@ -460,7 +601,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -470,10 +611,10 @@
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><select aria-label="Barangay" x-model="barangay" :disabled="barangayLocked" @change="fillOfficials()" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"><option value="">Choose a barangay</option><template x-for="b in barangays" :key="b.name"><option :value="b.name" x-text="b.name"></option></template></select></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Purok</label><input aria-label="Purok" type="text" x-model="purok" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Disaster</label><input aria-label="Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Occurrence</label><input aria-label="Date of Occurrence" type="date" x-model="occurred" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -517,12 +658,12 @@
                                         </select>
                                     </td>
                                     <td class="px-1 py-1">
-                                        <select aria-label="Flood Height" x-model="r.floodHeight" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <select aria-label="Flood Height" x-model="r.flood_height" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                             <option value="">—</option>
                                             <option value="1">(1) Ankle</option><option value="2">(2) Knee</option><option value="3">(3) Waist</option><option value="4">(4) Chest</option><option value="5">(5) Head</option>
                                         </select>
                                     </td>
-                                    <td class="px-1 py-1"><input aria-label="Estimated Damage (₱)" type="number" min="0" x-model.number="r.estDamage" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
+                                    <td class="px-1 py-1"><input aria-label="Estimated Damage (₱)" type="number" min="0" x-model.number="r.est_damage" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1"><button @click="businessRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
@@ -534,11 +675,11 @@
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Business Row
                 </button>
 
-                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-name="JENNETH A. CACHILA" consolidated-label="Barangay Secretary" noted-name="JORGE C. BRUZA" noted-label="Punong Barangay/BDRRMC Chairperson" />
+                <x-admin.sakuna.bdrrmc-signoff prepared-label="Assigned Kagawad (Purok)" consolidated-label="Barangay Secretary" noted-label="Punong Barangay/BDRRMC Chairperson" />
             </div>
-            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
+            <div class="no-print px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
                 <button @click="print()" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button @click="save()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> Save Form</button>
+                <button @click="save()" :disabled="saving" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save Form'"></span></button>
             </div>
         </div>
         </div>
@@ -554,7 +695,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">RDS</p>
@@ -564,10 +705,10 @@
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><input aria-label="Barangay" type="text" value="LABANGTAYTAY" readonly class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Barangay</label><select aria-label="Barangay" x-model="barangay" :disabled="barangayLocked" @change="fillOfficials()" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"><option value="">Choose a barangay</option><template x-for="b in barangays" :key="b.name"><option :value="b.name" x-text="b.name"></option></template></select></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Name of Evacuation Center</label><input aria-label="Name of Evacuation Center" type="text" x-model="center" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                     <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Type of Disaster</label><input aria-label="Type of Disaster" type="text" x-model="disasterType" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
-                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Relief Distribution</label><input aria-label="Date of Relief Distribution" type="date" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
+                    <div><label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">Date of Relief Distribution</label><input aria-label="Date of Relief Distribution" type="date" x-model="occurred" class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></div>
                 </div>
 
                 <div class="overflow-x-auto rounded-xl border border-slate-200">
@@ -604,11 +745,11 @@
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Beneficiary Row
                 </button>
 
-                <x-admin.sakuna.bdrrmc-signoff prepared-label="Barangay Official" prepared-role="Distributed by" consolidated-name="" consolidated-label="" noted-name="JORGE C. BRUZA" noted-label="Punong Barangay" noted-role="Certified True and Correct" :two-column="true" />
+                <x-admin.sakuna.bdrrmc-signoff prepared-label="Barangay Official" prepared-role="Distributed by" consolidated-label="" noted-label="Punong Barangay" noted-role="Certified True and Correct" :two-column="true" />
             </div>
-            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
+            <div class="no-print px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-end gap-2 shrink-0">
                 <button @click="print()" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i> Print</button>
-                <button @click="save()" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> Save Form</button>
+                <button @click="save()" :disabled="saving" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-60 rounded-xl px-4 py-2 transition-colors"><i data-lucide="save" class="w-4 h-4"></i> <span x-text="saving ? 'Saving…' : 'Save Form'"></span></button>
             </div>
         </div>
         </div>
