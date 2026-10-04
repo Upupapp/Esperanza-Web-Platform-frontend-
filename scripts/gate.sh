@@ -12,6 +12,33 @@
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
+# The fingerprint of the code this run checks: a git tree hash of every
+# tracked and untracked (non-ignored) file as it is on disk, built in a scratch
+# index so the real index is untouched. It is recorded when the gate passes and
+# nothing changed during the run; the pre-push hook then skips the gate for a
+# push whose commits hold exactly this code. The record lives in .git and is
+# never committed.
+worktree_tree() {
+  local idx
+  idx="$(mktemp)" || return 1
+  cp "$(git rev-parse --git-path index)" "$idx" 2>/dev/null || :
+  if GIT_INDEX_FILE="$idx" git add -A . >/dev/null 2>&1; then
+    GIT_INDEX_FILE="$idx" git write-tree 2>/dev/null
+  fi
+  rm -f "$idx"
+}
+record_verified_tree() {
+  local now
+  now="$(worktree_tree)"
+  if [ -n "$TREE_AT_START" ] && [ "$now" = "$TREE_AT_START" ]; then
+    echo "$now $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$(git rev-parse --git-path esperanza-verified-trees)"
+    echo "Recorded: this exact code passed; pushing it will not run the gate again."
+  else
+    echo "Not recorded: files changed while the gate ran, so the next push runs it again."
+  fi
+}
+TREE_AT_START="$(worktree_tree)"
+
 FAILED=0
 STEPS_RUN=0
 
@@ -265,6 +292,7 @@ echo ""
 echo "    steps run: $STEPS_RUN"
 if [ "$FAILED" -eq 0 ]; then
   echo "=== VERDICT: PASS ==="
+  record_verified_tree
 else
   echo "=== VERDICT: FAIL ==="
 fi

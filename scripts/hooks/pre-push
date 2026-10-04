@@ -12,6 +12,33 @@
 # fails there with "'bash': No such file or directory". Find bash instead: PATH
 # first, then the usual Git for Windows locations. Its directory goes on PATH so
 # the `#!/usr/bin/env bash` scripts the gate calls resolve too.
+# Skip the gate for code that already passed it. The gate records the
+# fingerprint (a git tree hash) of the exact files it checked when it passes
+# and nothing changed during the run (.git/esperanza-verified-trees, never
+# committed). A push whose every commit holds exactly such code runs nothing
+# new; any other push runs the full gate. ESPERANZA_FORCE_GATE=1 always runs it.
+# This is not a bypass: the same content already passed this same gate.
+# git passes the refs being pushed on stdin.
+pushed=$(cat)
+exec < /dev/null
+record="$(git rev-parse --git-path esperanza-verified-trees 2>/dev/null)"
+if [ -z "${ESPERANZA_FORCE_GATE:-}" ] && [ -n "$pushed" ] && [ -f "$record" ]; then
+    skip=1
+    when=""
+    for sha in $(printf '%s\n' "$pushed" | awk '{print $2}'); do
+        case "$sha" in *[!0]*) ;; *) continue ;; esac   # all zeros: a deleted branch
+        tree=$(git rev-parse --verify --quiet "$sha^{tree}") || { skip=0; break; }
+        hit=$(grep "^$tree " "$record" | tail -1) || { skip=0; break; }
+        [ -n "$hit" ] || { skip=0; break; }
+        when=${hit#* }
+    done
+    if [ "$skip" = 1 ] && [ -n "$when" ]; then
+        echo "pre-push: this exact code passed the full gate at $when; not running it again."
+        echo "          (ESPERANZA_FORCE_GATE=1 git push runs it anyway.)"
+        exit 0
+    fi
+fi
+
 here=$(dirname "$0")
 if command -v bash >/dev/null 2>&1; then
     exec bash "$here/../gate.sh" </dev/null
