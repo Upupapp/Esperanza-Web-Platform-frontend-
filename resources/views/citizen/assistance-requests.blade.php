@@ -41,18 +41,13 @@
             officeShortByKey: @js($officeShortByAssistKey),
             officeByType: @js($officeByAssistType),
             papeles: [],
-            // Tulong runs the same lifecycle as Dokyu on the server; these are
-            // its statuses (the case-management names below are kept only for
-            // older rows).
-            doneStatuses: ['Released', 'Completed', 'Rejected', 'Cancelled'],
+            // Tulong runs its own case lifecycle on the server (the eleven
+            // statuses of config/esperanza_tulong_lifecycle.php); these are
+            // its terminal ones.
+            doneStatuses: ['Completed', 'Rejected', 'Cancelled'],
             statusStyles: {
+                'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
-                'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
-                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
-                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
-                'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
-                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
-                'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Initial Screening': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
                 'Needs Requirements': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Assessment': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
@@ -118,6 +113,8 @@
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose;
                 r.canResubmit = !!d.can_resubmit;
                 r.payment = d.payment || null;
+                // What was approved and what was received (Tulong only).
+                r.assistance = d.assistance || null;
                 r.requirements = (d.requirements || []).map((q) => ({
                     key: q.key,
                     name: q.label,
@@ -170,10 +167,18 @@
                     this.$dispatch('toast', { message: this.apiMessage(err, 'Could not resubmit.'), variant: 'error' });
                 } finally { this.resubmitting = false; }
             },
-            stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
+            // Tulong's main line, as config/esperanza_tulong_lifecycle.php
+            // declares it (tests/Feature/TulongLifecycleTest.php pins the two).
+            // A side state sits on the step it branches from.
+            stepOrder: ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'],
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
-                return map[status] ?? 0;
+                const side = { 'Needs Requirements': 'Initial Screening', 'Returned for Reassessment': 'For Approval' };
+                return Math.max(0, this.stepOrder.indexOf(side[status] || status));
+            },
+            peso(v) {
+                if (v === null || v === undefined || v === '') return '';
+                const n = Number(v);
+                return isNaN(n) ? String(v) : '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             },
             get pickupInfo() {
                 const r = this.selectedRequest;
@@ -224,14 +229,14 @@
                  "Ayuda Received ₱42,500" to everyone; no amount received is
                  recorded anywhere, so it is gone. --}}
             <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="hand-heart" color="purple" :delay="0" />
-            <x-ui.stat-card label="Isinasagawa" labelEn="Processing" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="purple" :delay="40" />
-            <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="brand" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed'].includes(r.status)).length" icon="badge-check" color="gold" :delay="120" />
+            <x-ui.stat-card label="Isinasagawa" labelEn="Processing" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Ready for Release').length" icon="loader" color="purple" :delay="40" />
+            <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="brand" :delay="80" />
+            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="badge-check" color="gold" :delay="120" />
         </div>
 
         <div class="flex items-center gap-3 mb-3">
             <h3 class="text-sm font-semibold text-navy-900"><x-ui.t fil="Aking mga Kahilingan" en="My Requests" /></h3>
-            <x-citizen.status-guide />
+            <x-citizen.status-guide type="tulong" />
         </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2.5 mb-4">
@@ -985,11 +990,12 @@
                                 <i data-lucide="ban" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
                                     <p class="text-xs font-semibold text-slate-600"><x-ui.t fil="Kinansela ang kahilingang ito" en="This request was cancelled" /></p>
+                                    <p class="text-xs text-slate-600 mt-0.5" x-show="selectedRequest.remarks" x-text="selectedRequest.remarks"></p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="['Submitted', 'Under Verification', 'Resubmitted'].includes(selectedRequest.status) && (selectedRequest.requirements || []).length" x-cloak>
+                        <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="['Submitted', 'Initial Screening'].includes(selectedRequest.status) && (selectedRequest.requirements || []).length" x-cloak>
                             <p class="text-xs font-semibold text-navy-900 mb-2"><x-ui.t fil="Aking mga Dokumento para dito" en="My documents for this request" /></p>
                             <div class="space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
@@ -1008,7 +1014,10 @@
                             </div>
                         </div>
 
-                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Under Review' && (selectedRequest.requirements || []).length">
+                        {{-- Tulong's correction state. Sending the corrections
+                             returns the case to Initial Screening (there is no
+                             separate Resubmitted status in Tulong). --}}
+                        <div class="rounded-xl bg-amber-50 border border-amber-100 mt-5" x-show="selectedRequest.status === 'Needs Requirements' && (selectedRequest.requirements || []).length">
                             <div class="flex items-start gap-2.5 px-3.5 py-2.5">
                                 <i data-lucide="triangle-alert" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
@@ -1050,6 +1059,48 @@
                                 >
                                     <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Application' : 'Isumite Muli ang Aplikasyon')"></span>
                                 </x-ui.button>
+                            </div>
+                        </div>
+
+                        {{-- Internal re-verification: nothing for the resident
+                             to do, so a plain note, never a correction panel. --}}
+                        <div class="rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Returned for Reassessment'" x-cloak>
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="hourglass" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
+                                <p class="text-xs text-slate-600"><x-ui.t fil="Muling sinusuri ng opisina ang iyong kaso. Wala kang kailangang gawin." en="The office is re-checking your case. Nothing is needed from you." /></p>
+                            </div>
+                        </div>
+
+                        {{-- Approved: what was approved, and where to claim it
+                             once it is ready. --}}
+                        <div class="rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-2.5 mt-5" x-show="['Assistance Processing', 'Ready for Release'].includes(selectedRequest.status)" x-cloak>
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="badge-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-emerald-800" x-show="selectedRequest.status === 'Assistance Processing'"><x-ui.t fil="Naaprubahan — inihahanda na ang iyong tulong" en="Approved — your assistance is being prepared" /></p>
+                                    <p class="text-xs font-semibold text-emerald-800" x-show="selectedRequest.status === 'Ready for Release'"><x-ui.t fil="Handa nang kunin ang iyong tulong" en="Your assistance is ready to claim" /></p>
+                                    <p class="text-xs text-emerald-700 mt-0.5" x-show="selectedRequest.assistance?.approved_amount">
+                                        <x-ui.t fil="Inaprubahang halaga:" en="Approved amount:" /> <span class="font-semibold tabular-nums" x-text="peso(selectedRequest.assistance?.approved_amount)"></span>
+                                    </p>
+                                    <p class="text-xs text-emerald-700 mt-0.5" x-show="selectedRequest.status === 'Ready for Release'"><x-ui.t fil="Magdala ng valid ID sa opisinang nakalista sa ibaba." en="Bring a valid ID to the office listed below." /></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Completed: what was received. --}}
+                        <div class="rounded-xl bg-green-50 border border-green-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Completed'" x-cloak>
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="circle-check" class="w-4 h-4 text-green-600 shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-green-800"><x-ui.t fil="Natanggap na ang tulong" en="Assistance received" /></p>
+                                    <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.released_amount">
+                                        <x-ui.t fil="Halaga:" en="Amount:" /> <span class="font-semibold tabular-nums" x-text="peso(selectedRequest.assistance?.released_amount)"></span>
+                                    </p>
+                                    <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.release_reference">
+                                        <x-ui.t fil="Reference:" en="Reference:" /> <span class="font-mono" x-text="selectedRequest.assistance?.release_reference"></span>
+                                    </p>
+                                    <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.released_at" x-text="formatDay(selectedRequest.assistance?.released_at)"></p>
+                                </div>
                             </div>
                         </div>
 

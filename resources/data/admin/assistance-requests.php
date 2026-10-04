@@ -184,5 +184,6 @@ return [
 
     'tabs' => ['all' => 'All', 'action' => 'Needs Action', 'release' => 'Ready for Release', 'done' => 'Completed'],
 
-    'actionStatuses' => ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Needs Requirements', 'Returned for Reassessment'],
+    // Waiting on staff. Needs Requirements is waiting on the resident.
+    'actionStatuses' => ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Returned for Reassessment', 'Assistance Processing'],
 ];

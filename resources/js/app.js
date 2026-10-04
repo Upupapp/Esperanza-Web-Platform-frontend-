@@ -415,14 +415,23 @@ document.addEventListener('alpine:init', () => {
             if (side === 'admin') {
                 const session = Alpine.store('session');
                 if (!session.account) return;
+                // Waiting on a first look, in each type's own vocabulary: a
+                // resident's corrections make a Dokyu request Resubmitted and
+                // return a Tulong case to Initial Screening.
+                const waiting = { dokyu: 'Submitted,Resubmitted', tulong: 'Submitted,Initial Screening' };
                 const count = (type) => (session.can(type)
-                    ? api.get('/admin/' + type + '/requests', { params: { status: 'Submitted,Resubmitted', per_page: 1 } }).then(total).catch(() => null)
+                    ? api.get('/admin/' + type + '/requests', { params: { status: waiting[type], per_page: 1 } }).then(total).catch(() => null)
                     : Promise.resolve(null));
                 [this.dokyu, this.tulong] = await Promise.all([count('dokyu'), count('tulong')]);
             } else {
                 if (!Alpine.store('citizenSession').account) return;
-                const open = 'Submitted,Under Verification,Under Review,Resubmitted,Approved,Mark to Release';
-                const count = (type) => api.get('/citizen/requests', { params: { type, status: open, per_page: 1 } }).then(total).catch(() => null);
+                // Still open, in each type's own vocabulary (Tulong's is
+                // config/esperanza_tulong_lifecycle.php, not the fifteen).
+                const open = {
+                    dokyu: 'Submitted,Under Verification,Under Review,Resubmitted,Approved,Mark to Release',
+                    tulong: 'Submitted,Initial Screening,Needs Requirements,Assessment,For Approval,Returned for Reassessment,Assistance Processing,Ready for Release',
+                };
+                const count = (type) => api.get('/citizen/requests', { params: { type, status: open[type], per_page: 1 } }).then(total).catch(() => null);
                 [this.dokyu, this.tulong] = await Promise.all([count('dokyu'), count('tulong')]);
             }
         },

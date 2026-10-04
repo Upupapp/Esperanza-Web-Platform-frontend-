@@ -22,6 +22,11 @@
                 'Under Review': '#f97316', 'Resubmitted': '#0ea5e9', 'Approved': '#10b981',
                 'Rejected': '#f43f5e', 'Mark to Release': '#14b8a6', 'Released': '#06b6d4',
                 'Completed': '#22c55e', 'Cancelled': '#94a3b8', 'Archived': '#cbd5e1',
+                // Tulong's own case statuses (config/esperanza_tulong_lifecycle.php),
+                // the same hues as its pages.
+                'Initial Screening': '#2563eb', 'Needs Requirements': '#f59e0b', 'Assessment': '#6366f1',
+                'For Approval': '#d97706', 'Returned for Reassessment': '#f97316',
+                'Assistance Processing': '#a855f7', 'Ready for Release': '#14b8a6',
             },
             alertColors: {
                 'Critical': 'bg-rose-50 text-rose-600', 'Warning': 'bg-orange-50 text-orange-600',

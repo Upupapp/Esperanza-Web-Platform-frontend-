@@ -137,28 +137,64 @@ class TulongLifecycleTest extends TestCase
     }
 
     /**
-     * The steppers show the lifecycle the SERVER runs, and both show the same one.
+     * Both steppers are the declared main sequence, and so is the server.
      *
-     * The case-management sequence declared in config is still the spec, but the
-     * backend runs Tulong on the shared request engine (RequestLifecycle; its
-     * finding B-044 is open), and the Tulong pages now read and act on real
-     * requests (2026-10-04). A stepper drawn from statuses no request can reach
-     * would sit on step one forever, so both follow the engine's main line until
-     * the backend implements the case lifecycle -- at which point this test goes
-     * back to the declared main sequence.
+     * The backend runs Tulong's own case lifecycle since its finding B-044 closed
+     * (2026-10-04), vendored from this config, so the declared sequence is the
+     * one a real case moves through. (For the weeks between the pages going live
+     * and that change, both steppers followed the shared request engine instead,
+     * because a stepper drawn from statuses no request could reach sat on step
+     * one forever.)
      */
-    public function test_both_steppers_follow_the_lifecycle_the_server_runs(): void
+    public function test_both_steppers_follow_the_declared_main_sequence(): void
     {
-        $engine = ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'];
+        $main = config('esperanza_tulong_lifecycle.main_sequence');
 
-        $this->assertSame($engine, $this->jsArray('resources/views/admin/assistance-requests.blade.php', 'statusOrder'),
-            "The admin Process tab's statusOrder is not the server's lifecycle."
+        $this->assertSame($main, $this->jsArray('resources/views/admin/assistance-requests.blade.php', 'statusOrder'),
+            "The admin Process tab's statusOrder is not the declared main sequence."
         );
 
-        $this->assertSame($engine, $this->jsArray('resources/views/citizen/assistance-requests.blade.php', 'stepOrder'),
-            "The citizen stepper's stepOrder is not the server's lifecycle. "
+        $this->assertSame($main, $this->jsArray('resources/views/citizen/assistance-requests.blade.php', 'stepOrder'),
+            "The citizen stepper's stepOrder is not the declared main sequence. "
             .'The two sides would then show a case at different stages.'
         );
+    }
+
+    /** The resident's status guide on the Tulong page explains every case status, and only those. */
+    public function test_the_tulong_status_guide_explains_the_declared_vocabulary(): void
+    {
+        $html = (string) $this->blade('<x-citizen.status-guide type="tulong" />');
+
+        foreach ($this->all() as $status) {
+            $this->assertStringContainsString('>'.$status.'</span>', preg_replace('/\s+</', '<', $html),
+                "The Tulong status guide does not explain '{$status}'."
+            );
+        }
+
+        foreach (['Under Verification', 'Mark to Release', 'Released<'] as $engineOnly) {
+            $this->assertStringNotContainsString($engineOnly, $html,
+                "The Tulong status guide still explains the request engine's '{$engineOnly}'."
+            );
+        }
+    }
+
+    /** Neither page may still carry the shared engine's statuses. */
+    public function test_neither_page_speaks_the_request_engine_vocabulary(): void
+    {
+        foreach ([
+            'resources/views/admin/assistance-requests.blade.php',
+            'resources/views/citizen/assistance-requests.blade.php',
+        ] as $blade) {
+            $source = file_get_contents(base_path($blade));
+
+            // Case-level names only: Resubmitted and Approved are also
+            // requirement statuses (shared with Dokyu), so they stay.
+            foreach (['Under Verification', 'Under Review', 'Mark to Release', 'Released'] as $engineOnly) {
+                $this->assertStringNotContainsString("'{$engineOnly}'", $source,
+                    "{$blade} still names the request engine's '{$engineOnly}', which a Tulong case never holds."
+                );
+            }
+        }
     }
 
     public function test_every_declared_status_has_a_style_on_both_sides(): void

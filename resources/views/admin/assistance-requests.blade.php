@@ -76,31 +76,35 @@
             open: false,
             selected: null,
             processing: false,
-            rejectRemarks: '',
-            // Side-state action forms — Milestones 3/6/10 each require a
-            // reason/specification before confirming, same pattern as the
-            // existing Reject flow's rejectRemarks + Confirm button.
-            showReturnForm: false,
-            returnRemarks: '',
-            showCancelForm: false,
-            cancelRemarks: '',
-            showRequirementsForm: false,
-            missingRequirementPicks: [],
-            missingRequirementOther: '',
+            // Reject, Cancel and Return for Reassessment each need a typed
+            // reason (the contract's requires_reason). One form serves all
+            // three: sideForm names which, sideReason holds the text.
+            sideForm: null,
+            sideReason: '',
+            // The stage forms. Assessment records the findings and a
+            // recommended amount; For Approval sets the approved amount;
+            // Ready for Release records who received it, the actual amount, a
+            // reference and the proof.
+            assessNotes: '',
+            assessAmount: '',
+            approveAmount: '',
+            releaseTo: '',
+            releaseAmount: '',
+            releaseReference: '',
+            releaseNote: '',
             previewDoc: null,
-            // Tulong runs the same lifecycle engine as Dokyu on the server
-            // (RequestLifecycle; the case-management stages of
-            // config/esperanza_tulong_lifecycle.php are backend finding B-044,
-            // still open), so the queue shows and acts on the engine's
-            // statuses. The stage-by-stage case forms that had nowhere to be
-            // saved are gone until the backend stores them.
+            // Tulong runs its own case lifecycle on the server (backend finding
+            // B-044, closed 2026-10-04): the eleven statuses of
+            // config/esperanza_tulong_lifecycle.php, each move a real endpoint.
+            // The detail's case.next lists the moves the server will accept
+            // from where the case stands, so the buttons follow it.
             requests: [],
             requestsLoading: true,
             requestsFailed: false,
             detailLoading: false,
             citizenAvatars: {},
-            actionStatuses: ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted'],
-            allTulongStatuses: ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted', 'Approved', 'Mark to Release', 'Released', 'Rejected'],
+            actionStatuses: @js($actionStatuses),
+            allTulongStatuses: @js($allTulongStatuses),
             formSpecsByType: @js($formSpecsByType),
             wizardFieldsByKey: @js($wizardFieldsByKey),
             catalogNameByKey: @js($catalogNameByKey),
@@ -117,8 +121,19 @@
             // processingKind field. Falls back to 'general' for any type
             // missing one rather than guessing from the name.
             get processingKind() {
+                if (this.selected?.case?.processing_kind) return this.selected.case.processing_kind;
                 const name = this.catalogNameByKey[this.selected?.service_key] || this.selected?.type;
                 return this.tulongTypesByName[name]?.processingKind || 'general';
+            },
+            // Goods and registration programs give a package or an enrollment,
+            // not a sum, so they ask for no peso amount.
+            get showsAmount() {
+                return !['goods', 'registration'].includes(this.processingKind);
+            },
+            peso(v) {
+                if (v === null || v === undefined || v === '') return '—';
+                const n = Number(v);
+                return isNaN(n) ? String(v) : '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             },
             // Evidence Strength Hierarchy (guide section 1.2) — a light
             // keyword heuristic since this is mock/reference data, not a
@@ -132,14 +147,14 @@
             },
             insertStandardReason(label) {
                 const r = this.standardReasons.find(x => x.label === label);
-                if (r) this.rejectRemarks = r.message;
+                if (r) this.sideReason = r.message;
             },
             get flaggedRequirements() {
                 return (this.selected?.requirements || []).filter(r => r.reject_reason || r.remarks);
             },
             useRequirementReasons() {
                 if (!this.flaggedRequirements.length) return;
-                this.rejectRemarks = this.flaggedRequirements
+                this.sideReason = this.flaggedRequirements
                     .map(r => r.name + ': ' + (r.remarks || r.reject_reason))
                     .join('\n\n');
             },
@@ -258,6 +273,7 @@
                     requirements: null,
                     remarks: null,
                     history: [],
+                    case: {},
                     release_evidence: null,
                     release_evidence_at: null,
                 };
@@ -351,18 +367,45 @@
             applyDetail(r, d) {
                 r.status = d.status;
                 r.office = d.office || r.office;
+                // Reject and Cancel both record their reason as the decision
+                // remarks; the return reason is the case's own.
                 r.remarks = d.decision_remarks || null;
+                r.cancelReason = d.status === 'Cancelled' ? (d.decision_remarks || null) : null;
+                r.case = d.case || {};
+                r.returnReason = r.case.return_reason || null;
                 r.form_data = d.form_data || {};
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : '';
                 r.form_steps = this.formStepsFor(r.type, d.form_data, r.service_key);
                 r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
                 r.payment = d.payment || null;
-                r.history = (d.history || []).map((h) => ({ stage: h.to, date: this.formatDay(h.at), by: h.actor_name || '—', note: h.trigger || '' }));
+                r.history = (d.history || []).map((h) => ({ stage: h.to, from: h.from, date: this.formatDay(h.at), by: h.actor_name || '—', note: h.trigger || '' }));
                 const proof = d.proof_of_release || {};
+                r.proofNote = proof.note || null;
                 if (proof.captured) {
                     r.release_evidence = proof.file?.url || r.release_evidence || null;
                     r.release_evidence_at = proof.note || 'on file';
                 }
+            },
+            resetCaseForms() {
+                this.sideForm = null;
+                this.sideReason = '';
+                this.assessNotes = '';
+                this.assessAmount = '';
+                this.approveAmount = '';
+                this.releaseTo = '';
+                this.releaseAmount = '';
+                this.releaseReference = '';
+                this.releaseNote = '';
+            },
+            // Start each form from what the case already holds: the approval
+            // from the recommendation, the release from the approval and the
+            // applicant's name. Only empty fields are filled, so a refresh
+            // after a document decision never overwrites what was typed.
+            prefillCaseForms(r) {
+                const c = r.case || {};
+                if (this.approveAmount === '' && c.recommended_amount !== null && c.recommended_amount !== undefined) this.approveAmount = String(Number(c.recommended_amount));
+                if (this.releaseTo === '' && r.status === 'Ready for Release' && r.citizen && r.citizen !== '—') this.releaseTo = r.citizen;
+                if (this.releaseAmount === '' && c.approved_amount !== null && c.approved_amount !== undefined) this.releaseAmount = String(Number(c.approved_amount));
             },
             async refreshSelected() {
                 if (!this.selected) return;
@@ -397,12 +440,6 @@
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
                 'Submitted': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
-                'Under Verification': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
-                'Under Review': ['bg-orange-50 text-orange-700 ring-orange-200', 'bg-orange-500'],
-                'Resubmitted': ['bg-sky-50 text-sky-700 ring-sky-200', 'bg-sky-500'],
-                'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
-                'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
-                'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Initial Screening': ['bg-blue-50 text-blue-700 ring-blue-200', 'bg-blue-500'],
                 'Needs Requirements': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Assessment': ['bg-indigo-50 text-indigo-700 ring-indigo-200', 'bg-indigo-500'],
@@ -418,8 +455,8 @@
                 if (this.statusFilter) return r.status === this.statusFilter;
                 if (this.tab === 'all') return true;
                 if (this.tab === 'action') return this.actionStatuses.includes(r.status);
-                if (this.tab === 'release') return r.status === 'Mark to Release';
-                if (this.tab === 'done') return ['Released', 'Rejected'].includes(r.status);
+                if (this.tab === 'release') return r.status === 'Ready for Release';
+                if (this.tab === 'done') return this.terminalStatuses.includes(r.status);
                 return true;
             },
             get filteredRequests() {
@@ -437,22 +474,30 @@
                 );
             },
             clearAdvancedFilters() { this.categoryFilter = ''; this.officeFilter = ''; this.levelFilter = ''; this.assignedFilter = ''; this.barangayFilter = ''; this.statusFilter = ''; },
-            // The engine's main line (see statusOrder below); Under Review and
-            // Resubmitted are the correction loop at the verification step.
+            // The main line (statusOrder below). A side state sits on the step
+            // it branches from; a closed case stays on the step it closed at.
             stepIndex(status) {
-                const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Rejected': 0 };
-                return map[status] ?? 0;
+                const side = { 'Needs Requirements': 'Initial Screening', 'Returned for Reassessment': 'For Approval' };
+                const at = this.statusOrder.indexOf(side[status] || status);
+                if (at >= 0) return at;
+                if (status === 'Rejected' || status === 'Cancelled') {
+                    const last = (this.selected?.history || []).filter(h => h.stage === status).pop();
+                    const from = last?.from ? (side[last.from] || last.from) : null;
+                    return Math.max(0, this.statusOrder.indexOf(from));
+                }
+                return 0;
             },
-            // Opening is the server's own trigger: GET on a Submitted request
-            // moves it to Under Verification (RequestLifecycle::open).
+            // Opening is the server's own trigger: GET on a Submitted case
+            // moves it to Initial Screening (RequestLifecycle::open).
             async openRequest(r) {
                 this.selected = r;
-                this.rejectRemarks = '';
+                this.resetCaseForms();
                 this.previewDoc = null;
                 this.open = true;
                 this.detailLoading = true;
                 try {
                     await this.refreshSelected();
+                    this.prefillCaseForms(r);
                 } catch (err) {
                     this.$dispatch('toast', { message: this.apiMessage(err, 'Could not open ' + r.ref + '.'), variant: 'error' });
                 } finally {
@@ -460,18 +505,51 @@
                     this.$nextTick(() => window.renderIcons?.());
                 }
             },
-            async rejectCase() {
-                if (this.processing || !this.rejectRemarks.trim()) return;
-                this.processing = true;
+            // One case move: POST the action, take the server's detail as the
+            // new state, and start the next stage's form from it.
+            async moveCase(action, body, okMessage, variant) {
+                if (this.processing) return false;
                 const r = this.selected;
+                this.processing = true;
                 try {
-                    const res = await $api.post(this.apiBase(r.ref) + '/reject', { decision_remarks: this.rejectRemarks.trim() });
+                    const res = await $api.post(this.apiBase(r.ref) + '/' + action, body);
                     this.applyDetail(r, res.data);
-                    this.rejectRemarks = '';
-                    this.$dispatch('toast', { message: 'Case ' + r.ref + ' rejected.', variant: 'error' });
+                    this.resetCaseForms();
+                    this.prefillCaseForms(r);
+                    this.$dispatch('toast', { message: okMessage || (r.ref + ' moved to ' + r.status + '.'), variant: variant || 'success' });
+                    return true;
                 } catch (err) {
-                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not reject ' + r.ref + '.'), variant: 'error' });
-                } finally { this.processing = false; }
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not update ' + r.ref + '.'), variant: 'error' });
+                    return false;
+                } finally {
+                    this.processing = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
+            },
+            canMove(to) {
+                return !this.detailLoading && (this.selected?.case?.next || []).includes(to);
+            },
+            sideForms: {
+                reject: { title: 'Reject Case', confirm: 'Confirm Rejection', hint: 'The resident reads this reason. Reject only when the case cannot qualify.' },
+                cancel: { title: 'Cancel Case', confirm: 'Confirm Cancellation', hint: 'For a case the resident or the office withdrew before an approval decision. The resident reads this reason.' },
+                return: { title: 'Return for Reassessment', confirm: 'Return to Assessment', hint: 'Why the recommendation needs re-verification. Internal: the resident is not notified.' },
+            },
+            openSideForm(kind) {
+                this.sideForm = kind;
+                this.sideReason = '';
+                this.$nextTick(() => { this.$refs.sideFormPanel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); window.renderIcons?.(); });
+            },
+            async confirmSideForm() {
+                const reason = this.sideReason.trim();
+                if (!reason || !this.sideForm) return;
+                const ref = this.selected.ref;
+                if (this.sideForm === 'reject') {
+                    await this.moveCase('reject', { decision_remarks: reason }, 'Case ' + ref + ' rejected.', 'error');
+                } else if (this.sideForm === 'cancel') {
+                    await this.moveCase('cancel', { reason }, 'Case ' + ref + ' cancelled.', 'warning');
+                } else if (this.sideForm === 'return') {
+                    await this.moveCase('return-for-reassessment', { reason }, ref + ' returned for reassessment.', 'warning');
+                }
             },
             rejectReasons: ['Invalid document', 'Incorrect document', 'Unreadable', 'Expired', 'Wrong document', 'Missing information', 'Does not meet requirement', 'Other'],
             async verifyRequirement(req) {
@@ -520,40 +598,64 @@
                 const st = this.selected.status;
                 if (this.detailLoading) return { icon: 'loader-circle', tone: 'brand', title: 'Loading', message: 'Opening the case…' };
                 if (st === 'Rejected') return { icon: 'circle-x', tone: 'rose', title: 'Rejected', message: this.selected.remarks || 'This case was rejected.' };
-                if (st === 'Released') return { icon: 'circle-check', tone: 'emerald', title: 'Released', message: 'The assistance was released to the beneficiary. No further action is needed.' };
-                if (st === 'Mark to Release') {
-                    return this.selected.release_evidence
-                        ? { icon: 'circle-check', tone: 'emerald', title: 'Ready to Confirm', message: 'Proof of Release is ready. Confirm the release once the beneficiary actually receives it.' }
-                        : { icon: 'truck', tone: 'amber', title: 'Release Assistance', message: 'Capture Proof of Release, then confirm once received by the beneficiary.' };
+                if (st === 'Cancelled') return { icon: 'ban', tone: 'slate', title: 'Cancelled', message: this.selected.cancelReason || 'This case was cancelled.' };
+                if (st === 'Completed') return { icon: 'circle-check', tone: 'emerald', title: 'Completed', message: 'The assistance was released and the release is on record. No further action is needed.' };
+                if (st === 'Ready for Release') {
+                    return this.hasReleaseProof
+                        ? { icon: 'circle-check', tone: 'emerald', title: 'Ready to Confirm', message: 'Proof of Release is in hand. Record who received it, the amount and the reference, then confirm.' }
+                        : { icon: 'truck', tone: 'amber', title: 'Release Assistance', message: 'Capture Proof of Release (a photo, or a note on the acknowledgement), then confirm once the beneficiary has received it.' };
                 }
-                if (st === 'Approved') return { icon: 'package', tone: 'indigo', title: 'Prepare Assistance', message: 'The case is approved. Prepare the assistance, then mark it ready for release.' };
+                if (st === 'Assistance Processing') {
+                    const prep = { cash: 'Prepare the payout or voucher for the approved amount', goods: 'Prepare the approved package', medical: 'Prepare the guarantee letter or the payment to the provider', registration: 'Confirm the enrollment' }[this.processingKind] || 'Prepare the approved assistance';
+                    return { icon: 'package', tone: 'indigo', title: 'Prepare Assistance', message: prep + ', then mark the case ready for release.' };
+                }
+                if (st === 'For Approval') return { icon: 'stamp', tone: 'amber', title: 'Awaiting Approval', message: 'Approve the assistance (the approved amount may differ from the recommendation), return it for reassessment, or reject the case.' };
+                if (st === 'Returned for Reassessment') return { icon: 'rotate-ccw', tone: 'orange', title: 'Reassess', message: 'The approver sent this back' + (this.selected.returnReason ? ': ' + this.selected.returnReason : '.') + ' Resume the assessment to revise it.' };
+                if (st === 'Assessment') return { icon: 'clipboard-pen', tone: 'indigo', title: 'Assess Eligibility', message: 'Record the eligibility findings' + (this.showsAmount ? ' and a recommended amount' : '') + ', then submit for approval.' };
                 const reqs = this.selected.requirements || [];
                 const flagged = reqs.filter(r => r.status === 'Flagged for Replacement').length;
                 const pending = reqs.filter(r => r.status === 'Submitted' || r.status === 'Resubmitted').length;
-                if (st === 'Under Review' && flagged) return { icon: 'clock', tone: 'amber', title: 'Awaiting Beneficiary', message: flagged + ' document(s) flagged for replacement — waiting for the resident to send new ones.' };
-                if (pending) return { icon: 'search-check', tone: 'indigo', title: 'Check Eligibility', message: pending + ' of ' + reqs.length + ' requirement(s) still need review. Approve each, or flag what must be replaced.' };
-                if (reqs.length && reqs.every(r => r.status === 'Approved')) return { icon: 'circle-check', tone: 'emerald', title: 'Ready to Approve', message: 'Every requirement is verified. You can approve the assistance.' };
-                return { icon: 'clipboard-list', tone: 'brand', title: 'Review Case', message: 'Review the applicant and the submitted requirements, then decide.' };
+                if (st === 'Needs Requirements') return { icon: 'clock', tone: 'amber', title: 'Awaiting Beneficiary', message: (flagged ? flagged + ' document(s) flagged for replacement' : 'Requirements requested') + ' — waiting for the resident. The case returns to screening when they resubmit.' };
+                if (pending) return { icon: 'search-check', tone: 'indigo', title: 'Screen Requirements', message: pending + ' of ' + reqs.length + ' requirement(s) still need review. Approve each, or flag what must be replaced (that asks the resident for it).' };
+                if (st === 'Initial Screening' && this.screeningDone) return { icon: 'circle-check', tone: 'emerald', title: 'Screening Done', message: 'Every requirement is decided. Proceed to the eligibility assessment.' };
+                return { icon: 'clipboard-list', tone: 'brand', title: 'Review Case', message: 'Review the applicant and the submitted requirements.' };
             },
-            get canReject() {
-                return this.selected && ['Under Verification', 'Under Review', 'Resubmitted'].includes(this.selected.status);
+            // The server refuses Proceed to Assessment while any requirement
+            // is undecided or waiting on a replacement (SCREENING_NOT_FINISHED).
+            get screeningDone() {
+                return (this.selected?.requirements || []).every(q => !['Submitted', 'Resubmitted', 'Flagged for Replacement'].includes(q.status));
             },
-            statusOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
-            terminalStatuses: ['Released', 'Rejected', 'Completed', 'Cancelled', 'Archived'],
+            get hasReleaseProof() {
+                return !!(this.selected && (this.selected._proofFile || this.releaseNote.trim() || this.selected.release_evidence));
+            },
+            // Tulong's main line, as config/esperanza_tulong_lifecycle.php
+            // declares it (tests/Feature/TulongLifecycleTest.php pins the two).
+            statusOrder: ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'],
+            terminalStatuses: ['Completed', 'Rejected', 'Cancelled'],
             stageActionLabels: {
-                'Under Verification': 'Approve Assistance',
-                'Under Review': 'Approve Assistance',
-                'Resubmitted': 'Approve Assistance',
-                'Approved': 'Mark Ready for Release',
-                'Mark to Release': 'Confirm Release',
+                'Initial Screening': 'Proceed to Assessment',
+                'Returned for Reassessment': 'Resume Assessment',
+                'Assessment': 'Submit for Approval',
+                'For Approval': 'Approve Assistance',
+                'Assistance Processing': 'Mark Ready for Release',
+                'Ready for Release': 'Confirm Release',
             },
             get nextStageLabel() {
                 if (!this.selected || this.detailLoading) return '';
                 return this.stageActionLabels[this.selected.status] ?? '';
             },
+            // Why the primary button is not available yet, or '' when it is.
+            get primaryBlocked() {
+                const st = this.selected?.status;
+                if (st === 'Initial Screening' && !this.screeningDone) return 'Decide every requirement first.';
+                if (st === 'Assessment' && !this.assessNotes.trim()) return 'Write the eligibility findings first.';
+                if (st === 'Ready for Release' && !this.releaseTo.trim()) return 'Record who received the assistance.';
+                if (st === 'Ready for Release' && !this.hasReleaseProof) return 'Capture Proof of Release first.';
+                return '';
+            },
             // A real photo, held here and sent with the release itself
-            // (POST .../release, proof_file): the server refuses a release
-            // without proof.
+            // (POST .../complete, proof_file): the server refuses to complete
+            // a case without proof.
             captureReleaseEvidence(source) {
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -579,34 +681,31 @@
                 this.selected.release_evidence_at = null;
             },
             // The footer's one primary button, a real endpoint per stage:
-            //   Under Verification / Under Review / Resubmitted -> approve
-            //   Approved        -> mark-to-release
-            //   Mark to Release -> release, carrying the proof-of-release photo
+            //   Initial Screening / Returned for Reassessment -> begin-assessment
+            //   Assessment            -> recommend (findings, recommended amount)
+            //   For Approval          -> approve-assistance (approved amount)
+            //   Assistance Processing -> ready-for-release
+            //   Ready for Release     -> complete (recipient, amount, reference, proof)
             async primaryAction() {
-                if (this.processing) return;
+                if (this.processing || this.primaryBlocked) return;
                 const r = this.selected;
-                this.processing = true;
-                try {
-                    let res;
-                    if (['Under Verification', 'Under Review', 'Resubmitted'].includes(r.status)) {
-                        res = await $api.post(this.apiBase(r.ref) + '/approve');
-                    } else if (r.status === 'Approved') {
-                        res = await $api.post(this.apiBase(r.ref) + '/mark-to-release');
-                    } else if (r.status === 'Mark to Release') {
-                        const form = new FormData();
-                        if (r._proofFile) form.append('proof_file', r._proofFile);
-                        form.append('proof_note', 'Released to ' + r.citizen + '. Recorded by ' + (this.$store.session.account?.name || 'staff') + '.');
-                        res = await $api.post(this.apiBase(r.ref) + '/release', form);
-                    } else {
-                        return;
-                    }
-                    this.applyDetail(r, res.data);
-                    this.$dispatch('toast', { message: r.ref + ' moved to: ' + r.status + '.', variant: 'success' });
-                } catch (err) {
-                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not update ' + r.ref + '.'), variant: 'error' });
-                } finally {
-                    this.processing = false;
-                    this.$nextTick(() => window.renderIcons?.());
+                const amount = (v) => (v === '' || v === null || v === undefined) ? null : Number(v);
+                if (['Initial Screening', 'Returned for Reassessment'].includes(r.status)) {
+                    await this.moveCase('begin-assessment', {});
+                } else if (r.status === 'Assessment') {
+                    await this.moveCase('recommend', { assessment_notes: this.assessNotes.trim(), recommended_amount: this.showsAmount ? amount(this.assessAmount) : null }, r.ref + ' submitted for approval.');
+                } else if (r.status === 'For Approval') {
+                    await this.moveCase('approve-assistance', { approved_amount: this.showsAmount ? amount(this.approveAmount) : null }, 'Assistance approved for ' + r.ref + '.');
+                } else if (r.status === 'Assistance Processing') {
+                    await this.moveCase('ready-for-release', {});
+                } else if (r.status === 'Ready for Release') {
+                    const form = new FormData();
+                    form.append('released_to', this.releaseTo.trim());
+                    if (this.showsAmount && this.releaseAmount !== '') form.append('released_amount', this.releaseAmount);
+                    if (this.releaseReference.trim()) form.append('release_reference', this.releaseReference.trim());
+                    if (r._proofFile) form.append('proof_file', r._proofFile);
+                    if (this.releaseNote.trim()) form.append('proof_note', this.releaseNote.trim());
+                    await this.moveCase('complete', form, r.ref + ' completed. The release is on record.');
                 }
             },
         }"
@@ -642,12 +741,12 @@
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Active Cases" value="{{ collect($requests)->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled', 'Archived'])->count() }}" valueBind="requests.filter(r => !terminalStatuses.includes(r.status)).length" icon="hand-heart" color="purple" :delay="0" />
             <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or assessment" :delay="40" />
-            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
             {{-- These two were hard-coded peso figures ("₱1.8M of ₱2.5M") shown as
                  if they were the municipality's budget. No budget or
                  disbursement amount is recorded anywhere, so they count what is
                  real instead. --}}
-            <x-ui.stat-card @click="tab = 'done'" class="cursor-pointer" label="Released" value="0" valueBind="requests.filter(r => r.status === 'Released').length" icon="hand-coins" color="gold" sublabel="Assistance received" :delay="120" />
+            <x-ui.stat-card @click="tab = 'done'" class="cursor-pointer" label="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="hand-coins" color="gold" sublabel="Assistance received" :delay="120" />
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="All Cases" value="0" valueBind="requests.length" icon="wallet" color="brand" sublabel="Every status" :delay="160" />
         </div>
 
@@ -811,7 +910,7 @@
                     <div class="sm:w-44 shrink-0">
                         <p class="text-xs text-slate-500 mb-3 font-mono" x-text="selected.ref"></p>
                         <div class="flex flex-col">
-                            @foreach(['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'] as $i => $step)
+                            @foreach(config('esperanza_tulong_lifecycle.main_sequence') as $i => $step)
                                 <div class="flex items-start gap-3">
                                     <div class="flex flex-col items-center shrink-0">
                                         <span
@@ -1024,10 +1123,11 @@
                     <div class="rounded-xl border border-amber-200 bg-amber-50/40 px-3.5 py-3 mt-3" x-show="selected.status === 'Needs Requirements'" x-cloak>
                         <p class="text-xs font-semibold text-amber-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Requirements Needed</p>
                         <ul class="mt-2 space-y-1">
-                            <template x-for="item in (selected.screening?.missingRequirements || [])" :key="item">
-                                <li class="text-xs text-amber-700 flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-500 shrink-0"></span><span x-text="item"></span></li>
+                            <template x-for="item in (selected.requirements || []).filter(q => q.status === 'Flagged for Replacement')" :key="item.key">
+                                <li class="text-xs text-amber-700 flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-500 shrink-0"></span><span x-text="item.name + (item.reject_reason ? ' — ' + item.reject_reason : '')"></span></li>
                             </template>
                         </ul>
+                        <p class="text-[11px] text-amber-700 mt-2">The resident was notified. Their resubmission returns the case to Initial Screening.</p>
                     </div>
 
                     {{-- Returned for Reassessment banner. --}}
@@ -1056,6 +1156,118 @@
 
 
 
+                    {{-- Eligibility assessment (Assessment): the findings and the
+                         recommendation the approver decides on. --}}
+                    <div class="rounded-xl border border-indigo-200 bg-indigo-50/30 p-3.5 mt-3" x-show="selected.status === 'Assessment' && !detailLoading" x-cloak>
+                        <p class="text-xs font-semibold text-indigo-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="clipboard-pen" class="w-3.5 h-3.5"></i> Eligibility Assessment</p>
+                        <p class="text-[11px] text-slate-500 mt-1">What you found and what you recommend. The approver reads this; the resident does not.</p>
+                        <label for="tulong-assess-notes" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Findings <span class="text-rose-600">*</span></label>
+                        <textarea id="tulong-assess-notes" x-model="assessNotes" rows="3" maxlength="4000" placeholder="e.g. Enrolled for SY 2026-2027; household income is below the program threshold."
+                            class="w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                        <div x-show="showsAmount" class="mt-2">
+                            <label for="tulong-assess-amount" class="block text-[11px] font-medium text-slate-600 mb-1">Recommended amount (₱)</label>
+                            <input id="tulong-assess-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="assessAmount" placeholder="0.00"
+                                class="w-full sm:w-48 rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 tabular-nums focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        </div>
+                    </div>
+
+                    {{-- Approval (For Approval): the approved amount, kept apart
+                         from the recommendation it may change. --}}
+                    <div class="rounded-xl border border-amber-200 bg-amber-50/30 p-3.5 mt-3" x-show="selected.status === 'For Approval' && !detailLoading && showsAmount" x-cloak>
+                        <p class="text-xs font-semibold text-amber-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="stamp" class="w-3.5 h-3.5"></i> Approval</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Approve at the recommended amount or set another. The recommendation stays on record either way.</p>
+                        <label for="tulong-approve-amount" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Approved amount (₱)</label>
+                        <input id="tulong-approve-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="approveAmount" placeholder="0.00"
+                            class="w-full sm:w-48 rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 tabular-nums focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    </div>
+
+                    {{-- Release (Ready for Release): Completed records who released
+                         it (you), to whom, the actual amount and a reference, in one
+                         step, and waits on proof of release. --}}
+                    <div class="rounded-xl border border-teal-200 bg-teal-50/30 p-3.5 mt-3" x-show="selected.status === 'Ready for Release' && !detailLoading" x-cloak>
+                        <p class="text-xs font-semibold text-teal-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="hand-coins" class="w-3.5 h-3.5"></i> Release</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2.5">
+                            <div>
+                                <label for="tulong-release-to" class="block text-[11px] font-medium text-slate-600 mb-1">Received by <span class="text-rose-600">*</span></label>
+                                <input id="tulong-release-to" type="text" maxlength="160" x-model="releaseTo" placeholder="Full name of the person who received it"
+                                    class="w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            </div>
+                            <div x-show="showsAmount">
+                                <label for="tulong-release-amount" class="block text-[11px] font-medium text-slate-600 mb-1">Actual amount (₱)</label>
+                                <input id="tulong-release-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="releaseAmount" placeholder="0.00"
+                                    class="w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 tabular-nums focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            </div>
+                            <div>
+                                <label for="tulong-release-ref" class="block text-[11px] font-medium text-slate-600 mb-1">Reference no.</label>
+                                <input id="tulong-release-ref" type="text" maxlength="120" x-model="releaseReference" placeholder="e.g. voucher or acknowledgement no."
+                                    class="w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            </div>
+                        </div>
+                        <label for="tulong-release-note" class="block text-[11px] font-medium text-slate-600 mt-2 mb-1">Proof note</label>
+                        <textarea id="tulong-release-note" x-model="releaseNote" rows="2" maxlength="2000" placeholder="e.g. Received at the MSWDO counter; the beneficiary signed the acknowledgement slip."
+                            class="w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                        <p class="text-[11px] text-slate-500 mt-1">Proof of Release is required: a photo (beside this) or this note.</p>
+                    </div>
+
+                    {{-- Reject / Cancel / Return for Reassessment: each needs a
+                         typed reason before it can be confirmed. --}}
+                    <div x-ref="sideFormPanel" class="rounded-xl border p-3.5 mt-3" x-show="sideForm" x-cloak
+                        :class="sideForm === 'reject' ? 'border-rose-200 bg-rose-50/40' : (sideForm === 'return' ? 'border-orange-200 bg-orange-50/40' : 'border-slate-200 bg-slate-50')">
+                        <p class="text-xs font-semibold uppercase tracking-wide" :class="sideForm === 'reject' ? 'text-rose-700' : (sideForm === 'return' ? 'text-orange-700' : 'text-slate-700')" x-text="sideForms[sideForm]?.title"></p>
+                        <p class="text-[11px] text-slate-500 mt-1" x-text="sideForms[sideForm]?.hint"></p>
+                        <div class="flex items-center gap-2 mt-2" x-show="sideForm === 'reject'">
+                            <select aria-label="Insert a standard reason"
+                                @change="insertStandardReason($event.target.value); $event.target.value = ''"
+                                class="flex-1 min-w-0 text-xs rounded-xl border border-slate-200 bg-white py-2 px-3 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                            >
+                                <option value="">Insert a standard reason…</option>
+                                <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
+                            </select>
+                            <button
+                                type="button" x-show="flaggedRequirements.length" x-cloak
+                                @click="useRequirementReasons()"
+                                class="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-xl px-3 py-2 transition-colors whitespace-nowrap"
+                            >Use requirement reasons</button>
+                        </div>
+                        <textarea aria-label="Reason" x-model="sideReason" rows="3" maxlength="2000" placeholder="Type the reason…"
+                            class="w-full mt-2 rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                        <div class="flex items-center gap-2 mt-2">
+                            <button type="button" x-bind:disabled="processing || !sideReason.trim()" @click="confirmSideForm()"
+                                class="inline-flex items-center justify-center min-h-[36px] px-3.5 py-2 text-xs font-semibold rounded-xl text-white shadow-card transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                                :class="sideForm === 'reject' ? 'bg-rose-600 hover:bg-rose-700' : (sideForm === 'return' ? 'bg-orange-700 hover:bg-orange-800' : 'bg-slate-700 hover:bg-slate-800')"
+                                x-text="processing ? 'Saving…' : sideForms[sideForm]?.confirm"></button>
+                            <button type="button" @click="sideForm = null; sideReason = ''" class="text-xs font-medium text-slate-500 hover:text-slate-700">Back</button>
+                        </div>
+                    </div>
+
+                    {{-- Case record: what the case has recorded so far. --}}
+                    <div class="rounded-xl border border-slate-200 p-4 mt-3" x-show="selected.case?.assessment_notes || selected.case?.approved_amount || selected.case?.released_to" x-cloak>
+                        <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="file-check-2" class="w-3.5 h-3.5"></i> Case Record</p>
+                        <div class="mt-2.5" x-show="selected.case?.assessment_notes">
+                            <p class="text-[10px] text-slate-500 uppercase tracking-wide">Assessment <span class="normal-case tracking-normal" x-text="selected.case?.assessed_at ? '· ' + formatDay(selected.case.assessed_at) : ''"></span></p>
+                            <p class="text-xs text-slate-700 mt-0.5 whitespace-pre-line" x-text="selected.case?.assessment_notes"></p>
+                        </div>
+                        <dl class="grid grid-cols-3 gap-2 mt-2.5" x-show="showsAmount">
+                            <div class="rounded-lg bg-slate-50 px-2.5 py-2">
+                                <dt class="text-[10px] text-slate-500 uppercase tracking-wide">Recommended</dt>
+                                <dd class="text-sm font-semibold text-navy-900 tabular-nums" x-text="peso(selected.case?.recommended_amount)"></dd>
+                            </div>
+                            <div class="rounded-lg bg-slate-50 px-2.5 py-2">
+                                <dt class="text-[10px] text-slate-500 uppercase tracking-wide">Approved</dt>
+                                <dd class="text-sm font-semibold text-navy-900 tabular-nums" x-text="peso(selected.case?.approved_amount)"></dd>
+                            </div>
+                            <div class="rounded-lg bg-slate-50 px-2.5 py-2">
+                                <dt class="text-[10px] text-slate-500 uppercase tracking-wide">Released</dt>
+                                <dd class="text-sm font-semibold text-navy-900 tabular-nums" x-text="peso(selected.case?.released_amount)"></dd>
+                            </div>
+                        </dl>
+                        <div class="mt-2.5 text-xs text-slate-700 space-y-0.5" x-show="selected.case?.released_to">
+                            <p><span class="text-slate-500">Received by</span> <span class="font-medium" x-text="selected.case?.released_to"></span><span x-show="selected.case?.released_at" x-text="' · ' + formatDay(selected.case?.released_at)"></span></p>
+                            <p x-show="selected.case?.release_reference"><span class="text-slate-500">Reference</span> <span class="font-mono" x-text="selected.case?.release_reference"></span></p>
+                            <p x-show="selected.proofNote"><span class="text-slate-500">Proof</span> <span x-text="selected.proofNote"></span></p>
+                        </div>
+                    </div>
+
                     {{-- Case history: every transition the server recorded, newest first. --}}
                     <div class="rounded-xl border border-slate-200 p-4 mt-3" x-show="(selected.history || []).length" x-cloak>
                         <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide flex items-center gap-1.5 mb-2"><i data-lucide="history" class="w-3.5 h-3.5"></i> Case History</p>
@@ -1072,28 +1284,6 @@
 
 
 
-                    <div class="mt-3" x-show="canReject">
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Rejection Reason <span class="text-slate-500 font-normal">(required for Reject — this is what the citizen will see)</span></label>
-                        <p class="text-[11px] text-slate-500 mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <select
-                                @change="insertStandardReason($event.target.value); $event.target.value = ''"
-                                class="flex-1 min-w-0 text-xs rounded-xl border border-slate-200 bg-white py-2 px-3 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
-                            >
-                                <option value="">Insert a standard reason…</option>
-                                <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
-                            </select>
-                            <button
-                                type="button" x-show="flaggedRequirements.length" x-cloak
-                                @click="useRequirementReasons()"
-                                class="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-xl px-3 py-2 transition-colors whitespace-nowrap"
-                            >Use requirement reasons</button>
-                        </div>
-                        <textarea aria-label="e.g. Does not meet the program's eligibility criteria"
-                            x-model="rejectRemarks" rows="2" placeholder="e.g. Does not meet the program's eligibility criteria."
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
-                        ></textarea>
-                    </div>
                     </div>
 
                     {{-- RIGHT — System Advice, isolated (never scrolls). Mirrors
@@ -1150,11 +1340,11 @@
                              identical block for the full rationale), regated
                              onto Tulong's own Ready for Release stage and
                              relabeled for assistance rather than a document. --}}
-                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Ready for Release' || selected.release_evidence" x-cloak>
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
                                 <i data-lucide="camera" class="w-3.5 h-3.5"></i> Proof of Release
                             </p>
-                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!selected.release_evidence">Photo evidence that the citizen actually received this assistance — required before confirming release.</p>
+                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!selected.release_evidence">A photo of the beneficiary receiving the assistance, or a proof note in the Release form — one is required before confirming.</p>
 
                             <template x-if="selected.release_evidence">
                                 <div class="mt-2.5">
@@ -1163,7 +1353,7 @@
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <span class="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3 h-3"></i> Captured <span x-text="selected.release_evidence_at"></span></span>
-                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-500 hover:text-rose-500" x-show="selected.status === 'Mark to Release'">Retake</button>
+                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-500 hover:text-rose-500" x-show="selected.status === 'Ready for Release'">Retake</button>
                                     </div>
                                 </div>
                             </template>
@@ -1184,7 +1374,7 @@
                              application form (not a Dokyu-style prepared
                              document), gated the same as Proof of Release
                              above. --}}
-                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Ready for Release' || selected.release_evidence" x-cloak>
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
                                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Reference Form
                             </p>
@@ -1279,24 +1469,20 @@
                 </p>
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">
                     <div class="flex items-center gap-2 flex-wrap justify-end">
-                        <template x-if="canReject">
-                            <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="rejectCase()">
-                                <span class="inline-flex items-center gap-1.5">
-                                    <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
-                                    <span x-text="processing ? 'Rejecting…' : 'Reject Case'"></span>
-                                </span>
-                            </x-ui.button>
-                        </template>
+                        {{-- The side moves the server allows from here (case.next),
+                             each opening its reason form. --}}
+                        <x-ui.button variant="ghost" size="sm" x-show="canMove('Cancelled')" x-bind:disabled="processing" @click="openSideForm('cancel')">Cancel Case</x-ui.button>
+                        <x-ui.button variant="secondary" size="sm" x-show="canMove('Returned for Reassessment')" x-bind:disabled="processing" @click="openSideForm('return')">Return for Reassessment</x-ui.button>
+                        <x-ui.button variant="danger" size="sm" x-show="canMove('Rejected')" x-bind:disabled="processing" @click="openSideForm('reject')">Reject Case</x-ui.button>
                         {{-- Primary action — one button, dynamic per stage
-                             (Milestone 18's exact label table lives in
-                             stageActionLabels; primaryAction() dispatches
-                             to the matching method). --}}
+                             (stageActionLabels; primaryAction() calls the
+                             matching endpoint). --}}
                         <x-ui.button
                             size="sm"
                             x-show="nextStageLabel"
-                            x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)"
+                            x-bind:disabled="processing || !!primaryBlocked"
                             @click="primaryAction()"
-                            x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null"
+                            x-bind:title="primaryBlocked || null"
                         >
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>

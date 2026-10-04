@@ -33,7 +33,8 @@
                     this.kpi.dokyu = all.filter((r) => r.type === 'dokyu').length;
                     this.kpi.dokyuReady = all.filter((r) => r.type === 'dokyu' && r.status === 'Mark to Release').length;
                     this.kpi.tulong = all.filter((r) => r.type === 'tulong').length;
-                    this.kpi.tulongApproved = all.filter((r) => r.type === 'tulong' && r.status === 'Approved' && (r.submitted || '').startsWith(thisMonth)).length;
+                    // A Tulong case is approved once it reaches Assistance Processing.
+                    this.kpi.tulongApproved = all.filter((r) => r.type === 'tulong' && ['Assistance Processing', 'Ready for Release', 'Completed'].includes(r.status) && (r.submitted || '').startsWith(thisMonth)).length;
                 } catch { this.requests = []; }
             },
             async loadBalita() {
