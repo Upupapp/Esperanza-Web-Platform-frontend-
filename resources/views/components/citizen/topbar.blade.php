@@ -84,13 +84,30 @@
                 close() { this.open = false; },
                 idFilter: 'all',
                 myIds: [],
+                // The ID sent to verify the account (Profile, Verify ID), then
+                // any identity documents kept in Papeles. Papeles alone read
+                // 0 IDs right after a resident sent theirs.
                 async init() {
-                    try {
-                        const result = await $api.get('/citizen/papeles');
-                        this.myIds = (result.data || [])
-                            .filter((d) => d.category === 'Identity / Verification')
-                            .map((d) => ({ type: d.type, status: d.status === 'Approved' ? 'Verified' : 'Unverified' }));
-                    } catch { this.myIds = []; }
+                    const [verification, papeles] = await Promise.all([
+                        $api.get('/citizen/verification/id').catch(() => null),
+                        $api.get('/citizen/papeles').catch(() => null),
+                    ]);
+                    const labels = {
+                        'Approved': ['Verified', 'Verified'],
+                        'Pending Review': ['Under review', 'Sinusuri'],
+                        'Rejected': ['Not accepted', 'Hindi tinanggap'],
+                    };
+                    const entry = (type, status) => {
+                        const [en, fil] = labels[status] || ['Unverified', 'Unverified'];
+                        return { type, status: status === 'Approved' ? 'Verified' : 'Unverified', labelEn: en, labelFil: fil };
+                    };
+                    const list = [];
+                    const sent = verification?.data?.submission;
+                    if (sent) list.push(entry(sent.id_type, sent.status));
+                    (papeles?.data || [])
+                        .filter((d) => d.category === 'Identity / Verification')
+                        .forEach((d) => { if (!list.some((x) => x.type === d.type)) list.push(entry(d.type, d.status)); });
+                    this.myIds = list;
                 },
                 get filteredIds() { return this.idFilter === 'all' ? this.myIds : this.myIds.filter(d => d.status === this.idFilter); },
             }"
@@ -136,7 +153,7 @@
                                 :class="idDoc.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-amber-200'"
                             >
                                 <span class="w-1.5 h-1.5 rounded-full" :class="idDoc.status === 'Verified' ? 'bg-emerald-500' : 'bg-amber-500'"></span>
-                                <span x-text="idDoc.status"></span>
+                                <span x-text="$store.lang.current === 'en' ? idDoc.labelEn : idDoc.labelFil"></span>
                             </span>
                         </div>
                     </template>

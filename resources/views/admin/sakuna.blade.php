@@ -12,7 +12,6 @@
     $tabUrls = array_map(fn ($name) => route($name), $tabRoutes);
 
     // ── Operational Context ─────────────────────────────────────────────────
-    $periods = $__fixtures['periods'];
 
     // ── Barangays ────────────────────────────────────────────────────────────
     $barangays = config('esperanza.barangays');
@@ -62,8 +61,52 @@
     x-data="{
         activeTab: '{{ $activeTab }}',
         tabUrls: @js($tabUrls),
-        opStatus: 'Red Alert',
-        selectedPeriod: 'SWM-2026-07',
+        // The status bar reads the live board (GET /admin/sakuna/command-center):
+        // the alerts in effect and the incidents still open. It used to show a
+        // fixed Red Alert and a July 2026 monsoon that never happened.
+        // Activate EOC still sets a display-only status on this screen.
+        opStatusOverride: '',
+        headerBoard: null,
+        headerFailed: false,
+        get liveStatus() {
+            const c = this.headerBoard?.counts;
+            if (!c) return 'Normal';
+            if (c.alerts_live > 0) return 'Alert in effect';
+            if (c.incidents_open > 0) return 'Monitoring';
+            return 'Normal';
+        },
+        get opStatus() { return this.opStatusOverride || this.liveStatus; },
+        get activeEventLabel() {
+            if (this.headerFailed) return 'Live board not available';
+            const b = this.headerBoard;
+            if (!b) return 'Loading…';
+            const alert = (b.alerts || [])[0];
+            if (alert) return alert.title?.en || alert.title?.fil || alert.ref;
+            const open = b.counts?.incidents_open || 0;
+            if (open) return open + ' open incident' + (open === 1 ? '' : 's');
+            return 'No active event';
+        },
+        headerWaiting: false,
+        async loadHeader() {
+            // The account cached at sign-in carries no permissions yet; the
+            // GET /auth/me every page load runs brings them, so wait for it.
+            if (!Object.keys(this.$store.session.account?.permissions || {}).length) {
+                if (!this.headerWaiting) {
+                    this.headerWaiting = true;
+                    this.$watch('$store.session.account', () => {
+                        if (!this.headerWaiting) return;
+                        this.headerWaiting = false;
+                        this.loadHeader();
+                    });
+                }
+                return;
+            }
+            if (!this.$store.session.canPerm('sakuna_command', 'view')) { this.headerFailed = true; return; }
+            this.headerFailed = false;
+            try {
+                this.headerBoard = (await $api.get('/admin/sakuna/command-center')).data || {};
+            } catch { this.headerFailed = true; }
+        },
         selectedBarangay: '',
         ready: false,
         returnToProfile: null,
@@ -71,6 +114,7 @@
         // Incidents tab pre-filtered to their exact report, and offer a way
         // straight back to the profile that started the trip.
         init() {
+            this.loadHeader();
             const params = new URLSearchParams(window.location.search);
             const ref = params.get('ref');
             if (ref) {
@@ -962,6 +1006,7 @@
         opStatusColor() {
             const map = {
                 'Normal': 'text-emerald-700 bg-emerald-50 border-emerald-200',
+                'Alert in effect': 'text-rose-700 bg-rose-50 border-rose-200',
                 'Monitoring': 'text-blue-700 bg-blue-50 border-blue-200',
                 'Blue Alert': 'text-indigo-700 bg-indigo-50 border-indigo-200',
                 'Red Alert': 'text-rose-700 bg-rose-50 border-rose-200',
@@ -1082,42 +1127,24 @@
 >
     {{-- ── Operational Status Bar ──────────────────────────────────────────── --}}
     <div class="flex flex-wrap items-center gap-2">
-        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-            <button @click="open = !open" :class="opStatusColor()" class="inline-flex items-center gap-2 text-sm font-medium border rounded-xl px-3 py-1.5 transition-all shadow-card">
-                <i data-lucide="shield-alert" class="w-4 h-4"></i>
-                <span x-text="opStatus"></span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60" :class="open && 'rotate-180'" style="transition: transform 0.2s"></i>
-            </button>
-            <div x-show="open" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95 -translate-y-1" x-transition:enter-end="opacity-100 scale-100 translate-y-0" class="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-30 py-1.5">
-                @foreach(['Normal', 'Monitoring', 'Blue Alert', 'Red Alert', 'Emergency Operations Activated', 'Recovery Operations'] as $s)
-                    <button @click="opStatus = '{{ $s }}'; open = false; toast('Operational status set to {{ $s }}.', 'info')" class="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-slate-50" :class="opStatus === '{{ $s }}' ? 'text-brand-600 font-medium bg-brand-50/60' : 'text-slate-600'">{{ $s }}</button>
-                @endforeach
-            </div>
-        </div>
+        <span :class="opStatusColor()" class="inline-flex items-center gap-2 text-sm font-medium border rounded-xl px-3 py-1.5 shadow-card" :title="opStatusOverride ? 'Set on this screen only; nobody was notified' : 'From the public alerts in effect and the incidents still open'">
+            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+            <span x-text="opStatus"></span>
+        </span>
 
-        <div class="relative" x-data="{ open: false, label: 'Southwest Monsoon & Flooding — July 2026' }" @click.outside="open = false">
-            <button @click="open = !open" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
-                <i data-lucide="radio-tower" class="w-4 h-4 text-slate-500"></i>
-                <span x-text="label" class="max-w-48 truncate"></span>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500"></i>
-            </button>
-            <div x-show="open" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-float border border-slate-100 z-30 py-1.5">
-                @foreach($periods as $p)
-                    <button @click="label = '{{ $p['label'] }}'; selectedPeriod = '{{ $p['id'] }}'; open = false" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors {{ $p['active'] ? 'text-brand-600 font-medium' : 'text-slate-600' }}">
-                        <div class="flex items-center gap-2">
-                            @if($p['active'])<span class="w-1.5 h-1.5 rounded-full bg-brand-500 inline-block"></span>@endif
-                            {{ $p['label'] }}
-                        </div>
-                    </button>
-                @endforeach
-            </div>
-        </div>
+        <button type="button" @click="setTab(headerBoard?.alerts?.length ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors" title="Open the alerts or incidents behind this">
+            <i data-lucide="radio-tower" class="w-4 h-4 text-slate-500"></i>
+            <span x-text="activeEventLabel" class="max-w-48 truncate"></span>
+        </button>
 
-        <span class="text-xs text-slate-500 flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3 h-3"></i>Updated Jul 15, 2026 — 08:26 AM</span>
+        <button type="button" @click="loadHeader()" class="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 transition-colors" title="Refresh">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            <span x-text="headerBoard?.generated_at ? 'Updated ' + new Date(headerBoard.generated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not updated yet'"></span>
+        </button>
 
         <div class="ml-auto flex items-center gap-2">
-            <button @click="toast('Situation report exported.', 'success')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
-                <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export SitRep
+            <button @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
+                <i data-lucide="file-bar-chart" class="w-4 h-4 text-slate-500"></i> SitRep &amp; Reports
             </button>
             <button @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-1.5 shadow-card transition-colors">
                 <i data-lucide="siren" class="w-4 h-4"></i> Activate EOC
@@ -1281,7 +1308,7 @@
             <p class="text-sm text-slate-600 mb-5">There is no backend notion of an "operational status" yet — no notification, log entry, or record is created anywhere by this. It changes what this banner reads, for you, until you reload the page.</p>
             <div class="flex gap-3">
                 <button @click="showEOCConfirm = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
-                <button @click="showEOCConfirm = false; opStatus = 'Emergency Operations Activated'; toast('Operational status set. This is a local display setting only — nobody was notified.', 'warning'); $nextTick(() => window.renderIcons?.())" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors">Set Status</button>
+                <button @click="showEOCConfirm = false; opStatusOverride = 'Emergency Operations Activated'; toast('Operational status set. This is a local display setting only — nobody was notified.', 'warning'); $nextTick(() => window.renderIcons?.())" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors">Set Status</button>
             </div>
         </div>
     </div>

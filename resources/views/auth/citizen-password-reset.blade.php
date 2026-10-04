@@ -18,7 +18,7 @@
                     this.sent = true;
                     this.step = 'reset';
                 } catch (err) {
-                    this.error = err.localised ? err.localised($store.lang.current) : 'Request failed.';
+                    this.error = err.explain ? err.explain($store.lang.current) : 'Request failed.';
                 } finally {
                     this.loading = false;
                 }
@@ -34,7 +34,7 @@
                     });
                     this.step = 'done';
                 } catch (err) {
-                    this.error = err.localised ? err.localised($store.lang.current) : 'Reset failed.';
+                    this.error = err.explain ? err.explain($store.lang.current) : 'Reset failed.';
                 } finally {
                     this.loading = false;
                 }

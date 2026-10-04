@@ -27,10 +27,27 @@
                     this.barangays = (result.data || []).map((b) => b.name);
                 } catch { this.barangays = []; }
             },
-            next() { if (this.step < this.totalSteps) { this.error = ''; this.step++; } },
+            // The three steps share one form. Left to the browser, its
+            // validation ran over the hidden steps too: the first invalid
+            // field was on a step the resident could not see, so Susunod did
+            // nothing and said nothing. Each step now checks its own fields.
+            validStep() {
+                const box = this.$refs['step' + this.step];
+                if (!box) return true;
+                const bad = Array.from(box.querySelectorAll('input, select, textarea')).find((el) => !el.checkValidity());
+                if (!bad) return true;
+                bad.reportValidity();
+                bad.focus();
+                return false;
+            },
+            next() {
+                if (!this.validStep()) return;
+                if (this.step < this.totalSteps) { this.error = ''; this.step++; }
+            },
             back() { if (this.step > 1) this.step--; },
             async submit() {
                 if (this.loading) return;
+                if (!this.validStep()) return;
                 this.error = '';
                 this.loading = true;
                 try {
@@ -38,11 +55,7 @@
                     this.accountNo = result.data.account_no;
                     this.otpDestination = result.data.verification?.destination || '';
                 } catch (err) {
-                    this.error = err.localised ? err.localised($store.lang.current) : 'Registration failed.';
-                    if (err.fields && Object.keys(err.fields).length) {
-                        const first = Object.values(err.fields)[0];
-                        this.error = Array.isArray(first) ? first[0] : String(first);
-                    }
+                    this.error = err.explain ? err.explain($store.lang.current) : 'Registration failed.';
                 } finally {
                     this.loading = false;
                 }
@@ -53,10 +66,20 @@
                 this.verifying = true;
                 try {
                     await $api.post('/auth/citizen/verify', { account_no: this.accountNo, code: this.otpCode.trim() });
-                    await this.$store.citizenSession.login(this.accountNo, this.form.password);
+                } catch (err) {
+                    this.verifyError = err.explain ? err.explain($store.lang.current) : 'Verification failed.';
+                    this.verifying = false;
+                    return;
+                }
+                // The account is verified at this point. Signing in is a
+                // separate step: if it fails, the sign-in page can finish it,
+                // rather than leaving the resident on a code screen that
+                // reads as if the code was wrong.
+                try {
+                    await this.$store.citizenSession.login(this.form.email.trim() || this.form.mobile.trim() || this.accountNo, this.form.password);
                     window.location.href = '{{ route('citizen.dashboard') }}';
                 } catch (err) {
-                    this.verifyError = err.localised ? err.localised($store.lang.current) : 'Verification failed.';
+                    window.location.href = '{{ route('citizen.login') }}';
                 } finally {
                     this.verifying = false;
                 }
@@ -90,9 +113,9 @@
                 </template>
             </div>
 
-            <form class="mt-5 space-y-5" @submit.prevent="step === totalSteps ? submit() : next()">
+            <form class="mt-5 space-y-5" novalidate @submit.prevent="step === totalSteps ? submit() : next()">
                 <!-- Step 1: Personal Information -->
-                <div x-show="step === 1" x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
+                <div x-show="step === 1" x-ref="step1" x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <x-ui.input name="first_name" label="First Name" placeholder="Maria" x-model="form.first_name" required />
                         <x-ui.input name="last_name" label="Last Name" placeholder="Bacaltos" x-model="form.last_name" required />
@@ -130,7 +153,7 @@
                 </div>
 
                 <!-- Step 2: Address -->
-                <div x-show="step === 2" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
+                <div x-show="step === 2" x-ref="step2" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
                     <div>
                         <label for="barangay" class="block text-sm font-medium text-slate-700 mb-1.5">Barangay</label>
                         <div class="relative">
@@ -159,7 +182,7 @@
                 </div>
 
                 <!-- Step 3: Contact & Security -->
-                <div x-show="step === 3" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
+                <div x-show="step === 3" x-ref="step3" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
                     <x-ui.input name="email" type="email" label="Email Address" icon="mail" placeholder="maria.bacaltos@email.com" x-model="form.email" />
                     <x-ui.input name="mobile" type="text" label="Mobile Number" icon="phone" placeholder="09XX XXX XXXX" x-model="form.mobile" />
                     <x-ui.input name="password" type="password" label="Password" icon="lock" placeholder="Create a password" x-model="form.password" required />

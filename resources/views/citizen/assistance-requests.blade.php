@@ -118,7 +118,7 @@
                 r.requirements = (d.requirements || []).map((q) => ({
                     key: q.key,
                     name: q.label,
-                    status: q.status === 'Pending Review' ? 'Submitted' : q.status,
+                    status: q.status === 'Pending Review' ? (q.file ? 'Submitted' : 'Not submitted') : q.status,
                     reject_reason: q.reason,
                     remarks: q.remarks,
                     file: q.file?.name || null,
@@ -224,6 +224,8 @@
             />
         </x-ui.page-intro>
 
+        <x-citizen.approval-notice service="Tulong" />
+
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             {{-- Counted from the resident's own requests. A fifth tile showed
                  "Ayuda Received ₱42,500" to everyone; no amount received is
@@ -293,6 +295,46 @@
                             else if (f.type === 'table') { this.formData[f.key] = []; }
                             else { this.formData[f.key] = f.default || ''; }
                         });
+                        Object.entries(window.profileDefaults(this.types[i]?.fields, this.$store.citizenSession.account)).forEach(([k, v]) => {
+                            if (this.formData[k] === '') this.formData[k] = v;
+                        });
+                        this.stepError = '';
+                        this.stepWarning = '';
+                        this.attachWarned = false;
+                    },
+                    // Same checks as the Dokyu wizard: required fields block,
+                    // missing attachments are said once.
+                    stepError: '',
+                    stepWarning: '',
+                    attachWarned: false,
+                    missingRequired() {
+                        return (this.types[this.selectedType]?.fields || []).filter((f) => {
+                            if (!f.required) return false;
+                            const v = this.formData[f.key];
+                            return Array.isArray(v) ? v.length === 0 : String(v ?? '').trim() === '';
+                        }).map((f) => f.label);
+                    },
+                    advance() {
+                        const en = this.$store.lang.current === 'en';
+                        this.stepError = '';
+                        this.stepWarning = '';
+                        if (this.step === 2) {
+                            const missing = this.missingRequired();
+                            if (missing.length) {
+                                this.stepError = (en ? 'Please fill in: ' : 'Pakipunan ang: ') + missing.join(', ');
+                                return;
+                            }
+                            const total = (this.types[this.selectedType]?.requirements || []).length;
+                            const attached = Object.keys(this.attachments).filter((k) => this.attachments[k]).length;
+                            if (attached < total && !this.attachWarned) {
+                                this.attachWarned = true;
+                                this.stepWarning = en
+                                    ? (total - attached) + ' of ' + total + ' requirements not attached. The office needs them to assess the request: attach them now, or press Continue to add them later from Track Request.'
+                                    : (total - attached) + ' sa ' + total + ' requirement ang hindi pa naikakabit. Kailangan ito ng opisina: ikabit na ngayon, o pindutin ang Magpatuloy para idagdag mamaya sa Subaybayan.';
+                                return;
+                            }
+                        }
+                        this.step++;
                     },
                     toggleChecklist(fieldKey, option) {
                         const list = this.formData[fieldKey] || [];
@@ -321,7 +363,7 @@
                         en: ['Choose Assistance', 'Application Details', 'Payment', 'Review & Submit'],
                     },
                     stepIcons: ['hand-heart', 'user-round', 'credit-card', 'clipboard-check'],
-                    reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.submittedRef = null; this.search = ''; this.formData = {}; this.selectedCategory = null; },
+                    reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.submittedRef = null; this.search = ''; this.formData = {}; this.selectedCategory = null; this.stepError = ''; this.stepWarning = ''; this.attachWarned = false; },
                     // POST /citizen/requests, then each attachment onto its
                     // requirement. The server assigns the ref and notifies the
                     // office; a failed attachment can be added from Track Request.
@@ -368,7 +410,7 @@
                 class="contents"
             >
                 <div class="flex items-center gap-2 shrink-0">
-                <x-ui.button @click="open = true" icon="hand-heart" size="sm" class="shrink-0"><x-ui.t fil="Bagong Kahilingan sa Tulong" en="New Tulong Request" /></x-ui.button>
+                <x-ui.button @click="open = true" ::disabled="$store.citizenSession.account && !$store.citizenSession.account.fullServiceAccess" icon="hand-heart" size="sm" class="shrink-0"><x-ui.t fil="Bagong Kahilingan sa Tulong" en="New Tulong Request" /></x-ui.button>
                 <x-ui.modal title="Bagong Kahilingan sa Tulong" titleEn="New Tulong Request" maxWidth="3xl" :fullscreen="true">
                     <!-- Success state -->
                     <div x-show="submitted" x-cloak x-transition.opacity class="flex flex-col items-center justify-center text-center py-10">
@@ -861,7 +903,8 @@
                     </div>
 
                     <x-slot:footer>
-                        <x-ui.button variant="secondary" size="sm" x-show="!submitted" @click="step > 1 ? step-- : (open = false, reset())">
+                        <p x-show="!submitted && (stepError || stepWarning)" x-cloak role="alert" class="mr-auto min-w-0 text-xs leading-snug" :class="stepError ? 'text-rose-600' : 'text-amber-700'" x-text="stepError || stepWarning"></p>
+                        <x-ui.button variant="secondary" size="sm" x-show="!submitted" @click="stepError = ''; stepWarning = ''; step > 1 ? step-- : (open = false, reset())">
                             <span x-text="$store.lang.current === 'en' ? (step > 1 ? 'Back' : 'Cancel') : (step > 1 ? 'Bumalik' : 'Kanselahin')"></span>
                         </x-ui.button>
                         <x-ui.button
@@ -869,7 +912,7 @@
                             x-show="!submitted"
                             ::disabled="submitting || (step === 1 && selectedType === null)"
                             @click="
-                                if (step < 4) { step++ }
+                                if (step < 4) { advance() }
                                 else {
                                     submitting = true;
                                     submitRequest().then(({ ref, failed }) => {
@@ -879,7 +922,7 @@
                                             : 'Naisumite ang kahilingan ' + ref + '.' + (failed.length ? ' May mga file na hindi na-upload (' + failed.join(', ') + ') — idagdag sa Subaybayan.' : '');
                                         setTimeout(() => { open = false; reset(); $dispatch('toast', { message: msg, variant: failed.length ? 'warning' : 'success' }) }, 1200);
                                     }).catch((err) => {
-                                        $dispatch('toast', { message: err && err.localised ? err.localised($store.lang.current) : 'Could not submit the request.', variant: 'error' });
+                                        $dispatch('toast', { message: err && err.explain ? err.explain($store.lang.current) : 'Could not submit the request.', variant: 'error' });
                                     }).finally(() => { submitting = false; });
                                 }
                             "
@@ -1027,7 +1070,7 @@
                             </div>
                             <div class="px-3.5 pb-3.5 space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
-                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' }">
+                                    <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' || req.status === 'Not submitted' }">
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-2.5 min-w-0">
                                                 <i data-lucide="file-text" class="w-4 h-4 text-slate-500 shrink-0"></i>
@@ -1038,8 +1081,8 @@
                                             </div>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
-                                            ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted', 'bg-slate-100 text-slate-600 ring-slate-200': req.status === 'Not submitted' }"
+                                            ><span x-text="req.status === 'Approved' ? 'Verified' : (req.status === 'Not submitted' ? ($store.lang.current === 'en' ? 'Not submitted' : 'Wala pa') : req.status)"></span></span>
                                         </div>
 
                                         <div x-show="req.status === 'Flagged for Replacement'" class="mt-2 pt-2 border-t border-amber-100 text-[11px]">

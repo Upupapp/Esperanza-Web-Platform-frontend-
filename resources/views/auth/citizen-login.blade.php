@@ -13,7 +13,7 @@
                     await this.$store.citizenSession.login(this.identifier.trim(), this.password);
                     window.location.href = '{{ route('citizen.dashboard') }}';
                 } catch (err) {
-                    this.error = err.localised ? err.localised($store.lang.current) : ($store.lang.current === 'en' ? 'Sign in failed.' : 'Hindi ma-sign in.');
+                    this.error = err.explain ? err.explain($store.lang.current) : ($store.lang.current === 'en' ? 'Sign in failed.' : 'Hindi ma-sign in.');
                 } finally {
                     this.loading = false;
                 }

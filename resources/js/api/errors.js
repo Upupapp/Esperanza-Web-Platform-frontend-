@@ -34,6 +34,27 @@ export class ApiError extends Error {
         return this.messages[lang] || this.messages.en || this.messages.fil || this.message;
     }
 
+    /**
+     * The first field's own message, in the reader's language. A sign-in
+     * failure says what is wrong only here ("Invalid identifier or
+     * password", "not verified yet", "locked"); the envelope is the generic
+     * "check the highlighted fields". The server writes some of these as
+     * "Filipino / English".
+     */
+    fieldMessage(lang) {
+        const first = Object.values(this.fields || {})[0];
+        const text = Array.isArray(first) ? first[0] : first;
+        if (!text) return null;
+        const parts = String(text).split(' / ');
+        if (parts.length === 2) return lang === 'en' ? parts[1] : parts[0];
+        return String(text);
+    }
+
+    /** The field's own reason when there is one, otherwise the envelope message. */
+    explain(lang) {
+        return this.fieldMessage(lang) || this.localised(lang);
+    }
+
     get isValidation() {
         return this.status === 422;
     }

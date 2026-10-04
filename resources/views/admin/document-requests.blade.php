@@ -1630,6 +1630,47 @@
             apiBase(ref) {
                 return '/admin/' + this.requestType + '/requests/' + encodeURIComponent(ref);
             },
+            // Assign to me (and its undo): POST/DELETE .../assign, then the
+            // server's answer. It used to change only this screen, so a reload
+            // showed the case unassigned again.
+            // Filing to release, over the requests released so far. The card
+            // showed a fixed 2.4 days (trend -0.6) before any request had
+            // been released.
+            get releasedDurations() {
+                return this.requests
+                    .filter((r) => r.released_at && r.submitted_at)
+                    .map((r) => (new Date(r.released_at) - new Date(r.submitted_at)) / 86400000)
+                    .filter((days) => days >= 0);
+            },
+            get avgProcessingLabel() {
+                const all = this.releasedDurations;
+                if (!all.length) return '—';
+                const avg = all.reduce((a, b) => a + b, 0) / all.length;
+                if (avg >= 1) return avg.toFixed(1) + ' days';
+                const hours = Math.max(1, Math.round(avg * 24));
+                return hours + (hours === 1 ? ' hr' : ' hrs');
+            },
+            get avgProcessingNote() {
+                const n = this.releasedDurations.length;
+                return n ? 'Filing to release, ' + n + ' released' : 'No request released yet';
+            },
+            async setAssignment(assign) {
+                if (!this.selected || this.processing) return;
+                this.processing = true;
+                try {
+                    const url = this.apiBase(this.selected.ref) + '/assign';
+                    const res = assign ? await $api.post(url) : await $api.delete(url);
+                    const who = res.data?.assigned ?? null;
+                    this.selected.assigned = who;
+                    const row = this.requests.find((x) => x.ref === this.selected.ref);
+                    if (row) row.assigned = who;
+                    this.$dispatch('toast', { message: assign ? 'Assigned to you.' : 'No longer assigned to you.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not change who is assigned.'), variant: 'error' });
+                } finally {
+                    this.processing = false;
+                }
+            },
             apiMessage(err, fallback) {
                 return err && err.localised ? err.localised('en') : fallback;
             },
@@ -1677,12 +1718,13 @@
                     barangay: row.barangay || '',
                     submitted: this.formatDay(row.submitted),
                     submitted_at: row.submitted,
+                    released_at: row.released || null,
                     status: row.status,
                     category: cls.category || 'Other Municipal Services',
                     level: cls.level || 'Municipal',
                     reference_pdf: this.referencePdfByType[name] || this.referencePdfByType[type] || null,
                     service_guide_key: this.typeToServiceGuideKey[name] || this.typeToServiceGuideKey[type] || null,
-                    assigned: null,
+                    assigned: row.assigned || null,
                     purpose: '',
                     requirements: null,
                     remarks: null,
@@ -1764,6 +1806,7 @@
                     file_url: q.file?.url || null,
                     file_mime: q.file?.mime || null,
                     preview_asset: q.file?.url && (q.file?.mime || '').startsWith('image/') ? q.file.url : null,
+                    file_notice: window.fileNotice(q.file),
                     versions: (q.versions || []).map((v) => ({
                         file: v.file?.name || null,
                         file_url: v.file?.url || null,
@@ -1786,9 +1829,10 @@
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : '';
                 r.form_steps = this.formStepsFor(r.type, d.form_data, r.service_key);
                 r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
+                r.assigned = 'assigned' in d ? d.assigned : r.assigned;
                 r.payment = d.payment || null;
                 r.remarks_log = d.remarks || [];
-                r.history = (d.history || []).map((h) => ({ stage: h.to, date: this.formatDay(h.at), by: h.actor_name || '—', note: h.trigger || '' }));
+                r.history = (d.history || []).map((h) => ({ stage: h.to, date: this.formatDay(h.at), by: h.actor_name || '—', note: window.historyNote(h.trigger) }));
                 const proof = d.proof_of_release || {};
                 if (proof.captured) {
                     r.release_evidence = proof.file?.url || r.release_evidence || null;
@@ -2137,7 +2181,7 @@
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Requests" value="{{ count($requests) }}" valueBind="requests.length" icon="file-text" color="brand" sublabel="All statuses" :delay="0" />
             <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or verification" :delay="40" />
             <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Mark to Release" value="{{ collect($requests)->where('status', 'Mark to Release')->count() }}" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
-            <x-ui.stat-card :href="route('admin.analytics')" label="Avg. Processing Time" value="2.4 days" icon="timer" color="purple" trendDirection="down" trend="-0.6 days" sublabel="Within RA 11032 limits" :delay="120" />
+            <x-ui.stat-card :href="route('admin.analytics')" label="Avg. Processing Time" value="—" valueBind="avgProcessingLabel" icon="timer" color="purple" sublabel="No request released yet" sublabelBind="avgProcessingNote" :delay="120" />
         </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
@@ -2203,6 +2247,7 @@
                 <select aria-label="Assigned filter" x-model="assignedFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">Anyone / Unassigned</option>
                     <option value="unassigned">Unassigned only</option>
+                    <option x-show="$store.session.account" :value="$store.session.account?.name || ''">Assigned to me</option>
                 </select>
                 <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-500 hover:text-slate-600 transition-colors" x-show="officeFilter || levelFilter || assignedFilter || barangayFilter">Clear</button>
             </div>
@@ -2382,8 +2427,17 @@
                         <p class="text-xs text-slate-500">This request hasn't been routed to a processor yet.</p>
                         <x-ui.button
                             variant="secondary" size="sm" icon="user-plus"
-                            @click="selected.assigned = $store.session.account?.name || 'You'; $dispatch('toast', { message: 'Assigned to yourself.', variant: 'success' })"
+                            x-bind:disabled="processing"
+                            @click="setAssignment(true)"
                         >Assign to me</x-ui.button>
+                    </div>
+                    <div
+                        class="flex items-center justify-between gap-2 mt-3"
+                        x-show="selected.assigned && selected.assigned === $store.session.account?.name"
+                        x-cloak
+                    >
+                        <p class="text-xs text-slate-500">You are handling this request.</p>
+                        <x-ui.button variant="secondary" size="sm" icon="user-minus" x-bind:disabled="processing" @click="setAssignment(false)">Unassign me</x-ui.button>
                     </div>
 
                     {{-- Payment method + Official Payment Receipt — same source of
@@ -2739,12 +2793,9 @@
                         </button>
                     </div>
                     <div class="p-4">
-                        {{-- Real placeholder scan (only wired up for the handful of
-                             residents with an actual supplied ID image on file, e.g.
-                             Cristy — see 'preview_asset' on her requirement rows)
-                             renders as an actual image; every other mock requirement
-                             still falls back to the plain icon + filename, since no
-                             real file exists behind those. --}}
+                        {{-- The file itself: an image or a PDF shown inline, a link to
+                             open it, or why it cannot be opened (the server links a
+                             file only once the malware scan has cleared it). --}}
                         <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/2] overflow-hidden mb-3" x-show="previewDoc?.preview_asset">
                             <img :src="previewDoc?.preview_asset" :alt="previewDoc?.name" class="w-full h-full object-contain">
                         </div>
@@ -2760,6 +2811,7 @@
                                 :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'"
                             ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-7 h-7"></i></span>
                             <p class="text-xs font-medium text-slate-500 px-4 text-center truncate max-w-full" x-text="previewDoc?.file"></p>
+                            <p x-show="previewDoc?.file_notice" class="text-[11px] leading-snug text-rose-600 px-5 text-center" x-text="previewDoc?.file_notice"></p>
                         </div>
                         <dl class="space-y-2 text-xs">
                             <div class="flex items-center justify-between gap-3">

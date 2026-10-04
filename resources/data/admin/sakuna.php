@@ -30,10 +30,4 @@ return [
         'alerts' => 'admin.sakuna.alerts',
         'reports' => 'admin.sakuna.reports',
     ],
-
-    'periods' => [
-        ['id' => 'SWM-2026-07', 'label' => 'Southwest Monsoon & Flooding — July 2026', 'active' => true],
-        ['id' => 'TY-2026-05', 'label' => 'Typhoon Amang — May 2026', 'active' => false],
-        ['id' => 'DR-2026-02', 'label' => 'Dry Spell — February 2026', 'active' => false],
-    ],
 ];

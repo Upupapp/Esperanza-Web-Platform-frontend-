@@ -5,8 +5,11 @@
      sensitive read). Every decision here is a real endpoint. --}}
 
 <div x-data="{ get open() { return showAccountReview }, set open(v) { showAccountReview = v } }">
-    <x-ui.modal maxWidth="2xl">
-        <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-slate-100">
+    {{-- Bare: this dialog draws its own header (name, status, account
+         number, close), so the modal's empty titled strip with a second X
+         is left out. --}}
+    <x-ui.modal maxWidth="2xl" :bare="true">
+        <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-slate-100 shrink-0">
             <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2 mb-1">
                     <h2 class="text-base font-bold text-navy-900 truncate" x-text="accountDetail?.name || accountRow?.name || 'Citizen account'"></h2>
@@ -14,12 +17,12 @@
                 </div>
                 <p class="text-xs text-slate-500 font-mono" x-text="accountDetail?.account_no || accountRow?.citizen_account?.account_no"></p>
             </div>
-            <button type="button" @click="showAccountReview = false" class="text-slate-400 hover:text-slate-600" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button type="button" @click="showAccountReview = false" class="text-slate-500 hover:text-slate-700" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
-        <div x-show="accountLoading" class="p-6 space-y-2"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-40 opacity-80" /></div>
+        <div x-show="accountLoading" class="p-6 space-y-2 overflow-y-auto"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-40 opacity-80" /></div>
 
-        <div x-show="!accountLoading && accountDetail" class="p-6 space-y-5">
+        <div x-show="!accountLoading && accountDetail" class="p-6 space-y-5 overflow-y-auto scrollbar-thin min-h-0">
             {{-- The account --}}
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
                 <div class="flex justify-between gap-2"><dt class="text-slate-500">Barangay</dt><dd class="font-semibold text-navy-900" x-text="accountDetail?.barangay ? 'Brgy. ' + accountDetail.barangay : '—'"></dd></div>
@@ -47,7 +50,7 @@
                             <template x-if="part[1] && part[1].url && !(part[1].mime || '').startsWith('image/')">
                                 <a :href="part[1].url" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Open PDF</a>
                             </template>
-                            <p x-show="part[1] && !part[1].url" class="text-xs text-slate-500">Still being scanned.</p>
+                            <p x-show="part[1] && !part[1].url" class="text-xs leading-snug" :class="part[1]?.scan_status === 'pending' ? 'text-slate-500' : 'text-rose-600'" x-text="window.fileNotice(part[1])"></p>
                             <p x-show="!part[1]" class="text-xs text-slate-500">Not sent.</p>
                         </div>
                     </template>
@@ -62,11 +65,13 @@
                     <div>
                         <p class="text-[11px] font-medium text-slate-600 mb-1.5">On the Digital ID</p>
                         <img x-show="accountDetail?.photo?.current?.file?.url" :src="accountDetail?.photo?.current?.file?.url" alt="Approved photo" class="w-28 h-28 rounded-xl object-cover border border-slate-200">
+                        <p x-show="accountDetail?.photo?.current?.file && !accountDetail?.photo?.current?.file?.url" class="text-xs leading-snug text-rose-600" x-text="window.fileNotice(accountDetail?.photo?.current?.file)"></p>
                         <p x-show="!accountDetail?.photo?.current" class="text-xs text-slate-500">None yet.</p>
                     </div>
                     <div>
                         <p class="text-[11px] font-medium text-slate-600 mb-1.5">Waiting for approval</p>
                         <img x-show="accountDetail?.photo?.pending?.file?.url" :src="accountDetail?.photo?.pending?.file?.url" alt="New photo" class="w-28 h-28 rounded-xl object-cover border border-amber-300">
+                        <p x-show="accountDetail?.photo?.pending?.file && !accountDetail?.photo?.pending?.file?.url" class="text-xs leading-snug" :class="accountDetail?.photo?.pending?.file?.scan_status === 'pending' ? 'text-slate-500' : 'text-rose-600'" x-text="window.fileNotice(accountDetail?.photo?.pending?.file)"></p>
                         <p x-show="!accountDetail?.photo?.pending" class="text-xs text-slate-500">Nothing pending.</p>
                     </div>
                 </div>

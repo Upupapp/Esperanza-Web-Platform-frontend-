@@ -12,6 +12,8 @@
             },
             init() {
                 this.$store.citizenNotifications.load();
+                // A tab switch draws new rows; their icons need drawing too.
+                this.$watch('visible', () => this.$nextTick(() => window.renderIcons?.()));
             },
             timeAgo(iso) {
                 if (!iso) return '';

@@ -84,6 +84,93 @@ function formatRoleLabel(roleKey) {
         .join(' ');
 }
 
+// GET /auth/me sends the role's grants as a list of {module, submodule,
+// action} triples; canPerm() and canExportReports() look them up by
+// submodule. Read as a map, the list matched nothing, so every officer,
+// the municipal admin included, lost every action button behind canPerm()
+// (Verify Account, Sakuna's create buttons...). Accepts either shape, so an
+// account cached before this fix is read correctly too.
+function permissionMap(raw) {
+    if (!raw) return {};
+    if (!Array.isArray(raw)) return raw;
+    const map = {};
+    for (const p of raw) {
+        if (!p || !p.submodule || !p.action) continue;
+        (map[p.submodule] ||= []).push(p.action);
+    }
+    return map;
+}
+
+function withPermissionMap(account) {
+    return account ? { ...account, permissions: permissionMap(account.permissions) } : account;
+}
+
+// The resident's own details for the fields a request form asks again
+// (their name, age, purok...), so they are not typed twice. Only fields the
+// form left blank are filled, and they stay editable: a request can be for
+// someone else.
+function profileDefaults(fields, account) {
+    if (!account) return {};
+    const age = (() => {
+        const dob = account.birthdate ? new Date(account.birthdate) : null;
+        if (!dob || isNaN(dob)) return '';
+        const today = new Date();
+        let years = today.getFullYear() - dob.getFullYear();
+        const months = today.getMonth() - dob.getMonth();
+        if (months < 0 || (months === 0 && today.getDate() < dob.getDate())) years--;
+        return years;
+    })();
+    const byKey = {
+        requester_name: account.fullName,
+        applicant_name: account.fullName,
+        full_name: account.fullName,
+        subject_name: account.fullName,
+        age,
+        purok: account.purok,
+        address: account.address,
+        date_of_birth: account.birthdate,
+        civil_status: account.civilStatus,
+        sex: account.sex,
+        occupation: account.occupation,
+    };
+    const out = {};
+    for (const field of fields || []) {
+        const value = byKey[field.key];
+        if (value === undefined || value === null || value === '') continue;
+        if (!['text', 'number', 'date', 'select'].includes(field.type)) continue;
+        if (field.type === 'select' && !(field.options || []).includes(value)) continue;
+        out[field.key] = field.type === 'date' ? String(value).slice(0, 10) : value;
+    }
+    return out;
+}
+
+window.profileDefaults = profileDefaults;
+
+// Why an uploaded file cannot be opened. The server links a file only once
+// the malware scan has cleared it; every other case used to read "Still
+// being scanned", including a scan that had failed and never would finish.
+function fileNotice(file) {
+    if (!file || file.url) return '';
+    switch (file.scan_status) {
+        case 'pending': return 'Being checked for viruses. Reopen this in a minute.';
+        case 'infected': return 'Blocked: this file failed the virus check. Ask the resident for a new copy.';
+        case 'error': return 'The virus check could not run, so the file cannot be opened yet. Ask ICT to rescan the uploads.';
+        default: return 'This file cannot be opened right now. Try again later.';
+    }
+}
+
+window.fileNotice = fileNotice;
+
+// The status history's trigger codes, in words. "admin:action" says
+// nothing the officer's name beside it does not already say.
+const TRIGGER_NOTES = {
+    'auto:first-open': 'automatically, when the request was first opened',
+    'auto:requirement-flagged': 'automatically, when a document was flagged',
+    'citizen:resubmit': 'resubmitted by the resident',
+};
+
+window.historyNote = (trigger) => TRIGGER_NOTES[trigger] || '';
+
 function readJson(key) {
     try {
         return JSON.parse(localStorage.getItem(key) || 'null');
@@ -140,7 +227,7 @@ document.addEventListener('alpine:init', () => {
     // enforces every permission triple, and a check here must never be
     // presented as protection.
     Alpine.store('session', {
-        account: readJson('esperanza_session'),
+        account: withPermissionMap(readJson('esperanza_session')),
         booting: false,
 
         setAccount(raw) {
@@ -153,7 +240,7 @@ document.addEventListener('alpine:init', () => {
                 scope: raw.scope,
                 status: raw.status,
                 moduleKeys: raw.moduleKeys || [],
-                permissions: raw.permissions || {},
+                permissions: permissionMap(raw.permissions),
             };
             writeJson('esperanza_session', this.account);
         },
@@ -167,13 +254,17 @@ document.addEventListener('alpine:init', () => {
             // nothing but answer the challenge (see AuthController).
             api.setToken(data.token);
 
+            // The account's real scope, so the sign-in page can tell an
+            // officer who chose a different one (the choice is not a filter).
+            const scope = data.account?.scope ?? null;
+
             if (data.mfa?.required && !data.mfa.satisfied) {
-                return { mfaRequired: true };
+                return { mfaRequired: true, scope };
             }
 
             this.setAccount(data.account);
 
-            return { mfaRequired: false };
+            return { mfaRequired: false, scope };
         },
 
         /** Re-derive the account from the server. Never trust a cached copy for a decision. */
@@ -368,6 +459,9 @@ document.addEventListener('alpine:init', () => {
                         };
                     });
                     this.state = 'loaded';
+                    // The rows' <i data-lucide> placeholders only become icons
+                    // when Lucide runs after Alpine has drawn them.
+                    window.Alpine?.nextTick(() => window.renderIcons?.());
                 } catch (err) {
                     this.error = err;
                     this.state = 'error';
@@ -654,6 +748,10 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('toast', () => ({
         items: [],
         push(message, variant = 'success') {
+            // One failure can be reported twice (the client's api:forbidden
+            // toast and the page's own catch). The same words twice read as
+            // two problems, so a toast already on screen is not repeated.
+            if (this.items.some((item) => item.message === message && item.variant === variant)) return;
             const id = Date.now() + Math.random();
             while (this.items.length >= 2) this.dismiss(this.items[0].id);
             this.items.push({ id, message, variant });

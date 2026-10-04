@@ -16,6 +16,8 @@
             step: 'scope',
             loading: false,
             error: '',
+            notice: '',
+            scopeLabel(s) { return s === 'Municipal' ? 'Municipal-wide access' : 'Brgy. ' + s; },
             async init() {
                 try {
                     const result = await $api.get('/barangays');
@@ -35,9 +37,23 @@
             async submit() {
                 if (this.loading) return;
                 this.error = '';
+                this.notice = '';
                 this.loading = true;
                 try {
                     const result = await this.$store.session.login(this.employeeId.trim(), this.password, this.mfaCode || null);
+                    // The scope chosen in step 1 must be the account's own. The
+                    // server scopes the data either way; this tells the officer
+                    // which door they are actually signing in through.
+                    if (result.scope && this.scope && result.scope !== this.scope) {
+                        const chosen = this.scope;
+                        await this.$store.session.logout();
+                        this.scope = result.scope;
+                        this.mfaCode = '';
+                        this.step = 'credentials';
+                        this.loading = false;
+                        this.error = 'This account is assigned to ' + this.scopeLabel(result.scope) + ', not ' + this.scopeLabel(chosen) + '. The scope has been changed above; press Sign In to continue.';
+                        return;
+                    }
                     if (result.mfaRequired) {
                         this.step = 'mfa';
                         this.loading = false;
@@ -47,7 +63,29 @@
                     window.location.href = '{{ route('admin.dashboard') }}';
                 } catch (err) {
                     this.loading = false;
-                    this.error = err.localised ? err.localised('en') : 'Sign in failed.';
+                    this.error = err.explain ? err.explain('en') : 'Sign in failed.';
+                    if (err.code === 'MFA_CODE_INVALID') {
+                        this.mfaCode = '';
+                        this.$nextTick(() => this.$refs.mfaCode?.focus());
+                    }
+                }
+            },
+            // A new code: signing in again without one sends a fresh code
+            // (a wrong code no longer does, so the one being typed stays good).
+            async resendCode() {
+                if (this.loading) return;
+                this.error = '';
+                this.notice = '';
+                this.mfaCode = '';
+                this.loading = true;
+                try {
+                    await this.$store.session.login(this.employeeId.trim(), this.password, null);
+                    this.notice = 'A new code has been sent. Codes sent earlier no longer work.';
+                    this.$nextTick(() => this.$refs.mfaCode?.focus());
+                } catch (err) {
+                    this.error = err.explain ? err.explain('en') : 'Could not send a new code.';
+                } finally {
+                    this.loading = false;
                 }
             },
         }"
@@ -166,6 +204,10 @@
                     <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>
                     <p class="text-xs text-rose-600" x-text="error"></p>
                 </div>
+                <div x-show="notice" x-cloak class="flex items-center gap-2.5 rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-2.5">
+                    <i data-lucide="mail-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                    <p class="text-xs text-emerald-700" x-text="notice"></p>
+                </div>
 
                 <button
                     type="submit"
@@ -178,6 +220,10 @@
                     </svg>
                     <span x-text="loading ? 'Verifying…' : 'Verify and Sign In'"></span>
                 </button>
+                <p class="text-center text-xs text-slate-500">
+                    Didn't get it, or it expired?
+                    <button type="button" @click="resendCode()" :disabled="loading" class="font-medium text-navy-700 hover:underline disabled:opacity-50">Send a new code</button>
+                </p>
             </form>
         </div>
 
