@@ -91,4 +91,19 @@ class QaRunFixesTest extends TestCase
             $this->assertStringContainsString("'Not submitted'", $view, $page.': a requirement with no file does not read Submitted');
         }
     }
+
+    /** The resident saw neither the fee nor the receipt; the cashier could not tell which request a payment was for. */
+    public function test_the_resident_sees_the_fee_and_the_cashier_sees_the_request(): void
+    {
+        $fee = $this->source('resources/views/components/citizen/request-fee.blade.php');
+        $this->assertStringContainsString('selectedRequest?.payment?.receipt_no', $fee, 'the receipt number is shown');
+        $this->assertStringContainsString("selectedRequest?.payment?.status === 'Approved'", $fee, 'Approved reads as paid');
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $this->assertStringContainsString('<x-citizen.request-fee />', $this->source("resources/views/citizen/{$page}.blade.php"), $page);
+        }
+
+        $payments = $this->source('resources/views/admin/payments.blade.php');
+        $this->assertStringContainsString("' · ' + p.request_ref", $payments, 'each payment names its request');
+        $this->assertStringContainsString("(p.request_ref || '').toLowerCase().includes(q)", $payments, 'the search finds a payment by its request');
+    }
 }

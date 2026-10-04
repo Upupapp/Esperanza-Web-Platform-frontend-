@@ -1450,6 +1450,8 @@
                             </div>
                         </div>
 
+                        <x-citizen.request-fee />
+
                         <div class="grid grid-cols-2 gap-3 mt-5">
                             <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
                                 <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><x-ui.t fil="Inaasahang Petsa ng Release" en="Expected Release" /></p>

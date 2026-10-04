@@ -34,7 +34,7 @@
                     || (this.tab === 'rejected' && p.status === 'Rejected');
                 const barangayOk = this.barangayFilter === '' || p.barangay === this.barangayFilter;
                 const q = this.search.trim().toLowerCase();
-                const searchOk = q === '' || p.ref.toLowerCase().includes(q) || (p.citizen || '').toLowerCase().includes(q);
+                const searchOk = q === '' || p.ref.toLowerCase().includes(q) || (p.request_ref || '').toLowerCase().includes(q) || (p.citizen || '').toLowerCase().includes(q);
                 return tabOk && barangayOk && searchOk;
             },
             // Arriving from a request's own process modal via 'View in
@@ -149,7 +149,11 @@
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-2.5 min-w-0">
                             <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(p.citizen || '').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
-                            <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="p.citizen"></p>
+                            <div class="min-w-0">
+                                <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="p.citizen"></p>
+                                {{-- Which request it pays for, at every width: the Item column is hidden below 2xl. --}}
+                                <p class="text-[11px] text-slate-500 truncate" x-text="(p.item || '') + (p.request_ref ? ' · ' + p.request_ref : '')"></p>
+                            </div>
                         </div>
                     </td>
                     <td class="px-4 py-3 hidden 2xl:table-cell">
@@ -264,7 +268,7 @@
                             <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i data-lucide="circle-check" class="w-4 h-4"></i></span>
                             <div class="min-w-0 flex-1">
                                 <p class="text-xs font-semibold text-emerald-800">Paid via <span x-text="payments[selected].method || 'unspecified method'"></span></p>
-                                <p class="text-[11px] text-emerald-700/80" x-text="payments[selected]._receipt ? ('Receipt ' + payments[selected]._receipt.receipt_no + ' issued ' + payments[selected]._receipt.issued_at) : ('On ' + payments[selected].date)"></p>
+                                <p class="text-[11px] text-emerald-700/80" x-text="payments[selected]._receipt ? ('Receipt ' + payments[selected]._receipt.receipt_no + ' issued ' + new Date(payments[selected]._receipt.issued_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })) : ('On ' + payments[selected].date)"></p>
                             </div>
                         </div>
                     </div>
