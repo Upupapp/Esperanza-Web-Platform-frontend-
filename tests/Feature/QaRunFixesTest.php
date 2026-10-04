@@ -74,7 +74,9 @@ class QaRunFixesTest extends TestCase
         foreach (['document-requests', 'assistance-requests'] as $page) {
             $view = $this->source("resources/views/admin/{$page}.blade.php");
             $this->assertStringContainsString('file_notice: window.fileNotice(q.file)', $view, $page);
-            $this->assertStringContainsString('Open the file in a new tab', $view, $page.': the viewer links the file');
+            $this->assertStringContainsString('Download the file', $view, $page.': the viewer links the file');
+            $this->assertStringNotContainsString('<iframe :src="previewDoc?.file_url"', $view, $page.': uploads are downloads, never framed');
+            $this->assertStringContainsString("'Not submitted'", $view, $page.': a requirement with no file does not read Submitted');
         }
     }
 }

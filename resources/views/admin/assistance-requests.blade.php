@@ -1097,8 +1097,8 @@
                                             ><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset whitespace-nowrap"
-                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
-                                            ><span x-text="req.status === 'Approved' ? 'Verified' : req.status"></span></span>
+                                                :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': (req.status === 'Submitted' && req.file) || req.status === 'Flagged for Replacement', 'bg-slate-100 text-slate-600 ring-slate-200': req.status === 'Submitted' && !req.file, 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"
+                                            ><span x-text="req.status === 'Approved' ? 'Verified' : (req.status === 'Submitted' && !req.file ? 'Not submitted' : req.status)"></span></span>
                                         </div>
                                     </div>
 
@@ -1461,24 +1461,24 @@
                         </button>
                     </div>
                     <div class="p-4">
-                        {{-- The file itself: an image or a PDF shown inline, a link to
-                             open it, or why it cannot be opened (the server links a
-                             file only once the malware scan has cleared it). --}}
+                        {{-- The file itself: an image shown inline, a download link, or
+                             why it cannot be opened (the server links a file only once
+                             the malware scan has cleared it). A PDF is not framed: the
+                             server serves uploads as downloads, never inline, so a
+                             frame only started a download and stayed blank. --}}
                         <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/2] overflow-hidden mb-3" x-show="previewDoc?.preview_asset">
                             <img :src="previewDoc?.preview_asset" :alt="previewDoc?.name" class="w-full h-full object-contain">
                         </div>
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden mb-3" style="height: 320px;" x-show="!previewDoc?.preview_asset && previewDoc?.file_url && previewDoc?.file_mime === 'application/pdf'">
-                            <iframe :src="previewDoc?.file_url" class="w-full h-full" :title="previewDoc?.name"></iframe>
-                        </div>
                         <a x-show="previewDoc?.file_url" :href="previewDoc?.file_url" target="_blank" rel="noopener" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium inline-flex items-center gap-1 mb-3">
-                            <i data-lucide="external-link" class="w-3 h-3"></i> Open the file in a new tab
+                            <i data-lucide="download" class="w-3 h-3"></i> Download the file
                         </a>
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset && !(previewDoc?.file_url && previewDoc?.file_mime === 'application/pdf')">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset">
                             <span
                                 class="w-14 h-14 rounded-2xl flex items-center justify-center"
                                 :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'"
                             ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-7 h-7"></i></span>
                             <p class="text-xs font-medium text-slate-500 px-4 text-center truncate max-w-full" x-text="previewDoc?.file"></p>
+                            <p x-show="previewDoc?.file_url" class="text-[11px] leading-snug text-slate-500 px-5 text-center">Download it to read it: uploaded files are never opened inside the portal.</p>
                             <p x-show="previewDoc?.file_notice" class="text-[11px] leading-snug text-rose-600 px-5 text-center" x-text="previewDoc?.file_notice"></p>
                         </div>
                         <dl class="space-y-2 text-xs">

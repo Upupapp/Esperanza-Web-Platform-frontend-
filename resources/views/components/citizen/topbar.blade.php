@@ -108,6 +108,7 @@
                         .filter((d) => d.category === 'Identity / Verification')
                         .forEach((d) => { if (!list.some((x) => x.type === d.type)) list.push(entry(d.type, d.status)); });
                     this.myIds = list;
+                    this.$nextTick(() => window.renderIcons?.());
                 },
                 get filteredIds() { return this.idFilter === 'all' ? this.myIds : this.myIds.filter(d => d.status === this.idFilter); },
             }"
