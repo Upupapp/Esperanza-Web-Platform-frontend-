@@ -318,6 +318,7 @@ document.addEventListener('alpine:init', () => {
 
         can(moduleKey) {
             if (!this.account) return false;
+            if (this.account.roleKey === 'super_admin') return true;
             return (this.account.moduleKeys || []).includes(moduleKey);
         },
         canPerm(submoduleKey, permission) {
@@ -331,6 +332,7 @@ document.addEventListener('alpine:init', () => {
         },
         inScope(barangay) {
             if (!this.account) return false;
+            if (this.account.roleKey === 'super_admin') return true;
             if (this.account.scope === 'Municipal') return true;
             return this.account.scope === barangay;
         },
