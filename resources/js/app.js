@@ -171,6 +171,18 @@ const TRIGGER_NOTES = {
 
 window.historyNote = (trigger) => TRIGGER_NOTES[trigger] || '';
 
+// A path the API hands back unprefixed (`images/esperanza/...`), because the
+// file it names is one of THIS site's own bundled static assets (public/...),
+// not something the backend hosts. An <img> given that raw string resolves it
+// against the current page instead of the site root and 404s — only visible
+// once a row actually carries a path, which is why it went unnoticed: of the
+// 20 barangays only Labangtaytay has ever had a seal file (B-finding
+// 2026-10-05). Already-absolute values (http(s):// or a leading /) pass through.
+window.staticAssetUrl = (path) => {
+    if (!path) return null;
+    return /^https?:\/\//.test(path) || path.startsWith('/') ? path : `/${path}`;
+};
+
 function readJson(key) {
     try {
         return JSON.parse(localStorage.getItem(key) || 'null');
@@ -568,6 +580,13 @@ document.addEventListener('alpine:init', () => {
                 (result.data || []).forEach((b) => {
                     map[b.name] = {
                         label: b.name,
+                        // Deliberately raw: every citizen-facing template that
+                        // reads $store.barangay.mine?.seal (sidebar, dashboard,
+                        // profile, directory, document-requests) already wraps
+                        // it with `{{ rtrim(asset(''), '/') }}/` + seal itself.
+                        // Prefixing it here too would double it. Only the admin
+                        // Balita page skipped that wrapping — fixed there
+                        // instead, in its own component (see staticAssetUrl).
                         seal: b.seal_path,
                         officials: b.officials || {},
                         contact: b.contact,

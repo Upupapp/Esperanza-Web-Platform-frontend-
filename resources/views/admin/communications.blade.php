@@ -979,7 +979,10 @@
                     this.loading = true; this.failed = false;
                     try {
                         const res = await $api.get('/barangays');
-                        this.barangays = res.data || [];
+                        // seal_path comes back unprefixed (it names one of this
+                        // site's own bundled assets, not something the backend
+                        // hosts) — see window.staticAssetUrl's own comment.
+                        this.barangays = (res.data || []).map((b) => ({ ...b, seal_path: window.staticAssetUrl(b.seal_path) }));
                     } catch { this.failed = true; } finally { this.loading = false; }
                 },
                 edit(b) { this.selected = { ...b }; this.open = true; },
