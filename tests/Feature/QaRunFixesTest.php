@@ -170,6 +170,14 @@ class QaRunFixesTest extends TestCase
         }
     }
 
+    /** Icons in rows drawn after an API load stayed blank: the personnel Edit and Archive buttons were invisible. */
+    public function test_icons_drawn_after_the_first_render_are_rendered_too(): void
+    {
+        $js = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('new MutationObserver((mutations) => {', $js);
+        $this->assertStringContainsString("n.querySelector('i[data-lucide]')", $js);
+    }
+
     /** Branding was published as versions that neither portal read. */
     public function test_both_portals_apply_the_published_branding(): void
     {

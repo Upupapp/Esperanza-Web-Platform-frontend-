@@ -854,6 +854,19 @@ renderIcons();
 // yet when renderIcons() runs above — catch them once Alpine finishes init.
 document.addEventListener('alpine:initialized', () => renderIcons());
 
+// Rows and cards Alpine draws later (a list that loads from the API, a tab
+// opened later) bring new <i data-lucide> placeholders, which stayed blank
+// unless that page remembered to call renderIcons(): on staging the personnel
+// list's Edit and Archive buttons were empty and invisible (QA run
+// 2026-10-05). One watcher draws them on the next frame. Lucide's <svg>
+// replacements do not match, so it never feeds itself.
+let iconFrame = null;
+new MutationObserver((mutations) => {
+    if (iconFrame) return;
+    const placeholders = mutations.some((m) => [...m.addedNodes].some((n) => n.nodeType === 1 && (n.matches('i[data-lucide]') || n.querySelector('i[data-lucide]'))));
+    if (placeholders) iconFrame = requestAnimationFrame(() => { iconFrame = null; renderIcons(); });
+}).observe(document.documentElement, { childList: true, subtree: true });
+
 Alpine.start();
 
 
