@@ -108,6 +108,38 @@
                 f.columns.forEach(c => { row[c.key] = ''; });
                 this.formData[f.key].push(row);
             },
+            // Approve or reject the step waiting on this officer. The server had
+            // POST .../decide and the screen had no way to call it, so a filed
+            // form could never move (QA run 2026-10-05). Each row says whether
+            // it is this officer's turn (can_decide) and which step it is on.
+            decision: null,
+            decisionRemarks: '',
+            deciding: false,
+            startDecision(s, kind) {
+                this.decision = { s, kind };
+                this.decisionRemarks = '';
+            },
+            async confirmDecision() {
+                const d = this.decision;
+                if (!d || this.deciding) return;
+                if (d.kind === 'reject' && !this.decisionRemarks.trim()) return;
+                this.deciding = true;
+                try {
+                    const res = await $api.post('/admin/internal-forms/submissions/' + encodeURIComponent(d.s.ref) + '/decide', {
+                        decision: d.kind,
+                        remarks: this.decisionRemarks.trim() || undefined,
+                    });
+                    const i = this.submissions.findIndex((x) => x.ref === d.s.ref);
+                    if (i !== -1) this.submissions.splice(i, 1, { ...this.submissions[i], ...res.data });
+                    this.decision = null;
+                    this.$dispatch('toast', {
+                        message: d.s.ref + (d.kind === 'approve' ? ' approved' : ' rejected') + ' — now ' + res.data.status + '.',
+                        variant: d.kind === 'approve' ? 'success' : 'error',
+                    });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not record the decision.', variant: 'error' });
+                } finally { this.deciding = false; }
+            },
             reset() { this.open = false; this.selectedForm = null; this.formData = {}; this.attachments = {}; this.doneSubmit = false; this.submitting = false; this.formStep = 1; },
             async submit() {
                 if (this.submitting) return;
@@ -198,6 +230,7 @@
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell">Submitted By</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell">Date</th>
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
+                    <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-50">
@@ -211,6 +244,14 @@
                         <td class="px-4 py-3">
                             <x-ui.badge statusBind="s.status" />
                         </td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <div x-show="s.can_decide" class="inline-flex items-center gap-1.5">
+                                <button type="button" @click="startDecision(s, 'approve')" class="text-xs font-semibold text-emerald-700 hover:underline">Approve</button>
+                                <span class="text-slate-200" aria-hidden="true">·</span>
+                                <button type="button" @click="startDecision(s, 'reject')" class="text-xs font-semibold text-rose-600 hover:underline">Reject</button>
+                            </div>
+                            <span x-show="!s.can_decide && s.step" class="text-[11px] text-slate-500" x-text="'Waiting on ' + (s.step?.office || s.step?.label || 'the next step')"></span>
+                        </td>
                     </tr>
                 </template>
             </tbody>
@@ -219,6 +260,30 @@
             <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600">No submissions in this view.</p>
         </div>
+        </div>
+
+        <!-- Decide on the waiting step -->
+        <div x-show="decision" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
+             @click.self="decision = null" @keydown.escape.window="decision = null"
+             role="dialog" aria-modal="true" aria-labelledby="if-decide-title">
+            <div class="bg-white rounded-2xl shadow-float w-full max-w-md p-6 space-y-4">
+                <div>
+                    <h3 id="if-decide-title" class="text-base font-semibold text-navy-900" x-text="(decision?.kind === 'approve' ? 'Approve ' : 'Reject ') + (decision?.s.ref || '')"></h3>
+                    <p class="text-xs text-slate-500 mt-1" x-text="(decision?.s.form || '') + (decision?.s.step ? ' · Step ' + decision.s.step.number + (decision.s.step.label ? ': ' + decision.s.step.label : '') : '')"></p>
+                </div>
+                <label class="block">
+                    <span class="text-xs font-medium text-slate-600" x-text="decision?.kind === 'reject' ? 'Reason (required)' : 'Remarks (optional)'"></span>
+                    <textarea x-model="decisionRemarks" rows="3" class="mt-1 w-full text-sm rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                </label>
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="decision = null" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Cancel</button>
+                    <button type="button" @click="confirmDecision()"
+                        :disabled="deciding || (decision?.kind === 'reject' && !decisionRemarks.trim())"
+                        :class="decision?.kind === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'"
+                        class="px-4 py-2 text-xs font-semibold text-white rounded-xl disabled:opacity-40"
+                        x-text="deciding ? 'Saving…' : (decision?.kind === 'approve' ? 'Confirm Approval' : 'Confirm Rejection')"></button>
+                </div>
+            </div>
         </div>
 
         <!-- Fill-out Modal -->
@@ -334,7 +399,7 @@
                                                             <i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-3 h-3"></i>
                                                             <span x-text="row[currentFormStep.field.columns[0].key] || ((currentFormStep.field.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
                                                         </span>
-                                                        <button type="button" @click="formData[currentFormStep.field.key].splice(ri, 1)" class="text-slate-300 hover:text-rose-500 transition-colors">
+                                                        <button aria-label="Remove" type="button" @click="formData[currentFormStep.field.key].splice(ri, 1)" class="text-slate-300 hover:text-rose-500 transition-colors">
                                                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                                         </button>
                                                     </div>

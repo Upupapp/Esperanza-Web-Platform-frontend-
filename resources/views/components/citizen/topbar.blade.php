@@ -53,7 +53,7 @@
     x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.citizenNotifications.load(); $store.citizenNotifications.poll()"
 >
     <div class="flex items-center gap-3 min-w-0">
-        <button @click="mobileOpen = true" class="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100">
+        <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100">
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
         <div class="min-w-0">
@@ -210,7 +210,7 @@
              2026-09-25). Loaded once on the shell's own init below, so this
              dropdown and the dedicated Notifications page share one fetch. --}}
         <div class="relative" x-data="dropdown" @click.outside="close">
-            <button @click="toggle" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
+            <button @click="toggle" aria-label="Notifications" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
                 <i data-lucide="bell" class="w-5 h-5"></i>
                 <span class="absolute top-1.5 right-1.5 flex w-2 h-2" x-show="$store.citizenNotifications.unreadCount">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -246,7 +246,7 @@
                                     <span class="block text-xs text-slate-500 mt-0.5 line-clamp-2" x-text="n.body"></span>
                                 </span>
                             </a>
-                            <button
+                            <button aria-label="Close"
                                 type="button" x-show="!n.pinned"
                                 @click.prevent.stop="$store.citizenNotifications.dismiss(n.id)"
                                 class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"

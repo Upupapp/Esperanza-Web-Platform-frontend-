@@ -275,7 +275,7 @@
                     </div>
                 </div>
             </div>
-            <button @click="showEvacueeDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showEvacueeDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
@@ -367,7 +367,7 @@
                 <h3 class="font-semibold text-slate-800">Register Evacuee Household</h3>
                 <p class="text-xs text-slate-500 mt-0.5">Unregistered households are accepted — a disaster is not the moment to require an account.</p>
             </div>
-            <button @click="showEvacueeReg = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showEvacueeReg = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
@@ -418,7 +418,7 @@
                                 <option value="">Sex</option><option>Male</option><option>Female</option>
                             </select>
                             <input type="text" x-model="m.needs" :aria-label="'Member ' + (idx+1) + ' needs'" placeholder="Needs (comma-separated)" class="flex-1 min-w-[140px] text-xs border border-slate-200 rounded-lg px-2 py-1.5">
-                            <button type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-slate-500 hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                            <button aria-label="Close" type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-slate-500 hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </template>
                 </div>

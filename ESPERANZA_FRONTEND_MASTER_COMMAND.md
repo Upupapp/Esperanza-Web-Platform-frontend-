@@ -512,7 +512,7 @@ change is legible to anyone holding an older copy of this book.
   scope. The UI then shows the existing `x-admin.access-restricted` component
   rather than a full preview.
 - **Understand what client gating is for.** It hides what the user cannot use;
-  it is *not* the security boundary. The server enforces all 490 permission
+  it is *not* the security boundary. The server enforces all 519 permission
   triples (backend book, TAB 03). Never present a client check as protection.
 - **Keep the existing re-derivation behaviour.** The store deliberately
   re-reads `moduleKeys`/`permissions` from current config on every load rather

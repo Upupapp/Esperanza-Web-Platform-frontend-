@@ -52,8 +52,14 @@
                 x-data="{ chart: null }"
                 x-init="$watch('barangayStatusBreakdown', async (rows) => {
                     const Chart = await window.loadChart();
-                    if (chart) chart.destroy();
-                    chart = new Chart($refs.canvas, {
+                    // Chart.js loads late: by then the canvas can be gone, or a
+                    // second draw already holds it, and drawing threw 'reading
+                    // ownerDocument' (QA run 2026-10-05).
+                    const canvas = $refs.canvas;
+                    if (!canvas || !canvas.isConnected) return;
+                    if (chart) { chart.destroy(); chart = null; }
+                    Chart.getChart?.(canvas)?.destroy();
+                    chart = new Chart(canvas, {
                         type: 'doughnut',
                         data: {
                             labels: rows.map(r => r.label),

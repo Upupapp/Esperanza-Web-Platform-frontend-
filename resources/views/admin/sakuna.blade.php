@@ -114,6 +114,7 @@
         // Incidents tab pre-filtered to their exact report, and offer a way
         // straight back to the profile that started the trip.
         init() {
+            this.landOnAllowedTab();
             this.loadHeader();
             const params = new URLSearchParams(window.location.search);
             const ref = params.get('ref');
@@ -398,9 +399,10 @@
             this.evacueesLoading = true;
             this.evacueesFailed = false;
             try {
+                await this.$store.session.whenReady();
                 const [ev, centers] = await Promise.all([
                     $api.getAll('/admin/sakuna/evacuees'),
-                    $api.getAll('/admin/sakuna/centers').catch(() => ({ data: [] })),
+                    this.mayListCenters() ? $api.getAll('/admin/sakuna/centers').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.evacueesList = ev.data || [];
                 this.evacueeCentersOpen = (centers.data || []).filter(c => c.status === 'Processing');
@@ -499,9 +501,10 @@
             this.resourcesLoading = true;
             this.resourcesFailed = false;
             try {
+                await this.$store.session.whenReady();
                 const [res, incidents] = await Promise.all([
                     $api.getAll('/admin/sakuna/resources'),
-                    $api.getAll('/admin/sakuna/incidents').catch(() => ({ data: [] })),
+                    this.allowed('sakuna_incidents') ? $api.getAll('/admin/sakuna/incidents').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.resourcesList = res.data || [];
                 this.resourceIncidentsOpen = (incidents.data || []).filter(i => !['Completed', 'Archived'].includes(i.status));
@@ -665,9 +668,10 @@
             this.damagesLoading = true;
             this.damagesFailed = false;
             try {
+                await this.$store.session.whenReady();
                 const [res, incidents] = await Promise.all([
                     $api.getAll('/admin/sakuna/damage'),
-                    $api.getAll('/admin/sakuna/incidents').catch(() => ({ data: [] })),
+                    this.allowed('sakuna_incidents') ? $api.getAll('/admin/sakuna/incidents').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.damagesList = res.data || [];
                 this.damageIncidentsOpen = incidents.data || [];
@@ -886,10 +890,13 @@
             this.commandLoading = true;
             this.commandFailed = false;
             try {
+                // The personnel list feeds the Assign picker; only a role that
+                // may see Personnel asks for it (every 403 pops up).
+                await this.$store.session.whenReady();
                 const [board, incidents, personnel] = await Promise.all([
                     $api.get('/admin/sakuna/command-center'),
-                    $api.getAll('/admin/sakuna/incidents'),
-                    $api.getAll('/admin/users').catch(() => ({ data: [] })),
+                    this.allowed('sakuna_incidents') ? $api.getAll('/admin/sakuna/incidents') : this.nothing(),
+                    this.$store.session.canPerm('um_personnel', 'view') ? $api.getAll('/admin/users').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.commandBoard = board.data;
                 const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
@@ -942,10 +949,14 @@
             this.reportsLoading = true;
             this.reportsFailed = false;
             try {
+                // Reports reads three lists; the Records Officer holds no
+                // incidents or centers and the Information Officer no
+                // vulnerability, so each section shows what the role may see.
+                await this.$store.session.whenReady();
                 const [inc, centers, vul] = await Promise.all([
-                    $api.getAll('/admin/sakuna/incidents'),
-                    $api.getAll('/admin/sakuna/centers'),
-                    $api.getAll('/admin/sakuna/vulnerability'),
+                    this.allowed('sakuna_incidents') ? $api.getAll('/admin/sakuna/incidents') : this.nothing(),
+                    this.mayListCenters() ? $api.getAll('/admin/sakuna/centers') : this.nothing(),
+                    this.allowed('sakuna_vulnerability') ? $api.getAll('/admin/sakuna/vulnerability') : this.nothing(),
                 ]);
                 this.reportIncidents = inc.data || [];
                 this.reportCenters = centers.data || [];
@@ -990,6 +1001,7 @@
         // is a navigation. The query string is preserved deliberately: arriving
         // from a resident profile carries ?ref=, and init() re-enters here.
         setTab(tab) {
+            if (!this.tabAllowed(tab)) return;
             if (tab === this.activeTab) {
                 this.$nextTick(() => window.renderIcons?.());
                 return;
@@ -1119,6 +1131,36 @@
         can(submodule, action) {
             return this.$store.session.canPerm ? this.$store.session.canPerm(submodule, action) : true;
         },
+
+        // Each tab is one submodule. A role sees only the tabs it may view and
+        // lands on the first of them: the Front Desk, Records, Information,
+        // Department Head and Staff accounts opened tabs outside their part
+        // and got 'Something went wrong' plus a 'Walang pahintulot' pop-up
+        // (QA run 2026-10-05).
+        tabSubs: {
+            'command-center': 'sakuna_command', 'vulnerability': 'sakuna_vulnerability',
+            'incidents': 'sakuna_incidents', 'evacuation-centers': 'sakuna_centers',
+            'evacuees': 'sakuna_evacuees', 'resources': 'sakuna_resources',
+            'relief': 'sakuna_relief', 'damage-assessment': 'sakuna_damage',
+            'bdrrmc-forms': 'sakuna_reports', 'alerts': 'sakuna_alerts', 'reports': 'sakuna_reports',
+        },
+        allowed(submodule) { return this.can(submodule, 'view'); },
+        tabAllowed(tab) { return this.allowed(this.tabSubs[tab]); },
+        get permsReady() { return this.$store.session.permsReady; },
+        get activeAllowed() { return this.permsReady && this.tabAllowed(this.activeTab); },
+        get firstAllowedTab() { return Object.keys(this.tabSubs).find((t) => this.tabAllowed(t)) || null; },
+        // Choosing a center to check a family into, or move them to, needs the
+        // list without the Evacuation Centers tab (the server agrees).
+        mayListCenters() {
+            return this.allowed('sakuna_centers') || this.can('sakuna_evacuees', 'check_in') || this.can('sakuna_evacuees', 'transfer');
+        },
+        nothing() { return Promise.resolve({ data: [] }); },
+        async landOnAllowedTab() {
+            await this.$store.session.whenReady();
+            if (this.tabAllowed(this.activeTab)) return;
+            const first = this.firstAllowedTab;
+            if (first && this.tabUrls[first]) window.location.replace(this.tabUrls[first] + window.location.search);
+        },
     }"
     x-init="
         setTimeout(() => { ready = true; $nextTick(() => window.renderIcons?.()); }, 600);
@@ -1132,7 +1174,7 @@
             <span x-text="opStatus"></span>
         </span>
 
-        <button type="button" @click="setTab(headerBoard?.alerts?.length ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors" title="Open the alerts or incidents behind this">
+        <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors" title="Open the alerts or incidents behind this">
             <i data-lucide="radio-tower" class="w-4 h-4 text-slate-500"></i>
             <span x-text="activeEventLabel" class="max-w-48 truncate"></span>
         </button>
@@ -1143,10 +1185,10 @@
         </button>
 
         <div class="ml-auto flex items-center gap-2">
-            <button @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
+            <button x-show="tabAllowed('reports')" @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
                 <i data-lucide="file-bar-chart" class="w-4 h-4 text-slate-500"></i> SitRep &amp; Reports
             </button>
-            <button @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-1.5 shadow-card transition-colors">
+            <button x-show="can('sakuna_command', 'escalate')" @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-1.5 shadow-card transition-colors">
                 <i data-lucide="siren" class="w-4 h-4"></i> Activate EOC
             </button>
         </div>
@@ -1174,6 +1216,7 @@
                 @foreach($tabs as $t)
                     <a
                         href="{{ $tabUrls[$t['key']] }}"
+                        x-show="permsReady && tabAllowed('{{ $t['key'] }}')" x-cloak
                         @if($activeTab === $t['key']) aria-current="page" @endif
                         class="inline-flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors {{ $activeTab === $t['key'] ? 'border-b-2 border-brand-500 text-brand-600 bg-brand-50/40' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/60' }}"
                     >
@@ -1203,6 +1246,11 @@
 
         {{-- ── Tab Panels ───────────────────────────────────────────────────── --}}
         <div class="p-5">
+            {{-- A tab renders, and loads, only once the role may view it; a tab
+                 outside the role's part sends them to the first one they hold. --}}
+            <p x-show="!activeAllowed" class="py-10 text-center text-sm text-slate-500">Loading…</p>
+            <template x-if="activeAllowed">
+            <div x-init="$nextTick(() => window.renderIcons?.())">
 
             {{-- Command Center --}}
             @if($activeTab === 'command-center')
@@ -1286,6 +1334,8 @@
             </div>
             @endif
 
+            </div>
+            </template>
         </div>
     </div>
 

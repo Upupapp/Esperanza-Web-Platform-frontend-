@@ -274,7 +274,7 @@
                 <div class="flex flex-col min-h-0" style="max-height: 88vh;">
                     <div class="relative shrink-0 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-900 text-white px-6 py-5 rounded-t-2xl overflow-hidden">
                         <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5 pointer-events-none"></div>
-                        <button @click="open = false" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-20"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button aria-label="Close" @click="open = false" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-20"><i data-lucide="x" class="w-4 h-4"></i></button>
                         <div class="flex items-center gap-1.5 text-xs text-white/60 mb-3 relative z-10 pr-12">
                             <button @click="open = false; selectedBarangay = null; selectedCitizenId = null" class="hover:text-white transition-colors">Citizen Documents</button>
                             <i data-lucide="chevron-right" class="w-3 h-3"></i>
@@ -361,7 +361,7 @@
                             <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-4 h-4"></i></span>
                             <p class="text-sm font-semibold text-navy-900 truncate" x-text="previewDoc.type"></p>
                         </div>
-                        <button @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button aria-label="Close" @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
                         <div class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center py-14">

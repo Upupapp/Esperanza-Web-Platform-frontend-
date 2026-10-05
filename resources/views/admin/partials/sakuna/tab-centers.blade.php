@@ -110,10 +110,10 @@
         <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
     </button>
     <div class="ml-auto flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-card">
-        <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-slate-600'" class="px-3 py-2 transition-colors">
+        <button aria-label="Card view" @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-slate-600'" class="px-3 py-2 transition-colors">
             <i data-lucide="layout-grid" class="w-4 h-4"></i>
         </button>
-        <button @click="viewMode = 'table'" :class="viewMode === 'table' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-slate-600'" class="px-3 py-2 border-l border-slate-200 transition-colors">
+        <button aria-label="Table view" @click="viewMode = 'table'" :class="viewMode === 'table' ? 'bg-brand-50 text-brand-600' : 'text-slate-500 hover:text-slate-600'" class="px-3 py-2 border-l border-slate-200 transition-colors">
             <i data-lucide="table" class="w-4 h-4"></i>
         </button>
     </div>
@@ -264,7 +264,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span :class="statusBadge(selectedCenter?.status ?? '')" x-text="selectedCenter?.status === 'Processing' ? 'Open' : (selectedCenter?.status === 'Archived' ? 'Closed' : 'Registered')"></span>
-                <button @click="showCenterDetail = false" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+                <button aria-label="Close" @click="showCenterDetail = false" class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -449,7 +449,7 @@
                     <p class="text-xs text-slate-500">Facility name, barangay and capacity, plus optional services.</p>
                 </div>
             </div>
-            <button @click="showCreateCenter = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button aria-label="Close" @click="showCreateCenter = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
         <div class="px-6 py-5 space-y-4">

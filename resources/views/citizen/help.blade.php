@@ -164,12 +164,12 @@
                             <p class="text-sm text-slate-500 leading-relaxed" x-text="faq.a"></p>
                             <div class="flex items-center gap-2.5 mt-3 pt-3 border-t border-slate-50">
                                 <span class="text-[11px] text-slate-500"><x-ui.t fil="Nakatulong ba ito?" en="Was this helpful?" /></span>
-                                <button
+                                <button aria-label="Helpful"
                                     @click="markHelpful(faq.i, true)"
                                     class="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
                                     :class="helpful[faq.i] === true ? 'bg-emerald-50 text-emerald-600' : 'text-slate-300 hover:bg-slate-50 hover:text-slate-500'"
                                 ><i data-lucide="thumbs-up" class="w-3.5 h-3.5" :style="helpful[faq.i] === true ? 'fill: currentColor' : ''"></i></button>
-                                <button
+                                <button aria-label="Not helpful"
                                     @click="markHelpful(faq.i, false)"
                                     class="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
                                     :class="helpful[faq.i] === false ? 'bg-rose-50 text-rose-600' : 'text-slate-300 hover:bg-slate-50 hover:text-slate-500'"
@@ -279,7 +279,7 @@
                                     <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
                                         <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="ticketAttachment"></span>
                                     </span>
-                                    <button type="button" @click="ticketAttachment = null; ticketFile = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                    <button aria-label="Close" type="button" @click="ticketAttachment = null; ticketFile = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                 </div>
                             </div>
                             <div x-show="showAttachPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">

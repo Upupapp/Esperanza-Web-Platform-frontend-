@@ -201,6 +201,8 @@
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose;
                 r.formSnapshot = d.form_data || {};
                 r.canResubmit = !!d.can_resubmit;
+                // Required documents not uploaded yet hold the resubmit back (QA run 2026-10-05).
+                r.missingRequired = d.missing_required || [];
                 r.payment = d.payment || null;
                 r.history = d.history || [];
                 r.requirements = (d.requirements || []).map((q) => ({
@@ -1061,7 +1063,7 @@
                                                 <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
                                                     <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span class="truncate max-w-[140px]" x-text="attachments[i]?.name"></span>
                                                 </span>
-                                                <button type="button" @click="attachments[i] = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                                <button aria-label="Close" type="button" @click="attachments[i] = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                             </div>
                                         </div>
                                         <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
@@ -1453,6 +1455,7 @@
                                 >
                                     <span x-text="resubmitting ? ($store.lang.current === 'en' ? 'Resubmitting…' : 'Isinusumite muli…') : ($store.lang.current === 'en' ? 'Resubmit Application' : 'Isumite Muli ang Aplikasyon')"></span>
                                 </x-ui.button>
+                                <p x-show="(selectedRequest?.missingRequired || []).length" x-cloak class="text-[11px] text-amber-700" x-text="($store.lang.current === 'en' ? 'Attach these first, then resubmit: ' : 'I-upload muna ang mga ito bago muling isumite: ') + (selectedRequest?.missingRequired || []).map(m => m.label).join(', ')"></p>
                             </div>
                         </div>
 

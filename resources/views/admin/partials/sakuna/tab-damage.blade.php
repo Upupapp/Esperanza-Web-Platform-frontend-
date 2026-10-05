@@ -185,7 +185,7 @@
                 </div>
                 <p class="text-xs text-slate-500 mt-0.5" x-text="(selectedAssessment?.sector ?? '') + ' · ' + (selectedAssessment?.barangay ?? '')"></p>
             </div>
-            <button @click="showAssessmentDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showAssessmentDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
@@ -239,7 +239,7 @@
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <h3 class="font-semibold text-slate-800" x-text="damageFormMode === 'create' ? 'New Damage Assessment' : 'Edit Assessment'"></h3>
-            <button @click="showCreateAssessment = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showCreateAssessment = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

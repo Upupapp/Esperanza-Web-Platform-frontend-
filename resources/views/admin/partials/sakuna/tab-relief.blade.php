@@ -186,7 +186,7 @@
                 <h3 class="font-semibold text-slate-800">Record Distribution</h3>
                 <p class="text-xs text-slate-500 mt-0.5">A duplicate for the same operation and beneficiary is refused automatically.</p>
             </div>
-            <button @click="showCreateDistribution = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showCreateDistribution = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

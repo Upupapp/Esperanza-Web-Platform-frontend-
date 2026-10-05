@@ -224,7 +224,7 @@
                             <p class="text-xs text-slate-500 truncate" x-text="selectedBarangayProfile?.captain"></p>
                         </div>
                     </div>
-                    <button @click="showBarangayProfile = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    <button aria-label="Close" @click="showBarangayProfile = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
 
                 <template x-if="!selectedBarangayProfile?.history && !selectedBarangayProfile?.officialsRoster">

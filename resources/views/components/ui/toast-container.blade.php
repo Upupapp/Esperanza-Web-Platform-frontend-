@@ -36,7 +36,7 @@
                 <i :data-lucide="item.variant === 'success' ? 'circle-check' : item.variant === 'error' ? 'circle-alert' : item.variant === 'warning' ? 'triangle-alert' : 'info'" class="w-4 h-4"></i>
             </span>
             <p class="text-sm text-slate-600 flex-1 leading-snug pt-0.5" x-text="item.message"></p>
-            <button @click="dismiss(item.id)" class="text-slate-300 hover:text-slate-500 transition-colors shrink-0">
+            <button aria-label="Close" @click="dismiss(item.id)" class="text-slate-300 hover:text-slate-500 transition-colors shrink-0">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
             </button>
         </div>

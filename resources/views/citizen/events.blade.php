@@ -92,10 +92,10 @@
             <div class="flex items-center justify-between mb-3">
                 <p class="text-sm font-semibold text-navy-900" x-text="monthLabel"></p>
                 <div class="flex items-center gap-1">
-                    <button type="button" @click="prevMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button aria-label="Previous month" type="button" @click="prevMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-left" class="w-4 h-4"></i>
                     </button>
-                    <button type="button" @click="nextMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button aria-label="Next month" type="button" @click="nextMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </button>
                 </div>

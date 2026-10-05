@@ -397,7 +397,7 @@
                                     <span class="text-[11px] font-medium rounded-full px-2 py-0.5" :class="{ 'bg-teal-50 text-teal-600': s.level === 'Barangay', 'bg-brand-50 text-brand-600': s.level === 'Municipal', 'bg-purple-50 text-purple-600': s.level === 'Multi-Office' }" x-text="s.level"></span>
                                 </td>
                                 <td class="px-4 py-3 text-right" @click.stop x-show="can('set_service_catalog','edit')">
-                                    <button @click="editService(s)" class="text-slate-500 hover:text-brand-600 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                    <button aria-label="Edit" @click="editService(s)" class="text-slate-500 hover:text-brand-600 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
                         </template>
@@ -706,7 +706,7 @@
                     <x-ui.modal :bare="true" maxWidth="lg">
                         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
                             <h3 class="text-sm font-semibold text-navy-900" x-text="contentTab === 'privacy' ? 'Preview — Privacy Policy' : 'Preview — Terms &amp; Conditions'"></h3>
-                            <button @click="previewOpen = false" class="text-slate-500 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                            <button aria-label="Close" @click="previewOpen = false" class="text-slate-500 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
                         </div>
                         <div class="p-5 max-h-[65vh] overflow-y-auto scrollbar-thin">
                             <h2 class="text-base font-bold text-navy-900" x-text="doc.title"></h2>

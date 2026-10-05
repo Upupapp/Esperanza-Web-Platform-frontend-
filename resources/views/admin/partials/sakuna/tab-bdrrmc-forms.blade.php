@@ -243,7 +243,7 @@
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Dromic Form 1.2</p>
                     <h3 class="font-semibold text-slate-800">Profile of Evacuees Inside the Evacuation Center</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close" @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -299,7 +299,7 @@
                                     <td class="px-0.5 py-1"><input aria-label="Senior 60+ F" type="number" min="0" x-model.number="r.sc60f" class="w-9 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-2 py-1 text-center font-semibold text-slate-700" x-text="evacueeFamTotal(r)"></td>
                                     <td class="px-1 py-1"><input aria-label="Assistance Extended" type="text" x-model="r.assist" class="w-32 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
-                                    <td class="px-1 py-1"><button @click="evacueeRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+                                    <td class="px-1 py-1"><button aria-label="Remove" @click="evacueeRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -342,7 +342,7 @@
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Human, Housing & Flooding" Calamity/Damages Capture and Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close" @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
@@ -406,7 +406,7 @@
                                     </td>
                                     <td class="px-0.5 py-1"><input aria-label="Estimated Damage (₱) Partial" type="number" min="0" x-model.number="r.est_partial" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-0.5 py-1"><input aria-label="Estimated Damage (₱) Total" type="number" min="0" x-model.number="r.est_total" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
-                                    <td class="px-1 py-1"><button @click="housingRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+                                    <td class="px-1 py-1"><button aria-label="Remove" @click="housingRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -443,7 +443,7 @@
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Agricultural Crops & Livestock" Calamity Damages Captured Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close" @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
@@ -496,7 +496,7 @@
                                         </select>
                                     </td>
                                     <td class="px-1 py-1"><input aria-label="Metric Tons" type="number" step="0.1" min="0" x-model.number="r.metric_tons" class="w-16 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-center focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
-                                    <td class="px-1 py-1"><button @click="agriRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+                                    <td class="px-1 py-1"><button aria-label="Remove" @click="agriRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -532,7 +532,7 @@
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Fishing" Calamity Damages Captured Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close" @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -571,7 +571,7 @@
                                         </select>
                                     </td>
                                     <td class="px-1 py-1"><input aria-label="Estimated Damage (₱)" type="number" min="0" x-model.number="r.est_damage" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
-                                    <td class="px-1 py-1"><button @click="fishingRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+                                    <td class="px-1 py-1"><button aria-label="Remove" @click="fishingRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -607,7 +607,7 @@
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">BDRRMC Capture Form</p>
                     <h3 class="font-semibold text-slate-800">"Business" Calamity Damages Captured Assessment Form</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close" @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -664,7 +664,7 @@
                                         </select>
                                     </td>
                                     <td class="px-1 py-1"><input aria-label="Estimated Damage (₱)" type="number" min="0" x-model.number="r.est_damage" class="w-24 rounded-lg border border-slate-200 bg-white py-1 px-1 text-xs text-right focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
-                                    <td class="px-1 py-1"><button @click="businessRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+                                    <td class="px-1 py-1"><button aria-label="Remove" @click="businessRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -701,7 +701,7 @@
                     <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">RDS</p>
                     <h3 class="font-semibold text-slate-800">Relief Distribution Sheet</h3>
                 </div>
-                <button @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button aria-label="Close" @click="openForm = null" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -735,7 +735,7 @@
                                     <td class="px-1 py-1"><input aria-label="Qty/Unit" type="text" x-model="r.qty" class="w-20 rounded-lg border border-slate-200 bg-white py-1 px-1.5 text-xs focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></td>
                                     <td class="px-1 py-1 text-center"><input aria-label="Received in Good Condition" type="checkbox" x-model="r.received" class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"></td>
                                     <td class="px-1 py-1 text-center text-slate-300 italic">signed on release</td>
-                                    <td class="px-1 py-1"><button @click="rdsRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+                                    <td class="px-1 py-1"><button aria-label="Remove" @click="rdsRows.splice(ri,1)" class="text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
                                 </tr>
                             </template>
                         </tbody>

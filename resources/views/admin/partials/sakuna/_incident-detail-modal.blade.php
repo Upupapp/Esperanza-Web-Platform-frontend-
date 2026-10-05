@@ -42,7 +42,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span :class="statusBadge(selectedIncident?.status ?? '')" x-text="selectedIncident?.status ?? ''"></span>
-                <button @click="showIncidentDetail = false" class="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-600 transition-colors ml-2">
+                <button aria-label="Close" @click="showIncidentDetail = false" class="w-8 h-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-600 transition-colors ml-2">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>

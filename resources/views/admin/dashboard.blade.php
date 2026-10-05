@@ -167,7 +167,7 @@
                         <h3 class="font-semibold text-navy-900">Dokyu</h3>
                         <a href="{{ route('admin.document-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
-                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('docStatus', async (rows) => { const Chart = await window.loadChart(); if (chart) chart.destroy(); chart = new Chart($refs.canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
+                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('docStatus', async (rows) => { const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); chart = new Chart(canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
                         <canvas x-ref="canvas"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="docStatusTotal.toLocaleString()"></span>
@@ -195,7 +195,7 @@
                         <h3 class="font-semibold text-navy-900">Tulong</h3>
                         <a href="{{ route('admin.assistance-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
-                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('assistStatus', async (rows) => { const Chart = await window.loadChart(); if (chart) chart.destroy(); chart = new Chart($refs.canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
+                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('assistStatus', async (rows) => { const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); chart = new Chart(canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
                         <canvas x-ref="canvas"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="assistStatusTotal.toLocaleString()"></span>
@@ -252,7 +252,7 @@
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
                     </div>
-                    <div class="h-52" x-data="{ chart: null }" x-init="$watch('dash', async (d) => { if (!d?.requests?.trend) return; const Chart = await window.loadChart(); if (chart) chart.destroy(); const t = d.requests.trend; chart = new Chart($refs.canvas, { type: 'line', data: { labels: t.labels, datasets: [ { label: 'Dokyu', data: t.documents, borderColor: '#2f62f5', backgroundColor: 'rgba(47,98,245,0.08)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 }, { label: 'Tulong', data: t.assistance, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.06)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 } ] }, options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } } } }); }, { immediate: true })">
+                    <div class="h-52" x-data="{ chart: null }" x-init="$watch('dash', async (d) => { if (!d?.requests?.trend) return; const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); const t = d.requests.trend; chart = new Chart(canvas, { type: 'line', data: { labels: t.labels, datasets: [ { label: 'Dokyu', data: t.documents, borderColor: '#2f62f5', backgroundColor: 'rgba(47,98,245,0.08)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 }, { label: 'Tulong', data: t.assistance, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.06)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 } ] }, options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } } } }); }, { immediate: true })">
                         <canvas x-ref="canvas"></canvas>
                     </div>
                 </x-ui.card>
@@ -292,7 +292,8 @@
                                     <i data-lucide="activity" class="w-4 h-4"></i>
                                 </span>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="activity.actor + ' — ' + activity.action"></p>
+                                    {{-- In words: a failed sign-in read 'null — auth.login_failed' (QA run 2026-10-05). --}}
+                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="(activity.actor || 'System') + ' — ' + (activity.summary || activity.action)"></p>
                                     <p class="text-xs text-slate-500 mt-0.5" x-text="(activity.module || '') + (activity.target ? ' · ' + activity.target : '')"></p>
                                     <p class="text-[11px] text-slate-300 mt-1" x-text="activity.at ? new Date(activity.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></p>
                                 </div>

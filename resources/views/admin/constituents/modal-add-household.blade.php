@@ -57,7 +57,7 @@
                     <h2 class="text-lg font-bold text-navy-900">Register New Household</h2>
                     <p class="text-sm text-slate-500 mt-0.5">Municipality of Esperanza, Masbate</p>
                 </div>
-                <button @click="showAddHousehold = false; addHouseholdStep = 1" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                <button aria-label="Close" @click="showAddHousehold = false; addHouseholdStep = 1" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>

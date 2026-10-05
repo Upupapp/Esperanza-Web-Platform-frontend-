@@ -216,7 +216,7 @@
 
                                 <!-- Post options -->
                                 <div class="relative shrink-0" x-show="post.kind === 'community' && !post.mine" x-data="{ menuOpen: false }" @click.outside="menuOpen = false; reportOpenFor === post.id && (reportOpenFor = null)">
-                                    <button
+                                    <button aria-label="More options"
                                         type="button" @click="menuOpen = !menuOpen"
                                         class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                                     ><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
@@ -319,7 +319,7 @@
                                             x-bind:placeholder="$store.lang.current === 'en' ? 'Write a comment...' : 'Sumulat ng komento...'"
                                             class="w-full rounded-full border border-slate-200 bg-white py-2 pl-4 pr-10 text-xs text-slate-800 placeholder:text-slate-400 shadow-sm focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                         >
-                                        <button
+                                        <button aria-label="Send"
                                             type="button" @click="addComment(post)"
                                             class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-brand-500 hover:bg-brand-50 hover:text-brand-700 transition-colors"
                                         ><i data-lucide="send" class="w-3.5 h-3.5"></i></button>

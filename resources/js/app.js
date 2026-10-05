@@ -292,12 +292,26 @@ document.addEventListener('alpine:init', () => {
         /** Re-derive the account from the server. Never trust a cached copy for a decision. */
         async refresh() {
             this.booting = true;
-            try {
-                const result = await api.get('/auth/me');
-                this.setAccount(result.data);
-            } finally {
-                this.booting = false;
-            }
+            this.pending = api.get('/auth/me')
+                .then((result) => this.setAccount(result.data))
+                .finally(() => { this.booting = false; });
+            return this.pending;
+        },
+
+        /** True once the account carries its permissions (sign-in sends none; /auth/me does). */
+        get permsReady() {
+            return Object.keys(this.account?.permissions || {}).length > 0;
+        },
+
+        /**
+         * Resolves when canPerm() can be trusted: at once with the cached copy,
+         * otherwise after the /auth/me every page load runs. A page asks this
+         * before calling an endpoint the role may not hold, because every 403
+         * pops up "Walang pahintulot" (QA run 2026-10-05).
+         */
+        whenReady() {
+            if (this.permsReady || !this.pending) return Promise.resolve(this.account);
+            return this.pending.then(() => this.account, () => this.account);
         },
 
         clear() {

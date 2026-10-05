@@ -237,7 +237,7 @@
                     <p class="text-xs text-slate-500">The reporting officer is recorded automatically from your session.</p>
                 </div>
             </div>
-            <button @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+            <button aria-label="Close" @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>

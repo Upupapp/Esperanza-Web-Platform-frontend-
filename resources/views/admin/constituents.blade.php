@@ -54,6 +54,12 @@
             this.loading = true;
             this.failed = false;
             try {
+                // Each side list is asked for only when the role holds it: every
+                // 403 pops up 'Walang pahintulot', and five roles saw it on
+                // opening this page for the personnel list (QA run 2026-10-05).
+                await this.$store.session.whenReady();
+                const may = (sub) => this.$store.session.canPerm(sub, 'view');
+                const none = (extra = {}) => Promise.resolve({ data: [], ...extra });
                 const [residents, households, families, citizens, issues, encoders, coverage] = await Promise.all([
                     $api.getAll('/admin/residents'),
                     $api.getAll('/admin/households'),
@@ -61,17 +67,17 @@
                     // A citizen-verification queue's 'Not Registered' bucket needs
                     // every resident, so this joins onto individuals below rather
                     // than driving its own separate list.
-                    $api.getAll('/admin/citizens').catch(() => ({ data: [] })),
+                    may('const_citizen_verification') ? $api.getAll('/admin/citizens').catch(() => ({ data: [] })) : none(),
                     // Data Quality tab. Caught separately so a permission gap on
                     // this one queue doesn't take down the whole Registry.
-                    $api.getAll('/admin/data-quality').catch(() => ({ data: [] })),
+                    may('const_data_quality') ? $api.getAll('/admin/data-quality').catch(() => ({ data: [] })) : none(),
                     // Encoder list for the Assign action -- not everyone who can
                     // see the queue can see Personnel, so this degrades to an
                     // empty picker rather than failing the page.
-                    $api.getAll('/admin/users').catch(() => ({ data: [] })),
+                    may('um_personnel') ? $api.getAll('/admin/users').catch(() => ({ data: [] })) : none(),
                     // Profiling Coverage tab. `meta.municipal` is only present for
                     // a municipality-scoped actor -- null for a barangay-scoped one.
-                    $api.get('/admin/coverage').catch(() => ({ data: [], meta: null })),
+                    may('const_barangay') ? $api.get('/admin/coverage').catch(() => ({ data: [], meta: null })) : none({ meta: null }),
                 ]);
                 const citizensByRef = {};
                 (citizens.data || []).forEach(c => { if (c.resident_profile?.ref) citizensByRef[c.resident_profile.ref] = c; });

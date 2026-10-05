@@ -1824,6 +1824,7 @@
             applyDetail(r, d) {
                 r.status = d.status;
                 r.office = d.office || r.office;
+                r.permitted = d.permitted || null;
                 r.remarks = d.decision_remarks || null;
                 r.form_data = d.form_data || {};
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : '';
@@ -2005,8 +2006,28 @@
             // unsalvageable, shouldn't be stuck waiting forever for a
             // resubmission that may never come.
             get canReject() {
-                return this.selected && ['Under Verification', 'Under Review'].includes(this.selected.status);
+                return this.selected && ['Under Verification', 'Under Review'].includes(this.selected.status) && this.may('reject');
             },
+            // The permission the primary button needs at this stage.
+            get primaryPermission() {
+                const st = this.selected?.status;
+                if (['Under Verification', 'Under Review', 'Resubmitted'].includes(st)) return 'approve';
+                if (['Approved', 'Mark to Release'].includes(st)) return 'release';
+                return null;
+            },
+            // What this officer may do here, as the server says (detail.permitted).
+            // The staff site showed Reject to roles that could not reject, and
+            // Department Staff every Tulong decision (QA run 2026-10-05). Unknown
+            // means shown: the server still decides.
+            may(action) {
+                return !this.selected?.permitted || !!this.selected.permitted[action];
+            },
+            // Nothing uploaded means nothing to accept, unless the document is
+            // optional ('(if applicable)'): the server's rule and the phone app's.
+            mayAccept(req) {
+                return !!req.file || /if applicable|if available|if any/i.test(req.name || '');
+            },
+
             async verifyRequirement(req) {
                 if (req._busy) return;
                 req._busy = true;
@@ -2554,8 +2575,9 @@
                                          Flag for Replacement / Reject. No separate "needs verification"
                                          action — reviewing a requirement here already IS the
                                          verification step. --}}
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome">
-                                        <button type="button" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome && may('review')">
+                                        <button type="button" x-show="mayAccept(req)" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
+                                        <span x-show="!mayAccept(req)" class="text-[11px] text-slate-500">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
                                         <span class="text-slate-200">·</span>
@@ -2845,7 +2867,7 @@
                                 </span>
                             </x-ui.button>
                         </template>
-                        <x-ui.button size="sm" x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null">
+                        <x-ui.button size="sm" x-show="!primaryPermission || may(primaryPermission)" x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="!processing"></i>

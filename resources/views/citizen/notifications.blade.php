@@ -123,7 +123,7 @@
                                     <p class="text-[11px] text-slate-300 mt-1.5" x-text="timeAgo(n.createdAt)"></p>
                                 </div>
                                 <span class="text-[10px] font-medium text-slate-300 shrink-0 mt-0.5 whitespace-nowrap" x-show="n.pinned"><x-ui.t fil="Awtomatiko" en="Automated" /></span>
-                                <button
+                                <button aria-label="Close"
                                     type="button" x-show="!n.pinned"
                                     @click.stop="$store.citizenNotifications.dismiss(n.id)"
                                     class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"

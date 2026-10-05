@@ -6,9 +6,19 @@
     <div
         x-data="{
             tab: '{{ $tab }}',
+            // One submodule per tab. The Barangay Secretary holds only their
+            // directory entry and opened Balita to 'Something went wrong' and a
+            // 'Walang pahintulot' pop-up per tab (QA run 2026-10-05).
+            tabSubs: { balita: 'comm_news', banners: 'comm_banners', community: 'comm_community', events: 'comm_events', offices: 'comm_directory', barangays: 'comm_barangay_directory', blotter: 'comm_directory' },
+            tabAllowed(t) { return $store.session.canPerm(this.tabSubs[t], 'view'); },
+            async landOnAllowedTab() {
+                await $store.session.whenReady();
+                if (!this.tabAllowed(this.tab)) this.tab = Object.keys(this.tabSubs).find((t) => this.tabAllowed(t)) || this.tab;
+            },
             barangayNames: @js(config('esperanza.barangays')),
             initials(name) { return (name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); },
         }"
+        x-init="landOnAllowedTab()"
         class="animate-fade-up"
     >
 
@@ -19,13 +29,13 @@
         <div x-show="$store.session.can('communications')" x-cloak>
 
         <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4 overflow-x-auto">
-            <button @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
-            <button @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
-            <button @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
-            <button @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
-            <button @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
-            <button @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
-            <button @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
+            <button x-show="tabAllowed('balita')" @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
+            <button x-show="tabAllowed('banners')" @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
+            <button x-show="tabAllowed('community')" @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
+            <button x-show="tabAllowed('events')" @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
+            <button x-show="tabAllowed('offices')" @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
+            <button x-show="tabAllowed('barangays')" @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
+            <button x-show="tabAllowed('blotter')" @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
         </div>
 
         {{-- ============================= BALITA (announcements) ============================= --}}
@@ -112,7 +122,7 @@
                     if (await this.transition(post, 'Archived')) { this.$dispatch('toast', { message: 'Archived.', variant: 'success' }); await this.load(); }
                 },
             }"
-            x-init="load()"
+            x-init="$store.session.whenReady().then(() => tabAllowed('balita') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load Balita.'" retryExpr="load()" :retryable="true" /></div>
@@ -360,7 +370,7 @@
                 async release(e) { if (await this.transition(e, 'Released')) { this.$dispatch('toast', { message: 'Published.', variant: 'success' }); await this.load(); } },
                 async archive(e) { if (await this.transition(e, 'Archived')) { this.$dispatch('toast', { message: 'Archived.', variant: 'success' }); await this.load(); } },
             }"
-            x-init="load()"
+            x-init="$store.session.whenReady().then(() => tabAllowed('events') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load events.'" retryExpr="load()" :retryable="true" /></div>
@@ -609,7 +619,7 @@
                     }
                 },
             }"
-            x-init="load()"
+            x-init="$store.session.whenReady().then(() => tabAllowed('banners') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load banners.'" retryExpr="load()" :retryable="true" /></div>
@@ -668,8 +678,8 @@
                             </div>
                             <div class="flex items-center gap-1 shrink-0 self-start sm:self-center">
                                 <div class="flex flex-col mr-1">
-                                    <button type="button" @click="move(b, -1)" :disabled="idx === 0" class="p-1 rounded text-slate-500 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
-                                    <button type="button" @click="move(b, 1)" :disabled="idx === filtered.length - 1" class="p-1 rounded text-slate-500 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                    <button aria-label="Move up" type="button" @click="move(b, -1)" :disabled="idx === 0" class="p-1 rounded text-slate-500 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                    <button aria-label="Move down" type="button" @click="move(b, 1)" :disabled="idx === filtered.length - 1" class="p-1 rounded text-slate-500 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
                                 </div>
                                 <button type="button" x-show="b.status === 'Draft'" @click="transition(b, 'Pending Review')" title="Submit for review" class="p-2 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="send" class="w-4 h-4"></i></button>
                                 <button type="button" x-show="b.status === 'Pending Review'" @click="transition(b, 'Approved')" title="Approve" class="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>
@@ -691,7 +701,7 @@
             <x-ui.modal :bare="true" maxWidth="lg">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                     <h3 class="text-sm font-semibold text-navy-900" x-text="mode === 'add' ? 'New Banner' : 'Edit Banner'"></h3>
-                    <button @click="open = false" class="text-slate-500 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    <button aria-label="Close" @click="open = false" class="text-slate-500 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
                 <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
                     <div>
@@ -782,7 +792,7 @@
                     } finally { this.processing = false; }
                 },
             }"
-            x-init="load()"
+            x-init="$store.session.whenReady().then(() => tabAllowed('community') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load community posts.'" retryExpr="load()" :retryable="true" /></div>
@@ -916,7 +926,7 @@
                     }
                 },
             }"
-            x-init="load()"
+            x-init="$store.session.whenReady().then(() => tabAllowed('offices') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the directory.'" retryExpr="load()" :retryable="true" /></div>
@@ -952,7 +962,7 @@
             <x-ui.modal :bare="true" maxWidth="md">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                     <h3 class="text-sm font-semibold text-navy-900" x-text="mode === 'add' ? 'Add Office' : 'Edit Office'"></h3>
-                    <button @click="open = false" class="text-slate-500 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    <button aria-label="Close" @click="open = false" class="text-slate-500 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
                 <div class="px-6 py-5 space-y-4">
                     <x-ui.input name="office_name" label="Office" x-model="form.office" />
@@ -1001,7 +1011,7 @@
                     } finally { this.processing = false; }
                 },
             }"
-            x-init="load()"
+            x-init="$store.session.whenReady().then(() => tabAllowed('barangays') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load barangays.'" retryExpr="load()" :retryable="true" /></div>
@@ -1092,7 +1102,7 @@
                     } finally { this.processing = false; }
                 },
             }"
-            x-init="load()"
+            x-init="$store.session.whenReady().then(() => tabAllowed('blotter') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-16" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the blotter.'" retryExpr="load()" :retryable="true" /></div>
@@ -1143,7 +1153,7 @@
                 <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-2xl shadow-float w-full max-w-lg">
                     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                         <h3 class="text-sm font-semibold text-navy-900">Log Blotter Entry</h3>
-                        <button @click="showAdd = false" class="text-slate-500 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button aria-label="Close" @click="showAdd = false" class="text-slate-500 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
                         <div>

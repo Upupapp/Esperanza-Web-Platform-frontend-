@@ -388,6 +388,7 @@
             applyDetail(r, d) {
                 r.status = d.status;
                 r.office = d.office || r.office;
+                r.permitted = d.permitted || null;
                 // Reject and Cancel both record their reason as the decision
                 // remarks; the return reason is the case's own.
                 r.remarks = d.decision_remarks || null;
@@ -551,6 +552,28 @@
             canMove(to) {
                 return !this.detailLoading && (this.selected?.case?.next || []).includes(to);
             },
+            // The permission the primary button needs at this stage (the case
+            // actions' own gates on the server).
+            get primaryPermission() {
+                const st = this.selected?.status;
+                if (['Initial Screening', 'Returned for Reassessment', 'Assessment'].includes(st)) return 'review';
+                if (st === 'For Approval') return 'approve';
+                if (['Assistance Processing', 'Ready for Release'].includes(st)) return 'release';
+                return null;
+            },
+            // What this officer may do here, as the server says (detail.permitted).
+            // The staff site showed Reject to roles that could not reject, and
+            // Department Staff every Tulong decision (QA run 2026-10-05). Unknown
+            // means shown: the server still decides.
+            may(action) {
+                return !this.selected?.permitted || !!this.selected.permitted[action];
+            },
+            // Nothing uploaded means nothing to accept, unless the document is
+            // optional ('(if applicable)'): the server's rule and the phone app's.
+            mayAccept(req) {
+                return !!req.file || /if applicable|if available|if any/i.test(req.name || '');
+            },
+
             sideForms: {
                 reject: { title: 'Reject Case', confirm: 'Confirm Rejection', hint: 'The resident reads this reason. Reject only when the case cannot qualify.' },
                 cancel: { title: 'Cancel Case', confirm: 'Confirm Cancellation', hint: 'For a case the resident or the office withdrew before an approval decision. The resident reads this reason.' },
@@ -1120,8 +1143,9 @@
                                          Flag for Replacement / Reject. No separate "needs verification"
                                          action — reviewing a requirement here already IS the
                                          verification step. --}}
-                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome">
-                                        <button type="button" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
+                                    <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome && may('review')">
+                                        <button type="button" x-show="mayAccept(req)" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
+                                        <span x-show="!mayAccept(req)" class="text-[11px] text-slate-500">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
                                         <span class="text-slate-200">·</span>
@@ -1515,7 +1539,7 @@
                              matching endpoint). --}}
                         <x-ui.button
                             size="sm"
-                            x-show="nextStageLabel"
+                            x-show="nextStageLabel && (!primaryPermission || may(primaryPermission))"
                             x-bind:disabled="processing || !!primaryBlocked"
                             @click="primaryAction()"
                             x-bind:title="primaryBlocked || null"

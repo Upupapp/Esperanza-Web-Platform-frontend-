@@ -185,7 +185,7 @@
                 </div>
                 <h3 class="font-semibold text-slate-800 mt-1" x-text="selectedAlert?.title?.en"></h3>
             </div>
-            <button @click="showAlertDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showAlertDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">
@@ -274,7 +274,7 @@
                 <h3 class="font-semibold text-slate-800" x-text="alertFormMode === 'create' ? 'Create Alert' : 'Edit Draft Alert'"></h3>
                 <p class="text-xs text-slate-500 mt-0.5">Both languages are required — an emergency is the worst moment to send someone a language they don't read.</p>
             </div>
-            <button @click="showCreateAlert = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showCreateAlert = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4">

@@ -27,7 +27,7 @@
             <p class="text-[13px] font-semibold tracking-wide leading-tight truncate" data-brand-name>Esperanza LGU</p>
             <p class="text-[10.5px] text-slate-500 truncate">Administrative Portal</p>
         </div>
-        <button @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-white/10 hover:text-white">
+        <button aria-label="Close" @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-white/10 hover:text-white">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
     </div>
