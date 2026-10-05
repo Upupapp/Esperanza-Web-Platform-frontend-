@@ -102,10 +102,11 @@
                 x-data="{
                     loading: true, failed: false,
                     prefs: [
-                        { key: 'new_document_requests', label: 'New Document Requests', desc: 'Notify when a new Dokyu request is submitted.' },
-                        { key: 'new_assistance_requests', label: 'New Assistance Requests', desc: 'Notify when a new Tulong request is submitted.' },
-                        { key: 'overdue_requests', label: 'Overdue Requests', desc: 'Notify when a request passes its expected processing time.' },
-                        { key: 'weekly_summary', label: 'Weekly Summary', desc: 'A weekly digest of activity across all modules.' },
+                        { key: 'new_document_requests', label: 'New Document Requests', desc: 'A Dokyu request is filed or a corrected one comes back: the officers who review that document in its barangay (or the officer handling it) get it in their bell.' },
+                        { key: 'new_assistance_requests', label: 'New Assistance Requests', desc: 'The same for Tulong cases.' },
+                        { key: 'new_incident_reports', label: 'New Incident Reports', desc: 'A Sakuna incident is reported, by staff or from a resident\'s phone: the officers who validate incidents in that barangay get it in their bell.' },
+                        { key: 'overdue_requests', label: 'Overdue Requests', desc: 'Every day at 8:00 AM: requests past the expected release the resident was given, in one digest per officer, in the bell and by email. Each request is named once.' },
+                        { key: 'weekly_summary', label: 'Weekly Summary', desc: 'Every Monday at 8:00 AM: the past seven days in each officer\'s scope (filed, released, open, overdue, payments), in the bell and by email.' },
                     ],
                     values: {},
                     async load() {
@@ -135,10 +136,9 @@
                 <x-ui.card x-show="!loading && !failed">
                     <h3 class="text-sm font-semibold text-navy-900 mb-1">Notification Settings</h3>
                     <p class="text-xs text-slate-500 mb-3">Choose which system events trigger notifications for administrators.</p>
-                    {{-- Nothing reads these yet: no administrator alert exists for a new, overdue or weekly event (QA run 2026-10-05). --}}
-                    <p class="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-800">
+                    <p class="mb-4 flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-xs text-slate-600">
                         <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-                        <span>Saved, not applied yet: administrators are not sent these alerts today. New requests appear in the Dokyu and Tulong queues.</span>
+                        <span>These apply to every officer. The bell refreshes every minute. Emails go to the officer's work email; addresses on test domains are skipped.</span>
                     </p>
                     <div class="divide-y divide-slate-50">
                         <template x-for="pref in prefs" :key="pref.key">
@@ -233,7 +233,7 @@
                         <i data-lucide="lock" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
                         <p class="text-xs text-slate-500">
                             <span class="font-semibold text-slate-600">View only.</span>
-                            Branding is meant for both portals, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change it.
+                            Branding applies to both portals, so only the <span class="font-medium text-slate-600">Super Administrator</span> and <span class="font-medium text-slate-600">Municipal Administrator</span> roles can change it.
                         </p>
                     </div>
 
@@ -251,10 +251,9 @@
 
                     <x-ui.card>
                         <h3 class="text-sm font-semibold text-navy-900 mb-4">Theme</h3>
-                        {{-- Each publish is kept as a version, but no page reads it yet (QA run 2026-10-05). --}}
-                        <p class="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-800 max-w-sm">
+                        <p class="mb-4 flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-xs text-slate-600 max-w-sm">
                             <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-                            <span>Saved as versions, not applied yet: neither portal shows this theme or name today.</span>
+                            <span>Both portals apply the theme colours and the municipality name on their next page load. Every version is kept.</span>
                         </p>
                         <div class="max-w-sm space-y-3">
                             <div>

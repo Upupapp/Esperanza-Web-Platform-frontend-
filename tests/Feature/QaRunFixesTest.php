@@ -147,9 +147,39 @@ class QaRunFixesTest extends TestCase
         $this->assertStringNotContainsString('@foreach($privacy', $legal);
 
         $settings = $this->source('resources/views/admin/settings.blade.php');
-        $this->assertStringContainsString('administrators are not sent these alerts today', $settings);
-        $this->assertStringContainsString('neither portal shows this theme or name today', $settings);
         $this->assertStringNotContainsString('Branding ships to both portals', $settings);
+    }
+
+    /** Notifications only loaded with the page, a Sakuna alert opened nowhere, and the settings promised what nothing did. */
+    public function test_notifications_arrive_without_a_reload_and_alerts_open_on_any_page(): void
+    {
+        $js = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('poll(ms = 60000)', $js);
+        $this->assertStringContainsString('get pendingAlert()', $js);
+        $this->assertStringContainsString('$store.adminNotifications.poll()', $this->source('resources/views/components/admin/topbar.blade.php'));
+        $this->assertStringContainsString('$store.citizenNotifications.poll()', $this->source('resources/views/components/citizen/topbar.blade.php'));
+        $this->assertStringContainsString('<x-citizen.alert-popup />', $this->source('resources/views/components/layouts/citizen.blade.php'));
+
+        $settings = $this->source('resources/views/admin/settings.blade.php');
+        $this->assertStringNotContainsString('administrators are not sent these alerts today', $settings);
+        $this->assertStringContainsString("key: 'new_incident_reports'", $settings);
+
+        $this->assertStringContainsString("c.status !== 'Archived'", $this->source('resources/views/admin/partials/sakuna/tab-centers.blade.php'), 'an unopened centre can be closed');
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $this->assertStringContainsString('if (/working/i.test(r.days))', $this->source("resources/views/citizen/{$page}.blade.php"), $page);
+        }
+    }
+
+    /** Branding was published as versions that neither portal read. */
+    public function test_both_portals_apply_the_published_branding(): void
+    {
+        $js = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('function applyBranding(', $js);
+        $this->assertStringContainsString("root.style.setProperty('--color-brand-' + shade", $js);
+        foreach (['admin', 'citizen'] as $side) {
+            $this->assertStringContainsString('data-brand-name', $this->source("resources/views/components/{$side}/sidebar.blade.php"), $side);
+        }
+        $this->assertStringNotContainsString('not applied yet', $this->source('resources/views/admin/settings.blade.php'));
     }
 
     /** The resident saw neither the fee nor the receipt; the cashier could not tell which request a payment was for. */

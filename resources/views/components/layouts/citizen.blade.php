@@ -30,5 +30,6 @@
     <x-ui.toast-container />
     <x-citizen.birthday-popup />
     <x-citizen.fiesta-popup />
+    <x-citizen.alert-popup />
 </body>
 </html>

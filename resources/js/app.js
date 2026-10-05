@@ -213,17 +213,16 @@ document.addEventListener('alpine:init', () => {
             localStorage.setItem('esperanza_lang', lang);
         },
     });
-    // Until the resident picks a language, follow Settings, General, Default
-    // Language (it was saved and never read). Not stored, so a later change
-    // by the LGU still applies.
-    if (!localStorage.getItem('esperanza_lang')) {
-        api.get('/portal-settings')
-            .then((res) => {
-                const lang = res?.data?.default_language;
-                if ((lang === 'en' || lang === 'fil') && !localStorage.getItem('esperanza_lang')) Alpine.store('lang').current = lang;
-            })
-            .catch(() => {});
-    }
+    // Settings that reach the portals before anyone signs in (GET /portal-settings):
+    // the Default Language, until the resident picks one (not stored, so a later
+    // change by the LGU still applies), and the Branding in force.
+    api.get('/portal-settings')
+        .then((res) => {
+            const lang = res?.data?.default_language;
+            if ((lang === 'en' || lang === 'fil') && !localStorage.getItem('esperanza_lang')) Alpine.store('lang').current = lang;
+            applyBranding(res?.data?.branding ?? null, true);
+        })
+        .catch(() => {});
 
     // Real personnel session for the Administrative Portal, backed by
     // Sanctum bearer tokens (production-readiness programme, 2026-09-25).
@@ -429,10 +428,42 @@ document.addEventListener('alpine:init', () => {
     // session-only — there is no backend endpoint to delete a notification,
     // only to mark one read, so hiding one from view does not survive a
     // reload; that is a real, intentional gap (see PRODUCTION_READINESS.md).
+    // Settings → Branding, applied to both portals. Tailwind 4 compiles the
+    // brand colours to --color-brand-* variables, so a theme is a set of those.
+    // The last branding seen is kept so the next page opens in it at once.
+    const BRAND_THEMES = {
+        'Brand Blue': null,
+        Navy: ['#eef2f9', '#dbe3f2', '#b9c7e4', '#8ea3cf', '#5f78b2', '#3d5795', '#2c437a', '#243766', '#1d2c52', '#172340'],
+        Gold: ['#fdf9e7', '#fbf0c2', '#f7e28a', '#f2d24f', '#ecc02a', '#c99716', '#a57a12', '#8a6412', '#6f4f10', '#5a400e'],
+        Emerald: ['#ecfdf5', '#d1fae5', '#a7f3d0', '#6ee7b7', '#34d399', '#10b981', '#059669', '#047857', '#065f46', '#064e3b'],
+    };
+    function applyBranding(branding, remember = false) {
+        const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+        const root = document.documentElement;
+        const palette = branding ? (BRAND_THEMES[branding.theme] ?? null) : null;
+        shades.forEach((shade, i) => {
+            if (palette) root.style.setProperty('--color-brand-' + shade, palette[i]);
+            else root.style.removeProperty('--color-brand-' + shade);
+        });
+        const name = branding?.municipality_name;
+        if (name) {
+            document.querySelectorAll('[data-brand-name]').forEach((el) => { el.textContent = name + ' LGU'; });
+            document.title = document.title.replace(/Esperanza LGU/g, name + ' LGU');
+        }
+        if (remember) {
+            try { localStorage.setItem('esperanza_branding', JSON.stringify(branding)); } catch { /* applied for this page only */ }
+        }
+    }
+    try { applyBranding(JSON.parse(localStorage.getItem('esperanza_branding') || 'null')); } catch { /* nothing remembered */ }
+    document.addEventListener('DOMContentLoaded', () => {
+        try { applyBranding(JSON.parse(localStorage.getItem('esperanza_branding') || 'null')); } catch { /* nothing remembered */ }
+    });
+
     const notificationStyle = {
         dokyu: ['file-text', 'brand'], tulong: ['hand-heart', 'purple'],
         account: ['user-round', 'indigo'], community: ['megaphone', 'teal'],
         events: ['calendar', 'amber'], sakuna: ['shield-alert', 'rose'],
+        summary: ['calendar-range', 'indigo'],
     };
 
     function makeNotificationStore(path) {
@@ -447,8 +478,9 @@ document.addEventListener('alpine:init', () => {
             get visible() { return this.items.filter((n) => !this.dismissed.includes(n.id)); },
             get unreadCount() { return this.visible.filter((n) => n.unread).length; },
 
-            async load() {
-                this.state = 'loading';
+            // quiet: a background refresh keeps what is on screen until the answer comes.
+            async load(quiet = false) {
+                if (!quiet) this.state = 'loading';
                 this.error = null;
                 try {
                     const result = await api.get(path);
@@ -466,6 +498,7 @@ document.addEventListener('alpine:init', () => {
                             bodyFil: n.body?.fil, bodyEn: n.body?.en,
                             pill: n.pill, ref: n.ref, link: n.link,
                             pinned: n.pinned, unread: n.unread,
+                            popup: n.popup === true,
                             createdAt: n.time,
                         };
                     });
@@ -492,6 +525,29 @@ document.addEventListener('alpine:init', () => {
 
             async markAllRead() {
                 await Promise.all(this.visible.filter((n) => n.unread).map((n) => this.markRead(n.id)));
+            },
+
+            // New notifications arrive without a reload: every minute while the
+            // tab is in view. The bell only loaded once per page before.
+            poll(ms = 60000) {
+                if (this.timer) return;
+                this.timer = setInterval(() => {
+                    if (document.visibilityState === 'visible' && this.state !== 'loading') this.load(true);
+                }, ms);
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && this.state !== 'loading') this.load(true);
+                });
+            },
+
+            // A Sakuna alert the resident has not seen yet opens as a pop-up once.
+            shownAlerts: (() => { try { return JSON.parse(localStorage.getItem('esperanza_shown_alerts') || '[]'); } catch { return []; } })(),
+            get pendingAlert() {
+                return this.visible.find((n) => n.portal === 'sakuna' && n.popup && n.unread && !this.shownAlerts.includes(n.id)) || null;
+            },
+            alertShown(id) {
+                this.shownAlerts = [...this.shownAlerts, id].slice(-50);
+                try { localStorage.setItem('esperanza_shown_alerts', JSON.stringify(this.shownAlerts)); } catch { /* the pop-up just may show again */ }
+                this.markRead(id);
             },
 
             dismiss(id) {

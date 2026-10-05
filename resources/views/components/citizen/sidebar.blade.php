@@ -24,7 +24,7 @@
             class="w-9 h-9 rounded-full ring-2 ring-white/15 shrink-0 object-cover"
         >
         <div x-show="!collapsed" x-transition.opacity.duration.150ms class="min-w-0">
-            <p class="text-[13px] font-semibold tracking-wide leading-tight truncate">Esperanza LGU</p>
+            <p class="text-[13px] font-semibold tracking-wide leading-tight truncate" data-brand-name>Esperanza LGU</p>
             <p class="text-[10.5px] text-slate-500 truncate" x-text="$store.lang.current === 'en' ? 'Citizen Portal' : 'Portal ng Mamamayan'"></p>
         </div>
         <button @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-white/10 hover:text-white">

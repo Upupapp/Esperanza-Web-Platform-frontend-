@@ -50,7 +50,7 @@
             return this.searchIndex.filter(i => i.en.toLowerCase().includes(q) || i.fil.toLowerCase().includes(q));
         },
     }"
-    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.citizenNotifications.load()"
+    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.citizenNotifications.load(); $store.citizenNotifications.poll()"
 >
     <div class="flex items-center gap-3 min-w-0">
         <button @click="mobileOpen = true" class="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100">

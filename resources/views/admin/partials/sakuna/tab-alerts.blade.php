@@ -143,7 +143,7 @@
                         </template>
                     </div>
                     <p class="text-xs text-slate-500 mt-1.5">
-                        <span x-text="a.status === 'Released' ? ('Published ' + new Date(a.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + ' — ' + a.recipients + ' recipient(s)') : 'Not yet published'"></span>
+                        <span x-text="a.status === 'Released' ? ('Published ' + new Date(a.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + ' — ' + a.recipients + ' resident(s)') : 'Not yet published'"></span>
                     </p>
                 </div>
                 <div class="flex gap-2 flex-shrink-0 flex-col items-end" @click.stop>
@@ -202,7 +202,7 @@
             <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
                 <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Target</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedAlert?.barangays && selectedAlert.barangays.length) ? selectedAlert.barangays.join(', ') : 'Municipality-Wide'"></p></div>
                 <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Channels</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedAlert?.channels || []).join(', ')"></p></div>
-                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Recipients Reached</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAlert?.recipients ?? 0"></p></div>
+                <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Residents Reached</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="(selectedAlert?.recipients ?? 0) + (selectedAlert?.reach ? ' · ' + Object.entries(selectedAlert.reach).map(([c, n]) => ({ in_app: 'in-app', sms: 'SMS', email: 'email' }[c] || c) + ' ' + n).join(', ') : '')"></p></div>
                 <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Published</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAlert?.published_at ? new Date(selectedAlert.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></p></div>
             </div>
         </div>
@@ -242,7 +242,7 @@
             </div>
         </div>
         <p class="text-sm text-slate-600 mb-4">
-            The cancellation will reach exactly the <strong x-text="selectedAlert?.recipients"></strong> recipient(s) this alert originally reached.
+            The cancellation will reach exactly the <strong x-text="selectedAlert?.recipients"></strong> resident(s) this alert reached, on the same channels.
         </p>
         <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="cancel-reason">Reason <span class="text-rose-500">*</span></label>
         <textarea id="cancel-reason" x-model="cancelReason" rows="2" placeholder="Why is this alert being cancelled?"

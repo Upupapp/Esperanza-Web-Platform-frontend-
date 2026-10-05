@@ -164,7 +164,7 @@
                     class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-xl transition-colors">
                     <i data-lucide="door-open" class="w-3.5 h-3.5"></i> Open
                 </button>
-                <button x-show="can('sakuna_centers','close') && c.status === 'Processing'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
+                <button x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
                     class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 px-3 py-2 rounded-xl transition-colors">
                     <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> Close
                 </button>
@@ -217,7 +217,7 @@
                                     class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg transition-colors">
                                     <i data-lucide="door-open" class="w-3.5 h-3.5"></i> Open
                                 </button>
-                                <button x-show="can('sakuna_centers','close') && c.status === 'Processing'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
+                                <button x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
                                     class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors">
                                     <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> Close
                                 </button>

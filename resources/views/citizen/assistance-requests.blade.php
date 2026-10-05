@@ -193,9 +193,15 @@
                 const r = this.selectedRequest;
                 if (!r) return '';
                 const match = r.days.match(/(\d+)(?!.*\d)/);
-                const addDays = match ? parseInt(match[1]) : 5;
+                let left = match ? parseInt(match[1]) : 5;
                 const d = new Date(r.submitted);
-                d.setDate(d.getDate() + addDays);
+                // Working days skip Saturdays and Sundays, the same rule staff
+                // are alerted by when a request runs past this date.
+                if (/working/i.test(r.days)) {
+                    while (left > 0) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) left--; }
+                } else {
+                    d.setDate(d.getDate() + left);
+                }
                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
             // Deep-link landing: a notification click appends ?ref=TUL-2026-xxxx
