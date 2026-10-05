@@ -117,6 +117,41 @@ class QaRunFixesTest extends TestCase
         $this->assertStringContainsString('x-text="post.title"', $this->source('resources/views/citizen/dashboard.blade.php'), 'the dashboard preview too');
     }
 
+    /** New Role only toasted that it needed a backend; the Add Personnel dialog promised an email nobody sends. */
+    public function test_staff_can_create_and_delete_a_role_and_are_not_promised_an_email(): void
+    {
+        $users = $this->source('resources/views/admin/users.blade.php');
+        $this->assertStringNotContainsString('connect to backend to persist new roles', $users);
+        $this->assertStringContainsString("\$api.post('/admin/roles'", $users);
+        $this->assertStringContainsString("\$api.delete('/admin/roles/' + role.key)", $users);
+        $this->assertStringContainsString("window.addEventListener('roles-changed'", $users, 'the permission editor sees a new role');
+        $this->assertStringNotContainsString('will be sent to the personnel', $users);
+    }
+
+    /** The personnel list offered only Archive: no edit, no password reset, no way back from an archive. */
+    public function test_staff_can_edit_restore_and_reset_an_officer(): void
+    {
+        $users = $this->source('resources/views/admin/users.blade.php');
+        $this->assertStringContainsString("\$api.put('/admin/users/' + this.edit.id, changes)", $users);
+        $this->assertStringContainsString("'/reset-password', { password: this.tempPassword }", $users);
+        $this->assertStringContainsString('<option value="Approved">Active</option>', $users, 'an archived officer can be restored');
+    }
+
+    /** Settings saved a Default Language and Privacy/Terms versions that the resident site never read; other settings claimed effects they lack. */
+    public function test_settings_reach_the_resident_site_or_say_they_do_not(): void
+    {
+        $this->assertStringContainsString("api.get('/portal-settings')", $this->source('resources/js/app.js'));
+
+        $legal = $this->source('resources/views/citizen/legal.blade.php');
+        $this->assertStringContainsString("\$api.get('/site-content/' + key)", $legal, 'the legal page loads the published text');
+        $this->assertStringNotContainsString('@foreach($privacy', $legal);
+
+        $settings = $this->source('resources/views/admin/settings.blade.php');
+        $this->assertStringContainsString('administrators are not sent these alerts today', $settings);
+        $this->assertStringContainsString('neither portal shows this theme or name today', $settings);
+        $this->assertStringNotContainsString('Branding ships to both portals', $settings);
+    }
+
     /** The resident saw neither the fee nor the receipt; the cashier could not tell which request a payment was for. */
     public function test_the_resident_sees_the_fee_and_the_cashier_sees_the_request(): void
     {

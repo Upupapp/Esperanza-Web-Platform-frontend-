@@ -213,6 +213,17 @@ document.addEventListener('alpine:init', () => {
             localStorage.setItem('esperanza_lang', lang);
         },
     });
+    // Until the resident picks a language, follow Settings, General, Default
+    // Language (it was saved and never read). Not stored, so a later change
+    // by the LGU still applies.
+    if (!localStorage.getItem('esperanza_lang')) {
+        api.get('/portal-settings')
+            .then((res) => {
+                const lang = res?.data?.default_language;
+                if ((lang === 'en' || lang === 'fil') && !localStorage.getItem('esperanza_lang')) Alpine.store('lang').current = lang;
+            })
+            .catch(() => {});
+    }
 
     // Real personnel session for the Administrative Portal, backed by
     // Sanctum bearer tokens (production-readiness programme, 2026-09-25).

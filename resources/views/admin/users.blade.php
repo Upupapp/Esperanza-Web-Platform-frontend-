@@ -57,6 +57,64 @@
                 },
                 roleNamesByKey: {},
                 roleName(key) { return this.roleNamesByKey[key] || key; },
+                // Edit and reset password: the list only offered Archive, though the
+                // server takes PUT /admin/users/{id} and POST .../reset-password.
+                editOpen: false,
+                edit: null,
+                editRoles: [],
+                editBarangays: [],
+                editDepartments: [],
+                editSaving: false,
+                editError: '',
+                tempPassword: '',
+                resetting: false,
+                resetMessage: '',
+                async openEdit(u) {
+                    this.edit = { id: u.id, name: u.name, email: u.email || '', roleKey: u.roleKey, dept: u.dept, scope: u.scope, status: u.status, original: { ...u } };
+                    this.editError = ''; this.tempPassword = ''; this.resetMessage = '';
+                    this.editOpen = true;
+                    if (!this.editRoles.length) {
+                        try {
+                            const [rolesResult, barangaysResult, directoryResult] = await Promise.all([$api.get('/admin/roles'), $api.get('/barangays'), $api.get('/directory')]);
+                            this.editRoles = (rolesResult.data || []).filter((r) => r.key !== 'citizen');
+                            this.editBarangays = (barangaysResult.data || []).map((b) => b.name);
+                            this.editDepartments = [...new Set((directoryResult.data || []).map((o) => o.office))].sort();
+                        } catch { /* the current values stay selectable below */ }
+                    }
+                },
+                get editDeptOptions() { return [...new Set([this.edit?.dept, ...this.editDepartments].filter(Boolean))]; },
+                async saveEdit() {
+                    if (this.editSaving || !this.edit) return;
+                    const was = this.edit.original;
+                    const changes = {};
+                    if (this.edit.name.trim() !== was.name) changes.name = this.edit.name.trim();
+                    if (this.edit.email.trim().toLowerCase() !== (was.email || '')) changes.email = this.edit.email.trim();
+                    if (this.edit.roleKey !== was.roleKey) changes.role_key = this.edit.roleKey;
+                    if (this.edit.dept !== was.dept) changes.dept = this.edit.dept;
+                    if (this.edit.scope !== was.scope) changes.scope = this.edit.scope;
+                    if (this.edit.status !== was.status) changes.status = this.edit.status;
+                    if (!Object.keys(changes).length) { this.editOpen = false; return; }
+                    this.editSaving = true; this.editError = '';
+                    try {
+                        await $api.put('/admin/users/' + this.edit.id, changes);
+                        this.editOpen = false;
+                        this.$dispatch('toast', { message: 'Saved ' + (changes.name || was.name) + '.', variant: 'success' });
+                        await this.loadUsers();
+                    } catch (err) {
+                        this.editError = err.localised ? err.localised('en') : 'Could not save the changes.';
+                    } finally { this.editSaving = false; }
+                },
+                async resetPassword() {
+                    if (this.resetting || !this.edit || this.tempPassword.length < 10) return;
+                    this.resetting = true; this.editError = ''; this.resetMessage = '';
+                    try {
+                        await $api.post('/admin/users/' + this.edit.id + '/reset-password', { password: this.tempPassword });
+                        this.tempPassword = '';
+                        this.resetMessage = 'Temporary password set and every session signed out. Give it to the officer yourself; nothing is emailed.';
+                    } catch (err) {
+                        this.editError = err.localised ? err.localised('en') : 'Could not set the password.';
+                    } finally { this.resetting = false; }
+                },
                 async loadUsers() {
                     this.usersLoading = true;
                     this.usersFailed = false;
@@ -68,7 +126,7 @@
                         this.roleNamesByKey = Object.fromEntries((rolesResult.data || []).map((r) => [r.key, r.name]));
                         this.users = (usersResult.data || []).map((u) => ({
                             name: u.name, id: u.employee_id, roleKey: u.role, role: this.roleName(u.role),
-                            dept: u.dept, status: u.status, scope: u.scope,
+                            dept: u.dept, status: u.status, scope: u.scope, email: u.email,
                         }));
                     } catch { this.usersFailed = true; } finally { this.usersLoading = false; }
                 },
@@ -143,7 +201,13 @@
                                     <span x-text="u.status"></span>
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-right">
+                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                                <button
+                                    type="button"
+                                    @click="openEdit(u)"
+                                    class="text-slate-500 hover:text-brand-600 transition-colors mr-2" title="Edit or reset password"
+                                    :aria-label="'Edit ' + u.name"
+                                ><i data-lucide="pencil" class="w-4 h-4"></i></button>
                                 <button
                                     x-show="u.status !== 'Archived'"
                                     @click="if (confirm('Archive ' + u.name + '\'s account? They will be signed out everywhere and can no longer log in.')) { $api.post('/admin/users/' + u.id + '/archive').then(() => loadUsers()).catch((e) => $dispatch('toast', { message: e.localised ? e.localised('en') : 'Could not archive.', variant: 'error' })); }"
@@ -159,6 +223,72 @@
                 <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600">No personnel match this search.</p>
             </div>
+            </div>
+
+            {{-- ---------------- Edit personnel / reset password ---------------- --}}
+            <div x-data="{ get open() { return editOpen; }, set open(v) { editOpen = v; } }">
+                <x-ui.modal title="Edit Personnel Account" maxWidth="md">
+                    <template x-if="edit">
+                        <div class="space-y-4">
+                            <p class="text-xs text-slate-500">Employee ID <span class="font-mono text-slate-700" x-text="edit.id"></span></p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <x-ui.input name="edit_name" label="Name" x-model="edit.name" />
+                                <x-ui.input name="edit_email" type="email" label="Work Email" x-model="edit.email" />
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="edit_role" class="block text-sm font-medium text-slate-700 mb-1.5">Role</label>
+                                    <select id="edit_role" x-model="edit.roleKey" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <option :value="edit.original.roleKey" x-text="roleName(edit.original.roleKey)"></option>
+                                        <template x-for="r in editRoles.filter((r) => r.key !== edit.original.roleKey)" :key="'edit-role-' + r.key"><option :value="r.key" x-text="r.name"></option></template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="edit_dept" class="block text-sm font-medium text-slate-700 mb-1.5">Department</label>
+                                    <select id="edit_dept" x-model="edit.dept" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <template x-for="d in editDeptOptions" :key="'edit-dept-' + d"><option :value="d" x-text="d"></option></template>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="edit_scope" class="block text-sm font-medium text-slate-700 mb-1.5">Scope</label>
+                                    <select id="edit_scope" x-model="edit.scope" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <option value="Municipal">Municipality-wide</option>
+                                        <template x-for="b in [...new Set([edit.original.scope, ...editBarangays])].filter((b) => b && b !== 'Municipal')" :key="'edit-scope-' + b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="edit_status" class="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
+                                    <select id="edit_status" x-model="edit.status" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <option value="Approved">Active</option>
+                                        <option value="Archived">Archived (cannot sign in)</option>
+                                        <option x-show="edit.original.status === 'Pending Review'" value="Pending Review">Pending Review</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="rounded-xl border border-slate-100 bg-slate-50 p-3.5 space-y-2.5">
+                                <p class="text-sm font-medium text-slate-700">Reset password</p>
+                                <p class="text-xs text-slate-500">Sets a temporary password and signs the officer out everywhere. At least 10 characters with upper and lower case, a number and a symbol.</p>
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <div class="flex-1"><x-ui.input name="edit_temp_password" type="password" label="" aria-label="Temporary password" placeholder="Temporary password" x-model="tempPassword" autocomplete="new-password" /></div>
+                                    <x-ui.button variant="secondary" size="sm" icon="key-round" x-bind:disabled="resetting || tempPassword.length < 10" @click="resetPassword()">
+                                        <span x-text="resetting ? 'Setting…' : 'Set password'"></span>
+                                    </x-ui.button>
+                                </div>
+                                <p class="text-xs text-emerald-700" x-show="resetMessage" x-text="resetMessage"></p>
+                            </div>
+                            <p class="text-xs text-rose-600" x-show="editError" x-text="editError" role="alert"></p>
+                        </div>
+                    </template>
+                    <x-slot:footer>
+                        <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
+                        <x-ui.button size="sm" icon="save" x-bind:disabled="editSaving" @click="saveEdit()">
+                            <span x-text="editSaving ? 'Saving…' : 'Save Changes'"></span>
+                        </x-ui.button>
+                    </x-slot:footer>
+                </x-ui.modal>
             </div>
 
             {{-- ---------------- Add Personnel wizard ---------------- --}}
@@ -352,7 +482,7 @@
 
                         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5">
                             <i data-lucide="info" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
-                            <p class="text-xs text-slate-500">A temporary password will be sent to the personnel's work email upon account creation.</p>
+                            <p class="text-xs text-slate-500">Nothing is emailed: give the officer their Employee ID and this temporary password yourself, and ask them to change it after signing in.</p>
                         </div>
                     </div>
 
@@ -376,13 +506,57 @@
                 loading: true,
                 failed: false,
                 modules: @js($permissionModules),
+                open: false,
+                creating: false,
+                createError: '',
+                confirmDelete: null,
+                newRole: { name: '', description: '', from: '', color: 'text-slate-600 bg-slate-100' },
+                colors: ['text-slate-600 bg-slate-100', 'text-brand-700 bg-brand-50', 'text-purple-700 bg-purple-50', 'text-emerald-700 bg-emerald-50', 'text-orange-700 bg-orange-50', 'text-rose-700 bg-rose-50', 'text-teal-700 bg-teal-50'],
                 async loadRoles() {
                     this.loading = true;
                     this.failed = false;
                     try {
                         const result = await $api.get('/admin/roles');
                         this.roles = result.data || [];
-                    } catch { this.failed = true; } finally { this.loading = false; }
+                    } catch { this.failed = true; } finally { this.loading = false; this.$nextTick(() => window.renderIcons?.()); }
+                },
+                // The server key: lower case, digits and underscores, starting with a letter.
+                roleKey(name) {
+                    const key = (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 36);
+                    return key === '' ? '' : (/^[a-z]/.test(key) ? key : 'role_' + key);
+                },
+                // New Role used to toast that it needed a backend; POST /admin/roles existed.
+                async createRole() {
+                    if (this.creating || this.newRole.name.trim().length < 3) return;
+                    this.creating = true;
+                    this.createError = '';
+                    const base = this.roles.find((r) => r.key === this.newRole.from);
+                    const permissions = Object.entries(base?.permissions || {}).flatMap(([submodule, actions]) => actions.map((action) => ({ submodule, action })));
+                    try {
+                        const res = await $api.post('/admin/roles', {
+                            key: this.roleKey(this.newRole.name), name: this.newRole.name.trim(),
+                            description: this.newRole.description.trim() || null, icon: 'shield', color: this.newRole.color, permissions,
+                        });
+                        this.open = false;
+                        this.newRole = { name: '', description: '', from: '', color: 'text-slate-600 bg-slate-100' };
+                        this.$dispatch('toast', { message: 'Role created. Set its permissions on the Permissions tab.', variant: 'success' });
+                        await this.loadRoles();
+                        window.dispatchEvent(new CustomEvent('roles-changed', { detail: res.data?.key }));
+                    } catch (err) {
+                        this.createError = err.localised ? err.localised('en') : 'Could not create the role.';
+                    } finally { this.creating = false; }
+                },
+                // Two clicks: the first turns the button into Confirm delete.
+                async deleteRole(role) {
+                    if (this.confirmDelete !== role.key) { this.confirmDelete = role.key; return; }
+                    try {
+                        await $api.delete('/admin/roles/' + role.key);
+                        this.$dispatch('toast', { message: 'Role ' + role.name + ' deleted.', variant: 'success' });
+                        await this.loadRoles();
+                        window.dispatchEvent(new CustomEvent('roles-changed'));
+                    } catch (err) {
+                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not delete the role.', variant: 'error' });
+                    } finally { this.confirmDelete = null; }
                 },
                 get totalAccounts() { return this.roles.reduce((n, r) => n + (r.accounts || 0), 0); },
                 grantedCount(role) { return Object.values(role.permissions || {}).reduce((n, arr) => n + arr.length, 0); },
@@ -393,7 +567,7 @@
         >
             <div class="flex items-center justify-between gap-3 mb-4">
                 <p class="text-sm text-slate-500" x-text="roles.length + ' roles · ' + totalAccounts + ' personnel accounts'"></p>
-                <x-ui.button icon="plus" size="sm" @click="$dispatch('toast', { message: 'Custom role builder — connect to backend to persist new roles.', variant: 'default' })">New Role</x-ui.button>
+                <x-ui.button icon="plus" size="sm" @click="open = true; createError = ''">New Role</x-ui.button>
             </div>
 
             <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -410,7 +584,10 @@
                                     <i :data-lucide="role.icon || 'shield'" class="w-5 h-5"></i>
                                 </span>
                                 <div>
-                                    <p class="text-sm font-semibold text-navy-900 flex items-center gap-1.5" x-text="role.name"></p>
+                                    <p class="text-sm font-semibold text-navy-900 flex items-center gap-1.5">
+                                        <span x-text="role.name"></span>
+                                        <span x-show="role.built_in === false" class="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-1.5 py-0.5">Custom</span>
+                                    </p>
                                     <p class="text-xs text-slate-500" x-text="(role.accounts || 0) + ' personnel'"></p>
                                 </div>
                             </div>
@@ -419,14 +596,56 @@
                         <p class="text-xs text-slate-500 mt-3.5 leading-relaxed line-clamp-3" x-text="role.description"></p>
                         <div class="mt-3.5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
                             <span class="text-[11px] text-slate-500"><span class="font-semibold text-slate-600" x-text="moduleCount(role)"></span> modules · <span class="font-semibold text-slate-600" x-text="grantedCount(role)"></span> permissions</span>
-                            <button
-                                @click="tab = 'permissions'; window.dispatchEvent(new CustomEvent('select-role', { detail: role.key }))"
-                                class="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1"
-                            >View <i data-lucide="eye" class="w-3 h-3"></i></button>
+                            <div class="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    x-show="role.built_in === false && !role.accounts"
+                                    @click="deleteRole(role)"
+                                    class="text-xs font-medium text-rose-600 hover:underline"
+                                    x-text="confirmDelete === role.key ? 'Confirm delete' : 'Delete'"
+                                ></button>
+                                <button
+                                    @click="tab = 'permissions'; window.dispatchEvent(new CustomEvent('select-role', { detail: role.key }))"
+                                    class="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1"
+                                >View <i data-lucide="eye" class="w-3 h-3"></i></button>
+                            </div>
                         </div>
                     </div>
                 </template>
             </div>
+
+            <x-ui.modal title="New Role" maxWidth="sm">
+                <div class="space-y-4">
+                    <x-ui.input name="role_name" label="Role name" placeholder="e.g. Cashier" x-model="newRole.name" />
+                    <div>
+                        <label for="role_description" class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+                        <textarea id="role_description" rows="2" x-model="newRole.description" placeholder="What this role is for" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                    </div>
+                    <div>
+                        <label for="role_from" class="block text-sm font-medium text-slate-700 mb-1.5">Start with the permissions of</label>
+                        <select id="role_from" x-model="newRole.from" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <option value="">No permissions yet (set them on the Permissions tab)</option>
+                            <template x-for="r in roles.filter((r) => r.editable)" :key="'from-' + r.key"><option :value="r.key" x-text="r.name"></option></template>
+                        </select>
+                    </div>
+                    <div>
+                        <p class="block text-sm font-medium text-slate-700 mb-1.5">Colour</p>
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="c in colors" :key="c">
+                                <button type="button" @click="newRole.color = c" class="w-9 h-9 rounded-lg flex items-center justify-center ring-2 ring-offset-1 transition-all duration-[160ms] ease-standard" :class="[c, newRole.color === c ? 'ring-brand-400' : 'ring-transparent']" :aria-label="'Colour ' + c.split(' ')[0].replace('text-', '')" :aria-pressed="newRole.color === c ? 'true' : 'false'"><i data-lucide="shield" class="w-4 h-4"></i></button>
+                            </template>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500">Role key: <span class="font-mono text-slate-600" x-text="roleKey(newRole.name) || '—'"></span></p>
+                </div>
+                <x-slot:footer>
+                    <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
+                    <x-ui.button size="sm" icon="plus" x-bind:disabled="creating || newRole.name.trim().length < 3" @click="createRole()">
+                        <span x-text="creating ? 'Creating…' : 'Create Role'"></span>
+                    </x-ui.button>
+                    <p class="text-xs text-rose-600 mt-1" x-show="createError" x-text="createError"></p>
+                </x-slot:footer>
+            </x-ui.modal>
         </div>
 
         {{-- ============================= PERMISSIONS ============================= --}}
@@ -489,7 +708,7 @@
                     }
                 },
             }"
-            x-init="loadRoles(); $watch('workingPerms', () => dirty = true); window.addEventListener('select-role', e => selectRole(e.detail))"
+            x-init="loadRoles(); $watch('workingPerms', () => dirty = true); window.addEventListener('select-role', e => selectRole(e.detail)); window.addEventListener('roles-changed', async (e) => { await loadRoles(); if (e.detail) selectRole(e.detail); })"
             x-show="tab === 'permissions'" x-cloak
             class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start"
         >
