@@ -1,10 +1,28 @@
-@props(['banners' => []])
+{{-- The banners staff publish to the dashboard (Communications, Banners),
+     read from the live list when the page opens. The site is a static export,
+     so banners passed in at build time could never be the live ones, and no
+     page used this carousel (QA run 2026-10-05). --}}
+@php
+    $ctaUrls = collect(['citizen.dashboard', 'citizen.document-requests', 'citizen.assistance-requests', 'citizen.announcements', 'citizen.events'])
+        ->filter(fn ($name) => \Illuminate\Support\Facades\Route::has($name))
+        ->mapWithKeys(fn ($name) => [$name => route($name)])
+        ->all();
+@endphp
 
 <div
     x-data="{
-        banners: @js($banners),
+        banners: [],
+        links: @js($ctaUrls),
         active: 0,
         timer: null,
+        async load() {
+            try {
+                const res = await $api.get('/banners');
+                this.banners = (res.data || []).map((b, i) => ({ ...b, key: b.id ?? i, href: this.links[b.cta_route] || null }));
+            } catch { this.banners = []; }
+            this.$nextTick(() => window.renderIcons?.());
+            this.start();
+        },
         start() {
             if (this.banners.length <= 1) return;
             this.timer = setInterval(() => this.next(), 6000);
@@ -14,27 +32,30 @@
         goTo(i) { this.active = i; this.restart(); },
         restart() { clearInterval(this.timer); this.start(); },
     }"
-    x-init="start()"
+    x-init="load()"
     x-show="banners.length > 0"
+    x-cloak
     role="region"
     :aria-label="$store.lang.current === 'en' ? 'Announcements carousel' : 'Carousel ng mga anunsyo'"
-    class="relative rounded-2xl overflow-hidden mb-4 shadow-card group"
+    class="relative rounded-2xl overflow-hidden mb-4 shadow-card group max-h-60 w-full"
     style="aspect-ratio: 21 / 7;"
 >
-    <template x-for="(b, i) in banners" :key="b.id">
+    <template x-for="(b, i) in banners" :key="b.key">
         <a
-            :href="b.cta_url || '#'"
+            :href="b.href"
             x-show="active === i"
             x-transition:enter="transition duration-[420ms] ease-standard"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
             class="absolute inset-0 block"
         >
-            <img :src="b.image_url" :alt="b.title" class="absolute inset-0 w-full h-full object-cover" loading="lazy">
-            <div class="absolute inset-0 bg-gradient-to-r" :class="b.theme + ' opacity-85'"></div>
+            <template x-if="b.image_url">
+                <img :src="b.image_url" :alt="b.title" class="absolute inset-0 w-full h-full object-cover" loading="lazy">
+            </template>
+            <div class="absolute inset-0 bg-gradient-to-r" :class="(b.theme || 'from-brand-600 to-navy-800') + (b.image_url ? ' opacity-85' : '')"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-navy-950/70 via-transparent to-transparent"></div>
 
-            <div class="relative h-full flex flex-col justify-end p-4 sm:p-6">
+            <div class="relative h-full flex flex-col justify-end p-4 sm:py-6 sm:px-14">
                 <h3 class="text-white font-bold text-base sm:text-xl leading-tight max-w-lg drop-shadow-sm" x-text="b.title"></h3>
                 <p class="text-white/85 text-xs sm:text-sm mt-1 max-w-md leading-snug hidden sm:block" x-text="b.subtitle"></p>
                 <span
@@ -64,7 +85,7 @@
 
     <!-- Dots -->
     <div class="absolute bottom-3 right-4 flex items-center gap-1.5" x-show="banners.length > 1">
-        <template x-for="(b, i) in banners" :key="'dot-' + b.id">
+        <template x-for="(b, i) in banners" :key="'dot-' + b.key">
             <button
                 type="button" @click.prevent="goTo(i)"
                 :aria-label="($store.lang.current === 'en' ? 'Go to banner ' : 'Pumunta sa banner ') + (i + 1)"

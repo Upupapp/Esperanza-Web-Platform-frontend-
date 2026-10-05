@@ -46,6 +46,7 @@
                         author: post.author,
                         initials: post.official ? 'LGU' : (post.author || '').split(/\s+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join(''),
                         barangay: post.barangay,
+                        title: post.title,
                         body: post.body,
                         time: post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
                         likes: post.likes || 0,
@@ -171,9 +172,11 @@
                         </div>
 
                         <div class="min-w-0">
-                            <p class="text-[11px] font-medium text-white/50 uppercase tracking-wide">
-                                {{ now()->format('l, F j') }}
-                            </p>
+                            {{-- Today's date in the browser: now() here was the day the site was built. --}}
+                            <p
+                                class="text-[11px] font-medium text-white/50 uppercase tracking-wide"
+                                x-text="new Date().toLocaleDateString($store.lang.current === 'en' ? 'en-US' : 'fil-PH', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' })"
+                            ></p>
 
                             <h2
                                 class="text-xl font-semibold text-white truncate"
@@ -260,6 +263,8 @@
                     </a>
                 </div>
             </div>
+
+            <x-citizen.banner-carousel />
 
             @php
                 $introFil = 'Ang <strong>Dokyu</strong> ay para sa paghingi ng mga dokumento ng munisipyo (clearance, ID, permit). Ang <strong>Tulong</strong> ay para sa pag-apply sa mga programang ayuda. Parehong simple ang hakbang: pumili, punan ang detalye, magbayad kung kailangan, pagkatapos i-review at i-submit — masusubaybayan mo anumang oras mula sa dashboard na ito.';
@@ -422,6 +427,12 @@
                                             ></i>
 
                                         </p>
+
+                                        <p
+                                            class="text-xs font-medium text-navy-900 mt-0.5 line-clamp-1 leading-snug"
+                                            x-show="post.title"
+                                            x-text="post.title"
+                                        ></p>
 
                                         <p
                                             class="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-snug"

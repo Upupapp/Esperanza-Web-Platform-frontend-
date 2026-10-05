@@ -79,7 +79,8 @@
                 <div class="flex items-center gap-4 flex-1 min-w-0">
                     <div class="w-14 h-14 text-lg rounded-full bg-white/15 backdrop-blur border-2 border-white/40 text-white flex items-center justify-center font-semibold shadow-lg shrink-0" x-text="$store.session.initials()"></div>
                     <div class="min-w-0">
-                        <p class="text-[11px] font-medium text-white/50 uppercase tracking-wide">{{ now()->format('l, F j') }}</p>
+                        {{-- Today's date in the browser: now() here was the day the site was built. --}}
+                        <p class="text-[11px] font-medium text-white/50 uppercase tracking-wide" x-text="new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' })"></p>
                         <h2 class="text-xl font-semibold text-white truncate">
                             <span x-text="'Good day, ' + $store.session.account?.name"></span>
                         </h2>

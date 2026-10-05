@@ -1152,7 +1152,7 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-date">Date</label>
-                                <input id="blotter-date" type="date" x-model="newEntry.incident_date" max="{{ now()->toDateString() }}" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <input id="blotter-date" type="date" x-model="newEntry.incident_date" :max="new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-type">Incident Type</label>

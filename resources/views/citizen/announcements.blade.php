@@ -25,7 +25,7 @@
                     ]);
                     const annPosts = (ann.data || []).map(a => ({
                         kind: 'announcement', id: a.id, author: a.author, barangay: a.barangay, category: a.category,
-                        body: a.body, image_url: a.image_url, official: true, likes: a.likes,
+                        title: a.title, body: a.body, image_url: a.image_url, official: true, likes: a.likes,
                         // Sent with the resident's token, the public feed says which
                         // announcements they liked (null only for an anonymous read).
                         comments_count: a.comments_count, liked_by_me: a.liked_by_me === true, mine: false, visible: true,
@@ -33,7 +33,7 @@
                     }));
                     const commPosts = (comm.data || []).map(p => ({
                         kind: 'community', id: p.id, author: p.author, barangay: p.barangay, category: p.category,
-                        body: p.body, image_url: p.image_url, official: false, likes: p.likes,
+                        title: null, body: p.body, image_url: p.image_url, official: false, likes: p.likes,
                         comments_count: p.comments_count, liked_by_me: p.liked_by_me, mine: p.mine, visible: p.visible,
                         at: p.created_at, comments: null, showComments: false,
                     }));
@@ -249,7 +249,8 @@
                                 </div>
                             </div>
 
-                            <!-- Body -->
+                            <!-- Title (an LGU announcement has one) and body -->
+                            <p x-show="post.title" class="px-3.5 pb-1 text-sm font-semibold text-navy-900 leading-snug" x-text="post.title"></p>
                             <p class="px-3.5 pb-2.5 text-[13px] text-slate-700 leading-relaxed whitespace-pre-line" x-text="post.body"></p>
 
                             <!-- Media: at most one attached image, per the real post schema -->
@@ -347,7 +348,7 @@
                                 <div x-show="!rp.official" class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(rp.author)"></div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-navy-900 truncate" x-text="rp.author"></p>
-                                    <p class="text-[11px] text-slate-500 leading-snug" x-text="rp.body.length > 62 ? rp.body.slice(0, 62) + '…' : rp.body"></p>
+                                    <p class="text-[11px] text-slate-500 leading-snug" x-text="rp.title || (rp.body.length > 62 ? rp.body.slice(0, 62) + '…' : rp.body)"></p>
                                 </div>
                             </div>
                         </template>
@@ -365,7 +366,7 @@
                                 <div x-show="!tp.official" class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(tp.author)"></div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-medium text-navy-900 truncate" x-text="tp.author"></p>
-                                    <p class="text-[11px] text-slate-500 leading-snug" x-text="tp.body.length > 50 ? tp.body.slice(0, 50) + '…' : tp.body"></p>
+                                    <p class="text-[11px] text-slate-500 leading-snug" x-text="tp.title || (tp.body.length > 50 ? tp.body.slice(0, 50) + '…' : tp.body)"></p>
                                     <p class="text-[10px] text-rose-500 font-medium mt-0.5 flex items-center gap-1"><i data-lucide="heart" class="w-2.5 h-2.5" style="fill: currentColor"></i><span x-text="tp.likes + ' likes'"></span></p>
                                 </div>
                             </div>
@@ -390,7 +391,7 @@
                                 </div>
                             </div>
                         </template>
-                        <p class="text-[11px] text-slate-500" x-show="!events.length">No upcoming events.</p>
+                        <p class="text-[11px] text-slate-500" x-show="!events.length"><x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." /></p>
                     </div>
                     <a href="{{ route('citizen.events') }}" class="block text-center text-[11px] font-medium text-brand-600 hover:underline mt-2.5 pt-2.5 border-t border-slate-100">
                         <x-ui.t fil="Tingnan Lahat" en="View All" />

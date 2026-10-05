@@ -92,6 +92,31 @@ class QaRunFixesTest extends TestCase
         }
     }
 
+    /** The site is exported once, so a date printed with now() is the build's date: the dashboard read "Sunday, October 4" on a Monday the 5th. */
+    public function test_no_page_prints_the_build_date_as_today(): void
+    {
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path('resources/views'), \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if (str_ends_with($file->getFilename(), '.blade.php')) {
+                $this->assertDoesNotMatchRegularExpression('/now\(\)->/', file_get_contents($file->getPathname()), $file->getPathname());
+            }
+        }
+    }
+
+    /** No page showed a published banner, and the resident's Balita feed left out every post's title. */
+    public function test_published_banners_and_balita_titles_reach_the_resident(): void
+    {
+        $carousel = $this->source('resources/views/components/citizen/banner-carousel.blade.php');
+        $this->assertStringContainsString("\$api.get('/banners')", $carousel, 'the carousel reads the live banners');
+        $this->assertStringContainsString('x-init="load()"', $carousel);
+        $this->assertStringContainsString('<x-citizen.banner-carousel />', $this->source('resources/views/citizen/dashboard.blade.php'), 'the dashboard shows it');
+
+        $feed = $this->source('resources/views/citizen/announcements.blade.php');
+        $this->assertStringContainsString('title: a.title', $feed);
+        $this->assertStringContainsString('x-text="post.title"', $feed);
+        $this->assertStringContainsString('x-text="post.title"', $this->source('resources/views/citizen/dashboard.blade.php'), 'the dashboard preview too');
+    }
+
     /** The resident saw neither the fee nor the receipt; the cashier could not tell which request a payment was for. */
     public function test_the_resident_sees_the_fee_and_the_cashier_sees_the_request(): void
     {
