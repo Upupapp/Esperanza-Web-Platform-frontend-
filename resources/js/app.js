@@ -322,6 +322,9 @@ document.addEventListener('alpine:init', () => {
         },
         canPerm(submoduleKey, permission) {
             if (!this.account) return false;
+            // The Super Administrator can do everything, even actions no role
+            // carries (Reject on a barangay certificate): the server agrees.
+            if (this.account.roleKey === 'super_admin') return true;
             const perms = (this.account.permissions || {})[submoduleKey];
             if (!perms) return false;
             return Array.isArray(perms) ? perms.includes(permission) : perms === '*';
@@ -348,6 +351,7 @@ document.addEventListener('alpine:init', () => {
         // (view-only) and everyone else without the reports module do not.
         canExportReports() {
             if (!this.account) return false;
+            if (this.account.roleKey === 'super_admin') return true;
             const perms = this.account.permissions || {};
             return ['rep_population', 'rep_assistance', 'rep_document', 'rep_financial'].some((k) => (perms[k] || []).includes('export'));
         },

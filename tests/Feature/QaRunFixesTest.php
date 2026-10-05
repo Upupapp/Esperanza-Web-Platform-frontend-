@@ -185,6 +185,12 @@ class QaRunFixesTest extends TestCase
     }
 
     /** Branding was published as versions that neither portal read. */
+    /** Owner ruling 2026-10-05: the Super Administrator sees every action, as the server allows it. */
+    public function test_the_super_admin_sees_every_action(): void
+    {
+        $this->assertSame(2, substr_count($this->source('resources/js/app.js'), "if (this.account.roleKey === 'super_admin') return true;"), 'canPerm and canExportReports');
+    }
+
     public function test_both_portals_apply_the_published_branding(): void
     {
         $js = $this->source('resources/js/app.js');
