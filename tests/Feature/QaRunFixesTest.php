@@ -178,6 +178,12 @@ class QaRunFixesTest extends TestCase
         $this->assertStringContainsString("n.querySelector('i[data-lucide]')", $js);
     }
 
+    /** A published alert that was cancelled read "Not yet published". */
+    public function test_a_cancelled_alert_says_when_it_was_cancelled(): void
+    {
+        $this->assertStringContainsString("a.status === 'Cancelled' && a.cancelled_at ? ('Cancelled '", $this->source('resources/views/admin/partials/sakuna/tab-alerts.blade.php'));
+    }
+
     /** Branding was published as versions that neither portal read. */
     public function test_both_portals_apply_the_published_branding(): void
     {

@@ -143,7 +143,7 @@
                         </template>
                     </div>
                     <p class="text-xs text-slate-500 mt-1.5">
-                        <span x-text="a.status === 'Released' ? ('Published ' + new Date(a.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + ' — ' + a.recipients + ' resident(s)') : 'Not yet published'"></span>
+                        <span x-text="a.status === 'Released' ? ('Published ' + new Date(a.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + ' — ' + a.recipients + ' resident(s)') : (a.status === 'Cancelled' && a.cancelled_at ? ('Cancelled ' + new Date(a.cancelled_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) + (a.published_at ? ' — it had reached ' + a.recipients + ' resident(s)' : '')) : 'Not yet published')"></span>
                     </p>
                 </div>
                 <div class="flex gap-2 flex-shrink-0 flex-col items-end" @click.stop>
