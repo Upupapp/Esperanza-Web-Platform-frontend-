@@ -268,7 +268,7 @@
                             <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i data-lucide="circle-check" class="w-4 h-4"></i></span>
                             <div class="min-w-0 flex-1">
                                 <p class="text-xs font-semibold text-emerald-800">Paid via <span x-text="payments[selected].method || 'unspecified method'"></span></p>
-                                <p class="text-[11px] text-emerald-700/80" x-text="payments[selected]._receipt ? ('Receipt ' + payments[selected]._receipt.receipt_no + ' issued ' + new Date(payments[selected]._receipt.issued_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })) : ('On ' + payments[selected].date)"></p>
+                                <p class="text-[11px] text-emerald-700/80" x-text="payments[selected]._receipt ? ('Receipt ' + payments[selected]._receipt.receipt_no + ' issued ' + new Date(payments[selected]._receipt.issued_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })) : (payments[selected].receipt_no ? ('Receipt ' + payments[selected].receipt_no + ' · paid on ' + payments[selected].date) : ('On ' + payments[selected].date))"></p>
                             </div>
                         </div>
                     </div>

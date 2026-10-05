@@ -165,5 +165,6 @@ class QaRunFixesTest extends TestCase
         $payments = $this->source('resources/views/admin/payments.blade.php');
         $this->assertStringContainsString("' · ' + p.request_ref", $payments, 'each payment names its request');
         $this->assertStringContainsString("(p.request_ref || '').toLowerCase().includes(q)", $payments, 'the search finds a payment by its request');
+        $this->assertStringContainsString("'Receipt ' + payments[selected].receipt_no + ' · paid on '", $payments, 'a paid payment reopened later still shows its receipt');
     }
 }
