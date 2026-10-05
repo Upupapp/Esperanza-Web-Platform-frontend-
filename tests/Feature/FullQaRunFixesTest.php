@@ -91,7 +91,7 @@ class FullQaRunFixesTest extends TestCase
             $this->assertStringContainsString('may(primaryPermission)', $view, "{$path}: the primary button needs its stage's permission");
             // A required document nobody uploaded cannot be accepted (the server's rule too).
             $this->assertStringContainsString('x-show="mayAccept(req)" @click="verifyRequirement(req)"', $view, $path);
-            $this->assertStringContainsString('/if applicable|if available|if any/i', $view, $path);
+            $this->assertStringContainsString('/if applicable|if available|if any|required if|\\bonly\\s*$|interview|case study|case assessment|details of the record being requested|thumbmark|to be taken at|^\\s*none\\b/i', $view, $path);
         }
 
         $this->assertStringContainsString(

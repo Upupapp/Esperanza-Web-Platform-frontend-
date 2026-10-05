@@ -2023,9 +2023,10 @@
                 return !this.selected?.permitted || !!this.selected.permitted[action];
             },
             // Nothing uploaded means nothing to accept, unless the document is
-            // optional ('(if applicable)'): the server's rule and the phone app's.
+            // optional ('(if applicable)'), or is a step the office does itself
+            // (an interview, a case study, 'None'): the server's rule.
             mayAccept(req) {
-                return !!req.file || /if applicable|if available|if any/i.test(req.name || '');
+                return !!req.file || /if applicable|if available|if any|required if|\bonly\s*$|interview|case study|case assessment|details of the record being requested|thumbmark|to be taken at|^\s*none\b/i.test(req.name || '');
             },
 
             async verifyRequirement(req) {
