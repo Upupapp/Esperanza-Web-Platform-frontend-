@@ -429,8 +429,12 @@
             // bugs QA, 2026-10-06): the editor's content is reset directly.
             cancelDocumentEdits() {
                 if (this.selected) {
-                    if (this.$refs.docEditor && this.documentEditBackup !== null) {
-                        this.$refs.docEditor.innerHTML = this.documentEditBackup;
+                    // Closing the window runs this from the modal's wrapper,
+                    // where $refs.docEditor does not resolve (see
+                    // getDocContentEl), so the edit survived a close.
+                    const editor = this.$refs.docEditor || this.getDocContentEl();
+                    if (editor && this.documentEditBackup !== null) {
+                        editor.innerHTML = this.documentEditBackup;
                     }
                     this.selected.customDocumentHtml = this.documentEditBackup;
                     if (this.backgroundEditBackup) this.selected.background = this.backgroundEditBackup;

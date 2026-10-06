@@ -22,7 +22,8 @@ class BugsQaFixesTest extends TestCase
         $view = $this->source('resources/views/admin/document-requests.blade.php');
 
         $this->assertStringContainsString('set open(v) { if (!v && editingDocument) cancelDocumentEdits();', $view, 'closing the window while editing cancels');
-        $this->assertStringContainsString('this.$refs.docEditor.innerHTML = this.documentEditBackup;', $view, 'the editor content is reset, not only the bound string');
+        $this->assertStringContainsString('const editor = this.$refs.docEditor || this.getDocContentEl();', $view, 'found from the close path too, where $refs does not resolve');
+        $this->assertStringContainsString('editor.innerHTML = this.documentEditBackup;', $view, 'the editor content is reset, not only the bound string');
         $this->assertStringContainsString('x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save Changes', $view);
         $this->assertStringContainsString('x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel', $view);
         $this->assertStringContainsString('x-show="!editingDocument" @click="printDocument()"', $view, 'nothing prints half-edited');
