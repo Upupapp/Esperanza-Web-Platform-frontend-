@@ -61,6 +61,9 @@
             formatDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
 
             familyMembers: [],
+            // The Resident Profile filed on the phone: the barangay's decision.
+            profileVerification: null,
+            profileReview: null,
             residentProfileLoading: true,
             documents: [],
             documentsLoading: true,
@@ -76,6 +79,8 @@
                 try {
                     const result = await $api.get('/citizen/resident-profile');
                     this.familyMembers = result.data?.family?.members || [];
+                    this.profileVerification = result.data?.individual?.verification || null;
+                    this.profileReview = result.data?.review || null;
                 } catch { this.familyMembers = []; } finally { this.residentProfileLoading = false; }
                 this.loadDocuments();
                 this.loadIdView();
@@ -312,6 +317,23 @@
                         <div class="flex items-center justify-between gap-2" x-show="$store.barangay.mine?.contact"><span class="text-slate-500 shrink-0"><x-ui.t fil="Contact" en="Contact" /></span><a class="font-medium text-brand-600 hover:underline text-right truncate" :href="'tel:' + ($store.barangay.mine?.contact || '').replace(/[^0-9+]/g, '')" x-text="$store.barangay.mine?.contact"></a></div>
                     </div>
                 </div>
+
+                <!-- Resident Profile: where a notice about the barangay's decision lands -->
+                <x-ui.card id="resident-profile" x-show="profileVerification" x-cloak>
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                        <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="clipboard-check" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Resident Profile" en="Resident Profile" /></h3>
+                        {{-- LANGUAGE (TAB 09): the record status is a ruled status name, shown as is. --}}
+                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5" :class="profileVerification === 'Verified' ? 'bg-emerald-50 text-emerald-700' : (profileReview?.outcome === 'returned' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700')" x-text="profileVerification"></span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Verified'"><x-ui.t fil="Na-verify ng iyong barangay office ang impormasyon mo at ng iyong sambahayan." en="Your barangay office verified your information and your household's." /></p>
+                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'For Validation'"><x-ui.t fil="Sinusuri ito ng iyong barangay office. Aabisuhan ka kapag tapos na." en="Your barangay office is reviewing it. You will be told when they finish." /></p>
+                    <div class="space-y-1" x-show="profileReview?.outcome === 'returned'">
+                        <p class="text-xs font-semibold text-amber-700"><x-ui.t fil="Kailangang ayusin ayon sa iyong barangay office:" en="Your barangay office asks you to change:" /></p>
+                        <p class="text-xs text-amber-800 leading-relaxed break-words" x-text="profileReview?.note"></p>
+                        <p class="text-[11px] text-slate-500"><x-ui.t fil="Ayusin ito sa Esperanza app at isumite muli." en="Update it in the Esperanza app and submit it again." /></p>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Unverified' && profileReview?.outcome !== 'returned'"><x-ui.t fil="Hindi pa naisusumite. Kumpletuhin ito sa Esperanza app." en="Not submitted yet. Complete it in the Esperanza app." /></p>
+                </x-ui.card>
 
                 <!-- Household -->
                 <x-ui.card padded="false">

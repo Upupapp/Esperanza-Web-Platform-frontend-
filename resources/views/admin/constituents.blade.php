@@ -324,6 +324,48 @@
             const priority = v => v === 'Verified' ? 1 : 0;
             return [...list].sort((a, b) => priority(a.verification) - priority(b.verification));
         },
+        // A resident's submitted Resident Profile (the phone said Pending
+        // Verification with nothing here to finish it, 2026-10-06). Records
+        // staff or the barangay office, which verifies residents.
+        profileReturnNote: '',
+        profileReviewBusy: false,
+        get mayReviewProfile() {
+            return this.can('const_data_quality', 'verify') || this.can('const_citizen_verification', 'verify');
+        },
+        applyProfileReview(r, d) {
+            const row = (this.individuals || []).find((x) => x.ref === r.ref);
+            for (const x of [r, row].filter(Boolean)) {
+                x.verification = d.verification;
+                x.review_note = d.review_note;
+                x.reviewed_by = d.reviewed_by;
+                x.reviewed_at = d.reviewed_at;
+            }
+        },
+        async verifyProfile(r) {
+            if (!r || this.profileReviewBusy) return;
+            this.profileReviewBusy = true;
+            try {
+                const res = await $api.post('/admin/residents/' + r.ref + '/verify', { level: 'Verified' });
+                this.applyProfileReview(r, res.data);
+                this.profileReturnNote = '';
+                this.$dispatch('toast', { message: 'Verified. ' + (r.citizen_account ? 'The resident has been told.' : ''), variant: 'success' });
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not verify this profile.', variant: 'error' });
+            } finally { this.profileReviewBusy = false; }
+        },
+        async returnProfile(r) {
+            const note = this.profileReturnNote.trim();
+            if (!r || this.profileReviewBusy || note.length < 5) return;
+            this.profileReviewBusy = true;
+            try {
+                const res = await $api.post('/admin/residents/' + r.ref + '/return', { note });
+                this.applyProfileReview(r, res.data);
+                this.profileReturnNote = '';
+                this.$dispatch('toast', { message: 'Sent back with your note. ' + (r.citizen_account ? 'The resident has been told.' : ''), variant: 'success' });
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not send this profile back.', variant: 'error' });
+            } finally { this.profileReviewBusy = false; }
+        },
         async verifyFamily(f) {
             try {
                 await $api.post('/admin/families/' + f.ref + '/verify', { level: 'Verified' });

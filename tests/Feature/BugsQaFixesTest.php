@@ -116,6 +116,23 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringNotContainsString('prepared_document', $this->source('resources/views/citizen/document-requests.blade.php'), 'the resident\'s copy stays the template');
     }
 
+    /** A submitted Resident Profile said Pending Verification on the phone, with nothing on the staff site to finish it. */
+    public function test_a_submitted_resident_profile_can_be_verified_or_sent_back(): void
+    {
+        $page = $this->source('resources/views/admin/constituents.blade.php');
+        $this->assertStringContainsString("'/admin/residents/' + r.ref + '/verify'", $page);
+        $this->assertStringContainsString("'/admin/residents/' + r.ref + '/return', { note }", $page, 'sent back with what to change');
+        $this->assertStringContainsString("this.can('const_data_quality', 'verify') || this.can('const_citizen_verification', 'verify')", $page, 'records staff or the barangay office');
+
+        $modal = $this->source('resources/views/admin/constituents/modal-individual-detail.blade.php');
+        $this->assertStringContainsString('>Verify profile<', $modal);
+        $this->assertStringContainsString('>Send back for changes<', $modal);
+
+        $profile = $this->source('resources/views/citizen/profile.blade.php');
+        $this->assertStringContainsString('id="resident-profile"', $profile, 'the notice links here');
+        $this->assertStringContainsString("profileReview?.outcome === 'returned'", $profile, 'the resident sees what to change');
+    }
+
     /** Every uploaded document had to be downloaded to be read. */
     public function test_documents_are_read_in_the_portal_without_running_them(): void
     {

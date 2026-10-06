@@ -314,6 +314,22 @@
                     </div>
                 </div>
 
+                {{-- The resident's submitted Resident Profile: verify it, or send it
+                     back with what to change. The resident is told either way. --}}
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4" x-show="mayReviewProfile && selectedIndividual">
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Resident Profile Review</h3>
+                    <p class="text-xs leading-relaxed text-slate-600" x-show="selectedIndividual?.verification === 'For Validation'">Submitted for validation. Check the details on this record, then verify it or send it back with what to change.</p>
+                    <p class="text-xs leading-relaxed text-emerald-700" x-show="selectedIndividual?.verification === 'Verified'" x-text="'Verified' + (selectedIndividual?.reviewed_by ? ' by ' + selectedIndividual.reviewed_by : '') + (selectedIndividual?.reviewed_at ? ' on ' + new Date(selectedIndividual.reviewed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '') + '.'"></p>
+                    <p class="text-xs leading-relaxed text-amber-700 break-words" x-show="selectedIndividual?.review_note && selectedIndividual?.verification === 'Unverified'" x-text="'Sent back' + (selectedIndividual?.reviewed_by ? ' by ' + selectedIndividual.reviewed_by : '') + ', waiting for the resident: ' + selectedIndividual?.review_note"></p>
+                    <div class="mt-3 space-y-2" x-show="selectedIndividual?.verification !== 'Verified'">
+                        <x-ui.button size="sm" icon="shield-check" class="w-full justify-center" x-bind:disabled="profileReviewBusy" @click="verifyProfile(selectedIndividual)">Verify profile</x-ui.button>
+                        <div class="space-y-2" x-show="selectedIndividual?.verification === 'For Validation'">
+                            <textarea aria-label="What the resident should change" x-model="profileReturnNote" rows="2" maxlength="1000" placeholder="What should the resident change? (at least 5 characters)" class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-2 px-2.5 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition"></textarea>
+                            <x-ui.button size="sm" variant="secondary" icon="undo-2" class="w-full justify-center" x-bind:disabled="profileReviewBusy || profileReturnNote.trim().length < 5" @click="returnProfile(selectedIndividual)">Send back for changes</x-ui.button>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Record actions --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4" x-show="can('const_resident','delete')">
                     <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Record Actions</h3>
