@@ -1439,7 +1439,9 @@
                             <p class="mt-3 pt-3 border-t border-rose-100/70 text-xs text-rose-700"><x-ui.t fil="Maaari kang magsumite ng bagong kahilingan kapag naayos mo na ang dahilan sa itaas." en="You can file a new request once you've addressed the reason above." /></p>
                         </div>
 
-                        <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="['Submitted', 'Under Verification', 'Resubmitted'].includes(selectedRequest.status) && (selectedRequest.requirements || []).length" x-cloak>
+                        {{-- At every stage, so the resident sees which documents the office accepted
+                             (Esperanza bugs QA, 2026-10-06); Attach shows only where a file can still go. --}}
+                        <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="(selectedRequest.requirements || []).length" x-cloak>
                             <p class="text-xs font-semibold text-navy-900 mb-2"><x-ui.t fil="Aking mga Dokumento para dito" en="My documents for this request" /></p>
                             <div class="space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">

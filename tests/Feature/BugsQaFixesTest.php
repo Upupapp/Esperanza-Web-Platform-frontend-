@@ -61,6 +61,7 @@ class BugsQaFixesTest extends TestCase
             $this->assertSame(2, substr_count($view, 'x-text="reqKindLabel('), "{$path}: the form and Track Request both label it");
             $this->assertStringContainsString("'Accepted' : 'Tinanggap'", $view, "{$path}: an accepted one says so");
             $this->assertStringContainsString("reqKind(req.name) !== 'office'", $view, "{$path}: no Attach on a step the office does");
+            $this->assertStringContainsString('x-show="(selectedRequest.requirements || []).length" x-cloak>', $view, "{$path}: the list shows at every stage, not only the first");
         }
     }
 
