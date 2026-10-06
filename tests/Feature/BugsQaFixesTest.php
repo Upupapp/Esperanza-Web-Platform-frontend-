@@ -31,6 +31,14 @@ class BugsQaFixesTest extends TestCase
         $modal = $this->source('resources/views/components/ui/modal.blade.php');
         $this->assertStringContainsString('@click.outside="if (!$event.target.closest(\'[data-modal-layer]\')) open = false"', $modal, 'a click in the document window does not close the request behind it');
         $this->assertStringContainsString('data-modal-layer', $modal);
+        $this->assertStringContainsString('@keydown.escape.window="if (window.closesOnEscape($el)) open = false"', $modal, 'Escape closes only the window on top');
+        $this->assertStringContainsString('x-effect="window.modalLayer($el, open)"', $modal);
+        $app = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('window.closesOnEscape = (layer) =>', $app);
+        $this->assertStringContainsString("if (e.key === 'Escape') { e.stopPropagation(); done(null); }", $app, 'Escape in the camera leaves the request open');
+        foreach (['document-requests', 'assistance-requests', 'papeles'] as $page) {
+            $this->assertStringContainsString('data-modal-overlay x-show="previewDoc"', $this->source("resources/views/admin/{$page}.blade.php"), "{$page}: Escape on the document viewer closes the viewer only");
+        }
     }
 
     /** A Business Permit reached Released with 2 of its 7 documents checked. */
@@ -41,6 +49,7 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('get approveBlocked()', $view);
         $this->assertStringContainsString('x-bind:disabled="processing || !!approveBlocked', $view);
         $this->assertStringContainsString('x-text="approveBlocked"', $view, 'and says why');
+        $this->assertStringContainsString("'Waiting for the resident to replace '", $view, 'a flagged document is waited for, not approved');
     }
 
     /** The website never asked for the declared capital, so the server refused the permit. */
@@ -66,6 +75,8 @@ class BugsQaFixesTest extends TestCase
             $this->assertSame(2, substr_count($view, 'x-text="reqKindLabel('), "{$path}: the form and Track Request both label it");
             $this->assertStringContainsString("'Accepted' : 'Tinanggap'", $view, "{$path}: an accepted one says so");
             $this->assertStringContainsString("reqKind(req.name) !== 'office'", $view, "{$path}: no Attach on a step the office does");
+            $this->assertStringContainsString("reqKind(q) === 'required' && !this.attachments[i]", $view, "{$path}: the wizard names the documents still owed, not office steps");
+            $this->assertStringContainsString("filter(q => reqKind(q) !== 'office').length", $view, "{$path}: the attached count leaves out office steps");
             $this->assertStringContainsString('x-show="(selectedRequest.requirements || []).length" x-cloak>', $view, "{$path}: the list shows at every stage, not only the first");
         }
     }

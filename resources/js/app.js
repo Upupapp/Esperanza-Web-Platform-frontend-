@@ -102,6 +102,24 @@ window.renderPdfInto = async (el, url, { maxPages = 15 } = {}) => {
     return doc.numPages;
 };
 
+// Windows stacked on one another: the Prepared Document over its request, or a
+// document viewer or the camera opened inside one. Every <x-ui.modal> listens
+// for Escape on the whole window, so one key closed the viewer AND the request
+// behind it, and the officer was back on the list (live check, 2026-10-06).
+// Escape now closes only the window opened last; a viewer or the camera
+// ([data-modal-overlay]) closes itself first. The page behind stays locked
+// while any window is still open.
+const openLayers = [];
+window.modalLayer = (layer, open) => {
+    const i = openLayers.indexOf(layer);
+    if (open && i === -1) openLayers.push(layer);
+    if (!open && i !== -1) openLayers.splice(i, 1);
+    document.body.classList.toggle('overflow-hidden', openLayers.length > 0);
+    document.querySelector('main')?.classList.toggle('overflow-hidden', openLayers.length > 0);
+};
+window.closesOnEscape = (layer) => openLayers[openLayers.length - 1] === layer
+    && ![...document.querySelectorAll('[data-modal-overlay]')].some((o) => o.getClientRects().length > 0);
+
 // "Take Photo" for Proof of Release. A desktop browser ignores <input capture>,
 // so the button opened the file picker like "Upload Photo" (Esperanza bugs QA,
 // 2026-10-06). On a computer this opens the webcam in a dialog and resolves
@@ -123,6 +141,7 @@ window.takePhoto = async () => {
         overlay.setAttribute('role', 'dialog');
         overlay.setAttribute('aria-modal', 'true');
         overlay.setAttribute('aria-label', 'Take a photo');
+        overlay.setAttribute('data-modal-overlay', '');
         overlay.innerHTML = '<div class="bg-white rounded-2xl shadow-float w-full max-w-lg p-4 space-y-3">'
             + '<p class="text-sm font-semibold text-navy-900">Take a photo</p>'
             + '<video autoplay playsinline muted class="w-full rounded-xl bg-black aspect-video object-contain"></video>'
@@ -133,7 +152,8 @@ window.takePhoto = async () => {
         document.body.appendChild(overlay);
         const video = overlay.querySelector('video');
         video.srcObject = stream;
-        const onKey = (e) => { if (e.key === 'Escape') done(null); };
+        // Escape cancels the camera only, not the request window under it.
+        const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); done(null); } };
         const done = (file) => {
             stream.getTracks().forEach((t) => t.stop());
             overlay.remove();

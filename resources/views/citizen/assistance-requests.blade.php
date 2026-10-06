@@ -332,13 +332,14 @@
                                 this.stepError = (en ? 'Please fill in: ' : 'Pakipunan ang: ') + missing.join(', ');
                                 return;
                             }
-                            const total = (this.types[this.selectedType]?.requirements || []).length;
-                            const attached = Object.keys(this.attachments).filter((k) => this.attachments[k]).length;
-                            if (attached < total && !this.attachWarned) {
+                            // Names only what the resident owes: the MSWDO interview is
+                            // done at the office, and nothing can be attached for it.
+                            const owed = (this.types[this.selectedType]?.requirements || []).filter((q, i) => reqKind(q) === 'required' && !this.attachments[i]);
+                            if (owed.length && !this.attachWarned) {
                                 this.attachWarned = true;
                                 this.stepWarning = en
-                                    ? (total - attached) + ' of ' + total + ' requirements not attached. The office needs them to assess the request: attach them now, or press Continue to add them later from Track Request.'
-                                    : (total - attached) + ' sa ' + total + ' requirement ang hindi pa naikakabit. Kailangan ito ng opisina: ikabit na ngayon, o pindutin ang Magpatuloy para idagdag mamaya sa Subaybayan.';
+                                    ? 'Still to attach, and the office needs them to assess the request: ' + owed.join(', ') + '. Attach them now, or press Continue to add them later from Track Request.'
+                                    : 'Hindi pa naikakabit, at kailangan ito ng opisina: ' + owed.join(', ') + '. Ikabit na ngayon, o pindutin ang Magpatuloy para idagdag mamaya sa Subaybayan.';
                                 return;
                             }
                         }
@@ -587,7 +588,7 @@
                                     <div class="space-y-1.5 text-xs border-t border-purple-100/70 pt-3">
                                         <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Tinatayang Halaga" en="Estimated Amount" /></span><span class="font-semibold text-navy-900 text-right" x-text="types[selectedType]?.amount"></span></div>
                                         <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Oras ng Pagproseso" en="Processing Time" /></span><span class="font-medium text-slate-600" x-text="types[selectedType]?.days"></span></div>
-                                        <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).length + ' attached'"></span></div>
+                                        <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).filter(q => reqKind(q) !== 'office').length + ' attached'"></span></div>
                                     </div>
                                 </div>
                             </div>
@@ -701,10 +702,10 @@
 
                         <div class="flex items-center justify-between mb-1">
                             <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Mga Requirement" en="Requirements" /></p>
-                            <p class="text-[11px] font-medium text-slate-500" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).length"></p>
+                            <p class="text-[11px] font-medium text-slate-500" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).filter(q => reqKind(q) !== 'office').length"></p>
                         </div>
                         <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
-                            <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((types[selectedType]?.requirements || []).length ? (Object.keys(attachments).filter(k => attachments[k]).length / (types[selectedType]?.requirements || []).length) : 0) * 100) + '%'"></div>
+                            <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((types[selectedType]?.requirements || []).filter(q => reqKind(q) !== 'office').length ? Math.min(1, Object.keys(attachments).filter(k => attachments[k]).length / (types[selectedType]?.requirements || []).filter(q => reqKind(q) !== 'office').length) : 0) * 100) + '%'"></div>
                         </div>
                         <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

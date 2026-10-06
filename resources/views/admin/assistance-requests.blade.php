@@ -1464,7 +1464,7 @@
                  inside the scrollable middle column) so it sits above the
                  whole Review modal regardless of scroll position. --}}
             <div
-                x-show="previewDoc"
+                data-modal-overlay x-show="previewDoc"
                 x-cloak
                 x-transition:enter="transition duration-[200ms] ease-emphasized"
                 x-transition:enter-start="opacity-0"

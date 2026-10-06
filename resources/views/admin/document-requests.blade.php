@@ -2022,10 +2022,17 @@
             // Approve waits until every document is accepted, as the server
             // does (Esperanza bugs QA, 2026-10-06: a permit reached Released
             // with 2 of 7 documents checked). '' when nothing holds it back.
+            // A flagged document does not unblock it: the resident replaces it
+            // and the officer approves the new file, so the footer says who is
+            // being waited for.
             get approveBlocked() {
                 if (this.primaryPermission !== 'approve') return '';
-                const open = (this.selected?.requirements || []).filter((r) => r.status !== 'Approved').length;
-                return open ? 'Accept or flag every document first: ' + open + ' not accepted yet.' : '';
+                const reqs = this.selected?.requirements || [];
+                const open = reqs.filter((r) => r.status !== 'Approved').length;
+                if (!open) return '';
+                const flagged = reqs.filter((r) => r.status === 'Flagged for Replacement').length;
+                if (flagged === open) return 'Waiting for the resident to replace ' + (flagged === 1 ? 'the flagged document.' : 'the ' + flagged + ' flagged documents.');
+                return 'Approve every document first: ' + open + ' not approved yet' + (flagged ? ', ' + flagged + ' of them waiting for the resident to replace.' : '.');
             },
             // The permission the primary button needs at this stage.
             get primaryPermission() {
@@ -2813,7 +2820,7 @@
                  inside the scrollable middle column) so it sits above the
                  whole Process modal regardless of scroll position. --}}
             <div
-                x-show="previewDoc"
+                data-modal-overlay x-show="previewDoc"
                 x-cloak
                 x-transition:enter="transition duration-[200ms] ease-emphasized"
                 x-transition:enter-start="opacity-0"

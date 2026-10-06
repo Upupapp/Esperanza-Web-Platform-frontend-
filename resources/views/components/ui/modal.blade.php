@@ -22,11 +22,8 @@
         data-modal-layer
         x-show="open"
         x-cloak
-        x-effect="
-            document.body.classList.toggle('overflow-hidden', open);
-            document.querySelector('main')?.classList.toggle('overflow-hidden', open);
-        "
-        @keydown.escape.window="open = false"
+        x-effect="window.modalLayer($el, open)"
+        @keydown.escape.window="if (window.closesOnEscape($el)) open = false"
         style="position: fixed; inset: 0; z-index: 90;"
     >
         <div x-show="open" x-transition.opacity @click="open = false" style="position: absolute; inset: 0;" class="bg-navy-950/60 backdrop-blur-sm"
@@ -103,7 +100,7 @@
                          "Prepared Document" over its request) is not a click
                          away from it: it closed the request behind, and the
                          officer came back to the list (Esperanza bugs QA). --}}
-                    @click.outside="if (!$event.target.closest('[data-modal-layer]')) open = false"
+                    @click.outside="if (!$event.target.closest('[data-modal-layer], [data-modal-overlay]')) open = false"
                     role="dialog"
                     aria-modal="true"
                     x-trap="open"
