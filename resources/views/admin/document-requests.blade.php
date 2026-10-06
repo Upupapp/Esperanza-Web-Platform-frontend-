@@ -2923,12 +2923,13 @@
                         {{-- A PDF is read here: PDF.js draws its pages from the file's data, so the
                              file is never opened on the portal's origin and runs nothing
                              (Esperanza bugs QA, 2026-10-06: staff downloaded every file to read it). --}}
-                        <div x-data="pdfPreview" x-effect="show(previewDoc?.file_url, (previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || ''))" x-show="!previewDoc?.preview_asset && (previewDoc?.file_url && /pdf/i.test((previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || '')))" x-cloak class="rounded-xl border border-slate-200 bg-slate-100 max-h-[60vh] overflow-y-auto p-2 mb-3">
+                        <div x-data="pdfPreview" x-effect="show(previewDoc?.file_url, (previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || ''))" x-show="!previewDoc?.preview_asset && previewKind(previewDoc?.file_url, (previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || ''))" x-cloak class="rounded-xl border border-slate-200 bg-slate-100 max-h-[60vh] overflow-y-auto p-2 mb-3">
                             <p x-show="loading" class="text-xs text-slate-500 text-center py-8">Opening the document…</p>
                             <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8">This file could not be shown here. Use Download the file.</p>
+                            <img x-show="image" x-cloak :src="image" :alt="previewDoc?.name" class="block w-full h-auto rounded-lg bg-white">
                             <div x-ref="pages"></div>
                         </div>
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset && !(previewDoc?.file_url && /pdf/i.test((previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || '')))">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset && !previewKind(previewDoc?.file_url, (previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || ''))">
                             <span
                                 class="w-14 h-14 rounded-2xl flex items-center justify-center"
                                 :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'"

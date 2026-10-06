@@ -79,6 +79,32 @@ window.loadPdfJs = () => {
     return pdfjsPromise;
 };
 
+// What the viewer can show for an uploaded file: 'pdf', an image type
+// (raster only: png, jpeg, gif, webp), or null for anything else. `mime` may
+// also carry the file name, since a stored file's URL has no extension.
+window.previewKind = (url, mime) => {
+    if (!url) return null;
+    const s = String(mime || '');
+    const image = (ext) => 'image/' + (ext.toLowerCase() === 'jpg' ? 'jpeg' : ext.toLowerCase());
+    if (/application\/pdf/i.test(s)) return 'pdf';
+    let m = s.match(/image\/(png|jpe?g|gif|webp)\b/i);
+    if (m) return image(m[1]);
+    if (/\.pdf\b/i.test(s)) return 'pdf';
+    m = s.match(/\.(png|jpe?g|gif|webp)\b/i);
+    return m ? image(m[1]) : null;
+};
+
+// An uploaded photo, shown in the portal (Esperanza bugs QA follow-up,
+// 2026-10-06: the eye icon showed "cannot be shown here" for every image).
+// The API sends each file as a download (octet-stream, nosniff) from its own
+// origin, so the page reads the bytes and shows them as the raster type the
+// upload declared, the way PDF.js draws a PDF. Nothing in a raster image runs.
+window.imageBlobUrl = async (url, type) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('file ' + res.status);
+    return URL.createObjectURL(new Blob([await res.arrayBuffer()], { type }));
+};
+
 window.renderPdfInto = async (el, url, { maxPages = 15 } = {}) => {
     const pdfjs = await window.loadPdfJs();
     const res = await fetch(url);
@@ -842,25 +868,47 @@ document.addEventListener('alpine:init', () => {
     // <div x-data="pdfPreview" x-effect="show(url, mime)"><div x-ref="pages"></div></div>
     // Draws a PDF in place (window.renderPdfInto); anything else is left to
     // the page's own image preview or download link.
+    // Also shows an uploaded photo: <img x-show="image" :src="image"> inside.
     Alpine.data('pdfPreview', () => ({
         loading: false,
         failed: false,
         pages: 0,
         shown: null,
+        image: null,
         async show(url, mime) {
-            const isPdf = !!url && (/pdf/i.test(mime || '') || /\.pdf($|\?)/i.test(url));
-            if (!isPdf) { this.shown = null; this.pages = 0; this.failed = false; this.$refs.pages?.replaceChildren(); return; }
+            const kind = window.previewKind(url, mime);
+            if (!kind) { this.reset(); return; }
             if (this.shown === url) return;
+            this.reset();
             this.shown = url;
             this.loading = true;
-            this.failed = false;
             try {
-                this.pages = await window.renderPdfInto(this.$refs.pages, url);
+                if (kind === 'pdf') {
+                    this.pages = await window.renderPdfInto(this.$refs.pages, url);
+                } else {
+                    const blobUrl = await window.imageBlobUrl(url, kind);
+                    // Another file was opened meanwhile: drop this one.
+                    if (this.shown !== url) { URL.revokeObjectURL(blobUrl); return; }
+                    this.image = blobUrl;
+                    this.pages = 1;
+                }
             } catch (e) {
-                this.failed = true;
+                if (this.shown === url) this.failed = true;
             } finally {
-                this.loading = false;
+                if (this.shown === url) this.loading = false;
             }
+        },
+        reset() {
+            if (this.image) URL.revokeObjectURL(this.image);
+            this.image = null;
+            this.shown = null;
+            this.pages = 0;
+            this.failed = false;
+            this.loading = false;
+            this.$refs.pages?.replaceChildren();
+        },
+        destroy() {
+            if (this.image) URL.revokeObjectURL(this.image);
         },
     }));
 

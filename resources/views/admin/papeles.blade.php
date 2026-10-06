@@ -380,10 +380,10 @@
                         <button aria-label="Close" @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
-                        <img x-show="viewingImage" :src="viewing?.url" :alt="previewDoc.type" class="w-full max-h-[60vh] object-contain rounded-xl border border-slate-200 bg-slate-50">
-                        <div x-data="pdfPreview" x-effect="show(viewingPdf ? viewing.url : null, 'pdf')" x-show="viewingPdf" x-cloak class="max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
+                        <div x-data="pdfPreview" x-effect="show(viewingImage || viewingPdf ? viewing.url : null, (viewing?.mime || '') + ' ' + (viewing?.name || ''))" x-show="viewingImage || viewingPdf" x-cloak class="max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
                             <p x-show="loading" class="text-xs text-slate-500 text-center py-8">Opening the document…</p>
                             <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8">This file could not be shown here. Use Download.</p>
+                            <img x-show="image" x-cloak :src="image" :alt="previewDoc.type" class="block w-full h-auto rounded-lg bg-white">
                             <div x-ref="pages"></div>
                         </div>
                         <div x-show="!viewingImage && !viewingPdf" class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center py-14">

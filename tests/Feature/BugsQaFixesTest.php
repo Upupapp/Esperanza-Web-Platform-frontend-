@@ -123,6 +123,11 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString("import('pdfjs-dist')", $app, 'loaded only when a PDF is shown');
         $this->assertStringContainsString('isEvalSupported: false, enableXfa: false', $app, 'nothing in a PDF runs');
         $this->assertStringContainsString("Alpine.data('pdfPreview'", $app);
+        $this->assertStringContainsString('window.imageBlobUrl = async (url, type) =>', $app, 'an uploaded photo is shown too, read as bytes');
+        $this->assertStringContainsString('image\/(png|jpe?g|gif|webp)', $app, 'raster images only: nothing in them runs');
+        foreach (['document-requests', 'assistance-requests', 'papeles'] as $page) {
+            $this->assertStringContainsString('<img x-show="image" x-cloak :src="image"', $this->source("resources/views/admin/{$page}.blade.php"), "{$page}: the eye icon shows a photo");
+        }
         $this->assertStringContainsString("? 'assets/[name]-[hash].js'", $this->source('vite.config.js'), 'the worker is named .js, or a host serves it as octet-stream and nothing draws');
 
         foreach ([
