@@ -115,6 +115,9 @@
             get docCategories() { return [...new Set(this.documents.map(d => d.category))].sort(); },
 
             fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'; },
+            // A type stored as a key (affidavit_of_no_pension_income_or_family_support_notarized)
+            // has no spaces, so it could not wrap and ran into the next column. Shown as words.
+            typeLabel(t) { const s = String(t || ''); return /\s/.test(s) || !s.includes('_') ? s : s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '); },
 
             openBarangay(name) { this.selectedBarangay = name; this.selectedCitizenId = null; this.search = ''; this.sort = 'newest'; this.$nextTick(() => window.renderIcons?.()); },
             openCitizen(id) { this.selectedCitizenId = id; this.open = true; this.$nextTick(() => window.renderIcons?.()); },
@@ -332,7 +335,7 @@
                                     <li class="flex items-center gap-3 px-4 py-3">
                                         <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[doc.file_type] || 'file'" class="w-4 h-4"></i></span>
                                         <div class="min-w-0 flex-1">
-                                            <p class="text-sm font-medium text-slate-700 truncate" x-text="doc.type"></p>
+                                            <p class="text-sm font-medium text-slate-700 truncate" x-text="typeLabel(doc.type)"></p>
                                             <p class="text-xs text-slate-500" x-text="doc.category + ' · ' + fmtDate(doc.uploaded)"></p>
                                         </div>
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0" :class="(statusStyles[doc.status] || statusStyles['Submitted'])[0]">
@@ -375,7 +378,7 @@
                     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                         <div class="flex items-center gap-2.5 min-w-0">
                             <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-4 h-4"></i></span>
-                            <p class="text-sm font-semibold text-navy-900 truncate" x-text="previewDoc.type"></p>
+                            <p class="text-sm font-semibold text-navy-900 truncate" x-text="typeLabel(previewDoc.type)"></p>
                         </div>
                         <button aria-label="Close" @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
@@ -394,10 +397,10 @@
                             <p class="text-[11px] text-rose-400 mt-1" x-show="!previewDoc.has_file">No file was uploaded for this document.</p>
                         </div>
                         <dl class="grid grid-cols-2 gap-x-6 gap-y-2.5">
-                            <div><dt class="text-xs text-slate-500">Citizen</dt><dd class="text-sm font-semibold text-navy-900" x-text="selectedCitizen?.name"></dd></div>
-                            <div><dt class="text-xs text-slate-500">Barangay</dt><dd class="text-sm font-semibold text-navy-900" x-text="'Brgy. ' + selectedBarangay"></dd></div>
-                            <div><dt class="text-xs text-slate-500">Document Type</dt><dd class="text-sm font-semibold text-navy-900" x-text="previewDoc.type"></dd></div>
-                            <div><dt class="text-xs text-slate-500">Submitted</dt><dd class="text-sm font-semibold text-navy-900" x-text="fmtDate(previewDoc.uploaded)"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-slate-500">Citizen</dt><dd class="text-sm font-semibold text-navy-900 break-words" x-text="selectedCitizen?.name"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-slate-500">Barangay</dt><dd class="text-sm font-semibold text-navy-900 break-words" x-text="'Brgy. ' + selectedBarangay"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-slate-500">Document Type</dt><dd class="text-sm font-semibold text-navy-900 break-words [overflow-wrap:anywhere]" x-text="typeLabel(previewDoc.type)"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-slate-500">Submitted</dt><dd class="text-sm font-semibold text-navy-900" x-text="fmtDate(previewDoc.uploaded)"></dd></div>
                         </dl>
                         <div class="flex items-center justify-between gap-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[previewDoc.status] || statusStyles['Submitted'])[0]">
