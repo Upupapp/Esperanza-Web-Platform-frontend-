@@ -57,6 +57,9 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('x-bind:disabled="processing || !!approveBlocked', $view);
         $this->assertStringContainsString('x-text="approveBlocked"', $view, 'and says why');
         $this->assertStringContainsString("'Waiting for the resident to replace '", $view, 'a flagged document is waited for, not approved');
+        $this->assertStringContainsString("if (this.primaryPermission === 'release') return this.selected?.status === 'Mark to Release' ? this.feeOwed : '';", $view, 'Release waits for the receipt, as the server does (FEE_NOT_PAID)');
+        $this->assertStringContainsString('p.receipt_no || p.provisional', $view, 'a provisional fee cannot be receipted, so it does not hold the release');
+        $this->assertStringContainsString('x-bind:disabled="!method || processing || payments[selected].provisional"', $this->source('resources/views/admin/payments.blade.php'), 'the cashier is told before trying');
     }
 
     /** The website never asked for the declared capital, so the server refused the permit. */

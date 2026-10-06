@@ -277,6 +277,9 @@
                     <div x-show="payments[selected].status === 'Pending Review'" x-cloak>
                         <p class="text-sm font-semibold text-navy-900 mb-3 mt-4">Issue Receipt</p>
                         <p class="text-xs text-slate-500 mb-3">Select how the citizen paid, then issue the official receipt.</p>
+                        {{-- The server refuses a receipt for a provisional fee (FEE_SCHEDULE_PENDING);
+                             the cashier learned that only after trying (live check, 2026-10-06). --}}
+                        <p x-show="payments[selected].provisional" x-cloak class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">No official receipt can be issued yet: the LGU has not set the official fee schedule for this service, so this amount is provisional. It does not hold the document's release.</p>
                         <div class="space-y-2 mb-4">
                             <template x-for="m in [{ name: 'GCash', icon: 'smartphone' }, { name: 'PayMaya', icon: 'wallet' }, { name: 'Payment in Center', icon: 'building-2' }]" :key="m.name">
                                 <label
@@ -306,7 +309,7 @@
                 <template x-if="selected !== null && payments[selected].status === 'Pending Review' && !showRejectReason">
                     <div class="flex items-center gap-2.5 w-full">
                         <x-ui.button variant="danger" size="sm" @click="showRejectReason = true">Reject</x-ui.button>
-                        <x-ui.button size="sm" x-bind:disabled="!method || processing" @click="issueReceipt()" class="flex-1">
+                        <x-ui.button size="sm" x-bind:disabled="!method || processing || payments[selected].provisional" @click="issueReceipt()" class="flex-1">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="check" class="w-3.5 h-3.5" x-show="!processing"></i>

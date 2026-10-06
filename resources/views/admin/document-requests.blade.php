@@ -1989,6 +1989,7 @@
                     return { icon: 'package-check', tone: 'indigo', title: 'Prepare Document', message: 'Verification is complete. Prepare the requested document, then mark it Mark to Release.' };
                 }
                 if (this.selected.status === 'Mark to Release') {
+                    if (this.feeOwed) return { icon: 'receipt', tone: 'amber', title: 'Fee Not Paid', message: this.feeOwed + ' The cashier issues it on Payments.' };
                     return this.selected.release_evidence
                         ? { icon: 'circle-check', tone: 'emerald', title: 'Ready to Release', message: 'Proof of Release is on file. You can now release this document to the citizen.' }
                         : { icon: 'camera', tone: 'amber', title: 'Awaiting Proof of Release', message: 'Capture or upload Proof of Release (see the panel below) before this can be released to the citizen.' };
@@ -2033,6 +2034,7 @@
             // and the officer approves the new file, so the footer says who is
             // being waited for.
             get approveBlocked() {
+                if (this.primaryPermission === 'release') return this.selected?.status === 'Mark to Release' ? this.feeOwed : '';
                 if (this.primaryPermission !== 'approve') return '';
                 const reqs = this.selected?.requirements || [];
                 const open = reqs.filter((r) => r.status !== 'Approved').length;
@@ -2040,6 +2042,14 @@
                 const flagged = reqs.filter((r) => r.status === 'Flagged for Replacement').length;
                 if (flagged === open) return 'Waiting for the resident to replace ' + (flagged === 1 ? 'the flagged document.' : 'the ' + flagged + ' flagged documents.');
                 return 'Approve every document first: ' + open + ' not approved yet' + (flagged ? ', ' + flagged + ' of them waiting for the resident to replace.' : '.');
+            },
+            // The server refuses Release while a fee that can be receipted has
+            // no receipt (FEE_NOT_PAID). A provisional fee (the LGU has not set
+            // its schedule) cannot be receipted, so it does not hold it.
+            get feeOwed() {
+                const p = this.selected?.payment;
+                if (!p || !(Number(p.amount) > 0) || p.receipt_no || p.provisional) return '';
+                return 'Collect the fee first: ' + p.ref + ' (₱' + Number(p.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ') has no official receipt yet.';
             },
             // The permission the primary button needs at this stage.
             get primaryPermission() {
