@@ -119,9 +119,8 @@
             <i data-lucide="image" class="w-3.5 h-3.5"></i> <span class="text-[11px] font-medium"><x-ui.t fil="Background" en="Background" /></span>
         </button>
 
-        <span class="doc-toolbar-sep"></span>
-
-        <button type="button" class="doc-toolbar-btn shrink-0 text-slate-600" @click="cancelDocumentEdits()"><x-ui.t fil="Kanselahin" en="Cancel" /></button>
-        <button type="button" class="doc-toolbar-btn shrink-0 bg-brand-600 text-white border-brand-600 hover:bg-brand-700" @click="saveDocumentEdits()"><x-ui.t fil="I-save ang Pagbabago" en="Save Changes" /></button>
+        {{-- Cancel and Save Changes are in the window's footer, which is always
+             in view; here, at the end of a toolbar that scrolls sideways, the
+             tester never found them (Esperanza bugs QA, 2026-10-06). --}}
     </div>
 </div>

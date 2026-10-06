@@ -28,6 +28,10 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel', $view);
         $this->assertStringContainsString('x-show="!editingDocument" @click="printDocument()"', $view, 'nothing prints half-edited');
 
+        $toolbar = $this->source('resources/views/components/citizen/document-editor-toolbar.blade.php');
+        $this->assertStringNotContainsString('saveDocumentEdits()', $toolbar, 'one Save Changes, in the footer, not a second one in the toolbar');
+        $this->assertStringContainsString("current: staffSite ? 'en'", $this->source('resources/js/app.js'), 'the staff site is English-only (TAB 09), the shared editor included');
+
         $modal = $this->source('resources/views/components/ui/modal.blade.php');
         $this->assertStringContainsString('@click.outside="if (!$event.target.closest(\'[data-modal-layer]\')) open = false"', $modal, 'a click in the document window does not close the request behind it');
         $this->assertStringContainsString('data-modal-layer', $modal);

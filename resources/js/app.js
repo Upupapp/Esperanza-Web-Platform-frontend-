@@ -354,8 +354,12 @@ document.addEventListener('alpine:init', () => {
     // uses, input preserved on failure, and an unsaved-changes warning.
     Alpine.data('specForm', specForm);
 
+    // The staff site is English-only by owner ruling (TAB 09). The document
+    // editor it shares with the resident site follows this store, so staff saw
+    // "Kanselahin" and "I-save ang Pagbabago" beside the English buttons.
+    const staffSite = window.location.pathname.startsWith('/admin');
     Alpine.store('lang', {
-        current: localStorage.getItem('esperanza_lang') || 'fil',
+        current: staffSite ? 'en' : (localStorage.getItem('esperanza_lang') || 'fil'),
         set(lang) {
             this.current = lang;
             localStorage.setItem('esperanza_lang', lang);
@@ -367,7 +371,7 @@ document.addEventListener('alpine:init', () => {
     api.get('/portal-settings')
         .then((res) => {
             const lang = res?.data?.default_language;
-            if ((lang === 'en' || lang === 'fil') && !localStorage.getItem('esperanza_lang')) Alpine.store('lang').current = lang;
+            if (!staffSite && (lang === 'en' || lang === 'fil') && !localStorage.getItem('esperanza_lang')) Alpine.store('lang').current = lang;
             applyBranding(res?.data?.branding ?? null, true);
         })
         .catch(() => {});
