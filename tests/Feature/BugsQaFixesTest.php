@@ -28,6 +28,9 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel', $view);
         $this->assertStringContainsString('x-show="!editingDocument" @click="printDocument()"', $view, 'nothing prints half-edited');
 
+        $this->assertStringNotContainsString("'Document changes saved.'", $view, 'nothing stores the edit, so it is not called saved');
+        $this->assertStringContainsString('editedInWindow === selected?.ref', $view, 'the note beside Print says the edit is kept in this window only');
+
         $toolbar = $this->source('resources/views/components/citizen/document-editor-toolbar.blade.php');
         $this->assertStringNotContainsString('saveDocumentEdits()', $toolbar, 'one Save Changes, in the footer, not a second one in the toolbar');
         $this->assertStringContainsString("current: staffSite ? 'en'", $this->source('resources/js/app.js'), 'the staff site is English-only (TAB 09), the shared editor included');

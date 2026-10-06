@@ -109,6 +109,9 @@
             rejectRemarks: '',
             previewDoc: null,
             docPreviewOpen: false,
+            // The ref whose prepared document was edited in this window (the
+            // edit is not stored), for the note beside Print.
+            editedInWindow: null,
             // Edit Document rich-text editor state for the Prepared Document
             // modal below — see resources/js/dokyu-editor.js for the shared
             // engine and document-editor-toolbar/document-editor-background-panel
@@ -1422,7 +1425,11 @@
                     this.templateKeyEditBackup = null;
                     this.teardownHistoryTracking();
                     this.resetEditorUiState();
-                    this.$dispatch('toast', { message: 'Document changes saved.', variant: 'success' });
+                    // Kept in this window, for Print and Download PDF: nothing
+                    // stores an edited document on the server (live check,
+                    // 2026-10-06: "saved" was gone after a reload).
+                    this.editedInWindow = this.selected.ref;
+                    this.$dispatch('toast', { message: 'Changes applied. Print or download now: they are kept in this window only.', variant: 'success' });
                     this.$nextTick(() => this.recomputeZoomSizer());
                 });
             },
@@ -3054,6 +3061,7 @@
                     {{-- While editing: keep or drop the changes. Closing the window drops them too. --}}
                     <x-ui.button size="sm" variant="secondary" x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save Changes</x-ui.button>
+                    <p class="mr-auto text-[11px] leading-snug text-amber-700" x-show="!editingDocument && editedInWindow && editedInWindow === selected?.ref" x-cloak>Edited in this window only: print or download it before you leave. Opened again later, it starts from the template.</p>
                     <x-ui.button size="sm" variant="secondary" icon="printer" x-show="!editingDocument" @click="printDocument()">Print</x-ui.button>
                     <x-ui.button size="sm" icon="download" x-show="!editingDocument" @click="downloadDocument()">Download PDF</x-ui.button>
                 </x-slot:footer>
