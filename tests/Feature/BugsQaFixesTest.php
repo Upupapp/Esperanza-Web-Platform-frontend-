@@ -34,7 +34,7 @@ class BugsQaFixesTest extends TestCase
         $view = $this->source('resources/views/admin/document-requests.blade.php');
 
         $this->assertStringContainsString('get approveBlocked()', $view);
-        $this->assertStringContainsString("x-bind:disabled=\"processing || !!approveBlocked", $view);
+        $this->assertStringContainsString('x-bind:disabled="processing || !!approveBlocked', $view);
         $this->assertStringContainsString('x-text="approveBlocked"', $view, 'and says why');
     }
 
