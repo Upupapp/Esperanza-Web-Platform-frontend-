@@ -423,8 +423,15 @@
                     this.initHistoryTracking();
                 });
             },
+            // Cancel, and closing the window while editing, put the document back
+            // as it was. Restoring the same string does not redraw x-html, so
+            // the edited text stayed on the page and in the print (Esperanza
+            // bugs QA, 2026-10-06): the editor's content is reset directly.
             cancelDocumentEdits() {
                 if (this.selected) {
+                    if (this.$refs.docEditor && this.documentEditBackup !== null) {
+                        this.$refs.docEditor.innerHTML = this.documentEditBackup;
+                    }
                     this.selected.customDocumentHtml = this.documentEditBackup;
                     if (this.backgroundEditBackup) this.selected.background = this.backgroundEditBackup;
                     if (this.templateKeyEditBackup) this.selected.templateKey = this.templateKeyEditBackup;
@@ -2008,6 +2015,14 @@
             get canReject() {
                 return this.selected && ['Under Verification', 'Under Review'].includes(this.selected.status) && this.may('reject');
             },
+            // Approve waits until every document is accepted, as the server
+            // does (Esperanza bugs QA, 2026-10-06: a permit reached Released
+            // with 2 of 7 documents checked). '' when nothing holds it back.
+            get approveBlocked() {
+                if (this.primaryPermission !== 'approve') return '';
+                const open = (this.selected?.requirements || []).filter((r) => r.status !== 'Approved').length;
+                return open ? 'Accept or flag every document first: ' + open + ' not accepted yet.' : '';
+            },
             // The permission the primary button needs at this stage.
             get primaryPermission() {
                 const st = this.selected?.status;
@@ -2091,22 +2106,30 @@
             // A real photo from the device camera or files. It is held here
             // and sent with the release itself (POST .../release, proof_file):
             // the server refuses a release without proof.
-            captureReleaseEvidence(source) {
+            // Take Photo opens the webcam on a computer (window.takePhoto); a
+            // phone, or a computer with no camera, uses the file input, whose
+            // capture hint a phone honours.
+            async captureReleaseEvidence(source) {
+                if (source === 'camera') {
+                    const shot = await window.takePhoto();
+                    if (shot === null) return;
+                    if (shot) { this.useReleaseEvidence(shot); return; }
+                }
                 const input = document.createElement('input');
                 input.type = 'file';
                 input.accept = 'image/*';
                 if (source === 'camera') input.setAttribute('capture', 'environment');
-                input.onchange = () => {
-                    const file = input.files && input.files[0];
-                    if (!file || !this.selected) return;
-                    if (this.selected._proofPreview) URL.revokeObjectURL(this.selected._proofPreview);
-                    this.selected._proofFile = file;
-                    this.selected._proofPreview = URL.createObjectURL(file);
-                    this.selected.release_evidence = this.selected._proofPreview;
-                    this.selected.release_evidence_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                    this.$nextTick(() => window.renderIcons?.());
-                };
+                input.onchange = () => this.useReleaseEvidence(input.files && input.files[0]);
                 input.click();
+            },
+            useReleaseEvidence(file) {
+                if (!file || !this.selected) return;
+                if (this.selected._proofPreview) URL.revokeObjectURL(this.selected._proofPreview);
+                this.selected._proofFile = file;
+                this.selected._proofPreview = URL.createObjectURL(file);
+                this.selected.release_evidence = this.selected._proofPreview;
+                this.selected.release_evidence_at = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                this.$nextTick(() => window.renderIcons?.());
             },
             clearReleaseEvidence() {
                 if (this.selected._proofPreview) URL.revokeObjectURL(this.selected._proofPreview);
@@ -2772,7 +2795,7 @@
                             <template x-if="documentReady">
                                 <div class="mt-2.5">
                                     <p class="text-[11px] text-slate-500 leading-relaxed mb-2">Preview, print, or download the prepared document before handing it over.</p>
-                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="editingDocument = false; documentEditBackup = null; docPreviewOpen = true">View Document</x-ui.button>
+                                    <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="if (editingDocument) cancelDocumentEdits(); docPreviewOpen = true">View Document</x-ui.button>
                                 </div>
                             </template>
                             <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!documentReady">No prepared document on file for this request.</p>
@@ -2827,13 +2850,21 @@
                         <a x-show="previewDoc?.file_url" :href="previewDoc?.file_url" target="_blank" rel="noopener" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium inline-flex items-center gap-1 mb-3">
                             <i data-lucide="download" class="w-3 h-3"></i> Download the file
                         </a>
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset">
+                        {{-- A PDF is read here: PDF.js draws its pages from the file's data, so the
+                             file is never opened on the portal's origin and runs nothing
+                             (Esperanza bugs QA, 2026-10-06: staff downloaded every file to read it). --}}
+                        <div x-data="pdfPreview" x-effect="show(previewDoc?.file_url, (previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || ''))" x-show="!previewDoc?.preview_asset && (previewDoc?.file_url && /pdf/i.test((previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || '')))" x-cloak class="rounded-xl border border-slate-200 bg-slate-100 max-h-[60vh] overflow-y-auto p-2 mb-3">
+                            <p x-show="loading" class="text-xs text-slate-500 text-center py-8">Opening the document…</p>
+                            <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8">This file could not be shown here. Use Download the file.</p>
+                            <div x-ref="pages"></div>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 aspect-[3/4] flex flex-col items-center justify-center gap-2.5 mb-3" x-show="!previewDoc?.preview_asset && !(previewDoc?.file_url && /pdf/i.test((previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || '')))">
                             <span
                                 class="w-14 h-14 rounded-2xl flex items-center justify-center"
                                 :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'"
                             ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-7 h-7"></i></span>
                             <p class="text-xs font-medium text-slate-500 px-4 text-center truncate max-w-full" x-text="previewDoc?.file"></p>
-                            <p x-show="previewDoc?.file_url" class="text-[11px] leading-snug text-slate-500 px-5 text-center">Download it to read it: uploaded files are never opened inside the portal.</p>
+                            <p x-show="previewDoc?.file_url" class="text-[11px] leading-snug text-slate-500 px-5 text-center">This kind of file cannot be shown here. Download it to read it.</p>
                             <p x-show="previewDoc?.file_notice" class="text-[11px] leading-snug text-rose-600 px-5 text-center" x-text="previewDoc?.file_notice"></p>
                         </div>
                         <dl class="space-y-2 text-xs">
@@ -2860,6 +2891,7 @@
                 </p>
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">
                     <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <p x-show="approveBlocked" class="mr-auto text-xs text-amber-700 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i><span x-text="approveBlocked"></span></p>
                         <template x-if="canReject">
                             <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || !rejectRemarks.trim()" @click="reject()">
                                 <span class="inline-flex items-center gap-1.5">
@@ -2868,7 +2900,7 @@
                                 </span>
                             </x-ui.button>
                         </template>
-                        <x-ui.button size="sm" x-show="!primaryPermission || may(primaryPermission)" x-bind:disabled="processing || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null">
+                        <x-ui.button size="sm" x-show="!primaryPermission || may(primaryPermission)" x-bind:disabled="processing || !!approveBlocked || (selected.status === 'Mark to Release' && !selected.release_evidence)" @click="approve()" x-bind:title="approveBlocked || (selected.status === 'Mark to Release' && !selected.release_evidence ? 'Capture or upload Proof of Release first' : null)">
                             <span class="inline-flex items-center gap-1.5">
                                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="processing" x-cloak></i>
                                 <i data-lucide="arrow-right" class="w-3.5 h-3.5" x-show="!processing"></i>
@@ -2887,7 +2919,7 @@
              dp-printing print isolation as the citizen portal (shared rules
              in app.css). --}}
         <div
-            x-data="{ get open() { return docPreviewOpen }, set open(v) { docPreviewOpen = v; if (!v) { editingDocument = false; documentEditBackup = null; backgroundEditBackup = null; templateKeyEditBackup = null; resetEditorUiState(); } else { zoomLevel = 100; $nextTick(() => recomputeZoomSizer()); } } }"
+            x-data="{ get open() { return docPreviewOpen }, set open(v) { if (!v && editingDocument) cancelDocumentEdits(); docPreviewOpen = v; if (!v) { editingDocument = false; documentEditBackup = null; backgroundEditBackup = null; templateKeyEditBackup = null; resetEditorUiState(); } else { zoomLevel = 100; $nextTick(() => recomputeZoomSizer()); } } }"
             @keydown.window="handleZoomShortcut($event); handleUndoRedoShortcut($event)"
         >
             <x-ui.modal title="Prepared Document" maxWidth="3xl" :fullscreen="true" :start-compact="true">
@@ -3008,8 +3040,11 @@
                 </template>
 
                 <x-slot:footer>
-                    <x-ui.button size="sm" variant="secondary" icon="printer" @click="printDocument()">Print</x-ui.button>
-                    <x-ui.button size="sm" icon="download" @click="downloadDocument()">Download PDF</x-ui.button>
+                    {{-- While editing: keep or drop the changes. Closing the window drops them too. --}}
+                    <x-ui.button size="sm" variant="secondary" x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel</x-ui.button>
+                    <x-ui.button size="sm" icon="check" x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save Changes</x-ui.button>
+                    <x-ui.button size="sm" variant="secondary" icon="printer" x-show="!editingDocument" @click="printDocument()">Print</x-ui.button>
+                    <x-ui.button size="sm" icon="download" x-show="!editingDocument" @click="downloadDocument()">Download PDF</x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
         </div>

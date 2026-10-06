@@ -570,6 +570,29 @@
                             } catch { this.serviceMeta = {}; } finally { this.catalogLoaded = true; }
                         },
                         canFile(doc) { return !this.catalogLoaded || !Object.keys(this.serviceMeta).length || !!this.serviceMeta[doc?.key]; },
+                        // A fee assessed on a declared amount (capital, income,
+                        // gross receipts, project cost) needs that amount at
+                        // filing: the server refuses the request without it
+                        // (B-053), and this form never asked (Esperanza bugs QA,
+                        // 2026-10-06). The names come from the service's own
+                        // fee.required_inputs, as in the phone app.
+                        feeInputs: {},
+                        feeInputLabels: {
+                            declared_capital: ['Ipinahayag na kapital (₱)', 'Declared capital (₱)'],
+                            prior_year_gross_receipts: ['Kabuuang benta noong nakaraang taon (₱)', 'Last year\'s gross receipts (₱)'],
+                            income: ['Taunang kita (₱)', 'Annual income (₱)'],
+                            project_cost: ['Halaga ng proyekto (₱)', 'Project cost (₱)'],
+                        },
+                        get feeInputNames() { return this.serviceMeta[this.docs[this.selectedDoc]?.key]?.fee?.required_inputs || []; },
+                        feeInputLabel(name) {
+                            const l = this.feeInputLabels[name] || [name.replace(/_/g, ' '), name.replace(/_/g, ' ')];
+                            return this.$store.lang.current === 'en' ? l[1] : l[0];
+                        },
+                        parseAmount(raw) {
+                            const cleaned = String(raw ?? '').replace(/[₱,\s]/g, '');
+                            if (cleaned === '' || !/^\d+(\.\d+)?$/.test(cleaned)) return null;
+                            return Number(cleaned);
+                        },
                         selectedCategory: null,
                         categoryIcons: {
                             'Civil Registry': 'file-badge', 'Tax & Property': 'receipt', 'Business & Permits': 'briefcase',
@@ -645,6 +668,14 @@
                                     return;
                                 }
                             }
+                            if (this.step === 3) {
+                                const bad = this.feeInputNames.filter((n) => this.parseAmount(this.feeInputs[n]) === null);
+                                if (bad.length) {
+                                    this.stepError = (en ? 'Enter the amount the fee is computed from: ' : 'Ilagay ang halagang pagbabatayan ng bayarin: ')
+                                        + bad.map((n) => this.feeInputLabel(n)).join(', ');
+                                    return;
+                                }
+                            }
                             this.step++;
                         },
                         toggleChecklist(fieldKey, option) {
@@ -680,7 +711,7 @@
                             en: ['Choose Document', 'Application Details', 'Payment', 'Review & Submit'],
                         },
                         stepIcons: ['file-text', 'user-round', 'credit-card', 'clipboard-check'],
-                        reset() { this.step = 1; this.selectedDoc = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.submittedRef = null; this.formData = {}; this.otherPurposeText = {}; this.search = ''; this.stepError = ''; this.stepWarning = ''; this.attachWarned = false; },
+                        reset() { this.step = 1; this.selectedDoc = null; this.attachments = {}; this.feeInputs = {}; this.showFilePicker = null; this.submitted = false; this.submittedRef = null; this.formData = {}; this.otherPurposeText = {}; this.search = ''; this.stepError = ''; this.stepWarning = ''; this.attachWarned = false; },
                         submittedRef: null,
                         // One requirement's attachment: a new upload, or a document
                         // the resident already keeps in Papeles.
@@ -706,7 +737,8 @@
                                 applicant_mobile: this.applicant.mobile || '',
                                 applicant_email: this.applicant.email || '',
                             });
-                            const res = await $api.post('/citizen/requests', { service_key: doc.key, form_data: formData });
+                            const feeInputs = Object.fromEntries(this.feeInputNames.map((n) => [n, this.parseAmount(this.feeInputs[n])]));
+                            const res = await $api.post('/citizen/requests', { service_key: doc.key, form_data: formData, ...(this.feeInputNames.length ? { fee_inputs: feeInputs } : {}) });
                             const created = res.data || {};
                             const serverReqs = created.requirements || [];
                             const failed = [];
@@ -1053,9 +1085,9 @@
                                 <template x-for="(req, i) in docs[selectedDoc]?.requirements || []" :key="i">
                                     <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
                                         <div class="flex items-center justify-between gap-3">
-                                            <p class="text-xs text-slate-600 flex-1" x-text="req"></p>
+                                            <p class="text-xs text-slate-600 flex-1"><span x-text="req"></span> <span class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req)" x-text="reqKindLabel(req)"></span></p>
                                             <button
-                                                type="button" x-show="!attachments[i]"
+                                                type="button" x-show="!attachments[i] && reqKind(req) !== 'office'"
                                                 @click="showFilePicker = (showFilePicker === i ? null : i)"
                                                 class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap"
                                             ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
@@ -1098,6 +1130,19 @@
                             <template x-if="docs[selectedDoc]?.fee !== 'Free'">
                                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
                                     <div class="lg:col-span-3 order-2 lg:order-1">
+                                        <div x-show="feeInputNames.length" x-cloak class="mb-4 rounded-xl border border-brand-100 bg-brand-50/40 p-4 space-y-3">
+                                            <div>
+                                                <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Detalye para sa bayarin" en="Fee details" /></p>
+                                                <p class="text-xs text-slate-500 mt-0.5"><x-ui.t fil="Kinukuwenta ang bayarin mula sa halagang ilalagay mo. Kukumpirmahin ito ng opisina." en="The fee is computed from the amount you declare. The office confirms it during review." /></p>
+                                            </div>
+                                            <template x-for="name in feeInputNames" :key="name">
+                                                <label class="block">
+                                                    <span class="text-xs font-medium text-slate-700" x-text="feeInputLabel(name)"></span>
+                                                    <input type="text" inputmode="decimal" x-model="feeInputs[name]" :aria-label="feeInputLabel(name)" placeholder="50,000"
+                                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none">
+                                                </label>
+                                            </template>
+                                        </div>
                                         <p class="text-sm font-semibold text-navy-900 mb-2"><x-ui.t fil="Paano magbayad" en="How to pay" /></p>
                                         <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
                                             <p class="flex items-start gap-2"><i data-lucide="landmark" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i><x-ui.t fil="Babayaran mo ang bayarin nang personal sa tanggapang nakalista, at bibigyan ka roon ng opisyal na resibo." en="You pay the fee in person at the office listed, which gives you an official receipt." /></p>
@@ -1400,14 +1445,14 @@
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
                                     <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-2.5">
                                         <div class="min-w-0">
-                                            <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
-                                            <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file')"></p>
+                                            <p class="text-xs font-medium text-slate-700 truncate"><span x-text="req.name"></span> <span x-show="req.status !== 'Approved'" class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req.name)" x-text="reqKindLabel(req.name)"></span></p>
+                                            <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Nothing to upload: the office does this with you' : 'Walang ia-upload: gagawin ito ng opisina kasama ka') : ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file'))"></p>
                                         </div>
-                                        <label x-show="req.attachable" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                        <label x-show="req.attachable && reqKind(req.name) !== 'office'" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
                                             <span x-text="req._busy ? '…' : (req.file ? ($store.lang.current === 'en' ? 'Change' : 'Palitan') : ($store.lang.current === 'en' ? 'Attach' : 'Ikabit'))"></span>
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
                                         </label>
-                                        <span x-show="!req.attachable" class="shrink-0 text-[11px] text-slate-500" x-text="req.status === 'Approved' ? 'Verified' : req.status"></span>
+                                        <span x-show="!req.attachable" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : 'text-slate-500'" x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : req.status"></span>
                                     </div>
                                 </template>
                             </div>

@@ -711,9 +711,9 @@
                             <template x-for="(req, i) in types[selectedType]?.requirements || []" :key="i">
                                 <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
                                     <div class="flex items-center justify-between gap-3">
-                                        <p class="text-xs text-slate-600 flex-1" x-text="req"></p>
+                                        <p class="text-xs text-slate-600 flex-1"><span x-text="req"></span> <span class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req)" x-text="reqKindLabel(req)"></span></p>
                                         <button
-                                            type="button" x-show="!attachments[i]"
+                                            type="button" x-show="!attachments[i] && reqKind(req) !== 'office'"
                                             @click="showFilePicker = (showFilePicker === i ? null : i)"
                                             class="text-[11px] font-medium text-purple-600 hover:underline shrink-0 whitespace-nowrap"
                                         ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
@@ -1052,14 +1052,14 @@
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
                                     <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-2.5">
                                         <div class="min-w-0">
-                                            <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
-                                            <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file')"></p>
+                                            <p class="text-xs font-medium text-slate-700 truncate"><span x-text="req.name"></span> <span x-show="req.status !== 'Approved'" class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req.name)" x-text="reqKindLabel(req.name)"></span></p>
+                                            <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Nothing to upload: the office does this with you' : 'Walang ia-upload: gagawin ito ng opisina kasama ka') : ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file'))"></p>
                                         </div>
-                                        <label x-show="req.attachable" class="shrink-0 text-[11px] font-medium text-purple-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                        <label x-show="req.attachable && reqKind(req.name) !== 'office'" class="shrink-0 text-[11px] font-medium text-purple-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
                                             <span x-text="req._busy ? '…' : (req.file ? ($store.lang.current === 'en' ? 'Change' : 'Palitan') : ($store.lang.current === 'en' ? 'Attach' : 'Ikabit'))"></span>
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
                                         </label>
-                                        <span x-show="!req.attachable" class="shrink-0 text-[11px] text-slate-500" x-text="req.status === 'Approved' ? 'Verified' : req.status"></span>
+                                        <span x-show="!req.attachable" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : 'text-slate-500'" x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : req.status"></span>
                                     </div>
                                 </template>
                             </div>

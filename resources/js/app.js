@@ -57,6 +57,103 @@ window.loadHtml2Pdf = () => {
 
     return pdfModulePromise;
 };
+
+// Reading an uploaded PDF inside the portal (Esperanza bugs QA, 2026-10-06:
+// staff had to download every document to read it). The backend serves
+// uploads as downloads only ("never serve an uploaded file inline from the
+// application origin", the backend master command's file-upload section), and
+// that still holds: the file is fetched as data and PDF.js draws its pages as
+// pictures. It is never opened as a document on the portal's own origin, and
+// none of its scripts run (no evaluation, no XFA, no scripting layer).
+// Loaded only when a PDF is first shown, like Chart.js above.
+let pdfjsPromise = null;
+window.loadPdfJs = () => {
+    if (!pdfjsPromise) {
+        pdfjsPromise = Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]).then(([pdfjs, worker]) => {
+            pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+
+            return pdfjs;
+        });
+    }
+
+    return pdfjsPromise;
+};
+
+window.renderPdfInto = async (el, url, { maxPages = 15 } = {}) => {
+    const pdfjs = await window.loadPdfJs();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('file ' + res.status);
+    const doc = await pdfjs.getDocument({ data: await res.arrayBuffer(), isEvalSupported: false, enableXfa: false }).promise;
+    el.replaceChildren();
+    const width = el.clientWidth || 600;
+    for (let n = 1; n <= Math.min(doc.numPages, maxPages); n++) {
+        const page = await doc.getPage(n);
+        const scale = (width / page.getViewport({ scale: 1 }).width) * Math.min(window.devicePixelRatio || 1, 2);
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.className = 'block w-full h-auto rounded-lg border border-slate-200 bg-white mb-2';
+        canvas.setAttribute('aria-label', 'Page ' + n + ' of ' + doc.numPages);
+        el.appendChild(canvas);
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    }
+
+    return doc.numPages;
+};
+
+// "Take Photo" for Proof of Release. A desktop browser ignores <input capture>,
+// so the button opened the file picker like "Upload Photo" (Esperanza bugs QA,
+// 2026-10-06). On a computer this opens the webcam in a dialog and resolves
+// with the captured JPEG, or null when cancelled. It resolves undefined when
+// the caller should fall back to the file input instead: on a phone (whose
+// own camera input is better), with no camera, or with access refused.
+window.takePhoto = async () => {
+    if (window.matchMedia?.('(pointer: coarse)').matches || !navigator.mediaDevices?.getUserMedia) return undefined;
+    let stream;
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    } catch (e) {
+        return undefined;
+    }
+
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/70';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-label', 'Take a photo');
+        overlay.innerHTML = '<div class="bg-white rounded-2xl shadow-float w-full max-w-lg p-4 space-y-3">'
+            + '<p class="text-sm font-semibold text-navy-900">Take a photo</p>'
+            + '<video autoplay playsinline muted class="w-full rounded-xl bg-black aspect-video object-contain"></video>'
+            + '<div class="flex justify-end gap-2">'
+            + '<button type="button" data-act="cancel" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Cancel</button>'
+            + '<button type="button" data-act="shoot" class="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl">Capture</button>'
+            + '</div></div>';
+        document.body.appendChild(overlay);
+        const video = overlay.querySelector('video');
+        video.srcObject = stream;
+        const onKey = (e) => { if (e.key === 'Escape') done(null); };
+        const done = (file) => {
+            stream.getTracks().forEach((t) => t.stop());
+            overlay.remove();
+            document.removeEventListener('keydown', onKey);
+            resolve(file);
+        };
+        document.addEventListener('keydown', onKey);
+        overlay.querySelector('[data-act=cancel]').addEventListener('click', () => done(null));
+        overlay.querySelector('[data-act=shoot]').addEventListener('click', () => {
+            if (!video.videoWidth) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob((blob) => done(blob ? new File([blob], 'proof-of-release-' + Date.now() + '.jpg', { type: 'image/jpeg' }) : null), 'image/jpeg', 0.9);
+        });
+        overlay.querySelector('[data-act=shoot]').focus();
+    });
+};
+
 // Exposed globally for the same reason — the admin Dokyu "Edit Document"
 // rich-text editor (document-requests.blade.php + document-editor-toolbar/
 // document-editor-background-panel.blade.php) calls these directly from
@@ -160,6 +257,25 @@ function fileNotice(file) {
 }
 
 window.fileNotice = fileNotice;
+
+// How a requirement line reads: the server's RequestRequirement::needsFile
+// and the phone app's requirement_document_type.dart use the same rule.
+// 'office': a step the office or the hall does (an interview, a thumbmark
+// taken at the hall, 'None'); 'optional': the line says it is conditional;
+// otherwise 'required'. The resident could not tell which they owed
+// (Esperanza bugs QA, 2026-10-06).
+function reqKind(label) {
+    const l = String(label || '');
+    if (/interview|case study|case assessment|details of the record being requested|thumbmark|to be taken at|^\s*none\b/i.test(l)) return 'office';
+    if (/if applicable|if available|if any|required if|\bonly\s*$/i.test(l)) return 'optional';
+    return 'required';
+}
+window.reqKind = reqKind;
+window.reqKindLabel = (label) => {
+    const en = window.Alpine?.store('lang')?.current === 'en';
+    return { required: en ? 'Required' : 'Kailangan', optional: en ? 'If it applies' : 'Kung kailangan', office: en ? 'Done at the office' : 'Gagawin sa opisina' }[reqKind(label)];
+};
+window.reqKindClass = (label) => ({ required: 'bg-rose-50 text-rose-700', optional: 'bg-slate-100 text-slate-600', office: 'bg-sky-50 text-sky-700' }[reqKind(label)]);
 
 // The status history's trigger codes, in words. "admin:action" says
 // nothing the officer's name beside it does not already say.
@@ -698,6 +814,31 @@ document.addEventListener('alpine:init', () => {
             // place for this page load.
         });
     }
+
+    // <div x-data="pdfPreview" x-effect="show(url, mime)"><div x-ref="pages"></div></div>
+    // Draws a PDF in place (window.renderPdfInto); anything else is left to
+    // the page's own image preview or download link.
+    Alpine.data('pdfPreview', () => ({
+        loading: false,
+        failed: false,
+        pages: 0,
+        shown: null,
+        async show(url, mime) {
+            const isPdf = !!url && (/pdf/i.test(mime || '') || /\.pdf($|\?)/i.test(url));
+            if (!isPdf) { this.shown = null; this.pages = 0; this.failed = false; this.$refs.pages?.replaceChildren(); return; }
+            if (this.shown === url) return;
+            this.shown = url;
+            this.loading = true;
+            this.failed = false;
+            try {
+                this.pages = await window.renderPdfInto(this.$refs.pages, url);
+            } catch (e) {
+                this.failed = true;
+            } finally {
+                this.loading = false;
+            }
+        },
+    }));
 
     Alpine.data('dropdown', () => ({
         open: false,

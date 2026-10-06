@@ -47,8 +47,14 @@
                             <template x-if="part[1] && part[1].url && (part[1].mime || '').startsWith('image/')">
                                 <a :href="part[1].url" target="_blank" rel="noopener"><img :src="part[1].url" :alt="part[0] + ' of the ID'" class="w-full h-32 object-contain rounded-lg bg-white"></a>
                             </template>
+                            {{-- A PDF ID is read here too (PDF.js draws it; nothing in it runs). --}}
                             <template x-if="part[1] && part[1].url && !(part[1].mime || '').startsWith('image/')">
-                                <a :href="part[1].url" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Open PDF</a>
+                                <div x-data="pdfPreview" x-effect="show(part[1].url, part[1].mime || 'pdf')" class="max-h-64 overflow-y-auto rounded-lg bg-white">
+                                    <p x-show="loading" class="text-xs text-slate-500 py-3 text-center">Opening…</p>
+                                    <p x-show="failed" x-cloak class="text-xs text-rose-600 py-3 text-center">This file could not be shown here.</p>
+                                    <div x-ref="pages"></div>
+                                    <a :href="part[1].url" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline px-1 pb-1"><i data-lucide="download" class="w-3 h-3"></i> Download</a>
+                                </div>
                             </template>
                             <p x-show="part[1] && !part[1].url" class="text-xs leading-snug" :class="part[1]?.scan_status === 'pending' ? 'text-slate-500' : 'text-rose-600'" x-text="window.fileNotice(part[1])"></p>
                             <p x-show="!part[1]" class="text-xs text-slate-500">Not sent.</p>

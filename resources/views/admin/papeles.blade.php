@@ -144,6 +144,22 @@
                     this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not archive this document.', variant: 'error' });
                 } finally { this.processingDoc = null; }
             },
+            // Read in the portal (Esperanza bugs QA, 2026-10-06: staff had to
+            // download a document to see it). GET .../view needs only view, and
+            // returns the same short-lived link with the file type.
+            viewing: null,
+            viewFailed: false,
+            async openView(doc) {
+                this.viewing = null;
+                this.viewFailed = false;
+                if (!doc?.has_file) return;
+                try {
+                    const res = await $api.get('/admin/papeles/' + doc.id + '/view');
+                    if (this.previewDoc?.id === doc.id) this.viewing = res.data;
+                } catch { this.viewFailed = true; }
+            },
+            get viewingImage() { return !!this.viewing?.url && /^image\//i.test(this.viewing.mime || ''); },
+            get viewingPdf() { return !!this.viewing?.url && /pdf/i.test((this.viewing.mime || '') + ' ' + (this.viewing.name || '')); },
             async downloadDoc(doc) {
                 if (!doc.has_file) { this.$dispatch('toast', { message: 'No file was uploaded for this document.', variant: 'warning' }); return; }
                 try {
@@ -324,7 +340,7 @@
                                             <span x-text="doc.status"></span>
                                         </span>
                                         <div class="flex items-center gap-1 shrink-0">
-                                            <button x-show="can('view')" @click="previewDoc = doc; $nextTick(() => window.renderIcons?.())" class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                                            <button x-show="can('view')" @click="previewDoc = doc; openView(doc); $nextTick(() => window.renderIcons?.())" class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View"><i data-lucide="eye" class="w-4 h-4"></i></button>
                                             <button x-show="can('export')" :disabled="processingDoc === doc.id" @click="downloadDoc(doc)" class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors disabled:opacity-40" title="Download"><i data-lucide="download" class="w-4 h-4"></i></button>
                                             <button x-show="can('verify') && doc.status !== 'Approved'" :disabled="processingDoc === doc.id" @click="verifyDoc(doc)" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40" title="Verify"><i data-lucide="check-check" class="w-4 h-4"></i></button>
                                         </div>
@@ -354,7 +370,7 @@
             <template x-if="previewDoc">
                 <div
                     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                    class="bg-white rounded-2xl shadow-float w-full max-w-lg"
+                    class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[92vh] overflow-y-auto"
                 >
                     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                         <div class="flex items-center gap-2.5 min-w-0">
@@ -364,10 +380,17 @@
                         <button aria-label="Close" @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
-                        <div class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center py-14">
+                        <img x-show="viewingImage" :src="viewing?.url" :alt="previewDoc.type" class="w-full max-h-[60vh] object-contain rounded-xl border border-slate-200 bg-slate-50">
+                        <div x-data="pdfPreview" x-effect="show(viewingPdf ? viewing.url : null, 'pdf')" x-show="viewingPdf" x-cloak class="max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
+                            <p x-show="loading" class="text-xs text-slate-500 text-center py-8">Opening the document…</p>
+                            <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8">This file could not be shown here. Use Download.</p>
+                            <div x-ref="pages"></div>
+                        </div>
+                        <div x-show="!viewingImage && !viewingPdf" class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center py-14">
                             <span class="w-14 h-14 rounded-2xl bg-white text-slate-500 flex items-center justify-center mb-3 shadow-card"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-6 h-6"></i></span>
                             <p class="text-xs text-slate-500" x-text="previewDoc.name"></p>
-                            <p class="text-[11px] text-slate-300 mt-1" x-show="previewDoc.has_file">Use Download for the actual file.</p>
+                            <p class="text-[11px] text-slate-500 mt-1" x-show="previewDoc.has_file && !viewing && !viewFailed">Opening…</p>
+                            <p class="text-[11px] text-slate-500 mt-1" x-show="previewDoc.has_file && (viewFailed || viewing)">This file cannot be shown here. Use Download.</p>
                             <p class="text-[11px] text-rose-400 mt-1" x-show="!previewDoc.has_file">No file was uploaded for this document.</p>
                         </div>
                         <dl class="grid grid-cols-2 gap-x-6 gap-y-2.5">
