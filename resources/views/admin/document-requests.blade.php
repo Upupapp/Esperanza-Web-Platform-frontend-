@@ -1411,27 +1411,58 @@
             // so that specific case remains a known, documented
             // limitation; this reordering is kept regardless as a safe,
             // non-harmful improvement.
-            saveDocumentEdits() {
+            // Stores the edited copy on the request (owner decision
+            // 2026-10-06, option B): the next officer who opens it, or this one
+            // after a reload, sees the same paper. The server cleans the HTML
+            // and answers with what it kept, which replaces the copy here.
+            async saveDocumentEdits() {
+                const r = this.selected;
                 const el = this.getDocContentEl();
                 if (el) el.blur();
                 this.editingDocument = false;
-                this.$nextTick(() => {
-                    if (this.$refs.docEditor) {
-                        this.selected.customDocumentHtml = window.DokyuEditor.cleanHtml(this.$refs.docEditor.innerHTML);
-                    }
-                    this.reapplyTemplateSeals();
-                    this.documentEditBackup = null;
-                    this.backgroundEditBackup = null;
-                    this.templateKeyEditBackup = null;
-                    this.teardownHistoryTracking();
-                    this.resetEditorUiState();
-                    // Kept in this window, for Print and Download PDF: nothing
-                    // stores an edited document on the server (live check,
-                    // 2026-10-06: a saved edit was gone after a reload).
-                    this.editedInWindow = this.selected.ref;
-                    this.$dispatch('toast', { message: 'Changes applied. Print or download now: they are kept in this window only.', variant: 'success' });
-                    this.$nextTick(() => this.recomputeZoomSizer());
-                });
+                await this.$nextTick();
+                const editor = this.$refs.docEditor || this.getDocContentEl();
+                if (editor) r.customDocumentHtml = window.DokyuEditor.cleanHtml(editor.innerHTML);
+                this.reapplyTemplateSeals();
+                this.documentEditBackup = null;
+                this.backgroundEditBackup = null;
+                this.templateKeyEditBackup = null;
+                this.teardownHistoryTracking();
+                this.resetEditorUiState();
+                try {
+                    const res = await $api.put(this.apiBase(r.ref) + '/prepared-document', {
+                        html: window.DokyuEditor.iconsToPlaceholders(r.customDocumentHtml || ''),
+                        background: r.background || null,
+                        template_key: this.activeTemplateKey,
+                    });
+                    this.applyDetail(r, res.data);
+                    this.editedInWindow = null;
+                    this.$dispatch('toast', { message: 'Saved. Staff who open this request see this copy; the resident sees the template.', variant: 'success' });
+                } catch (err) {
+                    // Kept here, so it can still be printed or saved again.
+                    this.editedInWindow = r.ref;
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not save the document.') + ' The edit is still in this window.', variant: 'error' });
+                }
+                this.$nextTick(() => { this.recomputeZoomSizer(); window.renderIcons?.(); });
+            },
+            // Removes the stored copy for everyone; the audit log keeps that it existed.
+            async useTemplateAgain() {
+                const r = this.selected;
+                if (!r?.prepared) return;
+                if (!window.confirm('Go back to the template? The edited copy is removed for everyone who opens this request.')) return;
+                try {
+                    const res = await $api.delete(this.apiBase(r.ref) + '/prepared-document');
+                    this.applyDetail(r, res.data);
+                    this.editedInWindow = null;
+                    this.$dispatch('toast', { message: 'Back to the template.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, 'Could not go back to the template.'), variant: 'error' });
+                }
+            },
+            // Saving needs the service's release permission and a request
+            // still being prepared; released paper stays as handed over.
+            get mayEditDocument() {
+                return ['Approved', 'Mark to Release'].includes(this.selected?.status) && this.may('release');
             },
             printDocument() {
                 if (this.editingDocument) this.saveDocumentEdits();
@@ -1850,6 +1881,17 @@
                 r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
                 r.assigned = 'assigned' in d ? d.assigned : r.assigned;
                 r.payment = d.payment || null;
+                // The officer's edited copy, stored on the request (owner
+                // decision 2026-10-06, option B), or the template when there
+                // is none. Not while this officer is in the middle of editing it.
+                if (!(this.editingDocument && this.selected === r)) {
+                    const pd = d.prepared_document || null;
+                    r.prepared = pd ? { by: pd.edited_by || 'an officer', at: pd.edited_at, editable: !!pd.editable } : null;
+                    r.customDocumentHtml = pd ? pd.html : null;
+                    r.background = pd && pd.background ? pd.background : null;
+                    r.templateKey = pd ? (pd.template_key || null) : null;
+                    if (pd) this.$nextTick(() => window.renderIcons?.());
+                }
                 r.remarks_log = d.remarks || [];
                 r.history = (d.history || []).map((h) => ({ stage: h.to, date: this.formatDay(h.at), by: h.actor_name || '—', note: window.historyNote(h.trigger) }));
                 const proof = d.proof_of_release || {};
@@ -2955,7 +2997,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-3 dp-no-print" x-show="!editingDocument">
                             <p class="text-[11px] text-slate-500 leading-relaxed">Review the prepared document below, or edit its wording and formatting before printing or downloading.</p>
-                            <x-ui.button size="sm" variant="secondary" icon="pencil" @click="startEditingDocument()">Edit Document</x-ui.button>
+                            <x-ui.button size="sm" variant="secondary" icon="pencil" x-show="mayEditDocument" @click="startEditingDocument()">Edit Document</x-ui.button>
                         </div>
 
                         <x-citizen.document-editor-zoom-controls />
@@ -3071,7 +3113,11 @@
                     {{-- While editing: keep or drop the changes. Closing the window drops them too. --}}
                     <x-ui.button size="sm" variant="secondary" x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save Changes</x-ui.button>
-                    <p class="mr-auto text-[11px] leading-snug text-amber-700" x-show="!editingDocument && editedInWindow && editedInWindow === selected?.ref" x-cloak>Edited in this window only: print or download it before you leave. Opened again later, it starts from the template.</p>
+                    <p class="mr-auto text-[11px] leading-snug text-amber-700" x-show="!editingDocument && editedInWindow && editedInWindow === selected?.ref" x-cloak>Not saved: this edit is in this window only. Save again, or print or download it before you leave.</p>
+                    <div class="mr-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-snug text-slate-500" x-show="!editingDocument && selected?.prepared && editedInWindow !== selected?.ref" x-cloak>
+                        <span x-text="'Edited by ' + (selected?.prepared?.by || 'an officer') + (selected?.prepared?.at ? ' on ' + new Date(selected.prepared.at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '') + '. Staff see this copy; the resident sees the template.'"></span>
+                        <button type="button" x-show="selected?.prepared?.editable && mayEditDocument" @click="useTemplateAgain()" class="font-medium text-brand-600 hover:text-brand-700 hover:underline">Use the template again</button>
+                    </div>
                     <x-ui.button size="sm" variant="secondary" icon="printer" x-show="!editingDocument" @click="printDocument()">Print</x-ui.button>
                     <x-ui.button size="sm" icon="download" x-show="!editingDocument" @click="downloadDocument()">Download PDF</x-ui.button>
                 </x-slot:footer>

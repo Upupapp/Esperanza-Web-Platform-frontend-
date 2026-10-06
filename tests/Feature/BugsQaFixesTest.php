@@ -28,8 +28,8 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel', $view);
         $this->assertStringContainsString('x-show="!editingDocument" @click="printDocument()"', $view, 'nothing prints half-edited');
 
-        $this->assertStringNotContainsString("'Document changes saved.'", $view, 'nothing stores the edit, so it is not called saved');
-        $this->assertStringContainsString('editedInWindow === selected?.ref', $view, 'the note beside Print says the edit is kept in this window only');
+        $this->assertStringNotContainsString("'Document changes saved.'", $view);
+        $this->assertStringContainsString('editedInWindow === selected?.ref', $view, 'an edit the server did not take says it is in this window only');
 
         $toolbar = $this->source('resources/views/components/citizen/document-editor-toolbar.blade.php');
         $this->assertStringNotContainsString('@click="saveDocumentEdits()"', $toolbar, 'one Save Changes, in the footer, not a second one in the toolbar');
@@ -100,6 +100,20 @@ class BugsQaFixesTest extends TestCase
         foreach (['resources/views/admin/document-requests.blade.php', 'resources/views/admin/assistance-requests.blade.php'] as $path) {
             $this->assertStringContainsString('const shot = await window.takePhoto();', $this->source($path), $path);
         }
+    }
+
+    /** Owner decision 2026-10-06, option B: an edited prepared document is stored on the request, for staff. */
+    public function test_an_edited_document_is_stored_on_the_request_for_staff(): void
+    {
+        $view = $this->source('resources/views/admin/document-requests.blade.php');
+
+        $this->assertStringContainsString('$api.put(this.apiBase(r.ref) + \'/prepared-document\'', $view, 'Save stores it');
+        $this->assertStringContainsString('$api.delete(this.apiBase(r.ref) + \'/prepared-document\')', $view, 'and it can go back to the template');
+        $this->assertStringContainsString('const pd = d.prepared_document || null;', $view, 'reopened, the stored copy is shown');
+        $this->assertStringContainsString('x-show="mayEditDocument"', $view, 'Edit only while it can be saved');
+        $this->assertStringContainsString('\'Edited by \' + (selected?.prepared?.by', $view, 'with who saved it and when');
+        $this->assertStringContainsString('export function iconsToPlaceholders(html)', $this->source('resources/js/dokyu-editor.js'), 'icons are stored as placeholders, never as SVG');
+        $this->assertStringNotContainsString('prepared_document', $this->source('resources/views/citizen/document-requests.blade.php'), 'the resident\'s copy stays the template');
     }
 
     /** Every uploaded document had to be downloaded to be read. */

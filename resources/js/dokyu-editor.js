@@ -101,6 +101,22 @@ export function cleanHtml(html) {
     return wrapper.innerHTML;
 }
 
+// Before the edited copy is sent to be stored: each icon Lucide drew (an <svg
+// data-lucide>) goes back to the <i data-lucide> placeholder it came from, and
+// is drawn again when the copy is shown. The server stores no SVG at all.
+export function iconsToPlaceholders(html) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    wrapper.querySelectorAll('svg[data-lucide]').forEach((svg) => {
+        const i = document.createElement('i');
+        i.setAttribute('data-lucide', svg.getAttribute('data-lucide'));
+        const keep = (svg.getAttribute('class') || '').split(/\s+/).filter((c) => c && c !== 'lucide' && !c.startsWith('lucide-'));
+        if (keep.length) i.setAttribute('class', keep.join(' '));
+        svg.replaceWith(i);
+    });
+    return wrapper.innerHTML;
+}
+
 const WATERMARK_SIZE_WIDTH = { small: '34%', medium: '50%', large: '68%' };
 
 const WATERMARK_POSITION_STYLE = {
