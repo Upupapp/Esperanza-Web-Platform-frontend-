@@ -26,6 +26,10 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save Changes', $view);
         $this->assertStringContainsString('x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel', $view);
         $this->assertStringContainsString('x-show="!editingDocument" @click="printDocument()"', $view, 'nothing prints half-edited');
+
+        $modal = $this->source('resources/views/components/ui/modal.blade.php');
+        $this->assertStringContainsString('@click.outside="if (!$event.target.closest(\'[data-modal-layer]\')) open = false"', $modal, 'a click in the document window does not close the request behind it');
+        $this->assertStringContainsString('data-modal-layer', $modal);
     }
 
     /** A Business Permit reached Released with 2 of its 7 documents checked. */

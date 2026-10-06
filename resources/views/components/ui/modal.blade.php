@@ -19,6 +19,7 @@
 
 <template x-teleport="body">
     <div
+        data-modal-layer
         x-show="open"
         x-cloak
         x-effect="
@@ -98,7 +99,11 @@
                     x-transition:leave="transition duration-[150ms] ease-exit"
                     x-transition:leave-start="opacity-100 scale-100"
                     x-transition:leave-end="opacity-0 scale-95"
-                    @click.outside="open = false"
+                    {{-- A click in a window opened on top of this one (the Dokyu
+                         "Prepared Document" over its request) is not a click
+                         away from it: it closed the request behind, and the
+                         officer came back to the list (Esperanza bugs QA). --}}
+                    @click.outside="if (!$event.target.closest('[data-modal-layer]')) open = false"
                     role="dialog"
                     aria-modal="true"
                     x-trap="open"
