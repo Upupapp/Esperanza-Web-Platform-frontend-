@@ -1477,13 +1477,13 @@
                                                 <i data-lucide="file-text" class="w-4 h-4 text-slate-500 shrink-0"></i>
                                                 <div class="min-w-0">
                                                     <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
-                                                    <p class="text-[11px] text-slate-500 truncate" x-text="req.file || 'Not yet submitted'"></p>
+                                                    <p class="text-[11px] text-slate-500 truncate" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Done at the office' : 'Gagawin sa opisina') : ($store.lang.current === 'en' ? 'Not yet submitted' : 'Wala pang naisumite'))"></p>
                                                 </div>
                                             </div>
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset shrink-0"
                                                 :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': req.status === 'Submitted' || req.status === 'Flagged for Replacement', 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted', 'bg-slate-100 text-slate-600 ring-slate-200': req.status === 'Not submitted' }"
-                                            ><span x-text="req.status === 'Approved' ? 'Verified' : (req.status === 'Not submitted' ? ($store.lang.current === 'en' ? 'Not submitted' : 'Wala pa') : req.status)"></span></span>
+                                            ><span x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : (req.status === 'Not submitted' ? ($store.lang.current === 'en' ? 'Not submitted' : 'Wala pa') : req.status)"></span></span>
                                         </div>
 
                                         <div x-show="req.status === 'Flagged for Replacement'" class="mt-2 pt-2 border-t border-amber-100 text-[11px]">
