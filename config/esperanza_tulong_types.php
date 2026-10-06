@@ -64,7 +64,7 @@ return [
                 ['key' => 'monthly_income', 'label' => 'Monthly Family Net Income', 'type' => 'text'],
                 ['key' => 'id_card_presented', 'label' => 'ID Card Presented', 'type' => 'text'],
                 ['key' => 'id_card_number', 'label' => 'ID Card Number', 'type' => 'text'],
-                ['key' => 'contact_alternate', 'label' => 'Alternate Contact Number', 'type' => 'text'],
+                ['key' => 'contact_alternate', 'label' => 'Alternate Contact Number', 'type' => 'tel'],
                 ['key' => 'type_of_vulnerability', 'label' => 'Type of Vulnerability', 'type' => 'checkbox-group', 'allowOther' => true, 'options' => ['4Ps Beneficiary', 'Indigenous Person', 'Person with Disability', 'Senior Citizen', 'Solo Parent']],
                 ['key' => 'ip_ethnicity', 'label' => 'If Indigenous Person, Type of Ethnicity', 'type' => 'text'],
                 ['key' => 'house_ownership', 'label' => 'House Ownership', 'type' => 'select', 'options' => ['Owner', 'Renter', 'Sharer', 'Informal Settler']],

@@ -106,16 +106,27 @@ return [
                 ['key' => 'placeOfBirth', 'label' => 'Place of Birth', 'type' => 'text'],
                 ['key' => 'civilStatus', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married']],
                 ['key' => 'schoolName', 'label' => 'School Name', 'type' => 'text'],
-                ['key' => 'yearOrGradeLevel', 'label' => 'Year / Grade Level', 'type' => 'text'],
-                ['key' => 'degreeProgramOrCourse', 'label' => 'Degree Program / Course', 'type' => 'text', 'required' => false],
+                // A choice since the Esperanza QA of 2026-10-07 (the app's own
+                // MockCatalog.schoolGradeLevels + collegeYearLevels); the app asks
+                // for the course, and requires it, only for a college year.
+                ['key' => 'yearOrGradeLevel', 'label' => 'Year / Grade Level', 'type' => 'select', 'options' => [
+                    'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
+                    'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12',
+                    '1st Year College', '2nd Year College', '3rd Year College', '4th Year College', '5th Year College',
+                ]],
+                ['key' => 'degreeProgramOrCourse', 'label' => 'Degree Program / Course (college)', 'type' => 'text', 'required' => false],
                 ['key' => 'lastSchoolAverageGrade', 'label' => 'Last School Year Average Grade', 'type' => 'text', 'required' => false],
             ]],
             ['label' => 'Family Background', 'fields' => [
                 ['key' => 'fatherName', 'label' => "Father's Name", 'type' => 'text', 'required' => false],
                 ['key' => 'fatherOccupation', 'label' => "Father's Occupation", 'type' => 'text', 'required' => false],
+                // One income per parent (Esperanza QA, 2026-10-07). A request filed
+                // before carries one parentsMonthlyIncome, which the review lists
+                // under Other details as it does any answer this spec does not name.
+                ['key' => 'fatherMonthlyIncome', 'label' => "Father's Monthly Income (₱)", 'type' => 'number', 'required' => false],
                 ['key' => 'motherName', 'label' => "Mother's Name", 'type' => 'text', 'required' => false],
                 ['key' => 'motherOccupation', 'label' => "Mother's Occupation", 'type' => 'text', 'required' => false],
-                ['key' => 'parentsMonthlyIncome', 'label' => "Parents' Monthly Income (₱)", 'type' => 'number', 'required' => false],
+                ['key' => 'motherMonthlyIncome', 'label' => "Mother's Monthly Income (₱)", 'type' => 'number', 'required' => false],
             ]],
             ['label' => 'Additional Information', 'fields' => [
                 ['key' => 'communityInvolvement', 'label' => 'Community / School Involvement', 'type' => 'textarea', 'required' => false],

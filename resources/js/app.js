@@ -340,6 +340,31 @@ window.historyNote = (trigger) => TRIGGER_NOTES[trigger] || '';
 // once a row actually carries a path, which is why it went unnoticed: of the
 // 20 barangays only Labangtaytay has ever had a seal file (B-finding
 // 2026-10-05). Already-absolute values (http(s):// or a leading /) pass through.
+// A Philippine mobile number, as every citizen form takes it: 11 digits,
+// 09XXXXXXXXX, numbers only (Esperanza QA, 2026-10-07: contact fields took
+// letters and any length). The API checks the same rule (PhilippineMobile).
+window.phMobile = {
+    // What may stay in the box as it is typed: digits, at most 11.
+    clean(value) {
+        return String(value ?? '').replace(/\D+/g, '').slice(0, 11);
+    },
+    // The problem with a number, or '' when it is fine. Empty is fine unless required.
+    error(value, required = false, lang = 'en') {
+        const v = String(value ?? '').trim();
+        if (!v) return required ? (lang === 'en' ? 'Please enter a contact number.' : 'Pakilagay ang contact number.') : '';
+        return /^09\d{9}$/.test(v) ? '' : (lang === 'en'
+            ? 'Contact number must contain 11 digits and numbers only.'
+            : 'Ang contact number ay dapat 11 digit at numero lamang.');
+    },
+    // On an <input>: keep only digits, and let the browser's own validity carry
+    // the message, so a step that checks checkValidity() stops on it.
+    bind(el, required = false) {
+        el.value = this.clean(el.value);
+        el.setCustomValidity(this.error(el.value, required, window.Alpine?.store('lang')?.current || 'en'));
+        return el.value;
+    },
+};
+
 window.staticAssetUrl = (path) => {
     if (!path) return null;
     return /^https?:\/\//.test(path) || path.startsWith('/') ? path : `/${path}`;
@@ -670,11 +695,14 @@ document.addEventListener('alpine:init', () => {
             state: 'idle',
             error: null,
             dismissed: [],
+            // The server's count of every unread notification (meta.unread),
+            // not just the page loaded here: the number on the bell.
+            serverUnread: null,
 
             get loading() { return this.state === 'loading'; },
             get failed() { return this.state === 'error'; },
             get visible() { return this.items.filter((n) => !this.dismissed.includes(n.id)); },
-            get unreadCount() { return this.visible.filter((n) => n.unread).length; },
+            get unreadCount() { return this.serverUnread ?? this.visible.filter((n) => n.unread).length; },
 
             // quiet: a background refresh keeps what is on screen until the answer comes.
             async load(quiet = false) {
@@ -682,6 +710,7 @@ document.addEventListener('alpine:init', () => {
                 this.error = null;
                 try {
                     const result = await api.get(path);
+                    this.serverUnread = Number.isInteger(result.meta?.unread) ? result.meta.unread : null;
                     this.items = (result.data || []).map((n) => {
                         const [icon, color] = notificationStyle[n.category] || ['bell', 'brand'];
                         const lang = window.Alpine?.store('lang')?.current || 'fil';
@@ -714,15 +743,28 @@ document.addEventListener('alpine:init', () => {
                 const n = this.items.find((i) => i.id === id);
                 if (!n || !n.unread) return;
                 n.unread = false;
+                if (this.serverUnread) this.serverUnread--;
                 try {
                     await api.post(`${path}/${id}/read`);
                 } catch {
                     n.unread = true; // the server did not accept it — undo the optimistic flip
+                    if (this.serverUnread !== null) this.serverUnread++;
                 }
             },
 
+            // One call clears every unread notification, including ones on
+            // pages not loaded here, and it holds after a refresh.
             async markAllRead() {
-                await Promise.all(this.visible.filter((n) => n.unread).map((n) => this.markRead(n.id)));
+                const before = this.items.filter((n) => n.unread).map((n) => n.id);
+                const count = this.serverUnread;
+                this.items.forEach((n) => { n.unread = false; });
+                this.serverUnread = 0;
+                try {
+                    await api.post(`${path}/read-all`);
+                } catch {
+                    this.items.forEach((n) => { if (before.includes(n.id)) n.unread = true; });
+                    this.serverUnread = count;
+                }
             },
 
             // New notifications arrive without a reload: every minute while the

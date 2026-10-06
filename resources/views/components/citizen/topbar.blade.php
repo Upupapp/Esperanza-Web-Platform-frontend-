@@ -210,12 +210,13 @@
              2026-09-25). Loaded once on the shell's own init below, so this
              dropdown and the dedicated Notifications page share one fetch. --}}
         <div class="relative" x-data="dropdown" @click.outside="close">
-            <button @click="toggle" aria-label="Notifications" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
+            {{-- How many are unread, not just whether (Esperanza QA, 2026-10-07);
+                 nothing at all when every notification is read. --}}
+            <button @click="toggle" aria-label="Notifications" :aria-label="$store.citizenNotifications.unreadCount ? 'Notifications, ' + $store.citizenNotifications.unreadCount + ' unread' : 'Notifications'" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
                 <i data-lucide="bell" class="w-5 h-5"></i>
-                <span class="absolute top-1.5 right-1.5 flex w-2 h-2" x-show="$store.citizenNotifications.unreadCount">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full w-2 h-2 bg-rose-500 ring-2 ring-white"></span>
-                </span>
+                <span class="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 inline-flex items-center justify-center rounded-full bg-rose-500 ring-2 ring-white text-[10px] font-bold leading-none text-white"
+                      x-show="$store.citizenNotifications.unreadCount > 0"
+                      x-text="$store.citizenNotifications.unreadCount > 99 ? '99+' : $store.citizenNotifications.unreadCount"></span>
             </button>
 
             <div

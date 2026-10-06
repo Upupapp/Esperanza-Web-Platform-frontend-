@@ -1,7 +1,7 @@
 {{-- One field of a service form spec, rendered FROM the spec. TAB 07.
 
      config/esperanza_service_form_specs.php holds 25 services / 45 steps /
-     229 fields. Hand-writing them is what makes 28 services unmaintainable, so
+     230 fields. Hand-writing them is what makes 28 services unmaintainable, so
      they render from the definition instead.
 
      Every control gets a real <label for> and a generated id. That is not

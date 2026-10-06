@@ -668,15 +668,19 @@
                 const reqs = this.selected.requirements || [];
                 const flagged = reqs.filter(r => r.status === 'Flagged for Replacement').length;
                 const pending = reqs.filter(r => r.status === 'Submitted' || r.status === 'Resubmitted').length;
+                const rejected = reqs.filter(r => r.status === 'Rejected').length;
                 if (st === 'Needs Requirements') return { icon: 'clock', tone: 'amber', title: 'Awaiting Beneficiary', message: (flagged ? flagged + ' document(s) flagged for replacement' : 'Requirements requested') + ' — waiting for the resident. The case returns to screening when they resubmit.' };
                 if (pending) return { icon: 'search-check', tone: 'indigo', title: 'Screen Requirements', message: pending + ' of ' + reqs.length + ' requirement(s) still need review. Approve each, or flag what must be replaced (that asks the resident for it).' };
-                if (st === 'Initial Screening' && this.screeningDone) return { icon: 'circle-check', tone: 'emerald', title: 'Screening Done', message: 'Every requirement is decided. Proceed to the eligibility assessment.' };
+                if (st === 'Initial Screening' && rejected) return { icon: 'clock', tone: 'amber', title: 'Waiting on a Replacement', message: rejected + ' document(s) rejected. The resident was told why and can upload a replacement; review it when it arrives. Assessment opens once every document is accepted.' };
+                if (st === 'Initial Screening' && this.screeningDone) return { icon: 'circle-check', tone: 'emerald', title: 'Screening Done', message: 'Every requirement is accepted. Proceed to the eligibility assessment.' };
                 return { icon: 'clipboard-list', tone: 'brand', title: 'Review Case', message: 'Review the applicant and the submitted requirements.' };
             },
-            // The server refuses Proceed to Assessment while any requirement
-            // is undecided or waiting on a replacement (SCREENING_NOT_FINISHED).
+            // Proceed to Assessment only once every requirement is accepted:
+            // a pending, replaced, flagged or rejected one holds the case. The
+            // server refuses it the same way (SCREENING_NOT_FINISHED), so this
+            // button is a convenience, not the rule (Esperanza QA, 2026-10-07).
             get screeningDone() {
-                return (this.selected?.requirements || []).every(q => !['Submitted', 'Resubmitted', 'Flagged for Replacement'].includes(q.status));
+                return (this.selected?.requirements || []).every(q => q.status === 'Approved');
             },
             get hasReleaseProof() {
                 return !!(this.selected && (this.selected._proofFile || this.releaseNote.trim() || this.selected.release_evidence));
@@ -700,7 +704,7 @@
             // Why the primary button is not available yet, or '' when it is.
             get primaryBlocked() {
                 const st = this.selected?.status;
-                if (st === 'Initial Screening' && !this.screeningDone) return 'Decide every requirement first.';
+                if (st === 'Initial Screening' && !this.screeningDone) return 'Accept every requirement first. A rejected one must be replaced and accepted.';
                 if (st === 'Assessment' && !this.assessNotes.trim()) return 'Write the eligibility findings first.';
                 if (st === 'Ready for Release' && !this.releaseTo.trim()) return 'Record who received the assistance.';
                 if (st === 'Ready for Release' && !this.hasReleaseProof) return 'Capture Proof of Release first.';

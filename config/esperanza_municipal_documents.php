@@ -199,7 +199,7 @@ return [
             'fields' => [
                 ['key' => 'owner_name', 'label' => "Owner's Full Name", 'type' => 'text', 'required' => true],
                 ['key' => 'address', 'label' => 'Address', 'type' => 'text'],
-                ['key' => 'phone', 'label' => 'Phone Number', 'type' => 'text'],
+                ['key' => 'phone', 'label' => 'Phone Number', 'type' => 'tel'],
                 ['key' => 'email', 'label' => 'Email Address', 'type' => 'text'],
                 ['key' => 'pet_name', 'label' => "Pet's Name", 'type' => 'text'],
                 ['key' => 'species', 'label' => 'Species', 'type' => 'select', 'options' => ['Dog', 'Cat', 'Other']],
@@ -212,7 +212,7 @@ return [
                 ['key' => 'other_vaccinations', 'label' => 'Other Vaccinations (Name & Date)', 'type' => 'text'],
                 ['key' => 'spay_neuter', 'label' => 'Spayed / Neutered?', 'type' => 'select', 'options' => ['Yes', 'No']],
                 ['key' => 'emergency_contact_name', 'label' => 'Emergency Contact Name', 'type' => 'text'],
-                ['key' => 'emergency_contact_phone', 'label' => 'Emergency Contact Phone', 'type' => 'text'],
+                ['key' => 'emergency_contact_phone', 'label' => 'Emergency Contact Phone', 'type' => 'tel'],
             ],
         ],
         [
@@ -446,7 +446,7 @@ return [
                 ['key' => 'business_type', 'label' => 'Type of Business', 'type' => 'select', 'options' => ['Single Proprietorship', 'Partnership', 'Corporation / Cooperative']],
                 ['key' => 'dti_sec_cda_no', 'label' => 'DTI / SEC / CDA Registration No.', 'type' => 'text'],
                 ['key' => 'business_address', 'label' => 'Business Address', 'type' => 'text', 'required' => true],
-                ['key' => 'contact_no', 'label' => 'Contact Number', 'type' => 'text'],
+                ['key' => 'contact_no', 'label' => 'Contact Number', 'type' => 'tel'],
                 ['key' => 'line_of_business', 'label' => 'Line of Business', 'type' => 'text', 'required' => true],
                 ['key' => 'capital_investment', 'label' => 'Capital Investment', 'type' => 'text'],
                 ['key' => 'total_employees', 'label' => 'Total No. of Employees', 'type' => 'text'],

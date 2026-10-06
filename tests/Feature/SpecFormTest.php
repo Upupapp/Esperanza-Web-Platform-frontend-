@@ -11,7 +11,7 @@ use Tests\TestCase;
  * TAB 07 asks for 28 services to be rendered FROM
  * config/esperanza_service_form_specs.php rather than hand-written, which is
  * only maintainable if the renderer actually covers every field the spec can
- * contain. Measured: 25 services, 45 steps, 229 fields, 8 field types.
+ * contain. Measured: 25 services, 45 steps, 230 fields, 8 field types.
  *
  * A component nothing uses yet is a component nothing tests, so this renders
  * all 25 for real rather than trusting that it compiles.

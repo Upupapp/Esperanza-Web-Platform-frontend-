@@ -151,6 +151,8 @@
             barangayCatalog: @js($barangayCatalog),
             docTypeLookup: @js(config('esperanza_document_type_lookup')),
             progressOpen: false,
+            // The proof-of-release preview inside the request's progress view.
+            proofOpen: false,
             docPreviewOpen: false,
             selectedRequest: null,
             resubmitNote: '',
@@ -204,6 +206,10 @@
                 // Required documents not uploaded yet hold the resubmit back (QA run 2026-10-05).
                 r.missingRequired = d.missing_required || [];
                 r.payment = d.payment || null;
+                // The photo or scan the office took at release, once released
+                // (Esperanza QA, 2026-10-07). A signed, short-lived link from the
+                // resident's own request detail.
+                r.releaseProof = d.proof_of_release?.file || null;
                 r.history = d.history || [];
                 r.requirements = (d.requirements || []).map((q) => ({
                     key: q.key,
@@ -214,12 +220,16 @@
                     file: q.file?.name || null,
                     file_url: q.file?.url || null,
                     attachable: !!q.attachable,
+                    // Flagged, or rejected while the office can still review a
+                    // replacement (Esperanza QA, 2026-10-07).
+                    replaceable: !!q.replaceable,
                     _busy: false,
                 }));
             },
             async openProgress(r) {
                 this.selectedRequest = r;
                 this.progressOpen = true;
+                this.proofOpen = false;
                 try {
                     const res = await $api.get('/citizen/requests/' + encodeURIComponent(r.ref));
                     this.applyDetail(r, res.data);
@@ -641,6 +651,17 @@
                         stepError: '',
                         stepWarning: '',
                         attachWarned: false,
+                        // The applicant's mobile number and any number field: '' when every one is fine.
+                        phoneProblem() {
+                            const lang = this.$store.lang.current;
+                            const own = window.phMobile.error(this.applicant.mobile, false, lang);
+                            if (own) return own;
+                            for (const f of (this.docs[this.selectedDoc]?.fields || []).filter((f) => f.type === 'tel')) {
+                                const err = window.phMobile.error(this.formData[f.key], !!f.required, lang);
+                                if (err) return f.label + ': ' + err;
+                            }
+                            return '';
+                        },
                         missingRequired() {
                             return (this.docs[this.selectedDoc]?.fields || []).filter((f) => {
                                 if (!f.required) return false;
@@ -656,6 +677,12 @@
                                 const missing = this.missingRequired();
                                 if (missing.length) {
                                     this.stepError = (en ? 'Please fill in: ' : 'Pakipunan ang: ') + missing.join(', ');
+                                    return;
+                                }
+                                // Every number field takes a Philippine mobile number (Esperanza QA, 2026-10-07).
+                                const badPhone = this.phoneProblem();
+                                if (badPhone) {
+                                    this.stepError = badPhone;
                                     return;
                                 }
                                 // Names only what the resident owes: a step the office
@@ -991,7 +1018,7 @@
                                         <x-ui.input name="req_address" label="Complete Address" icon="map-pin" x-model="applicant.address" />
                                     </div>
                                     <div class="grid grid-cols-2 gap-3">
-                                        <x-ui.input name="req_mobile" label="Mobile Number" icon="phone" x-model="applicant.mobile" />
+                                        <x-ui.input name="req_mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="applicant.mobile" @input="applicant.mobile = window.phMobile.clean($event.target.value)" />
                                         <x-ui.input name="req_email" type="email" label="Email Address" icon="mail" x-model="applicant.email" />
                                     </div>
                                 </div>
@@ -1034,11 +1061,13 @@
                                                     <div class="w-full rounded-xl border border-slate-200 bg-slate-100/70 py-2.5 px-4 text-sm text-slate-500" x-text="(formData[f.key] ?? null) !== null ? formData[f.key] + ' years old' : 'Set birthdate first'"></div>
                                                 </div>
                                             </template>
-                                            <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date'">
+                                            <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date' || f.type === 'tel'">
                                                 <div>
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                     <input :aria-label="f.label"
                                                         :type="f.type" x-model="formData[f.key]"
+                                                    :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
+                                                    @input="if (f.type === 'tel') formData[f.key] = window.phMobile.clean($event.target.value)"
                                                         class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                     >
                                                 </div>
@@ -1450,14 +1479,38 @@
                                         <div class="min-w-0">
                                             <p class="text-xs font-medium text-slate-700 truncate"><span x-text="req.name"></span> <span x-show="req.status !== 'Approved'" class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req.name)" x-text="reqKindLabel(req.name)"></span></p>
                                             <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Nothing to upload: the office does this with you' : 'Walang ia-upload: gagawin ito ng opisina kasama ka') : ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file'))"></p>
+                                            {{-- A rejected document says why, and takes a replacement below. --}}
+                                            <p x-show="req.status === 'Rejected' && (req.reject_reason || req.remarks)" class="text-[11px] text-rose-600 whitespace-normal" x-text="($store.lang.current === 'en' ? 'Reason: ' : 'Dahilan: ') + [req.reject_reason, req.remarks].filter((v, i, a) => v && a.indexOf(v) === i).join(' — ')"></p>
                                         </div>
                                         <label x-show="req.attachable && reqKind(req.name) !== 'office'" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
                                             <span x-text="req._busy ? '…' : (req.file ? ($store.lang.current === 'en' ? 'Change' : 'Palitan') : ($store.lang.current === 'en' ? 'Attach' : 'Ikabit'))"></span>
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
                                         </label>
-                                        <span x-show="!req.attachable" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : 'text-slate-500'" x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : req.status"></span>
+                                        <label x-show="req.replaceable && req.status === 'Rejected'" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                            <span x-text="req._busy ? '…' : ($store.lang.current === 'en' ? 'Upload replacement' : 'Mag-upload ng kapalit')"></span>
+                                            <input type="file" class="sr-only" accept="image/*,application/pdf" @change="replaceRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
+                                        </label>
+                                        <span x-show="!req.attachable && !(req.replaceable && req.status === 'Rejected')" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : (req.status === 'Rejected' ? 'text-rose-600 font-semibold' : 'text-slate-500')" x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : (req.status === 'Rejected' ? ($store.lang.current === 'en' ? 'Not accepted' : 'Hindi tinanggap') : req.status)"></span>
                                     </div>
                                 </template>
+                            </div>
+                        </div>
+
+                        {{-- Once released: the photo or scan the office took at release, shown
+                             here in the page's own viewer (Esperanza QA, 2026-10-07). --}}
+                        <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="selectedRequest.releaseProof" x-cloak>
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-navy-900"><x-ui.t fil="Patunay ng Pag-release" en="Proof of release" /></p>
+                                    <p class="text-[11px] text-slate-500 truncate" x-text="selectedRequest.releaseProof?.name"></p>
+                                </div>
+                                <button type="button" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline" @click="proofOpen = !proofOpen" x-text="proofOpen ? lang('Hide', 'Itago') : lang('View', 'Tingnan')"></button>
+                            </div>
+                            <div x-show="proofOpen" x-cloak x-data="pdfPreview" x-effect="show(proofOpen && selectedRequest.releaseProof ? selectedRequest.releaseProof.url : null, (selectedRequest.releaseProof?.mime || '') + ' ' + (selectedRequest.releaseProof?.name || ''))" class="mt-3 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
+                                <p x-show="loading" class="text-xs text-slate-500 text-center py-8"><x-ui.t fil="Binubuksan…" en="Opening…" /></p>
+                                <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8"><x-ui.t fil="Hindi maipakita ang file. Isara at buksan muli ang kahilingan." en="The file could not be shown. Close and reopen the request." /></p>
+                                <img x-show="image" x-cloak :src="image" alt="Proof of release" class="block w-full h-auto rounded-lg bg-white">
+                                <div x-ref="pages"></div>
                             </div>
                         </div>
 

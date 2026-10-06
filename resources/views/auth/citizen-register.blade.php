@@ -184,7 +184,7 @@
                 <!-- Step 3: Contact & Security -->
                 <div x-show="step === 3" x-ref="step3" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
                     <x-ui.input name="email" type="email" label="Email Address" icon="mail" placeholder="maria.bacaltos@email.com" x-model="form.email" />
-                    <x-ui.input name="mobile" type="text" label="Mobile Number" icon="phone" placeholder="09XX XXX XXXX" x-model="form.mobile" />
+                    <x-ui.input name="mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="form.mobile" @input="form.mobile = window.phMobile.bind($event.target)" />
                     <x-ui.input name="password" type="password" label="Password" icon="lock" placeholder="Create a password" x-model="form.password" required />
 
                     <label class="flex items-start gap-2.5 text-xs text-slate-500 pt-1">
