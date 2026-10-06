@@ -105,6 +105,16 @@ window.imageBlobUrl = async (url, type) => {
     return URL.createObjectURL(new Blob([await res.arrayBuffer()], { type }));
 };
 
+// An <img> source for a photo that may be the API's file (a download, which a
+// plain <img> will not draw) or one just taken here (data: or blob:, drawn as
+// is). The reopened proof of release was blank for exactly that reason
+// (Esperanza QA, 2026-10-07).
+window.viewableImage = async (url, mime) => {
+    if (!url) return '';
+    if (/^(data|blob):/.test(url)) return url;
+    return window.imageBlobUrl(url, window.previewKind(url, mime) || 'image/jpeg');
+};
+
 window.renderPdfInto = async (el, url, { maxPages = 15 } = {}) => {
     const pdfjs = await window.loadPdfJs();
     const res = await fetch(url);

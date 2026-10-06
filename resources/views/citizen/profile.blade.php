@@ -90,23 +90,38 @@
             showEditProfile: false,
             savingProfile: false,
             editForm: { firstName: '', lastName: '', mobile: '', occupation: '', address: '' },
+            // A new mobile number is proven with a one-time code before it lands
+            // (POST /citizen/profile/contact, then /verify). The field used to be
+            // editable and its value silently dropped (Esperanza QA, 2026-10-07).
+            mobileStep: null,
+            mobileCode: '',
+            mobileSentTo: '',
+            originalMobile: '',
             openEditProfile() {
                 const a = this.$store.citizenSession.account || {};
-                this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: a.mobile || '', occupation: a.occupation || '', address: a.address || '' };
+                this.originalMobile = window.phMobile.clean(a.mobile || '');
+                this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: this.originalMobile, occupation: a.occupation || '', address: a.address || '' };
+                this.mobileStep = null;
+                this.mobileCode = '';
                 this.showEditProfile = true;
             },
+            get mobileChanged() { return this.editForm.mobile !== '' && this.editForm.mobile !== this.originalMobile; },
             async saveProfile() {
                 if (this.savingProfile) return;
+                const lang = this.$store.lang.current;
+                const mobileError = this.mobileChanged ? window.phMobile.error(this.editForm.mobile, false, lang) : '';
+                if (mobileError) {
+                    this.$dispatch('toast', { message: mobileError, variant: 'error' });
+                    return;
+                }
                 this.savingProfile = true;
                 try {
                     // Identity fields (first/middle/last name, suffix, birthdate,
                     // sex, barangay) are locked once the account is Verified (see
                     // identity_locked below) and PUT /citizen/profile 422s on
                     // them; occupation and address are always editable.
-                    // Mobile is NOT accepted here at all -- a contact change is
-                    // proven at the new number via POST /citizen/profile/contact
-                    // + /verify, a flow this quick-edit modal does not implement
-                    // (see PRODUCTION_READINESS.md).
+                    // Mobile is not part of PUT /citizen/profile: a changed number
+                    // goes through the code step below instead.
                     const payload = { occupation: this.editForm.occupation, address: this.editForm.address };
                     if (!this.$store.citizenSession.account?.identityLocked) {
                         payload.first_name = this.editForm.firstName;
@@ -114,10 +129,37 @@
                     }
                     await $api.put('/citizen/profile', payload);
                     await this.$store.citizenSession.refresh();
+                    if (this.mobileChanged) {
+                        const res = await $api.post('/citizen/profile/contact', { channel: 'mobile', value: this.editForm.mobile });
+                        this.mobileSentTo = res.data?.destination || '';
+                        this.mobileStep = 'code';
+                        this.$dispatch('toast', { message: lang === 'en' ? 'Profile saved. Enter the code we sent to confirm your new mobile number.' : 'Na-save ang profile. Ilagay ang code na ipinadala para kumpirmahin ang bagong mobile number.', variant: 'success' });
+                        return;
+                    }
                     this.showEditProfile = false;
                     this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Profile updated.' : 'Na-update ang profile.', variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not update profile.', variant: 'error' });
+                } finally {
+                    this.savingProfile = false;
+                }
+            },
+            async verifyMobile() {
+                if (this.savingProfile) return;
+                const lang = this.$store.lang.current;
+                if (!/^[0-9]{6}$/.test(this.mobileCode)) {
+                    this.$dispatch('toast', { message: lang === 'en' ? 'Enter the 6-digit code.' : 'Ilagay ang 6-digit na code.', variant: 'error' });
+                    return;
+                }
+                this.savingProfile = true;
+                try {
+                    await $api.post('/citizen/profile/contact/verify', { code: this.mobileCode });
+                    await this.$store.citizenSession.refresh();
+                    this.showEditProfile = false;
+                    this.mobileStep = null;
+                    this.$dispatch('toast', { message: lang === 'en' ? 'Mobile number updated.' : 'Na-update ang mobile number.', variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(lang) : 'Could not confirm the code.', variant: 'error' });
                 } finally {
                     this.savingProfile = false;
                 }
@@ -477,7 +519,11 @@
                         <x-ui.input name="edit_first_name" label="First Name" x-model="editForm.firstName" />
                         <x-ui.input name="edit_last_name" label="Last Name" x-model="editForm.lastName" />
                     </div>
-                    <x-ui.input name="edit_mobile" label="Mobile Number" icon="phone" x-model="editForm.mobile" />
+                    <x-ui.input name="edit_mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="editForm.mobile" x-bind:disabled="mobileStep === 'code'" @input="editForm.mobile = window.phMobile.clean($event.target.value)" />
+                    <div x-show="mobileStep === 'code'" x-cloak class="rounded-xl border border-brand-100 bg-brand-50/50 p-3 space-y-2">
+                        <p class="text-xs text-slate-600" x-text="$store.lang.current === 'en' ? ('We sent a 6-digit code to ' + (mobileSentTo || 'you') + '. Enter it to change your mobile number.') : ('Nagpadala kami ng 6-digit na code sa ' + (mobileSentTo || 'iyo') + '. Ilagay ito para palitan ang mobile number.')"></p>
+                        <x-ui.input name="edit_mobile_code" type="text" inputmode="numeric" maxlength="6" label="Verification code" placeholder="000000" x-model="mobileCode" @input="mobileCode = $event.target.value.replace(/[^0-9]/g, '').slice(0, 6)" />
+                    </div>
                     <x-ui.input name="edit_occupation" label="Occupation" icon="briefcase" x-model="editForm.occupation" />
                     <x-ui.input name="edit_address" label="Complete Address" icon="house" x-model="editForm.address" />
                     <p class="text-xs text-slate-500"><x-ui.t fil="Ang barangay at Resident ID ay hindi maaaring baguhin dito — makipag-ugnayan sa iyong Barangay Hall." en="Barangay and Resident ID can't be changed here — contact your Barangay Hall for those." /></p>
@@ -485,7 +531,8 @@
 
                 <x-slot:footer>
                     <x-ui.button variant="secondary" size="sm" x-bind:disabled="savingProfile" @click="showEditProfile = false"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
-                    <x-ui.button size="sm" x-bind:disabled="savingProfile" @click="saveProfile()">
+                    <x-ui.button size="sm" x-show="mobileStep === 'code'" x-cloak x-bind:disabled="savingProfile" @click="verifyMobile()"><x-ui.t fil="Kumpirmahin ang Code" en="Confirm Code" /></x-ui.button>
+                    <x-ui.button size="sm" x-show="mobileStep !== 'code'" x-bind:disabled="savingProfile" @click="saveProfile()">
                         <span class="inline-flex items-center gap-1.5">
                             <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="savingProfile" x-cloak></i>
                             <span x-text="savingProfile ? ($store.lang.current === 'en' ? 'Saving…' : 'Sine-save…') : ($store.lang.current === 'en' ? 'Save Changes' : 'I-save ang Pagbabago')"></span>

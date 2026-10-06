@@ -10,6 +10,34 @@
             reportReason: {},
             reportOpenFor: null,
             reportSubmitting: {},
+            // The post a notification opened (?post=ID), highlighted and scrolled to.
+            focusPost: null,
+            fromAnnouncement(a) {
+                return {
+                    kind: 'announcement', id: a.id, author: a.author, barangay: a.barangay, category: a.category,
+                    title: a.title, body: a.body, image_url: a.image_url, official: true, likes: a.likes,
+                    // Sent with the resident's token, the public feed says which
+                    // announcements they liked (null only for an anonymous read).
+                    comments_count: a.comments_count, liked_by_me: a.liked_by_me === true, mine: false, visible: true,
+                    at: a.published_at, comments: null, showComments: false,
+                };
+            },
+            // A New in Balita notification opens /citizen/announcements?post=ID
+            // (Esperanza QA, 2026-10-07): that post is shown even when it is
+            // older than the first page, and the page scrolls to it.
+            async openLinkedPost() {
+                const want = Number(new URLSearchParams(window.location.search).get('post'));
+                if (!want) return;
+                if (!this.posts.some((p) => p.kind === 'announcement' && p.id === want)) {
+                    try {
+                        const one = await $api.get('/announcements/' + want);
+                        if (one.data) this.posts.unshift(this.fromAnnouncement(one.data));
+                    } catch { return; }
+                }
+                this.cat = 'All';
+                this.focusPost = 'announcement-' + want;
+                this.$nextTick(() => document.getElementById('post-announcement-' + want)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+            },
             async init() {
                 this.loading = true;
                 this.failed = false;
@@ -23,14 +51,7 @@
                         $api.get('/citizen/community-posts', { params: { per_page: 30 } }).catch(() => ({ data: [] })),
                         $api.get('/events', { params: { per_page: 4, from: new Date().toISOString().slice(0, 10) } }).catch(() => ({ data: [] })),
                     ]);
-                    const annPosts = (ann.data || []).map(a => ({
-                        kind: 'announcement', id: a.id, author: a.author, barangay: a.barangay, category: a.category,
-                        title: a.title, body: a.body, image_url: a.image_url, official: true, likes: a.likes,
-                        // Sent with the resident's token, the public feed says which
-                        // announcements they liked (null only for an anonymous read).
-                        comments_count: a.comments_count, liked_by_me: a.liked_by_me === true, mine: false, visible: true,
-                        at: a.published_at, comments: null, showComments: false,
-                    }));
+                    const annPosts = (ann.data || []).map(a => this.fromAnnouncement(a));
                     const commPosts = (comm.data || []).map(p => ({
                         kind: 'community', id: p.id, author: p.author, barangay: p.barangay, category: p.category,
                         title: null, body: p.body, image_url: p.image_url, official: false, likes: p.likes,
@@ -40,6 +61,7 @@
                     this.posts = [...annPosts, ...commPosts].sort((a, b) => new Date(b.at) - new Date(a.at));
                     this.events = ev.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }
+                await this.openLinkedPost();
             },
             get categories() { return [...new Set(this.posts.map(p => p.category).filter(Boolean))].sort(); },
             matchesCat(post) {
@@ -161,7 +183,9 @@
                     <template x-for="post in posts" :key="post.kind + post.id">
                         <div
                             x-show="matchesCat(post)"
-                            class="bg-white rounded-2xl border border-slate-100 shadow-card"
+                            :id="'post-' + post.kind + '-' + post.id"
+                            class="bg-white rounded-2xl border border-slate-100 shadow-card scroll-mt-24"
+                            :class="focusPost === post.kind + '-' + post.id && 'ring-2 ring-brand-400'"
                         >
                             <!-- Header -->
                             <div class="flex items-center gap-2.5 p-3.5 pb-2.5">

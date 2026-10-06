@@ -412,6 +412,7 @@
                 r.proofNote = proof.note || null;
                 if (proof.captured) {
                     r.release_evidence = proof.file?.url || r.release_evidence || null;
+                    r.release_evidence_mime = (proof.file?.mime || '') + ' ' + (proof.file?.name || '');
                     r.release_evidence_at = proof.note || 'on file';
                 }
             },
@@ -1429,7 +1430,7 @@
                             <template x-if="selected.release_evidence">
                                 <div class="mt-2.5">
                                     <div class="rounded-xl overflow-hidden border border-slate-200 aspect-[4/3]">
-                                        <img :src="selected.release_evidence" class="w-full h-full object-cover" alt="Proof of release">
+                                        <img alt="Proof of release" class="w-full h-full object-cover" x-data="{ src: '' }" x-effect="window.viewableImage(selected.release_evidence, selected.release_evidence_mime).then((b) => { src = b; }).catch(() => { src = ''; })" :src="src" x-show="src">
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <span class="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3 h-3"></i> Captured <span x-text="selected.release_evidence_at"></span></span>
