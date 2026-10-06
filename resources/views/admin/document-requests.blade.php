@@ -1427,7 +1427,7 @@
                     this.resetEditorUiState();
                     // Kept in this window, for Print and Download PDF: nothing
                     // stores an edited document on the server (live check,
-                    // 2026-10-06: "saved" was gone after a reload).
+                    // 2026-10-06: a saved edit was gone after a reload).
                     this.editedInWindow = this.selected.ref;
                     this.$dispatch('toast', { message: 'Changes applied. Print or download now: they are kept in this window only.', variant: 'success' });
                     this.$nextTick(() => this.recomputeZoomSizer());

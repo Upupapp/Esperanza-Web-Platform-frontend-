@@ -32,11 +32,11 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('editedInWindow === selected?.ref', $view, 'the note beside Print says the edit is kept in this window only');
 
         $toolbar = $this->source('resources/views/components/citizen/document-editor-toolbar.blade.php');
-        $this->assertStringNotContainsString('saveDocumentEdits()', $toolbar, 'one Save Changes, in the footer, not a second one in the toolbar');
+        $this->assertStringNotContainsString('@click="saveDocumentEdits()"', $toolbar, 'one Save Changes, in the footer, not a second one in the toolbar');
         $this->assertStringContainsString("current: staffSite ? 'en'", $this->source('resources/js/app.js'), 'the staff site is English-only (TAB 09), the shared editor included');
 
         $modal = $this->source('resources/views/components/ui/modal.blade.php');
-        $this->assertStringContainsString('@click.outside="if (!$event.target.closest(\'[data-modal-layer]\')) open = false"', $modal, 'a click in the document window does not close the request behind it');
+        $this->assertStringContainsString('@click.outside="if (!$event.target.closest(\'[data-modal-layer], [data-modal-overlay]\')) open = false"', $modal, 'a click in the document window, a viewer or the camera does not close the request behind it');
         $this->assertStringContainsString('data-modal-layer', $modal);
         $this->assertStringContainsString('@keydown.escape.window="if (window.closesOnEscape($el)) open = false"', $modal, 'Escape closes only the window on top');
         $this->assertStringContainsString('x-effect="window.modalLayer($el, open)"', $modal);

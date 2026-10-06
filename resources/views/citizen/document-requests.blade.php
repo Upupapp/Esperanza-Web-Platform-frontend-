@@ -659,7 +659,7 @@
                                     return;
                                 }
                                 // Names only what the resident owes: a step the office
-                                // does, or a document "if applicable", is not missing.
+                                // does, or a document marked if applicable, is not missing.
                                 const owed = (this.docs[this.selectedDoc]?.requirements || []).filter((q, i) => reqKind(q) === 'required' && !this.attachments[i]);
                                 if (owed.length && !this.attachWarned) {
                                     this.attachWarned = true;
