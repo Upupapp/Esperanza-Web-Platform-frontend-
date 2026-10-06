@@ -234,7 +234,7 @@
                             <div>
                                 <div class="flex items-center justify-between text-sm mb-1.5">
                                     <span class="text-slate-600 font-medium" x-text="'Brgy. ' + brgy.name"></span>
-                                    <span class="text-slate-500" x-text="brgy.count + ' requests'"></span>
+                                    <span class="text-slate-500" x-text="brgy.count + (brgy.count === 1 ? ' request' : ' requests')"></span>
                                 </div>
                                 <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
