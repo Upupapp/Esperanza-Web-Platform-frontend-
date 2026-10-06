@@ -47,7 +47,7 @@
             get barangayRequests() {
                 const rows = this.dash?.requests?.by_barangay || [];
                 const max = Math.max(1, ...rows.map(r => r.open));
-                return rows.map(r => ({ name: r.barangay, count: r.open, pct: Math.round((r.open / max) * 100) }));
+                return rows.map(r => ({ name: r.barangay, count: r.open, dokyu: r.dokyu ?? null, tulong: r.tulong ?? null, pct: Math.round((r.open / max) * 100) }));
             },
             get registeredResidents() {
                 return this.coverage?.meta?.municipal?.residents ?? this.coverage?.data?.[0]?.residents ?? null;
@@ -221,7 +221,13 @@
                 <x-ui.card>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold text-navy-900">Open Requests by Barangay</h3>
-                        <a href="{{ route('admin.directory') }}" class="text-xs font-medium text-brand-600 hover:underline">View All</a>
+                        {{-- It opened the Government Directory (under Balita). Each count
+                             opens the list it counts: open requests, by module. --}}
+                        <div class="flex items-center gap-2 text-xs font-medium">
+                            <span class="text-slate-500">View all:</span>
+                            <a x-show="$store.session.can('dokyu')" href="{{ route('admin.document-requests') }}?open=1" class="text-brand-600 hover:underline">Dokyu</a>
+                            <a x-show="$store.session.can('tulong')" href="{{ route('admin.assistance-requests') }}?open=1" class="text-brand-600 hover:underline">Tulong</a>
+                        </div>
                     </div>
                     <div class="space-y-4">
                         <template x-for="brgy in barangayRequests" :key="brgy.name">
@@ -232,6 +238,10 @@
                                 </div>
                                 <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
+                                </div>
+                                <div class="flex flex-wrap gap-x-3 mt-1 text-[11px] font-medium">
+                                    <a x-show="brgy.dokyu && $store.session.can('dokyu')" :href="'{{ route('admin.document-requests') }}?open=1&barangay=' + encodeURIComponent(brgy.name)" class="text-brand-600 hover:underline" x-text="'Dokyu ' + brgy.dokyu"></a>
+                                    <a x-show="brgy.tulong && $store.session.can('tulong')" :href="'{{ route('admin.assistance-requests') }}?open=1&barangay=' + encodeURIComponent(brgy.name)" class="text-brand-600 hover:underline" x-text="'Tulong ' + brgy.tulong"></a>
                                 </div>
                             </div>
                         </template>

@@ -133,6 +133,22 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString("profileReview?.outcome === 'returned'", $profile, 'the resident sees what to change');
     }
 
+    /** The dashboard's Open Requests by Barangay View All opened the Government Directory, under Balita. */
+    public function test_open_requests_by_barangay_open_the_requests_they_count(): void
+    {
+        $dash = $this->source('resources/views/admin/dashboard.blade.php');
+        $this->assertStringNotContainsString("route('admin.directory') }}\" class=\"text-xs font-medium text-brand-600 hover:underline\">View All", $dash);
+        $this->assertStringContainsString("{{ route('admin.document-requests') }}?open=1", $dash);
+        $this->assertStringContainsString("{{ route('admin.assistance-requests') }}?open=1", $dash);
+        $this->assertStringContainsString("?open=1&barangay=' + encodeURIComponent(brgy.name)", $dash, 'each count opens its barangay');
+
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $view = $this->source("resources/views/admin/{$page}.blade.php");
+            $this->assertStringContainsString("if (params.get('open') === '1') { this.openOnly = true;", $view, "{$page}: open only, from the address");
+            $this->assertStringContainsString('(!this.openOnly || !this.terminalStatuses.includes(r.status))', $view, $page);
+        }
+    }
+
     /** Every uploaded document had to be downloaded to be read. */
     public function test_documents_are_read_in_the_portal_without_running_them(): void
     {

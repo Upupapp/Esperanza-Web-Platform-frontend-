@@ -72,6 +72,8 @@
             levelFilter: '',
             assignedFilter: '',
             barangayFilter: '',
+            // Only requests still open (not released, completed, rejected or cancelled).
+            openOnly: false,
             showAdvancedFilters: false,
             open: false,
             selected: null,
@@ -204,6 +206,9 @@
                 const params = new URLSearchParams(window.location.search);
                 const ref = params.get('ref');
                 const citizen = params.get('citizen');
+                // From the dashboard's Open Requests by Barangay card.
+                if (params.get('barangay')) { this.barangayFilter = params.get('barangay'); this.tab = 'all'; }
+                if (params.get('open') === '1') { this.openOnly = true; this.tab = 'all'; }
                 if (ref || citizen) {
                     this.search = ref || citizen;
                     this.tab = 'all';
@@ -494,6 +499,7 @@
                     (this.levelFilter === '' || r.level === this.levelFilter) &&
                     (this.assignedFilter === '' || (this.assignedFilter === 'unassigned' ? !r.assigned : r.assigned === this.assignedFilter)) &&
                     (this.barangayFilter === '' || r.barangay === this.barangayFilter) &&
+                    (!this.openOnly || !this.terminalStatuses.includes(r.status)) &&
                     (q === '' || r.ref.toLowerCase().includes(q) || r.citizen.toLowerCase().includes(q))
                 );
             },
@@ -841,6 +847,10 @@
                     @endforeach
                 </div>
                 <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' cases'"></p>
+                <p x-show="openOnly || barangayFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
+                    <span x-text="'Showing ' + (openOnly ? 'open cases' : 'cases') + (barangayFilter ? ' in Brgy. ' + barangayFilter : '') + '.'"></span>
+                    <button type="button" class="font-medium underline" @click="openOnly = false; barangayFilter = ''">Show all</button>
+                </p>
             </div>
 
             <div
