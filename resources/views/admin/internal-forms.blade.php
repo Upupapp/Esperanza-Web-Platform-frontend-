@@ -1,4 +1,4 @@
-<x-layouts.admin title="Internal Forms" subtitle="Staff self-service forms for HR, GSO, Agriculture, and MSWD." active="internal-forms">
+<x-layouts.admin title="Internal Forms" subtitle="Staff self-service forms: HR, General Services, Social Welfare and Agriculture." active="internal-forms">
     <div
         x-data="{
             officeKey: null,
@@ -18,6 +18,17 @@
             doneSubmit: false,
             formStep: 1,
             iconMap: { hr: 'users-round', gso: 'warehouse', agriculture: 'wheat', mswd: 'hand-heart' },
+            // Spelled out, acronym kept for those who know it (live test
+            // 2026-10-07, UX-14). HR first: leave and service forms are for everyone.
+            officeNames: { hr: 'HR (MHRMO)', gso: 'General Services (MGSO)', agriculture: 'Agriculture (MAO)', mswd: 'Social Welfare (MSWDO)' },
+            officeOrder: ['hr', 'gso', 'mswd', 'agriculture'],
+            ownOfficeKey() {
+                const dept = String($store.session.account?.dept || '').toLowerCase();
+                if (/social welfare|mswd/.test(dept)) return 'mswd';
+                if (/agricultur|\bmao\b/.test(dept)) return 'agriculture';
+                if (/general services|gso/.test(dept)) return 'gso';
+                return 'hr';
+            },
             async init() {
                 this.loading = true;
                 this.failed = false;
@@ -26,13 +37,18 @@
                         $api.get('/admin/internal-forms'),
                         $api.getAll('/admin/internal-forms/submissions'),
                     ]);
-                    const grouped = {};
+                    const byKey = {};
                     (defsRes.data || []).forEach(d => {
-                        if (!grouped[d.office_key]) grouped[d.office_key] = { shortLabel: d.office, icon: this.iconMap[d.office_key] || 'building-2', forms: [] };
-                        grouped[d.office_key].forms.push(d);
+                        if (!byKey[d.office_key]) byKey[d.office_key] = { shortLabel: this.officeNames[d.office_key] || d.office, icon: this.iconMap[d.office_key] || 'building-2', forms: [] };
+                        byKey[d.office_key].forms.push(d);
                     });
+                    const rank = (k) => { const i = this.officeOrder.indexOf(k); return i === -1 ? 99 : i; };
+                    const grouped = {};
+                    Object.keys(byKey).sort((a, b) => rank(a) - rank(b)).forEach((k) => { grouped[k] = byKey[k]; });
                     this.offices = grouped;
-                    this.officeKey = Object.keys(grouped)[0] || null;
+                    await $store.session.whenReady?.();
+                    const own = this.ownOfficeKey();
+                    this.officeKey = grouped[own] ? own : (Object.keys(grouped)[0] || null);
                     this.totalForms = (defsRes.data || []).length;
                     this.submissions = subsRes.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }

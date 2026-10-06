@@ -1,5 +1,6 @@
 @props([
     'label' => null,
+    'labelFil' => null,
     'name',
     'type' => 'text',
     'icon' => null,
@@ -9,7 +10,7 @@
 
 <div class="w-full">
     @if($label)
-        <label for="{{ $name }}" class="block text-sm font-medium text-slate-700 mb-1.5">{{ $label }}</label>
+        <label for="{{ $name }}" class="block text-sm font-medium text-slate-700 mb-1.5">@if($labelFil)<x-ui.t :fil="$labelFil" :en="$label" />@else{{ $label }}@endif</label>
     @endif
 
     <div class="relative">

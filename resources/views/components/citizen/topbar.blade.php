@@ -9,6 +9,7 @@
         'dashboard' => 'Home', 'document-requests' => 'Dokyu', 'assistance-requests' => 'Tulong',
         'announcements' => 'Balita', 'events' => 'Mga Kaganapan', 'directory' => 'Direktoryo ng Pamahalaan',
         'help' => 'Suporta', 'profile' => 'Aking Profile', 'notifications' => 'Mga Abiso', 'settings' => 'Mga Setting',
+        'legal' => 'Privacy at mga Tuntunin',
     ];
     $filSubtitles = [
         'dashboard' => 'Narito ang buod ng iyong account.',
@@ -21,6 +22,7 @@
         'profile' => 'Pamahalaan ang iyong impormasyon bilang residente.',
         'notifications' => 'Lahat ng update sa iyong account, nasa isang lugar.',
         'settings' => 'Pamahalaan ang iyong mga kagustuhan sa account.',
+        'legal' => 'Ang Patakaran sa Privacy at ang mga Tuntunin at Kundisyon.',
     ];
     $filTitle = $filTitles[$active] ?? $title;
     $filSubtitle = $filSubtitles[$active] ?? $subtitle;

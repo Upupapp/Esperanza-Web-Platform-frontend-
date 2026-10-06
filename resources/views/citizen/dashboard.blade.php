@@ -231,7 +231,7 @@
                         <img
                             :src="$store.barangay.mine?.seal ? '{{ rtrim(asset(''), '/') }}/' + $store.barangay.mine.seal : ''"
                             x-show="$store.barangay.mine?.seal"
-                            onerror="this.style.display='none'"
+                            x-on:error="$el.style.display='none'"
                             alt=""
                             class="relative w-8 h-8 rounded-full object-cover ring-1 ring-white/30"
                         >

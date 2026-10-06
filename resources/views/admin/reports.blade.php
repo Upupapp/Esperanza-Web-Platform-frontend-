@@ -59,7 +59,11 @@
                 if (this.generating) return;
                 this.generating = key;
                 try {
-                    const res = await $api.post('/admin/reports/' + key + '/export', {});
+                    // The run used to be recorded and nothing handed over: no file,
+                    // nothing to click (live test 2026-10-07, BUG-8). The rows it
+                    // returns are saved as a CSV the officer can open in Excel.
+                    const res = await $api.post('/admin/reports/' + key + '/export', { format: 'CSV' });
+                    this.saveCsv(res.data);
                     this.runs.unshift({
                         id: res.data.run_id, key: res.data.key, title: res.data.title,
                         by: this.$store.session.account?.name || 'You', scope: res.data.scope?.geographic,
@@ -70,6 +74,24 @@
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not generate the report.', variant: 'error' });
                 } finally { this.generating = null; }
+            },
+            saveCsv(data) {
+                const rows = Array.isArray(data?.rows) ? data.rows : [];
+                const flat = (v) => (v !== null && typeof v === 'object') ? JSON.stringify(v) : (v ?? '');
+                const q = String.fromCharCode(34);
+                const cell = (v) => { const t = String(flat(v)); return [',', q, String.fromCharCode(10), String.fromCharCode(13)].some((c) => t.includes(c)) ? q + t.split(q).join(q + q) + q : t; };
+                const columns = [...new Set(rows.flatMap((r) => Object.keys(r || {})))];
+                const lines = [columns.map(cell).join(',')].concat(rows.map((r) => columns.map((c) => cell(r?.[c])).join(',')));
+                if (data?.totals && typeof data.totals === 'object') {
+                    lines.push('');
+                    Object.entries(data.totals).forEach(([k, v]) => lines.push(cell('Total: ' + k) + ',' + cell(v)));
+                }
+                const blob = new Blob([String.fromCharCode(0xFEFF) + lines.join(String.fromCharCode(13, 10))], { type: 'text/csv;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = (data?.key || 'report') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 4000);
             },
             get avgResolutionDays() {
                 const vals = [this.docSummary?.totals?.avg_days_to_release, this.assistSummary?.totals?.avg_days_to_release].filter(v => v !== null && v !== undefined);
@@ -159,6 +181,7 @@
                         <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell">Date</th>
                         <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Format</th>
                         <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Rows</th>
+                        <th class="px-4 py-2.5"><span class="sr-only">Download</span></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -169,9 +192,15 @@
                             <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="r.generated ? new Date(r.generated).toLocaleDateString() : '—'"></td>
                             <td class="px-4 py-3"><span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md" x-text="r.format"></span></td>
                             <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="r.row_count"></td>
+                            <td class="px-4 py-3 text-right">
+                                {{-- A fresh copy of the same report, as of now: each download is its own audited run. --}}
+                                <button type="button" @click="generate(r.key)" x-show="r.key && (reports.find((x) => x.key === r.key) || {}).can_export" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline" :disabled="!!generating">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i>Download again
+                                </button>
+                            </td>
                         </tr>
                     </template>
-                    <tr x-show="!runs.length"><td colspan="5" class="px-4 py-6 text-center text-xs text-slate-500">No reports generated yet.</td></tr>
+                    <tr x-show="!runs.length"><td colspan="6" class="px-4 py-6 text-center text-xs text-slate-500">No reports generated yet.</td></tr>
                 </tbody>
             </x-ui.table>
             </div>

@@ -102,7 +102,7 @@
             <div class="absolute inset-0 rounded-full bg-slate-50 border-2 border-gold-400 flex items-center justify-center text-slate-300">
                 <i data-lucide="shield" class="w-6 h-6"></i>
             </div>
-            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" data-default-src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" onerror="this.style.display='none'" class="header-seal header-seal--right absolute inset-0 w-full h-full rounded-full object-contain bg-white border border-slate-200 p-0.5">
+            <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" data-default-src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="Municipality of Esperanza Seal" x-on:error="$el.style.display='none'" class="header-seal header-seal--right absolute inset-0 w-full h-full rounded-full object-contain bg-white border border-slate-200 p-0.5">
         </div>
     </div>
 

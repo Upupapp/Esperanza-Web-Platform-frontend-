@@ -448,8 +448,8 @@ return [
                 ['key' => 'business_address', 'label' => 'Business Address', 'type' => 'text', 'required' => true],
                 ['key' => 'contact_no', 'label' => 'Contact Number', 'type' => 'tel'],
                 ['key' => 'line_of_business', 'label' => 'Line of Business', 'type' => 'text', 'required' => true],
-                ['key' => 'capital_investment', 'label' => 'Capital Investment', 'type' => 'text'],
-                ['key' => 'total_employees', 'label' => 'Total No. of Employees', 'type' => 'text'],
+                ['key' => 'capital_investment', 'label' => 'Capital Investment (₱)', 'type' => 'number'],
+                ['key' => 'total_employees', 'label' => 'Total No. of Employees', 'type' => 'number'],
             ],
         ],
         [

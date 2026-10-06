@@ -32,7 +32,7 @@
                         Household
                     </th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                        Verification
+                        Record
                     </th>
                     <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Status

@@ -73,7 +73,9 @@
   to     = "/"
   status = 302
 
+# A wrong address gets a real "page not found" (live test 2026-10-07, PR-3):
+# it used to answer 404 with the welcome page and no explanation.
 [[redirects]]
   from   = "/*"
-  to     = "/index.html"
+  to     = "/404/index.html"
   status = 404

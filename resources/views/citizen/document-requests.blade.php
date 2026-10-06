@@ -134,11 +134,16 @@
                 'Cancelled': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-400'],
                 'Archived': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-300'],
             },
+            // Rejected and cancelled requests have their own tab and tile, so the
+            // tiles add up to the total (live test 2026-10-07, UX-7).
+            stoppedStatuses: ['Rejected', 'Cancelled'],
             get filteredRequests() {
                 return this.requests.filter(r => {
                     if (this.tab === 'all') return true;
+                    const stopped = this.stoppedStatuses.includes(r.status);
+                    if (this.tab === 'stopped') return stopped;
                     const isDone = this.doneStatuses.includes(r.status);
-                    return this.tab === 'done' ? isDone : !isDone;
+                    return this.tab === 'done' ? (isDone && !stopped) : !isDone;
                 });
             },
             pickupDirectory: @js($pickupDirectory),
@@ -420,15 +425,17 @@
             <span x-show="tab === 'all'"><x-ui.t fil="Pumili ng dokumento, kumpirmahin ang iyong detalye, bayaran ang bayarin kung meron (marami, tulad ng Certificate of Indigency, ay libre), pagkatapos i-submit. Nagsisimula sa" en="Pick a document, confirm your details, pay the fee if there is one (many, like the Certificate of Indigency, are free), then submit. Reference numbers start with" /> <span class="font-mono">DOK-</span> <x-ui.t fil="ang reference number." en="." /></span>
             <span x-show="tab === 'active'" x-cloak><x-ui.t fil="Ang mga kahilingang ito ay nire-review, vine-verify, o inihahanda pa. Aabisuhan ka namin kapag may update — hindi na kailangang sumunod pa sa opisina." en="These requests are still being reviewed, verified, or prepared. We'll notify you the moment there's an update — no need to follow up in person." /></span>
             <span x-show="tab === 'done'" x-cloak><x-ui.t fil="Ang mga kahilingang ito ay na-release o kumpleto na. Puwede mo pa ring balikan ang mga ito rito anumang oras kung kailangan mo ng kopya ng detalye." en="These requests have been released or fully completed. You can revisit any of them here anytime you need a copy of the details." /></span>
+            <span x-show="tab === 'stopped'" x-cloak><x-ui.t fil="Ang mga kahilingang ito ay tinanggihan o kinansela. Buksan ang isa para makita ang dahilan; puwede kang magsumite ulit ng bagong kahilingan." en="These requests were rejected or cancelled. Open one to see why; you can always file a new request." /></span>
         </x-ui.page-intro>
 
         <x-citizen.approval-notice service="Dokyu" />
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+            <x-ui.stat-card class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
             <x-ui.stat-card label="Isinasagawa" labelEn="In Progress" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="orange" :delay="40" />
             <x-ui.stat-card label="Handa nang Kunin" labelEn="Mark to Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed'].includes(r.status)).length" icon="circle-check" color="purple" :delay="120" />
+            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed', 'Archived'].includes(r.status)).length" icon="circle-check" color="purple" :delay="120" />
+            <x-ui.stat-card label="Hindi Natuloy" labelEn="Not Completed" value="0" valueBind="requests.filter(r => stoppedStatuses.includes(r.status)).length" icon="circle-x" color="red" :delay="160" sublabel="Tinanggihan o kinansela" sublabelEn="Rejected or cancelled" />
         </div>
 
         <div class="flex items-center gap-3 mb-3">
@@ -438,9 +445,9 @@
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2.5 mb-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto shrink-0">
-                        @foreach(['all' => ['Lahat', 'All'], 'active' => ['Isinasagawa', 'In Progress'], 'done' => ['Kumpleto', 'Completed']] as $key => [$labelFil, $labelEn])
+                <div class="flex flex-wrap items-center gap-2.5 min-w-0 max-w-full">
+                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 max-w-full overflow-x-auto">
+                        @foreach(['all' => ['Lahat', 'All'], 'active' => ['Isinasagawa', 'In Progress'], 'done' => ['Kumpleto', 'Completed'], 'stopped' => ['Hindi Natuloy', 'Not Completed']] as $key => [$labelFil, $labelEn])
                             <button
                                 @click="tab = '{{ $key }}'"
                                 class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
@@ -450,7 +457,7 @@
                     </div>
                     <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredRequests.length + ' ' + ($store.lang.current === 'en' ? 'of ' + requests.length + ' requests' : 'sa ' + requests.length + ' kahilingan')"></p>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <div x-data="{ open: false, fileTab: 'all', uploading: false,
                     fileKind(doc) {
                         const t = (doc.file_type || '').toLowerCase();
@@ -594,6 +601,36 @@
                             project_cost: ['Halaga ng proyekto (₱)', 'Project cost (₱)'],
                         },
                         get feeInputNames() { return this.serviceMeta[this.docs[this.selectedDoc]?.key]?.fee?.required_inputs || []; },
+                        // A fee amount the details step already asked for is not asked
+                        // again: the Business Permit took the capital twice, and the two
+                        // answers could disagree (live test 2026-10-07, UX-10).
+                        feeInputSources: { declared_capital: 'capital_investment' },
+                        feeInputSource(name) {
+                            const key = this.feeInputSources[name];
+                            return key && (this.docs[this.selectedDoc]?.fields || []).some((f) => f.key === key) ? key : null;
+                        },
+                        get feeInputsAsked() { return this.feeInputNames.filter((n) => !this.feeInputSource(n)); },
+                        feeInputValue(name) {
+                            const key = this.feeInputSource(name);
+                            return this.parseAmount(key ? this.formData[key] : this.feeInputs[name]);
+                        },
+                        // A number field holds a number: the server kept 'QA TEST value'
+                        // as a capital (live test 2026-10-07, UX-10).
+                        numberProblem() {
+                            const en = this.$store.lang.current === 'en';
+                            for (const f of (this.docs[this.selectedDoc]?.fields || []).filter((f) => f.type === 'number')) {
+                                const raw = this.formData[f.key];
+                                if (String(raw ?? '').trim() !== '' && this.parseAmount(raw) === null) return f.label + (en ? ': numbers only.' : ': numero lamang.');
+                            }
+                            for (const name of this.feeInputNames) {
+                                const key = this.feeInputSource(name);
+                                if (key && this.parseAmount(this.formData[key]) === null) {
+                                    const f = (this.docs[this.selectedDoc]?.fields || []).find((x) => x.key === key);
+                                    return (f?.label || key) + (en ? ': enter the amount; the fee is computed from it.' : ': ilagay ang halaga; dito kinukuwenta ang bayarin.');
+                                }
+                            }
+                            return '';
+                        },
                         feeInputLabel(name) {
                             const l = this.feeInputLabels[name] || [name.replace(/_/g, ' '), name.replace(/_/g, ' ')];
                             return this.$store.lang.current === 'en' ? l[1] : l[0];
@@ -685,6 +722,11 @@
                                     this.stepError = badPhone;
                                     return;
                                 }
+                                const badNumber = this.numberProblem();
+                                if (badNumber) {
+                                    this.stepError = badNumber;
+                                    return;
+                                }
                                 // Names only what the resident owes: a step the office
                                 // does, or a document marked if applicable, is not missing.
                                 const owed = (this.docs[this.selectedDoc]?.requirements || []).filter((q, i) => reqKind(q) === 'required' && !this.attachments[i]);
@@ -697,7 +739,7 @@
                                 }
                             }
                             if (this.step === 3) {
-                                const bad = this.feeInputNames.filter((n) => this.parseAmount(this.feeInputs[n]) === null);
+                                const bad = this.feeInputsAsked.filter((n) => this.parseAmount(this.feeInputs[n]) === null);
                                 if (bad.length) {
                                     this.stepError = (en ? 'Enter the amount the fee is computed from: ' : 'Ilagay ang halagang pagbabatayan ng bayarin: ')
                                         + bad.map((n) => this.feeInputLabel(n)).join(', ');
@@ -765,7 +807,7 @@
                                 applicant_mobile: this.applicant.mobile || '',
                                 applicant_email: this.applicant.email || '',
                             });
-                            const feeInputs = Object.fromEntries(this.feeInputNames.map((n) => [n, this.parseAmount(this.feeInputs[n])]));
+                            const feeInputs = Object.fromEntries(this.feeInputNames.map((n) => [n, this.feeInputValue(n)]));
                             const res = await $api.post('/citizen/requests', { service_key: doc.key, form_data: formData, ...(this.feeInputNames.length ? { fee_inputs: feeInputs } : {}) });
                             const created = res.data || {};
                             const serverReqs = created.requirements || [];
@@ -796,7 +838,7 @@
                     x-effect="!open && reset()"
                     class="contents"
                 >
-                    <x-ui.button @click="open = true" ::disabled="$store.citizenSession.account && !$store.citizenSession.account.fullServiceAccess" icon="file-plus" size="sm" class="shrink-0"><x-ui.t fil="Bagong Kahilingan sa Dokyu" en="New Dokyu Request" /></x-ui.button>
+                    <x-ui.button @click="open = true" ::disabled="$store.citizenSession.account && !$store.citizenSession.account.fullServiceAccess" icon="file-plus" size="sm" class="w-full sm:w-auto justify-center"><x-ui.t fil="Bagong Kahilingan sa Dokyu" en="New Dokyu Request" /></x-ui.button>
                     <x-ui.modal title="Bagong Kahilingan sa Dokyu" titleEn="New Dokyu Request" maxWidth="3xl" :fullscreen="true">
                         <!-- Success state -->
                         <div x-show="submitted" x-cloak x-transition.opacity class="flex flex-col items-center justify-center text-center py-10">
@@ -864,7 +906,7 @@
                                                 <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-5 h-5"></i></div>
                                                 <img
                                                     :src="myBarangayInfo.seal ? '{{ rtrim(asset(''), '/') }}/' + myBarangayInfo.seal : null"
-                                                    x-show="myBarangayInfo.seal" onerror="this.style.display='none'"
+                                                    x-show="myBarangayInfo.seal" x-on:error="$el.style.display='none'"
                                                     :alt="myBarangayInfo.name ? 'Seal of Barangay ' + myBarangayInfo.name : 'Barangay seal'"
                                                     class="relative w-11 h-11 rounded-full object-cover border-2 border-gold-400"
                                                 >
@@ -1161,11 +1203,14 @@
                                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
                                     <div class="lg:col-span-3 order-2 lg:order-1">
                                         <div x-show="feeInputNames.length" x-cloak class="mb-4 rounded-xl border border-brand-100 bg-brand-50/40 p-4 space-y-3">
+                                            <template x-for="name in feeInputNames.filter((n) => feeInputSource(n))" :key="'from-' + name">
+                                                <p class="text-xs text-slate-600" x-text="feeInputLabel(name) + ': ₱' + (feeInputValue(name) ?? 0).toLocaleString('en-PH') + ($store.lang.current === 'en' ? ' (from the details you gave)' : ' (mula sa detalyeng inilagay mo)')"></p>
+                                            </template>
                                             <div>
                                                 <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Detalye para sa bayarin" en="Fee details" /></p>
                                                 <p class="text-xs text-slate-500 mt-0.5"><x-ui.t fil="Kinukuwenta ang bayarin mula sa halagang ilalagay mo. Kukumpirmahin ito ng opisina." en="The fee is computed from the amount you declare. The office confirms it during review." /></p>
                                             </div>
-                                            <template x-for="name in feeInputNames" :key="name">
+                                            <template x-for="name in feeInputsAsked" :key="name">
                                                 <label class="block">
                                                     <span class="text-xs font-medium text-slate-700" x-text="feeInputLabel(name)"></span>
                                                     <input type="text" inputmode="decimal" x-model="feeInputs[name]" :aria-label="feeInputLabel(name)" placeholder="50,000"
@@ -1351,7 +1396,35 @@
             </div>
         </div>
 
-        <x-ui.table>
+        {{-- On a phone each request is a card with a full-width Subaybayan
+             button; the table cut that column to one letter (live test
+             2026-10-07, BUG-4). --}}
+        <div class="sm:hidden space-y-2.5">
+            <template x-for="req in filteredRequests" :key="'card-' + req.ref">
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-mono text-[11px] text-slate-500" x-text="req.ref"></p>
+                            <p class="text-sm font-medium text-slate-800 mt-0.5 break-words" x-text="req.type"></p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" x-show="req.submitted" x-text="($store.lang.current === 'en' ? 'Submitted ' : 'Isinumite ') + req.submitted"></p>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
+                            :class="(statusStyles[req.status] || statusStyles['Draft'])[0]"
+                        >
+                            <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[req.status] || statusStyles['Draft'])[1]"></span>
+                            <span x-text="req.status"></span>
+                        </span>
+                    </div>
+                    <button type="button" @click="openProgress(req)"
+                        class="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-medium text-brand-700 hover:bg-slate-50">
+                        <i data-lucide="search" class="w-3.5 h-3.5"></i><x-ui.t fil="Subaybayan" en="Track" />
+                    </button>
+                </div>
+            </template>
+        </div>
+
+        <x-ui.table class="hidden sm:block">
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Reference" en="Reference" /></th>
@@ -1635,7 +1708,7 @@
                             </template>
                         </div>
                         <p class="text-[11px] text-slate-500 text-center mt-4 dp-no-print">
-                            <x-ui.t fil="Frontend na preview lamang — walang tunay na e-signature o QR code na naka-verify." en="Frontend preview only — not digitally signed or QR-verified." />
+                            <x-ui.t fil="Kopya para sa iyong sanggunian. Ang pirmadong kopya ay kinukuha sa opisina." en="Reference copy. The signed copy is released at the office." />
                         </p>
                     </div>
                 </template>

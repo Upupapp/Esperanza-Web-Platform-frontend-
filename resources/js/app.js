@@ -2,6 +2,7 @@ import './bootstrap';
 import api from './api/client';
 import { resource } from './api/resource';
 import { specForm } from './api/form';
+import { residentProfileForm } from './resident-profile-form';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons, icons } from 'lucide';
@@ -415,24 +416,32 @@ document.addEventListener('alpine:init', () => {
     // uses, input preserved on failure, and an unsaved-changes warning.
     Alpine.data('specForm', specForm);
 
+    // The Resident Profile form on the website (live test 2026-10-07, UX-8).
+    Alpine.data('residentProfileForm', residentProfileForm);
+
     // The staff site is English-only by owner ruling (TAB 09). The document
     // editor it shares with the resident site follows this store, so staff saw
     // "Kanselahin" and "I-save ang Pagbabago" beside the English buttons.
     const staffSite = window.location.pathname.startsWith('/admin');
+    // The page's own lang follows the language shown, so a screen reader reads
+    // Filipino with a Filipino voice (live test 2026-10-07, UX-6).
+    const applyDocumentLang = (lang) => { document.documentElement.lang = lang === 'en' ? 'en' : 'fil'; };
     Alpine.store('lang', {
         current: staffSite ? 'en' : (localStorage.getItem('esperanza_lang') || 'fil'),
         set(lang) {
             this.current = lang;
             localStorage.setItem('esperanza_lang', lang);
+            applyDocumentLang(lang);
         },
     });
+    applyDocumentLang(Alpine.store('lang').current);
     // Settings that reach the portals before anyone signs in (GET /portal-settings):
     // the Default Language, until the resident picks one (not stored, so a later
     // change by the LGU still applies), and the Branding in force.
     api.get('/portal-settings')
         .then((res) => {
             const lang = res?.data?.default_language;
-            if (!staffSite && (lang === 'en' || lang === 'fil') && !localStorage.getItem('esperanza_lang')) Alpine.store('lang').current = lang;
+            if (!staffSite && (lang === 'en' || lang === 'fil') && !localStorage.getItem('esperanza_lang')) { Alpine.store('lang').current = lang; applyDocumentLang(lang); }
             applyBranding(res?.data?.branding ?? null, true);
         })
         .catch(() => {});
@@ -464,6 +473,9 @@ document.addEventListener('alpine:init', () => {
                 status: raw.status,
                 moduleKeys: raw.moduleKeys || [],
                 permissions: permissionMap(raw.permissions),
+                // A password an administrator set: My Profile opens by itself and
+                // asks for the officer's own before anything else (PR-8).
+                mustChangePassword: !!raw.must_change_password,
             };
             writeJson('esperanza_session', this.account);
         },
@@ -793,6 +805,12 @@ document.addEventListener('alpine:init', () => {
             shownAlerts: (() => { try { return JSON.parse(localStorage.getItem('esperanza_shown_alerts') || '[]'); } catch { return []; } })(),
             get pendingAlert() {
                 return this.visible.find((n) => n.portal === 'sakuna' && n.popup && n.unread && !this.shownAlerts.includes(n.id)) || null;
+            },
+            // The notice that the account is verified opens once as a welcome
+            // (live test 2026-10-07, UX-9): it was only a red dot on the bell
+            // while Dokyu and Tulong still said to wait for approval.
+            get pendingWelcome() {
+                return this.visible.find((n) => n.portal === 'account' && n.pill === 'Verified' && n.unread && !this.shownAlerts.includes(n.id)) || null;
             },
             alertShown(id) {
                 this.shownAlerts = [...this.shownAlerts, id].slice(-50);
@@ -1201,5 +1219,13 @@ window.addEventListener('api:unauthorized', (event) => {
 
 window.addEventListener('api:forbidden', (event) => {
     const lang = window.Alpine?.store('lang')?.current || 'fil';
-    toast(event.detail.error.localised(lang));
+    // A password an administrator set: not a missing permission. My Profile
+    // opens and asks for the officer's own (PR-8).
+    if (event.detail.error.code === 'PASSWORD_CHANGE_REQUIRED') {
+        window.dispatchEvent(new CustomEvent('password-change-required'));
+        return;
+    }
+    // The server appends the permission it checked, '(um_audit.view)', for
+    // the log; people saw it in red toasts (live test 2026-10-07, NAV-3).
+    toast(String(event.detail.error.localised(lang)).replace(/\s*\([a-z_]+\.[a-z_]+\)\s*$/, ''));
 });

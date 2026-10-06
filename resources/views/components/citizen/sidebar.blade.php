@@ -19,7 +19,7 @@
 >
     <div class="flex items-center gap-2.5 px-4 h-16 border-b border-white/10 shrink-0">
         <img
-            src="{{ asset('images/esperanza/esperanza-seal.png') }}"
+            src="{{ asset('images/esperanza/esperanza-seal-128.png') }}"
             alt="Municipality of Esperanza Seal"
             class="w-9 h-9 rounded-full ring-2 ring-white/15 shrink-0 object-cover"
         >
@@ -38,7 +38,7 @@
             <div class="absolute inset-0 rounded-full bg-white/10 flex items-center justify-center text-white/40"><i data-lucide="map-pinned" class="w-3 h-3"></i></div>
             <img
                 :src="$store.barangay.mine?.seal ? '{{ rtrim(asset(''), '/') }}/' + $store.barangay.mine.seal : ''"
-                x-show="$store.barangay.mine?.seal" onerror="this.style.display='none'" alt=""
+                x-show="$store.barangay.mine?.seal" x-on:error="$el.style.display='none'" alt=""
                 class="relative w-6 h-6 rounded-full object-cover"
             >
         </div>

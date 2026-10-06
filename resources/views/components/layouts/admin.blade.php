@@ -4,13 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>{{ $title }} — Esperanza LGU Administrative Portal</title>
-    <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal.png') }}">
+    <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal-64.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans antialiased">
     <div class="flex h-screen overflow-hidden bg-slate-50" x-data="{ collapsed: false, mobileOpen: false }">
         <x-admin.sidebar :active="$active" />
+        <x-admin.my-profile />
 
         <div class="flex-1 flex flex-col min-w-0">
             <x-admin.topbar :title="$title" :subtitle="$subtitle" />

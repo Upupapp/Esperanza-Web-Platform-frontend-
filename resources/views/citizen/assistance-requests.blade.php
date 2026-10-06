@@ -59,11 +59,16 @@
                 'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
                 'Cancelled': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-400'],
             },
+            // Rejected and cancelled requests have their own tab and tile, so the
+            // tiles add up to the total (live test 2026-10-07, UX-7).
+            stoppedStatuses: ['Rejected', 'Cancelled'],
             get filteredRequests() {
                 return this.requests.filter(r => {
                     if (this.tab === 'all') return true;
+                    const stopped = this.stoppedStatuses.includes(r.status);
+                    if (this.tab === 'stopped') return stopped;
                     const isDone = this.doneStatuses.includes(r.status);
-                    return this.tab === 'done' ? isDone : !isDone;
+                    return this.tab === 'done' ? (isDone && !stopped) : !isDone;
                 });
             },
             pickupDirectory: @js($pickupDirectory),
@@ -244,14 +249,15 @@
 
         <x-citizen.approval-notice service="Tulong" />
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
             {{-- Counted from the resident's own requests. A fifth tile showed
                  "Ayuda Received ₱42,500" to everyone; no amount received is
                  recorded anywhere, so it is gone. --}}
-            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="hand-heart" color="purple" :delay="0" />
+            <x-ui.stat-card class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="hand-heart" color="purple" :delay="0" />
             <x-ui.stat-card label="Isinasagawa" labelEn="Processing" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Ready for Release').length" icon="loader" color="purple" :delay="40" />
             <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="brand" :delay="80" />
             <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="badge-check" color="gold" :delay="120" />
+            <x-ui.stat-card label="Hindi Natuloy" labelEn="Not Completed" value="0" valueBind="requests.filter(r => stoppedStatuses.includes(r.status)).length" icon="circle-x" color="red" :delay="160" sublabel="Tinanggihan o kinansela" sublabelEn="Rejected or cancelled" />
         </div>
 
         <div class="flex items-center gap-3 mb-3">
@@ -261,9 +267,9 @@
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2.5 mb-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto shrink-0">
-                        @foreach(['all' => ['Lahat', 'All'], 'active' => ['Isinasagawa', 'In Progress'], 'done' => ['Kumpleto', 'Completed']] as $key => [$labelFil, $labelEn])
+                <div class="flex flex-wrap items-center gap-2.5 min-w-0 max-w-full">
+                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 max-w-full overflow-x-auto">
+                        @foreach(['all' => ['Lahat', 'All'], 'active' => ['Isinasagawa', 'In Progress'], 'done' => ['Kumpleto', 'Completed'], 'stopped' => ['Hindi Natuloy', 'Not Completed']] as $key => [$labelFil, $labelEn])
                             <button
                                 @click="tab = '{{ $key }}'"
                                 class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
@@ -371,6 +377,7 @@
                             }
                         }
                         this.step++;
+                        if (this.step === 3 && this.tulongFree) this.step = 4;
                     },
                     toggleChecklist(fieldKey, option) {
                         const list = this.formData[fieldKey] || [];
@@ -399,6 +406,9 @@
                         en: ['Choose Assistance', 'Application Details', 'Payment', 'Review & Submit'],
                     },
                     stepIcons: ['hand-heart', 'user-round', 'credit-card', 'clipboard-check'],
+                    // Free assistance has no payment step (live test 2026-10-07, UX-12):
+                    // it only said 'Hindi aplikable'. Step 3 is skipped both ways.
+                    get tulongFree() { return this.selectedType !== null && this.types[this.selectedType]?.fee === 'Free'; },
                     reset() { this.step = 1; this.selectedType = null; this.attachments = {}; this.showFilePicker = null; this.submitted = false; this.submittedRef = null; this.search = ''; this.formData = {}; this.selectedCategory = null; this.stepError = ''; this.stepWarning = ''; this.attachWarned = false; },
                     // POST /citizen/requests, then each attachment onto its
                     // requirement. The server assigns the ref and notifies the
@@ -445,8 +455,8 @@
                 x-effect="!open && reset()"
                 class="contents"
             >
-                <div class="flex items-center gap-2 shrink-0">
-                <x-ui.button @click="open = true" ::disabled="$store.citizenSession.account && !$store.citizenSession.account.fullServiceAccess" icon="hand-heart" size="sm" class="shrink-0"><x-ui.t fil="Bagong Kahilingan sa Tulong" en="New Tulong Request" /></x-ui.button>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <x-ui.button @click="open = true" ::disabled="$store.citizenSession.account && !$store.citizenSession.account.fullServiceAccess" icon="hand-heart" size="sm" class="w-full sm:w-auto justify-center"><x-ui.t fil="Bagong Kahilingan sa Tulong" en="New Tulong Request" /></x-ui.button>
                 <x-ui.modal title="Bagong Kahilingan sa Tulong" titleEn="New Tulong Request" maxWidth="3xl" :fullscreen="true">
                     <!-- Success state -->
                     <div x-show="submitted" x-cloak x-transition.opacity class="flex flex-col items-center justify-center text-center py-10">
@@ -468,7 +478,7 @@
                     <!-- Step indicator -->
                     <div class="flex items-center mb-8 px-1">
                         <template x-for="(label, i) in ($store.lang.current === 'en' ? stepLabels.en : stepLabels.fil)" :key="i">
-                            <div class="flex-1 flex items-center">
+                            <div class="flex-1 flex items-center" x-show="!(i === 2 && tulongFree)">
                                 <div class="flex flex-col items-center gap-2 text-center">
                                     <span
                                         class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
@@ -942,7 +952,7 @@
 
                     <x-slot:footer>
                         <p x-show="!submitted && (stepError || stepWarning)" x-cloak role="alert" class="mr-auto min-w-0 text-xs leading-snug" :class="stepError ? 'text-rose-600' : 'text-amber-700'" x-text="stepError || stepWarning"></p>
-                        <x-ui.button variant="secondary" size="sm" x-show="!submitted" @click="stepError = ''; stepWarning = ''; step > 1 ? step-- : (open = false, reset())">
+                        <x-ui.button variant="secondary" size="sm" x-show="!submitted" @click="stepError = ''; stepWarning = ''; step > 1 ? (step = (step === 4 && tulongFree) ? 2 : step - 1) : (open = false, reset())">
                             <span x-text="$store.lang.current === 'en' ? (step > 1 ? 'Back' : 'Cancel') : (step > 1 ? 'Bumalik' : 'Kanselahin')"></span>
                         </x-ui.button>
                         <x-ui.button
@@ -975,7 +985,35 @@
             </div>
         </div>
 
-        <x-ui.table>
+        {{-- On a phone each request is a card with a full-width Subaybayan
+             button; the table cut that column to one letter (live test
+             2026-10-07, BUG-4). --}}
+        <div class="sm:hidden space-y-2.5">
+            <template x-for="req in filteredRequests" :key="'card-' + req.ref">
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-mono text-[11px] text-slate-500" x-text="req.ref"></p>
+                            <p class="text-sm font-medium text-slate-800 mt-0.5 break-words" x-text="req.type"></p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" x-show="req.submitted" x-text="($store.lang.current === 'en' ? 'Submitted ' : 'Isinumite ') + req.submitted"></p>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
+                            :class="(statusStyles[req.status] || statusStyles['Draft'])[0]"
+                        >
+                            <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[req.status] || statusStyles['Draft'])[1]"></span>
+                            <span x-text="req.status"></span>
+                        </span>
+                    </div>
+                    <button type="button" @click="openProgress(req)"
+                        class="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-medium text-brand-700 hover:bg-slate-50">
+                        <i data-lucide="search" class="w-3.5 h-3.5"></i><x-ui.t fil="Subaybayan" en="Track" />
+                    </button>
+                </div>
+            </template>
+        </div>
+
+        <x-ui.table class="hidden sm:block">
             <thead>
                 <tr class="border-b border-slate-100 bg-slate-50/60">
                     <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Reference" en="Reference" /></th>

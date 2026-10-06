@@ -10,6 +10,49 @@
  * PDFs) reach production.
  */
 
+if (!function_exists('esperanza_response_headers')) {
+    /**
+     * Netlify `_headers` for the exported site (live test 2026-10-07):
+     * PR-1, the site sent HSTS only (no CSP, no frame-ancestors, no nosniff,
+     * no Referrer-Policy, no Permissions-Policy); PR-2, staff pages could be
+     * indexed; PR-5, the content-hashed bundle was revalidated on every page.
+     */
+    function esperanza_response_headers(string $apiOrigin): string
+    {
+        $csp = implode('; ', [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-eval'",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            "font-src 'self' https://fonts.gstatic.com data:",
+            "img-src 'self' data: blob: {$apiOrigin}",
+            "connect-src 'self' {$apiOrigin}",
+            "media-src 'self' blob: {$apiOrigin}",
+            "worker-src 'self' blob:",
+            "frame-src 'self' blob:",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+        ]);
+
+        return implode("\n", [
+            '/*',
+            '  Content-Security-Policy: '.$csp,
+            '  X-Frame-Options: DENY',
+            '  X-Content-Type-Options: nosniff',
+            '  Referrer-Policy: strict-origin-when-cross-origin',
+            '  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=()',
+            '',
+            '/admin/*',
+            '  X-Robots-Tag: noindex, nofollow',
+            '',
+            '/build/assets/*',
+            '  Cache-Control: public, max-age=31536000, immutable',
+            '',
+        ]);
+    }
+}
+
 if (!function_exists('esperanza_export_skip_uris')) {
     /**
      * URIs the router exposes that are not pages and must not be exported.

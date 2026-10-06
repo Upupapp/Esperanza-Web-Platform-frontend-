@@ -11,6 +11,21 @@
     $tabRoutes = $__fixtures['tabRoutes'];
     $tabUrls = array_map(fn ($name) => route($name), $tabRoutes);
 
+    // The tab bar, and the names used when a tab is not this role's (NAV-1).
+    $tabs = [
+        ['key' => 'command-center',    'label' => 'Command Center',    'icon' => 'monitor-check'],
+        ['key' => 'vulnerability',      'label' => 'Vulnerability',     'icon' => 'map-pin'],
+        ['key' => 'incidents',          'label' => 'Incidents',         'icon' => 'flame'],
+        ['key' => 'evacuation-centers', 'label' => 'Evac. Centers',    'icon' => 'house'],
+        ['key' => 'evacuees',           'label' => 'Evacuees',          'icon' => 'users'],
+        ['key' => 'resources',          'label' => 'Resources',         'icon' => 'truck'],
+        ['key' => 'relief',             'label' => 'Relief & Logistics','icon' => 'package'],
+        ['key' => 'damage-assessment',  'label' => 'Damage',            'icon' => 'clipboard-list'],
+        ['key' => 'bdrrmc-forms',       'label' => 'BDRRMC Forms',      'icon' => 'file-check'],
+        ['key' => 'alerts',             'label' => 'Alerts',            'icon' => 'bell-ring'],
+        ['key' => 'reports',            'label' => 'Reports',           'icon' => 'chart-bar'],
+    ];
+
     // ── Operational Context ─────────────────────────────────────────────────
 
     // ── Barangays ────────────────────────────────────────────────────────────
@@ -1155,11 +1170,47 @@
             return this.allowed('sakuna_centers') || this.can('sakuna_evacuees', 'check_in') || this.can('sakuna_evacuees', 'transfer');
         },
         nothing() { return Promise.resolve({ data: [] }); },
+        // A shared link to a tab this role does not hold lands on the first one
+        // it does, and says so (live test 2026-10-07, NAV-1): it used to move
+        // the person without a word.
+        tabLabels: @js(collect($tabs)->pluck('label', 'key')),
         async landOnAllowedTab() {
             await this.$store.session.whenReady();
+            const moved = new URLSearchParams(window.location.search).get('no_access');
+            if (moved && this.tabLabels[moved] && this.tabAllowed(this.activeTab)) {
+                this.toast('You do not have access to ' + this.tabLabels[moved] + '; showing ' + this.tabLabels[this.activeTab] + '.', 'info');
+                const params = new URLSearchParams(window.location.search);
+                params.delete('no_access');
+                history.replaceState(null, '', window.location.pathname + (params.toString() ? '?' + params : ''));
+            }
             if (this.tabAllowed(this.activeTab)) return;
             const first = this.firstAllowedTab;
-            if (first && this.tabUrls[first]) window.location.replace(this.tabUrls[first] + window.location.search);
+            if (first && this.tabUrls[first]) {
+                const params = new URLSearchParams(window.location.search);
+                params.set('no_access', this.activeTab);
+                window.location.replace(this.tabUrls[first] + '?' + params);
+            }
+        },
+        // A Send alert button in the header lands here with ?compose=1.
+        composeOnArrival() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('compose') !== '1') return;
+            params.delete('compose');
+            history.replaceState(null, '', window.location.pathname + (params.toString() ? '?' + params : ''));
+            if (this.can('sakuna_alerts', 'create')) this.openCreateAlert();
+        },
+        // Incidents keep the shared request statuses on record; the screen says
+        // what happened in the words of the buttons that moved them (live test
+        // 2026-10-07, UX-17): Dispatch reads Dispatched, not Processing.
+        incidentStatusLabel(st) {
+            return ({
+                'Submitted': 'Reported',
+                'Under Verification': 'Validated',
+                'Assigned': 'Assigned',
+                'Processing': 'Dispatched',
+                'Completed': 'Resolved',
+                'Archived': 'Closed',
+            })[st] || st;
         },
     }"
     x-init="
@@ -1188,6 +1239,13 @@
             <button x-show="tabAllowed('reports')" @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
                 <i data-lucide="file-bar-chart" class="w-4 h-4 text-slate-500"></i> SitRep &amp; Reports
             </button>
+            {{-- Warning the public must never be past the edge of the tab row
+                 (live test 2026-10-07, NAV-4). --}}
+            <button x-show="permsReady && can('sakuna_alerts', 'create')" x-cloak
+                @click="activeTab === 'alerts' ? openCreateAlert() : (window.location.href = tabUrls['alerts'] + '?compose=1')"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-xl px-3 py-1.5 shadow-card transition-colors">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i> Send alert
+            </button>
             <button x-show="can('sakuna_command', 'escalate')" @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-1.5 shadow-card transition-colors">
                 <i data-lucide="siren" class="w-4 h-4"></i> Activate EOC
             </button>
@@ -1196,23 +1254,8 @@
 
     {{-- ── Tab Navigation ───────────────────────────────────────────────────── --}}
     <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
-        <div class="overflow-x-auto">
-            <nav class="flex border-b border-slate-100 min-w-max">
-                @php
-                    $tabs = [
-                        ['key' => 'command-center',    'label' => 'Command Center',    'icon' => 'monitor-check'],
-                        ['key' => 'vulnerability',      'label' => 'Vulnerability',     'icon' => 'map-pin'],
-                        ['key' => 'incidents',          'label' => 'Incidents',         'icon' => 'flame'],
-                        ['key' => 'evacuation-centers', 'label' => 'Evac. Centers',    'icon' => 'house'],
-                        ['key' => 'evacuees',           'label' => 'Evacuees',          'icon' => 'users'],
-                        ['key' => 'resources',          'label' => 'Resources',         'icon' => 'truck'],
-                        ['key' => 'relief',             'label' => 'Relief & Logistics','icon' => 'package'],
-                        ['key' => 'damage-assessment',  'label' => 'Damage',            'icon' => 'clipboard-list'],
-                        ['key' => 'bdrrmc-forms',       'label' => 'BDRRMC Forms',      'icon' => 'file-check'],
-                        ['key' => 'alerts',             'label' => 'Alerts',            'icon' => 'bell-ring'],
-                        ['key' => 'reports',            'label' => 'Reports',           'icon' => 'chart-bar'],
-                    ];
-                @endphp
+        <div>
+            <nav class="flex flex-wrap border-b border-slate-100">
                 @foreach($tabs as $t)
                     <a
                         href="{{ $tabUrls[$t['key']] }}"

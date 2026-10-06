@@ -16,7 +16,7 @@
                     :class="cvType === t ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
                 >
                     <i :data-lucide="t === 'Individual' ? 'user' : (t === 'Family' ? 'users-round' : 'house')" class="w-3.5 h-3.5"></i>
-                    <span x-text="t"></span>
+                    <span x-text="t === 'Individual' ? 'Account IDs' : (t === 'Family' ? 'Family Records' : 'Household Records')"></span>
                     <span
                         class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                         :class="cvType === t ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-slate-500'"
@@ -308,7 +308,7 @@
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head of Family</th>
                         <th class="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Members</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Verification</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
@@ -378,7 +378,7 @@
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay</th>
                         <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head</th>
                         <th class="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Members</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Verification</th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
                         <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>

@@ -19,7 +19,7 @@
 >
     <div class="flex items-center gap-2.5 px-4 h-16 border-b border-white/10 shrink-0">
         <img
-            src="{{ asset('images/esperanza/esperanza-seal.png') }}"
+            src="{{ asset('images/esperanza/esperanza-seal-128.png') }}"
             alt="Municipality of Esperanza Seal"
             class="w-9 h-9 rounded-full ring-2 ring-white/15 shrink-0 object-cover"
         >
@@ -55,10 +55,24 @@
         <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badgeBind="$store.queueCounts.tulong" :active="$active === 'assistance-requests'" moduleKey="tulong" />
         <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />
         <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
-        <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Balita" :active="$active === 'communications'" moduleKey="communications" />
+        {{-- Balita held the Directory and the Blotter too, so staff looked for
+             them under news (live test 2026-10-07, NAV-2). Same pages, own entries. --}}
+        <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Balita & Events" :active="$active === 'communications'"
+            showIf="$store.session.can('communications') && ['comm_news','comm_banners','comm_community','comm_events'].some((s) => $store.session.canPerm(s, 'view'))" />
+        <x-ui.nav-item dense :href="route('admin.directory')" icon="building-2" label="Directory" :active="$active === 'directory'"
+            showIf="$store.session.can('communications') && ['comm_directory','comm_barangay_directory'].some((s) => $store.session.canPerm(s, 'view'))" />
+        <x-ui.nav-item dense :href="route('admin.communications.blotter')" icon="book-open-text" label="Blotter" :active="$active === 'blotter'"
+            showIf="$store.session.can('communications') && $store.session.canPerm('comm_directory', 'view')" />
         <x-ui.nav-item dense :href="route('admin.reports')" icon="file-chart-column" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />
         <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" moduleKey="user_management" />
         <x-ui.nav-item dense :href="route('admin.internal-forms')" icon="clipboard-list" label="Internal Forms" :active="$active === 'internal-forms'" />
+        {{-- Settings was only in the profile menu, and offered to every role
+             (live test 2026-10-07, NAV-3); the Audit Logs three clicks inside it. --}}
+        <x-ui.nav-item dense :href="route('admin.support')" icon="life-buoy" label="Support Tickets" :active="$active === 'support'"
+            showIf="$store.session.can('settings') && $store.session.canPerm('set_general', 'view')" />
+        <x-ui.nav-item dense :href="route('admin.settings')" icon="settings" label="Settings" :active="$active === 'settings'" moduleKey="settings" />
+        <x-ui.nav-item dense :href="route('admin.audit-logs')" icon="scroll-text" label="Audit Logs" :active="$active === 'audit-logs'"
+            showIf="$store.session.canPerm('um_audit', 'view')" />
     </nav>
 
     <div class="border-t border-white/10 p-2.5 shrink-0">

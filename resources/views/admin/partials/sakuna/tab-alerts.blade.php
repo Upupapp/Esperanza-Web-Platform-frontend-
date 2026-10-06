@@ -41,7 +41,7 @@
             (!alertStatusFilter || a.status === alertStatusFilter)
         );
     },
-}" x-init="loadAlerts()" class="space-y-4">
+}" x-init="loadAlerts(); composeOnArrival()" class="space-y-4">
 
 {{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap items-center justify-between gap-3">

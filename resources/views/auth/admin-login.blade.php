@@ -4,7 +4,7 @@
      the first thing LGU staff saw when signing in. Replaced with scenery that
      makes no place claim at all; see FRONTEND_PENDING.md and
      tests/Feature/PlaceIdentityTest.php. --}}
-<x-layouts.guest title="LGU Personnel Login" image="rectangle_sunset.jpg" fullscreen>
+<x-layouts.guest title="LGU Personnel Login" image="rectangle_sunset.jpg" fullscreen :lang-switch="false">
     <div
         x-data="{
             barangayNames: [],
@@ -13,7 +13,12 @@
             employeeId: '',
             password: '',
             mfaCode: '',
-            step: 'scope',
+            // Straight to Employee ID and password: the account already knows
+            // its scope, and a list of 21 scopes was the first thing every
+            // officer had to get right (live test 2026-10-07, UX-2). The
+            // scope step stays reachable only from the chip below, which shows
+            // once the server has said which scope this account is.
+            step: 'credentials',
             loading: false,
             error: '',
             notice: '',
@@ -142,7 +147,7 @@
         <!-- Step 2: credentials -->
         <div x-show="step === 'credentials'" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
             <button
-                type="button" @click="step = 'scope'; scope = ''; scopeSearch = ''"
+                type="button" x-show="scope" x-cloak @click="step = 'scope'; scope = ''; scopeSearch = ''"
                 class="w-full flex items-center justify-between gap-2 rounded-xl border border-navy-200 bg-navy-50/60 px-3.5 py-2.5 text-left hover:bg-navy-50 transition-colors mb-3.5 animate-fade-up"
             >
                 <span class="flex items-center gap-2 text-sm font-medium text-navy-800 min-w-0">

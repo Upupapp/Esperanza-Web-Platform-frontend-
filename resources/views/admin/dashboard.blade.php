@@ -7,7 +7,7 @@
     $permissionModules = config('esperanza_rbac.permission_modules');
 @endphp
 
-<x-layouts.admin title="Executive Dashboard" subtitle="Overview of citizen services and municipal operations." active="dashboard">
+<x-layouts.admin title="Dashboard" subtitle="Requests, residents and alerts in your scope." active="dashboard">
     <div
         x-data="{
             ready: false,
@@ -44,6 +44,17 @@
                 return Object.entries(by).map(([label, value]) => ({ label, value, color: this.statusColors[label] || '#94a3b8' }));
             },
             get assistStatusTotal() { return this.assistStatus.reduce((n, r) => n + r.value, 0); },
+            // Open = not Released / Rejected / Completed / Cancelled / Archived. The
+            // Tulong tile said Currently active over every status, 11 closed
+            // cases (live test 2026-10-07, BUG-2).
+            get openDokyu() { return this.dash?.requests?.open_by_type?.dokyu ?? 0; },
+            get openTulong() { return this.dash?.requests?.open_by_type?.tulong ?? 0; },
+            get waitingDokyu() { return this.dash?.requests?.needing_action_by_type?.dokyu ?? this.dash?.requests?.needing_action ?? 0; },
+            get waitingTulong() { return this.dash?.requests?.needing_action_by_type?.tulong ?? 0; },
+            get scopeLabel() {
+                const s = this.$store.session.account?.scope;
+                return !s || s === 'Municipal' ? 'Across 20 barangays' : 'In Brgy. ' + s;
+            },
             get barangayRequests() {
                 const rows = this.dash?.requests?.by_barangay || [];
                 const max = Math.max(1, ...rows.map(r => r.open));
@@ -117,7 +128,7 @@
         </div>
 
         <div class="flex items-center justify-between mb-4">
-            <p class="text-sm text-slate-500">Real-time overview of citizen services and municipal operations.</p>
+            <p class="text-sm text-slate-500">Live counts, refreshed each time this page opens.</p>
             <x-ui.button :href="route('admin.reports')" variant="secondary" size="sm" icon="download">Export Report</x-ui.button>
         </div>
 
@@ -151,10 +162,10 @@
 
             <!-- KPI row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">
-                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabel="Across 20 barangays" :delay="0" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Dokyu" valueBind="docStatusTotal" icon="file-text" color="green" sublabel="Open + closed this window" :delay="40" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Pending Approvals" valueBind="dash?.requests?.needing_action ?? 0" icon="inbox" color="orange" sublabel="Needs action today" :delay="80" /></div>
-                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.assistance-requests')" label="Tulong" valueBind="assistStatusTotal" icon="hand-heart" color="purple" sublabel="Currently active" :delay="120" /></div>
+                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="green" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
+                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.assistance-requests') . '?open=1'" label="Tulong Open" valueBind="openTulong" icon="hand-heart" color="purple" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
                 <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="teal" sublabel="Document requests" :delay="160" /></div>
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="red" sublabel="Dokyu + Tulong" :delay="200" /></div>
             </div>
@@ -199,7 +210,7 @@
                         <canvas x-ref="canvas"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="assistStatusTotal.toLocaleString()"></span>
-                            <span class="text-[11px] text-slate-500">Active Cases</span>
+                            <span class="text-[11px] text-slate-500">Total Cases</span>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2.5">

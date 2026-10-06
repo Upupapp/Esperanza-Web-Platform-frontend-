@@ -38,7 +38,7 @@
 
         <form class="mt-6 space-y-4" @submit.prevent="submit">
             <div class="animate-fade-up" style="animation-delay: 90ms">
-                <x-ui.input name="identifier" type="text" label="Resident ID, Email, or Mobile" icon="user" placeholder="ESP-RES-2026-000123" x-model="identifier" x-ref="identifier" required />
+                <x-ui.input name="identifier" type="text" label="Resident ID, Email, or Mobile" label-fil="Resident ID, Email, o Mobile" icon="user" placeholder="ESP-RES-2026-000123" x-model="identifier" x-ref="identifier" required />
             </div>
 
             <div class="animate-fade-up" style="animation-delay: 120ms" x-data="passwordField">

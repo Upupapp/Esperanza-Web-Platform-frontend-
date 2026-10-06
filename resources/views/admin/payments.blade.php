@@ -1,7 +1,8 @@
 <x-layouts.admin title="Payments" subtitle="Track Dokyu and Tulong invoices, methods, and issued receipts." active="payments">
     <div
         x-data="{
-            tab: 'all',
+            // Opens on what the cashier has to act on (live test 2026-10-07, BUG-3).
+            tab: 'review',
             search: '',
             barangayFilter: '',
             open: false,
@@ -31,7 +32,9 @@
                 const tabOk = this.tab === 'all'
                     || (this.tab === 'review' && p.status === 'Pending Review')
                     || (this.tab === 'paid' && p.status === 'Approved')
-                    || (this.tab === 'rejected' && p.status === 'Rejected');
+                    || (this.tab === 'rejected' && p.status === 'Rejected')
+                    || (this.tab === 'closed' && p.status === 'Cancelled')
+                    || (this.tab === 'refund' && this.refundToDecide(p));
                 const barangayOk = this.barangayFilter === '' || p.barangay === this.barangayFilter;
                 const q = this.search.trim().toLowerCase();
                 const searchOk = q === '' || p.ref.toLowerCase().includes(q) || (p.request_ref || '').toLowerCase().includes(q) || (p.citizen || '').toLowerCase().includes(q);
@@ -47,7 +50,11 @@
                 await this.loadPayments();
             },
             get visibleCount() { return this.payments.filter(p => this.matches(p)).length; },
-            get totalInvoiced() { return this.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0); },
+            // A request rejected or cancelled closes its unpaid payment as Cancelled
+            // (the server does it); a paid one on such a request is a refund for a
+            // person to decide. Neither counts as owed.
+            refundToDecide(p) { return p.status === 'Approved' && ['Rejected', 'Cancelled'].includes(p.request_status); },
+            get totalInvoiced() { return this.payments.filter(p => p.status !== 'Cancelled').reduce((sum, p) => sum + Number(p.amount || 0), 0); },
             get totalCollected() { return this.payments.filter(p => p.status === 'Approved').reduce((sum, p) => sum + Number(p.amount || 0), 0); },
             async issueReceipt() {
                 if (this.processing || !this.method || this.selected === null) return;
@@ -86,7 +93,7 @@
         <div x-show="$store.session.can('payments')" x-cloak>
 
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card label="Total Invoiced" valueBind="'₱' + totalInvoiced.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="receipt" color="brand" sublabel="All payments on file" :delay="0" />
+            <x-ui.stat-card label="Total Invoiced" valueBind="'₱' + totalInvoiced.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="receipt" color="brand" sublabel="Not counting closed requests" :delay="0" />
             <x-ui.stat-card label="Total Collected" valueBind="'₱' + totalCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="banknote" color="green" :delay="40" />
             <x-ui.stat-card label="Paid" valueBind="payments.filter(p => p.status === 'Approved').length" icon="circle-check" color="green" :delay="80" />
             <x-ui.stat-card label="Pending Review" valueBind="payments.filter(p => p.status === 'Pending Review').length" icon="clock" color="orange" sublabel="Awaiting receipt" :delay="120" />
@@ -113,6 +120,8 @@
                     <button type="button" @click="tab = 'review'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'review' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">Pending Review</button>
                     <button type="button" @click="tab = 'paid'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'paid' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">Paid</button>
                     <button type="button" @click="tab = 'rejected'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'rejected' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">Rejected</button>
+                    <button type="button" @click="tab = 'closed'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'closed' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'" title="Unpaid payments of requests that were rejected or cancelled">Request closed</button>
+                    <button type="button" x-show="payments.some((p) => refundToDecide(p))" x-cloak @click="tab = 'refund'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'refund' ? 'bg-white text-navy-900 shadow-sm' : 'text-amber-700 hover:text-amber-800'">Refund to decide <span x-text="payments.filter((p) => refundToDecide(p)).length"></span></button>
                 </div>
                 <p class="text-[11px] text-slate-500 shrink-0" x-text="visibleCount + ' of ' + payments.length + ' payments'"></p>
             </div>
@@ -165,6 +174,8 @@
                     <td class="px-4 py-3 text-slate-500 hidden xl:table-cell whitespace-nowrap" x-text="p.date"></td>
                     <td class="px-4 py-3">
                         <x-ui.badge statusBind="p.status" />
+                        <p x-show="refundToDecide(p)" x-cloak class="text-[10.5px] font-medium text-amber-700 mt-1" x-text="'Request ' + (p.request_status || '').toLowerCase() + ': refund to decide'"></p>
+                        <p x-show="p.status === 'Cancelled' && p.request_status" x-cloak class="text-[10.5px] text-slate-500 mt-1" x-text="'Request ' + (p.request_status || '').toLowerCase()"></p>
                     </td>
                     <td class="px-4 py-3 text-right" @click.stop>
                         <button

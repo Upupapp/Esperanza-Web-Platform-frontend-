@@ -69,7 +69,7 @@
 
                         <div class="relative h-full flex flex-col px-4 pt-3.5 pb-3">
                             <div class="flex items-center gap-2">
-                                <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="" class="w-7 h-7 rounded-full ring-1 ring-white/30 object-cover shrink-0">
+                                <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-7 h-7 rounded-full ring-1 ring-white/30 object-cover shrink-0">
                                 <div class="min-w-0 leading-tight">
                                     <p class="text-[8px] text-white/50 uppercase tracking-wide">Republic of the Philippines</p>
                                     <p class="text-[9.5px] font-semibold text-white/85 truncate">Municipality of Esperanza, Masbate</p>

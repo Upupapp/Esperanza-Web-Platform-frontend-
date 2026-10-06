@@ -76,7 +76,7 @@
     <x-ui.pill color="slate"><i data-lucide="list" class="w-3.5 h-3.5"></i> <span x-text="'Total: ' + incidentsList.length"></span></x-ui.pill>
     <x-ui.pill color="rose"><i data-lucide="flame" class="w-3.5 h-3.5"></i> <span x-text="'Critical: ' + incidentsList.filter(i => i.severity === 'Critical').length"></span></x-ui.pill>
     <x-ui.pill color="orange"><i data-lucide="truck" class="w-3.5 h-3.5"></i> <span x-text="'Active: ' + incidentsList.filter(i => !['Completed','Archived'].includes(i.status)).length"></span></x-ui.pill>
-    <x-ui.pill color="emerald"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i> <span x-text="'Completed: ' + incidentsList.filter(i => i.status === 'Completed').length"></span></x-ui.pill>
+    <x-ui.pill color="emerald"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i> <span x-text="'Resolved: ' + incidentsList.filter(i => i.status === 'Completed').length"></span></x-ui.pill>
 </div>
 
 {{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
@@ -106,12 +106,12 @@
     <select aria-label="Incident status filter" x-model="incidentStatusFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Statuses</option>
-        <option>Submitted</option>
-        <option>Under Verification</option>
-        <option>Assigned</option>
-        <option>Processing</option>
-        <option>Completed</option>
-        <option>Archived</option>
+        <option value="Submitted">Reported</option>
+        <option value="Under Verification">Validated</option>
+        <option value="Assigned">Assigned</option>
+        <option value="Processing">Dispatched</option>
+        <option value="Completed">Resolved</option>
+        <option value="Archived">Closed</option>
     </select>
     <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter"
         class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
@@ -168,7 +168,7 @@
                             <span class="text-sm text-slate-700" x-text="inc.assigned_name || '—'" x-show="inc.assigned_name"></span>
                             <span class="text-xs italic text-amber-600" x-show="!inc.assigned_name">Unassigned</span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(inc.status)" x-text="inc.status"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(inc.status)" x-text="incidentStatusLabel(inc.status)" :title="'Status on record: ' + inc.status"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap"><span class="text-xs text-slate-500" x-text="elapsed(inc.reported)"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-1.5">

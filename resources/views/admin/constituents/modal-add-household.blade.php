@@ -45,7 +45,7 @@
             this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not create this household.', variant: 'error' });
         } finally { this.submitting = false; }
     }
-}">
+}" x-init="$watch('open', v => { if (!v) addHouseholdStep = 1; })">
 <x-ui.modal maxWidth="xl" :fullscreen="true">
 
     <div class="flex flex-col h-full max-h-[90vh]">

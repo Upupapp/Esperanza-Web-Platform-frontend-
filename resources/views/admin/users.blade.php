@@ -144,10 +144,12 @@
             x-show="tab === 'personnel'"
         >
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card label="Total Personnel" valueBind="totalCount" icon="users" color="brand" :delay="0" />
+                {{-- Same words as the status in the list, and the same count as the
+                     Roles tab (live test 2026-10-07, UX-13). --}}
+                <x-ui.stat-card label="All Staff Accounts" valueBind="totalCount" icon="users" color="brand" :delay="0" sublabel="Including archived" />
                 <x-ui.stat-card label="Active Accounts" valueBind="activeCount" icon="user-round-check" color="green" :delay="40" />
                 <x-ui.stat-card label="Pending Approval" valueBind="pendingCount" icon="user-round-search" color="orange" :delay="80" />
-                <x-ui.stat-card label="Deactivated" valueBind="archivedCount" icon="user-x" color="red" :delay="120" />
+                <x-ui.stat-card label="Archived or Rejected" valueBind="archivedCount" icon="user-x" color="red" :delay="120" sublabel="Cannot sign in" />
             </div>
 
             <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 flex flex-wrap items-center gap-2">
@@ -566,7 +568,7 @@
             x-show="tab === 'roles'" x-cloak
         >
             <div class="flex items-center justify-between gap-3 mb-4">
-                <p class="text-sm text-slate-500" x-text="roles.length + ' roles · ' + totalAccounts + ' personnel accounts'"></p>
+                <p class="text-sm text-slate-500" x-text="roles.length + ' staff roles · ' + totalAccounts + ' staff accounts in use (active or pending; archived not counted)'"></p>
                 <x-ui.button icon="plus" size="sm" @click="open = true; createError = ''">New Role</x-ui.button>
             </div>
 
@@ -588,7 +590,7 @@
                                         <span x-text="role.name"></span>
                                         <span x-show="role.built_in === false" class="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-1.5 py-0.5">Custom</span>
                                     </p>
-                                    <p class="text-xs text-slate-500" x-text="(role.accounts || 0) + ' personnel'"></p>
+                                    <p class="text-xs text-slate-500" x-text="(role.accounts || 0) + ((role.accounts || 0) === 1 ? ' account in use' : ' accounts in use')"></p>
                                 </div>
                             </div>
                             <span x-show="!role.editable" class="text-slate-300" title="System role — not editable"><i data-lucide="lock" class="w-3.5 h-3.5"></i></span>

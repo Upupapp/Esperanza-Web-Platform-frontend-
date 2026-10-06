@@ -117,19 +117,19 @@
                 <!-- Step 1: Personal Information -->
                 <div x-show="step === 1" x-ref="step1" x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        <x-ui.input name="first_name" label="First Name" placeholder="Maria" x-model="form.first_name" required />
-                        <x-ui.input name="last_name" label="Last Name" placeholder="Bacaltos" x-model="form.last_name" required />
+                        <x-ui.input name="first_name" label="First Name" label-fil="Pangalan" placeholder="Maria" x-model="form.first_name" required />
+                        <x-ui.input name="last_name" label="Last Name" label-fil="Apelyido" placeholder="Bacaltos" x-model="form.last_name" required />
                     </div>
-                    <x-ui.input name="middle_name" label="Middle Name" placeholder="Cabaltera" x-model="form.middle_name" />
+                    <x-ui.input name="middle_name" label="Middle Name" label-fil="Gitnang Pangalan" placeholder="Cabaltera" x-model="form.middle_name" />
 
                     <div class="grid grid-cols-2 gap-4">
-                        <x-ui.input name="birthdate" type="date" label="Date of Birth" x-model="form.birthdate" required />
+                        <x-ui.input name="birthdate" type="date" label="Date of Birth" label-fil="Petsa ng Kapanganakan" x-model="form.birthdate" required />
                         <div>
                             <label for="sex" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Kasarian" en="Sex" /></label>
                             <select id="sex" name="sex" x-model="form.sex" required class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
-                                <option value="">Select</option>
-                                <option>Female</option>
-                                <option>Male</option>
+                                <option value="" x-text="$store.lang.current === 'en' ? 'Select' : 'Pumili'">Select</option>
+                                <option value="Female" x-text="$store.lang.current === 'en' ? 'Female' : 'Babae'">Female</option>
+                                <option value="Male" x-text="$store.lang.current === 'en' ? 'Male' : 'Lalaki'">Male</option>
                             </select>
                         </div>
                     </div>
@@ -137,7 +137,7 @@
                     <div>
                         <label for="civil_status" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Katayuang Sibil" en="Civil Status" /></label>
                         <select id="civil_status" name="civil_status" x-model="form.civil_status" required class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
-                            <option value="">Select your civil status</option>
+                            <option value="" x-text="$store.lang.current === 'en' ? 'Select your civil status' : 'Piliin ang katayuang sibil'">Select your civil status</option>
                             <option>Single</option>
                             <option>Married</option>
                             <option>Widowed</option>
@@ -159,7 +159,7 @@
                         <div class="relative">
                             <i data-lucide="map-pin" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500 pointer-events-none"></i>
                             <select id="barangay" name="barangay" x-model="form.barangay" required class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
-                                <option value="">Select your barangay</option>
+                                <option value="" x-text="$store.lang.current === 'en' ? 'Select your barangay' : 'Piliin ang iyong barangay'">Select your barangay</option>
                                 <template x-for="b in barangays" :key="b">
                                     <option :value="b" x-text="b"></option>
                                 </template>
@@ -168,8 +168,8 @@
                         </div>
                     </div>
 
-                    <x-ui.input name="purok" label="Purok / Sitio" placeholder="Purok 3, Sitio Mabuhay" x-model="form.purok" />
-                    <x-ui.input name="address" label="Complete Address" icon="house" placeholder="Purok 3, Sitio Mabuhay" x-model="form.address" required />
+                    <x-ui.input name="purok" label="Purok / Sitio" label-fil="Purok / Sitio" placeholder="Purok 3, Sitio Mabuhay" x-model="form.purok" />
+                    <x-ui.input name="address" label="Complete Address" label-fil="Kumpletong Address" icon="house" placeholder="Purok 3, Sitio Mabuhay" x-model="form.address" required />
 
                     <div class="flex items-center gap-2.5">
                         <x-ui.button type="button" @click="back()" variant="secondary" size="lg" icon="arrow-left">
@@ -183,9 +183,9 @@
 
                 <!-- Step 3: Contact & Security -->
                 <div x-show="step === 3" x-ref="step3" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" class="space-y-4">
-                    <x-ui.input name="email" type="email" label="Email Address" icon="mail" placeholder="maria.bacaltos@email.com" x-model="form.email" />
-                    <x-ui.input name="mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="form.mobile" @input="form.mobile = window.phMobile.bind($event.target)" />
-                    <x-ui.input name="password" type="password" label="Password" icon="lock" placeholder="Create a password" x-model="form.password" required />
+                    <x-ui.input name="email" type="email" label="Email Address" label-fil="Email Address" icon="mail" placeholder="maria.bacaltos@email.com" x-model="form.email" />
+                    <x-ui.input name="mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" label-fil="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="form.mobile" @input="form.mobile = window.phMobile.bind($event.target)" />
+                    <x-ui.input name="password" type="password" label="Password" label-fil="Password" icon="lock" x-bind:placeholder="$store.lang.current === 'en' ? 'Create a password' : 'Gumawa ng password'" x-model="form.password" required />
 
                     <label class="flex items-start gap-2.5 text-xs text-slate-500 pt-1">
                         <input type="checkbox" required class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
@@ -227,7 +227,7 @@
             <p class="text-slate-500 text-sm mt-1.5" x-text="($store.lang.current === 'en' ? 'Enter the 6-digit code sent to ' : 'Ilagay ang 6-digit code na ipinadala sa ') + otpDestination"></p>
 
             <form class="mt-6 space-y-4" @submit.prevent="verify">
-                <x-ui.input name="code" type="text" label="6-digit code" icon="shield-check" class="font-mono text-center tracking-[0.4em]" x-model="otpCode" maxlength="6" required />
+                <x-ui.input name="code" type="text" label="6-digit code" label-fil="6-digit na code" icon="shield-check" class="font-mono text-center tracking-[0.4em]" x-model="otpCode" maxlength="6" required />
 
                 <div x-show="verifyError" x-cloak class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
                     <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>

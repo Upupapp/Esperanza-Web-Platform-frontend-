@@ -68,9 +68,14 @@
                                     <span x-show="compact"><i data-lucide="maximize-2" class="w-4 h-4"></i></span>
                                     <span x-show="!compact"><i data-lucide="minimize-2" class="w-4 h-4"></i></span>
                                 </button>
+                                {{-- Untitled: the content has its own heading and close
+                                     button, so a second x here was one too many
+                                     (live test 2026-10-07, UX-5). --}}
+                                @if($title)
                                 <button type="button" @click="open = false" aria-label="Close dialog" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                                     <i data-lucide="x" class="w-5 h-5"></i>
                                 </button>
+                                @endif
                             </div>
                         </div>
                         <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 sm:px-10 sm:py-8">

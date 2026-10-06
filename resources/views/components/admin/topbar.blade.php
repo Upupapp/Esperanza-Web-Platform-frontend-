@@ -113,10 +113,10 @@
                         <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + $store.session.account?.scope"></span>
                     </span>
                 </div>
-                <a href="#" @click.prevent="$dispatch('toast', { message: 'Personnel profile page is a frontend preview.', variant: 'info' })" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <a href="#" @click.prevent="open = false; $dispatch('open-my-profile')" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-slate-500"></i>My Profile
                 </a>
-                <a href="{{ route('admin.settings') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <a href="{{ route('admin.settings') }}" x-show="$store.session.can('settings')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                     <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>Settings
                 </a>
                 <div class="border-t border-slate-100 my-1.5"></div>

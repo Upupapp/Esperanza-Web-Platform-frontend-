@@ -25,6 +25,7 @@
                 try {
                     const result = await $api.get('/citizen/notification-preferences');
                     this.notifPrefs = result.data?.preferences || [];
+                    this.smsAvailable = result.data?.sms_available !== false;
                 } catch { this.notifPrefs = []; } finally { this.notifPrefsLoading = false; }
                 this.loadDataRequests();
             },
@@ -33,7 +34,12 @@
             // delivers anyway -- so a resident could not choose texts without
             // email. In-app is not a choice (backend B3); SMS and email are.
             // in_app is still sent as true: a backend from before B3 requires it.
+            // No SMS gateway yet: the SMS switches are greyed out and say so,
+            // instead of offering a channel that sends nothing (live test
+            // 2026-10-07, PR-10). The server sends email in their place.
+            smsAvailable: true,
             async togglePref(pref, channel) {
+                if (channel === 'sms' && !this.smsAvailable) return;
                 const next = !pref[channel];
                 pref[channel] = next;
                 try {
@@ -113,9 +119,13 @@
                         <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-brand-600"></i>
                         <x-ui.t fil="Laging naka-on ang mga abiso sa portal at app — dito mo makikita ang lahat ng update sa iyong mga kahilingan." en="Notifications in the portal and app are always on — they are where every update on your requests appears." />
                     </p>
+                    <p x-show="!smsAvailable" x-cloak class="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4 flex items-start gap-1.5">
+                        <i data-lucide="message-square-off" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
+                        <x-ui.t fil="Darating pa ang text message (SMS). Hangga't wala pa, sa email namin ipinapadala ang mga update na pinili mong i-text." en="Text messages (SMS) are coming soon. Until then, updates you chose to get by text are sent by email." />
+                    </p>
                     <div class="hidden sm:grid grid-cols-[minmax(0,1fr)_64px_64px] gap-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                         <span><x-ui.t fil="Uri ng update" en="Update type" /></span>
-                        <span class="text-center">SMS</span>
+                        <span class="text-center" x-text="smsAvailable ? 'SMS' : ($store.lang.current === 'en' ? 'SMS (soon)' : 'SMS (darating)')"></span>
                         <span class="text-center">Email</span>
                     </div>
                     <div class="divide-y divide-slate-50">
@@ -130,7 +140,9 @@
                                             role="switch"
                                             :aria-checked="pref[channel] ? 'true' : 'false'"
                                             :aria-label="(channel === 'sms' ? 'SMS' : 'Email') + ': ' + ($store.lang.current === 'en' ? pref.label?.en : (pref.label?.fil || pref.label?.en))"
-                                            class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative"
+                                            :disabled="channel === 'sms' && !smsAvailable"
+                                            :title="channel === 'sms' && !smsAvailable ? ($store.lang.current === 'en' ? 'Text messages are coming soon' : 'Darating pa ang text message') : null"
+                                            class="w-10 h-6 rounded-full transition-colors duration-[160ms] ease-standard relative disabled:opacity-40 disabled:cursor-not-allowed"
                                             :class="pref[channel] ? 'bg-brand-600' : 'bg-slate-200'"
                                         >
                                             <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-[160ms] ease-standard" :class="pref[channel] && 'translate-x-4'"></span>

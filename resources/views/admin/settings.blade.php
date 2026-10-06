@@ -3,7 +3,7 @@
     $supportIconOptions = ['phone', 'mail', 'message-square', 'map-pin', 'clock', 'life-buoy', 'headset', 'globe'];
 @endphp
 
-<x-layouts.admin title="Settings" subtitle="Platform preferences and configuration." active="settings">
+<x-layouts.admin title="Settings" subtitle="Platform preferences and configuration." :active="$tab === 'audit-logs' ? 'audit-logs' : ($tab === 'support' ? 'support' : 'settings')">
     <div x-data="{ tab: '{{ $tab }}', can(sub, perm) { return this.$store.session.canPerm ? this.$store.session.canPerm(sub, perm) : true; } }" class="animate-fade-up">
 
         <div x-show="!$store.session.can('settings')" x-cloak>
@@ -15,7 +15,7 @@
         <div class="lg:col-span-1">
             <x-ui.card padded="false" class="p-2">
                 <nav class="space-y-0.5">
-                    @foreach(['general' => ['building-2', 'General'], 'notifications' => ['bell', 'Notifications'], 'security' => ['shield', 'Security'], 'branding' => ['palette', 'Branding'], 'service-catalog' => ['layout-list', 'Service Catalog'], 'site-content' => ['file-text', 'Site Content'], 'integrations' => ['plug', 'Integrations'], 'audit-logs' => ['scroll-text', 'Audit Logs']] as $key => [$icon, $label])
+                    @foreach(['general' => ['building-2', 'General'], 'support' => ['life-buoy', 'Support Tickets'], 'notifications' => ['bell', 'Notifications'], 'security' => ['shield', 'Security'], 'branding' => ['palette', 'Branding'], 'service-catalog' => ['layout-list', 'Service Catalog'], 'site-content' => ['file-text', 'Site Content'], 'integrations' => ['plug', 'Integrations'], 'audit-logs' => ['scroll-text', 'Audit Logs']] as $key => [$icon, $label])
                         <button
                             @click="tab = '{{ $key }}'"
                             class="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors"
@@ -164,27 +164,18 @@
             </div>
 
             {{-- ============================= SECURITY ============================= --}}
-            {{-- No backend concept exists for these yet (no password-policy or
-                 session-timeout store) — left as a static preview, same treatment
-                 as the Users screen's own Matrix tab. --}}
+            {{-- 'Enforce 2FA for all' and a session-timeout choice answered with a
+                 'frontend preview' toast: no policy store exists for either (live
+                 test 2026-10-07, PR-8). This tab now says what the platform does. --}}
             <div x-show="tab === 'security'" x-cloak class="space-y-4">
-                <x-ui.card class="flex items-center justify-between gap-4">
-                    <div>
-                        <p class="text-sm font-medium text-navy-900">Two-Factor Authentication</p>
-                        <p class="text-xs text-slate-500 mt-0.5">Require 2FA for all personnel accounts.</p>
-                    </div>
-                    <x-ui.button variant="secondary" size="sm" @click="$dispatch('toast', { message: '2FA enforcement is a frontend preview — no policy store exists on the backend yet.', variant: 'info' })">Enforce for All</x-ui.button>
-                </x-ui.card>
-                <x-ui.card class="flex items-center justify-between gap-4">
-                    <div>
-                        <p class="text-sm font-medium text-navy-900">Session Timeout</p>
-                        <p class="text-xs text-slate-500 mt-0.5">Automatically sign out inactive sessions.</p>
-                    </div>
-                    <select class="text-sm rounded-xl border border-slate-200 bg-white py-2 px-3 shadow-card focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                        <option>15 minutes</option>
-                        <option selected>30 minutes</option>
-                        <option>1 hour</option>
-                    </select>
+                <x-ui.card>
+                    <h3 class="text-sm font-semibold text-navy-900 mb-3">What protects staff accounts</h3>
+                    <ul class="space-y-2.5 text-sm text-slate-600">
+                        <li class="flex gap-2.5"><i data-lucide="lock" class="w-4 h-4 mt-0.5 text-slate-500 shrink-0"></i><span>Five wrong passwords lock an account for 15 minutes. Every failed sign-in and lockout is in the Audit Logs.</span></li>
+                        <li class="flex gap-2.5"><i data-lucide="key-round" class="w-4 h-4 mt-0.5 text-slate-500 shrink-0"></i><span>A password set by an administrator (a new account, or a reset) must be replaced by the officer at their next sign-in. Officers change their own password under My Profile.</span></li>
+                        <li class="flex gap-2.5"><i data-lucide="smartphone" class="w-4 h-4 mt-0.5 text-slate-500 shrink-0"></i><span>Sign-in codes are required for the roles the role catalog marks for them.</span></li>
+                        <li class="flex gap-2.5"><i data-lucide="log-out" class="w-4 h-4 mt-0.5 text-slate-500 shrink-0"></i><span>Archiving an account, or resetting its password, signs it out everywhere at once.</span></li>
+                    </ul>
                 </x-ui.card>
             </div>
 
@@ -244,7 +235,7 @@
                             <div>
                                 <p class="text-sm text-slate-600">esperanza-seal.png</p>
                                 <p class="text-xs text-slate-500 mt-0.5">512×512px · PNG · Used across both portals</p>
-                                <x-ui.button variant="secondary" size="sm" icon="upload" class="mt-2.5" @click="$dispatch('toast', { message: 'Seal upload is a frontend preview — no upload endpoint exists on the backend yet.', variant: 'info' })" x-show="can('set_branding','edit')">Replace Seal</x-ui.button>
+                                <p class="text-[11px] text-slate-500 mt-2">To change the seal, send the new image to the ICT Office: it is part of the site, not a setting.</p>
                             </div>
                         </div>
                     </x-ui.card>
@@ -747,6 +738,110 @@
                         @endforeach
                     </div>
                 </x-ui.card>
+            </div>
+
+            {{-- ============================= SUPPORT TICKETS ============================= --}}
+            {{-- Residents send tickets from Help → Suporta. The server had a list
+                 and a reply for them, but no staff screen used either, so every
+                 ticket waited forever (live test 2026-10-07, BUG-5). A reply
+                 reaches the resident's bell. Permission: set_general. --}}
+            <div
+                x-show="tab === 'support'" x-cloak
+                x-data="{
+                    loading: false, failed: false, loaded: false,
+                    tickets: [], filter: 'open',
+                    selected: null, response: '', replyStatus: 'Completed', sending: false, error: '',
+                    openStatuses: ['Submitted', 'Pending Review', 'Under Review'],
+                    get shown() {
+                        return this.tickets.filter((t) => this.filter === 'all' || (this.filter === 'open' ? this.openStatuses.includes(t.status) : !this.openStatuses.includes(t.status)));
+                    },
+                    get openCount() { return this.tickets.filter((t) => this.openStatuses.includes(t.status)).length; },
+                    async load() {
+                        if (!can('set_general', 'view')) return;
+                        this.loading = true; this.failed = false;
+                        try { this.tickets = (await $api.getAll('/admin/support/tickets')).data || []; this.loaded = true; }
+                        catch { this.failed = true; }
+                        finally { this.loading = false; }
+                    },
+                    pick(t) { this.selected = t; this.response = t.response || ''; this.replyStatus = 'Completed'; this.error = ''; },
+                    async reply() {
+                        if (!this.selected || this.response.trim().length < 2 || this.sending) return;
+                        this.sending = true; this.error = '';
+                        try {
+                            const res = await $api.post('/admin/support/tickets/' + encodeURIComponent(this.selected.ref) + '/respond', { response: this.response.trim(), status: this.replyStatus });
+                            const row = res.data || {};
+                            this.tickets = this.tickets.map((t) => t.ref === this.selected.ref ? { ...t, ...row } : t);
+                            this.selected = this.tickets.find((t) => t.ref === row.ref) || null;
+                            $dispatch('toast', { message: 'Reply sent. The resident is notified in their bell.', variant: 'success' });
+                        } catch (err) {
+                            this.error = err.explain ? err.explain('en') : 'The reply could not be sent.';
+                        } finally { this.sending = false; }
+                    },
+                    when(iso) { return iso ? new Date(iso).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''; },
+                }"
+                x-effect="if (tab === 'support' && !loaded && !loading) load()"
+                class="space-y-4"
+            >
+                <x-ui.card x-show="!can('set_general', 'view')" x-cloak>
+                    <p class="text-sm text-slate-600">Support tickets are answered by staff who hold General Settings.</p>
+                </x-ui.card>
+                <div x-show="can('set_general', 'view')" class="grid grid-cols-1 xl:grid-cols-5 gap-4">
+                    <x-ui.card padded="false" class="xl:col-span-2 overflow-hidden">
+                        <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
+                            <h3 class="text-sm font-semibold text-navy-900">Tickets <span class="text-slate-400 font-normal" x-text="'(' + openCount + ' open)'"></span></h3>
+                            <select x-model="filter" aria-label="Show" class="text-xs rounded-lg border border-slate-200 py-1.5 px-2">
+                                <option value="open">Open</option>
+                                <option value="closed">Answered / closed</option>
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                        <p class="px-4 py-6 text-sm text-slate-500" x-show="loading">Loading…</p>
+                        <p class="px-4 py-6 text-sm text-rose-600" x-show="failed" x-cloak>The tickets could not be loaded. <button type="button" class="underline" @click="load()">Try again</button></p>
+                        <p class="px-4 py-6 text-sm text-slate-500" x-show="loaded && !shown.length" x-cloak>No tickets here.</p>
+                        <ul class="divide-y divide-slate-100 max-h-[32rem] overflow-y-auto">
+                            <template x-for="t in shown" :key="t.ref">
+                                <li>
+                                    <button type="button" @click="pick(t)" class="w-full text-left px-4 py-3 hover:bg-slate-50" :class="selected?.ref === t.ref ? 'bg-brand-50/60' : ''">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="text-sm font-medium text-navy-900 truncate" x-text="t.subject"></span>
+                                            <span class="text-[10.5px] font-semibold px-2 py-0.5 rounded-full shrink-0" :class="openStatuses.includes(t.status) ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'" x-text="t.status"></span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 mt-0.5" x-text="t.ref + ' · ' + (t.citizen?.name || 'Resident') + (t.citizen?.barangay ? ' · Brgy. ' + t.citizen.barangay : '') + ' · ' + when(t.created_at)"></p>
+                                    </button>
+                                </li>
+                            </template>
+                        </ul>
+                    </x-ui.card>
+                    <x-ui.card class="xl:col-span-3">
+                        <p class="text-sm text-slate-500" x-show="!selected">Choose a ticket to read and answer it.</p>
+                        <div x-show="selected" x-cloak class="space-y-3">
+                            <div>
+                                <p class="text-[11px] text-slate-500" x-text="(selected?.ref || '') + ' · ' + (selected?.category || '')"></p>
+                                <h3 class="text-base font-semibold text-navy-900" x-text="selected?.subject"></h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5" x-text="(selected?.citizen?.name || 'Resident') + (selected?.citizen?.account_no ? ' · ' + selected.citizen.account_no : '')"></p>
+                            </div>
+                            <p class="text-sm text-slate-700 whitespace-pre-line bg-slate-50 rounded-xl p-3" x-text="selected?.body"></p>
+                            <p class="text-[11px] text-slate-500" x-show="selected?.attachment" x-text="'Attachment: ' + (selected?.attachment?.name || '')"></p>
+                            <div x-show="selected?.response" class="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+                                <p class="text-[11px] font-semibold text-emerald-700" x-text="'Answered ' + when(selected?.responded_at)"></p>
+                                <p class="text-sm text-slate-700 whitespace-pre-line mt-1" x-text="selected?.response"></p>
+                            </div>
+                            <div x-show="can('set_general', 'edit')" class="space-y-2">
+                                <label for="ticket-reply" class="block text-xs font-medium text-slate-700">Reply to the resident</label>
+                                <textarea id="ticket-reply" x-model="response" rows="5" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-sm focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none" placeholder="Write the answer the resident will see in their bell."></textarea>
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <select x-model="replyStatus" aria-label="After replying" class="text-xs rounded-lg border border-slate-200 py-1.5 px-2">
+                                        <option value="Completed">Answered and closed</option>
+                                        <option value="Under Review">Answered, still working on it</option>
+                                        <option value="Cancelled">Closed without action</option>
+                                    </select>
+                                    <x-ui.button icon="send" @click="reply()" ::disabled="sending || response.trim().length < 2"><span x-text="sending ? 'Sending…' : 'Send reply'"></span></x-ui.button>
+                                </div>
+                                <p class="text-xs text-rose-600" x-show="error" x-text="error"></p>
+                            </div>
+                        </div>
+                    </x-ui.card>
+                </div>
             </div>
 
             {{-- ============================= AUDIT LOGS ============================= --}}

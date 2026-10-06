@@ -1,6 +1,6 @@
 <x-layouts.guest title="Welcome" image="esperanza-aerial.jpg" fullscreen>
     <div class="lg:hidden flex items-center gap-3 mb-8">
-        <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" class="w-11 h-11 rounded-full ring-2 ring-slate-200 object-cover" alt="Seal">
+        <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" class="w-11 h-11 rounded-full ring-2 ring-slate-200 object-cover" alt="Seal">
         <div>
             <p class="font-semibold text-navy-900 leading-tight">Municipality of Esperanza</p>
             <p class="text-xs text-slate-500">Province of Masbate</p>

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} — Esperanza Citizen Portal</title>
-    <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal.png') }}">
+    <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal-64.png') }}">
     {{-- The per-barangay directory (seal, officials, contact) used to be
          injected here from config/esperanza_barangay_documents.php as
          window.__barangayCatalog. $store.barangay now loads it from
@@ -31,5 +31,6 @@
     <x-citizen.birthday-popup />
     <x-citizen.fiesta-popup />
     <x-citizen.alert-popup />
+    <x-citizen.verified-popup />
 </body>
 </html>

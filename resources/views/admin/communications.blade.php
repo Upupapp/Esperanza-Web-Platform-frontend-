@@ -1,8 +1,15 @@
 @php
     $tab = $tab ?? 'balita';
+    // One page, three entries in the sidebar (live test 2026-10-07, NAV-2).
+    $group = in_array($tab, ['offices', 'barangays'], true) ? 'directory' : ($tab === 'blotter' ? 'blotter' : 'news');
+    [$pageTitle, $pageSubtitle, $activeNav] = match ($group) {
+        'directory' => ['Directory', 'Municipal offices and barangay officials residents can call.', 'directory'],
+        'blotter' => ['Blotter', 'Incident records kept by the barangay.', 'blotter'],
+        default => ['Balita & Events', 'Announcements, banners, community posts and events.', 'communications'],
+    };
 @endphp
 
-<x-layouts.admin title="Balita" subtitle="Announcements, community posts, and the municipal directory." active="communications">
+<x-layouts.admin :title="$pageTitle" :subtitle="$pageSubtitle" :active="$activeNav">
     <div
         x-data="{
             tab: '{{ $tab }}',
@@ -11,9 +18,16 @@
             // 'Walang pahintulot' pop-up per tab (QA run 2026-10-05).
             tabSubs: { balita: 'comm_news', banners: 'comm_banners', community: 'comm_community', events: 'comm_events', offices: 'comm_directory', barangays: 'comm_barangay_directory', blotter: 'comm_directory' },
             tabAllowed(t) { return $store.session.canPerm(this.tabSubs[t], 'view'); },
+            group: '{{ $group }}',
+            groupOf(t) { return ['offices', 'barangays'].includes(t) ? 'directory' : (t === 'blotter' ? 'blotter' : 'news'); },
+            inGroup(t) { return this.groupOf(t) === this.group; },
             async landOnAllowedTab() {
                 await $store.session.whenReady();
-                if (!this.tabAllowed(this.tab)) this.tab = Object.keys(this.tabSubs).find((t) => this.tabAllowed(t)) || this.tab;
+                if (!this.tabAllowed(this.tab)) {
+                    const keys = Object.keys(this.tabSubs);
+                    this.tab = keys.find((t) => this.inGroup(t) && this.tabAllowed(t)) || keys.find((t) => this.tabAllowed(t)) || this.tab;
+                    this.group = this.groupOf(this.tab);
+                }
             },
             barangayNames: @js(config('esperanza.barangays')),
             initials(name) { return (name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); },
@@ -28,14 +42,14 @@
 
         <div x-show="$store.session.can('communications')" x-cloak>
 
-        <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4 overflow-x-auto">
-            <button x-show="tabAllowed('balita')" @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
-            <button x-show="tabAllowed('banners')" @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
-            <button x-show="tabAllowed('community')" @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
-            <button x-show="tabAllowed('events')" @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
-            <button x-show="tabAllowed('offices')" @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
-            <button x-show="tabAllowed('barangays')" @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
-            <button x-show="tabAllowed('blotter')" @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
+        <div x-show="group !== 'blotter'" class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4 overflow-x-auto">
+            <button x-show="tabAllowed('balita') && inGroup('balita')" @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
+            <button x-show="tabAllowed('banners') && inGroup('banners')" @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
+            <button x-show="tabAllowed('community') && inGroup('community')" @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
+            <button x-show="tabAllowed('events') && inGroup('events')" @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
+            <button x-show="tabAllowed('offices') && inGroup('offices')" @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
+            <button x-show="tabAllowed('barangays') && inGroup('barangays')" @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
+            <button x-show="tabAllowed('blotter') && inGroup('blotter')" @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
         </div>
 
         {{-- ============================= BALITA (announcements) ============================= --}}
@@ -1022,7 +1036,7 @@
                         <div class="flex items-center gap-3 p-3.5 pb-3 bg-gradient-to-br from-brand-50/70 to-white">
                             <div class="relative w-12 h-12 shrink-0">
                                 <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-5 h-5"></i></div>
-                                <img :src="b.seal_path" x-show="b.seal_path" onerror="this.style.display='none'" alt="" class="relative w-12 h-12 rounded-full object-cover border-2 border-gold-400">
+                                <img :src="b.seal_path" x-show="b.seal_path" x-on:error="$el.style.display='none'" alt="" class="relative w-12 h-12 rounded-full object-cover border-2 border-gold-400">
                             </div>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-navy-900 truncate"><span>Brgy.</span> <span x-text="b.name"></span></p>

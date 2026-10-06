@@ -1,2 +1,4 @@
+# The staff site is not for search engines (live test 2026-10-07, PR-2).
+# Its pages also send X-Robots-Tag: noindex (_headers) and a noindex meta.
 User-agent: *
-Disallow:
+Disallow: /admin/

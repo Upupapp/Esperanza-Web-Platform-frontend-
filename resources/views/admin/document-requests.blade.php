@@ -1612,7 +1612,11 @@
             // components/admin/request-form-review.blade.php.
             formatFieldDate(iso) {
                 if (!iso) return '—';
-                const [y, m, d] = iso.split('-').map(Number);
+                // The app sends dates with a time (2026-01-31T00:00:00.000): only
+                // the date part is read, or the day became NaN and the field
+                // said 'Invalid Date' (live test 2026-10-07, BUG-1).
+                const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+                if (!y || !m || !d) return String(iso);
                 return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             },
             derivedAgeDisplay(step, field) {

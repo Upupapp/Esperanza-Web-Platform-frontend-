@@ -317,7 +317,7 @@
                 {{-- The resident's submitted Resident Profile: verify it, or send it
                      back with what to change. The resident is told either way. --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4" x-show="mayReviewProfile && selectedIndividual">
-                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Resident Profile Review</h3>
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Profile Sent by the Resident</h3>
                     <p class="text-xs leading-relaxed text-slate-600" x-show="selectedIndividual?.verification === 'For Validation'">Submitted for validation. Check the details on this record, then verify it or send it back with what to change.</p>
                     <p class="text-xs leading-relaxed text-emerald-700" x-show="selectedIndividual?.verification === 'Verified'" x-text="'Verified' + (selectedIndividual?.reviewed_by ? ' by ' + selectedIndividual.reviewed_by : '') + (selectedIndividual?.reviewed_at ? ' on ' + new Date(selectedIndividual.reviewed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '') + '.'"></p>
                     <p class="text-xs leading-relaxed text-amber-700 break-words" x-show="selectedIndividual?.review_note && selectedIndividual?.verification === 'Unverified'" x-text="'Sent back' + (selectedIndividual?.reviewed_by ? ' by ' + selectedIndividual.reviewed_by : '') + ', waiting for the resident: ' + selectedIndividual?.review_note"></p>

@@ -211,11 +211,24 @@
                 this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not decide the photo.', variant: 'error' });
             } finally { this.processingCitizen = false; }
         },
+        // The badge says what it is counting (live test 2026-10-07, UX-4): it
+        // read 2 while every account was approved, because it also counts the
+        // family and household records not confirmed yet.
+        get verificationQueueParts() {
+            return {
+                accounts: this.citizenAccountList.filter(i => i.citizen_account && ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length,
+                families: this.cvFamilyList.filter(f => f.verification !== 'Verified').length,
+                households: this.cvHouseholdList.filter(h => h.verification !== 'Verified').length,
+            };
+        },
         get pendingCitizenVerificationCount() {
-            const indiv = this.citizenAccountList.filter(i => i.citizen_account && ['Pending Review', 'Under Verification'].includes(i.citizen_account.status)).length;
-            const fam = this.cvFamilyList.filter(f => f.verification !== 'Verified').length;
-            const hh = this.cvHouseholdList.filter(h => h.verification !== 'Verified').length;
-            return indiv + fam + hh;
+            const p = this.verificationQueueParts;
+            return p.accounts + p.families + p.households;
+        },
+        get verificationQueueBreakdown() {
+            const p = this.verificationQueueParts;
+            const n = (k, one, many) => k + ' ' + (k === 1 ? one : many);
+            return n(p.accounts, 'account ID', 'account IDs') + ', ' + n(p.families, 'family record', 'family records') + ', ' + n(p.households, 'household record', 'household records') + ' to verify';
         },
         get cvCounts() {
             const list = this.citizenAccountList;
@@ -608,8 +621,8 @@
             <x-ui.stat-card @click="tab='registry';view='individuals';clearFilters()" class="cursor-pointer" label="Registered Residents" valueBind="activeStats.residents"  icon="users"          color="brand"  :delay="0"   />
             <x-ui.stat-card @click="tab='registry';view='households';clearFilters()" class="cursor-pointer" label="Active Households"    valueBind="activeStats.households" icon="house"           color="green"  :delay="40"  />
             <x-ui.stat-card @click="tab='registry';view='families';clearFilters()" class="cursor-pointer" label="Recorded Families"    valueBind="activeStats.families"   icon="users-round"    color="purple" :delay="80"  />
-            <x-ui.stat-card @click="tab='registry';view='individuals';clearFilters();verificationFilter='Verified'" class="cursor-pointer" label="ID Verified"          valueBind="activeStats.verified"   icon="badge-check"    color="gold"   :delay="120" />
-            <x-ui.stat-card @click="tab='registry';view='individuals';clearFilters();verificationFilter='For Validation'" class="cursor-pointer" label="Pending Validation"   valueBind="activeStats.pending"    icon="clock"          color="orange" :delay="160" />
+            <x-ui.stat-card @click="tab='registry';view='individuals';clearFilters();verificationFilter='Verified'" class="cursor-pointer" label="Records Confirmed"    valueBind="activeStats.verified"   icon="badge-check"    color="gold"   :delay="120" sublabel="Registry record checked" />
+            <x-ui.stat-card @click="tab='registry';view='individuals';clearFilters();verificationFilter='For Validation'" class="cursor-pointer" label="Profiles to Review"   valueBind="activeStats.pending"    icon="clock"          color="orange" :delay="160" sublabel="Sent in by residents" />
             <x-ui.stat-card @click="tab='data-quality';clearFilters()" class="cursor-pointer" label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="red"    :delay="200" sublabel="Needs attention" />
         </div>
 
@@ -635,8 +648,9 @@
             <button @click="tab='citizen-verification';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 relative"
                     :class="tab==='citizen-verification' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
-                <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>Citizen Verification
+                <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>To Verify
                 <span
+                    :title="verificationQueueBreakdown"
                     x-show="pendingCitizenVerificationCount > 0"
                     class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                     :class="tab==='citizen-verification' ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-600'"
@@ -738,7 +752,7 @@
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV
                     </button>
-                    <button onclick="window.print()"
+                    <button @click="window.print()"
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="printer" class="w-3.5 h-3.5"></i>Print
                     </button>

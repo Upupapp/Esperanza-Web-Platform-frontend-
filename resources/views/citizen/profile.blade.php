@@ -64,6 +64,7 @@
             // The Resident Profile filed on the phone: the barangay's decision.
             profileVerification: null,
             profileReview: null,
+            residentProfileView: null,
             residentProfileLoading: true,
             documents: [],
             documentsLoading: true,
@@ -74,14 +75,18 @@
                     this.documents = result.data || [];
                 } catch { this.documents = []; } finally { this.documentsLoading = false; }
             },
-            async init() {
+            async loadResidentProfile() {
                 this.residentProfileLoading = true;
                 try {
                     const result = await $api.get('/citizen/resident-profile');
+                    this.residentProfileView = result.data || null;
                     this.familyMembers = result.data?.family?.members || [];
                     this.profileVerification = result.data?.individual?.verification || null;
                     this.profileReview = result.data?.review || null;
                 } catch { this.familyMembers = []; } finally { this.residentProfileLoading = false; }
+            },
+            async init() {
+                await this.loadResidentProfile();
                 this.loadDocuments();
                 this.loadIdView();
                 this.loadPhoto();
@@ -347,7 +352,7 @@
                             <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-5 h-5"></i></div>
                             <img
                                 :src="$store.barangay.mine?.seal ? '{{ rtrim(asset(''), '/') }}/' + $store.barangay.mine.seal : ''"
-                                x-show="$store.barangay.mine?.seal" onerror="this.style.display='none'" alt=""
+                                x-show="$store.barangay.mine?.seal" x-on:error="$el.style.display='none'" alt=""
                                 class="relative w-11 h-11 rounded-full object-cover border-2 border-gold-400"
                             >
                         </div>
@@ -361,7 +366,7 @@
                 </div>
 
                 <!-- Resident Profile: where a notice about the barangay's decision lands -->
-                <x-ui.card id="resident-profile" x-show="profileVerification" x-cloak>
+                <x-ui.card id="resident-profile" x-show="profileVerification" x-cloak @resident-profile-saved.window="loadResidentProfile()">
                     <div class="flex items-center justify-between gap-2 mb-1.5">
                         <h3 class="text-sm font-semibold text-navy-900 flex items-center gap-2"><i data-lucide="clipboard-check" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Resident Profile" en="Resident Profile" /></h3>
                         {{-- LANGUAGE (TAB 09): the record status is a ruled status name, shown as is. --}}
@@ -372,9 +377,15 @@
                     <div class="space-y-1" x-show="profileReview?.outcome === 'returned'">
                         <p class="text-xs font-semibold text-amber-700"><x-ui.t fil="Kailangang ayusin ayon sa iyong barangay office:" en="Your barangay office asks you to change:" /></p>
                         <p class="text-xs text-amber-800 leading-relaxed break-words" x-text="profileReview?.note"></p>
-                        <p class="text-[11px] text-slate-500"><x-ui.t fil="Ayusin ito sa Esperanza app at isumite muli." en="Update it in the Esperanza app and submit it again." /></p>
+                        <p class="text-[11px] text-slate-500"><x-ui.t fil="Ayusin ito rito, o sa Esperanza app (Android), at isumite muli." en="Fix it here, or in the Esperanza app (Android), and send it again." /></p>
                     </div>
-                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Unverified' && profileReview?.outcome !== 'returned'"><x-ui.t fil="Hindi pa naisusumite. Kumpletuhin ito sa Esperanza app." en="Not submitted yet. Complete it in the Esperanza app." /></p>
+                    <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Unverified' && profileReview?.outcome !== 'returned'"><x-ui.t fil="Hindi pa naisusumite. Kumpletuhin ito rito, o sa Esperanza app (Android)." en="Not submitted yet. Complete it here, or in the Esperanza app (Android)." /></p>
+                    {{-- The website fills and corrects it too (live test 2026-10-07,
+                         UX-8): the app is Android only. --}}
+                    <x-ui.button size="sm" class="mt-3 w-full justify-center" icon="clipboard-pen" x-show="profileVerification === 'Unverified'" x-cloak
+                        @click="$dispatch('open-resident-profile', residentProfileView)">
+                        <span x-text="$store.lang.current === 'en' ? (profileReview?.outcome === 'returned' ? 'Fix my Resident Profile' : 'Fill in my Resident Profile') : (profileReview?.outcome === 'returned' ? 'Ayusin ang Resident Profile' : 'Punan ang Resident Profile')"></span>
+                    </x-ui.button>
                 </x-ui.card>
 
                 <!-- Household -->
@@ -542,4 +553,5 @@
             </x-ui.modal>
         </div>
     </div>
+    <x-citizen.resident-profile-form />
 </x-layouts.citizen>

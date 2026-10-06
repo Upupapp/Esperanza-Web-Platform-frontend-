@@ -148,6 +148,16 @@ foreach (['favicon.ico', 'robots.txt'] as $file) {
     }
 }
 
+// ── Response headers (Netlify _headers) ───────────────────────────────────────
+// Security and caching headers, written here so the API origin in the CSP is
+// the one THIS build talks to (VITE_API_BASE_URL), never a second copy of it
+// (live test 2026-10-07, PR-1 and PR-5). Alpine evaluates x-data expressions,
+// so script-src needs 'unsafe-eval'; style attributes need 'unsafe-inline'.
+$apiBase = getenv('VITE_API_BASE_URL') ?: ($_ENV['VITE_API_BASE_URL'] ?? 'https://esperanza.139-162-51-165.sslip.io/api/v1');
+$apiOrigin = preg_replace('#^(https?://[^/]+).*$#', '$1', (string) $apiBase);
+file_put_contents($distDir.'/_headers', esperanza_response_headers($apiOrigin));
+echo "  ✓  _headers (API origin {$apiOrigin})\n";
+
 // ── Summary ───────────────────────────────────────────────────────────────────
 echo "\n── Done ────────────────────────────────────────────────────\n";
 echo "  Pages : {$ok} rendered, {$fail} failed\n\n";

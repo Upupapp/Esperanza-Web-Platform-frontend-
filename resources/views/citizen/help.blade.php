@@ -13,10 +13,16 @@
             faqSearch: '',
             faqCategory: 'all',
             helpful: {},
+            // Each item may carry q_fil / a_fil; English where it does not
+            // (live test 2026-10-07, UX-6: the questions were English only).
+            faqText(f, key) {
+                return this.$store.lang.current !== 'en' && f[key + '_fil'] ? f[key + '_fil'] : f[key];
+            },
+            categoryNames: { Documents: 'Dokumento', Assistance: 'Tulong', Account: 'Account', Payments: 'Bayad', Technical: 'Teknikal' },
             get filteredFaqs() {
                 return this.faqs.map((f, i) => ({ ...f, i })).filter(f =>
                     (this.faqCategory === 'all' || f.category === this.faqCategory) &&
-                    (f.q + ' ' + f.a).toLowerCase().includes(this.faqSearch.toLowerCase())
+                    [f.q, f.a, f.q_fil, f.a_fil].join(' ').toLowerCase().includes(this.faqSearch.toLowerCase())
                 );
             },
             markHelpful(i, val) {
@@ -36,6 +42,9 @@
                 );
             },
             watchTutorial(t) { this.activeTutorial = t; this.open = true; },
+            // Only tutorials with a real video are shown; the cards had running
+            // times and no video behind them (live test 2026-10-07, PR-8).
+            get hasTutorials() { return this.tutorials.length > 0; },
             markWatched(i) { if (!this.watched.includes(i)) this.watched.push(i); },
 
             channels: [],
@@ -64,7 +73,8 @@
                         $api.get('/citizen/support/tickets').catch(() => ({ data: [] })),
                     ]);
                     this.faqs = faqs.data?.sections || [];
-                    this.tutorials = (tutorials.data?.sections || []).map((t) => ({ ...t, views: t.views ?? null }));
+                    this.tutorials = (tutorials.data?.sections || []).filter((t) => t.video_url).map((t) => ({ ...t, views: t.views ?? null }));
+                    if (this.tab === 'tutorials' && !this.tutorials.length) this.tab = 'faqs';
                     this.channels = support.data?.channels || [];
                     this.officeHours = support.data?.office_hours || '';
                     this.officeHoursFil = support.data?.office_hours_fil || '';
@@ -112,7 +122,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit">
                 <button @click="tab = 'faqs'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'faqs' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="circle-question-mark" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tanong" en="FAQs" /></button>
-                <button @click="tab = 'tutorials'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'tutorials' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Gabay" en="Tutorials" /></button>
+                <button x-show="hasTutorials" x-cloak @click="tab = 'tutorials'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'tutorials' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Gabay" en="Tutorials" /></button>
                 <button @click="tab = 'support'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'support' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
                     <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i><x-ui.t fil="Suporta" en="Support" />
                     <span class="text-[9px] font-semibold bg-white/25 rounded-full px-1.5 py-0.5" :class="tab === 'support' ? 'text-white' : 'bg-slate-100 text-slate-500'" x-text="tickets.length"></span>
@@ -139,7 +149,7 @@
                             @click="faqCategory = c"
                             class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
                             :class="faqCategory === c ? 'bg-brand-600 text-white' : 'bg-slate-100/70 text-slate-500 hover:bg-slate-100'"
-                            x-text="c === 'all' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : c"
+                            x-text="c === 'all' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : ($store.lang.current === 'en' ? c : (categoryNames[c] || c))"
                         ></button>
                     </template>
                     <span class="text-[11px] text-slate-500 ml-auto" x-text="filteredFaqs.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
@@ -150,7 +160,7 @@
                 <template x-for="faq in filteredFaqs" :key="faq.i">
                     <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
                         <button @click="activeIndex = activeIndex === faq.i ? null : faq.i" class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
-                            <span class="text-sm font-medium text-slate-700" x-text="faq.q"></span>
+                            <span class="text-sm font-medium text-slate-700" x-text="faqText(faq, 'q')"></span>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 shrink-0 transition-transform duration-[160ms] ease-standard" :class="activeIndex === faq.i && 'rotate-180'"></i>
                         </button>
                         <div
@@ -161,7 +171,7 @@
                             x-transition:enter-end="opacity-100 translate-y-0"
                             class="px-5 pb-4 -mt-1"
                         >
-                            <p class="text-sm text-slate-500 leading-relaxed" x-text="faq.a"></p>
+                            <p class="text-sm text-slate-500 leading-relaxed" x-text="faqText(faq, 'a')"></p>
                             <div class="flex items-center gap-2.5 mt-3 pt-3 border-t border-slate-50">
                                 <span class="text-[11px] text-slate-500"><x-ui.t fil="Nakatulong ba ito?" en="Was this helpful?" /></span>
                                 <button aria-label="Helpful"
@@ -365,18 +375,12 @@
         <x-ui.modal title="Panoorin ang Gabay" titleEn="Watch Tutorial" maxWidth="lg">
             <template x-if="activeTutorial">
                 <div>
-                    <div class="relative aspect-video rounded-xl bg-gradient-to-br from-navy-900 to-brand-800 flex items-center justify-center overflow-hidden mb-4">
-                        <div class="w-16 h-16 rounded-full bg-white/15 backdrop-blur flex items-center justify-center">
-                            <i data-lucide="play" class="w-7 h-7 text-white ml-1"></i>
-                        </div>
-                        <span class="absolute bottom-3 right-3 text-xs font-medium text-white bg-navy-950/70 px-2 py-1 rounded-md" x-text="activeTutorial.duration"></span>
-                    </div>
+                    <video :src="activeTutorial.video_url" controls preload="metadata" class="w-full aspect-video rounded-xl bg-navy-950 mb-4"></video>
                     <span class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full mb-2">
                         <i :data-lucide="activeTutorial.icon" class="w-3 h-3"></i><span x-text="activeTutorial.category"></span>
                     </span>
                     <p class="text-sm font-semibold text-navy-900 leading-snug" x-text="activeTutorial.title"></p>
                     <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="activeTutorial.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
-                    <p class="text-xs text-slate-500 mt-3"><x-ui.t fil="Ito ay isang frontend preview — walang aktwal na video na naka-play." en="This is a frontend preview — no actual video plays here." /></p>
                 </div>
             </template>
 

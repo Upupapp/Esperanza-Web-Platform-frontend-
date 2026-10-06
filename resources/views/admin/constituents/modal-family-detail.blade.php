@@ -181,7 +181,7 @@
                                         </dd>
                                     </div>
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500">Verification</dt>
+                                        <dt class="text-xs text-slate-500">Record</dt>
                                         <dd>
                                             <span
                                                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"

@@ -141,7 +141,7 @@
                             <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-6 h-6"></i></div>
                             <img
                                 :src="$store.barangay.mine?.seal ? '{{ rtrim(asset(''), '/') }}/' + $store.barangay.mine.seal : ''"
-                                x-show="$store.barangay.mine?.seal" onerror="this.style.display='none'" alt=""
+                                x-show="$store.barangay.mine?.seal" x-on:error="$el.style.display='none'" alt=""
                                 class="relative w-14 h-14 rounded-full object-cover border-2 border-gold-400"
                             >
                         </div>
@@ -180,7 +180,7 @@
                             </div>
                             <img
                                 :src="b.seal ? '{{ rtrim(asset(''), '/') }}/' + b.seal : ''"
-                                x-show="b.seal" onerror="this.style.display='none'" alt=""
+                                x-show="b.seal" x-on:error="$el.style.display='none'" alt=""
                                 class="relative w-12 h-12 rounded-full object-cover border-2 border-brand-100"
                             >
                         </div>
@@ -217,7 +217,7 @@
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="relative w-11 h-11 shrink-0">
                             <div class="absolute inset-0 rounded-full bg-gradient-to-br from-brand-50 to-purple-50 border-2 border-brand-100 flex items-center justify-center text-brand-400"><i data-lucide="map-pinned" class="w-5 h-5"></i></div>
-                            <img :src="selectedBarangayProfile?.seal ? '{{ rtrim(asset(''), '/') }}/' + selectedBarangayProfile.seal : ''" x-show="selectedBarangayProfile?.seal" onerror="this.style.display='none'" alt="" class="relative w-11 h-11 rounded-full object-cover border-2 border-brand-100">
+                            <img :src="selectedBarangayProfile?.seal ? '{{ rtrim(asset(''), '/') }}/' + selectedBarangayProfile.seal : ''" x-show="selectedBarangayProfile?.seal" x-on:error="$el.style.display='none'" alt="" class="relative w-11 h-11 rounded-full object-cover border-2 border-brand-100">
                         </div>
                         <div class="min-w-0">
                             <h3 class="font-semibold text-slate-800 truncate" x-text="'Barangay ' + (selectedBarangayProfile?.name ?? '')"></h3>
@@ -292,7 +292,7 @@
                                     <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/40 p-3">
                                         <img
                                             :src="o.photo ? '{{ rtrim(asset(''), '/') }}/' + o.photo : ''"
-                                            onerror="this.style.display='none'"
+                                            x-on:error="$el.style.display='none'"
                                             :alt="o.name ? 'Photograph of ' + o.name : ''"
                                             class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
                                         >

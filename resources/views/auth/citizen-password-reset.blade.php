@@ -50,7 +50,7 @@
         <p class="text-slate-500 text-sm mt-1.5" x-show="step === 'reset'"><x-ui.t fil="Ilagay ang code at ang iyong bagong password." en="Enter the code and your new password." /></p>
 
         <form x-show="step === 'request'" class="mt-6 space-y-4" @submit.prevent="requestCode">
-            <x-ui.input name="identifier" type="text" label="Resident ID, Email, or Mobile" icon="user" x-model="identifier" required />
+            <x-ui.input name="identifier" type="text" label="Resident ID, Email, or Mobile" label-fil="Resident ID, Email, o Mobile" icon="user" x-model="identifier" required />
             <div x-show="error" x-cloak class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
                 <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>
                 <p class="text-xs text-rose-600" x-text="error"></p>
@@ -65,9 +65,9 @@
                 <i data-lucide="mail-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
                 <p class="text-xs text-emerald-700"><x-ui.t fil="Kung verified ang account, may naipadala nang code." en="If the account is verified, a code has been sent." /></p>
             </div>
-            <x-ui.input name="code" type="text" label="6-digit code" icon="shield-check" class="font-mono text-center tracking-[0.4em]" x-model="code" maxlength="6" required />
-            <x-ui.input name="password" type="password" label="New Password" icon="lock" x-model="password" required />
-            <x-ui.input name="password_confirmation" type="password" label="Confirm New Password" icon="lock" x-model="passwordConfirmation" required />
+            <x-ui.input name="code" type="text" label="6-digit code" label-fil="6-digit na code" icon="shield-check" class="font-mono text-center tracking-[0.4em]" x-model="code" maxlength="6" required />
+            <x-ui.input name="password" type="password" label="New Password" label-fil="Bagong Password" icon="lock" x-model="password" required />
+            <x-ui.input name="password_confirmation" type="password" label="Confirm New Password" label-fil="Kumpirmahin ang Bagong Password" icon="lock" x-model="passwordConfirmation" required />
             <div x-show="error" x-cloak class="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5">
                 <i data-lucide="circle-alert" class="w-4 h-4 text-rose-500 shrink-0"></i>
                 <p class="text-xs text-rose-600" x-text="error"></p>

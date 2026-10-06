@@ -8,7 +8,7 @@
     $tab = $tab ?? 'privacy';
 @endphp
 
-<x-layouts.citizen title="Legal" subtitle="Privacy Policy and Terms &amp; Conditions." active="settings">
+<x-layouts.citizen title="Privacy &amp; Terms" subtitle="Privacy Policy and Terms &amp; Conditions." active="legal">
     {{-- The Privacy Policy and Terms staff publish in Settings, Site Content.
          This page printed the build's copy, so a published change never
          reached residents on the website (the app already read it). --}}
@@ -36,6 +36,12 @@
         x-init="load(); $nextTick(() => window.renderIcons?.())"
     >
 
+        {{-- Back to wherever the link was (sign-up, Settings, the footer):
+             the page used to be titled Settings (live test 2026-10-07, NAV-5). --}}
+        <button type="button" @click="history.length > 1 ? history.back() : (window.location.href = '{{ route('citizen.dashboard') }}')"
+            class="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><x-ui.t fil="Bumalik" en="Back" />
+        </button>
         <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-5">
             <button @click="tab = 'privacy'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'privacy' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
                 <i data-lucide="shield-check" class="w-3.5 h-3.5"></i><x-ui.t fil="Patakaran sa Privacy" en="Privacy Policy" />

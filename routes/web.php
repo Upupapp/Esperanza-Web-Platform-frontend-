@@ -16,6 +16,8 @@ Route::view('/admin/login', 'auth.admin-login')->name('admin.login');
 
 // Shared logout stub — frontend-only, returns to the portal chooser.
 Route::view('/logout', 'auth.select-portal')->name('logout');
+// Served by Netlify for any address that is not a page (netlify.toml).
+Route::view('/404', 'errors.not-found')->name('not-found');
 
 // Citizen Portal
 Route::view('/citizen/dashboard', 'citizen.dashboard')->name('citizen.dashboard');
@@ -78,6 +80,7 @@ Route::view('/admin/internal-forms', 'admin.internal-forms', ['office' => 'hr'])
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');
 Route::view('/admin/settings/branding', 'admin.settings', ['tab' => 'branding'])->name('admin.branding');
 Route::view('/admin/settings/audit-logs', 'admin.settings', ['tab' => 'audit-logs'])->name('admin.audit-logs');
+Route::view('/admin/settings/support', 'admin.settings', ['tab' => 'support'])->name('admin.support');
 Route::view('/admin/settings/site-content', 'admin.settings', ['tab' => 'site-content'])->name('admin.settings.site-content');
 
 // Sakuna — Disaster Risk Reduction, Emergency Operations, Evacuation, Relief, and Recovery Management.

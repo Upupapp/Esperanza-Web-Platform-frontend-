@@ -1,11 +1,11 @@
-@props(['title' => 'Welcome', 'image' => 'esperanza-aerial.jpg', 'fullscreen' => false])
+@props(['title' => 'Welcome', 'image' => 'esperanza-aerial.jpg', 'fullscreen' => false, 'langSwitch' => true])
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} — Esperanza Web Platform</title>
-    <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal.png') }}">
+    <link rel="icon" href="{{ asset('images/esperanza/esperanza-seal-64.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans antialiased bg-slate-50 {{ $fullscreen ? 'overflow-hidden' : '' }}">
@@ -25,7 +25,7 @@
             <div class="relative z-10 flex flex-col justify-between p-12 text-white w-full">
                 <div class="flex items-center justify-between animate-fade-up">
                     <div class="flex items-center gap-3">
-                        <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" class="w-12 h-12 rounded-full ring-2 ring-white/25 object-cover" alt="Municipal Seal">
+                        <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" class="w-12 h-12 rounded-full ring-2 ring-white/25 object-cover" alt="Municipal Seal">
                         <div>
                             <p class="font-semibold leading-tight">Municipality of Esperanza</p>
                             <p class="text-xs text-white/60">Province of Masbate</p>
@@ -35,8 +35,8 @@
                 </div>
 
                 <div class="animate-fade-up" style="animation-delay: 100ms">
-                    <p class="font-display text-3xl leading-snug max-w-md">One platform for every resident, family, and frontliner of Esperanza.</p>
-                    <p class="text-white/60 text-sm mt-4 max-w-sm">Request documents, follow up assistance programs, and stay informed on municipal announcements — all in one place.</p>
+                    <p class="font-display text-3xl leading-snug max-w-md"><x-ui.t fil="Iisang plataporma para sa bawat residente, pamilya, at frontliner ng Esperanza." en="One platform for every resident, family, and frontliner of Esperanza." /></p>
+                    <p class="text-white/60 text-sm mt-4 max-w-sm"><x-ui.t fil="Humiling ng dokumento, subaybayan ang mga programang tulong, at manatiling updated sa mga anunsyo ng munisipyo — lahat sa iisang lugar." en="Request documents, follow up assistance programs, and stay informed on municipal announcements — all in one place." /></p>
                 </div>
 
                 <div class="flex items-center gap-6 text-xs text-white/50 animate-fade-up" style="animation-delay: 200ms">
@@ -53,6 +53,16 @@
             <div class="absolute top-0 right-0 w-[28rem] h-[28rem] bg-brand-100/60 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3"></div>
             <div class="absolute bottom-0 left-0 w-72 h-72 bg-gold-100/50 rounded-full blur-3xl -z-10 -translate-x-1/3 translate-y-1/3"></div>
 
+            @if ($langSwitch)
+                {{-- Choose the language before signing in (live test 2026-10-07,
+                     UX-6): the only switch used to be in Settings, after sign-in. --}}
+                <div class="absolute top-4 right-4 sm:top-6 sm:right-6 inline-flex rounded-xl border border-slate-200 bg-white/90 p-0.5 text-xs font-medium shadow-sm" role="group" aria-label="Wika / Language">
+                    <button type="button" @click="$store.lang.set('fil')" :aria-pressed="$store.lang.current !== 'en'"
+                        :class="$store.lang.current !== 'en' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1.5 rounded-lg transition">Filipino</button>
+                    <button type="button" @click="$store.lang.set('en')" :aria-pressed="$store.lang.current === 'en'"
+                        :class="$store.lang.current === 'en' ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-50'" class="px-3 py-1.5 rounded-lg transition">English</button>
+                </div>
+            @endif
             <main class="w-full max-w-md animate-fade-up {{ $fullscreen ? 'max-h-full overflow-y-auto scrollbar-thin' : '' }}">
                 {{ $slot }}
             </main>

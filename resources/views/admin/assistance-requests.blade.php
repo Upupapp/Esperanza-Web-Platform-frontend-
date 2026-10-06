@@ -164,7 +164,11 @@
             // components/admin/request-form-review.blade.php.
             formatFieldDate(iso) {
                 if (!iso) return '—';
-                const [y, m, d] = iso.split('-').map(Number);
+                // The app sends dates with a time (2026-01-31T00:00:00.000): only
+                // the date part is read, or the day became NaN and the field
+                // said 'Invalid Date' (live test 2026-10-07, BUG-1).
+                const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+                if (!y || !m || !d) return String(iso);
                 return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             },
             derivedAgeDisplay(step, field) {
@@ -573,6 +577,24 @@
             // The staff site showed Reject to roles that could not reject, and
             // Department Staff every Tulong decision (QA run 2026-10-05). Unknown
             // means shown: the server still decides.
+            // Nothing on this case is this officer's to do (live test 2026-10-07,
+            // UX-11): the window used to show advice to approve documents, with
+            // no button and no word that it was read-only.
+            get viewOnly() {
+                if (!this.selected || this.detailLoading || this.terminalStatuses.includes(this.selected.status)) return false;
+                const perm = this.primaryPermission;
+                const reqWaiting = (this.selected.requirements || []).some(r => r.status === 'Submitted' || r.status === 'Resubmitted');
+                if (perm && this.may(perm)) return false;
+                if (reqWaiting && this.may('review')) return false;
+                return !this.canMove('Cancelled') && !this.canMove('Rejected') && !this.canMove('Returned for Reassessment');
+            },
+            get waitingOn() {
+                const st = this.selected?.status;
+                if (st === 'For Approval') return 'Waiting for an officer who can approve Tulong assistance (usually the Department Head).';
+                if (['Assistance Processing', 'Ready for Release'].includes(st)) return 'Waiting for an officer who can release Tulong assistance.';
+                if (st === 'Needs Requirements') return 'Waiting for the resident to send what was asked for.';
+                return 'Waiting for an officer who can screen and assess Tulong cases (usually the Department Head).';
+            },
             may(action) {
                 return !this.selected?.permitted || !!this.selected.permitted[action];
             },
@@ -654,6 +676,7 @@
                 if (st === 'Rejected') return { icon: 'circle-x', tone: 'rose', title: 'Rejected', message: this.selected.remarks || 'This case was rejected.' };
                 if (st === 'Cancelled') return { icon: 'ban', tone: 'slate', title: 'Cancelled', message: this.selected.cancelReason || 'This case was cancelled.' };
                 if (st === 'Completed') return { icon: 'circle-check', tone: 'emerald', title: 'Completed', message: 'The assistance was released and the release is on record. No further action is needed.' };
+                if (this.viewOnly) return { icon: 'eye', tone: 'slate', title: 'View Only', message: this.waitingOn + ' You can read this case, but deciding it is not part of your role.' };
                 if (st === 'Ready for Release') {
                     return this.hasReleaseProof
                         ? { icon: 'circle-check', tone: 'emerald', title: 'Ready to Confirm', message: 'Proof of Release is in hand. Record who received it, the amount and the reference, then confirm.' }
@@ -1128,7 +1151,7 @@
                                                         :title="'Evidence Strength: Level ' + evidenceTier(req.name)"
                                                     >L<span x-text="evidenceTier(req.name)"></span></span>
                                                 </div>
-                                                <p class="text-[11px] text-slate-500 truncate" x-text="req.file || 'Not yet submitted'"></p>
+                                                <p class="text-[11px] text-slate-500 truncate" x-text="req.file || (reqKind(req.name) === 'office' ? 'Done at the office' : 'Not yet submitted')"></p>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
@@ -1560,6 +1583,14 @@
             <x-slot:footer>
                 <p class="text-xs text-slate-500 flex-1 flex items-center gap-1.5" x-show="selected && terminalStatuses.includes(selected.status)" x-cloak>
                     <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>This case is finalized — no further status changes.
+                </p>
+                <p class="text-xs text-slate-500 flex-1 flex items-center gap-1.5" x-show="viewOnly" x-cloak>
+                    <i data-lucide="eye" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'View only: you cannot decide this case. ' + waitingOn"></span>
+                </p>
+                {{-- The reason beside the switched-off button, not only in its
+                     tooltip, as Dokyu does (live test 2026-10-07, UX-11). --}}
+                <p class="text-xs text-amber-700 flex-1 flex items-center gap-1.5" x-show="!viewOnly && nextStageLabel && primaryBlocked && (!primaryPermission || may(primaryPermission))" x-cloak>
+                    <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i><span x-text="primaryBlocked"></span>
                 </p>
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">
                     <div class="flex items-center gap-2 flex-wrap justify-end">
