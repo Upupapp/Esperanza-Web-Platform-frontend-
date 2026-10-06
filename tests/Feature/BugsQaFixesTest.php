@@ -81,6 +81,7 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString("import('pdfjs-dist')", $app, 'loaded only when a PDF is shown');
         $this->assertStringContainsString('isEvalSupported: false, enableXfa: false', $app, 'nothing in a PDF runs');
         $this->assertStringContainsString("Alpine.data('pdfPreview'", $app);
+        $this->assertStringContainsString("? 'assets/[name]-[hash].js'", $this->source('vite.config.js'), 'the worker is named .js, or a host serves it as octet-stream and nothing draws');
 
         foreach ([
             'resources/views/admin/document-requests.blade.php',
