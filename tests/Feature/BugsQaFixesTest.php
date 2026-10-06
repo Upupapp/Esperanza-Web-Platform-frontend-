@@ -127,6 +127,9 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringContainsString('image\/(png|jpe?g|gif|webp)', $app, 'raster images only: nothing in them runs');
         foreach (['document-requests', 'assistance-requests', 'papeles'] as $page) {
             $this->assertStringContainsString('<img x-show="image" x-cloak :src="image"', $this->source("resources/views/admin/{$page}.blade.php"), "{$page}: the eye icon shows a photo");
+            if ($page !== 'papeles') {
+                $this->assertStringContainsString('preview_asset: null,', $this->source("resources/views/admin/{$page}.blade.php"), "{$page}: not the download URL in a plain img, which shows blank");
+            }
         }
         $this->assertStringContainsString("? 'assets/[name]-[hash].js'", $this->source('vite.config.js'), 'the worker is named .js, or a host serves it as octet-stream and nothing draws');
 

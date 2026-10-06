@@ -369,7 +369,8 @@
                     file: q.file?.name || null,
                     file_url: q.file?.url || null,
                     file_mime: q.file?.mime || null,
-                    preview_asset: q.file?.url && (q.file?.mime || '').startsWith('image/') ? q.file.url : null,
+                    // Not the file's URL: the API sends it as a download, which an <img> will not show. Photos open in the viewer (window.imageBlobUrl).
+                    preview_asset: null,
                     file_notice: window.fileNotice(q.file),
                     versions: (q.versions || []).map((v) => ({
                         file: v.file?.name || null,
