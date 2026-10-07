@@ -28,8 +28,11 @@
     $filSubtitle = $filSubtitles[$active] ?? $subtitle;
 @endphp
 
+{{-- Clay design (STYLE_GUIDE §2): no full-width bar. The title sits on the
+     canvas; the clock and search are pressed wells, the buttons and the user
+     chip glass, the menus glass panels. --}}
 <header
-    class="relative z-20 h-16 bg-white/90 backdrop-blur border-b border-slate-200/70 flex items-center justify-between px-4 lg:px-6 shrink-0"
+    class="relative z-20 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{
         time: '',
         searchQuery: '',
@@ -54,22 +57,22 @@
     }"
     x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.citizenNotifications.load(); $store.citizenNotifications.poll()"
 >
-    <div class="flex items-center gap-3 min-w-0">
-        <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100">
+    <div class="flex-1 basis-44 flex items-center gap-3 min-w-0">
+        <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body shrink-0">
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
         <div class="min-w-0">
-            <h1 class="text-base lg:text-lg font-semibold text-navy-900 truncate" x-text="$store.lang.current === 'en' ? @js($title) : @js($filTitle)">{{ $filTitle }}</h1>
+            <h1 class="text-[22px] lg:text-[26px] font-extrabold tracking-[-.02em] leading-tight text-ink truncate" x-text="$store.lang.current === 'en' ? @js($title) : @js($filTitle)">{{ $filTitle }}</h1>
             @if($subtitle)
-                <p class="text-xs text-slate-500 truncate" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
+                <p class="text-[13.5px] text-ink-muted truncate" x-text="$store.lang.current === 'en' ? @js($subtitle) : @js($filSubtitle)">{{ $filSubtitle }}</p>
             @endif
         </div>
 
     </div>
 
-    <div class="flex items-center gap-1.5 lg:gap-2.5">
-        <div class="hidden xl:flex items-center gap-1.5 font-mono text-xs text-slate-500 tabular-nums px-2.5 py-1.5 rounded-xl bg-slate-100/70">
-            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+    <div class="ml-auto flex items-center gap-2.5">
+        <div class="hidden xl:flex items-center gap-2.5 h-11 px-4 rounded-2xl surface-pressed font-mono text-[13px] text-ink-body tabular-nums whitespace-nowrap">
+            <span class="w-2 h-2 rounded-full bg-gold-400 shadow-[0_0_0_3px_rgb(255_225_26/.3)]" aria-hidden="true"></span>
             <span x-text="time"></span>
         </div>
 
@@ -116,9 +119,9 @@
             }"
             @click.outside="close"
         >
-            <button @click="toggle" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors" :title="$store.lang.current === 'en' ? 'My IDs' : 'Aking mga ID'">
+            <button @click="toggle" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors" :title="$store.lang.current === 'en' ? 'My IDs' : 'Aking mga ID'">
                 <i data-lucide="id-card" class="w-5 h-5"></i>
-                <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" x-show="myIds.some((d) => d.status !== 'Verified')"></span>
+                <span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-gold-400 ring-2 ring-white" x-show="myIds.some((d) => d.status !== 'Verified')"></span>
             </button>
 
             <div
@@ -127,13 +130,13 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right"
+                class="absolute right-0 mt-2 w-80 surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
             >
-                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                    <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Aking mga ID" en="My IDs" /></p>
+                <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
+                    <p class="text-sm font-bold text-ink"><x-ui.t fil="Aking mga ID" en="My IDs" /></p>
                     <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full" x-text="filteredIds.length"></span>
                 </div>
-                <div class="flex items-center gap-1 px-4 py-2 border-b border-slate-100 bg-slate-50/60">
+                <div class="flex items-center gap-1 px-4 py-2 border-b border-brand-600/10 bg-well/50">
                     <button type="button" @click="idFilter = 'all'" class="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors" :class="idFilter === 'all' ? 'bg-white text-navy-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'">
                         <x-ui.t fil="Lahat" en="All" />
                     </button>
@@ -144,12 +147,12 @@
                         <x-ui.t fil="Unverified" en="Unverified" />
                     </button>
                 </div>
-                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-slate-50">
+                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-brand-600/10">
                     <template x-for="idDoc in filteredIds" :key="idDoc.type">
                         <div class="flex items-center gap-3 px-4 py-3">
-                            <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="id-card" class="w-4 h-4"></i></span>
+                            <span class="w-9 h-9 rounded-xl clay-light flex items-center justify-center shrink-0"><i data-lucide="id-card" class="w-4 h-4"></i></span>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-medium text-slate-700 truncate" x-text="idDoc.type"></p>
+                                <p class="text-sm font-semibold text-ink truncate" x-text="idDoc.type"></p>
                             </div>
                             <span
                                 class="inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap shrink-0"
@@ -161,38 +164,38 @@
                         </div>
                     </template>
                     <div class="flex flex-col items-center text-center py-8" x-show="filteredIds.length === 0">
-                        <span class="w-11 h-11 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="id-card" class="w-5 h-5"></i></span>
+                        <span class="w-11 h-11 rounded-2xl surface-pressed text-ink-muted flex items-center justify-center mb-2"><i data-lucide="id-card" class="w-5 h-5"></i></span>
                         <p class="text-xs text-slate-500"><x-ui.t fil="Walang ID sa filter na ito." en="No IDs match this filter." /></p>
                     </div>
                 </div>
-                <a href="{{ route('citizen.profile') }}" class="block text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                <a href="{{ route('citizen.profile') }}" class="block text-center text-sm font-semibold text-brand-600 py-3 border-t border-brand-600/10 hover:bg-white/60 transition-colors">
                     <x-ui.t fil="Pamahalaan ang mga ID sa Profile" en="Manage IDs in Profile" />
                 </a>
             </div>
         </div>
 
         <div class="hidden md:block relative" @click.outside="searchOpen = false">
-            <div class="flex items-center relative">
-                <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none"></i>
+            <label class="flex items-center gap-2.5 h-11 w-56 2xl:w-[360px] px-4 rounded-2xl surface-pressed transition-all duration-[160ms] ease-standard focus-within:bg-white/90 focus-within:shadow-[var(--shadow-pressed-sm),0_0_0_4px_var(--color-brand-100)]">
+                <i data-lucide="search" class="w-[18px] h-[18px] text-ink-muted shrink-0 pointer-events-none"></i>
                 <input aria-label="Search query"
                     type="text"
                     x-model="searchQuery"
                     @focus="searchOpen = true"
                     x-bind:placeholder="$store.lang.current === 'en' ? 'Search dokyu, tulong, balita...' : 'Maghanap ng dokyu, tulong, balita...'"
-                    class="w-52 lg:w-72 pl-10 pr-4 py-2 text-sm rounded-xl bg-slate-100/80 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                    class="w-full min-w-0 bg-transparent border-0 p-0 text-sm text-ink placeholder:text-ink-faint focus:ring-0 focus:outline-none"
                 >
-            </div>
+            </label>
             <div
                 x-show="searchOpen && searchQuery.trim() !== ''"
                 x-transition:enter="transition duration-[200ms] ease-emphasized"
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top"
+                class="absolute left-0 right-0 mt-2 surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top"
             >
                 <template x-for="item in filteredSearch" :key="item.href">
-                    <a :href="item.href" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                        <i :data-lucide="item.icon" class="w-4 h-4 text-slate-500 shrink-0"></i>
+                    <a :href="item.href" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
+                        <i :data-lucide="item.icon" class="w-4 h-4 text-ink-muted shrink-0"></i>
                         <span x-text="$store.lang.current === 'en' ? item.en : item.fil"></span>
                     </a>
                 </template>
@@ -214,9 +217,9 @@
         <div class="relative" x-data="dropdown" @click.outside="close">
             {{-- How many are unread, not just whether (Esperanza QA, 2026-10-07);
                  nothing at all when every notification is read. --}}
-            <button @click="toggle" aria-label="Notifications" :aria-label="$store.citizenNotifications.unreadCount ? 'Notifications, ' + $store.citizenNotifications.unreadCount + ' unread' : 'Notifications'" class="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
+            <button @click="toggle" aria-label="Notifications" :aria-label="$store.citizenNotifications.unreadCount ? 'Notifications, ' + $store.citizenNotifications.unreadCount + ' unread' : 'Notifications'" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
                 <i data-lucide="bell" class="w-5 h-5"></i>
-                <span class="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 inline-flex items-center justify-center rounded-full bg-rose-500 ring-2 ring-white text-[10px] font-bold leading-none text-white"
+                <span class="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 inline-flex items-center justify-center rounded-full clay-gold ring-2 ring-white text-[10.5px] font-extrabold leading-none"
                       x-show="$store.citizenNotifications.unreadCount > 0"
                       x-text="$store.citizenNotifications.unreadCount > 99 ? '99+' : $store.citizenNotifications.unreadCount"></span>
             </button>
@@ -227,26 +230,26 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-[22rem] bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right"
+                class="absolute right-0 mt-2 w-[22rem] surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right"
             >
-                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                    <p class="text-sm font-semibold text-navy-900" x-text="$store.lang.current === 'en' ? 'Notifications' : 'Mga Abiso'"></p>
-                    <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full" x-show="$store.citizenNotifications.unreadCount" x-text="$store.citizenNotifications.unreadCount + ($store.lang.current === 'en' ? ' new' : ' bago')"></span>
+                <div class="flex items-center justify-between px-4 py-3 border-b border-brand-600/10">
+                    <p class="text-sm font-bold text-ink" x-text="$store.lang.current === 'en' ? 'Notifications' : 'Mga Abiso'"></p>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full clay-gold-light" x-show="$store.citizenNotifications.unreadCount" x-text="$store.citizenNotifications.unreadCount + ($store.lang.current === 'en' ? ' new' : ' bago')"></span>
                 </div>
-                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-slate-50">
+                <div class="max-h-80 overflow-y-auto scrollbar-thin divide-y divide-brand-600/10">
                     <template x-for="n in $store.citizenNotifications.visible.slice(0, 8)" :key="n.id">
-                        <div class="group relative flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+                        <div class="group relative flex items-start gap-3 px-4 py-3 hover:bg-white/60 transition-colors">
                             <a
                                 :href="n.link || '{{ route('citizen.notifications') }}'"
                                 @click="$store.citizenNotifications.markRead(n.id); close()"
                                 class="flex items-start gap-3 flex-1 min-w-0"
                             >
-                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" :class="{ brand: 'text-brand-600 bg-brand-50', purple: 'text-purple-600 bg-purple-50', indigo: 'text-indigo-600 bg-indigo-50', teal: 'text-teal-600 bg-teal-50', amber: 'text-amber-600 bg-amber-50', rose: 'text-rose-600 bg-rose-50' }[n.color] || 'text-brand-600 bg-brand-50'">
+                                <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" :class="{ brand: 'text-brand-600 bg-brand-50', purple: 'text-purple-600 bg-purple-50', indigo: 'text-indigo-600 bg-indigo-50', teal: 'text-teal-600 bg-teal-50', amber: 'text-amber-600 bg-amber-50', rose: 'text-rose-600 bg-rose-50' }[n.color] || 'text-brand-600 bg-brand-50'">
                                     <i :data-lucide="n.icon" class="w-4 h-4"></i>
                                 </span>
                                 <span class="min-w-0">
-                                    <span class="block text-sm font-medium text-slate-700 truncate" x-text="n.title"></span>
-                                    <span class="block text-xs text-slate-500 mt-0.5 line-clamp-2" x-text="n.body"></span>
+                                    <span class="block text-sm font-semibold text-ink truncate" x-text="n.title"></span>
+                                    <span class="block text-xs text-ink-muted mt-0.5 line-clamp-2" x-text="n.body"></span>
                                 </span>
                             </a>
                             <button aria-label="Close"
@@ -260,22 +263,20 @@
                         <x-ui.t fil="Wala pang abiso." en="No notifications yet." />
                     </p>
                 </div>
-                <a href="{{ route('citizen.notifications') }}" class="block text-center text-sm font-medium text-brand-600 py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                <a href="{{ route('citizen.notifications') }}" class="block text-center text-sm font-semibold text-brand-600 py-3 border-t border-brand-600/10 hover:bg-white/60 transition-colors">
                     <x-ui.t fil="Tingnan lahat ng abiso" en="View all notifications" />
                 </a>
             </div>
         </div>
 
-        <div class="w-px h-8 bg-slate-200 hidden sm:block"></div>
-
         <div class="relative" x-data="dropdown" @click.outside="close">
-            <button @click="toggle" class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl hover:bg-slate-100 transition-colors">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-xs" x-text="$store.citizenSession.initials()"></div>
-                <span class="hidden lg:block text-left max-w-[130px]">
-                    <span class="block text-sm font-medium text-navy-900 leading-tight truncate" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></span>
-                    <span class="block text-xs text-slate-500 leading-tight truncate" x-text="$store.citizenSession.account ? (($store.lang.current === 'en' ? 'Resident — Brgy. ' : 'Residente — Brgy. ') + $store.citizenSession.account.barangay) : ($store.lang.current === 'en' ? 'Not signed in' : 'Hindi naka-sign in')"></span>
+            <button @click="toggle" class="h-[52px] pl-1.5 pr-1.5 lg:pr-3.5 flex items-center gap-2.5 rounded-[20px] surface-glass-sm hover:bg-white/80 transition-colors">
+                <div class="w-10 h-10 rounded-full clay-blue grid place-items-center font-extrabold text-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
+                <span class="hidden lg:block text-left max-w-[140px]">
+                    <span class="block text-sm font-bold text-ink leading-tight truncate" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></span>
+                    <span class="block text-xs text-ink-muted leading-tight truncate" x-text="$store.citizenSession.account ? (($store.lang.current === 'en' ? 'Resident — Brgy. ' : 'Residente — Brgy. ') + $store.citizenSession.account.barangay) : ($store.lang.current === 'en' ? 'Not signed in' : 'Hindi naka-sign in')"></span>
                 </span>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 hidden lg:block transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-ink-muted hidden lg:block transition-transform duration-[160ms] ease-standard" :class="open && 'rotate-180'"></i>
             </button>
 
             <div
@@ -284,20 +285,20 @@
                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                 x-cloak
-                class="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-float border border-slate-100 overflow-hidden z-50 origin-top-right py-1.5"
+                class="absolute right-0 mt-2 w-60 surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right py-1.5"
             >
-                <div class="px-4 py-3 border-b border-slate-100">
-                    <p class="text-sm font-semibold text-navy-900" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></p>
+                <div class="px-4 py-3 border-b border-brand-600/10">
+                    <p class="text-sm font-bold text-ink" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></p>
                     <p class="text-xs text-slate-500" x-text="$store.citizenSession.account?.email ?? 'No account selected'"></p>
                 </div>
-                <a href="{{ route('citizen.profile') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="user" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Aking Profile" en="My Profile" />
+                <a href="{{ route('citizen.profile') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
+                    <i data-lucide="user" class="w-4 h-4 text-ink-muted"></i><x-ui.t fil="Aking Profile" en="My Profile" />
                 </a>
-                <a href="{{ route('citizen.settings') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i><x-ui.t fil="Mga Setting" en="Settings" />
+                <a href="{{ route('citizen.settings') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
+                    <i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i><x-ui.t fil="Mga Setting" en="Settings" />
                 </a>
-                <div class="border-t border-slate-100 my-1.5"></div>
-                <a href="{{ route('logout') }}" @click="$store.citizenSession.logout()" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors">
+                <div class="border-t border-brand-600/10 my-1.5"></div>
+                <a href="{{ route('logout') }}" @click="$store.citizenSession.logout()" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50/70 transition-colors">
                     <i data-lucide="log-out" class="w-4 h-4"></i><x-ui.t fil="Mag-sign Out" en="Sign Out" />
                 </a>
             </div>

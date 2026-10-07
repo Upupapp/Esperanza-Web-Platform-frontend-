@@ -168,7 +168,7 @@ class LiveTestFixesTest extends TestCase
         foreach (['balita', 'banners', 'community', 'events', 'offices', 'barangays', 'blotter'] as $tab) {
             $this->assertStringContainsString("<button x-show=\"tabAllowed('{$tab}')\" @click=\"tab = '{$tab}'\"", $balita, $tab);
         }
-        $this->assertStringContainsString('<i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>Settings', $this->source('resources/views/components/admin/topbar.blade.php'));
+        $this->assertStringContainsString('<i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i>Settings', $this->source('resources/views/components/admin/topbar.blade.php'));
         $this->assertStringContainsString("'audit-logs' => ['scroll-text', 'Audit Logs']", $this->source('resources/views/admin/settings.blade.php'));
     }
 

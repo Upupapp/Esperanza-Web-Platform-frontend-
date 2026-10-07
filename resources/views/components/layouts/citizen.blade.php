@@ -15,13 +15,17 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans antialiased">
-    <div class="flex h-screen overflow-hidden bg-slate-50" x-data="{ collapsed: false, mobileOpen: false }">
+    {{-- Clay design (STYLE_GUIDE §2): the full-height shell stays (pop-ups and
+         the Dokyu print path depend on it) on a washed canvas. <main> reaches
+         back over the shell's padding so the cards' shadows have a gutter
+         inside the scroll area instead of being cut at its edges. --}}
+    <div class="flex h-screen overflow-hidden canvas-washed gap-5 p-4 lg:p-5" x-data="{ collapsed: false, mobileOpen: false }">
         <x-citizen.sidebar :active="$active" />
 
-        <div class="flex-1 flex flex-col min-w-0">
+        <div class="flex-1 flex flex-col gap-5 min-w-0">
             <x-citizen.topbar :title="$title" :subtitle="$subtitle" :active="$active" />
 
-            <main class="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-6">
+            <main class="flex-1 overflow-y-auto scrollbar-thin -mx-4 px-5 pt-4 pb-6 lg:-mx-5 lg:px-8 lg:pb-10">
                 {{ $slot }}
             </main>
         </div>

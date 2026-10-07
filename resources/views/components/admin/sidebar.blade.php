@@ -12,42 +12,45 @@
         @keydown.enter.prevent="mobileOpen = false"
         @keydown.space.prevent="mobileOpen = false"></div>
 
+{{-- Clay design (STYLE_GUIDE §2): a dark glass panel, rounded and inset from
+     the page on large screens; the mobile drawer stays full height and square. --}}
 <aside
     x-init="$store.queueCounts.load('admin')"
-    class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-navy-900 text-white shrink-0 w-64 transition-transform duration-[260ms] ease-standard -translate-x-full lg:translate-x-0"
+    class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col sidebar-glass lg:rounded-[30px] lg:my-0 lg:h-[calc(100vh-2.5rem)] text-white shrink-0 w-64 px-3 py-3 transition-transform duration-[260ms] ease-standard -translate-x-full lg:translate-x-0"
     :class="[collapsed ? 'lg:w-[76px]' : 'lg:w-64', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
 >
-    <div class="flex items-center gap-2.5 px-4 h-16 border-b border-white/10 shrink-0">
-        <img
-            src="{{ asset('images/esperanza/esperanza-seal-128.png') }}"
-            alt="Municipality of Esperanza Seal"
-            class="w-9 h-9 rounded-full ring-2 ring-white/15 shrink-0 object-cover"
-        >
+    <div class="flex items-center gap-3 px-0.5 pb-2 shrink-0">
+        <span class="w-[46px] h-[46px] rounded-full bg-gold-400 shadow-clay-gold p-[2px] shrink-0">
+            <img
+                src="{{ asset('images/esperanza/esperanza-seal-128.png') }}"
+                alt="Municipality of Esperanza Seal"
+                class="w-full h-full rounded-full object-cover"
+            >
+        </span>
         <div x-show="!collapsed" x-transition.opacity.duration.150ms class="min-w-0">
-            <p class="text-[13px] font-semibold tracking-wide leading-tight truncate" data-brand-name>Esperanza LGU</p>
-            <p class="text-[10.5px] text-slate-500 truncate">Administrative Portal</p>
+            <p class="text-[15px] font-extrabold leading-tight text-white truncate" data-brand-name>Esperanza LGU</p>
+            <p class="text-xs text-sidebar-muted truncate">Administrative Portal</p>
         </div>
-        <button aria-label="Close" @click="mobileOpen = false" class="ml-auto lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-white/10 hover:text-white">
+        <button aria-label="Close" @click="mobileOpen = false" class="ml-auto lg:hidden w-9 h-9 rounded-xl grid place-items-center text-sidebar-text hover:bg-white/10 hover:text-white">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
     </div>
 
     <!-- Signed-in account + access scope -->
-    <div x-show="$store.session.account" x-cloak class="mx-2.5 mt-2.5 mb-1 px-3 py-2.5 rounded-xl bg-white/[0.06] border border-white/10">
-        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1" x-show="!collapsed">Signed in as</p>
-        <p class="text-xs font-semibold text-white truncate" x-show="!collapsed" x-text="$store.session.account?.name"></p>
-        <p class="text-[10.5px] text-slate-500 truncate mb-1.5" x-show="!collapsed" x-text="$store.session.account?.id + ' · ' + $store.session.account?.role"></p>
+    <div x-show="$store.session.account && !collapsed" x-cloak class="sidebar-well rounded-[20px] px-3.5 py-3 mt-0.5 mb-1.5 shrink-0">
+        <p class="text-[10.5px] font-bold uppercase tracking-[.08em] text-sidebar-label mb-0.5">Signed in as</p>
+        <p class="text-[14.5px] font-bold text-white truncate" x-text="$store.session.account?.name"></p>
+        <p class="text-xs text-sidebar-muted truncate mb-1.5" x-text="$store.session.account?.id + ' · ' + $store.session.account?.role"></p>
         <span
-            class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5"
-            :class="$store.session.account?.scope === 'Municipal' ? 'bg-brand-500/20 text-brand-300' : 'bg-purple-500/20 text-purple-300'"
-            x-show="!collapsed"
+            class="inline-flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-2.5 py-[3px] border whitespace-nowrap"
+            :class="$store.session.account?.scope === 'Municipal' ? 'bg-gold-400/15 border-gold-400/35 text-gold-400' : 'bg-purple-400/15 border-purple-300/35 text-purple-200'"
         >
-            <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
+            <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-3 h-3"></i>
             <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide' : 'Brgy. ' + $store.session.account?.scope"></span>
         </span>
     </div>
 
-    <nav class="flex-1 overflow-y-auto scrollbar-dark px-2.5 py-3 space-y-0.5">
+    <nav class="flex-1 overflow-y-auto scrollbar-dark -mx-1 px-1 pt-1 pb-2 space-y-[2px]">
         <x-ui.nav-item dense :href="route('admin.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" moduleKey="constituents" />
         <x-ui.nav-item dense :href="route('admin.papeles')" icon="folder-open" label="Papeles" :active="$active === 'papeles'" moduleKey="papeles" />
@@ -69,10 +72,10 @@
              entries as possible (2026-10-07). --}}
     </nav>
 
-    <div class="border-t border-white/10 p-2.5 shrink-0">
+    <div class="pt-1.5 shrink-0">
         <button
             @click="collapsed = !collapsed"
-            class="mt-0.5 w-full hidden lg:flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-white py-2 rounded-xl hover:bg-white/[0.06] transition-colors"
+            class="w-full h-11 hidden lg:flex items-center justify-center gap-2 rounded-2xl bg-white/[.06] border border-white/[.08] text-[13px] font-semibold text-sidebar-text hover:text-white hover:bg-white/[.09] shadow-[4px_5px_12px_rgb(0_0_0/.25),inset_0_1px_0_rgb(255_255_255/.12)] active:shadow-pressed-dark transition-colors"
         >
             <i data-lucide="panel-left-close" class="w-4 h-4 transition-transform duration-[160ms] ease-standard" :class="collapsed && 'rotate-180'"></i>
             <span x-show="!collapsed">Collapse</span>
