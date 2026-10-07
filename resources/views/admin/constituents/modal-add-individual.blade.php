@@ -69,12 +69,12 @@
 
             <div class="flex items-start justify-between mb-5">
                 <div>
-                    <h2 class="text-lg font-bold text-navy-900">Add New Resident</h2>
-                    <p class="text-sm text-slate-500 mt-0.5">Encode a new individual record into the barangay registry</p>
+                    <h2 class="text-lg font-bold text-ink">Add New Resident</h2>
+                    <p class="text-sm text-ink-muted mt-0.5">Encode a new individual record into the barangay registry</p>
                 </div>
                 <button
                     @click="open = false; resetForm()"
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
                     title="Close"
                 >
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -94,7 +94,7 @@
                                 ? 'border-brand-500 bg-brand-500 text-white'
                                 : addIndividualStep > 1
                                 ? 'border-brand-500 bg-brand-500 text-white'
-                                : 'border-slate-200 bg-white text-slate-500'"
+                                : 'border-slate-200 bg-white text-ink-muted'"
                         >
                             <template x-if="addIndividualStep > 1">
                                 <i data-lucide="check" class="w-4 h-4"></i>
@@ -105,7 +105,7 @@
                         </div>
                         <div class="flex-1 h-0.5" :class="addIndividualStep > 1 ? 'bg-brand-500' : 'bg-slate-200'"></div>
                     </div>
-                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 1 ? 'text-brand-600' : addIndividualStep > 1 ? 'text-brand-500' : 'text-slate-500'">
+                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 1 ? 'text-brand-600' : addIndividualStep > 1 ? 'text-brand-500' : 'text-ink-muted'">
                         Personal
                     </span>
                 </div>
@@ -120,7 +120,7 @@
                                 ? 'border-brand-500 bg-brand-500 text-white'
                                 : addIndividualStep > 2
                                 ? 'border-brand-500 bg-brand-500 text-white'
-                                : 'border-slate-200 bg-white text-slate-500'"
+                                : 'border-slate-200 bg-white text-ink-muted'"
                         >
                             <template x-if="addIndividualStep > 2">
                                 <i data-lucide="check" class="w-4 h-4"></i>
@@ -131,7 +131,7 @@
                         </div>
                         <div class="flex-1 h-0.5" :class="addIndividualStep > 2 ? 'bg-brand-500' : 'bg-slate-200'"></div>
                     </div>
-                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 2 ? 'text-brand-600' : addIndividualStep > 2 ? 'text-brand-500' : 'text-slate-500'">
+                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 2 ? 'text-brand-600' : addIndividualStep > 2 ? 'text-brand-500' : 'text-ink-muted'">
                         Address
                     </span>
                 </div>
@@ -144,13 +144,13 @@
                             class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all flex-shrink-0"
                             :class="addIndividualStep === 3
                                 ? 'border-brand-500 bg-brand-500 text-white'
-                                : 'border-slate-200 bg-white text-slate-500'"
+                                : 'border-slate-200 bg-white text-ink-muted'"
                         >
                             <span>3</span>
                         </div>
                         <div class="flex-1 h-0.5 bg-transparent"></div>
                     </div>
-                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 3 ? 'text-brand-600' : 'text-slate-500'">
+                    <span class="text-xs mt-1.5 font-medium" :class="addIndividualStep === 3 ? 'text-brand-600' : 'text-ink-muted'">
                         Profile
                     </span>
                 </div>
@@ -179,8 +179,8 @@
                         <i data-lucide="user" class="w-4 h-4 text-brand-600"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-navy-900">Personal Information</h3>
-                        <p class="text-xs text-slate-500">Basic identity and contact details</p>
+                        <h3 class="text-sm font-semibold text-ink">Personal Information</h3>
+                        <p class="text-xs text-ink-muted">Basic identity and contact details</p>
                     </div>
                 </div>
 
@@ -194,7 +194,7 @@
                             type="text"
                             x-model="form.first_name"
                             placeholder="e.g. Maria"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
                         />
                     </div>
@@ -204,7 +204,7 @@
                             type="text"
                             x-model="form.middle_name"
                             placeholder="e.g. Santos"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         />
                     </div>
                     <div class="sm:col-span-1">
@@ -215,7 +215,7 @@
                             type="text"
                             x-model="form.last_name"
                             placeholder="e.g. Reyes"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
                         />
                     </div>
@@ -227,7 +227,7 @@
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="suffix">Suffix</label>
                         <select id="suffix"
                             x-model="form.suffix"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         >
                             <option value="">None</option>
                             <option value="Jr.">Jr.</option>
@@ -249,7 +249,7 @@
                                     class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all text-sm font-medium"
                                     :class="form.sex === 'Male'
                                         ? 'border-blue-400 bg-blue-50 text-blue-700'
-                                        : 'border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50/50'"
+                                        : 'border-slate-200 bg-white text-ink-muted hover:border-blue-200 hover:bg-blue-50/50'"
                                 >
                                     <input type="radio" name="sex" value="Male" x-model="form.sex" class="sr-only" />
                                     <i data-lucide="mars" class="w-4 h-4"></i>
@@ -261,7 +261,7 @@
                                     class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all text-sm font-medium"
                                     :class="form.sex === 'Female'
                                         ? 'border-pink-400 bg-pink-50 text-pink-700'
-                                        : 'border-slate-200 bg-white text-slate-500 hover:border-pink-200 hover:bg-pink-50/50'"
+                                        : 'border-slate-200 bg-white text-ink-muted hover:border-pink-200 hover:bg-pink-50/50'"
                                 >
                                     <input type="radio" name="sex" value="Female" x-model="form.sex" class="sr-only" />
                                     <i data-lucide="venus" class="w-4 h-4"></i>
@@ -281,7 +281,7 @@
                         <input id="date-of-birth"
                             type="date"
                             x-model="form.dob"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
                         />
                     </div>
@@ -291,7 +291,7 @@
                         </label>
                         <select id="civil-status"
                             x-model="form.civil_status"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
                         >
                             <option value="" disabled selected>Select status</option>
@@ -311,13 +311,13 @@
                         Contact Number <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">+63</span>
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">+63</span>
                         <input aria-label="9XXXXXXXXX"
                             type="tel"
                             x-model="form.contact"
                             placeholder="9XXXXXXXXX"
                             maxlength="10"
-                            class="w-full pl-12 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
                         />
                     </div>
@@ -334,8 +334,8 @@
                         <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-navy-900">Address & Household</h3>
-                        <p class="text-xs text-slate-500">Location and household linkage</p>
+                        <h3 class="text-sm font-semibold text-ink">Address & Household</h3>
+                        <p class="text-xs text-ink-muted">Location and household linkage</p>
                     </div>
                 </div>
 
@@ -347,7 +347,7 @@
                         </label>
                         <select id="barangay-4"
                             x-model="form.barangay"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             required
                         >
                             <option value="" disabled selected>Select barangay</option>
@@ -362,7 +362,7 @@
                             type="text"
                             x-model="form.sitio"
                             placeholder="e.g. Sitio Malago"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         />
                     </div>
                 </div>
@@ -372,28 +372,28 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">
                             Household Reference
-                            <span class="text-slate-500 font-normal ml-1">(optional — link to existing)</span>
+                            <span class="text-ink-muted font-normal ml-1">(optional — link to existing)</span>
                         </label>
                         <div class="relative">
-                            <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                             <input aria-label="e.g. HH-2026-0001"
                                 type="text"
                                 x-model="form.household_ref"
                                 placeholder="e.g. HH-2026-0001"
-                                class="w-full pl-9 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                                class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                             />
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="family-ref-optional">
                             Family Reference
-                            <span class="text-slate-500 font-normal ml-1">(optional)</span>
+                            <span class="text-ink-muted font-normal ml-1">(optional)</span>
                         </label>
                         <input id="family-ref-optional"
                             type="text"
                             x-model="form.family_ref"
                             placeholder="e.g. FAM-2026-0001"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         />
                     </div>
                 </div>
@@ -411,7 +411,7 @@
                                     class="flex items-center justify-center px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all"
                                     :class="form.relation === rel
                                         ? 'border-brand-500 bg-brand-50 text-brand-700'
-                                        : 'border-slate-200 bg-white text-slate-500 hover:border-brand-200 hover:bg-brand-50/30'"
+                                        : 'border-slate-200 bg-white text-ink-muted hover:border-brand-200 hover:bg-brand-50/30'"
                                     x-text="rel"
                                 ></div>
                             </label>
@@ -430,8 +430,8 @@
                         <i data-lucide="tag" class="w-4 h-4 text-emerald-600"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-navy-900">Profile & Sector Tags</h3>
-                        <p class="text-xs text-slate-500">Socioeconomic profile and program eligibility</p>
+                        <h3 class="text-sm font-semibold text-ink">Profile & Sector Tags</h3>
+                        <p class="text-xs text-ink-muted">Socioeconomic profile and program eligibility</p>
                     </div>
                 </div>
 
@@ -443,14 +443,14 @@
                             type="text"
                             x-model="form.occupation"
                             placeholder="e.g. Farmer, Teacher"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="highest-education">Highest Education</label>
                         <select id="highest-education"
                             x-model="form.education"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         >
                             <option value="" disabled selected>Select level</option>
                             <option value="No Formal Education">No Formal Education</option>
@@ -470,7 +470,7 @@
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="monthly-income-range">Monthly Income Range</label>
                         <select id="monthly-income-range"
                             x-model="form.income_range"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
                         >
                             <option value="" disabled selected>Select range</option>
                             <option value="No Income">No Income</option>
@@ -488,7 +488,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-2">
                         Vulnerable Sector Classification
-                        <span class="text-slate-500 font-normal ml-1">(check all that apply)</span>
+                        <span class="text-ink-muted font-normal ml-1">(check all that apply)</span>
                     </label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <template x-for="sector in [
@@ -571,7 +571,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-semibold text-slate-700">For Validation</p>
-                                    <p class="text-xs text-slate-500">Documents pending review</p>
+                                    <p class="text-xs text-ink-muted">Documents pending review</p>
                                 </div>
                             </div>
                         </label>
@@ -594,7 +594,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-semibold text-slate-700">Unverified</p>
-                                    <p class="text-xs text-slate-500">No documents on file</p>
+                                    <p class="text-xs text-ink-muted">No documents on file</p>
                                 </div>
                             </div>
                         </label>
@@ -610,17 +610,17 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                         <div>
                             <span class="text-brand-500">Name:</span>
-                            <span class="font-semibold text-navy-900 ml-1">
+                            <span class="font-semibold text-ink ml-1">
                                 <span x-text="[form.first_name, form.middle_name, form.last_name, form.suffix].filter(Boolean).join(' ') || '—'"></span>
                             </span>
                         </div>
                         <div>
                             <span class="text-brand-500">Barangay:</span>
-                            <span class="font-semibold text-navy-900 ml-1" x-text="form.barangay || '—'"></span>
+                            <span class="font-semibold text-ink ml-1" x-text="form.barangay || '—'"></span>
                         </div>
                         <div>
                             <span class="text-brand-500">Tags:</span>
-                            <span class="font-semibold text-navy-900 ml-1" x-text="form.tags.length > 0 ? form.tags.join(', ') : 'None'"></span>
+                            <span class="font-semibold text-ink ml-1" x-text="form.tags.length > 0 ? form.tags.join(', ') : 'None'"></span>
                         </div>
                     </div>
                 </div>
@@ -639,7 +639,7 @@
             <button
                 x-show="addIndividualStep > 1"
                 @click="addIndividualStep--"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-white/60 transition-colors"
             >
                 <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 Back
@@ -649,14 +649,14 @@
             <button
                 x-show="addIndividualStep === 1"
                 @click="open = false; resetForm()"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-white/60 transition-colors"
             >
                 Cancel
             </button>
 
             <div class="flex items-center gap-1.5 ml-auto">
                 {{-- Step indicator --}}
-                <span class="text-xs text-slate-500 mr-2">
+                <span class="text-xs text-ink-muted mr-2">
                     Step <span x-text="addIndividualStep"></span> of 3
                 </span>
 
@@ -664,7 +664,7 @@
                 <button
                     x-show="addIndividualStep < 3"
                     @click="addIndividualStep++"
-                    class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm"
+                    class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl clay-blue text-sm font-semibold hover:brightness-95 transition-colors"
                 >
                     Next
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -675,7 +675,7 @@
                     x-show="addIndividualStep === 3"
                     :disabled="submitting"
                     @click="submitForm()"
-                    class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 disabled:opacity-60 transition-colors shadow-sm"
+                    class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl clay-blue text-sm font-semibold hover:brightness-95 disabled:opacity-60 transition-colors"
                 >
                     <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting"></i>
                     <i data-lucide="save" class="w-4 h-4" x-show="!submitting"></i>

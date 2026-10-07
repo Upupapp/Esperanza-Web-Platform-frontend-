@@ -88,7 +88,7 @@
              DYNAMIC HEADER — color and icon change per action
         ════════════════════════════════════════════════════════ --}}
         <div
-            class="px-6 pt-6 pb-5 rounded-t-2xl border-b border-slate-100 relative overflow-hidden"
+            class="px-6 pt-6 pb-5 rounded-t-2xl border-b border-brand-600/10 relative overflow-hidden"
             :class="{
                 'bg-indigo-50': lifecycleAction === 'Transfer',
                 'bg-slate-50': lifecycleAction === 'Deceased',
@@ -109,7 +109,7 @@
             {{-- Close --}}
             <button
                 @click="open = false; resetLifecycleForm()"
-                class="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-600 hover:bg-white/60 transition-colors z-10"
+                class="absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center text-ink-muted hover:text-slate-600 hover:bg-white/60 transition-colors z-10"
                 title="Close"
             >
                 <i data-lucide="x" class="w-4 h-4"></i>
@@ -149,7 +149,7 @@
                         }"
                         x-text="actionConfig.title"
                     ></h2>
-                    <p class="text-xs mt-1 leading-relaxed text-slate-500" x-text="actionConfig.desc"></p>
+                    <p class="text-xs mt-1 leading-relaxed text-ink-muted" x-text="actionConfig.desc"></p>
                 </div>
             </div>
         </div>
@@ -165,10 +165,10 @@
                     <span x-text="(selectedIndividual?.name || 'R').split(' ').map(w=>w[0]).slice(0,2).join('')"></span>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <p class="text-sm font-bold text-navy-900 truncate" x-text="selectedIndividual?.name || '—'"></p>
-                    <p class="text-xs text-slate-500 mt-0.5">
+                    <p class="text-sm font-bold text-ink truncate" x-text="selectedIndividual?.name || '—'"></p>
+                    <p class="text-xs text-ink-muted mt-0.5">
                         ID: <span class="font-mono font-medium text-slate-700" x-text="selectedIndividual?.ref || '—'"></span>
-                        <span class="mx-1.5 text-slate-300">·</span>
+                        <span class="mx-1.5 text-ink-faint">·</span>
                         Brgy. <span x-text="selectedIndividual?.barangay || '—'"></span>
                     </p>
                 </div>
@@ -189,7 +189,7 @@
                     </label>
                     <select id="target-barangay"
                         x-model="form.target_barangay"
-                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                         required
                     >
                         <option value="" disabled selected>Select destination barangay</option>
@@ -197,7 +197,7 @@
                             <option value="{{ $brgy }}">{{ $brgy }}</option>
                         @endforeach
                     </select>
-                    <p class="text-xs text-slate-500 mt-1">
+                    <p class="text-xs text-ink-muted mt-1">
                         Select the barangay where this resident will be formally transferred.
                     </p>
                 </div>
@@ -210,7 +210,7 @@
                         x-model="form.transfer_reason"
                         placeholder="Briefly state the reason for this transfer (e.g., marriage, employment relocation, family consolidation…)"
                         rows="3"
-                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition resize-none"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition resize-none"
                     ></textarea>
                 </div>
 
@@ -222,7 +222,7 @@
                         <input id="effective-date"
                             type="date"
                             x-model="form.effective_date"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                         />
                     </div>
                     <div>
@@ -233,7 +233,7 @@
                             type="text"
                             x-model="form.certifying_officer"
                             placeholder="Full name of the barangay officer"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
                         />
                     </div>
                 </div>
@@ -261,7 +261,7 @@
                         <input id="date-of-passing"
                             type="date"
                             x-model="form.date_of_passing"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
                             required
                         />
                     </div>
@@ -271,7 +271,7 @@
                             type="text"
                             x-model="form.cause_of_death"
                             placeholder="e.g. Natural causes, illness"
-                            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
                         />
                     </div>
                 </div>
@@ -284,7 +284,7 @@
                         type="text"
                         x-model="form.informant_name"
                         placeholder="Name of the person reporting the death"
-                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
                     />
                 </div>
 
@@ -294,14 +294,14 @@
                         type="text"
                         x-model="form.death_cert_ref"
                         placeholder="e.g. 2026-DC-000123"
-                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
                     />
-                    <p class="text-xs text-slate-500 mt-1">Leave blank if PSA certificate is not yet available.</p>
+                    <p class="text-xs text-ink-muted mt-1">Leave blank if PSA certificate is not yet available.</p>
                 </div>
 
                 {{-- Note --}}
                 <div class="bg-slate-100 border border-slate-200 rounded-lg px-4 py-3 flex items-start gap-2.5 text-xs text-slate-600">
-                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-500"></i>
+                    <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5 text-ink-muted"></i>
                     <span>
                         The record will be soft-deleted and removed from active views. It is not permanently erased.
                     </span>
@@ -332,10 +332,10 @@
                         x-model="form.archive_reason"
                         placeholder="Provide a reason (e.g., resident migrated permanently, duplicate record, data entry error…)"
                         rows="4"
-                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-navy-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition resize-none"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition resize-none"
                         required
                     ></textarea>
-                    <p class="text-xs text-slate-500 mt-1">This reason will be recorded in the audit log and is required by LGU data governance policy.</p>
+                    <p class="text-xs text-ink-muted mt-1">This reason will be recorded in the audit log and is required by LGU data governance policy.</p>
                 </div>
 
             </div>{{-- /Archive --}}
@@ -350,7 +350,7 @@
 
             <button
                 @click="open = false; resetLifecycleForm()"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-white/60 transition-colors"
             >
                 Cancel
             </button>
@@ -359,7 +359,7 @@
             <button
                 @click="confirmLifecycle()"
                 :disabled="submitting || (lifecycleAction === 'Transfer' && !form.target_barangay) || (lifecycleAction === 'Deceased' && !form.date_of_passing) || (lifecycleAction === 'Archive' && form.archive_reason.trim().length < 5)"
-                class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-60"
+                class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-60"
                 :class="{
                     'bg-indigo-600 hover:bg-indigo-700': lifecycleAction === 'Transfer',
                     'bg-slate-700 hover:bg-slate-800': lifecycleAction === 'Deceased',

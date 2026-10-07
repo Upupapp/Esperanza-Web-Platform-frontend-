@@ -5,8 +5,8 @@
 
     {{-- Header row: count + add button --}}
     <div class="flex items-center justify-between">
-        <p class="text-sm text-slate-500">
-            Showing <span class="font-semibold text-navy-900" x-text="filteredFamilies.length"></span>
+        <p class="text-sm text-ink-muted">
+            Showing <span class="font-semibold text-ink" x-text="filteredFamilies.length"></span>
             <span x-text="filteredFamilies.length === 1 ? 'family' : 'families'"></span>
         </p>
         <button
@@ -21,17 +21,17 @@
     {{-- Table --}}
     <x-ui.table>
         <thead>
-            <tr class="bg-slate-50 border-b border-slate-200">
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Family</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Household</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head of Family</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Members</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+            <tr class="bg-well/70">
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Family</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden xl:table-cell">Barangay</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">Household</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden xl:table-cell">Head of Family</th>
+                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Members</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Record</th>
+                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Actions</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-brand-600/[.08]">
 
             {{-- Empty state row --}}
             <template x-if="filteredFamilies.length === 0">
@@ -62,8 +62,8 @@
                                 <span class="text-blue-700 font-bold text-xs" x-text="(f.surname || '').substring(0,2).toUpperCase()"></span>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="f.label"></p>
-                                <p class="text-xs text-slate-500 font-mono" x-text="f.ref"></p>
+                                <p class="text-sm font-semibold text-ink truncate" x-text="f.label"></p>
+                                <p class="text-xs text-ink-muted font-mono" x-text="f.ref"></p>
                                 {{-- Family type chip --}}
                                 <span
                                     class="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded text-xs font-medium"
@@ -80,8 +80,8 @@
 
                     {{-- Barangay --}}
                     <td class="px-4 py-3 hidden xl:table-cell">
-                        <p class="text-sm text-navy-900 font-medium" x-text="f.barangay"></p>
-                        <p class="text-xs text-slate-500" x-text="f.sitio ? ('Sitio ' + f.sitio) : '—'"></p>
+                        <p class="text-sm text-ink font-medium" x-text="f.barangay"></p>
+                        <p class="text-xs text-ink-muted" x-text="f.sitio ? ('Sitio ' + f.sitio) : '—'"></p>
                     </td>
 
                     {{-- Household link --}}
@@ -93,7 +93,7 @@
                             </span>
                         </template>
                         <template x-if="!f.household_ref">
-                            <span class="text-xs text-slate-500 italic">Unlinked</span>
+                            <span class="text-xs text-ink-muted italic">Unlinked</span>
                         </template>
                     </td>
 
@@ -101,9 +101,9 @@
                     <td class="px-4 py-3 hidden xl:table-cell">
                         <div class="flex items-center gap-2">
                             <template x-if="f.head_name">
-                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(f.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                <div class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(f.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                             </template>
-                            <span class="text-sm text-navy-900" x-text="f.head_name || '—'"></span>
+                            <span class="text-sm text-ink" x-text="f.head_name || '—'"></span>
                         </div>
                     </td>
 
@@ -127,7 +127,7 @@
                             <button
                                 @click="openFamily(f)"
                                 title="View family detail"
-                                class="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                class="p-1.5 rounded-md text-ink-muted hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             >
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
@@ -141,7 +141,7 @@
 
     {{-- Footer pagination hint --}}
     <template x-if="filteredFamilies.length > 0">
-        <p class="text-xs text-slate-500 text-right pt-1">
+        <p class="text-xs text-ink-muted text-right pt-1">
             <span x-text="filteredFamilies.length"></span> record<span x-text="filteredFamilies.length===1?'':'s'"></span> shown
         </p>
     </template>

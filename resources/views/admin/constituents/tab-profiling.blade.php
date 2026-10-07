@@ -44,16 +44,16 @@
 
         {{-- Donut chart card --}}
         <x-ui.card class="flex flex-col items-center justify-center py-6 gap-4">
-            <h3 class="text-sm font-semibold text-navy-900 tracking-tight self-start px-1">
+            <h3 class="text-sm font-semibold text-ink tracking-tight self-start px-1">
                 Status Breakdown
             </h3>
 
             <div x-data="centerDonut({ cutout: '68%', borderWidth: 3 })" x-effect="draw(barangayStatusBreakdown)" @mouseleave="hover = null" class="relative w-40 h-40">
                 <canvas x-ref="canvas" class="w-full h-full"></canvas>
                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
-                    <span class="text-2xl font-bold text-navy-900 tabular-nums" x-text="hover ? hover.value.toLocaleString() : barangayCoverage.length"></span>
-                    <span x-show="!hover" class="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Barangays</span>
-                    <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-navy-900 leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
+                    <span class="text-2xl font-bold text-ink tabular-nums" x-text="hover ? hover.value.toLocaleString() : barangayCoverage.length"></span>
+                    <span x-show="!hover" class="text-[10px] text-ink-muted uppercase tracking-wider mt-0.5">Barangays</span>
+                    <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-ink leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
                 </div>
             </div>
 
@@ -63,7 +63,7 @@
                     <div class="flex items-center gap-2">
                         <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="'background-color:' + row.color"></span>
                         <span class="text-slate-600" x-text="row.label"></span>
-                        <span class="font-semibold text-navy-900" x-text="'(' + row.value + ')'"></span>
+                        <span class="font-semibold text-ink" x-text="'(' + row.value + ')'"></span>
                     </div>
                 </template>
             </div>
@@ -71,7 +71,7 @@
 
         {{-- Coverage progress overview --}}
         <x-ui.card class="lg:col-span-2 flex flex-col gap-3 py-5 px-5">
-            <h3 class="text-sm font-semibold text-navy-900 tracking-tight mb-1">
+            <h3 class="text-sm font-semibold text-ink tracking-tight mb-1">
                 Overall Municipal Coverage
             </h3>
 
@@ -84,7 +84,7 @@
                 }">
                     <div class="flex justify-between text-xs text-slate-600 mb-1">
                         <span>Residents Profiled</span>
-                        <span class="font-semibold text-navy-900">
+                        <span class="font-semibold text-ink">
                             <span x-text="n.toLocaleString()"></span> / <span x-text="d.toLocaleString()"></span> &mdash;
                             <span class="text-emerald-600" x-text="pct + '%'"></span>
                         </span>
@@ -101,7 +101,7 @@
                 }">
                     <div class="flex justify-between text-xs text-slate-600 mb-1">
                         <span>Households Profiled</span>
-                        <span class="font-semibold text-navy-900">
+                        <span class="font-semibold text-ink">
                             <span x-text="n.toLocaleString()"></span> / <span x-text="d.toLocaleString()"></span> &mdash;
                             <span class="text-blue-600" x-text="pct + '%'"></span>
                         </span>
@@ -118,7 +118,7 @@
                 }">
                     <div class="flex justify-between text-xs text-slate-600 mb-1">
                         <span>Barangays &ge; 80% Complete</span>
-                        <span class="font-semibold text-navy-900">
+                        <span class="font-semibold text-ink">
                             <span x-text="n"></span> / <span x-text="d"></span> &mdash;
                             <span class="text-purple-600" x-text="pct + '%'"></span>
                         </span>
@@ -129,7 +129,7 @@
                 </div>
             </div>
 
-            <p class="text-[11px] text-slate-500 mt-auto pt-2 border-t border-slate-100" x-data="{ today: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }">
+            <p class="text-[11px] text-ink-muted mt-auto pt-2 border-t border-brand-600/10" x-data="{ today: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }">
                 <i data-lucide="info" class="w-3 h-3 inline -mt-0.5 mr-0.5"></i>
                 Data as of <span x-text="today"></span>. Figures are computed live from resident, household and barangay-profiling records.
             </p>
@@ -138,17 +138,17 @@
 
     {{-- ── BARANGAY COVERAGE TABLE ─────────────────────────────────────────── --}}
     <x-ui.card class="overflow-hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-brand-600/10">
             <div>
-                <h3 class="text-sm font-semibold text-navy-900 tracking-tight">Barangay-Level Coverage</h3>
-                <p class="text-xs text-slate-500 mt-0.5">
+                <h3 class="text-sm font-semibold text-ink tracking-tight">Barangay-Level Coverage</h3>
+                <p class="text-xs text-ink-muted mt-0.5">
                     <span x-text="isMunicipalScope ? barangayCoverage.length + ' barangays of Esperanza' : 'Brgy. ' + $store.session.account?.scope"></span>
                 </p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <button
                     @click="exportCSV(barangayCoverage, 'profiling-coverage-export.csv')"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:border-slate-300 transition"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-white/60 hover:border-slate-300 transition"
                 >
                     <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
                 </button>
@@ -156,24 +156,24 @@
         </div>
 
         <x-ui.table>
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
+            <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
+                <thead class="bg-well/70">
                     <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Residents Profiled</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Households Profiled</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap w-32">Coverage %</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Last Visit</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Assigned Encoder</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Barangay</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">Residents Profiled</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Households Profiled</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap w-32">Coverage %</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Last Visit</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Assigned Encoder</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
+                        <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50 bg-white">
+                <tbody class="divide-y divide-brand-600/[.08] bg-white">
                     <template x-for="b in barangayCoverage" :key="b.name">
-                        <tr x-show="$store.session.inScope(b.name)" class="hover:bg-slate-50/70 transition-colors group" x-cloak>
+                        <tr x-show="$store.session.inScope(b.name)" class="hover:bg-white/60 transition-colors group" x-cloak>
                             {{-- Barangay name --}}
-                            <td class="px-4 py-3 font-medium text-navy-900 whitespace-nowrap">
+                            <td class="px-4 py-3 font-medium text-ink whitespace-nowrap">
                                 <div class="flex items-center gap-2">
                                     <span class="w-1.5 h-1.5 rounded-full shrink-0"
                                           :class="b.pct >= 90 ? 'bg-emerald-500' : (b.pct >= 70 ? 'bg-amber-400' : 'bg-rose-500')"></span>
@@ -183,14 +183,14 @@
 
                             {{-- Residents --}}
                             <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums hidden xl:table-cell">
-                                <span class="font-semibold text-navy-900" x-text="b.profiled.toLocaleString()"></span>
-                                <span class="text-slate-500 text-xs" x-text="' / ' + b.residents.toLocaleString()"></span>
+                                <span class="font-semibold text-ink" x-text="b.profiled.toLocaleString()"></span>
+                                <span class="text-ink-muted text-xs" x-text="' / ' + b.residents.toLocaleString()"></span>
                             </td>
 
                             {{-- Households --}}
                             <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums hidden 2xl:table-cell">
-                                <span class="font-semibold text-navy-900" x-text="b.hh_profiled.toLocaleString()"></span>
-                                <span class="text-slate-500 text-xs" x-text="' / ' + b.hh.toLocaleString()"></span>
+                                <span class="font-semibold text-ink" x-text="b.hh_profiled.toLocaleString()"></span>
+                                <span class="text-ink-muted text-xs" x-text="' / ' + b.hh.toLocaleString()"></span>
                             </td>
 
                             {{-- Coverage % with progress bar --}}
@@ -220,7 +220,7 @@
                                           x-text="b.encoder ? b.encoder.charAt(0) : '?'"></span>
                                     <span class="text-xs text-slate-700" x-text="b.encoder"></span>
                                 </div>
-                                <span class="text-xs text-slate-500" x-show="!b.encoder">Unassigned</span>
+                                <span class="text-xs text-ink-muted" x-show="!b.encoder">Unassigned</span>
                             </td>
 
                             {{-- Status chip --}}
@@ -239,7 +239,7 @@
                             <td class="px-4 py-3 text-right whitespace-nowrap">
                                 <button
                                     @click="goToBarangayResidents(b.name)"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 ring-1 ring-brand-200 transition"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 ring-1 ring-brand-200 transition"
                                     :title="'View residents in Brgy. ' + b.name"
                                 >
                                     <i data-lucide="users" class="w-3 h-3"></i> View Residents
@@ -250,16 +250,16 @@
 
                     {{-- Empty state --}}
                     <tr x-show="barangayCoverage.length === 0" x-cloak>
-                        <td colspan="8" class="px-6 py-10 text-center text-sm text-slate-500">No barangay coverage data available.</td>
+                        <td colspan="8" class="px-6 py-10 text-center text-sm text-ink-muted">No barangay coverage data available.</td>
                     </tr>
                 </tbody>
             </table>
         </x-ui.table>
 
         {{-- Table footer --}}
-        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/50">
-            <p class="text-xs text-slate-500">
-                Showing <span class="font-semibold text-navy-900" x-text="barangayCoverage.length"></span> barangay(s) &mdash; Municipality of Esperanza, Masbate
+        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-brand-600/10 bg-slate-50/50">
+            <p class="text-xs text-ink-muted">
+                Showing <span class="font-semibold text-ink" x-text="barangayCoverage.length"></span> barangay(s) &mdash; Municipality of Esperanza, Masbate
             </p>
         </div>
     </x-ui.card>

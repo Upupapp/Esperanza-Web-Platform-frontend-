@@ -5,8 +5,8 @@
 
     {{-- Header row: count + add button --}}
     <div class="flex items-center justify-between">
-        <p class="text-sm text-slate-500">
-            Showing <span class="font-semibold text-navy-900" x-text="filteredHouseholds.length"></span>
+        <p class="text-sm text-ink-muted">
+            Showing <span class="font-semibold text-ink" x-text="filteredHouseholds.length"></span>
             <span x-text="filteredHouseholds.length === 1 ? 'household' : 'households'"></span>
         </p>
         <button
@@ -21,18 +21,18 @@
     {{-- Table --}}
     <x-ui.table>
         <thead>
-            <tr class="bg-slate-50 border-b border-slate-200">
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Household</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay / Sitio</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Head</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Members</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Dwelling</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Amenities</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+            <tr class="bg-well/70">
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Household</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden xl:table-cell">Barangay / Sitio</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">Head</th>
+                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Members</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">Dwelling</th>
+                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">Amenities</th>
+                <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Record</th>
+                <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Actions</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-brand-600/[.08]">
 
             {{-- Empty state row --}}
             <template x-if="filteredHouseholds.length === 0">
@@ -63,8 +63,8 @@
                                 <i data-lucide="house" class="w-4 h-4 text-indigo-600"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="h.label"></p>
-                                <p class="text-xs text-slate-500 font-mono" x-text="h.ref"></p>
+                                <p class="text-sm font-semibold text-ink truncate" x-text="h.label"></p>
+                                <p class="text-xs text-ink-muted font-mono" x-text="h.ref"></p>
                                 {{-- Flood risk chip --}}
                                 <span
                                     class="inline-flex items-center mt-0.5 gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
@@ -83,17 +83,17 @@
 
                     {{-- Barangay / Sitio --}}
                     <td class="px-4 py-3 hidden xl:table-cell">
-                        <p class="text-sm text-navy-900 font-medium" x-text="h.barangay"></p>
-                        <p class="text-xs text-slate-500" x-text="h.sitio ? ('Sitio ' + h.sitio) : '—'"></p>
+                        <p class="text-sm text-ink font-medium" x-text="h.barangay"></p>
+                        <p class="text-xs text-ink-muted" x-text="h.sitio ? ('Sitio ' + h.sitio) : '—'"></p>
                     </td>
 
                     {{-- Head --}}
                     <td class="px-4 py-3 hidden 2xl:table-cell">
                         <div class="flex items-center gap-2">
                             <template x-if="h.head_name">
-                                <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(h.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                <div class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(h.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                             </template>
-                            <span class="text-sm text-navy-900" x-text="h.head_name || '—'"></span>
+                            <span class="text-sm text-ink" x-text="h.head_name || '—'"></span>
                         </div>
                     </td>
 
@@ -104,21 +104,21 @@
 
                     {{-- Dwelling type --}}
                     <td class="px-4 py-3 hidden 2xl:table-cell">
-                        <p class="text-sm text-navy-900 leading-tight" x-text="h.dwelling_type || '—'"></p>
-                        <p class="text-xs text-slate-500 mt-0.5" x-text="h.housing_tenure || ''"></p>
+                        <p class="text-sm text-ink leading-tight" x-text="h.dwelling_type || '—'"></p>
+                        <p class="text-xs text-ink-muted mt-0.5" x-text="h.housing_tenure || ''"></p>
                     </td>
 
                     {{-- Amenities: electricity / water / toilet icons --}}
                     <td class="px-4 py-3 hidden 2xl:table-cell">
                         <div class="flex items-center justify-center gap-2">
                             <span :title="h.electricity ? 'Has Electricity' : 'No Electricity'">
-                                <i data-lucide="zap" class="w-4 h-4 transition-colors" :class="h.electricity ? 'text-amber-500' : 'text-slate-300'"></i>
+                                <i data-lucide="zap" class="w-4 h-4 transition-colors" :class="h.electricity ? 'text-amber-500' : 'text-ink-faint'"></i>
                             </span>
                             <span :title="h.water ? 'Has Water Source' : 'No Water Source'">
-                                <i data-lucide="droplets" class="w-4 h-4 transition-colors" :class="h.water ? 'text-blue-500' : 'text-slate-300'"></i>
+                                <i data-lucide="droplets" class="w-4 h-4 transition-colors" :class="h.water ? 'text-blue-500' : 'text-ink-faint'"></i>
                             </span>
                             <span :title="h.toilet ? 'Has Toilet Facility' : 'No Toilet Facility'">
-                                <i data-lucide="toilet" class="w-4 h-4 transition-colors" :class="h.toilet ? 'text-emerald-500' : 'text-slate-300'"></i>
+                                <i data-lucide="toilet" class="w-4 h-4 transition-colors" :class="h.toilet ? 'text-emerald-500' : 'text-ink-faint'"></i>
                             </span>
                         </div>
                     </td>
@@ -138,7 +138,7 @@
                             <button
                                 @click="openHousehold(h)"
                                 title="View household detail"
-                                class="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                class="p-1.5 rounded-md text-ink-muted hover:text-blue-600 hover:bg-blue-50 transition-colors"
                             >
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
@@ -152,7 +152,7 @@
 
     {{-- Footer pagination hint --}}
     <template x-if="filteredHouseholds.length > 0">
-        <p class="text-xs text-slate-500 text-right pt-1">
+        <p class="text-xs text-ink-muted text-right pt-1">
             <span x-text="filteredHouseholds.length"></span> record<span x-text="filteredHouseholds.length===1?'':'s'"></span> shown
         </p>
     </template>

@@ -56,17 +56,17 @@
     <x-ui.modal maxWidth="2xl">
 
         {{-- ── MODAL HEADER ────────────────────────────────────────────────── --}}
-        <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-slate-100">
+        <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-brand-600/10">
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
                     <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-rose-100">
                         <i data-lucide="git-merge" class="w-4 h-4 text-rose-600"></i>
                     </span>
-                    <h2 class="text-base font-bold text-navy-900 tracking-tight">
+                    <h2 class="text-base font-bold text-ink tracking-tight">
                         Duplicate Review &mdash; Merge Preview
                     </h2>
                 </div>
-                <p class="text-xs text-slate-500 mt-0.5 max-w-2xl">
+                <p class="text-xs text-ink-muted mt-0.5 max-w-2xl">
                     Review both records side-by-side, choose which one to keep, and confirm.
                     The other record is archived (soft-deleted) and its linked rows repointed to the kept record.
                     A System Administrator can revert this merge if needed — it is not permanent.
@@ -76,7 +76,7 @@
             {{-- Close X --}}
             <button
                 @click="showMerge = false"
-                class="p-1.5 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition shrink-0"
+                class="p-1.5 rounded-xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition shrink-0"
                 aria-label="Cancel merge and close"
             >
                 <i data-lucide="x" class="w-5 h-5"></i>
@@ -95,42 +95,42 @@
                 <button
                     type="button"
                     @click="keep = 'A'"
-                    class="text-left rounded-xl border-2 p-4 transition"
+                    class="text-left rounded-2xl border-2 p-4 transition"
                     :class="keep === 'A' ? 'border-brand-300 bg-brand-50/40' : 'border-slate-200 bg-white hover:border-slate-300'"
                 >
                     <div class="flex items-center gap-2 mb-3">
-                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-brand-600 text-white text-xs font-bold shrink-0">A</span>
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full clay-blue text-xs font-bold shrink-0">A</span>
                         <span class="text-xs font-bold text-brand-700 uppercase tracking-wider">Record A</span>
                         <span class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ring-1"
-                              :class="keep === 'A' ? 'bg-brand-100 text-brand-700 ring-brand-200' : 'bg-slate-100 text-slate-500 ring-slate-200'"
+                              :class="keep === 'A' ? 'bg-brand-100 text-brand-700 ring-brand-200' : 'bg-slate-100 text-ink-muted ring-slate-200'"
                               x-text="keep === 'A' ? 'Will keep' : 'Will archive'"></span>
                     </div>
-                    <p class="text-sm font-bold text-navy-900" x-text="dqRecordName(selectedDQIssue?.record) || '—'"></p>
-                    <p class="text-xs font-mono text-slate-500 mt-0.5" x-text="selectedDQIssue?.record || '—'"></p>
+                    <p class="text-sm font-bold text-ink" x-text="dqRecordName(selectedDQIssue?.record) || '—'"></p>
+                    <p class="text-xs font-mono text-ink-muted mt-0.5" x-text="selectedDQIssue?.record || '—'"></p>
                 </button>
 
                 {{-- Record B --}}
                 <button
                     type="button"
                     @click="keep = 'B'"
-                    class="text-left rounded-xl border-2 p-4 transition"
+                    class="text-left rounded-2xl border-2 p-4 transition"
                     :class="keep === 'B' ? 'border-brand-300 bg-brand-50/40' : 'border-slate-200 bg-white hover:border-slate-300'"
                 >
                     <div class="flex items-center gap-2 mb-3">
                         <span class="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white text-xs font-bold shrink-0">B</span>
                         <span class="text-xs font-bold text-rose-700 uppercase tracking-wider">Record B — Suspected Duplicate</span>
                         <span class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ring-1"
-                              :class="keep === 'B' ? 'bg-brand-100 text-brand-700 ring-brand-200' : 'bg-slate-100 text-slate-500 ring-slate-200'"
+                              :class="keep === 'B' ? 'bg-brand-100 text-brand-700 ring-brand-200' : 'bg-slate-100 text-ink-muted ring-slate-200'"
                               x-text="keep === 'B' ? 'Will keep' : 'Will archive'"></span>
                     </div>
-                    <p class="text-sm font-bold text-navy-900" x-text="dqRecordName(selectedDQIssue?.merge_candidate) || '—'"></p>
-                    <p class="text-xs font-mono text-slate-500 mt-0.5" x-text="selectedDQIssue?.merge_candidate || '—'"></p>
+                    <p class="text-sm font-bold text-ink" x-text="dqRecordName(selectedDQIssue?.merge_candidate) || '—'"></p>
+                    <p class="text-xs font-mono text-ink-muted mt-0.5" x-text="selectedDQIssue?.merge_candidate || '—'"></p>
                 </button>
             </div>
 
             {{-- ── FIELD COMPARISON (read-only) ─────────────────────────────── --}}
             <div>
-                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3 flex items-center gap-2">
                     <i data-lucide="columns-2" class="w-3.5 h-3.5"></i>
                     Field-by-Field Comparison
                 </h3>
@@ -139,57 +139,57 @@
                     <table class="min-w-full text-sm">
                         <thead class="bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th class="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-32">Field</th>
+                                <th class="px-4 py-2.5 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] w-32">Field</th>
                                 <th class="px-4 py-2.5 text-left text-[11px] font-semibold text-brand-600 uppercase tracking-wider">Record A</th>
                                 <th class="px-4 py-2.5 text-left text-[11px] font-semibold text-rose-600 uppercase tracking-wider">Record B</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
+                        <tbody class="divide-y divide-brand-600/[.08] bg-white">
 
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Full Name</td>
-                                <td class="px-4 py-2.5 text-sm font-medium text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.name || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm font-medium text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.name || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Full Name</td>
+                                <td class="px-4 py-2.5 text-sm font-medium text-ink" x-text="dqRecord(selectedDQIssue?.record)?.name || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm font-medium text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.name || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Barangay</td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.barangay || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.barangay || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Barangay</td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.record)?.barangay || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.barangay || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Sex</td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.sex || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.sex || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Sex</td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.record)?.sex || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.sex || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Date of Birth</td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.dob || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.dob || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Date of Birth</td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.record)?.dob || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.dob || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Civil Status</td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.civil_status || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.civil_status || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Civil Status</td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.record)?.civil_status || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.civil_status || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Contact No.</td>
-                                <td class="px-4 py-2.5 text-sm font-mono text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.contact || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm font-mono text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.contact || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Contact No.</td>
+                                <td class="px-4 py-2.5 text-sm font-mono text-ink" x-text="dqRecord(selectedDQIssue?.record)?.contact || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm font-mono text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.contact || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Household</td>
-                                <td class="px-4 py-2.5 text-sm font-mono text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.household?.ref || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm font-mono text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.household?.ref || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Household</td>
+                                <td class="px-4 py-2.5 text-sm font-mono text-ink" x-text="dqRecord(selectedDQIssue?.record)?.household?.ref || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm font-mono text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.household?.ref || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Family</td>
-                                <td class="px-4 py-2.5 text-sm font-mono text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.family?.ref || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm font-mono text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.family?.ref || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Family</td>
+                                <td class="px-4 py-2.5 text-sm font-mono text-ink" x-text="dqRecord(selectedDQIssue?.record)?.family?.ref || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm font-mono text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.family?.ref || '—'"></td>
                             </tr>
                             <tr class="even:bg-slate-50/50">
-                                <td class="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Verification</td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.record)?.verification || '—'"></td>
-                                <td class="px-4 py-2.5 text-sm text-navy-900" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.verification || '—'"></td>
+                                <td class="px-4 py-2.5 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Verification</td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.record)?.verification || '—'"></td>
+                                <td class="px-4 py-2.5 text-sm text-ink" x-text="dqRecord(selectedDQIssue?.merge_candidate)?.verification || '—'"></td>
                             </tr>
 
                         </tbody>
@@ -199,10 +199,10 @@
 
             {{-- ── NOTE ──────────────────────────────────────────────────────── --}}
             <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block" for="merge-note">Note (optional)</label>
+                <label class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-1.5 block" for="merge-note">Note (optional)</label>
                 <textarea id="merge-note" x-model="note" rows="2"
                     placeholder="Why these are the same person, or anything the next reviewer should know."
-                    class="w-full text-sm rounded-lg border border-slate-200 bg-white p-3 placeholder-slate-400 text-navy-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
+                    class="w-full text-sm rounded-xl border border-slate-200 bg-white p-3 placeholder-slate-400 text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
                 ></textarea>
             </div>
 
@@ -221,24 +221,24 @@
         </div>
 
         {{-- ── MODAL FOOTER ────────────────────────────────────────────────── --}}
-        <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl">
+        <div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl">
 
             {{-- Left: Cancel --}}
             <button
                 @click="showMerge = false" x-bind:disabled="merging"
-                class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:pointer-events-none"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-white/60 transition disabled:opacity-50 disabled:pointer-events-none"
             >
                 <i data-lucide="x" class="w-3.5 h-3.5"></i> Cancel
             </button>
 
             {{-- Right: Merge confirmation --}}
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                <p class="text-[11px] text-slate-500 text-center sm:text-right hidden sm:block">
-                    Keeping <span class="font-semibold text-navy-900" x-text="(keep === 'A' ? dqRecordName(selectedDQIssue?.record) : dqRecordName(selectedDQIssue?.merge_candidate)) || 'record'"></span>
+                <p class="text-[11px] text-ink-muted text-center sm:text-right hidden sm:block">
+                    Keeping <span class="font-semibold text-ink" x-text="(keep === 'A' ? dqRecordName(selectedDQIssue?.record) : dqRecordName(selectedDQIssue?.merge_candidate)) || 'record'"></span>
                 </p>
                 <button
                     @click="confirmMerge()" x-bind:disabled="merging"
-                    class="inline-flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-bold rounded-lg bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 transition shadow-md shadow-rose-200 shrink-0 disabled:opacity-70 disabled:pointer-events-none"
+                    class="inline-flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-bold rounded-xl bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 transition shadow-md shadow-rose-200 shrink-0 disabled:opacity-70 disabled:pointer-events-none"
                 >
                     <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="merging" x-cloak></i>
                     <i data-lucide="git-merge" class="w-3.5 h-3.5" x-show="!merging"></i>

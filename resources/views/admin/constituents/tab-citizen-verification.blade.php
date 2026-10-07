@@ -6,20 +6,20 @@
     {{-- ── ENTITY TYPE SWITCHER — its own bordered/shadowed toolbar card so
          it's anchored the same way the Registry tab's view switcher is,
          instead of a bare pill floating directly on the page background. ── --}}
-    <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-1.5 w-fit">
-        <div class="inline-flex items-center gap-1 bg-slate-100/70 rounded-xl p-1">
+    <div class="surface-glass rounded-[26px] p-1.5 w-fit">
+        <div class="inline-flex items-center gap-1 surface-pressed rounded-xl p-1">
             <template x-for="t in ['Individual', 'Family', 'Household']" :key="t">
                 <button
                     type="button"
                     @click="cvType = t; cvStatusFilter = ''; cvSearch = ''; cvBarangayFilter = ''; cvTagFilter = ''"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors"
-                    :class="cvType === t ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors"
+                    :class="cvType === t ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                 >
                     <i :data-lucide="t === 'Individual' ? 'user' : (t === 'Family' ? 'users-round' : 'house')" class="w-3.5 h-3.5"></i>
                     <span x-text="t === 'Individual' ? 'Account IDs' : (t === 'Family' ? 'Family Records' : 'Household Records')"></span>
                     <span
                         class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                        :class="cvType === t ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-slate-500'"
+                        :class="cvType === t ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-ink-muted'"
                         x-text="t === 'Individual' ? citizenAccountList.length : (t === 'Family' ? cvFamilyList.length : cvHouseholdList.length)"
                     ></span>
                 </button>
@@ -57,24 +57,24 @@
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
             <div class="relative flex-1 min-w-0">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </span>
                 <input aria-label="Citizen verification search"
                     type="text"
                     x-model="cvSearch"
                     :placeholder="cvType === 'Individual' ? 'Search by name, resident ID, barangay, or email…' : 'Search by name, ID, barangay, or head…'"
-                    class="w-full pl-8 pr-4 py-2 text-sm rounded-lg border border-slate-200 bg-white placeholder-slate-400 text-navy-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
+                    class="w-full pl-8 pr-4 py-2 text-sm rounded-xl border border-slate-200 bg-white placeholder-slate-400 text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
                 />
             </div>
 
             <div class="relative">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                 </span>
                 <select aria-label="Citizen verification status filter"
                     x-model="cvStatusFilter"
-                    class="pl-8 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
+                    class="pl-8 pr-8 py-2 text-sm rounded-xl border border-slate-200 bg-white text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
                     <option value="">All Statuses</option>
                     <template x-if="cvType === 'Individual'">
@@ -88,7 +88,7 @@
                         </template>
                     </template>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -99,14 +99,14 @@
             <div class="relative" x-show="isMunicipalScope">
                 <select aria-label="Citizen verification barangay filter"
                     x-model="cvBarangayFilter"
-                    class="pl-3 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
+                    class="pl-3 pr-8 py-2 text-sm rounded-xl border border-slate-200 bg-white text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
                     <option value="">All Barangays</option>
                     @foreach($barangayOptions as $b)
                         <option value="{{ $b }}">{{ $b }}</option>
                     @endforeach
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -118,7 +118,7 @@
             <div class="relative" x-show="cvType === 'Individual'" x-cloak>
                 <select aria-label="Citizen verification tag filter"
                     x-model="cvTagFilter"
-                    class="pl-3 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
+                    class="pl-3 pr-8 py-2 text-sm rounded-xl border border-slate-200 bg-white text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
                     <option value="">All Tags</option>
                     <option value="senior">Senior Citizen</option>
@@ -133,7 +133,7 @@
                     <option value="farmer">Farmer</option>
                     <option value="high_risk">High Risk</option>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -142,17 +142,17 @@
                 @click="cvSearch = ''; cvStatusFilter = ''; cvBarangayFilter = ''; cvTagFilter = ''"
                 x-show="cvSearch !== '' || cvStatusFilter !== '' || cvBarangayFilter !== '' || cvTagFilter !== ''"
                 x-cloak
-                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition shrink-0"
+                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-white/60 transition shrink-0"
                 title="Clear all filters"
             >
                 <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
             </button>
         </div>
 
-        <div class="mt-3 pt-3 border-t border-slate-100">
+        <div class="mt-3 pt-3 border-t border-brand-600/10">
             <template x-if="cvType === 'Individual'">
-                <p class="text-xs text-slate-500">
-                    Showing <span class="font-semibold text-navy-900" x-text="filteredCitizenAccounts.length"></span>
+                <p class="text-xs text-ink-muted">
+                    Showing <span class="font-semibold text-ink" x-text="filteredCitizenAccounts.length"></span>
                     <span x-text="filteredCitizenAccounts.length === 1 ? 'citizen account' : 'citizen accounts'"></span>
                     <span x-show="cvSearch !== '' || cvStatusFilter !== '' || cvBarangayFilter !== '' || cvTagFilter !== ''" x-cloak>
                         &mdash; filtered from <span class="font-semibold" x-text="citizenAccountList.length"></span> total
@@ -160,8 +160,8 @@
                 </p>
             </template>
             <template x-if="cvType === 'Family'">
-                <p class="text-xs text-slate-500">
-                    Showing <span class="font-semibold text-navy-900" x-text="filteredCvFamilies.length"></span>
+                <p class="text-xs text-ink-muted">
+                    Showing <span class="font-semibold text-ink" x-text="filteredCvFamilies.length"></span>
                     <span x-text="filteredCvFamilies.length === 1 ? 'family' : 'families'"></span>
                     <span x-show="cvSearch !== '' || cvStatusFilter !== '' || cvBarangayFilter !== ''" x-cloak>
                         &mdash; filtered from <span class="font-semibold" x-text="cvFamilyList.length"></span> total
@@ -169,8 +169,8 @@
                 </p>
             </template>
             <template x-if="cvType === 'Household'">
-                <p class="text-xs text-slate-500">
-                    Showing <span class="font-semibold text-navy-900" x-text="filteredCvHouseholds.length"></span>
+                <p class="text-xs text-ink-muted">
+                    Showing <span class="font-semibold text-ink" x-text="filteredCvHouseholds.length"></span>
                     <span x-text="filteredCvHouseholds.length === 1 ? 'household' : 'households'"></span>
                     <span x-show="cvSearch !== '' || cvStatusFilter !== '' || cvBarangayFilter !== ''" x-cloak>
                         &mdash; filtered from <span class="font-semibold" x-text="cvHouseholdList.length"></span> total
@@ -186,19 +186,19 @@
          inside a second x-ui.card, which was the double-boxed, padded,
          "floating" look. ── --}}
     <x-ui.table x-show="cvType === 'Individual'">
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
+            <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
+                <thead class="bg-well/70">
                     <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Citizen</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Resident ID</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Registered</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Profile</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Citizen</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">Resident ID</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Barangay</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Registered</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Profile</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
+                        <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50 bg-white">
+                <tbody class="divide-y divide-brand-600/[.08] bg-white">
                     <template x-if="filteredCitizenAccounts.length === 0">
                         <tr>
                             <td colspan="7" class="py-16 px-4 text-center">
@@ -213,24 +213,24 @@
         @keydown.space.prevent="i.accountOnly ? openAccount(i) : openIndividual(i)">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
-                                    <span class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold text-xs ring-2 ring-white shadow-sm shrink-0" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
+                                    <span class="w-8 h-8 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold text-xs shrink-0" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="i.name"></p>
-                                        <p class="text-xs text-slate-500 truncate" x-text="i.citizen_account ? i.citizen_account.email : 'Not registered on Citizen Portal'"></p>
+                                        <p class="text-xs text-ink-muted truncate" x-text="i.citizen_account ? i.citizen_account.email : 'Not registered on Citizen Portal'"></p>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 font-mono text-xs text-slate-500 whitespace-nowrap hidden xl:table-cell" x-text="i.ref"></td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell" x-text="'Brgy. ' + i.barangay"></td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden 2xl:table-cell" x-text="i.citizen_account?.registered_at ? new Date(i.citizen_account.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'"></td>
+                            <td class="px-4 py-3 font-mono text-xs text-ink-muted whitespace-nowrap hidden xl:table-cell" x-text="i.ref"></td>
+                            <td class="px-4 py-3 text-ink-muted whitespace-nowrap hidden 2xl:table-cell" x-text="'Brgy. ' + i.barangay"></td>
+                            <td class="px-4 py-3 text-ink-muted whitespace-nowrap hidden 2xl:table-cell" x-text="i.citizen_account?.registered_at ? new Date(i.citizen_account.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'"></td>
                             <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell">
                                 <div class="flex items-center gap-2" x-show="i.citizen_account">
                                     <div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden shrink-0">
                                         <div class="h-full rounded-full bg-brand-500" :style="'width:' + (i.citizen_account?.profile_completeness || 0) + '%'"></div>
                                     </div>
-                                    <span class="text-xs text-slate-500" x-text="(i.citizen_account?.profile_completeness || 0) + '%'"></span>
+                                    <span class="text-xs text-ink-muted" x-text="(i.citizen_account?.profile_completeness || 0) + '%'"></span>
                                 </div>
-                                <span class="text-xs text-slate-300" x-show="!i.citizen_account">—</span>
+                                <span class="text-xs text-ink-faint" x-show="!i.citizen_account">—</span>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <span
@@ -256,7 +256,7 @@
                                 </span>
                                 <span
                                     x-show="!i.citizen_account"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200 whitespace-nowrap"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-ink-muted ring-1 ring-inset ring-slate-200 whitespace-nowrap"
                                 >
                                     <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                                     Not Registered
@@ -270,7 +270,7 @@
                                 <button
                                     x-show="i.citizen_account && (['Pending Review', 'Under Verification'].includes(i.citizen_account.status) || i.citizen_account.photo_pending) && (can('const_citizen_verification', 'verify') || can('const_citizen_verification', 'reject'))"
                                     @click="openAccount(i)"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
@@ -287,7 +287,7 @@
                                      added, and re-sends periodically until they register. --}}
                                 <span
                                     x-show="!i.citizen_account"
-                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 cursor-default"
+                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted cursor-default"
                                     title="An automated Citizen Portal registration reminder was sent to this resident's contact on file."
                                 >
                                     <i data-lucide="send" class="w-3.5 h-3.5"></i> Already Notified for Account Verification
@@ -301,18 +301,18 @@
 
     {{-- ── FAMILY QUEUE TABLE ──────────────────────────────────────────────── --}}
     <x-ui.table x-show="cvType === 'Family'" x-cloak>
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
+            <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
+                <thead class="bg-well/70">
                     <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Family</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head of Family</th>
-                        <th class="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Members</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Family</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">Barangay</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">Head of Family</th>
+                        <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Members</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Record</th>
+                        <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50 bg-white">
+                <tbody class="divide-y divide-brand-600/[.08] bg-white">
                     <template x-if="filteredCvFamilies.length === 0">
                         <tr>
                             <td colspan="6" class="py-16 px-4 text-center">
@@ -330,11 +330,11 @@
                                     <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold shrink-0 text-xs text-blue-700 ring-2 ring-white shadow-sm" x-text="(f.surname || '').substring(0,2).toUpperCase()"></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="f.label"></p>
-                                        <p class="text-xs text-slate-500 font-mono truncate" x-text="f.ref"></p>
+                                        <p class="text-xs text-ink-muted font-mono truncate" x-text="f.ref"></p>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden xl:table-cell" x-text="'Brgy. ' + f.barangay"></td>
+                            <td class="px-4 py-3 text-ink-muted whitespace-nowrap hidden xl:table-cell" x-text="'Brgy. ' + f.barangay"></td>
                             <td class="px-4 py-3 text-slate-600 whitespace-nowrap hidden xl:table-cell" x-text="f.head_name || '—'"></td>
                             <td class="px-4 py-3 text-center hidden 2xl:table-cell">
                                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold" x-text="f.member_count"></span>
@@ -353,7 +353,7 @@
                                 <button
                                     x-show="f.verification !== 'Verified' && can('const_data_quality', 'verify')"
                                     @click="openFamily(f)"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>
@@ -371,18 +371,18 @@
 
     {{-- ── HOUSEHOLD QUEUE TABLE ───────────────────────────────────────────── --}}
     <x-ui.table x-show="cvType === 'Household'" x-cloak>
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
+            <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
+                <thead class="bg-well/70">
                     <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Household</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">Head</th>
-                        <th class="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Members</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Household</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">Barangay</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden xl:table-cell">Head</th>
+                        <th class="px-4 py-3 text-center text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Members</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Record</th>
+                        <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50 bg-white">
+                <tbody class="divide-y divide-brand-600/[.08] bg-white">
                     <template x-if="filteredCvHouseholds.length === 0">
                         <tr>
                             <td colspan="6" class="py-16 px-4 text-center">
@@ -400,11 +400,11 @@
                                     <span class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm"><i data-lucide="house" class="w-4 h-4 text-indigo-600"></i></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="h.label"></p>
-                                        <p class="text-xs text-slate-500 font-mono truncate" x-text="h.ref"></p>
+                                        <p class="text-xs text-ink-muted font-mono truncate" x-text="h.ref"></p>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap hidden xl:table-cell" x-text="'Brgy. ' + h.barangay"></td>
+                            <td class="px-4 py-3 text-ink-muted whitespace-nowrap hidden xl:table-cell" x-text="'Brgy. ' + h.barangay"></td>
                             <td class="px-4 py-3 text-slate-600 whitespace-nowrap hidden xl:table-cell" x-text="h.head_name || '—'"></td>
                             <td class="px-4 py-3 text-center hidden 2xl:table-cell">
                                 <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold" x-text="h.member_count"></span>
@@ -423,7 +423,7 @@
                                 <button
                                     x-show="h.verification !== 'Verified' && can('const_data_quality', 'verify')"
                                     @click="openHousehold(h)"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                                 >
                                     <i data-lucide="scan-search" class="w-3.5 h-3.5"></i> Review
                                 </button>

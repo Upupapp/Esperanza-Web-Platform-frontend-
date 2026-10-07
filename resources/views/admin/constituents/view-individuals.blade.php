@@ -8,11 +8,11 @@
 
     {{-- ── Result count bar ── --}}
     <div class="flex items-center justify-between px-1">
-        <p class="text-sm text-slate-500">
+        <p class="text-sm text-ink-muted">
             Showing
-            <span class="font-semibold text-navy-900" x-text="filteredIndividuals.length"></span>
+            <span class="font-semibold text-ink" x-text="filteredIndividuals.length"></span>
             of
-            <span class="font-semibold text-navy-900" x-text="individuals.length"></span>
+            <span class="font-semibold text-ink" x-text="individuals.length"></span>
             residents
         </p>
     </div>
@@ -21,28 +21,28 @@
     <x-ui.table>
         <table class="w-full text-sm">
             <thead>
-                <tr class="bg-slate-50 border-b border-slate-200">
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                <tr class="bg-well/70">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
                         Resident
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden xl:table-cell">
                         Barangay / Sitio
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap hidden 2xl:table-cell">
                         Household
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
                         Record
                     </th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
                         Status
                     </th>
-                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                    <th class="text-center px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">
                         Actions
                     </th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-50 bg-white">
+            <tbody class="divide-y divide-brand-600/[.08] bg-white">
 
                 {{-- ── Empty state ── --}}
                 <template x-if="filteredIndividuals.length === 0">
@@ -56,7 +56,7 @@
                                 <template x-if="can('const_resident','create')">
                                     <button
                                         @click="showAddIndividual = true"
-                                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+                                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl clay-blue text-sm font-medium hover:brightness-95 transition-colors"
                                     >
                                         <i data-lucide="user-plus" class="w-4 h-4"></i>
                                         Add Resident
@@ -70,7 +70,7 @@
                 {{-- ── Individual rows ── --}}
                 <template x-for="r in filteredIndividuals" :key="r.ref">
                     <tr
-                        class="hover:bg-slate-50/70 transition-colors cursor-pointer group"
+                        class="hover:bg-white/60 transition-colors cursor-pointer group"
                         @click="openIndividual(r)"
 
         tabindex="0"
@@ -81,7 +81,7 @@
                         <td class="px-4 py-3">
                             <div class="flex items-start gap-3 min-w-0">
                                 <div class="flex-shrink-0 relative">
-                                    <div class="w-10 h-10 text-sm rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                    <div class="w-10 h-10 text-sm rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     {{-- Sex indicator dot --}}
                                     <span
                                         class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center text-white"
@@ -91,10 +91,10 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p
-                                        class="font-semibold text-navy-900 text-sm leading-tight truncate group-hover:text-brand-600 transition-colors"
+                                        class="font-semibold text-ink text-sm leading-tight truncate group-hover:text-brand-600 transition-colors"
                                         x-text="r.name"
                                     ></p>
-                                    <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                                    <p class="text-xs text-ink-muted mt-0.5 flex items-center gap-1">
                                         <span x-text="'ID: ' + r.ref"></span>
                                         <i x-show="r.citizen_account" data-lucide="smartphone" class="w-3 h-3 text-brand-500" title="Linked to Citizen Portal account"></i>
                                     </p>
@@ -125,8 +125,8 @@
                         {{-- Barangay / Sitio --}}
                         <td class="px-4 py-3 hidden xl:table-cell">
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-slate-800 truncate" x-text="'Brgy. ' + r.barangay"></p>
-                                <p class="text-xs text-slate-500 mt-0.5 truncate" x-text="r.sitio ? 'Sitio ' + r.sitio : '—'"></p>
+                                <p class="text-sm font-medium text-ink-body truncate" x-text="'Brgy. ' + r.barangay"></p>
+                                <p class="text-xs text-ink-muted mt-0.5 truncate" x-text="r.sitio ? 'Sitio ' + r.sitio : '—'"></p>
                             </div>
                         </td>
 
@@ -134,13 +134,13 @@
                         <td class="px-4 py-3 hidden 2xl:table-cell">
                             <div class="min-w-0">
                                 <p class="text-xs text-slate-600 font-medium">
-                                    HH: <span class="text-slate-800 font-semibold" x-text="r.household?.ref || '—'"></span>
+                                    HH: <span class="text-ink-body font-semibold" x-text="r.household?.ref || '—'"></span>
                                 </p>
-                                <p class="text-xs text-slate-500 mt-0.5">
+                                <p class="text-xs text-ink-muted mt-0.5">
                                     Fam: <span x-text="r.family?.ref || '—'"></span>
                                 </p>
                                 <p
-                                    class="text-[10px] font-semibold uppercase text-slate-500 mt-1 bg-slate-100 rounded px-1 py-0.5 inline-block"
+                                    class="text-[10px] font-semibold uppercase text-ink-muted mt-1 bg-slate-100 rounded px-1 py-0.5 inline-block"
                                     x-text="r.relation || 'Member'"
                                 ></p>
                             </div>
@@ -189,7 +189,7 @@
                                 <button
                                     @click="openIndividual(r)"
                                     title="View resident detail"
-                                    class="p-1.5 rounded-md text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                    class="p-1.5 rounded-md text-ink-muted hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 >
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>

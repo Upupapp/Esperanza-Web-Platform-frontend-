@@ -106,7 +106,7 @@
             <div class="flex-1 min-h-0 flex flex-col sm:flex-row overflow-hidden">
 
                 {{-- ── Side nav ── --}}
-                <div class="w-full sm:w-48 shrink-0 flex flex-row sm:flex-col gap-0.5 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50/60 p-2 sm:p-2.5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto scrollbar-thin">
+                <div class="w-full sm:w-48 shrink-0 flex flex-row sm:flex-col gap-0.5 border-b sm:border-b-0 sm:border-r border-brand-600/10 bg-slate-50/60 p-2 sm:p-2.5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto scrollbar-thin">
                     <template x-for="tab in [
                         {id:'overview',icon:'layout-dashboard',label:'Overview'},
                         {id:'members',icon:'users',label:'Members',count:selectedFamily?.member_count},
@@ -114,15 +114,15 @@
                     ]" :key="tab.id">
                         <button
                             @click="familyTab = tab.id"
-                            class="shrink-0 sm:w-full flex items-center gap-2 sm:gap-2.5 px-3 py-2 sm:py-2.5 rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap sm:whitespace-normal text-left"
-                            :class="familyTab === tab.id ? 'bg-white text-brand-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'"
+                            class="shrink-0 sm:w-full flex items-center gap-2 sm:gap-2.5 px-3 py-2 sm:py-2.5 rounded-xl text-[13px] font-medium transition-colors whitespace-nowrap sm:whitespace-normal text-left"
+                            :class="familyTab === tab.id ? 'bg-white text-brand-700 shadow-sm ring-1 ring-slate-200' : 'text-ink-muted hover:bg-white/70 hover:text-slate-700'"
                         >
-                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="familyTab === tab.id ? 'text-brand-600' : 'text-slate-500'"></i>
+                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="familyTab === tab.id ? 'text-brand-600' : 'text-ink-muted'"></i>
                             <span class="flex-1 min-w-0 sm:truncate" x-text="tab.label"></span>
                             <span
                                 x-show="tab.count"
                                 class="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
-                                :class="familyTab === tab.id ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-slate-500'"
+                                :class="familyTab === tab.id ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-ink-muted'"
                                 x-text="tab.count"
                             ></span>
                         </button>
@@ -139,31 +139,31 @@
                         {{-- Left column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Family Details</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Family Details</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Family Type</dt>
-                                        <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.family_type"></dd>
+                                        <dt class="text-xs text-ink-muted">Family Type</dt>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedFamily.family_type"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Barangay</dt>
-                                        <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.barangay"></dd>
+                                        <dt class="text-xs text-ink-muted">Barangay</dt>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedFamily.barangay"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Sitio / Purok</dt>
-                                        <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.sitio || '—'"></dd>
+                                        <dt class="text-xs text-ink-muted">Sitio / Purok</dt>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedFamily.sitio || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Household</dt>
+                                        <dt class="text-xs text-ink-muted">Household</dt>
                                         <dd class="text-xs font-semibold text-blue-600" x-text="selectedFamily.household_ref || 'Unlinked'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Head of Family</dt>
-                                        <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.head_name || '—'"></dd>
+                                        <dt class="text-xs text-ink-muted">Head of Family</dt>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedFamily.head_name || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500">Member Count</dt>
-                                        <dd class="text-xs font-semibold text-navy-900" x-text="selectedFamily.member_count"></dd>
+                                        <dt class="text-xs text-ink-muted">Member Count</dt>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedFamily.member_count"></dd>
                                     </div>
                                 </dl>
                             </x-ui.card>
@@ -172,16 +172,16 @@
                         {{-- Right column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Status & Verification</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Status & Verification</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500">Record Status</dt>
+                                        <dt class="text-xs text-ink-muted">Record Status</dt>
                                         <dd>
                                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" :class="statusBadge(selectedFamily.status)" x-text="selectedFamily.status"></span>
                                         </dd>
                                     </div>
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500">Record</dt>
+                                        <dt class="text-xs text-ink-muted">Record</dt>
                                         <dd>
                                             <span
                                                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
@@ -195,10 +195,10 @@
 
                             {{-- Programs chips --}}
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Enrolled Programs</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Enrolled Programs</h4>
                                 <div class="flex flex-wrap gap-1.5">
                                     <template x-if="!selectedFamily.programs || selectedFamily.programs.length === 0">
-                                        <span class="text-xs text-slate-500 italic">No enrolled programs</span>
+                                        <span class="text-xs text-ink-muted italic">No enrolled programs</span>
                                     </template>
                                     <template x-for="prog in (selectedFamily.programs || [])" :key="prog">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700" x-text="prog"></span>
@@ -208,7 +208,7 @@
 
                             {{-- Notes --}}
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Notes / Remarks</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-2">Notes / Remarks</h4>
                                 <p class="text-xs text-slate-600 leading-relaxed" x-text="selectedFamily.notes || 'No notes recorded.'"></p>
                             </x-ui.card>
                         </div>
@@ -220,7 +220,7 @@
                         <div class="max-w-xl space-y-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5">Family Type</label>
-                                <select aria-label="Family Type" x-model="edit.family_type" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <select aria-label="Family Type" x-model="edit.family_type" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                                     <option value="Nuclear">Nuclear</option>
                                     <option value="Extended">Extended</option>
                                     <option value="Single Parent">Single Parent</option>
@@ -228,15 +228,15 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-sitio">Sitio / Purok</label>
-                                <input id="fam-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="fam-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-head">Head of Family</label>
-                                <input id="fam-edit-head" type="text" x-model="edit.head_name" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="fam-edit-head" type="text" x-model="edit.head_name" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-notes">Notes</label>
-                                <textarea id="fam-edit-notes" x-model="edit.notes" rows="3" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all resize-none"></textarea>
+                                <textarea id="fam-edit-notes" x-model="edit.notes" rows="3" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all resize-none"></textarea>
                             </div>
                             <div class="flex items-center gap-2">
                                 <x-ui.button variant="secondary" size="sm" @click="editing = false">Cancel</x-ui.button>
@@ -249,7 +249,7 @@
                 {{-- ── MEMBERS TAB ── --}}
                 <div x-show="familyTab === 'members'" x-cloak>
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-navy-900">
+                        <h3 class="text-sm font-semibold text-ink">
                             All Family Members
                             <span class="ml-1.5 px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 font-semibold" x-text="selectedFamily.member_count"></span>
                         </h3>
@@ -259,13 +259,13 @@
                         <template x-if="(individuals.filter(r => r.family?.ref === selectedFamily?.ref)).length === 0">
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
-                                    <i data-lucide="user-x" class="w-8 h-8 text-slate-300"></i>
-                                    <p class="text-sm text-slate-500">No members linked to this family yet.</p>
+                                    <i data-lucide="user-x" class="w-8 h-8 text-ink-faint"></i>
+                                    <p class="text-sm text-ink-muted">No members linked to this family yet.</p>
                                 </div>
                             </div>
                         </template>
 
-                        <ul class="divide-y divide-slate-100">
+                        <ul class="divide-y divide-brand-600/[.08]">
                             <template x-for="r in individuals.filter(r => r.family?.ref === selectedFamily?.ref)" :key="r.ref">
                                 <li
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50/40 cursor-pointer transition-colors"
@@ -275,10 +275,10 @@
         tabindex="0"
         @keydown.enter.prevent="openIndividual(r)"
         @keydown.space.prevent="openIndividual(r)">
-                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                    <div class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
-                                        <p class="text-xs text-slate-500">
+                                        <p class="text-sm font-semibold text-ink truncate" x-text="r.name"></p>
+                                        <p class="text-xs text-ink-muted">
                                             <span x-text="r.age ? r.age + ' yrs' : ''"></span>
                                             <template x-if="r.relation"><span> · <span x-text="r.relation"></span></span></template>
                                         </p>
@@ -288,7 +288,7 @@
                                         :class="verificationBadge(r.verification).class"
                                         x-text="verificationBadge(r.verification).label"
                                     ></span>
-                                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 flex-shrink-0"></i>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint flex-shrink-0"></i>
                                 </li>
                             </template>
                         </ul>
@@ -297,13 +297,13 @@
 
                 {{-- ── PROGRAMS TAB ── --}}
                 <div x-show="familyTab === 'programs'" x-cloak>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-3">Program Enrollments</h3>
+                    <h3 class="text-sm font-semibold text-ink mb-3">Program Enrollments</h3>
 
                     <template x-if="!selectedFamily.programs || selectedFamily.programs.length === 0">
                         <x-ui.card class="py-10 text-center">
                             <div class="flex flex-col items-center gap-2">
-                                <i data-lucide="heart-handshake" class="w-8 h-8 text-slate-300"></i>
-                                <p class="text-sm text-slate-500">No programs enrolled.</p>
+                                <i data-lucide="heart-handshake" class="w-8 h-8 text-ink-faint"></i>
+                                <p class="text-sm text-ink-muted">No programs enrolled.</p>
                             </div>
                         </x-ui.card>
                     </template>
@@ -315,7 +315,7 @@
                                     <i data-lucide="heart-handshake" class="w-5 h-5 text-emerald-600"></i>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-navy-900" x-text="prog"></p>
+                                    <p class="text-sm font-semibold text-ink" x-text="prog"></p>
                                     <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 mt-0.5">
                                         <i data-lucide="circle-check" class="w-3 h-3"></i>
                                         Active
@@ -330,7 +330,7 @@
             </div>
 
             {{-- ── Modal Footer ── --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
+            <div class="flex-shrink-0 px-6 py-4 border-t border-brand-600/10 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
                 <x-ui.button size="sm" icon="pencil" x-show="can('const_family','edit')" @click="startEdit()">Edit Family</x-ui.button>
             </div>
 
@@ -339,7 +339,7 @@
 
     {{-- Placeholder when no family selected --}}
     <template x-if="!selectedFamily">
-        <div class="flex items-center justify-center h-48 text-slate-500 text-sm">
+        <div class="flex items-center justify-center h-48 text-ink-muted text-sm">
             <i data-lucide="loader-circle" class="w-6 h-6 animate-spin mr-2"></i>
             Loading family details…
         </div>

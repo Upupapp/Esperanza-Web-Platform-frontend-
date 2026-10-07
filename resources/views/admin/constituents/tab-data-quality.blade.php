@@ -45,51 +45,51 @@
 
             {{-- Search --}}
             <div class="relative flex-1 min-w-0">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </span>
                 <input aria-label="Search by name, record ID, barangay"
                     type="text"
                     x-model="search"
                     placeholder="Search by name, record ID, barangay…"
-                    class="w-full pl-8 pr-4 py-2 text-sm rounded-lg border border-slate-200 bg-white placeholder-slate-400 text-navy-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
+                    class="w-full pl-8 pr-4 py-2 text-sm rounded-xl border border-slate-200 bg-white placeholder-slate-400 text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
                 />
             </div>
 
             {{-- Type filter --}}
             <div class="relative">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                 </span>
                 <select aria-label="Data quality type filter"
                     x-model="dqTypeFilter"
-                    class="pl-8 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
+                    class="pl-8 pr-8 py-2 text-sm rounded-xl border border-slate-200 bg-white text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
                     <option value="">All Types</option>
                     <option value="Duplicate Suspected">Duplicate Suspected</option>
                     <option value="Orphaned Record">Orphaned Record</option>
                     <option value="Incomplete Profile">Incomplete Profile</option>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
 
             {{-- Status filter --}}
             <div class="relative">
-                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="list-filter" class="w-3.5 h-3.5"></i>
                 </span>
                 <select aria-label="Data quality status filter"
                     x-model="dqStatusFilter"
-                    class="pl-8 pr-8 py-2 text-sm rounded-lg border border-slate-200 bg-white text-navy-900 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
+                    class="pl-8 pr-8 py-2 text-sm rounded-xl border border-slate-200 bg-white text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
                 >
                     <option value="">All Statuses</option>
                     <option value="Open">Open</option>
                     <option value="In Review">In Review</option>
                     <option value="Resolved">Resolved</option>
                 </select>
-                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500">
+                <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-ink-muted">
                     <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
                 </span>
             </div>
@@ -99,7 +99,7 @@
                 @click="search=''; dqTypeFilter=''; dqStatusFilter=''"
                 x-show="search !== '' || dqTypeFilter !== '' || dqStatusFilter !== ''"
                 x-cloak
-                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition shrink-0"
+                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-white/60 transition shrink-0"
                 title="Clear all filters"
             >
                 <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
@@ -110,7 +110,7 @@
                 x-show="can('const_data_quality','verify')"
                 @click="runDataQualityDetection()"
                 :disabled="dqScanning"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-navy-900 text-white hover:bg-navy-800 transition shrink-0 disabled:opacity-60 disabled:pointer-events-none"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-navy-900 text-white hover:bg-navy-800 transition shrink-0 disabled:opacity-60 disabled:pointer-events-none"
                 title="Scan resident records for duplicates, orphaned links, and incomplete profiles"
             >
                 <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="dqScanning" x-cloak></i>
@@ -121,9 +121,9 @@
         </div>
 
         {{-- Result count --}}
-        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-            <p class="text-xs text-slate-500">
-                Showing <span class="font-semibold text-navy-900" x-text="filteredQualityIssues.length"></span>
+        <div class="mt-3 pt-3 border-t border-brand-600/10 flex items-center justify-between">
+            <p class="text-xs text-ink-muted">
+                Showing <span class="font-semibold text-ink" x-text="filteredQualityIssues.length"></span>
                 <span x-text="filteredQualityIssues.length === 1 ? 'issue' : 'issues'"></span>
                 <span x-show="search !== '' || dqTypeFilter !== '' || dqStatusFilter !== ''" x-cloak>
                     &mdash; filtered from <span class="font-semibold" x-text="qualityIssues.length"></span> total
@@ -141,21 +141,21 @@
     {{-- ── ISSUES TABLE ─────────────────────────────────────────────────────── --}}
     <x-ui.card class="overflow-hidden">
         <x-ui.table>
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
+            <table class="min-w-full divide-y divide-brand-600/[.08] text-sm">
+                <thead class="bg-well/70">
                     <tr>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Issue ID</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Type</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Severity</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Barangay</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Record</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Assigned To</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden 2xl:table-cell">Created</th>
-                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-                        <th class="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Issue ID</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Type</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Severity</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Barangay</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Record</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Assigned To</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap hidden 2xl:table-cell">Created</th>
+                        <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
+                        <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50 bg-white">
+                <tbody class="divide-y divide-brand-600/[.08] bg-white">
 
                     <template x-for="issue in filteredQualityIssues" :key="issue.ref">
                         <tr
@@ -166,7 +166,7 @@
                             @keydown.space.prevent="openDQIssue(issue)">
                             {{-- Issue ref --}}
                             <td class="px-4 py-3 whitespace-nowrap hidden 2xl:table-cell" @click.stop>
-                                <span class="font-mono text-xs font-semibold text-navy-900" x-text="issue.ref"></span>
+                                <span class="font-mono text-xs font-semibold text-ink" x-text="issue.ref"></span>
                             </td>
 
                             {{-- Type chip --}}
@@ -194,15 +194,15 @@
                             {{-- Barangay --}}
                             <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-700 hidden 2xl:table-cell">
                                 <span class="flex items-center gap-1.5">
-                                    <i data-lucide="map-pin" class="w-3 h-3 text-slate-500 shrink-0"></i>
+                                    <i data-lucide="map-pin" class="w-3 h-3 text-ink-muted shrink-0"></i>
                                     <span x-text="issue.barangay"></span>
                                 </span>
                             </td>
 
                             {{-- Record --}}
                             <td class="px-4 py-3 whitespace-nowrap">
-                                <div class="text-xs font-medium text-navy-900" x-text="dqRecordName(issue.record) || '—'"></div>
-                                <div class="text-[10px] text-slate-500 font-mono" x-text="issue.record"></div>
+                                <div class="text-xs font-medium text-ink" x-text="dqRecordName(issue.record) || '—'"></div>
+                                <div class="text-[10px] text-ink-muted font-mono" x-text="issue.record"></div>
                             </td>
 
                             {{-- Assigned to --}}
@@ -217,7 +217,7 @@
                             </td>
 
                             {{-- Created date --}}
-                            <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-500 hidden 2xl:table-cell"
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-ink-muted hidden 2xl:table-cell"
                                 x-text="issue.created ? new Date(issue.created).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
 
                             {{-- Status badge --}}
@@ -239,7 +239,7 @@
                                     {{-- Review button --}}
                                     <button
                                         @click="openDQIssue(issue)"
-                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 ring-1 ring-brand-200 transition"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 ring-1 ring-brand-200 transition"
                                         title="Open issue detail"
                                     >
                                         <i data-lucide="search" class="w-3 h-3"></i> Review
@@ -267,8 +267,8 @@
                                     <i data-lucide="circle-check" class="w-6 h-6 text-emerald-500"></i>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-navy-900">No issues found</p>
-                                    <p class="text-xs text-slate-500 mt-1">
+                                    <p class="text-sm font-semibold text-ink">No issues found</p>
+                                    <p class="text-xs text-ink-muted mt-1">
                                         <span x-show="search !== '' || dqTypeFilter !== '' || dqStatusFilter !== ''">
                                             No data quality issues match your current filters.
                                             <button @click="search=''; dqTypeFilter=''; dqStatusFilter=''" class="text-brand-600 underline hover:text-brand-700 ml-1">Clear filters</button>
@@ -287,12 +287,12 @@
         </x-ui.table>
 
         {{-- Table footer --}}
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/50">
-            <p class="text-xs text-slate-500">
-                <span class="font-semibold text-navy-900" x-text="filteredQualityIssues.length"></span> issue(s) displayed
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-5 py-3 border-t border-brand-600/10 bg-slate-50/50">
+            <p class="text-xs text-ink-muted">
+                <span class="font-semibold text-ink" x-text="filteredQualityIssues.length"></span> issue(s) displayed
                 &mdash; Click any row to view full issue detail
             </p>
-            <div class="flex items-center gap-3 text-[11px] text-slate-500">
+            <div class="flex items-center gap-3 text-[11px] text-ink-muted">
                 <span class="flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-rose-400"></span> Open
                 </span>

@@ -115,7 +115,7 @@
             <div class="flex-1 min-h-0 flex flex-col sm:flex-row overflow-hidden">
 
                 {{-- ── Side nav ── --}}
-                <div class="w-full sm:w-48 shrink-0 flex flex-row sm:flex-col gap-0.5 border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50/60 p-2 sm:p-2.5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto scrollbar-thin">
+                <div class="w-full sm:w-48 shrink-0 flex flex-row sm:flex-col gap-0.5 border-b sm:border-b-0 sm:border-r border-brand-600/10 bg-slate-50/60 p-2 sm:p-2.5 overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto scrollbar-thin">
                     <template x-for="tab in [
                         {id:'overview',icon:'layout-dashboard',label:'Overview'},
                         {id:'members',icon:'users',label:'Members',count:selectedHousehold?.member_count},
@@ -123,15 +123,15 @@
                     ]" :key="tab.id">
                         <button
                             @click="householdTab = tab.id"
-                            class="shrink-0 sm:w-full flex items-center gap-2 sm:gap-2.5 px-3 py-2 sm:py-2.5 rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap sm:whitespace-normal text-left"
-                            :class="householdTab === tab.id ? 'bg-white text-brand-700 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'"
+                            class="shrink-0 sm:w-full flex items-center gap-2 sm:gap-2.5 px-3 py-2 sm:py-2.5 rounded-xl text-[13px] font-medium transition-colors whitespace-nowrap sm:whitespace-normal text-left"
+                            :class="householdTab === tab.id ? 'bg-white text-brand-700 shadow-sm ring-1 ring-slate-200' : 'text-ink-muted hover:bg-white/70 hover:text-slate-700'"
                         >
-                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="householdTab === tab.id ? 'text-brand-600' : 'text-slate-500'"></i>
+                            <i :data-lucide="tab.icon" class="w-4 h-4 shrink-0" :class="householdTab === tab.id ? 'text-brand-600' : 'text-ink-muted'"></i>
                             <span class="flex-1 min-w-0 sm:truncate" x-text="tab.label"></span>
                             <span
                                 x-show="tab.count"
                                 class="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
-                                :class="householdTab === tab.id ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-slate-500'"
+                                :class="householdTab === tab.id ? 'bg-brand-100 text-brand-700' : 'bg-slate-200 text-ink-muted'"
                                 x-text="tab.count"
                             ></span>
                         </button>
@@ -147,31 +147,31 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Left column --}}
                         <x-ui.card class="p-4">
-                            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Location & Identification</h4>
+                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Location & Identification</h4>
                             <dl class="space-y-2.5">
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500">Address</dt>
-                                    <dd class="text-xs font-semibold text-navy-900 text-right" x-text="selectedHousehold.address || '—'"></dd>
+                                    <dt class="text-xs text-ink-muted">Address</dt>
+                                    <dd class="text-xs font-semibold text-ink text-right" x-text="selectedHousehold.address || '—'"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500">Household ID</dt>
-                                    <dd class="text-xs font-mono font-semibold text-navy-900" x-text="selectedHousehold.ref"></dd>
+                                    <dt class="text-xs text-ink-muted">Household ID</dt>
+                                    <dd class="text-xs font-mono font-semibold text-ink" x-text="selectedHousehold.ref"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500">Barangay</dt>
-                                    <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.barangay"></dd>
+                                    <dt class="text-xs text-ink-muted">Barangay</dt>
+                                    <dd class="text-xs font-semibold text-ink" x-text="selectedHousehold.barangay"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500">Sitio / Purok</dt>
-                                    <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.sitio || '—'"></dd>
+                                    <dt class="text-xs text-ink-muted">Sitio / Purok</dt>
+                                    <dd class="text-xs font-semibold text-ink" x-text="selectedHousehold.sitio || '—'"></dd>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
-                                    <dt class="text-xs text-slate-500">Head of Household</dt>
-                                    <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.head_name || '—'"></dd>
+                                    <dt class="text-xs text-ink-muted">Head of Household</dt>
+                                    <dd class="text-xs font-semibold text-ink" x-text="selectedHousehold.head_name || '—'"></dd>
                                 </div>
                                 <div class="flex justify-between items-center gap-2">
-                                    <dt class="text-xs text-slate-500">Total Members</dt>
-                                    <dd class="text-xs font-bold text-navy-900" x-text="selectedHousehold.member_count"></dd>
+                                    <dt class="text-xs text-ink-muted">Total Members</dt>
+                                    <dd class="text-xs font-bold text-ink" x-text="selectedHousehold.member_count"></dd>
                                 </div>
                             </dl>
                         </x-ui.card>
@@ -179,18 +179,18 @@
                         {{-- Right column --}}
                         <div class="space-y-3">
                             <x-ui.card class="p-4">
-                                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Dwelling & Tenure</h4>
+                                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Dwelling & Tenure</h4>
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Dwelling Type</dt>
-                                        <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.dwelling_type || '—'"></dd>
+                                        <dt class="text-xs text-ink-muted">Dwelling Type</dt>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedHousehold.dwelling_type || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
-                                        <dt class="text-xs text-slate-500">Housing Tenure</dt>
-                                        <dd class="text-xs font-semibold text-navy-900" x-text="selectedHousehold.housing_tenure || '—'"></dd>
+                                        <dt class="text-xs text-ink-muted">Housing Tenure</dt>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedHousehold.housing_tenure || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500">Flood Risk</dt>
+                                        <dt class="text-xs text-ink-muted">Flood Risk</dt>
                                         <dd>
                                             <span
                                                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
@@ -209,7 +209,7 @@
                             <x-ui.card class="p-4">
                                 <dl class="space-y-1.5">
                                     <div class="flex justify-between items-center gap-2">
-                                        <dt class="text-xs text-slate-500">Record Status</dt>
+                                        <dt class="text-xs text-ink-muted">Record Status</dt>
                                         <dd>
                                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" :class="statusBadge(selectedHousehold.status)" x-text="selectedHousehold.status"></span>
                                         </dd>
@@ -225,20 +225,20 @@
                         <div class="max-w-xl space-y-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-address">Address</label>
-                                <input id="hh-edit-address" type="text" x-model="edit.address" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="hh-edit-address" type="text" x-model="edit.address" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-sitio">Sitio / Purok</label>
-                                <input id="hh-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="hh-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-head">Head of Household <span class="text-slate-500 font-normal">(leave blank to keep current)</span></label>
-                                <input id="hh-edit-head" type="text" x-model="edit.head_name" placeholder="Full name" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-head">Head of Household <span class="text-ink-muted font-normal">(leave blank to keep current)</span></label>
+                                <input id="hh-edit-head" type="text" x-model="edit.head_name" placeholder="Full name" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body placeholder-slate-400 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-xs font-medium text-slate-700 mb-1.5">Dwelling Type</label>
-                                    <select aria-label="Dwelling Type" x-model="edit.dwelling_type" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                    <select aria-label="Dwelling Type" x-model="edit.dwelling_type" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                                         <option value="Single Detached">Single Detached</option>
                                         <option value="Single Attached">Single Attached</option>
                                         <option value="Apartment">Apartment</option>
@@ -247,7 +247,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-slate-700 mb-1.5">Housing Tenure</label>
-                                    <select aria-label="Housing Tenure" x-model="edit.housing_tenure" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                    <select aria-label="Housing Tenure" x-model="edit.housing_tenure" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                                         <option value="Owner">Owner</option>
                                         <option value="Renter">Renter</option>
                                         <option value="Shared">Shared</option>
@@ -256,7 +256,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5">Flood Risk</label>
-                                <select aria-label="Flood Risk" x-model="edit.flood_risk" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <select aria-label="Flood Risk" x-model="edit.flood_risk" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                                     <option value="Low">Low</option>
                                     <option value="Medium">Medium</option>
                                     <option value="High">High</option>
@@ -278,7 +278,7 @@
                 {{-- ── MEMBERS TAB ── --}}
                 <div x-show="householdTab === 'members'" x-cloak>
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-navy-900">
+                        <h3 class="text-sm font-semibold text-ink">
                             All Household Members
                             <span
                                 class="ml-1.5 px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold"
@@ -291,13 +291,13 @@
                         <template x-if="individuals.filter(r => r.household?.ref === selectedHousehold?.ref).length === 0">
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
-                                    <i data-lucide="user-x" class="w-8 h-8 text-slate-300"></i>
-                                    <p class="text-sm text-slate-500">No individuals linked to this household.</p>
+                                    <i data-lucide="user-x" class="w-8 h-8 text-ink-faint"></i>
+                                    <p class="text-sm text-ink-muted">No individuals linked to this household.</p>
                                 </div>
                             </div>
                         </template>
 
-                        <ul class="divide-y divide-slate-100">
+                        <ul class="divide-y divide-brand-600/[.08]">
                             <template x-for="r in individuals.filter(r => r.household?.ref === selectedHousehold?.ref)" :key="r.ref">
                                 <li
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50/40 cursor-pointer transition-colors"
@@ -307,24 +307,24 @@
         tabindex="0"
         @keydown.enter.prevent="openIndividual(r)"
         @keydown.space.prevent="openIndividual(r)">
-                                    <div class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                    <div class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-semibold text-navy-900 truncate" x-text="r.name"></p>
+                                        <p class="text-sm font-semibold text-ink truncate" x-text="r.name"></p>
                                         <div class="flex items-center gap-2 mt-0.5">
-                                            <span class="text-xs text-slate-500" x-text="r.age ? (r.age + ' yrs') : ''"></span>
-                                            <template x-if="r.sex"><span class="text-xs text-slate-500" x-text="'· ' + r.sex"></span></template>
-                                            <template x-if="r.relation"><span class="text-xs text-slate-500 font-medium" x-text="'· ' + r.relation"></span></template>
+                                            <span class="text-xs text-ink-muted" x-text="r.age ? (r.age + ' yrs') : ''"></span>
+                                            <template x-if="r.sex"><span class="text-xs text-ink-muted" x-text="'· ' + r.sex"></span></template>
+                                            <template x-if="r.relation"><span class="text-xs text-ink-muted font-medium" x-text="'· ' + r.relation"></span></template>
                                         </div>
                                     </div>
                                     <template x-if="r.family?.label">
-                                        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full hidden sm:inline-flex" x-text="r.family.label"></span>
+                                        <span class="text-xs text-ink-muted bg-slate-100 px-2 py-0.5 rounded-full hidden sm:inline-flex" x-text="r.family.label"></span>
                                     </template>
                                     <span
                                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
                                         :class="verificationBadge(r.verification).class"
                                         x-text="verificationBadge(r.verification).label"
                                     ></span>
-                                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 flex-shrink-0"></i>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint flex-shrink-0"></i>
                                 </li>
                             </template>
                         </ul>
@@ -333,7 +333,7 @@
 
                 {{-- ── AMENITIES TAB ── --}}
                 <div x-show="householdTab === 'amenities'" x-cloak>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4">Household Amenities</h3>
+                    <h3 class="text-sm font-semibold text-ink mb-4">Household Amenities</h3>
 
                     {{-- 3 amenity cards --}}
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -343,13 +343,13 @@
                                 class="w-16 h-16 rounded-2xl flex items-center justify-center"
                                 :class="selectedHousehold.water ? 'bg-blue-100' : 'bg-slate-100'"
                             >
-                                <i data-lucide="droplets" class="w-8 h-8" :class="selectedHousehold.water ? 'text-blue-500' : 'text-slate-300'"></i>
+                                <i data-lucide="droplets" class="w-8 h-8" :class="selectedHousehold.water ? 'text-blue-500' : 'text-ink-faint'"></i>
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-navy-900">Water Source</p>
+                                <p class="text-sm font-semibold text-ink">Water Source</p>
                                 <span
                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold mt-1.5"
-                                    :class="selectedHousehold.water ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'"
+                                    :class="selectedHousehold.water ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-ink-muted'"
                                 >
                                     <i :data-lucide="selectedHousehold.water ? 'check-circle' : 'x-circle'" class="w-3.5 h-3.5"></i>
                                     <span x-text="selectedHousehold.water ? 'Available' : 'Not Available'"></span>
@@ -363,13 +363,13 @@
                                 class="w-16 h-16 rounded-2xl flex items-center justify-center"
                                 :class="selectedHousehold.electricity ? 'bg-amber-100' : 'bg-slate-100'"
                             >
-                                <i data-lucide="zap" class="w-8 h-8" :class="selectedHousehold.electricity ? 'text-amber-500' : 'text-slate-300'"></i>
+                                <i data-lucide="zap" class="w-8 h-8" :class="selectedHousehold.electricity ? 'text-amber-500' : 'text-ink-faint'"></i>
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-navy-900">Electricity</p>
+                                <p class="text-sm font-semibold text-ink">Electricity</p>
                                 <span
                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold mt-1.5"
-                                    :class="selectedHousehold.electricity ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'"
+                                    :class="selectedHousehold.electricity ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-ink-muted'"
                                 >
                                     <i :data-lucide="selectedHousehold.electricity ? 'check-circle' : 'x-circle'" class="w-3.5 h-3.5"></i>
                                     <span x-text="selectedHousehold.electricity ? 'Available' : 'Not Available'"></span>
@@ -383,13 +383,13 @@
                                 class="w-16 h-16 rounded-2xl flex items-center justify-center"
                                 :class="selectedHousehold.toilet ? 'bg-emerald-100' : 'bg-slate-100'"
                             >
-                                <i data-lucide="toilet" class="w-8 h-8" :class="selectedHousehold.toilet ? 'text-emerald-500' : 'text-slate-300'"></i>
+                                <i data-lucide="toilet" class="w-8 h-8" :class="selectedHousehold.toilet ? 'text-emerald-500' : 'text-ink-faint'"></i>
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-navy-900">Toilet Facility</p>
+                                <p class="text-sm font-semibold text-ink">Toilet Facility</p>
                                 <span
                                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold mt-1.5"
-                                    :class="selectedHousehold.toilet ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'"
+                                    :class="selectedHousehold.toilet ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-ink-muted'"
                                 >
                                     <i :data-lucide="selectedHousehold.toilet ? 'check-circle' : 'x-circle'" class="w-3.5 h-3.5"></i>
                                     <span x-text="selectedHousehold.toilet ? 'Available' : 'Not Available'"></span>
@@ -399,7 +399,7 @@
                     </div>
 
                     {{-- Flood risk block --}}
-                    <h3 class="text-sm font-semibold text-navy-900 mb-3">Disaster Risk Profile</h3>
+                    <h3 class="text-sm font-semibold text-ink mb-3">Disaster Risk Profile</h3>
                     <div
                         class="rounded-xl p-4 flex items-start gap-3"
                         :class="{
@@ -425,7 +425,7 @@
                             ></i>
                         </div>
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Flood Risk Level</p>
+                            <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]">Flood Risk Level</p>
                             <p class="text-sm font-bold mt-0.5"
                                 :class="{
                                     'text-emerald-700': selectedHousehold.flood_risk === 'Low',
@@ -442,7 +442,7 @@
             </div>
 
             {{-- ── Modal Footer ── --}}
-            <div class="flex-shrink-0 px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
+            <div class="flex-shrink-0 px-6 py-4 border-t border-brand-600/10 bg-slate-50/50 flex items-center justify-end gap-3 rounded-b-2xl" x-show="!editing">
                 <x-ui.button size="sm" icon="pencil" x-show="can('const_household','edit')" @click="startEdit()">Edit Household</x-ui.button>
             </div>
 
@@ -451,7 +451,7 @@
 
     {{-- Loading placeholder --}}
     <template x-if="!selectedHousehold">
-        <div class="flex items-center justify-center h-48 text-slate-500 text-sm">
+        <div class="flex items-center justify-center h-48 text-ink-muted text-sm">
             <i data-lucide="loader-circle" class="w-6 h-6 animate-spin mr-2"></i>
             Loading household details…
         </div>
