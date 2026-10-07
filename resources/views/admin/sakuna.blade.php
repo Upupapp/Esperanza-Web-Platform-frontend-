@@ -1064,24 +1064,24 @@
                 'On Scene': 'bg-orange-100 text-orange-700',
                 'Contained': 'bg-teal-100 text-teal-700',
                 'Resolved': 'bg-emerald-100 text-emerald-700',
-                'Closed': 'bg-slate-100 text-slate-500',
+                'Closed': 'bg-slate-100 text-ink-muted',
                 'Referred': 'bg-pink-100 text-pink-700',
                 'Open': 'bg-emerald-100 text-emerald-700',
                 'Standby': 'bg-blue-100 text-blue-700',
                 'Preparing': 'bg-amber-100 text-amber-700',
                 'Near Capacity': 'bg-orange-100 text-orange-700',
                 'Full': 'bg-rose-100 text-rose-700',
-                'Temporarily Unavailable': 'bg-slate-100 text-slate-500',
+                'Temporarily Unavailable': 'bg-slate-100 text-ink-muted',
                 'Under Inspection': 'bg-indigo-100 text-indigo-700',
                 'Available': 'bg-emerald-100 text-emerald-700',
                 'Deployed': 'bg-orange-100 text-orange-700',
                 'Returning': 'bg-teal-100 text-teal-700',
-                'Under Maintenance': 'bg-slate-100 text-slate-500',
+                'Under Maintenance': 'bg-slate-100 text-ink-muted',
                 'Out of Service': 'bg-rose-100 text-rose-700',
                 'Checked In': 'bg-emerald-100 text-emerald-700',
                 'Temporarily Out': 'bg-amber-100 text-amber-700',
                 'Transferred': 'bg-blue-100 text-blue-700',
-                'Returned Home': 'bg-slate-100 text-slate-500',
+                'Returned Home': 'bg-slate-100 text-ink-muted',
                 'Referred to Hospital': 'bg-pink-100 text-pink-700',
                 'Draft': 'bg-slate-100 text-slate-600',
                 'Submitted': 'bg-blue-100 text-blue-700',
@@ -1092,9 +1092,9 @@
                 'Consolidated': 'bg-teal-100 text-teal-700',
                 'Published': 'bg-emerald-100 text-emerald-700',
                 'Scheduled': 'bg-blue-100 text-blue-700',
-                'Expired': 'bg-slate-100 text-slate-500',
+                'Expired': 'bg-slate-100 text-ink-muted',
                 'Cancelled': 'bg-rose-100 text-rose-700',
-                'Archived': 'bg-slate-100 text-slate-500',
+                'Archived': 'bg-slate-100 text-ink-muted',
                 // Real values reachable on SakunaIncident/SakunaCenter/
                 // SakunaEvacueeFamily that the map above never carried --
                 // added when Command Center/Incidents/Centers were wired to
@@ -1225,25 +1225,25 @@
             <span x-text="opStatus"></span>
         </span>
 
-        <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors" title="Open the alerts or incidents behind this">
-            <i data-lucide="radio-tower" class="w-4 h-4 text-slate-500"></i>
+        <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors" title="Open the alerts or incidents behind this">
+            <i data-lucide="radio-tower" class="w-4 h-4 text-ink-muted"></i>
             <span x-text="activeEventLabel" class="max-w-48 truncate"></span>
         </button>
 
-        <button type="button" @click="loadHeader()" class="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 transition-colors" title="Refresh">
+        <button type="button" @click="loadHeader()" class="text-xs text-ink-muted hover:text-slate-700 flex items-center gap-1 transition-colors" title="Refresh">
             <i data-lucide="refresh-cw" class="w-3 h-3"></i>
             <span x-text="headerBoard?.generated_at ? 'Updated ' + new Date(headerBoard.generated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not updated yet'"></span>
         </button>
 
         <div class="ml-auto flex items-center gap-2">
-            <button x-show="tabAllowed('reports')" @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
-                <i data-lucide="file-bar-chart" class="w-4 h-4 text-slate-500"></i> SitRep &amp; Reports
+            <button x-show="tabAllowed('reports')" @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
+                <i data-lucide="file-bar-chart" class="w-4 h-4 text-ink-muted"></i> SitRep &amp; Reports
             </button>
             {{-- Warning the public must never be past the edge of the tab row
                  (live test 2026-10-07, NAV-4). --}}
             <button x-show="permsReady && can('sakuna_alerts', 'create')" x-cloak
                 @click="activeTab === 'alerts' ? openCreateAlert() : (window.location.href = tabUrls['alerts'] + '?compose=1')"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-xl px-3 py-1.5 shadow-card transition-colors">
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-2xl px-3 py-1.5 shadow-card transition-colors">
                 <i data-lucide="bell-ring" class="w-4 h-4"></i> Send alert
             </button>
             <button x-show="can('sakuna_command', 'escalate')" @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-1.5 shadow-card transition-colors">
@@ -1253,15 +1253,17 @@
     </div>
 
     {{-- ── Tab Navigation ───────────────────────────────────────────────────── --}}
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+    <div class="surface-glass rounded-[26px] overflow-hidden">
         <div>
-            <nav class="flex flex-wrap border-b border-slate-100">
+            {{-- Clay design (STYLE_GUIDE §3.6): a pressed track, never underline tabs.
+                 It wraps, so no tab is ever off screen (live test NAV-4). --}}
+            <nav class="flex flex-wrap gap-1 m-4 mb-1 p-1 rounded-2xl surface-pressed-sm">
                 @foreach($tabs as $t)
                     <a
                         href="{{ $tabUrls[$t['key']] }}"
                         x-show="permsReady && tabAllowed('{{ $t['key'] }}')" x-cloak
                         @if($activeTab === $t['key']) aria-current="page" @endif
-                        class="inline-flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors {{ $activeTab === $t['key'] ? 'border-b-2 border-brand-500 text-brand-600 bg-brand-50/40' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/60' }}"
+                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all duration-200 {{ $activeTab === $t['key'] ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink' }}"
                     >
                         <i data-lucide="{{ $t['icon'] }}" class="w-4 h-4"></i>
                         {{ $t['label'] }}
@@ -1291,7 +1293,7 @@
         <div class="p-5">
             {{-- A tab renders, and loads, only once the role may view it; a tab
                  outside the role's part sends them to the first one they hold. --}}
-            <p x-show="!activeAllowed" class="py-10 text-center text-sm text-slate-500">Loading…</p>
+            <p x-show="!activeAllowed" class="py-10 text-center text-sm text-ink-muted">Loading…</p>
             <template x-if="activeAllowed">
             <div x-init="$nextTick(() => window.renderIcons?.())">
 
@@ -1394,13 +1396,13 @@
                     <i data-lucide="siren" class="w-6 h-6 text-rose-600"></i>
                 </div>
                 <div>
-                    <h3 class="text-base font-semibold text-slate-800">Set Operational Status</h3>
-                    <p class="text-sm text-slate-500">This changes the banner shown in your own browser only.</p>
+                    <h3 class="text-base font-semibold text-ink-body">Set Operational Status</h3>
+                    <p class="text-sm text-ink-muted">This changes the banner shown in your own browser only.</p>
                 </div>
             </div>
             <p class="text-sm text-slate-600 mb-5">There is no backend notion of an "operational status" yet — no notification, log entry, or record is created anywhere by this. It changes what this banner reads, for you, until you reload the page.</p>
             <div class="flex gap-3">
-                <button @click="showEOCConfirm = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
+                <button @click="showEOCConfirm = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">Cancel</button>
                 <button @click="showEOCConfirm = false; opStatusOverride = 'Emergency Operations Activated'; toast('Operational status set. This is a local display setting only — nobody was notified.', 'warning'); $nextTick(() => window.renderIcons?.())" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors">Set Status</button>
             </div>
         </div>

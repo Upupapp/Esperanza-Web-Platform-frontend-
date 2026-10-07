@@ -67,7 +67,7 @@ class LiveTestFixesTest extends TestCase
     public function test_sakuna_alerts_are_never_off_screen(): void
     {
         $sakuna = $this->source('resources/views/admin/sakuna.blade.php');
-        $this->assertStringContainsString('<nav class="flex flex-wrap border-b border-slate-100">', $sakuna);
+        $this->assertStringContainsString('<nav class="flex flex-wrap gap-1 m-4 mb-1 p-1 rounded-2xl surface-pressed-sm">', $sakuna);
         $this->assertStringNotContainsString('min-w-max', $sakuna);
         $this->assertStringContainsString("(window.location.href = tabUrls['alerts'] + '?compose=1')", $sakuna);
         $this->assertStringContainsString("params.set('no_access', this.activeTab);", $sakuna);

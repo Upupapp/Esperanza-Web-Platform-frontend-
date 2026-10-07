@@ -183,11 +183,11 @@
 
         {{-- ═══════════════ Level 1: Barangay folder grid (page-level) ═══════════════ --}}
         <div x-show="!selectedBarangay" x-cloak>
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 flex items-center gap-3">
+            <div class="surface-glass rounded-[26px] p-3 mb-4 flex items-center gap-3">
                 <span class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="folder-open" class="w-5 h-5"></i></span>
                 <div>
-                    <h3 class="text-sm font-semibold text-navy-900">Citizen Documents by Barangay</h3>
-                    <p class="text-xs text-slate-500" x-text="visibleFolders.length + ' barangay' + (visibleFolders.length === 1 ? '' : 's') + ' in your scope'"></p>
+                    <h3 class="text-sm font-semibold text-ink">Citizen Documents by Barangay</h3>
+                    <p class="text-xs text-ink-muted" x-text="visibleFolders.length + ' barangay' + (visibleFolders.length === 1 ? '' : 's') + ' in your scope'"></p>
                 </div>
             </div>
 
@@ -195,19 +195,19 @@
                 <template x-for="f in visibleFolders" :key="f.name">
                     <button
                         type="button" @click="openBarangay(f.name)"
-                        class="text-left bg-white rounded-2xl border border-slate-100 shadow-card p-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
+                        class="text-left surface-glass rounded-[26px] p-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
                     >
                         <div class="flex items-start justify-between mb-3">
-                            <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center shrink-0"><i data-lucide="folder" class="w-5 h-5"></i></span>
+                            <span class="w-11 h-11 rounded-xl clay-blue font-extrabold flex items-center justify-center shrink-0"><i data-lucide="folder" class="w-5 h-5"></i></span>
                             <span x-show="f.pending > 0" class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200" x-text="f.pending + ' pending'"></span>
                         </div>
-                        <p class="text-sm font-semibold text-navy-900 truncate" x-text="'Brgy. ' + f.name"></p>
-                        <p class="text-xs text-slate-500 mt-2" x-text="f.citizens.toLocaleString() + ' citizen' + (f.citizens === 1 ? '' : 's') + ' with documents'"></p>
-                        <p class="text-xs text-slate-500" x-text="f.documents.toLocaleString() + ' document' + (f.documents === 1 ? '' : 's')"></p>
+                        <p class="text-sm font-semibold text-ink truncate" x-text="'Brgy. ' + f.name"></p>
+                        <p class="text-xs text-ink-muted mt-2" x-text="f.citizens.toLocaleString() + ' citizen' + (f.citizens === 1 ? '' : 's') + ' with documents'"></p>
+                        <p class="text-xs text-ink-muted" x-text="f.documents.toLocaleString() + ' document' + (f.documents === 1 ? '' : 's')"></p>
                     </button>
                 </template>
-                <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl" x-show="visibleFolders.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="folder-x" class="w-7 h-7"></i></span>
+                <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-10 bg-white border border-brand-600/10 rounded-2xl" x-show="visibleFolders.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="folder-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No barangays in your current scope.</p>
                 </div>
             </div>
@@ -218,7 +218,7 @@
             x-show="selectedBarangay" x-cloak
             x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
         >
-            <button type="button" @click="backToBarangays()" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-600 transition-colors mb-3">
+            <button type="button" @click="backToBarangays()" class="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-slate-600 transition-colors mb-3">
                 <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Citizen Documents
             </button>
 
@@ -233,13 +233,13 @@
                 </div>
             </div>
 
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-2.5">
+            <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-2.5">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search citizen name, ID, or document" type="text" x-model="search" placeholder="Search citizen name, ID, or document..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input aria-label="Search citizen name, ID, or document" type="text" x-model="search" placeholder="Search citizen name, ID, or document..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select aria-label="Sort" x-model="sort" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
+                    <select aria-label="Sort" x-model="sort" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
                         <option value="newest">Sort: Newest</option>
                         <option value="oldest">Sort: Oldest</option>
                         <option value="name_asc">Citizen A&ndash;Z</option>
@@ -248,20 +248,20 @@
                     </select>
                     <button
                         type="button" @click="showAdvancedFilters = !showAdvancedFilters"
-                        class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border transition-colors shrink-0"
-                        :class="showAdvancedFilters || docCategoryFilter || docStatusFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'"
+                        class="inline-flex items-center gap-1.5 text-xs font-medium rounded-2xl px-3 py-2 border transition-colors shrink-0"
+                        :class="showAdvancedFilters || docCategoryFilter || docStatusFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-ink-muted hover:text-slate-700'"
                     ><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced</button>
                 </div>
                 <div x-show="showAdvancedFilters" x-cloak x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-wrap items-center gap-2">
-                    <select aria-label="Doc document category filter" x-model="docCategoryFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Doc document category filter" x-model="docCategoryFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="">All Document Categories</option>
                         <template x-for="c in docCategories" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select aria-label="Doc status filter" x-model="docStatusFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Doc status filter" x-model="docStatusFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="">All Statuses</option>
                         <template x-for="s in Object.keys(statusStyles)" :key="s"><option :value="s" x-text="s"></option></template>
                     </select>
-                    <button type="button" @click="docCategoryFilter = ''; docStatusFilter = ''" class="text-xs text-slate-500 hover:text-slate-600 transition-colors" x-show="docCategoryFilter || docStatusFilter">Clear</button>
+                    <button type="button" @click="docCategoryFilter = ''; docStatusFilter = ''" class="text-xs text-ink-muted hover:text-slate-600 transition-colors" x-show="docCategoryFilter || docStatusFilter">Clear</button>
                 </div>
             </div>
 
@@ -269,19 +269,19 @@
                 <template x-for="c in filteredCitizens" :key="c.id">
                     <button
                         type="button" @click="openCitizen(c.id)"
-                        class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-brand-300 hover:shadow-sm transition-all duration-[220ms] ease-standard"
+                        class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left hover:border-brand-300 hover:shadow-sm transition-all duration-[220ms] ease-standard"
                     >
-                        <div class="w-10 h-10 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(c.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                        <div class="w-10 h-10 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(c.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-medium text-slate-700 truncate" x-text="c.name"></p>
-                            <p class="text-xs text-slate-500 font-mono" x-text="c.id"></p>
+                            <p class="text-xs text-ink-muted font-mono" x-text="c.id"></p>
                         </div>
-                        <span class="text-[11px] font-semibold text-slate-500 shrink-0" x-text="citizenDocs(c.id).length + ' docs'"></span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
+                        <span class="text-[11px] font-semibold text-ink-muted shrink-0" x-text="citizenDocs(c.id).length + ' docs'"></span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint shrink-0"></i>
                     </button>
                 </template>
-                <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filteredCitizens.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-12 bg-white border border-brand-600/10 rounded-2xl" x-show="filteredCitizens.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No citizens match this search.</p>
                 </div>
             </div>
@@ -317,42 +317,42 @@
                     </div>
 
                     <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-6 bg-slate-50/50 space-y-4">
-                        <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
-                            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Citizen Information</h4>
+                        <div class="surface-glass rounded-[26px] p-4">
+                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-3">Citizen Information</h4>
                             <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-3">
-                                <div><dt class="text-xs text-slate-500">Full Name</dt><dd class="text-sm font-semibold text-navy-900" x-text="selectedCitizen.name"></dd></div>
-                                <div><dt class="text-xs text-slate-500">Account No.</dt><dd class="text-sm font-mono font-semibold text-navy-900" x-text="selectedCitizen.id"></dd></div>
-                                <div><dt class="text-xs text-slate-500">Barangay</dt><dd class="text-sm font-semibold text-navy-900" x-text="'Brgy. ' + selectedCitizen.barangay"></dd></div>
-                                <div><dt class="text-xs text-slate-500">Document Count</dt><dd class="text-sm font-semibold text-navy-900" x-text="selectedCitizenDocs.length"></dd></div>
-                                <div><dt class="text-xs text-slate-500">Awaiting Verification</dt><dd class="text-sm font-semibold text-amber-600" x-text="selectedCitizenDocs.filter(d => d.status === 'Submitted').length"></dd></div>
+                                <div><dt class="text-xs text-ink-muted">Full Name</dt><dd class="text-sm font-semibold text-ink" x-text="selectedCitizen.name"></dd></div>
+                                <div><dt class="text-xs text-ink-muted">Account No.</dt><dd class="text-sm font-mono font-semibold text-ink" x-text="selectedCitizen.id"></dd></div>
+                                <div><dt class="text-xs text-ink-muted">Barangay</dt><dd class="text-sm font-semibold text-ink" x-text="'Brgy. ' + selectedCitizen.barangay"></dd></div>
+                                <div><dt class="text-xs text-ink-muted">Document Count</dt><dd class="text-sm font-semibold text-ink" x-text="selectedCitizenDocs.length"></dd></div>
+                                <div><dt class="text-xs text-ink-muted">Awaiting Verification</dt><dd class="text-sm font-semibold text-amber-600" x-text="selectedCitizenDocs.filter(d => d.status === 'Submitted').length"></dd></div>
                             </dl>
                         </div>
 
-                        <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
-                            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 pb-0">Stored Documents</h4>
-                            <ul class="divide-y divide-slate-100 mt-3">
+                        <div class="surface-glass rounded-[26px] overflow-hidden">
+                            <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r p-4 pb-0">Stored Documents</h4>
+                            <ul class="divide-y divide-brand-600/[.08] mt-3">
                                 <template x-for="doc in selectedCitizenDocs" :key="doc.id">
                                     <li class="flex items-center gap-3 px-4 py-3">
-                                        <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[doc.file_type] || 'file'" class="w-4 h-4"></i></span>
+                                        <span class="w-9 h-9 rounded-lg bg-slate-100 text-ink-muted flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[doc.file_type] || 'file'" class="w-4 h-4"></i></span>
                                         <div class="min-w-0 flex-1">
                                             <p class="text-sm font-medium text-slate-700 truncate" x-text="typeLabel(doc.type)"></p>
-                                            <p class="text-xs text-slate-500" x-text="doc.category + ' · ' + fmtDate(doc.uploaded)"></p>
+                                            <p class="text-xs text-ink-muted" x-text="doc.category + ' · ' + fmtDate(doc.uploaded)"></p>
                                         </div>
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0" :class="(statusStyles[doc.status] || statusStyles['Submitted'])[0]">
                                             <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[doc.status] || statusStyles['Submitted'])[1]"></span>
                                             <span x-text="doc.status"></span>
                                         </span>
                                         <div class="flex items-center gap-1 shrink-0">
-                                            <button x-show="can('view')" @click="previewDoc = doc; openView(doc); $nextTick(() => window.renderIcons?.())" class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                                            <button x-show="can('export')" :disabled="processingDoc === doc.id" @click="downloadDoc(doc)" class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors disabled:opacity-40" title="Download"><i data-lucide="download" class="w-4 h-4"></i></button>
-                                            <button x-show="can('verify') && doc.status !== 'Approved'" :disabled="processingDoc === doc.id" @click="verifyDoc(doc)" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40" title="Verify"><i data-lucide="check-check" class="w-4 h-4"></i></button>
+                                            <button x-show="can('view')" @click="previewDoc = doc; openView(doc); $nextTick(() => window.renderIcons?.())" class="p-1.5 rounded-lg text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                                            <button x-show="can('export')" :disabled="processingDoc === doc.id" @click="downloadDoc(doc)" class="p-1.5 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors disabled:opacity-40" title="Download"><i data-lucide="download" class="w-4 h-4"></i></button>
+                                            <button x-show="can('verify') && doc.status !== 'Approved'" :disabled="processingDoc === doc.id" @click="verifyDoc(doc)" class="p-1.5 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40" title="Verify"><i data-lucide="check-check" class="w-4 h-4"></i></button>
                                         </div>
                                     </li>
                                 </template>
                                 <li class="flex flex-col items-center text-center py-10" x-show="selectedCitizenDocs.length === 0">
-                                    <span class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3"><i data-lucide="folder-open" class="w-6 h-6"></i></span>
+                                    <span class="w-14 h-14 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-3"><i data-lucide="folder-open" class="w-6 h-6"></i></span>
                                     <p class="text-sm font-medium text-slate-600">No citizen documents yet.</p>
-                                    <p class="text-xs text-slate-500 mt-1 max-w-xs">Documents submitted or stored for this citizen will appear here.</p>
+                                    <p class="text-xs text-ink-muted mt-1 max-w-xs">Documents submitted or stored for this citizen will appear here.</p>
                                 </li>
                             </ul>
                         </div>
@@ -375,32 +375,32 @@
                     x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                     class="bg-white rounded-2xl shadow-float w-full max-w-2xl max-h-[92vh] overflow-y-auto"
                 >
-                    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-brand-600/10">
                         <div class="flex items-center gap-2.5 min-w-0">
-                            <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-4 h-4"></i></span>
-                            <p class="text-sm font-semibold text-navy-900 truncate" x-text="typeLabel(previewDoc.type)"></p>
+                            <span class="w-9 h-9 rounded-lg bg-slate-100 text-ink-muted flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-4 h-4"></i></span>
+                            <p class="text-sm font-semibold text-ink truncate" x-text="typeLabel(previewDoc.type)"></p>
                         </div>
-                        <button aria-label="Close" @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button aria-label="Close" @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
                         <div x-data="pdfPreview" x-effect="show(viewingImage || viewingPdf ? viewing.url : null, (viewing?.mime || '') + ' ' + (viewing?.name || ''))" x-show="viewingImage || viewingPdf" x-cloak class="max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
-                            <p x-show="loading" class="text-xs text-slate-500 text-center py-8">Opening the document…</p>
+                            <p x-show="loading" class="text-xs text-ink-muted text-center py-8">Opening the document…</p>
                             <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8">This file could not be shown here. Use Download.</p>
                             <img x-show="image" x-cloak :src="image" :alt="previewDoc.type" class="block w-full h-auto rounded-lg bg-white">
                             <div x-ref="pages"></div>
                         </div>
                         <div x-show="!viewingImage && !viewingPdf" class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center py-14">
-                            <span class="w-14 h-14 rounded-2xl bg-white text-slate-500 flex items-center justify-center mb-3 shadow-card"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-6 h-6"></i></span>
-                            <p class="text-xs text-slate-500" x-text="previewDoc.name"></p>
-                            <p class="text-[11px] text-slate-500 mt-1" x-show="previewDoc.has_file && !viewing && !viewFailed">Opening…</p>
-                            <p class="text-[11px] text-slate-500 mt-1" x-show="previewDoc.has_file && (viewFailed || viewing)">This file cannot be shown here. Use Download.</p>
+                            <span class="w-14 h-14 rounded-2xl bg-white text-ink-muted flex items-center justify-center mb-3 shadow-card"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-6 h-6"></i></span>
+                            <p class="text-xs text-ink-muted" x-text="previewDoc.name"></p>
+                            <p class="text-[11px] text-ink-muted mt-1" x-show="previewDoc.has_file && !viewing && !viewFailed">Opening…</p>
+                            <p class="text-[11px] text-ink-muted mt-1" x-show="previewDoc.has_file && (viewFailed || viewing)">This file cannot be shown here. Use Download.</p>
                             <p class="text-[11px] text-rose-400 mt-1" x-show="!previewDoc.has_file">No file was uploaded for this document.</p>
                         </div>
                         <dl class="grid grid-cols-2 gap-x-6 gap-y-2.5">
-                            <div class="min-w-0"><dt class="text-xs text-slate-500">Citizen</dt><dd class="text-sm font-semibold text-navy-900 break-words" x-text="selectedCitizen?.name"></dd></div>
-                            <div class="min-w-0"><dt class="text-xs text-slate-500">Barangay</dt><dd class="text-sm font-semibold text-navy-900 break-words" x-text="'Brgy. ' + selectedBarangay"></dd></div>
-                            <div class="min-w-0"><dt class="text-xs text-slate-500">Document Type</dt><dd class="text-sm font-semibold text-navy-900 break-words [overflow-wrap:anywhere]" x-text="typeLabel(previewDoc.type)"></dd></div>
-                            <div class="min-w-0"><dt class="text-xs text-slate-500">Submitted</dt><dd class="text-sm font-semibold text-navy-900" x-text="fmtDate(previewDoc.uploaded)"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-ink-muted">Citizen</dt><dd class="text-sm font-semibold text-ink break-words" x-text="selectedCitizen?.name"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-ink-muted">Barangay</dt><dd class="text-sm font-semibold text-ink break-words" x-text="'Brgy. ' + selectedBarangay"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-ink-muted">Document Type</dt><dd class="text-sm font-semibold text-ink break-words [overflow-wrap:anywhere]" x-text="typeLabel(previewDoc.type)"></dd></div>
+                            <div class="min-w-0"><dt class="text-xs text-ink-muted">Submitted</dt><dd class="text-sm font-semibold text-ink" x-text="fmtDate(previewDoc.uploaded)"></dd></div>
                         </dl>
                         <div class="flex items-center justify-between gap-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[previewDoc.status] || statusStyles['Submitted'])[0]">
@@ -411,17 +411,17 @@
                                 <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Verify
                             </button>
                         </div>
-                        <div x-show="can('edit')" class="pt-3 border-t border-slate-100">
-                            <label class="text-xs font-medium text-slate-500 mb-1 block" for="papeles-archive-reason">Archive this document (requires a reason, min. 5 characters)</label>
+                        <div x-show="can('edit')" class="pt-3 border-t border-brand-600/10">
+                            <label class="text-xs font-medium text-ink-muted mb-1 block" for="papeles-archive-reason">Archive this document (requires a reason, min. 5 characters)</label>
                             <div class="flex items-center gap-2">
-                                <input id="papeles-archive-reason" type="text" x-model="archiveReason" placeholder="Reason for archiving" class="flex-1 text-xs rounded-lg border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
-                                <button :disabled="processingDoc === previewDoc.id || archiveReason.trim().length < 5" @click="archiveDoc(previewDoc)" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 transition disabled:opacity-40 disabled:pointer-events-none">
+                                <input id="papeles-archive-reason" type="text" x-model="archiveReason" placeholder="Reason for archiving" class="flex-1 text-xs rounded-xl border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <button :disabled="processingDoc === previewDoc.id || archiveReason.trim().length < 5" @click="archiveDoc(previewDoc)" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 transition disabled:opacity-40 disabled:pointer-events-none">
                                     <i data-lucide="archive" class="w-3.5 h-3.5"></i> Archive
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-100 bg-slate-50/60">
+                    <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-brand-600/10 bg-slate-50/60">
                         <x-ui.button variant="secondary" size="sm" @click="previewDoc = null; archiveReason = ''">Close</x-ui.button>
                         <x-ui.button size="sm" icon="download" x-show="can('export')" @click="downloadDoc(previewDoc)">Download</x-ui.button>
                     </div>

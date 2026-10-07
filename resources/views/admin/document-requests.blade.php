@@ -2290,15 +2290,15 @@
             </button>
         </div>
 
-        <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto mb-4">
+        <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto mb-4">
             <button
                 type="button" @click="view = 'requests'"
-                class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                :class="view === 'requests' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                :class="view === 'requests' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
             ><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Document Requests</button>
             <a
                 href="{{ route('admin.papeles') }}"
-                class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap text-slate-500 hover:text-slate-700"
+                class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap text-ink-muted hover:text-slate-700"
             ><i data-lucide="folder-open" class="w-3.5 h-3.5"></i> Citizen Document Storage <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
         </div>
 
@@ -2314,39 +2314,39 @@
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input aria-label="Search reference or citizen" type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input aria-label="Search reference or citizen" type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
-                <select aria-label="Category filter" x-model="categoryFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
+                <select aria-label="Category filter" x-model="categoryFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
                     <option value="">All Categories</option>
                     <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                 </select>
                 <button
                     type="button" @click="showAdvancedFilters = !showAdvancedFilters"
-                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border transition-colors shrink-0"
-                    :class="showAdvancedFilters || officeFilter || levelFilter || assignedFilter || barangayFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700'"
+                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-2xl px-3 py-2 border transition-colors shrink-0"
+                    :class="showAdvancedFilters || officeFilter || levelFilter || assignedFilter || barangayFilter ? 'bg-brand-50 border-brand-200 text-brand-700' : 'bg-slate-50 border-slate-200 text-ink-muted hover:text-slate-700'"
                 >
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced
                 </button>
                 <button
                     type="button" @click="loadRequests()"
                     title="Reload the queue from the server."
-                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-xl px-3 py-2 border border-slate-200 bg-slate-50 text-slate-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors shrink-0"
+                    class="inline-flex items-center gap-1.5 text-xs font-medium rounded-2xl px-3 py-2 border border-slate-200 bg-slate-50 text-ink-muted hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors shrink-0"
                 >
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
                 </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                     @foreach($tabs as $key => $label)
                         <button
                             type="button" @click="tab = '{{ $key }}'"
-                            class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
-                            :class="tab === '{{ $key }}' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                            class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                            :class="tab === '{{ $key }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                         >{{ $label }}</button>
                     @endforeach
                 </div>
-                <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' requests'"></p>
+                <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' requests'"></p>
                 <p x-show="openOnly || barangayFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
                     <span x-text="'Showing ' + (openOnly ? 'open requests' : 'requests') + (barangayFilter ? ' in Brgy. ' + barangayFilter : '') + '.'"></span>
                     <button type="button" class="font-medium underline" @click="openOnly = false; barangayFilter = ''">Show all</button>
@@ -2356,80 +2356,80 @@
             <div
                 x-show="showAdvancedFilters" x-cloak
                 x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100"
+                class="flex flex-wrap items-center gap-2 pt-3 border-t border-brand-600/10"
             >
-                <select aria-label="Office filter" x-model="officeFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Office filter" x-model="officeFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">All Offices</option>
                     <template x-for="o in offices" :key="o"><option :value="o" x-text="o"></option></template>
                 </select>
-                <select aria-label="Level filter" x-model="levelFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Level filter" x-model="levelFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">All Levels</option>
                     <option value="Barangay">Barangay</option>
                     <option value="Municipal">Municipal</option>
                     <option value="Multi-Office">Multi-Office</option>
                 </select>
-                <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">All Barangays</option>
                     <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                 </select>
                 <span x-show="!isMunicipalScope" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2">
                     <i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span>
                 </span>
-                <select aria-label="Assigned filter" x-model="assignedFilter" class="text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Assigned filter" x-model="assignedFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     <option value="">Anyone / Unassigned</option>
                     <option value="unassigned">Unassigned only</option>
                     <option x-show="$store.session.account" :value="$store.session.account?.name || ''">Assigned to me</option>
                 </select>
-                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-slate-500 hover:text-slate-600 transition-colors" x-show="officeFilter || levelFilter || assignedFilter || barangayFilter">Clear</button>
+                <button type="button" @click="clearAdvancedFilters()" class="text-xs text-ink-muted hover:text-slate-600 transition-colors" x-show="officeFilter || levelFilter || assignedFilter || barangayFilter">Clear</button>
             </div>
         </div>
 
         <x-ui.table>
             <thead>
-                <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden xl:table-cell">Reference</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Citizen</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Document Type</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Office</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Barangay</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden 2xl:table-cell">Assigned</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden xl:table-cell">Submitted</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
+                <tr class="bg-well/70">
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden xl:table-cell">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Citizen</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Document Type</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Office</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Barangay</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Assigned</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden xl:table-cell">Submitted</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Status</th>
                     <th class="px-4 py-2.5"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-50">
+            <tbody class="divide-y divide-brand-600/[.08]">
                 <template x-for="r in filteredRequests" :key="r.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors group cursor-pointer" @click="openRequest(r)"
+                    <tr class="hover:bg-white/60 transition-colors group cursor-pointer" @click="openRequest(r)"
         tabindex="0"
         @keydown.enter.prevent="openRequest(r)"
         @keydown.space.prevent="openRequest(r)">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500 hidden xl:table-cell" x-text="r.ref" @click.stop="openRequest(r)"></td>
+                        <td class="px-4 py-3 font-mono text-xs text-ink-muted hidden xl:table-cell" x-text="r.ref" @click.stop="openRequest(r)"></td>
                         <td class="px-4 py-3" @click.stop="openRequest(r)">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <img x-show="citizenAvatars[r.citizen]" :src="citizenAvatars[r.citizen]" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" :alt="r.citizen">
-                                <div x-show="!citizenAvatars[r.citizen]" class="w-8 h-8 text-xs rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                <div x-show="!citizenAvatars[r.citizen]" class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
                             </div>
                         </td>
                         <td class="px-4 py-3">
                             <p class="text-slate-700" x-text="r.type"></p>
-                            <p class="text-[11px] text-slate-500 mt-0.5" x-text="r.category"></p>
+                            <p class="text-[11px] text-ink-muted mt-0.5" x-text="r.category"></p>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell">
-                            <span class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap" x-text="r.office"></span>
+                        <td class="px-4 py-3 text-ink-muted hidden 2xl:table-cell">
+                            <span class="text-[11px] font-medium text-ink-muted bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap" x-text="r.office"></span>
                             <span
                                 class="inline-block ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap"
                                 :class="{ 'bg-teal-50 text-teal-700': r.level === 'Barangay', 'bg-brand-50 text-brand-700': r.level === 'Municipal', 'bg-purple-50 text-purple-700': r.level === 'Multi-Office' }"
                                 x-text="r.level"
                             ></span>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell"><span x-text="'Brgy. ' + r.barangay"></span></td>
-                        <td class="px-4 py-3 text-slate-500 hidden 2xl:table-cell">
+                        <td class="px-4 py-3 text-ink-muted hidden 2xl:table-cell"><span x-text="'Brgy. ' + r.barangay"></span></td>
+                        <td class="px-4 py-3 text-ink-muted hidden 2xl:table-cell">
                             <span x-show="r.assigned" x-text="r.assigned"></span>
-                            <span x-show="!r.assigned" class="text-slate-300 italic">Unassigned</span>
+                            <span x-show="!r.assigned" class="text-ink-faint italic">Unassigned</span>
                         </td>
-                        <td class="px-4 py-3 text-slate-500 hidden xl:table-cell" x-text="r.submitted"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden xl:table-cell" x-text="r.submitted"></td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[r.status] || statusStyles['Draft'])[0]">
                                 <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[r.status] || statusStyles['Draft'])[1]"></span>
@@ -2446,8 +2446,8 @@
 
         <div x-show="requestsLoading" class="space-y-2 mt-3"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
         <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="'Could not load document requests.'" retryExpr="loadRequests()" :retryable="true" /></div>
-        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-brand-600/10 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600" x-text="requests.length ? 'No requests match these filters.' : 'No document requests yet.'"></p>
         </div>
 
@@ -2462,14 +2462,14 @@
 
                     {{-- LEFT — Stepper, isolated (never scrolls). --}}
                     <div class="sm:w-40 shrink-0">
-                        <p class="text-xs text-slate-500 mb-3 font-mono" x-text="selected.ref"></p>
+                        <p class="text-xs text-ink-muted mb-3 font-mono" x-text="selected.ref"></p>
                         <div class="flex flex-col">
                             @foreach(['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'] as $i => $step)
                                 <div class="flex items-start gap-3">
                                     <div class="flex flex-col items-center shrink-0">
                                         <span
                                             class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold transition-all duration-[600ms] ease-standard shrink-0"
-                                            :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-500 text-white shadow-sm' : (stepIndex(selected.status) === {{ $i }} ? 'bg-brand-600 text-white shadow-card ring-4 ring-brand-100' : 'bg-slate-100 text-slate-500')"
+                                            :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-500 text-white shadow-sm' : (stepIndex(selected.status) === {{ $i }} ? 'clay-blue shadow-card ring-4 ring-brand-100' : 'bg-slate-100 text-ink-muted')"
                                         >
                                             <i data-lucide="check" class="w-3.5 h-3.5" x-show="stepIndex(selected.status) > {{ $i }}" x-cloak></i>
                                             <span x-show="stepIndex(selected.status) <= {{ $i }}">{{ $i + 1 }}</span>
@@ -2478,7 +2478,7 @@
                                             <div class="w-0.5 flex-1 my-1 rounded-full transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) > {{ $i }} ? 'bg-emerald-400' : 'bg-slate-100'" style="min-height: 1.25rem"></div>
                                         @endif
                                     </div>
-                                    <span class="text-[11px] leading-tight pt-1.5 pb-2 transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) === {{ $i }} ? 'text-navy-900 font-semibold' : 'text-slate-500'">{{ $step }}</span>
+                                    <span class="text-[11px] leading-tight pt-1.5 pb-2 transition-colors duration-[600ms] ease-standard" :class="stepIndex(selected.status) === {{ $i }} ? 'text-ink font-semibold' : 'text-ink-muted'">{{ $step }}</span>
                                 </div>
                             @endforeach
                         </div>
@@ -2488,40 +2488,40 @@
                          only column that scrolls. --}}
                     <div class="flex-1 min-w-0 sm:overflow-y-auto sm:min-h-0 scrollbar-thin sm:pr-1">
                     <div class="rounded-xl border border-slate-200 overflow-hidden">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 bg-slate-50/60">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-brand-600/[.08] bg-slate-50/60">
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Citizen</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.citizen"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Citizen</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="selected.citizen"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Document</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.type"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Document</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="selected.type"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Processing Office</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.office"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Processing Office</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="selected.office"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Barangay</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="'Brgy. ' + selected.barangay"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Barangay</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="'Brgy. ' + selected.barangay"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="folder" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Category</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.category"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Category</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="selected.category"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
@@ -2530,22 +2530,22 @@
                                     :class="{ 'bg-teal-50 text-teal-600 border-teal-100': selected.level === 'Barangay', 'bg-brand-50 text-brand-600 border-brand-100': selected.level === 'Municipal', 'bg-purple-50 text-purple-600 border-purple-100': selected.level === 'Multi-Office' }"
                                 ><i data-lucide="route" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Processing Level</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.level"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Processing Level</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="selected.level"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user-check" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Assigned Personnel</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.assigned || 'Unassigned'"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Assigned Personnel</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="selected.assigned || 'Unassigned'"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="calendar" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Submitted</p>
-                                    <p class="text-sm font-medium text-navy-900 truncate" x-text="selected.submitted"></p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Submitted</p>
+                                    <p class="text-sm font-medium text-ink truncate" x-text="selected.submitted"></p>
                                 </div>
                             </div>
                         </div>
@@ -2555,7 +2555,7 @@
                         class="flex items-center justify-between gap-2 mt-3"
                         x-show="!selected.assigned && (!$store.session.account || ['department_head', 'municipal_admin', 'super_admin'].includes($store.session.account?.roleKey))"
                     >
-                        <p class="text-xs text-slate-500">This request hasn't been routed to a processor yet.</p>
+                        <p class="text-xs text-ink-muted">This request hasn't been routed to a processor yet.</p>
                         <x-ui.button
                             variant="secondary" size="sm" icon="user-plus"
                             x-bind:disabled="processing"
@@ -2567,7 +2567,7 @@
                         x-show="selected.assigned && selected.assigned === $store.session.account?.name"
                         x-cloak
                     >
-                        <p class="text-xs text-slate-500">You are handling this request.</p>
+                        <p class="text-xs text-ink-muted">You are handling this request.</p>
                         <x-ui.button variant="secondary" size="sm" icon="user-minus" x-bind:disabled="processing" @click="setAssignment(false)">Unassign me</x-ui.button>
                     </div>
 
@@ -2584,7 +2584,7 @@
                          has actually been uploaded/generated. --}}
                     <div class="mt-4" x-show="selectedPayment?.method">
                         <div class="flex items-center justify-between mb-2">
-                            <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Payment</p>
+                            <p class="text-xs font-semibold text-ink uppercase tracking-wide">Payment</p>
                             <button
                                 type="button"
                                 @click="window.location.href = '/admin/payments?ref=' + encodeURIComponent(selected.ref)"
@@ -2606,8 +2606,8 @@
                                     <i x-show="!['GCash','PayMaya'].includes(selectedPayment?.method)" data-lucide="store" class="w-4 h-4"></i>
                                 </span>
                                 <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-navy-900" x-text="(selectedPayment?.method === 'Payment in Center' ? 'Onsite — Municipal Office' : selectedPayment?.method) + ' · ' + selectedPayment?.amount"></p>
-                                    <p class="text-[11px] text-slate-500" x-text="selectedPayment?.receipt ? 'Receipt on file' : 'Awaiting receipt'"></p>
+                                    <p class="text-xs font-semibold text-ink" x-text="(selectedPayment?.method === 'Payment in Center' ? 'Onsite — Municipal Office' : selectedPayment?.method) + ' · ' + selectedPayment?.amount"></p>
+                                    <p class="text-[11px] text-ink-muted" x-text="selectedPayment?.receipt ? 'Receipt on file' : 'Awaiting receipt'"></p>
                                 </div>
                             </div>
                             <span
@@ -2622,8 +2622,8 @@
 
                     <div class="mt-4" x-show="(selected.requirements || []).length">
                         <div class="flex items-center justify-between mb-2">
-                            <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide">Submitted Documents</p>
-                            <p class="text-[11px] text-slate-500" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
+                            <p class="text-xs font-semibold text-ink uppercase tracking-wide">Submitted Documents</p>
+                            <p class="text-[11px] text-ink-muted" x-text="(selected.requirements || []).filter(r => r.status === 'Approved').length + ' / ' + (selected.requirements || []).length + ' verified'"></p>
                         </div>
                         <div class="space-y-2">
                             <template x-for="req in (selected.requirements || [])" :key="req.key">
@@ -2632,7 +2632,7 @@
                                         <div class="flex items-center gap-2.5 min-w-0">
                                             <span
                                                 class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                                                :class="req.file ? (req.file.toLowerCase().endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500') : 'bg-slate-100 text-slate-300'"
+                                                :class="req.file ? (req.file.toLowerCase().endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500') : 'bg-slate-100 text-ink-faint'"
                                             >
                                                 <i :data-lucide="req.file ? (req.file.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image') : 'file-x'" class="w-4 h-4"></i>
                                             </span>
@@ -2641,11 +2641,11 @@
                                                     <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
                                                     <span
                                                         class="text-[9px] font-bold px-1 py-0.5 rounded shrink-0"
-                                                        :class="{ 1: 'bg-slate-100 text-slate-500', 2: 'bg-blue-50 text-blue-600', 3: 'bg-emerald-50 text-emerald-600', 4: 'bg-purple-50 text-purple-600' }[evidenceTier(req.name)]"
+                                                        :class="{ 1: 'bg-slate-100 text-ink-muted', 2: 'bg-blue-50 text-blue-600', 3: 'bg-emerald-50 text-emerald-600', 4: 'bg-purple-50 text-purple-600' }[evidenceTier(req.name)]"
                                                         :title="'Evidence Strength: Level ' + evidenceTier(req.name)"
                                                     >L<span x-text="evidenceTier(req.name)"></span></span>
                                                 </div>
-                                                <p class="text-[11px] text-slate-500 truncate" x-text="req.file || 'Not yet submitted'"></p>
+                                                <p class="text-[11px] text-ink-muted truncate" x-text="req.file || 'Not yet submitted'"></p>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
@@ -2657,7 +2657,7 @@
                                                 type="button"
                                                 x-show="req.file"
                                                 @click="previewDoc = req; $nextTick(() => window.renderIcons?.())"
-                                                class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-brand-600 hover:border-brand-300 flex items-center justify-center transition-colors"
+                                                class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-ink-muted hover:text-brand-600 hover:border-brand-300 flex items-center justify-center transition-colors"
                                                 title="View submitted document"
                                             ><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
                                             <span
@@ -2671,12 +2671,12 @@
                                         <p class="font-semibold" x-show="req.reject_reason" :class="req.status === 'Rejected' ? 'text-rose-700' : 'text-amber-700'" x-text="req.reject_reason"></p>
                                         <p class="mt-0.5" :class="req.status === 'Rejected' ? 'text-rose-600' : 'text-amber-600'" x-show="req.remarks" x-text="req.remarks"></p>
                                         <p class="font-medium text-sky-700 flex items-center gap-1" x-show="req.status === 'Resubmitted'"><i data-lucide="refresh-ccw" class="w-3 h-3"></i> Citizen replaced this file — compare with the flagged version below.</p>
-                                        <button type="button" x-show="(req.versions || []).length" @click="req._showVersions = !req._showVersions" class="mt-1.5 text-slate-500 hover:text-slate-600 transition-colors">
+                                        <button type="button" x-show="(req.versions || []).length" @click="req._showVersions = !req._showVersions" class="mt-1.5 text-ink-muted hover:text-slate-600 transition-colors">
                                             <span x-text="(req._showVersions ? 'Hide' : 'Show') + ' version history (' + req.versions.length + ')'"></span>
                                         </button>
-                                        <div x-show="req._showVersions" x-cloak class="mt-1.5 space-y-1 pl-2 border-l-2 border-slate-100">
+                                        <div x-show="req._showVersions" x-cloak class="mt-1.5 space-y-1 pl-2 border-l-2 border-brand-600/10">
                                             <template x-for="(v, vi) in (req.versions || [])" :key="vi">
-                                                <p class="text-slate-500">Version <span x-text="vi + 1"></span> — <span x-text="v.status"></span> · <span x-text="v.date"></span><span x-show="v.reject_reason"> · <span x-text="v.reject_reason"></span></span></p>
+                                                <p class="text-ink-muted">Version <span x-text="vi + 1"></span> — <span x-text="v.status"></span> · <span x-text="v.date"></span><span x-show="v.reject_reason"> · <span x-text="v.reject_reason"></span></span></p>
                                             </template>
                                         </div>
                                     </div>
@@ -2687,28 +2687,28 @@
                                          verification step. --}}
                                     <div class="flex items-center gap-2 mt-2 flex-wrap" x-show="(req.status === 'Submitted' || req.status === 'Resubmitted') && !req._decidingOutcome && may('review')">
                                         <button type="button" x-show="mayAccept(req)" @click="verifyRequirement(req)" class="text-[11px] font-medium text-emerald-600 hover:underline">Approve</button>
-                                        <span x-show="!mayAccept(req)" class="text-[11px] text-slate-500">Nothing uploaded yet</span>
+                                        <span x-show="!mayAccept(req)" class="text-[11px] text-ink-muted">Nothing uploaded yet</span>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Flagged for Replacement')" class="text-[11px] font-medium text-amber-600 hover:underline">Flag for Replacement</button>
                                         <span class="text-slate-200">·</span>
                                         <button type="button" @click="startRequirementDecision(req, 'Rejected')" class="text-[11px] font-medium text-rose-600 hover:underline">Reject</button>
                                     </div>
 
-                                    <div x-show="req._decidingOutcome" x-cloak class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
-                                        <p class="text-[11px] font-semibold text-slate-500" x-text="(decisionOutcomes[req._decidingOutcome]?.label || req._decidingOutcome) + ' — ' + req.name"></p>
-                                        <select aria-label="Reason" x-model="req._reason" class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <div x-show="req._decidingOutcome" x-cloak class="mt-2.5 pt-2.5 border-t border-brand-600/10 space-y-2">
+                                        <p class="text-[11px] font-semibold text-ink-muted" x-text="(decisionOutcomes[req._decidingOutcome]?.label || req._decidingOutcome) + ' — ' + req.name"></p>
+                                        <select aria-label="Reason" x-model="req._reason" class="w-full text-xs rounded-xl bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                             <option value="">Select a reason...</option>
                                             <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
                                             <template x-for="reason in rejectReasons" :key="reason"><option :value="reason" x-text="reason"></option></template>
                                         </select>
-                                        <textarea aria-label="Remarks for the citizen (optional)" x-model="req._remarks" rows="2" placeholder="Remarks for the citizen (optional)..." class="w-full text-xs rounded-lg bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                                        <textarea aria-label="Remarks for the citizen (optional)" x-model="req._remarks" rows="2" placeholder="Remarks for the citizen (optional)..." class="w-full text-xs rounded-xl bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                                         <div class="flex items-center gap-2">
                                             <button
                                                 type="button" x-bind:disabled="!req._reason" @click="confirmRequirementDecision(req)"
-                                                class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none rounded-lg px-2.5 py-1.5 transition-colors"
+                                                class="text-[11px] font-medium text-white disabled:opacity-40 disabled:pointer-events-none rounded-xl px-2.5 py-1.5 transition-colors"
                                                 :class="req._decidingOutcome === 'Rejected' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-500 hover:bg-amber-600'"
                                             >Confirm</button>
-                                            <button type="button" @click="req._decidingOutcome = null" class="text-[11px] font-medium text-slate-500 hover:text-slate-600">Cancel</button>
+                                            <button type="button" @click="req._decidingOutcome = null" class="text-[11px] font-medium text-ink-muted hover:text-slate-600">Cancel</button>
                                         </div>
                                     </div>
                                 </div>
@@ -2730,24 +2730,24 @@
 
                     {{-- Status history: every transition the server recorded, newest first. --}}
                     <div class="rounded-xl border border-slate-200 p-4 mt-3" x-show="(selected.history || []).length" x-cloak>
-                        <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide flex items-center gap-1.5 mb-2"><i data-lucide="history" class="w-3.5 h-3.5"></i> Status History</p>
+                        <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5 mb-2"><i data-lucide="history" class="w-3.5 h-3.5"></i> Status History</p>
                         <ul class="space-y-2">
                             <template x-for="(h, hi) in (selected.history || []).slice().reverse()" :key="hi">
                                 <li class="text-xs border-l-2 border-slate-200 pl-2.5">
-                                    <p class="font-medium text-navy-900" x-text="h.stage + (h.note ? ' — ' + h.note : '')"></p>
-                                    <p class="text-[11px] text-slate-500" x-text="h.date + (h.by ? ' · ' + h.by : '')"></p>
+                                    <p class="font-medium text-ink" x-text="h.stage + (h.note ? ' — ' + h.note : '')"></p>
+                                    <p class="text-[11px] text-ink-muted" x-text="h.date + (h.by ? ' · ' + h.by : '')"></p>
                                 </li>
                             </template>
                         </ul>
                     </div>
 
                     <div class="mt-3" x-show="canReject">
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Decision Remarks <span class="text-slate-500 font-normal">(required for Reject — this is what the citizen will see)</span></label>
-                        <p class="text-[11px] text-slate-500 mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Decision Remarks <span class="text-ink-muted font-normal">(required for Reject — this is what the citizen will see)</span></label>
+                        <p class="text-[11px] text-ink-muted mb-1.5">This is the final message the citizen will see. If you've already flagged specific requirements below, pull those reasons in instead of retyping them.</p>
                         <div class="flex items-center gap-2 mb-1.5">
                             <select
                                 @change="insertStandardReason($event.target.value); $event.target.value = ''"
-                                class="flex-1 min-w-0 text-xs rounded-xl border border-slate-200 bg-white py-2 px-3 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                class="flex-1 min-w-0 text-xs rounded-2xl border border-slate-200 bg-white py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                             >
                                 <option value="">Insert a standard reason…</option>
                                 <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
@@ -2755,12 +2755,12 @@
                             <button
                                 type="button" x-show="flaggedRequirements.length" x-cloak
                                 @click="useRequirementReasons()"
-                                class="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-xl px-3 py-2 transition-colors whitespace-nowrap"
+                                class="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-2xl px-3 py-2 transition-colors whitespace-nowrap"
                             >Use requirement reasons</button>
                         </div>
                         <textarea aria-label="Reject remarks"
                             x-model="rejectRemarks" rows="2" placeholder="e.g. Missing Fire Safety Inspection Certificate. Please resubmit with this requirement attached."
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
+                            class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-3.5 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"
                         ></textarea>
                     </div>
                     </div>
@@ -2817,10 +2817,10 @@
                              itself (proof_file); the server refuses a release
                              without proof. --}}
                         <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
-                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted flex items-center gap-1.5">
                                 <i data-lucide="camera" class="w-3.5 h-3.5"></i> Proof of Release
                             </p>
-                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!selected.release_evidence">Photo evidence that the citizen actually received this document — required before releasing.</p>
+                            <p class="text-[11px] text-ink-muted mt-1 leading-relaxed" x-show="!selected.release_evidence">Photo evidence that the citizen actually received this document — required before releasing.</p>
 
                             <template x-if="selected.release_evidence">
                                 <div class="mt-2.5">
@@ -2829,17 +2829,17 @@
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <span class="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3 h-3"></i> Captured <span x-text="selected.release_evidence_at"></span></span>
-                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-slate-500 hover:text-rose-500" x-show="selected.status === 'Mark to Release'">Retake</button>
+                                        <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-ink-muted hover:text-rose-500" x-show="selected.status === 'Mark to Release'">Retake</button>
                                     </div>
                                 </div>
                             </template>
 
                             <div class="grid grid-cols-2 gap-2 mt-2.5" x-show="!selected.release_evidence">
-                                <button type="button" @click="captureReleaseEvidence('camera')" class="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/40 py-3 text-slate-500 hover:text-brand-600 transition-colors">
+                                <button type="button" @click="captureReleaseEvidence('camera')" class="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/40 py-3 text-ink-muted hover:text-brand-600 transition-colors">
                                     <i data-lucide="camera" class="w-4 h-4"></i>
                                     <span class="text-[11px] font-medium">Take Photo</span>
                                 </button>
-                                <button type="button" @click="captureReleaseEvidence('upload')" class="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/40 py-3 text-slate-500 hover:text-brand-600 transition-colors">
+                                <button type="button" @click="captureReleaseEvidence('upload')" class="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/40 py-3 text-ink-muted hover:text-brand-600 transition-colors">
                                     <i data-lucide="upload" class="w-4 h-4"></i>
                                     <span class="text-[11px] font-medium">Upload Photo</span>
                                 </button>
@@ -2852,9 +2852,9 @@
                              once the request reaches Mark to Release, same
                              visibility condition as Proof of Release above. --}}
                         <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Mark to Release' || selected.release_evidence" x-cloak>
-                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted flex items-center gap-1.5">
                                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Reference Form
-                                <span x-show="selected.formNo" class="normal-case font-normal text-slate-500" x-text="'— ' + selected.formNo"></span>
+                                <span x-show="selected.formNo" class="normal-case font-normal text-ink-muted" x-text="'— ' + selected.formNo"></span>
                             </p>
                             <template x-if="selected.reference_pdf">
                                 <div class="mt-2.5">
@@ -2866,7 +2866,7 @@
                                     </a>
                                 </div>
                             </template>
-                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this service.</p>
+                            <p class="text-[11px] text-ink-muted mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this service.</p>
                         </div>
 
                         {{-- Document — the citizen's own prepared/issued
@@ -2875,16 +2875,16 @@
                              what will be handed over. Same visibility window
                              as Proof of Release / Reference Form. --}}
                         <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="['Approved', 'Mark to Release', 'Released'].includes(selected.status)" x-cloak>
-                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted flex items-center gap-1.5">
                                 <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i> Document
                             </p>
                             <template x-if="documentReady">
                                 <div class="mt-2.5">
-                                    <p class="text-[11px] text-slate-500 leading-relaxed mb-2">Preview, print, or download the prepared document before handing it over.</p>
+                                    <p class="text-[11px] text-ink-muted leading-relaxed mb-2">Preview, print, or download the prepared document before handing it over.</p>
                                     <x-ui.button size="sm" variant="secondary" icon="eye" class="w-full justify-center" @click="if (editingDocument) cancelDocumentEdits(); docPreviewOpen = true">View Document</x-ui.button>
                                 </div>
                             </template>
-                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed" x-show="!documentReady">No prepared document on file for this request.</p>
+                            <p class="text-[11px] text-ink-muted mt-1 leading-relaxed" x-show="!documentReady">No prepared document on file for this request.</p>
                         </div>
                     </div>
                 </div>
@@ -2914,13 +2914,13 @@
                     x-transition:enter-start="opacity-0 scale-95"
                     x-transition:enter-end="opacity-100 scale-100"
                 >
-                    <div class="flex items-center gap-2.5 px-4 py-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2.5 px-4 py-3 border-b border-brand-600/10">
                         <span
                             class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                             :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-500'"
                         ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-3.5 h-3.5"></i></span>
-                        <h3 class="text-sm font-semibold text-navy-900 truncate flex-1" x-text="previewDoc?.name"></h3>
-                        <button type="button" @click="previewDoc = null" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-600 transition-colors shrink-0" title="Close">
+                        <h3 class="text-sm font-semibold text-ink truncate flex-1" x-text="previewDoc?.name"></h3>
+                        <button type="button" @click="previewDoc = null" class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-ink-muted hover:text-slate-600 transition-colors shrink-0" title="Close">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -2940,7 +2940,7 @@
                              file is never opened on the portal's origin and runs nothing
                              (Esperanza bugs QA, 2026-10-06: staff downloaded every file to read it). --}}
                         <div x-data="pdfPreview" x-effect="show(previewDoc?.file_url, (previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || ''))" x-show="!previewDoc?.preview_asset && previewKind(previewDoc?.file_url, (previewDoc?.file_mime || '') + ' ' + (previewDoc?.file || ''))" x-cloak class="rounded-xl border border-slate-200 bg-slate-100 max-h-[60vh] overflow-y-auto p-2 mb-3">
-                            <p x-show="loading" class="text-xs text-slate-500 text-center py-8">Opening the document…</p>
+                            <p x-show="loading" class="text-xs text-ink-muted text-center py-8">Opening the document…</p>
                             <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8">This file could not be shown here. Use Download the file.</p>
                             <img x-show="image" x-cloak :src="image" :alt="previewDoc?.name" class="block w-full h-auto rounded-lg bg-white">
                             <div x-ref="pages"></div>
@@ -2950,21 +2950,21 @@
                                 class="w-14 h-14 rounded-2xl flex items-center justify-center"
                                 :class="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-500'"
                             ><i :data-lucide="previewDoc?.file?.toLowerCase().endsWith('.pdf') ? 'file-text' : 'image'" class="w-7 h-7"></i></span>
-                            <p class="text-xs font-medium text-slate-500 px-4 text-center truncate max-w-full" x-text="previewDoc?.file"></p>
-                            <p x-show="previewDoc?.file_url" class="text-[11px] leading-snug text-slate-500 px-5 text-center">This kind of file cannot be shown here. Download it to read it.</p>
+                            <p class="text-xs font-medium text-ink-muted px-4 text-center truncate max-w-full" x-text="previewDoc?.file"></p>
+                            <p x-show="previewDoc?.file_url" class="text-[11px] leading-snug text-ink-muted px-5 text-center">This kind of file cannot be shown here. Download it to read it.</p>
                             <p x-show="previewDoc?.file_notice" class="text-[11px] leading-snug text-rose-600 px-5 text-center" x-text="previewDoc?.file_notice"></p>
                         </div>
                         <dl class="space-y-2 text-xs">
                             <div class="flex items-center justify-between gap-3">
-                                <dt class="text-slate-500 shrink-0">Requirement</dt>
-                                <dd class="font-medium text-navy-900 text-right truncate" x-text="previewDoc?.name"></dd>
+                                <dt class="text-ink-muted shrink-0">Requirement</dt>
+                                <dd class="font-medium text-ink text-right truncate" x-text="previewDoc?.name"></dd>
                             </div>
                             <div class="flex items-center justify-between gap-3">
-                                <dt class="text-slate-500 shrink-0">Status</dt>
-                                <dd class="font-medium text-navy-900" x-text="previewDoc?.status === 'Approved' ? 'Verified' : previewDoc?.status"></dd>
+                                <dt class="text-ink-muted shrink-0">Status</dt>
+                                <dd class="font-medium text-ink" x-text="previewDoc?.status === 'Approved' ? 'Verified' : previewDoc?.status"></dd>
                             </div>
                             <div class="flex items-start justify-between gap-3" x-show="previewDoc?.remarks">
-                                <dt class="text-slate-500 shrink-0">Remarks</dt>
+                                <dt class="text-ink-muted shrink-0">Remarks</dt>
                                 <dd class="font-medium text-right text-slate-600" x-text="previewDoc?.remarks"></dd>
                             </div>
                         </dl>
@@ -2973,7 +2973,7 @@
             </div>
 
             <x-slot:footer>
-                <p class="text-xs text-slate-500 flex-1 flex items-center gap-1.5" x-show="selected && terminalStatuses.includes(selected.status)" x-cloak>
+                <p class="text-xs text-ink-muted flex-1 flex items-center gap-1.5" x-show="selected && terminalStatuses.includes(selected.status)" x-cloak>
                     <i data-lucide="circle-check" class="w-3.5 h-3.5"></i>This request is finalized — no further status changes.
                 </p>
                 <template x-if="selected && !terminalStatuses.includes(selected.status)">
@@ -3013,7 +3013,7 @@
                 <template x-if="selected && documentReady">
                     <div>
                         <div class="flex items-center justify-between mb-3 dp-no-print" x-show="!editingDocument">
-                            <p class="text-[11px] text-slate-500 leading-relaxed">Review the prepared document below, or edit its wording and formatting before printing or downloading.</p>
+                            <p class="text-[11px] text-ink-muted leading-relaxed">Review the prepared document below, or edit its wording and formatting before printing or downloading.</p>
                             <x-ui.button size="sm" variant="secondary" icon="pencil" x-show="mayEditDocument" @click="startEditingDocument()">Edit Document</x-ui.button>
                         </div>
 
@@ -3032,7 +3032,7 @@
                             <x-citizen.document-editor-template-sidebar />
                             <div class="flex-1 min-w-0">
                         <div id="dp-print-area">
-                            <div class="flex items-center justify-between mb-4 text-[11px] text-slate-500 dp-no-print">
+                            <div class="flex items-center justify-between mb-4 text-[11px] text-ink-muted dp-no-print">
                                 <span x-text="selected.ref"></span>
                                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium ring-1 ring-inset"
                                       :class="selected.status === 'Released' ? 'bg-cyan-50 text-cyan-700 ring-cyan-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'"
@@ -3131,7 +3131,7 @@
                     <x-ui.button size="sm" variant="secondary" x-show="editingDocument" x-cloak @click="cancelDocumentEdits()">Cancel</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-show="editingDocument" x-cloak @click="saveDocumentEdits()">Save Changes</x-ui.button>
                     <p class="mr-auto text-[11px] leading-snug text-amber-700" x-show="!editingDocument && editedInWindow && editedInWindow === selected?.ref" x-cloak>Not saved: this edit is in this window only. Save again, or print or download it before you leave.</p>
-                    <div class="mr-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-snug text-slate-500" x-show="!editingDocument && selected?.prepared && editedInWindow !== selected?.ref" x-cloak>
+                    <div class="mr-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-snug text-ink-muted" x-show="!editingDocument && selected?.prepared && editedInWindow !== selected?.ref" x-cloak>
                         <span x-text="'Edited by ' + (selected?.prepared?.by || 'an officer') + (selected?.prepared?.at ? ' on ' + new Date(selected.prepared.at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '') + '. Staff see this copy; the resident sees the template.'"></span>
                         <button type="button" x-show="selected?.prepared?.editable && mayEditDocument" @click="useTemplateAgain()" class="font-medium text-brand-600 hover:text-brand-700 hover:underline">Use the template again</button>
                     </div>

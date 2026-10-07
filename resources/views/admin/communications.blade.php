@@ -32,14 +32,14 @@
 
         <div x-show="$store.session.can('communications')" x-cloak>
 
-        <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-4 overflow-x-auto">
-            <button x-show="tabAllowed('balita')" @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
-            <button x-show="tabAllowed('banners')" @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
-            <button x-show="tabAllowed('community')" @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
-            <button x-show="tabAllowed('events')" @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
-            <button x-show="tabAllowed('offices')" @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
-            <button x-show="tabAllowed('barangays')" @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
-            <button x-show="tabAllowed('blotter')" @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
+        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-4 overflow-x-auto">
+            <button x-show="tabAllowed('balita')" @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
+            <button x-show="tabAllowed('banners')" @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
+            <button x-show="tabAllowed('community')" @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
+            <button x-show="tabAllowed('events')" @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
+            <button x-show="tabAllowed('offices')" @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
+            <button x-show="tabAllowed('barangays')" @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
+            <button x-show="tabAllowed('blotter')" @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
         </div>
 
         {{-- ============================= BALITA (announcements) ============================= --}}
@@ -139,17 +139,17 @@
                 <x-ui.stat-card label="Total Likes" valueBind="posts.reduce((n, a) => n + (a.likes || 0), 0)" icon="heart" color="green" :delay="120" />
             </div>
 
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+            <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search Balita titles" type="text" x-model="search" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input aria-label="Search Balita titles" type="text" x-model="search" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select aria-label="Balita category" x-model="category" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Balita category" x-model="category" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Categories</option>
                         <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select aria-label="Balita scope" x-model="scope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Balita scope" x-model="scope" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Audiences</option>
                         <option value="Municipal">Municipal-wide</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
@@ -158,21 +158,21 @@
                     <x-ui.button @click="open = true" icon="plus" size="sm" class="shrink-0">New Balita</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                         <template x-for="s in ['All', ...statuses]" :key="s">
-                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'" x-text="s"></button>
+                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s"></button>
                         </template>
                     </div>
-                    <p class="text-[11px] text-slate-500 shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
+                    <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="a in filtered" :key="a.id">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
+                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
                         <div class="p-3.5">
                             <div class="flex items-center justify-between gap-2 mb-2">
-                                <span class="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-full px-2 py-0.5" x-text="a.category"></span>
+                                <span class="text-[10px] font-semibold text-ink-muted bg-slate-100 rounded-full px-2 py-0.5" x-text="a.category"></span>
                                 <x-ui.badge statusBind="a.status" />
                             </div>
                             <span
@@ -182,16 +182,16 @@
                                 <i :data-lucide="!a.barangay ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
                                 <span x-text="!a.barangay ? 'Municipality-wide' : 'Brgy. ' + a.barangay"></span>
                             </span>
-                            <p class="text-sm font-semibold text-navy-900 leading-snug line-clamp-2 mb-2" x-text="a.title"></p>
+                            <p class="text-sm font-semibold text-ink leading-snug line-clamp-2 mb-2" x-text="a.title"></p>
                             <div class="flex items-center justify-between">
-                                <span class="inline-flex items-center gap-1.5 text-xs text-slate-500 min-w-0">
-                                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(a.author)"></div>
+                                <span class="inline-flex items-center gap-1.5 text-xs text-ink-muted min-w-0">
+                                    <div class="w-6 h-6 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(a.author)"></div>
                                     <span class="truncate" x-text="a.author"></span>
                                 </span>
-                                <span class="text-[11px] text-slate-500 shrink-0" x-text="a.published_at ? new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not yet published'"></span>
+                                <span class="text-[11px] text-ink-muted shrink-0" x-text="a.published_at ? new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not yet published'"></span>
                             </div>
                         </div>
-                        <div class="flex border-t border-slate-100">
+                        <div class="flex border-t border-brand-600/10">
                             <button
                                 x-show="a.status === 'Pending Review'"
                                 @click="selected = a; reviewOpen = true; rejectReason = ''"
@@ -199,12 +199,12 @@
                             ><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
                             <button x-show="a.status === 'Draft'" @click="transition(a, 'Pending Review').then(ok => ok && load())" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
                             <button x-show="a.status === 'Approved'" @click="release(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
-                            <button x-show="['Released', 'Rejected', 'Draft'].includes(a.status)" @click="archive(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-slate-500 hover:bg-slate-50 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                            <button x-show="['Released', 'Rejected', 'Draft'].includes(a.status)" @click="archive(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
                         </div>
                     </div>
                 </template>
                 <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filtered.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No Balita posts match these filters.</p>
                 </div>
             </div>
@@ -215,7 +215,7 @@
                     <x-ui.input name="title" label="Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="newForm.title" />
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="category">Category</label>
-                        <select id="category" x-model="newForm.category" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <select id="category" x-model="newForm.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             <option>Community</option>
                             <option>Health</option>
                             <option>Public Service</option>
@@ -228,19 +228,19 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Audience</label>
                         <div class="grid grid-cols-2 gap-2.5">
-                            <button type="button" @click="newForm.audience = 'Municipal'" class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="newForm.audience = 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
-                                <p class="text-xs font-semibold text-navy-900">Municipal-wide</p>
-                                <p class="text-[10.5px] text-slate-500 mt-0.5">Visible to every barangay</p>
+                                <p class="text-xs font-semibold text-ink">Municipal-wide</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Visible to every barangay</p>
                             </button>
-                            <button type="button" @click="newForm.audience = 'Barangay'" class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="newForm.audience = 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
-                                <p class="text-xs font-semibold text-navy-900">Specific Barangay</p>
-                                <p class="text-[10.5px] text-slate-500 mt-0.5">Only that barangay sees it</p>
+                                <p class="text-xs font-semibold text-ink">Specific Barangay</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it</p>
                             </button>
                         </div>
                         <div x-show="newForm.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
-                            <select aria-label="New balita barangay" x-model="newForm.barangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <select aria-label="New balita barangay" x-model="newForm.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                             </select>
                         </div>
@@ -248,9 +248,9 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="content">Content</label>
-                        <textarea id="content" rows="4" placeholder="Write the announcement content..." x-model="newForm.body" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <textarea id="content" rows="4" placeholder="Write the announcement content..." x-model="newForm.body" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                     </div>
-                    <p class="text-[11px] text-slate-500">Attachments aren't part of this pass — the create endpoint doesn't accept an image yet (only an edit, after the post exists, does).</p>
+                    <p class="text-[11px] text-ink-muted">Attachments aren't part of this pass — the create endpoint doesn't accept an image yet (only an edit, after the post exists, does).</p>
                 </div>
 
                 <x-slot:footer>
@@ -264,21 +264,21 @@
                 <template x-if="selected">
                     <div>
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-sm" x-text="initials(selected.author)"></div>
+                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-sm" x-text="initials(selected.author)"></div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-semibold text-navy-900" x-text="selected.author"></p>
-                                <p class="text-xs text-slate-500" x-text="(!selected.barangay ? 'Municipality-wide' : 'Brgy. ' + selected.barangay)"></p>
+                                <p class="text-sm font-semibold text-ink" x-text="selected.author"></p>
+                                <p class="text-xs text-ink-muted" x-text="(!selected.barangay ? 'Municipality-wide' : 'Brgy. ' + selected.barangay)"></p>
                             </div>
-                            <span class="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5 shrink-0" x-text="selected.category"></span>
+                            <span class="text-[10px] font-medium text-ink-muted bg-slate-100 rounded-full px-2 py-0.5 shrink-0" x-text="selected.category"></span>
                         </div>
-                        <p class="text-sm font-semibold text-navy-900 mb-2" x-text="selected.title"></p>
+                        <p class="text-sm font-semibold text-ink mb-2" x-text="selected.title"></p>
                         <p class="text-sm text-slate-600 leading-relaxed mb-3 whitespace-pre-line" x-text="selected.body"></p>
-                        <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5 text-xs text-slate-500 mb-3">
+                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5 text-xs text-ink-muted mb-3">
                             This post is awaiting review before it goes live on the citizen Balita feed. Approving will publish it immediately to its selected audience.
                         </div>
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Remarks (required to send back)</label>
-                            <textarea aria-label="Remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-2 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <label class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Remarks (required to send back)</label>
+                            <textarea aria-label="Remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                         </div>
                     </div>
                 </template>
@@ -387,17 +387,17 @@
                 <x-ui.stat-card label="Total on File" valueBind="events.length" icon="calendar-days" color="green" :delay="120" />
             </div>
 
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+            <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search event titles" type="text" x-model="search" placeholder="Search event titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input aria-label="Search event titles" type="text" x-model="search" placeholder="Search event titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select aria-label="Events category" x-model="category" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Events category" x-model="category" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Categories</option>
                         <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select aria-label="Events scope" x-model="scope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Events scope" x-model="scope" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Audiences</option>
                         <option value="Municipal">Municipal-wide</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
@@ -406,31 +406,31 @@
                     <x-ui.button @click="open = true" icon="plus" size="sm" class="shrink-0">New Event</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                         <template x-for="s in ['All', ...statuses]" :key="s">
-                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'" x-text="s"></button>
+                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s"></button>
                         </template>
                     </div>
-                    <p class="text-[11px] text-slate-500 shrink-0" x-text="filtered.length + ' of ' + events.length + ' events'"></p>
+                    <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + events.length + ' events'"></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="e in filtered" :key="e.key">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
+                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
                         <div class="p-3.5 flex items-start gap-3">
-                            <div class="shrink-0 w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center overflow-hidden">
+                            <div class="shrink-0 w-12 h-12 rounded-xl bg-slate-50 border border-brand-600/10 flex flex-col items-center justify-center overflow-hidden">
                                 <span class="w-full text-center text-[9px] font-bold text-white py-0.5" :class="categoryColor[e.category] || 'bg-slate-400'" x-text="e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : ''"></span>
-                                <span class="text-sm font-bold text-navy-900 leading-none mt-1" x-text="e.date ? new Date(e.date + 'T00:00:00').getDate() : ''"></span>
+                                <span class="text-sm font-bold text-ink leading-none mt-1" x-text="e.date ? new Date(e.date + 'T00:00:00').getDate() : ''"></span>
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-1.5 mb-1">
                                     <span class="text-[10px] font-semibold text-white rounded-full px-2 py-0.5" :class="categoryColor[e.category] || 'bg-slate-400'" x-text="e.category"></span>
                                     <x-ui.badge statusBind="e.status" />
                                 </div>
-                                <p class="text-sm font-semibold text-navy-900 leading-snug line-clamp-2" x-text="e.title || e.name"></p>
-                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1" x-show="e.time"><i data-lucide="clock" class="w-3 h-3 shrink-0"></i><span x-text="e.time"></span></p>
-                                <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1 truncate" x-show="e.venue"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span x-text="e.venue"></span></p>
+                                <p class="text-sm font-semibold text-ink leading-snug line-clamp-2" x-text="e.title || e.name"></p>
+                                <p class="text-xs text-ink-muted mt-1 flex items-center gap-1" x-show="e.time"><i data-lucide="clock" class="w-3 h-3 shrink-0"></i><span x-text="e.time"></span></p>
+                                <p class="text-xs text-ink-muted mt-0.5 flex items-center gap-1 truncate" x-show="e.venue"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span x-text="e.venue"></span></p>
                             </div>
                         </div>
                         <div class="px-3.5 pb-3">
@@ -439,16 +439,16 @@
                                 <span x-text="e.barangay ? 'Brgy. ' + e.barangay : 'Municipality-wide'"></span>
                             </span>
                         </div>
-                        <div class="flex border-t border-slate-100">
+                        <div class="flex border-t border-brand-600/10">
                             <button x-show="e.status === 'Pending Review'" @click="selected = e; reviewOpen = true; rejectReason = ''" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
                             <button x-show="e.status === 'Draft'" @click="transition(e, 'Pending Review').then(ok => ok && load())" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
                             <button x-show="e.status === 'Approved'" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
-                            <button x-show="['Released', 'Rejected', 'Draft'].includes(e.status)" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-slate-500 hover:bg-slate-50 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                            <button x-show="['Released', 'Rejected', 'Draft'].includes(e.status)" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
                         </div>
                     </div>
                 </template>
                 <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filtered.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No events match these filters.</p>
                 </div>
             </div>
@@ -464,7 +464,7 @@
                     <x-ui.input name="event_venue" label="Venue" placeholder="e.g. Municipal Plaza" x-model="newForm.venue" />
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="category-2">Category</label>
-                        <select id="category-2" x-model="newForm.category" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <select id="category-2" x-model="newForm.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             <template x-for="c in Object.keys(categoryColor)" :key="c"><option x-text="c" :value="c"></option></template>
                         </select>
                     </div>
@@ -472,24 +472,24 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Audience</label>
                         <div class="grid grid-cols-2 gap-2.5">
-                            <button type="button" @click="newForm.audience = 'Municipal'" class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="newForm.audience = 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
-                                <p class="text-xs font-semibold text-navy-900">Municipal-wide</p>
-                                <p class="text-[10.5px] text-slate-500 mt-0.5">Visible to every barangay</p>
+                                <p class="text-xs font-semibold text-ink">Municipal-wide</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Visible to every barangay</p>
                             </button>
-                            <button type="button" @click="newForm.audience = 'Barangay'" class="text-left rounded-xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="newForm.audience = 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
-                                <p class="text-xs font-semibold text-navy-900">Specific Barangay</p>
-                                <p class="text-[10.5px] text-slate-500 mt-0.5">Only that barangay sees it</p>
+                                <p class="text-xs font-semibold text-ink">Specific Barangay</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it</p>
                             </button>
                         </div>
                         <div x-show="newForm.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
-                            <select aria-label="New event barangay" x-model="newForm.barangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <select aria-label="New event barangay" x-model="newForm.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                             </select>
                         </div>
                     </div>
-                    <p class="text-[11px] text-slate-500">Posters aren't part of this pass — event creation has no image field on the backend yet.</p>
+                    <p class="text-[11px] text-ink-muted">Posters aren't part of this pass — event creation has no image field on the backend yet.</p>
                 </div>
 
                 <x-slot:footer>
@@ -504,27 +504,27 @@
                     <div>
                         <div class="flex items-center gap-3 mb-3">
                             <div class="min-w-0 flex-1">
-                                <p class="text-xs text-slate-500" x-text="(selected.barangay ? 'Brgy. ' + selected.barangay : 'Municipality-wide') + (selected.date ? (' · ' + selected.date) : '')"></p>
+                                <p class="text-xs text-ink-muted" x-text="(selected.barangay ? 'Brgy. ' + selected.barangay : 'Municipality-wide') + (selected.date ? (' · ' + selected.date) : '')"></p>
                             </div>
                             <span class="text-[10px] font-medium text-white rounded-full px-2 py-0.5 shrink-0" :class="categoryColor[selected.category] || 'bg-slate-400'" x-text="selected.category"></span>
                         </div>
-                        <p class="text-sm font-semibold text-navy-900 mb-2" x-text="selected.title || selected.name"></p>
+                        <p class="text-sm font-semibold text-ink mb-2" x-text="selected.title || selected.name"></p>
                         <dl class="grid grid-cols-2 gap-3 mb-3">
-                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                                <dt class="text-[10px] text-slate-500 uppercase tracking-wide">Time</dt>
-                                <dd class="text-sm font-semibold text-navy-900" x-text="selected.time || '—'"></dd>
+                            <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3">
+                                <dt class="text-[10px] text-ink-muted uppercase tracking-wide">Time</dt>
+                                <dd class="text-sm font-semibold text-ink" x-text="selected.time || '—'"></dd>
                             </div>
-                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                                <dt class="text-[10px] text-slate-500 uppercase tracking-wide">Venue</dt>
-                                <dd class="text-sm font-semibold text-navy-900" x-text="selected.venue || '—'"></dd>
+                            <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3">
+                                <dt class="text-[10px] text-ink-muted uppercase tracking-wide">Venue</dt>
+                                <dd class="text-sm font-semibold text-ink" x-text="selected.venue || '—'"></dd>
                             </div>
                         </dl>
-                        <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5 text-xs text-slate-500 mb-3">
+                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5 text-xs text-ink-muted mb-3">
                             This event is awaiting review before it appears on the citizen Events calendar. Approving will publish it immediately to its selected audience.
                         </div>
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Remarks (required to send back)</label>
-                            <textarea aria-label="Remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-2 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <label class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Remarks (required to send back)</label>
+                            <textarea aria-label="Remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                         </div>
                     </div>
                 </template>
@@ -636,30 +636,30 @@
                 <x-ui.stat-card label="Drafts" valueBind="banners.filter(b => b.status === 'Draft').length" icon="pencil-line" color="purple" :delay="120" />
             </div>
 
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+            <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search banner titles" type="text" x-model="search" placeholder="Search banner titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input aria-label="Search banner titles" type="text" x-model="search" placeholder="Search banner titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
                     <x-ui.button @click="openAdd()" icon="plus" size="sm" class="shrink-0">New Banner</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                         <template x-for="s in ['All', 'Draft', 'Pending Review', 'Approved', 'Released', 'Archived']" :key="s">
-                            <button type="button" @click="statusFilter = s" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="statusFilter === s ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'" x-text="s"></button>
+                            <button type="button" @click="statusFilter = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="statusFilter === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s"></button>
                         </template>
                     </div>
-                    <p class="text-[11px] text-slate-500 shrink-0" x-text="filtered.length + ' of ' + banners.length + ' banners'"></p>
+                    <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + banners.length + ' banners'"></p>
                 </div>
             </div>
 
-            <p class="text-xs text-slate-500 mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i>Banners are shown to citizens in this order, top to bottom, while Released and within their date window.</p>
+            <p class="text-xs text-ink-muted mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i>Banners are shown to citizens in this order, top to bottom, while Released and within their date window.</p>
 
             <div class="space-y-3">
                 <template x-for="(b, idx) in filtered" :key="b.id">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard flex flex-col sm:flex-row">
+                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard flex flex-col sm:flex-row">
                         <div class="relative w-full sm:w-56 h-32 sm:h-auto shrink-0 bg-gradient-to-br" :class="b.theme">
                             <div class="absolute inset-0 flex flex-col justify-end p-3">
                                 <p class="text-white font-semibold text-xs leading-snug line-clamp-2" x-text="b.title"></p>
@@ -670,89 +670,89 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5 mb-1">
                                     <x-ui.badge statusBind="b.status" />
-                                    <span class="text-[10px] text-slate-500 font-mono" x-text="'#' + b.id"></span>
+                                    <span class="text-[10px] text-ink-muted font-mono" x-text="'#' + b.id"></span>
                                 </div>
-                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="b.title"></p>
-                                <p class="text-xs text-slate-500 mt-0.5 truncate" x-text="b.subtitle"></p>
-                                <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                <p class="text-sm font-semibold text-ink truncate" x-text="b.title"></p>
+                                <p class="text-xs text-ink-muted mt-0.5 truncate" x-text="b.subtitle"></p>
+                                <p class="text-[11px] text-ink-muted mt-1.5 flex items-center gap-1.5 flex-wrap">
                                     <i data-lucide="calendar" class="w-3 h-3"></i><span x-text="(b.start_date || '—') + ' – ' + (b.end_date || '—')"></span>
-                                    <span class="text-slate-300">·</span>
+                                    <span class="text-ink-faint">·</span>
                                     <i data-lucide="mouse-pointer-click" class="w-3 h-3"></i><span x-text="b.cta_label || 'No CTA'"></span>
                                 </p>
                             </div>
                             <div class="flex items-center gap-1 shrink-0 self-start sm:self-center">
                                 <div class="flex flex-col mr-1">
-                                    <button aria-label="Move up" type="button" @click="move(b, -1)" :disabled="idx === 0" class="p-1 rounded text-slate-500 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
-                                    <button aria-label="Move down" type="button" @click="move(b, 1)" :disabled="idx === filtered.length - 1" class="p-1 rounded text-slate-500 hover:text-navy-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                    <button aria-label="Move up" type="button" @click="move(b, -1)" :disabled="idx === 0" class="p-1 rounded text-ink-muted hover:text-navy-700 hover:bg-white/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                    <button aria-label="Move down" type="button" @click="move(b, 1)" :disabled="idx === filtered.length - 1" class="p-1 rounded text-ink-muted hover:text-navy-700 hover:bg-white/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
                                 </div>
-                                <button type="button" x-show="b.status === 'Draft'" @click="transition(b, 'Pending Review')" title="Submit for review" class="p-2 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="send" class="w-4 h-4"></i></button>
-                                <button type="button" x-show="b.status === 'Pending Review'" @click="transition(b, 'Approved')" title="Approve" class="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>
-                                <button type="button" x-show="b.status === 'Approved'" @click="transition(b, 'Released')" title="Publish to dashboard" class="p-2 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="upload" class="w-4 h-4"></i></button>
-                                <button type="button" x-show="b.status !== 'Archived'" @click="transition(b, 'Archived')" title="Archive (remove from dashboard)" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="archive" class="w-4 h-4"></i></button>
-                                <button type="button" @click="openEdit(b)" title="Edit banner" class="p-2 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                <button type="button" x-show="b.status === 'Draft'" @click="transition(b, 'Pending Review')" title="Submit for review" class="p-2 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="send" class="w-4 h-4"></i></button>
+                                <button type="button" x-show="b.status === 'Pending Review'" @click="transition(b, 'Approved')" title="Approve" class="p-2 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="check" class="w-4 h-4"></i></button>
+                                <button type="button" x-show="b.status === 'Approved'" @click="transition(b, 'Released')" title="Publish to dashboard" class="p-2 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                                <button type="button" x-show="b.status !== 'Archived'" @click="transition(b, 'Archived')" title="Archive (remove from dashboard)" class="p-2 rounded-xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="archive" class="w-4 h-4"></i></button>
+                                <button type="button" @click="openEdit(b)" title="Edit banner" class="p-2 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
                             </div>
                         </div>
                     </div>
                 </template>
 
-                <div class="flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filtered.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="gallery-horizontal" class="w-7 h-7"></i></span>
+                <div class="flex flex-col items-center text-center py-12 bg-white border border-brand-600/10 rounded-2xl" x-show="filtered.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="gallery-horizontal" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No banners match these filters.</p>
                 </div>
             </div>
             </div>
 
             <x-ui.modal :bare="true" maxWidth="lg">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h3 class="text-sm font-semibold text-navy-900" x-text="mode === 'add' ? 'New Banner' : 'Edit Banner'"></h3>
-                    <button aria-label="Close" @click="open = false" class="text-slate-500 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
+                    <h3 class="text-sm font-semibold text-ink" x-text="mode === 'add' ? 'New Banner' : 'Edit Banner'"></h3>
+                    <button aria-label="Close" @click="open = false" class="text-ink-muted hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
                 <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-title">Title <span class="text-rose-500">*</span></label>
-                        <input id="banner-title" type="text" x-model="form.title" placeholder="e.g. Fiesta ng Esperanza 2026" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <input id="banner-title" type="text" x-model="form.title" placeholder="e.g. Fiesta ng Esperanza 2026" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-subtitle">Subtitle</label>
-                        <textarea id="banner-subtitle" rows="2" x-model="form.subtitle" placeholder="Short supporting line shown under the title" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <textarea id="banner-subtitle" rows="2" x-model="form.subtitle" placeholder="Short supporting line shown under the title" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-image">Banner Image</label>
-                        <input id="banner-image" type="file" accept="image/*" @change="form.imageFile = $event.target.files[0]" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-700 file:text-xs">
-                        <p class="text-[10.5px] text-slate-500 mt-1" x-show="mode === 'edit'">Leave empty to keep the current image.</p>
+                        <input id="banner-image" type="file" accept="image/*" @change="form.imageFile = $event.target.files[0]" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-700 file:text-xs">
+                        <p class="text-[10.5px] text-ink-muted mt-1" x-show="mode === 'edit'">Leave empty to keep the current image.</p>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1.5">Overlay Color</label>
                         <div class="grid grid-cols-3 gap-2">
                             <template x-for="(label, key) in themes" :key="key">
-                                <button type="button" @click="form.theme = key" class="h-9 rounded-lg bg-gradient-to-br transition-all duration-[160ms] ease-standard ring-2 ring-offset-1" :class="[key, form.theme === key ? 'ring-brand-400' : 'ring-transparent']" :title="label"></button>
+                                <button type="button" @click="form.theme = key" class="h-9 rounded-xl bg-gradient-to-br transition-all duration-[160ms] ease-standard ring-2 ring-offset-1" :class="[key, form.theme === key ? 'ring-brand-400' : 'ring-transparent']" :title="label"></button>
                             </template>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-start">Start Date</label>
-                            <input id="banner-start" type="date" x-model="form.start_date" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <input id="banner-start" type="date" x-model="form.start_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-end">End Date</label>
-                            <input id="banner-end" type="date" x-model="form.end_date" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <input id="banner-end" type="date" x-model="form.end_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-cta-label">Button Label</label>
-                            <input id="banner-cta-label" type="text" x-model="form.cta_label" placeholder="e.g. View Schedule" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <input id="banner-cta-label" type="text" x-model="form.cta_label" placeholder="e.g. View Schedule" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-cta-route">Links To</label>
-                            <select id="banner-cta-route" x-model="form.cta_route" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <select id="banner-cta-route" x-model="form.cta_route" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <template x-for="(label, key) in ctaRoutes" :key="key"><option :value="key" x-text="label"></option></template>
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100">
+                <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10">
                     <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="open = false">Cancel</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="save()" x-text="processing ? 'Saving…' : (mode === 'add' ? 'Create Banner' : 'Save Changes')"></x-ui.button>
                 </div>
@@ -809,42 +809,42 @@
                 <x-ui.stat-card label="Hidden / Taken Down" valueBind="posts.filter(p => p.hidden).length" icon="eye-off" color="purple" :delay="120" />
             </div>
 
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+            <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search author or post content" type="text" x-model="search" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input aria-label="Search author or post content" type="text" x-model="search" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                     </div>
-                    <select aria-label="Community scope" x-model="scope" class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Community scope" x-model="scope" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         <option value="All">All Barangays</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                         <template x-for="s in ['All', 'Pending Review', 'Released', 'Archived']" :key="s">
-                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'" x-text="s"></button>
+                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s"></button>
                         </template>
                     </div>
-                    <p class="text-[11px] text-slate-500 shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
+                    <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <template x-for="p in filtered" :key="p.id">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
+                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
                         <div class="flex items-center gap-2.5 p-3.5 pb-2.5">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-sm" x-text="initials(p.author)"></div>
+                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-sm" x-text="initials(p.author)"></div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="p.author"></p>
-                                <p class="text-[11px] text-slate-500" x-text="'Brgy. ' + p.barangay + ' · ' + (p.time ? new Date(p.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')"></p>
+                                <p class="text-sm font-semibold text-ink truncate" x-text="p.author"></p>
+                                <p class="text-[11px] text-ink-muted" x-text="'Brgy. ' + p.barangay + ' · ' + (p.time ? new Date(p.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')"></p>
                             </div>
                             <span class="shrink-0"><x-ui.badge statusBind="p.status" /></span>
                         </div>
                         <p class="px-3.5 pb-2.5 text-[13px] text-slate-700 leading-relaxed line-clamp-3" x-text="p.body"></p>
                         <div class="flex items-center justify-between px-3.5 py-2.5 border-t border-slate-50">
-                            <div class="flex items-center gap-3 text-xs text-slate-500">
-                                <span class="inline-flex items-center gap-1" x-show="p.hidden"><i data-lucide="eye-off" class="w-3.5 h-3.5 text-slate-500"></i>Hidden</span>
+                            <div class="flex items-center gap-3 text-xs text-ink-muted">
+                                <span class="inline-flex items-center gap-1" x-show="p.hidden"><i data-lucide="eye-off" class="w-3.5 h-3.5 text-ink-muted"></i>Hidden</span>
                                 <span class="inline-flex items-center gap-1 text-rose-600 font-medium" x-show="p.report_count > 0"><i data-lucide="flag" class="w-3.5 h-3.5"></i><span x-text="p.report_count + ' report' + (p.report_count > 1 ? 's' : '')"></span></span>
                             </div>
                             <button @click="selected = p; open = true; modReason = ''" class="text-xs font-semibold text-brand-600 hover:underline whitespace-nowrap shrink-0">Moderate</button>
@@ -852,7 +852,7 @@
                     </div>
                 </template>
                 <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filtered.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No community posts match these filters.</p>
                 </div>
             </div>
@@ -862,20 +862,20 @@
                 <template x-if="selected">
                     <div>
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0 text-sm" x-text="initials(selected.author)"></div>
+                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-sm" x-text="initials(selected.author)"></div>
                             <div>
-                                <p class="text-sm font-semibold text-navy-900" x-text="selected.author"></p>
-                                <p class="text-xs text-slate-500" x-text="'Brgy. ' + selected.barangay"></p>
+                                <p class="text-sm font-semibold text-ink" x-text="selected.author"></p>
+                                <p class="text-xs text-ink-muted" x-text="'Brgy. ' + selected.barangay"></p>
                             </div>
                         </div>
                         <p class="text-sm text-slate-700 leading-relaxed mb-3" x-text="selected.body"></p>
-                        <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 text-sm text-slate-600 space-y-1.5 mb-3">
-                            <p x-show="selected.report_count > 0"><span class="text-slate-500">Reports:</span> <span class="text-rose-600 font-medium" x-text="selected.report_count + ' citizen report(s) — review for possible spam or policy violation'"></span></p>
-                            <p x-show="selected.moderation_reason"><span class="text-slate-500">Last moderation note:</span> <span x-text="selected.moderation_reason"></span></p>
+                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-4 text-sm text-slate-600 space-y-1.5 mb-3">
+                            <p x-show="selected.report_count > 0"><span class="text-ink-muted">Reports:</span> <span class="text-rose-600 font-medium" x-text="selected.report_count + ' citizen report(s) — review for possible spam or policy violation'"></span></p>
+                            <p x-show="selected.moderation_reason"><span class="text-ink-muted">Last moderation note:</span> <span x-text="selected.moderation_reason"></span></p>
                         </div>
                         <div x-show="selected.status !== 'Pending Review' || selected.report_count > 0 || true">
-                            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Reason (required to hide or take down)</label>
-                            <textarea aria-label="Moderation reason" x-model="modReason" rows="2" placeholder="Why is this being hidden or taken down?" class="w-full text-xs rounded-lg border border-slate-200 px-2.5 py-2 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <label class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Reason (required to hide or take down)</label>
+                            <textarea aria-label="Moderation reason" x-model="modReason" rows="2" placeholder="Why is this being hidden or taken down?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                         </div>
                     </div>
                 </template>
@@ -941,22 +941,22 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="e in entries" :key="e.id">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
+                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
                         <div class="relative h-24 bg-gradient-to-br from-brand-600 to-navy-800 flex items-center justify-center">
                             <i data-lucide="building-2" class="w-9 h-9 text-white/90"></i>
                         </div>
                         <div class="p-3.5">
-                            <p class="text-sm font-semibold text-navy-900 leading-snug mb-2.5" x-text="e.office"></p>
+                            <p class="text-sm font-semibold text-ink leading-snug mb-2.5" x-text="e.office"></p>
                             <div class="flex items-center gap-2 mb-2" x-show="e.official_name">
-                                <div class="w-6 h-6 text-[9px] rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0" x-text="initials(e.official_name)"></div>
+                                <div class="w-6 h-6 text-[9px] rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="initials(e.official_name)"></div>
                                 <span class="text-xs text-slate-600 truncate" x-text="e.official_name + (e.position ? ' — ' + e.position : '')"></span>
                             </div>
-                            <p class="text-xs text-slate-500 flex items-center gap-1.5 mb-1" x-show="e.contact"><i data-lucide="phone" class="w-3 h-3 shrink-0"></i><span x-text="e.contact"></span></p>
-                            <p class="text-xs text-slate-500 flex items-center gap-1.5 truncate" x-show="e.email"><i data-lucide="mail" class="w-3 h-3 shrink-0"></i><span x-text="e.email"></span></p>
+                            <p class="text-xs text-ink-muted flex items-center gap-1.5 mb-1" x-show="e.contact"><i data-lucide="phone" class="w-3 h-3 shrink-0"></i><span x-text="e.contact"></span></p>
+                            <p class="text-xs text-ink-muted flex items-center gap-1.5 truncate" x-show="e.email"><i data-lucide="mail" class="w-3 h-3 shrink-0"></i><span x-text="e.email"></span></p>
                         </div>
-                        <div class="flex border-t border-slate-100">
+                        <div class="flex border-t border-brand-600/10">
                             <button @click="openEdit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
-                            <button @click="remove(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50/60 py-2.5 transition-colors border-l border-slate-100"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Remove</button>
+                            <button @click="remove(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50/60 py-2.5 transition-colors border-l border-brand-600/10"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Remove</button>
                         </div>
                     </div>
                 </template>
@@ -964,9 +964,9 @@
             </div>
 
             <x-ui.modal :bare="true" maxWidth="md">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h3 class="text-sm font-semibold text-navy-900" x-text="mode === 'add' ? 'Add Office' : 'Edit Office'"></h3>
-                    <button aria-label="Close" @click="open = false" class="text-slate-500 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
+                    <h3 class="text-sm font-semibold text-ink" x-text="mode === 'add' ? 'Add Office' : 'Edit Office'"></h3>
+                    <button aria-label="Close" @click="open = false" class="text-ink-muted hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
                 <div class="px-6 py-5 space-y-4">
                     <x-ui.input name="office_name" label="Office" x-model="form.office" />
@@ -975,7 +975,7 @@
                     <x-ui.input name="office_contact" label="Contact" x-model="form.contact" />
                     <x-ui.input name="office_email" type="email" label="Email" x-model="form.email" />
                 </div>
-                <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100">
+                <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10">
                     <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="save()">Save</x-ui.button>
                 </div>
@@ -1022,22 +1022,22 @@
 
             <div x-show="!loading && !failed" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="b in barangays" :key="b.name">
-                    <div x-show="$store.session.inScope(b.name)" x-cloak class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
+                    <div x-show="$store.session.inScope(b.name)" x-cloak class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
                         <div class="flex items-center gap-3 p-3.5 pb-3 bg-gradient-to-br from-brand-50/70 to-white">
                             <div class="relative w-12 h-12 shrink-0">
-                                <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-5 h-5"></i></div>
+                                <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-ink-faint"><i data-lucide="landmark" class="w-5 h-5"></i></div>
                                 <img :src="b.seal_path" x-show="b.seal_path" x-on:error="$el.style.display='none'" alt="" class="relative w-12 h-12 rounded-full object-cover border-2 border-gold-400">
                             </div>
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900 truncate"><span>Brgy.</span> <span x-text="b.name"></span></p>
-                                <p class="text-[11px] text-slate-500 truncate" x-text="b.punong_barangay || 'No punong barangay on file'"></p>
+                                <p class="text-sm font-semibold text-ink truncate"><span>Brgy.</span> <span x-text="b.name"></span></p>
+                                <p class="text-[11px] text-ink-muted truncate" x-text="b.punong_barangay || 'No punong barangay on file'"></p>
                             </div>
                         </div>
                         <div class="p-3.5 pt-2.5">
-                            <p class="text-xs text-slate-500 flex items-center gap-1.5 mb-1" x-show="b.contact"><i data-lucide="phone" class="w-3 h-3 shrink-0 text-slate-500"></i><span x-text="b.contact"></span></p>
-                            <p class="text-xs text-slate-500 flex items-center gap-1.5" x-show="b.barangay_secretary"><i data-lucide="user" class="w-3 h-3 shrink-0 text-slate-500"></i><span x-text="'Secretary: ' + b.barangay_secretary"></span></p>
+                            <p class="text-xs text-ink-muted flex items-center gap-1.5 mb-1" x-show="b.contact"><i data-lucide="phone" class="w-3 h-3 shrink-0 text-ink-muted"></i><span x-text="b.contact"></span></p>
+                            <p class="text-xs text-ink-muted flex items-center gap-1.5" x-show="b.barangay_secretary"><i data-lucide="user" class="w-3 h-3 shrink-0 text-ink-muted"></i><span x-text="'Secretary: ' + b.barangay_secretary"></span></p>
                         </div>
-                        <button @click="edit(b)" x-show="$store.session.canPerm('comm_barangay_directory', 'edit')" class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 border-t border-slate-100 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
+                        <button @click="edit(b)" x-show="$store.session.canPerm('comm_barangay_directory', 'edit')" class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 border-t border-brand-600/10 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                     </div>
                 </template>
             </div>
@@ -1045,21 +1045,21 @@
             <x-ui.modal title="Edit Barangay Directory Entry" maxWidth="md">
                 <template x-if="selected">
                     <div class="space-y-4">
-                        <div class="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5">
-                            <i data-lucide="map-pinned" class="w-4 h-4 text-slate-500 shrink-0"></i>
+                        <div class="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-brand-600/10 px-3.5 py-2.5">
+                            <i data-lucide="map-pinned" class="w-4 h-4 text-ink-muted shrink-0"></i>
                             <p class="text-sm font-medium text-slate-700" x-text="'Brgy. ' + selected.name"></p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5">Punong Barangay</label>
-                            <input aria-label="Punong Barangay" type="text" x-model="selected.punong_barangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <input aria-label="Punong Barangay" type="text" x-model="selected.punong_barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5">Barangay Secretary</label>
-                            <input aria-label="Barangay Secretary" type="text" x-model="selected.barangay_secretary" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <input aria-label="Barangay Secretary" type="text" x-model="selected.barangay_secretary" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5">Contact Number</label>
-                            <input aria-label="Contact Number" type="text" x-model="selected.contact" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 font-mono focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <input aria-label="Contact Number" type="text" x-model="selected.contact" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body font-mono focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                         </div>
                     </div>
                 </template>
@@ -1114,10 +1114,10 @@
             <div x-show="!loading && !failed">
             <div class="flex flex-wrap items-center gap-2 mb-3">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input aria-label="Search incident type or details" type="text" x-model="search" placeholder="Search incident type or details..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white border border-slate-200 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input aria-label="Search incident type or details" type="text" x-model="search" placeholder="Search incident type or details..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-white border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
-                <select aria-label="Blotter barangay filter" x-model="barangayFilter" class="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-brand-300 focus:outline-none transition-colors">
+                <select aria-label="Blotter barangay filter" x-model="barangayFilter" class="text-xs border border-slate-200 rounded-2xl px-3 py-2 bg-white focus:border-brand-300 focus:outline-none transition-colors">
                     <option value="All">All Barangays</option>
                     <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
                 </select>
@@ -1128,23 +1128,23 @@
 
             <div class="space-y-2.5">
                 <template x-for="b in filtered" :key="b.ref">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+                    <div class="surface-glass rounded-[26px] p-4">
                         <div class="flex items-start justify-between gap-3 mb-2">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <span class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i data-lucide="book-text" class="w-4 h-4"></i></span>
+                                <span class="w-9 h-9 rounded-xl bg-slate-100 text-ink-muted flex items-center justify-center shrink-0"><i data-lucide="book-text" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-navy-900 truncate" x-text="b.incident_type"></p>
-                                    <p class="text-xs text-slate-500" x-text="'Brgy. ' + b.barangay + ' — ' + b.incident_date + ' — ' + b.ref"></p>
+                                    <p class="text-sm font-semibold text-ink truncate" x-text="b.incident_type"></p>
+                                    <p class="text-xs text-ink-muted" x-text="'Brgy. ' + b.barangay + ' — ' + b.incident_date + ' — ' + b.ref"></p>
                                 </div>
                             </div>
                             <x-ui.badge statusBind="b.status" />
                         </div>
                         <p class="text-sm text-slate-600 leading-relaxed pl-[46px]" x-show="!b.restricted" x-text="b.narrative"></p>
-                        <p class="text-xs text-slate-500 italic pl-[46px] flex items-center gap-1.5" x-show="b.restricted"><i data-lucide="lock" class="w-3 h-3"></i>You don't have permission to view this incident's details.</p>
+                        <p class="text-xs text-ink-muted italic pl-[46px] flex items-center gap-1.5" x-show="b.restricted"><i data-lucide="lock" class="w-3 h-3"></i>You don't have permission to view this incident's details.</p>
                     </div>
                 </template>
-                <div class="flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filtered.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                <div class="flex flex-col items-center text-center py-12 bg-white border border-brand-600/10 rounded-2xl" x-show="filtered.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600">No blotter entries match your filters.</p>
                 </div>
             </div>
@@ -1155,33 +1155,33 @@
                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm" @click.self="showAdd = false"
                 role="dialog" aria-modal="true" @keydown.escape.window="showAdd = false">
                 <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-2xl shadow-float w-full max-w-lg">
-                    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                        <h3 class="text-sm font-semibold text-navy-900">Log Blotter Entry</h3>
-                        <button aria-label="Close" @click="showAdd = false" class="text-slate-500 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-brand-600/10">
+                        <h3 class="text-sm font-semibold text-ink">Log Blotter Entry</h3>
+                        <button aria-label="Close" @click="showAdd = false" class="text-ink-muted hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-barangay">Barangay</label>
-                            <select id="blotter-barangay" x-model="newEntry.barangay" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            <select id="blotter-barangay" x-model="newEntry.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-date">Date</label>
-                                <input id="blotter-date" type="date" x-model="newEntry.incident_date" :max="new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <input id="blotter-date" type="date" x-model="newEntry.incident_date" :max="new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-type">Incident Type</label>
-                                <input id="blotter-type" type="text" x-model="newEntry.incident_type" placeholder="e.g. Noise Complaint" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <input id="blotter-type" type="text" x-model="newEntry.incident_type" placeholder="e.g. Noise Complaint" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5" for="blotter-narrative">Details</label>
-                            <textarea id="blotter-narrative" rows="4" x-model="newEntry.narrative" placeholder="Describe the incident..." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                            <textarea id="blotter-narrative" rows="4" x-model="newEntry.narrative" placeholder="Describe the incident..." class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-100 bg-slate-50/60">
+                    <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-brand-600/10 bg-slate-50/60">
                         <x-ui.button variant="secondary" size="sm" @click="showAdd = false">Cancel</x-ui.button>
                         <x-ui.button size="sm" x-bind:disabled="processing" @click="addEntry()">Log Entry</x-ui.button>
                     </div>

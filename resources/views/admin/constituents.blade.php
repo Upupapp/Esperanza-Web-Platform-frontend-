@@ -548,11 +548,11 @@
         openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
         openDQIssue(issue)       { this.selectedDQIssue=issue; this.showDQDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
         verificationBadge(v) {
-            const m={'Verified':'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200','Partially Verified':'text-amber-700 bg-amber-50 ring-1 ring-amber-200','For Validation':'text-indigo-700 bg-indigo-50 ring-1 ring-indigo-200','Missing Documents':'text-orange-700 bg-orange-50 ring-1 ring-orange-200','Unverified':'text-slate-500 bg-slate-100 ring-1 ring-slate-200','Rejected':'text-rose-700 bg-rose-50 ring-1 ring-rose-200'};
+            const m={'Verified':'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200','Partially Verified':'text-amber-700 bg-amber-50 ring-1 ring-amber-200','For Validation':'text-indigo-700 bg-indigo-50 ring-1 ring-indigo-200','Missing Documents':'text-orange-700 bg-orange-50 ring-1 ring-orange-200','Unverified':'text-ink-muted bg-slate-100 ring-1 ring-slate-200','Rejected':'text-rose-700 bg-rose-50 ring-1 ring-rose-200'};
             return { class: m[v]||m['Unverified'], label: v || 'Unverified' };
         },
         statusBadge(s) {
-            const m={'Active':'text-emerald-700 bg-emerald-50','New Resident':'text-brand-700 bg-brand-50','Transferred':'text-indigo-700 bg-indigo-50','Temporarily Away':'text-amber-700 bg-amber-50','Overseas':'text-teal-700 bg-teal-50','Deceased':'text-slate-500 bg-slate-100','Archived':'text-slate-500 bg-slate-50','Under Review':'text-purple-700 bg-purple-50'};
+            const m={'Active':'text-emerald-700 bg-emerald-50','New Resident':'text-brand-700 bg-brand-50','Transferred':'text-indigo-700 bg-indigo-50','Temporarily Away':'text-amber-700 bg-amber-50','Overseas':'text-teal-700 bg-teal-50','Deceased':'text-ink-muted bg-slate-100','Archived':'text-ink-muted bg-slate-50','Under Review':'text-purple-700 bg-purple-50'};
             return m[s]||m['Active'];
         },
         severityBadge(s) {
@@ -589,27 +589,27 @@
         {{-- Page header --}}
         <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
             <div>
-                <h2 class="text-lg font-bold text-navy-900">Constituent Registry</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Municipality of Esperanza · 20 barangays · <span x-text="isMunicipalScope?'Municipality-wide view':'Brgy. '+$store.session.account?.scope+' view'"></span></p>
+                <h2 class="text-lg font-bold text-ink">Constituent Registry</h2>
+                <p class="text-xs text-ink-muted mt-0.5">Municipality of Esperanza · 20 barangays · <span x-text="isMunicipalScope?'Municipality-wide view':'Brgy. '+$store.session.account?.scope+' view'"></span></p>
             </div>
             <div class="flex items-center gap-2 relative" x-show="can('const_resident','create') || can('const_family','create') || can('const_household','create')">
                 <button @click="showAddMenu=!showAddMenu" @click.outside="showAddMenu=false"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-200 transition-all">
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold clay-blue hover:brightness-95 transition-all">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>Add Record
                     <i data-lucide="chevron-down" class="w-3 h-3 opacity-70 transition-transform" :class="showAddMenu&&'rotate-180'"></i>
                 </button>
                 <div x-show="showAddMenu" x-transition.origin.top.right x-cloak
                      class="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl border border-slate-200 shadow-lg z-30 overflow-hidden">
                     <button x-show="can('const_resident','create')" @click="addIndividualStep=1;showAddIndividual=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
-                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
                         <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New Resident
                     </button>
                     <button x-show="can('const_family','create')" @click="addFamilyStep=1;showAddFamily=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
-                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
                         <i data-lucide="users" class="w-3.5 h-3.5 text-purple-500"></i>New Family
                     </button>
                     <button x-show="can('const_household','create')" @click="addHouseholdStep=1;showAddHousehold=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
-                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">
+                            class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
                         <i data-lucide="house" class="w-3.5 h-3.5 text-emerald-500"></i>New Household
                     </button>
                 </div>
@@ -627,27 +627,27 @@
         </div>
 
         {{-- Primary tab bar --}}
-        <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-5">
+        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-5">
             <button @click="tab='registry';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                    :class="tab==='registry'     ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
+                    :class="tab==='registry'     ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="users" class="w-3.5 h-3.5"></i>Registry
             </button>
             <button @click="tab='profiling';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                    :class="tab==='profiling'    ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
+                    :class="tab==='profiling'    ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="user-round-search" class="w-3.5 h-3.5"></i>Profiling Coverage
             </button>
             <button @click="tab='data-quality';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 relative"
-                    :class="tab==='data-quality' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
+                    :class="tab==='data-quality' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>Data Quality
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                       :class="tab==='data-quality' ? 'bg-white/25 text-white' : 'bg-rose-100 text-rose-600'" x-text="qualityIssues.length"></span>
             </button>
             <button @click="tab='citizen-verification';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 relative"
-                    :class="tab==='citizen-verification' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'">
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
+                    :class="tab==='citizen-verification' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>To Verify
                 <span
                     :title="verificationQueueBreakdown"
@@ -677,37 +677,37 @@
         <div x-show="tab === 'registry'">
             {{-- Unified toolbar: view switcher on top, search/filters/actions below --}}
             <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
-                <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                     <button @click="view='individuals';clearFilters()"
-                            class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                            :class="view==='individuals' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                            class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                            :class="view==='individuals' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="user" class="w-3.5 h-3.5"></i>Individuals
                         <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredIndividuals.length"></span>
                     </button>
                     <button @click="view='families';clearFilters()"
-                            class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                            :class="view==='families'    ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                            class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                            :class="view==='families'    ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="users" class="w-3.5 h-3.5"></i>Families
                         <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredFamilies.length"></span>
                     </button>
                     <button @click="view='households';clearFilters()"
-                            class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                            :class="view==='households'  ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                            class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                            :class="view==='households'  ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="house" class="w-3.5 h-3.5"></i>Households
                         <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredHouseholds.length"></span>
                     </button>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-brand-600/10">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Search" x-model="search" type="text"
                                :placeholder="view==='individuals'?'Search residents...':view==='families'?'Search families...':'Search households...'"
-                               class="w-52 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                               class="w-52 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                     </div>
                     <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter"
-                            class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                         <option value="">All Barangays</option>
                         @foreach($barangayOptions as $b)
                             <option value="{{ $b }}">{{ $b }}</option>
@@ -719,7 +719,7 @@
                     </span>
                     <div x-show="view==='individuals'" class="flex items-center gap-2">
                         <select aria-label="Verification filter" x-model="verificationFilter"
-                                class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             <option value="">All Verification</option>
                             <option>Verified</option>
                             <option>Partially Verified</option>
@@ -727,7 +727,7 @@
                             <option>Unverified</option>
                         </select>
                         <select aria-label="Tag filter" x-model="tagFilter"
-                                class="text-xs rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
                             <option value="">All Tags</option>
                             <option value="senior">Senior Citizen</option>
                             <option value="osca">OSCA Member</option>
@@ -743,17 +743,17 @@
                         </select>
                     </div>
                     <button x-show="search||barangayFilter||verificationFilter||tagFilter" @click="clearFilters()"
-                            class="text-xs text-slate-500 hover:text-rose-600 flex items-center gap-1 transition-colors">
+                            class="text-xs text-ink-muted hover:text-rose-600 flex items-center gap-1 transition-colors">
                         <i data-lucide="circle-x" class="w-3.5 h-3.5"></i>Clear
                     </button>
                 </div>
                 <div class="flex items-center gap-2">
                     <button @click="exportCSV(view==='individuals'?filteredIndividuals:view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
+                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV
                     </button>
                     <button @click="window.print()"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
+                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="printer" class="w-3.5 h-3.5"></i>Print
                     </button>
                 </div>

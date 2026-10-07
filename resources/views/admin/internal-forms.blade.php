@@ -195,19 +195,19 @@
         </div>
 
         <!-- Office tabs + search -->
-        <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
-            <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
+        <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
+            <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                 <template x-for="(o, key) in offices" :key="key">
                     <button
                         type="button" @click="officeKey = key"
-                        class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                        :class="officeKey === key ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                        :class="officeKey === key ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                     ><i :data-lucide="o.icon" class="w-3.5 h-3.5"></i><span x-text="o.shortLabel"></span></button>
                 </template>
             </div>
             <div class="relative">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input aria-label="Search forms" type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input aria-label="Search forms" type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
             </div>
         </div>
 
@@ -216,47 +216,47 @@
             <template x-for="f in filteredForms" :key="f.key">
                 <button
                     type="button" @click="selectForm(f)"
-                    class="text-left bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard p-4"
+                    class="text-left surface-glass rounded-[26px] hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard p-4"
                 >
                     <div class="flex items-start justify-between mb-2.5">
                         <span class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></span>
                         <span x-show="f.sensitive" class="text-[10px] font-medium text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">Sensitive</span>
                     </div>
                     <p class="text-sm font-medium text-slate-700 leading-snug" x-text="f.form"></p>
-                    <p class="text-xs text-slate-500 mt-1 truncate" x-text="f.print_template || ''"></p>
+                    <p class="text-xs text-ink-muted mt-1 truncate" x-text="f.print_template || ''"></p>
                 </button>
             </template>
-            <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl" x-show="filteredForms.length === 0">
-                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+            <div class="sm:col-span-2 lg:col-span-3 flex flex-col items-center text-center py-10 bg-white border border-brand-600/10 rounded-2xl" x-show="filteredForms.length === 0">
+                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600">No forms match this search.</p>
             </div>
         </div>
 
         <!-- My Submitted Forms -->
         <div class="flex items-center gap-3 mb-3">
-            <h3 class="text-sm font-semibold text-navy-900" x-text="isAuthority ? 'Recent Submissions' : 'My Submissions'"></h3>
-            <span class="text-[11px] text-slate-500" x-text="filteredSubmitted.length + (isAuthority ? ' total' : ' submitted by you')"></span>
+            <h3 class="text-sm font-semibold text-ink" x-text="isAuthority ? 'Recent Submissions' : 'My Submissions'"></h3>
+            <span class="text-[11px] text-ink-muted" x-text="filteredSubmitted.length + (isAuthority ? ' total' : ' submitted by you')"></span>
         </div>
         <x-ui.table>
             <thead>
-                <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Reference</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Form</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Office</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell">Submitted By</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell">Date</th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
-                    <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500">Action</th>
+                <tr class="bg-well/70">
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Reference</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Form</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell">Office</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden lg:table-cell">Submitted By</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden sm:table-cell">Date</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Status</th>
+                    <th class="px-4 py-2.5 text-right text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Action</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-50">
+            <tbody class="divide-y divide-brand-600/[.08]">
                 <template x-for="s in filteredSubmitted" :key="s.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="s.ref"></td>
+                    <tr class="hover:bg-white/60 transition-colors">
+                        <td class="px-4 py-3 font-mono text-xs text-ink-muted" x-text="s.ref"></td>
                         <td class="px-4 py-3 text-slate-700 font-medium" x-text="s.form"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="s.office"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="s.submitted_by"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="s.submitted ? new Date(s.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-text="s.office"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden lg:table-cell" x-text="s.submitted_by"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden sm:table-cell" x-text="s.submitted ? new Date(s.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'"></td>
                         <td class="px-4 py-3">
                             <x-ui.badge statusBind="s.status" />
                         </td>
@@ -266,14 +266,14 @@
                                 <span class="text-slate-200" aria-hidden="true">·</span>
                                 <button type="button" @click="startDecision(s, 'reject')" class="text-xs font-semibold text-rose-600 hover:underline">Reject</button>
                             </div>
-                            <span x-show="!s.can_decide && s.step" class="text-[11px] text-slate-500" x-text="'Waiting on ' + (s.step?.office || s.step?.label || 'the next step')"></span>
+                            <span x-show="!s.can_decide && s.step" class="text-[11px] text-ink-muted" x-text="'Waiting on ' + (s.step?.office || s.step?.label || 'the next step')"></span>
                         </td>
                     </tr>
                 </template>
             </tbody>
         </x-ui.table>
-        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="filteredSubmitted.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-brand-600/10 rounded-2xl mt-3" x-show="filteredSubmitted.length === 0">
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600">No submissions in this view.</p>
         </div>
         </div>
@@ -284,19 +284,19 @@
              role="dialog" aria-modal="true" aria-labelledby="if-decide-title">
             <div class="bg-white rounded-2xl shadow-float w-full max-w-md p-6 space-y-4">
                 <div>
-                    <h3 id="if-decide-title" class="text-base font-semibold text-navy-900" x-text="(decision?.kind === 'approve' ? 'Approve ' : 'Reject ') + (decision?.s.ref || '')"></h3>
-                    <p class="text-xs text-slate-500 mt-1" x-text="(decision?.s.form || '') + (decision?.s.step ? ' · Step ' + decision.s.step.number + (decision.s.step.label ? ': ' + decision.s.step.label : '') : '')"></p>
+                    <h3 id="if-decide-title" class="text-base font-semibold text-ink" x-text="(decision?.kind === 'approve' ? 'Approve ' : 'Reject ') + (decision?.s.ref || '')"></h3>
+                    <p class="text-xs text-ink-muted mt-1" x-text="(decision?.s.form || '') + (decision?.s.step ? ' · Step ' + decision.s.step.number + (decision.s.step.label ? ': ' + decision.s.step.label : '') : '')"></p>
                 </div>
                 <label class="block">
                     <span class="text-xs font-medium text-slate-600" x-text="decision?.kind === 'reject' ? 'Reason (required)' : 'Remarks (optional)'"></span>
-                    <textarea x-model="decisionRemarks" rows="3" class="mt-1 w-full text-sm rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                    <textarea x-model="decisionRemarks" rows="3" class="mt-1 w-full text-sm rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
                 </label>
                 <div class="flex justify-end gap-2">
-                    <button type="button" @click="decision = null" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Cancel</button>
+                    <button type="button" @click="decision = null" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl">Cancel</button>
                     <button type="button" @click="confirmDecision()"
                         :disabled="deciding || (decision?.kind === 'reject' && !decisionRemarks.trim())"
                         :class="decision?.kind === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'"
-                        class="px-4 py-2 text-xs font-semibold text-white rounded-xl disabled:opacity-40"
+                        class="px-4 py-2 text-xs font-semibold text-white rounded-2xl disabled:opacity-40"
                         x-text="deciding ? 'Saving…' : (decision?.kind === 'approve' ? 'Confirm Approval' : 'Confirm Rejection')"></button>
                 </div>
             </div>
@@ -314,25 +314,25 @@
                                 <i data-lucide="check" class="w-7 h-7"></i>
                             </span>
                         </div>
-                        <p class="text-sm font-semibold text-navy-900">Form Submitted!</p>
-                        <p class="text-xs text-slate-500 mt-1 max-w-[240px]">Your submission has been logged and routed for processing.</p>
+                        <p class="text-sm font-semibold text-ink">Form Submitted!</p>
+                        <p class="text-xs text-ink-muted mt-1 max-w-[240px]">Your submission has been logged and routed for processing.</p>
                     </div>
 
                     <div x-show="!doneSubmit">
-                        <div class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100">
-                            <span class="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4.5 h-4.5"></i></span>
+                        <div class="flex items-center gap-3 mb-4 pb-4 border-b border-brand-600/10">
+                            <span class="w-10 h-10 rounded-lg clay-blue flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4.5 h-4.5"></i></span>
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-navy-900 truncate" x-text="selectedForm.form"></p>
-                                <p class="text-xs text-slate-500 truncate" x-text="selectedForm.print_template || ''"></p>
+                                <p class="text-sm font-semibold text-ink truncate" x-text="selectedForm.form"></p>
+                                <p class="text-xs text-ink-muted truncate" x-text="selectedForm.print_template || ''"></p>
                             </div>
                         </div>
 
                         {{-- Approval chain, from the form's own real definition --}}
-                        <div x-show="(selectedForm.approval_chain || []).length" x-cloak class="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] text-slate-500">
+                        <div x-show="(selectedForm.approval_chain || []).length" x-cloak class="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] text-ink-muted">
                             <span class="font-medium text-slate-600">Routes to:</span>
                             <template x-for="(step, idx) in (selectedForm.approval_chain || [])" :key="step.step">
                                 <span class="inline-flex items-center gap-1.5">
-                                    <span x-show="idx > 0" class="text-slate-300">→</span>
+                                    <span x-show="idx > 0" class="text-ink-faint">→</span>
                                     <span class="bg-slate-100 rounded-full px-2 py-0.5" x-text="step.label"></span>
                                 </span>
                             </template>
@@ -346,14 +346,14 @@
                                         <div class="flex-1 h-0.5" :class="formStep > idx + 1 ? 'bg-brand-500' : (idx === 0 ? 'bg-transparent' : 'bg-slate-200')"></div>
                                         <div
                                             class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all flex-shrink-0"
-                                            :class="formStep >= idx + 1 ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-500'"
+                                            :class="formStep >= idx + 1 ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-200 bg-white text-ink-muted'"
                                         >
                                             <template x-if="formStep > idx + 1"><i data-lucide="check" class="w-3.5 h-3.5"></i></template>
                                             <template x-if="formStep <= idx + 1"><span x-text="idx + 1"></span></template>
                                         </div>
                                         <div class="flex-1 h-0.5" :class="[formStep > idx + 1 ? 'bg-brand-500' : 'bg-slate-200', idx === totalFormSteps - 1 ? '!bg-transparent' : '']"></div>
                                     </div>
-                                    <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="formStep === idx + 1 ? 'text-brand-600' : formStep > idx + 1 ? 'text-brand-500' : 'text-slate-500'" x-text="step.label"></span>
+                                    <span class="text-[10px] mt-1.5 font-medium text-center px-1 leading-tight" :class="formStep === idx + 1 ? 'text-brand-600' : formStep > idx + 1 ? 'text-brand-500' : 'text-ink-muted'" x-text="step.label"></span>
                                 </div>
                             </template>
                         </nav>
@@ -369,14 +369,14 @@
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                 <input :aria-label="f.label"
                                                     :type="f.type" x-model="formData[f.key]"
-                                                    class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                                    class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                 >
                                             </div>
                                         </template>
                                         <template x-if="f.type === 'select'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                     <option value="">—</option>
                                                     <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                 </select>
@@ -405,7 +405,7 @@
                                     <div>
                                         <div class="flex items-center justify-between mb-2.5">
                                             <label class="block text-xs font-medium text-slate-700" x-text="currentFormStep.field.label"></label>
-                                            <span class="text-[11px] text-slate-500" x-text="(formData[currentFormStep.field.key] || []).length + ' added'"></span>
+                                            <span class="text-[11px] text-ink-muted" x-text="(formData[currentFormStep.field.key] || []).length + ' added'"></span>
                                         </div>
                                         <div class="space-y-2.5">
                                             <template x-for="(row, ri) in (formData[currentFormStep.field.key] || [])" :key="ri">
@@ -415,15 +415,15 @@
                                                             <i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-3 h-3"></i>
                                                             <span x-text="row[currentFormStep.field.columns[0].key] || ((currentFormStep.field.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
                                                         </span>
-                                                        <button aria-label="Remove" type="button" @click="formData[currentFormStep.field.key].splice(ri, 1)" class="text-slate-300 hover:text-rose-500 transition-colors">
+                                                        <button aria-label="Remove" type="button" @click="formData[currentFormStep.field.key].splice(ri, 1)" class="text-ink-faint hover:text-rose-500 transition-colors">
                                                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                                         </button>
                                                     </div>
                                                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                                                         <template x-for="col in currentFormStep.field.columns" :key="col.key">
                                                             <div>
-                                                                <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1" x-text="col.label"></label>
-                                                                <input :aria-label="col.label" type="text" x-model="row[col.key]" class="w-full rounded-lg border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-slate-800 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                                <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
+                                                                <input :aria-label="col.label" type="text" x-model="row[col.key]" class="w-full rounded-xl border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                             </div>
                                                         </template>
                                                     </div>
@@ -431,13 +431,13 @@
                                             </template>
 
                                             <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[currentFormStep.field.key] || []).length === 0">
-                                                <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-4 h-4"></i></span>
-                                                <p class="text-xs text-slate-500">No entries yet.</p>
+                                                <span class="w-9 h-9 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i :data-lucide="currentFormStep.field.rowIcon || 'list'" class="w-4 h-4"></i></span>
+                                                <p class="text-xs text-ink-muted">No entries yet.</p>
                                             </div>
 
                                             <button
                                                 type="button" @click="addTableRow(currentFormStep.field)"
-                                                class="w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-slate-500 hover:text-brand-600 py-2.5 transition-all duration-[160ms] ease-standard"
+                                                class="w-full flex items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-ink-muted hover:text-brand-600 py-2.5 transition-all duration-[160ms] ease-standard"
                                             >
                                                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                                 <span x-text="'Add ' + (currentFormStep.field.rowLabel || 'Entry')"></span>
@@ -456,7 +456,7 @@
                 <x-ui.button variant="secondary" size="sm" x-show="!doneSubmit && formStep > 1" @click="formStep--">
                     <span class="inline-flex items-center gap-1.5"><i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>Back</span>
                 </x-ui.button>
-                <span class="text-xs text-slate-500 mr-auto ml-3" x-show="!doneSubmit && totalFormSteps > 1" x-text="'Step ' + formStep + ' of ' + totalFormSteps"></span>
+                <span class="text-xs text-ink-muted mr-auto ml-3" x-show="!doneSubmit && totalFormSteps > 1" x-text="'Step ' + formStep + ' of ' + totalFormSteps"></span>
                 <x-ui.button size="sm" x-show="!doneSubmit && formStep < totalFormSteps" @click="formStep++; $nextTick(() => window.renderIcons?.())">
                     <span class="inline-flex items-center gap-1.5">Next<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></span>
                 </x-ui.button>
