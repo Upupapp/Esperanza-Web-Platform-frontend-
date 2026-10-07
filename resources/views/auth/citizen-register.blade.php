@@ -86,13 +86,13 @@
             },
         }"
     >
-        <a href="{{ route('citizen.login') }}" x-show="!accountNo" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-600 mb-6 transition-colors">
+        <a href="{{ route('citizen.login') }}" x-show="!accountNo" class="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-slate-600 mb-6 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik sa login" en="Back to login" />
         </a>
 
         <div x-show="!accountNo">
-            <h1 class="text-2xl font-semibold text-navy-900"><x-ui.t fil="Gumawa ng Account ng Mamamayan" en="Create your Citizen Account" /></h1>
-            <p class="text-slate-500 text-sm mt-1.5"><x-ui.t fil="Magrehistro para humiling ng dokumento at ma-access ang mga serbisyo ng munisipyo online." en="Register to request documents and access municipal services online." /></p>
+            <h1 class="text-2xl font-semibold text-ink"><x-ui.t fil="Gumawa ng Account ng Mamamayan" en="Create your Citizen Account" /></h1>
+            <p class="text-ink-muted text-sm mt-1.5"><x-ui.t fil="Magrehistro para humiling ng dokumento at ma-access ang mga serbisyo ng munisipyo online." en="Register to request documents and access municipal services online." /></p>
 
             <!-- Step indicator -->
             <div class="flex items-center mt-6 mb-1">
@@ -101,12 +101,12 @@
                         <div class="flex flex-col items-center gap-1.5 text-center">
                             <span
                                 class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-[300ms] ease-standard"
-                                :class="step > i + 1 ? 'bg-emerald-500 text-white' : (step === i + 1 ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500')"
+                                :class="step > i + 1 ? 'bg-emerald-500 text-white' : (step === i + 1 ? 'clay-blue' : 'bg-slate-100 text-ink-muted')"
                             >
                                 <i data-lucide="check" class="w-3 h-3" x-show="step > i + 1" x-cloak></i>
                                 <span x-show="step <= i + 1" x-text="i + 1"></span>
                             </span>
-                            <span class="text-[10px] max-w-[90px] leading-tight" :class="step === i + 1 ? 'text-navy-900 font-medium' : 'text-slate-500'" x-text="label"></span>
+                            <span class="text-[10px] max-w-[90px] leading-tight" :class="step === i + 1 ? 'text-ink font-medium' : 'text-ink-muted'" x-text="label"></span>
                         </div>
                         <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < 2"></div>
                     </div>
@@ -126,7 +126,7 @@
                         <x-ui.input name="birthdate" type="date" label="Date of Birth" label-fil="Petsa ng Kapanganakan" x-model="form.birthdate" required />
                         <div>
                             <label for="sex" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Kasarian" en="Sex" /></label>
-                            <select id="sex" name="sex" x-model="form.sex" required class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
+                            <select id="sex" name="sex" x-model="form.sex" required class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
                                 <option value="" x-text="$store.lang.current === 'en' ? 'Select' : 'Pumili'">Select</option>
                                 <option value="Female" x-text="$store.lang.current === 'en' ? 'Female' : 'Babae'">Female</option>
                                 <option value="Male" x-text="$store.lang.current === 'en' ? 'Male' : 'Lalaki'">Male</option>
@@ -136,7 +136,7 @@
 
                     <div>
                         <label for="civil_status" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Katayuang Sibil" en="Civil Status" /></label>
-                        <select id="civil_status" name="civil_status" x-model="form.civil_status" required class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
+                        <select id="civil_status" name="civil_status" x-model="form.civil_status" required class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
                             <option value="" x-text="$store.lang.current === 'en' ? 'Select your civil status' : 'Piliin ang katayuang sibil'">Select your civil status</option>
                             <option>Single</option>
                             <option>Married</option>
@@ -157,14 +157,14 @@
                     <div>
                         <label for="barangay" class="block text-sm font-medium text-slate-700 mb-1.5">Barangay</label>
                         <div class="relative">
-                            <i data-lucide="map-pin" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500 pointer-events-none"></i>
-                            <select id="barangay" name="barangay" x-model="form.barangay" required class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
+                            <i data-lucide="map-pin" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-ink-muted pointer-events-none"></i>
+                            <select id="barangay" name="barangay" x-model="form.barangay" required class="w-full rounded-2xl border-0 surface-pressed py-2.5 pl-10 pr-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard appearance-none">
                                 <option value="" x-text="$store.lang.current === 'en' ? 'Select your barangay' : 'Piliin ang iyong barangay'">Select your barangay</option>
                                 <template x-for="b in barangays" :key="b">
                                     <option :value="b" x-text="b"></option>
                                 </template>
                             </select>
-                            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
                         </div>
                     </div>
 
@@ -187,7 +187,7 @@
                     <x-ui.input name="mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" label-fil="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="form.mobile" @input="form.mobile = window.phMobile.bind($event.target)" />
                     <x-ui.input name="password" type="password" label="Password" label-fil="Password" icon="lock" x-bind:placeholder="$store.lang.current === 'en' ? 'Create a password' : 'Gumawa ng password'" x-model="form.password" required />
 
-                    <label class="flex items-start gap-2.5 text-xs text-slate-500 pt-1">
+                    <label class="flex items-start gap-2.5 text-xs text-ink-muted pt-1">
                         <input type="checkbox" required class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
                         <span x-show="$store.lang.current === 'en'">
                             I agree to the <a href="{{ route('citizen.terms') }}" target="_blank" class="text-brand-600 hover:underline font-medium">Terms of Service</a> and <a href="{{ route('citizen.privacy-policy') }}" target="_blank" class="text-brand-600 hover:underline font-medium">Data Privacy policy</a> of the Municipality of Esperanza.
@@ -223,8 +223,8 @@
             <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
                 <i data-lucide="mail-check" class="w-6 h-6"></i>
             </div>
-            <h1 class="text-xl font-semibold text-navy-900"><x-ui.t fil="Kumpirmahin ang Account" en="Confirm your account" /></h1>
-            <p class="text-slate-500 text-sm mt-1.5" x-text="($store.lang.current === 'en' ? 'Enter the 6-digit code sent to ' : 'Ilagay ang 6-digit code na ipinadala sa ') + otpDestination"></p>
+            <h1 class="text-xl font-semibold text-ink"><x-ui.t fil="Kumpirmahin ang Account" en="Confirm your account" /></h1>
+            <p class="text-ink-muted text-sm mt-1.5" x-text="($store.lang.current === 'en' ? 'Enter the 6-digit code sent to ' : 'Ilagay ang 6-digit code na ipinadala sa ') + otpDestination"></p>
 
             <form class="mt-6 space-y-4" @submit.prevent="verify">
                 <x-ui.input name="code" type="text" label="6-digit code" label-fil="6-digit na code" icon="shield-check" class="font-mono text-center tracking-[0.4em]" x-model="otpCode" maxlength="6" required />

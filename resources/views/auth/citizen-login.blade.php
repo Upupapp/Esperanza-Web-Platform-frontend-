@@ -20,7 +20,7 @@
             },
         }"
     >
-        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-600 mb-6 transition-colors">
+        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-slate-600 mb-6 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik" en="Back" />
         </a>
 
@@ -33,8 +33,8 @@
             </span>
         </div>
 
-        <h1 class="text-2xl font-semibold text-navy-900 mt-3 animate-fade-up" style="animation-delay: 40ms"><x-ui.t fil="Maligayang Pagbabalik" en="Welcome back" /></h1>
-        <p class="text-slate-500 text-sm mt-1.5 animate-fade-up" style="animation-delay: 60ms"><x-ui.t fil="Mag-sign in gamit ang iyong resident ID, email, o numero ng mobile." en="Sign in with your resident ID, email, or mobile number." /></p>
+        <h1 class="text-2xl font-semibold text-ink mt-3 animate-fade-up" style="animation-delay: 40ms"><x-ui.t fil="Maligayang Pagbabalik" en="Welcome back" /></h1>
+        <p class="text-ink-muted text-sm mt-1.5 animate-fade-up" style="animation-delay: 60ms"><x-ui.t fil="Mag-sign in gamit ang iyong resident ID, email, o numero ng mobile." en="Sign in with your resident ID, email, or mobile number." /></p>
 
         <form class="mt-6 space-y-4" @submit.prevent="submit">
             <div class="animate-fade-up" style="animation-delay: 90ms">
@@ -44,20 +44,20 @@
             <div class="animate-fade-up" style="animation-delay: 120ms" x-data="passwordField">
                 <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Password" en="Password" /></label>
                 <div class="relative">
-                    <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500 pointer-events-none"></i>
+                    <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-ink-muted pointer-events-none"></i>
                     <input
                         :type="visible ? 'text' : 'password'"
                         name="password" id="password" placeholder="••••••••" required
                         x-model="password"
-                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                        class="w-full rounded-2xl border-0 surface-pressed py-2.5 pl-10 pr-11 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                     >
-                    <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 transition-colors">
+                    <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-slate-600 transition-colors">
                         <i data-lucide="eye" class="w-[18px] h-[18px]" x-show="!visible"></i>
                         <i data-lucide="eye-off" class="w-[18px] h-[18px]" x-show="visible" x-cloak></i>
                     </button>
                 </div>
                 <div class="flex items-center justify-between mt-2">
-                    <label class="flex items-center gap-2 text-sm text-slate-500">
+                    <label class="flex items-center gap-2 text-sm text-ink-muted">
                         <input type="checkbox" class="rounded border-slate-300 text-brand-600 focus:ring-brand-200">
                         <x-ui.t fil="Tandaan ako" en="Remember me" />
                     </label>
@@ -85,7 +85,7 @@
             </x-ui.button>
         </form>
 
-        <p class="text-center text-sm text-slate-500 mt-4">
+        <p class="text-center text-sm text-ink-muted mt-4">
             <x-ui.t fil="Wala ka pang account?" en="Don't have an account?" /> <a href="{{ route('citizen.register') }}" class="text-brand-600 font-medium hover:underline"><x-ui.t fil="Magrehistro rito" en="Register here" /></a>
         </p>
     </div>

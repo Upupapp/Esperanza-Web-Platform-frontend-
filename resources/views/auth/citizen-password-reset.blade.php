@@ -41,13 +41,13 @@
             },
         }"
     >
-        <a href="{{ route('citizen.login') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-600 mb-6 transition-colors">
+        <a href="{{ route('citizen.login') }}" class="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-slate-600 mb-6 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> <x-ui.t fil="Bumalik sa login" en="Back to login" />
         </a>
 
-        <h1 class="text-2xl font-semibold text-navy-900"><x-ui.t fil="I-reset ang Password" en="Reset your password" /></h1>
-        <p class="text-slate-500 text-sm mt-1.5" x-show="step === 'request'"><x-ui.t fil="Ilagay ang iyong resident ID, email, o mobile. Magpapadala kami ng code kung verified ang account." en="Enter your resident ID, email, or mobile. We'll send a code if the account is verified." /></p>
-        <p class="text-slate-500 text-sm mt-1.5" x-show="step === 'reset'"><x-ui.t fil="Ilagay ang code at ang iyong bagong password." en="Enter the code and your new password." /></p>
+        <h1 class="text-2xl font-semibold text-ink"><x-ui.t fil="I-reset ang Password" en="Reset your password" /></h1>
+        <p class="text-ink-muted text-sm mt-1.5" x-show="step === 'request'"><x-ui.t fil="Ilagay ang iyong resident ID, email, o mobile. Magpapadala kami ng code kung verified ang account." en="Enter your resident ID, email, or mobile. We'll send a code if the account is verified." /></p>
+        <p class="text-ink-muted text-sm mt-1.5" x-show="step === 'reset'"><x-ui.t fil="Ilagay ang code at ang iyong bagong password." en="Enter the code and your new password." /></p>
 
         <form x-show="step === 'request'" class="mt-6 space-y-4" @submit.prevent="requestCode">
             <x-ui.input name="identifier" type="text" label="Resident ID, Email, or Mobile" label-fil="Resident ID, Email, o Mobile" icon="user" x-model="identifier" required />
@@ -81,8 +81,8 @@
             <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
                 <i data-lucide="check" class="w-6 h-6"></i>
             </div>
-            <p class="text-sm font-medium text-navy-900 mb-1"><x-ui.t fil="Na-reset na ang password" en="Password reset" /></p>
-            <p class="text-xs text-slate-500 mb-4"><x-ui.t fil="Puwede ka nang mag-sign in gamit ang bagong password." en="You can now sign in with your new password." /></p>
+            <p class="text-sm font-medium text-ink mb-1"><x-ui.t fil="Na-reset na ang password" en="Password reset" /></p>
+            <p class="text-xs text-ink-muted mb-4"><x-ui.t fil="Puwede ka nang mag-sign in gamit ang bagong password." en="You can now sign in with your new password." /></p>
             <a href="{{ route('citizen.login') }}" class="text-sm font-medium text-brand-600 hover:underline"><x-ui.t fil="Bumalik sa Sign In" en="Back to Sign In" /></a>
         </div>
     </div>

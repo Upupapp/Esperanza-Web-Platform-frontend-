@@ -95,7 +95,7 @@
             },
         }"
     >
-        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-600 mb-4 transition-colors">
+        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-slate-600 mb-4 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
         </a>
 
@@ -108,38 +108,38 @@
             </span>
         </div>
 
-        <h1 class="text-xl font-semibold text-navy-900 mt-3 animate-fade-up" style="animation-delay: 40ms">LGU Personnel Login</h1>
-        <p class="text-slate-500 text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="step === 'scope' ? 'First, select your assigned access scope.' : (step === 'mfa' ? 'Enter the 6-digit code sent to confirm it is you.' : 'Signing in to ' + (scope === 'Municipal' ? 'Municipal-wide access.' : 'Brgy. ' + scope + '.'))"></p>
+        <h1 class="text-xl font-semibold text-ink mt-3 animate-fade-up" style="animation-delay: 40ms">LGU Personnel Login</h1>
+        <p class="text-ink-muted text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="step === 'scope' ? 'First, select your assigned access scope.' : (step === 'mfa' ? 'Enter the 6-digit code sent to confirm it is you.' : 'Signing in to ' + (scope === 'Municipal' ? 'Municipal-wide access.' : 'Brgy. ' + scope + '.'))"></p>
 
         <!-- Step 1: choose access scope (informational only — the server returns the account's real scope) -->
         <div x-show="step === 'scope'" x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
             <button
                 type="button" @click="chooseScope('Municipal')"
-                class="w-full flex items-center gap-2.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3.5 py-3 text-sm shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard mb-2.5"
+                class="w-full flex items-center gap-2.5 text-left rounded-2xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3.5 py-3 text-sm shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard mb-2.5"
             >
                 <span class="w-8 h-8 rounded-lg bg-navy-50 text-navy-700 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                 <span>
-                    <span class="block text-xs font-semibold text-navy-900">Municipal-wide</span>
-                    <span class="block text-[10.5px] text-slate-500">Municipal Hall departments &amp; offices</span>
+                    <span class="block text-xs font-semibold text-ink">Municipal-wide</span>
+                    <span class="block text-[10.5px] text-ink-muted">Municipal Hall departments &amp; offices</span>
                 </span>
             </button>
 
             <div class="relative mb-2.5">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input aria-label="Search your barangay" type="text" x-model="scopeSearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-navy-300 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input aria-label="Search your barangay" type="text" x-model="scopeSearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-navy-300 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard">
             </div>
             <div class="grid grid-cols-2 gap-1.5 max-h-56 overflow-y-auto scrollbar-thin pr-0.5">
                 <template x-for="b in filteredScopes" :key="b">
                     <button
                         type="button" @click="chooseScope(b)"
-                        class="flex items-center gap-1.5 text-left rounded-xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-navy-800 shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard"
+                        class="flex items-center gap-1.5 text-left rounded-2xl border border-slate-200 bg-white hover:border-navy-300 hover:bg-navy-50/40 hover:-translate-y-0.5 px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-navy-800 shadow-sm hover:shadow-card transition-all duration-[220ms] ease-standard"
                     >
-                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i><span class="truncate" x-text="b"></span>
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-muted shrink-0"></i><span class="truncate" x-text="b"></span>
                     </button>
                 </template>
                 <div class="col-span-2 flex flex-col items-center text-center py-6" x-show="filteredScopes.length === 0">
-                    <span class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4 h-4"></i></span>
-                    <p class="text-[11px] text-slate-500">No barangay matches "<span x-text="scopeSearch"></span>".</p>
+                    <span class="w-9 h-9 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4 h-4"></i></span>
+                    <p class="text-[11px] text-ink-muted">No barangay matches "<span x-text="scopeSearch"></span>".</p>
                 </div>
             </div>
         </div>
@@ -148,7 +148,7 @@
         <div x-show="step === 'credentials'" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="mt-5">
             <button
                 type="button" x-show="scope" x-cloak @click="step = 'scope'; scope = ''; scopeSearch = ''"
-                class="w-full flex items-center justify-between gap-2 rounded-xl border border-navy-200 bg-navy-50/60 px-3.5 py-2.5 text-left hover:bg-navy-50 transition-colors mb-3.5 animate-fade-up"
+                class="w-full flex items-center justify-between gap-2 rounded-2xl border border-navy-200 bg-navy-50/60 px-3.5 py-2.5 text-left hover:bg-navy-50 transition-colors mb-3.5 animate-fade-up"
             >
                 <span class="flex items-center gap-2 text-sm font-medium text-navy-800 min-w-0">
                     <i :data-lucide="scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-4 h-4 shrink-0"></i>
@@ -165,14 +165,14 @@
                 <div class="animate-fade-up" style="animation-delay: 80ms" x-data="passwordField">
                     <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
                     <div class="relative">
-                        <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500 pointer-events-none"></i>
+                        <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-ink-muted pointer-events-none"></i>
                         <input
                             :type="visible ? 'text' : 'password'"
                             name="password" id="password" placeholder="••••••••" required
                             x-model="password"
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 pl-10 pr-11 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-navy-400 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard"
+                            class="w-full rounded-2xl border-0 surface-pressed py-2.5 pl-10 pr-11 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white focus:border-navy-400 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
-                        <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600 transition-colors">
+                        <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-slate-600 transition-colors">
                             <i data-lucide="eye" class="w-[18px] h-[18px]" x-show="!visible"></i>
                             <i data-lucide="eye-off" class="w-[18px] h-[18px]" x-show="visible" x-cloak></i>
                         </button>
@@ -186,7 +186,7 @@
 
                 <button
                     type="submit"
-                    class="btn-shine w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3.5 text-sm font-medium select-none shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-300 active:duration-[80ms] active:scale-[0.985] disabled:opacity-50 disabled:pointer-events-none animate-fade-up"
+                    class="btn-shine w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-2xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3.5 text-sm font-medium select-none shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-300 active:duration-[80ms] active:scale-[0.985] disabled:opacity-50 disabled:pointer-events-none animate-fade-up"
                     style="animation-delay: 120ms"
                     :disabled="loading"
                 >
@@ -216,7 +216,7 @@
 
                 <button
                     type="submit"
-                    class="btn-shine w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3.5 text-sm font-medium select-none shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard disabled:opacity-50 disabled:pointer-events-none"
+                    class="btn-shine w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-2xl bg-gradient-to-b from-navy-800 to-navy-900 text-white py-3.5 text-sm font-medium select-none shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard disabled:opacity-50 disabled:pointer-events-none"
                     :disabled="loading"
                 >
                     <svg x-show="loading" x-cloak class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -225,14 +225,14 @@
                     </svg>
                     <span x-text="loading ? 'Verifying…' : 'Verify and Sign In'"></span>
                 </button>
-                <p class="text-center text-xs text-slate-500">
+                <p class="text-center text-xs text-ink-muted">
                     Didn't get it, or it expired?
                     <button type="button" @click="resendCode()" :disabled="loading" class="font-medium text-navy-700 hover:underline disabled:opacity-50">Send a new code</button>
                 </p>
             </form>
         </div>
 
-        <p class="text-center text-xs text-slate-500 mt-4">
+        <p class="text-center text-xs text-ink-muted mt-4">
             Personnel accounts cannot self-register — contact the ICT Office for access.
         </p>
     </div>
