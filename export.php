@@ -158,11 +158,19 @@ $apiOrigin = preg_replace('#^(https?://[^/]+).*$#', '$1', (string) $apiBase);
 file_put_contents($distDir.'/_headers', esperanza_response_headers($apiOrigin));
 
 // Netlify serves /404.html at the publish root for any address that is not a
-// file (PR-3). The /404/ route renders it; the rule in netlify.toml pointing
-// at /404/index.html was not honoured live and answered with the welcome page.
+// file (PR-3). The /404/ route renders it. The catch-all rule in netlify.toml
+// was not honoured live (the welcome page still answered, retest 2026-10-07),
+// so the rules also go in dist/_redirects, which Netlify reads first, beside
+// the _headers file that does take effect.
 if (is_file($distDir.'/404/index.html')) {
     copy($distDir.'/404/index.html', $distDir.'/404.html');
-    echo "  ✓  404.html (page not found)\n";
+    file_put_contents($distDir.'/_redirects', implode("\n", [
+        '# Written by export.php (see netlify.toml): a wrong address gets the page-not-found page.',
+        '/logout  /  302',
+        '/*  /404.html  404',
+        '',
+    ]));
+    echo "  ✓  404.html and _redirects (page not found)\n";
 }
 echo "  ✓  _headers (API origin {$apiOrigin})\n";
 

@@ -49,6 +49,7 @@ class LiveTestFixesTest extends TestCase
         $this->get('/404')->assertOk()->assertSee('Hindi nahanap ang pahinang ito', false)->assertSee('This page was not found', false);
         $this->assertStringContainsString('to     = "/404.html"', $this->source('netlify.toml'));
         $this->assertStringContainsString("copy(\$distDir.'/404/index.html', \$distDir.'/404.html');", $this->source('export.php'));
+        $this->assertStringContainsString("'/*  /404.html  404',", $this->source('export.php'), 'dist/_redirects, which Netlify reads first');
     }
 
     /** PR-8: staff choose their own password; My Profile is real. */
