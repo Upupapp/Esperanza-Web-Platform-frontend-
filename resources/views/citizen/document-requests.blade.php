@@ -453,7 +453,7 @@
             <x-ui.stat-card class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
             <x-ui.stat-card label="Isinasagawa" labelEn="In Progress" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="orange" :delay="40" />
             <x-ui.stat-card label="Handa nang Kunin" labelEn="Mark to Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed', 'Archived'].includes(r.status)).length" icon="circle-check" color="purple" :delay="120" />
+            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed', 'Archived'].includes(r.status)).length" icon="circle-check" color="deep" :delay="120" />
             <x-ui.stat-card label="Hindi Natuloy" labelEn="Not Completed" value="0" valueBind="requests.filter(r => stoppedStatuses.includes(r.status)).length" icon="circle-x" color="red" :delay="160" sublabel="Tinanggihan o kinansela" sublabelEn="Rejected or cancelled" />
         </div>
 
@@ -952,94 +952,89 @@
                         <div class="grid grid-cols-4 mb-8">
                             <template x-for="(label, i) in ($store.lang.current === 'en' ? stepLabels.en : stepLabels.fil)" :key="i">
                                 <div class="relative flex flex-col items-center text-center px-1">
-                                    <div x-show="i < 3" class="absolute top-4 left-[calc(50%_+_26px)] right-[calc(-50%_+_26px)] h-1 rounded-full transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'"></div>
+                                    <div x-show="i < 3" class="absolute top-4 left-[calc(50%_+_26px)] right-[calc(-50%_+_26px)] h-1 rounded-full transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-brand-600/10'"></div>
                                     <span
                                         class="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
-                                        :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'clay-blue shadow-card ring-4 ring-brand-100' : 'bg-slate-100 text-ink-muted')"
+                                        :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'clay-blue ring-4 ring-brand-100' : 'bg-white text-ink-faint ring-1 ring-brand-600/15')"
                                     >
                                         <i data-lucide="check" class="w-4 h-4" x-show="step > i + 1" x-cloak></i>
                                         <i :data-lucide="stepIcons[i]" class="w-4 h-4" x-show="step <= i + 1"></i>
                                     </span>
-                                    <span class="mt-2 text-[11px] max-w-[110px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-ink font-semibold' : 'text-ink-muted'" x-text="label"></span>
+                                    <span class="mt-2 text-[11px] max-w-[110px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-ink font-bold' : 'text-ink-muted'" x-text="label"></span>
                                 </div>
                             </template>
                         </div>
 
                         <!-- Step 1: choose document -->
-                        <div x-show="step === 1">
-                            <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 mb-4">
-                                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit shrink-0">
-                                    <button type="button" @click="catalogTab = 'barangay'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="catalogTab === 'barangay' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
-                                        <i data-lucide="map-pinned" class="w-3.5 h-3.5"></i><x-ui.t fil="Aking Barangay" en="My Barangay" />
+                        <div x-show="step === 1" class="space-y-4">
+                            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                                <div class="flex items-center gap-1 surface-pressed rounded-2xl p-1 w-fit shrink-0" role="tablist">
+                                    <button type="button" role="tab" :aria-selected="catalogTab === 'barangay'" @click="catalogTab = 'barangay'" class="px-4 py-2 text-[13px] rounded-xl transition-all duration-200 flex items-center gap-1.5" :class="catalogTab === 'barangay' ? 'bg-white/90 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">
+                                        <i data-lucide="map-pinned" class="w-4 h-4"></i><x-ui.t fil="Aking Barangay" en="My Barangay" />
                                     </button>
-                                    <button type="button" @click="catalogTab = 'municipal'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="catalogTab === 'municipal' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
-                                        <i data-lucide="landmark" class="w-3.5 h-3.5"></i><x-ui.t fil="Munisipyo" en="Municipal" />
+                                    <button type="button" role="tab" :aria-selected="catalogTab === 'municipal'" @click="catalogTab = 'municipal'" class="px-4 py-2 text-[13px] rounded-xl transition-all duration-200 flex items-center gap-1.5" :class="catalogTab === 'municipal' ? 'bg-white/90 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">
+                                        <i data-lucide="landmark" class="w-4 h-4"></i><x-ui.t fil="Munisipyo" en="Municipal" />
                                     </button>
                                 </div>
-                                <div class="relative flex-1">
-                                    <i data-lucide="search" class="w-3.5 h-3.5 text-ink-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                <div class="flex-1">
+                                <div class="relative">
+                                    <i data-lucide="search" class="w-4 h-4 text-ink-faint absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                                     <input aria-label="Search"
                                         type="text" x-model="search"
                                         x-bind:placeholder="$store.lang.current === 'en' ? 'Search documents...' : 'Maghanap ng dokumento...'"
-                                        class="w-full rounded-2xl border-0 surface-pressed py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                        class="w-full min-h-[44px] rounded-2xl border-0 surface-pressed py-2.5 pl-11 pr-4 text-sm text-ink placeholder:text-ink-faint focus:bg-white focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                     >
+                                </div>
                                 </div>
                             </div>
 
                             <!-- My Barangay -->
                             <div x-show="catalogTab === 'barangay'">
                                 <template x-if="myBarangayInfo">
-                                    <div>
-                                        <div class="flex items-center gap-3 rounded-xl bg-gradient-to-br from-brand-50 to-white border border-brand-100 px-4 py-3 mb-4">
-                                            <div class="relative w-11 h-11 shrink-0">
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-3.5 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] px-4 py-3.5">
+                                            <div class="relative w-12 h-12 shrink-0">
                                                 <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-ink-faint"><i data-lucide="landmark" class="w-5 h-5"></i></div>
                                                 <img
                                                     :src="myBarangayInfo.seal ? '{{ rtrim(asset(''), '/') }}/' + myBarangayInfo.seal : null"
                                                     x-show="myBarangayInfo.seal" x-on:error="$el.style.display='none'"
                                                     :alt="myBarangayInfo.name ? 'Seal of Barangay ' + myBarangayInfo.name : 'Barangay seal'"
-                                                    class="relative w-11 h-11 rounded-full object-cover border-2 border-gold-400"
+                                                    class="relative w-12 h-12 rounded-full object-cover border-2 border-gold-400"
                                                 >
                                             </div>
-                                            <div class="min-w-0">
-                                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Barangay" en="Barangay" /> <span x-text="myBarangayInfo.label"></span></p>
-                                                <p class="text-xs text-ink-muted"><x-ui.t fil="Punong Barangay:" en="Punong Barangay:" /> <span x-text="myBarangayInfo.officials.punong_barangay"></span></p>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-[15px] font-bold text-ink"><x-ui.t fil="Barangay" en="Barangay" /> <span x-text="myBarangayInfo.label"></span></p>
+                                                <p class="text-[12.5px] text-ink-muted"><x-ui.t fil="Punong Barangay:" en="Punong Barangay:" /> <span x-text="myBarangayInfo.officials.punong_barangay"></span></p>
                                             </div>
+                                            <p class="hidden sm:block text-[12.5px] text-ink-muted max-w-[260px] text-right"><x-ui.t fil="Mga dokumentong maaari mong hilingin mula sa iyong barangay hall." en="Documents you can request from your own barangay hall." /></p>
                                         </div>
-                                        <p class="text-sm text-ink-muted mb-3"><x-ui.t fil="Mga dokumentong maaari mong hilingin mula sa iyong barangay hall." en="Documents you can request from your own barangay hall." /></p>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
                                             <template x-for="doc in filteredMyBarangayDocs" :key="doc.i">
-                                                <label
-                                                    class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                                    :class="selectedDoc === doc.i ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
-                                                >
+                                                <label class="choice-card" :class="selectedDoc === doc.i && 'is-selected'">
                                                     <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
-                                                    <div class="flex items-center justify-between mb-2.5">
-                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'clay-blue' : 'bg-slate-100 text-ink-muted'">
-                                                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                                                        </span>
-                                                        <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
-                                                    </div>
-                                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="doc.name"></p>
-                                                    <p class="text-xs text-ink-muted mt-1 truncate" x-text="doc.office + ' · ' + doc.days"></p>
-                                                    <span
-                                                        class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
-                                                        x-text="doc.fee"
-                                                    ></span>
+                                                    <span class="choice-icon">
+                                                        <i data-lucide="file-text" class="w-5 h-5" x-show="selectedDoc !== doc.i"></i>
+                                                        <i data-lucide="check" class="w-5 h-5" x-show="selectedDoc === doc.i" x-cloak></i>
+                                                    </span>
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block text-[14.5px] font-semibold text-ink leading-snug" x-text="doc.name"></span>
+                                                        <span class="block text-[12.5px] text-ink-muted mt-0.5 truncate" x-text="doc.office + ' · ' + doc.days"></span>
+                                                    </span>
+                                                    <span class="shrink-0 self-start text-[11.5px] font-bold rounded-full px-2.5 py-1" :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-200/70'" x-text="doc.fee"></span>
                                                 </label>
                                             </template>
-                                            <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredMyBarangayDocs.length === 0">
-                                                <span class="w-10 h-10 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
-                                                <p class="text-xs text-ink-muted"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
+                                            <div class="md:col-span-2 2xl:col-span-3 flex flex-col items-center text-center py-10 rounded-2xl bg-white border border-dashed border-brand-600/15" x-show="filteredMyBarangayDocs.length === 0">
+                                                <span class="w-11 h-11 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center mb-2.5"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
                                             </div>
                                         </div>
                                     </div>
                                 </template>
                                 <template x-if="!myBarangayInfo">
-                                    <div class="flex flex-col items-center text-center py-10 px-4">
-                                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="map-pinned" class="w-7 h-7"></i></span>
-                                        <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Hindi pa available online ang mga dokumento ng iyong barangay" en="Your barangay's documents aren't available online yet" /></p>
-                                        <p class="text-xs text-ink-muted mt-1 max-w-xs"><x-ui.t fil="Bisitahin ang iyong Barangay Hall, o pumili ng dokumentong munisipyo sa halip." en="Please visit your Barangay Hall directly, or choose a municipal document instead." /></p>
+                                    <div class="flex flex-col items-center text-center py-12 px-4 rounded-2xl bg-white border border-dashed border-brand-600/15">
+                                        <span class="w-14 h-14 rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4"><i data-lucide="map-pinned" class="w-7 h-7"></i></span>
+                                        <p class="text-sm font-semibold text-ink"><x-ui.t fil="Hindi pa available online ang mga dokumento ng iyong barangay" en="Your barangay's documents aren't available online yet" /></p>
+                                        <p class="text-[12.5px] text-ink-muted mt-1 max-w-xs"><x-ui.t fil="Bisitahin ang iyong Barangay Hall, o pumili ng dokumentong munisipyo sa halip." en="Please visit your Barangay Hall directly, or choose a municipal document instead." /></p>
                                     </div>
                                 </template>
                             </div>
@@ -1049,51 +1044,39 @@
                                 <!-- Category grid (shown first, or when searching) -->
                                 <template x-if="!selectedCategory || search">
                                     <div>
-                                        <p class="text-sm text-ink-muted mb-3" x-show="!search"><x-ui.t fil="Piliin ang uri ng dokumentong kailangan mo." en="Choose the kind of document you need." /></p>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" x-show="!search">
+                                        <h4 class="text-base font-bold text-ink mb-3" x-show="!search"><x-ui.t fil="Piliin ang uri ng dokumentong kailangan mo." en="Choose the kind of document you need." /></h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3" x-show="!search">
                                             <template x-for="cat in municipalCategories" :key="cat.name">
-                                                <button
-                                                    type="button" @click="chooseCategory(cat.name)"
-                                                    class="flex items-center gap-3 rounded-2xl border border-slate-200 p-3.5 text-left hover:border-brand-300 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
-                                                >
-                                                    <span class="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
-                                                        <i :data-lucide="cat.icon" class="w-5 h-5"></i>
-                                                    </span>
+                                                <button type="button" @click="chooseCategory(cat.name)" class="choice-card group">
+                                                    <span class="choice-icon"><i :data-lucide="cat.icon" class="w-5 h-5"></i></span>
                                                     <span class="min-w-0 flex-1">
-                                                        <span class="block text-sm font-medium text-slate-700 truncate" x-text="cat.name"></span>
-                                                        <span class="block text-xs text-ink-muted mt-0.5" x-text="cat.count + (cat.count === 1 ? ' document' : ' documents')"></span>
+                                                        <span class="block text-[15px] font-semibold text-ink truncate" x-text="cat.name"></span>
+                                                        <span class="block text-[12.5px] text-ink-muted mt-0.5" x-text="cat.count + (cat.count === 1 ? ' document' : ' documents')"></span>
                                                     </span>
-                                                    <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint shrink-0"></i>
+                                                    <span class="w-8 h-8 rounded-full bg-brand-50 text-brand-600 grid place-items-center shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"><i data-lucide="chevron-right" class="w-4 h-4"></i></span>
                                                 </button>
                                             </template>
                                         </div>
 
                                         <!-- Search results (flat, across categories) -->
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" x-show="search">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3" x-show="search">
                                             <template x-for="doc in filteredMunicipalDocs" :key="doc.i">
-                                                <label
-                                                    class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                                    :class="selectedDoc === doc.i ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
-                                                >
+                                                <label class="choice-card" :class="selectedDoc === doc.i && 'is-selected'">
                                                     <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
-                                                    <div class="flex items-center justify-between mb-2.5">
-                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'clay-blue' : 'bg-slate-100 text-ink-muted'">
-                                                            <i data-lucide="landmark" class="w-4 h-4"></i>
-                                                        </span>
-                                                        <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
-                                                    </div>
-                                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="doc.name"></p>
-                                                    <p class="text-xs text-ink-muted mt-1 truncate" x-text="doc.category + ' · ' + doc.office_short"></p>
-                                                    <span
-                                                        class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
-                                                        x-text="doc.fee"
-                                                    ></span>
+                                                    <span class="choice-icon">
+                                                        <i data-lucide="landmark" class="w-5 h-5" x-show="selectedDoc !== doc.i"></i>
+                                                        <i data-lucide="check" class="w-5 h-5" x-show="selectedDoc === doc.i" x-cloak></i>
+                                                    </span>
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block text-[14.5px] font-semibold text-ink leading-snug" x-text="doc.name"></span>
+                                                        <span class="block text-[12.5px] text-ink-muted mt-0.5 truncate" x-text="doc.category + ' · ' + doc.office_short"></span>
+                                                    </span>
+                                                    <span class="shrink-0 self-start text-[11.5px] font-bold rounded-full px-2.5 py-1" :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-200/70'" x-text="doc.fee"></span>
                                                 </label>
                                             </template>
-                                            <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredMunicipalDocs.length === 0">
-                                                <span class="w-10 h-10 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
-                                                <p class="text-xs text-ink-muted"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
+                                            <div class="md:col-span-2 2xl:col-span-3 flex flex-col items-center text-center py-10 rounded-2xl bg-white border border-dashed border-brand-600/15" x-show="filteredMunicipalDocs.length === 0">
+                                                <span class="w-11 h-11 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center mb-2.5"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
                                             </div>
                                         </div>
                                     </div>
@@ -1102,31 +1085,24 @@
                                 <!-- Documents within the chosen category -->
                                 <template x-if="selectedCategory && !search">
                                     <div>
-                                        <button type="button" @click="backToCategories()" class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-brand-600 mb-3 transition-colors">
-                                            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                                        <button type="button" @click="backToCategories()" class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-600 hover:text-brand-700 mb-3 transition-colors">
+                                            <i data-lucide="arrow-left" class="w-4 h-4"></i>
                                             <x-ui.t fil="Bumalik sa mga kategorya" en="Back to categories" />
                                         </button>
-                                        <p class="text-sm font-semibold text-ink mb-3" x-text="selectedCategory"></p>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <p class="text-[15px] font-bold text-ink mb-3" x-text="selectedCategory"></p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
                                             <template x-for="doc in municipalDocsInCategory" :key="doc.i">
-                                                <label
-                                                    class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                                    :class="selectedDoc === doc.i ? 'border-brand-400 bg-brand-50/60 ring-4 ring-brand-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
-                                                >
+                                                <label class="choice-card" :class="selectedDoc === doc.i && 'is-selected'">
                                                     <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
-                                                    <div class="flex items-center justify-between mb-2.5">
-                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'clay-blue' : 'bg-slate-100 text-ink-muted'">
-                                                            <i data-lucide="landmark" class="w-4 h-4"></i>
-                                                        </span>
-                                                        <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
-                                                    </div>
-                                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="doc.name"></p>
-                                                    <p class="text-xs text-ink-muted mt-1 truncate" x-text="doc.office_short + ' · ' + doc.days"></p>
-                                                    <span
-                                                        class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
-                                                        x-text="doc.fee"
-                                                    ></span>
+                                                    <span class="choice-icon">
+                                                        <i data-lucide="landmark" class="w-5 h-5" x-show="selectedDoc !== doc.i"></i>
+                                                        <i data-lucide="check" class="w-5 h-5" x-show="selectedDoc === doc.i" x-cloak></i>
+                                                    </span>
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block text-[14.5px] font-semibold text-ink leading-snug" x-text="doc.name"></span>
+                                                        <span class="block text-[12.5px] text-ink-muted mt-0.5 truncate" x-text="doc.office_short + ' · ' + doc.days"></span>
+                                                    </span>
+                                                    <span class="shrink-0 self-start text-[11.5px] font-bold rounded-full px-2.5 py-1" :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-200/70'" x-text="doc.fee"></span>
                                                 </label>
                                             </template>
                                         </div>

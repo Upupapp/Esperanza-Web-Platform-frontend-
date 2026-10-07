@@ -262,7 +262,7 @@
         class="animate-fade-up"
     >
 
-        <x-ui.page-intro id="tulong" icon="hand-heart" title="Paano gumagana ang Tulong" titleEn="How Tulong works" color="purple">
+        <x-ui.page-intro id="tulong" icon="hand-heart" title="Paano gumagana ang Tulong" titleEn="How Tulong works" color="brand">
             <x-ui.t
                 fil="Piliin ang programang tulong o ayuda na kailangan mo, sabihin sa amin ang iyong sitwasyon, ikabit ang mga requirement, pagkatapos i-submit. Halos lahat ng programa rito ay libreng i-apply — nagsisimula sa TUL- ang reference number."
                 en="Choose the assistance or ayuda program you need, tell us about your situation, attach your requirements, then submit. Almost every program here is free to apply for — reference numbers start with TUL-."
@@ -275,10 +275,10 @@
             {{-- Counted from the resident's own requests. A fifth tile showed
                  "Ayuda Received ₱42,500" to everyone; no amount received is
                  recorded anywhere, so it is gone. --}}
-            <x-ui.stat-card class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="hand-heart" color="purple" :delay="0" />
-            <x-ui.stat-card label="Isinasagawa" labelEn="Processing" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Ready for Release').length" icon="loader" color="purple" :delay="40" />
-            <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="brand" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="badge-check" color="gold" :delay="120" />
+            <x-ui.stat-card class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="hand-heart" color="brand" :delay="0" />
+            <x-ui.stat-card label="Isinasagawa" labelEn="Processing" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Ready for Release').length" icon="loader" color="orange" :delay="40" />
+            <x-ui.stat-card label="Handa nang Ilabas" labelEn="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="badge-check" color="deep" :delay="120" />
             <x-ui.stat-card label="Hindi Natuloy" labelEn="Not Completed" value="0" valueBind="requests.filter(r => stoppedStatuses.includes(r.status)).length" icon="circle-x" color="red" :delay="160" sublabel="Tinanggihan o kinansela" sublabelEn="Rejected or cancelled" />
         </div>
 
@@ -514,78 +514,68 @@
                     <div class="grid mb-8" :class="tulongFree ? 'grid-cols-3' : 'grid-cols-4'">
                         <template x-for="(label, i) in ($store.lang.current === 'en' ? stepLabels.en : stepLabels.fil)" :key="i">
                             <div class="relative flex flex-col items-center text-center px-1" x-show="!(i === 2 && tulongFree)">
-                                <div x-show="i < 3" class="absolute top-4 left-[calc(50%_+_26px)] right-[calc(-50%_+_26px)] h-1 rounded-full transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'"></div>
+                                <div x-show="i < 3" class="absolute top-4 left-[calc(50%_+_26px)] right-[calc(-50%_+_26px)] h-1 rounded-full transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-brand-600/10'"></div>
                                 <span
                                     class="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
-                                    :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-ink-muted')"
+                                    :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'clay-blue ring-4 ring-brand-100' : 'bg-white text-ink-faint ring-1 ring-brand-600/15')"
                                 >
                                     <i data-lucide="check" class="w-4 h-4" x-show="step > i + 1" x-cloak></i>
                                     <i :data-lucide="stepIcons[i]" class="w-4 h-4" x-show="step <= i + 1"></i>
                                 </span>
-                                <span class="mt-2 text-[11px] max-w-[110px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-ink font-semibold' : 'text-ink-muted'" x-text="label"></span>
+                                <span class="mt-2 text-[11px] max-w-[110px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-ink font-bold' : 'text-ink-muted'" x-text="label"></span>
                             </div>
                         </template>
                     </div>
 
                     <!-- Step 1: choose assistance type -->
-                    <div x-show="step === 1">
-                        <p class="text-sm text-ink-muted mb-3"><x-ui.t fil="Piliin ang uri ng tulong na kailangan mo." en="Choose the type of assistance you need." /></p>
-                        <div class="relative mb-4">
-                            <i data-lucide="search" class="w-3.5 h-3.5 text-ink-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                            <input aria-label="Search"
-                                type="text" x-model="search"
-                                x-bind:placeholder="$store.lang.current === 'en' ? 'Search assistance programs...' : 'Maghanap ng programang tulong...'"
-                                class="w-full rounded-2xl border-0 surface-pressed py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-ink-faint focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard"
-                            >
+                    <div x-show="step === 1" class="space-y-4">
+                        <div class="flex flex-col gap-3">
+                            <h4 class="text-base font-bold text-ink"><x-ui.t fil="Piliin ang uri ng tulong na kailangan mo." en="Choose the type of assistance you need." /></h4>
+                            <div class="relative">
+                                    <i data-lucide="search" class="w-4 h-4 text-ink-faint absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    <input aria-label="Search"
+                                        type="text" x-model="search"
+                                        x-bind:placeholder="$store.lang.current === 'en' ? 'Search assistance programs...' : 'Maghanap ng programang tulong...'"
+                                        class="w-full min-h-[44px] rounded-2xl border-0 surface-pressed py-2.5 pl-11 pr-4 text-sm text-ink placeholder:text-ink-faint focus:bg-white focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                    >
+                                </div>
                         </div>
                         <!-- Category grid (shown first, or when searching) -->
                         <template x-if="!selectedCategory || search">
                             <div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" x-show="!search">
+                                <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3" x-show="!search">
                                     <template x-for="cat in assistanceCategories" :key="cat.name">
-                                        <button
-                                            type="button" @click="chooseCategory(cat.name)"
-                                            class="flex items-center gap-3 rounded-2xl border border-slate-200 p-3.5 text-left hover:border-purple-300 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
-                                        >
-                                            <span class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                                                <i :data-lucide="cat.icon" class="w-5 h-5"></i>
-                                            </span>
-                                            <span class="min-w-0 flex-1">
-                                                <span class="block text-sm font-medium text-slate-700 truncate" x-text="cat.name"></span>
-                                                <span class="block text-xs text-ink-muted mt-0.5" x-text="cat.count + (cat.count === 1 ? ' program' : ' programs')"></span>
-                                            </span>
-                                            <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint shrink-0"></i>
-                                        </button>
+                                        <button type="button" @click="chooseCategory(cat.name)" class="choice-card group">
+                                                    <span class="choice-icon"><i :data-lucide="cat.icon" class="w-5 h-5"></i></span>
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block text-[15px] font-semibold text-ink truncate" x-text="cat.name"></span>
+                                                        <span class="block text-[12.5px] text-ink-muted mt-0.5" x-text="cat.count + (cat.count === 1 ? ' program' : ' programs')"></span>
+                                                    </span>
+                                                    <span class="w-8 h-8 rounded-full bg-brand-50 text-brand-600 grid place-items-center shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"><i data-lucide="chevron-right" class="w-4 h-4"></i></span>
+                                                </button>
                                     </template>
                                 </div>
 
                                 <!-- Search results (flat, across categories) -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" x-show="search">
+                                <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3" x-show="search">
                                     <template x-for="type in filteredTypes" :key="type.i">
-                                        <label
-                                            class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                            :class="selectedType === type.i ? 'border-purple-400 bg-purple-50/60 ring-4 ring-purple-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
-                                        >
-                                            <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
-                                            <div class="flex items-center justify-between mb-2.5">
-                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-ink-muted'">
-                                                    <i :data-lucide="type.icon" class="w-4 h-4"></i>
-                                                </span>
-                                                <i data-lucide="circle-check" class="w-4 h-4 text-purple-500" x-show="selectedType === type.i" x-cloak></i>
-                                            </div>
-                                            <p class="text-sm font-medium text-slate-700 leading-snug" x-text="type.name"></p>
-                                            <p class="text-xs text-ink-muted mt-1 truncate" x-text="type.category + ' · ' + type.office_short"></p>
-                                            <span
-                                                class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
-                                                x-text="type.amount"
-                                            ></span>
-                                        </label>
+                                        <label class="choice-card" :class="selectedType === type.i && 'is-selected'">
+                                                    <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
+                                                    <span class="choice-icon">
+                                                        <i :data-lucide="type.icon" class="w-5 h-5" x-show="selectedType !== type.i"></i>
+                                                        <i data-lucide="check" class="w-5 h-5" x-show="selectedType === type.i" x-cloak></i>
+                                                    </span>
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block text-[14.5px] font-semibold text-ink leading-snug" x-text="type.name"></span>
+                                                        <span class="block text-[12.5px] text-ink-muted mt-0.5 truncate" x-text="type.category + ' · ' + type.office_short"></span>
+                                                    </span>
+                                                    <span class="shrink-0 self-start text-[11.5px] font-bold rounded-full px-2.5 py-1" :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-200/70'" x-text="type.amount"></span>
+                                                </label>
                                     </template>
-                                    <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredTypes.length === 0">
-                                        <span class="w-10 h-10 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
-                                        <p class="text-xs text-ink-muted"><x-ui.t fil="Walang programang tumutugma." en="No assistance programs match your search." /></p>
-                                    </div>
+                                    <div class="md:col-span-2 2xl:col-span-3 flex flex-col items-center text-center py-10 rounded-2xl bg-white border border-dashed border-brand-600/15" x-show="filteredTypes.length === 0">
+                                                <span class="w-11 h-11 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center mb-2.5"><i data-lucide="search-x" class="w-5 h-5"></i></span>
+                                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Walang programang tumutugma." en="No assistance programs match your search." /></p>
+                                            </div>
                                 </div>
                             </div>
                         </template>
@@ -593,32 +583,25 @@
                         <!-- Programs within the chosen category -->
                         <template x-if="selectedCategory && !search">
                             <div>
-                                <button type="button" @click="backToCategories()" class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-purple-600 mb-3 transition-colors">
-                                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
-                                    <x-ui.t fil="Bumalik sa mga kategorya" en="Back to categories" />
-                                </button>
-                                <p class="text-sm font-semibold text-ink mb-3" x-text="selectedCategory"></p>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <button type="button" @click="backToCategories()" class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-600 hover:text-brand-700 mb-3 transition-colors">
+                                            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                                            <x-ui.t fil="Bumalik sa mga kategorya" en="Back to categories" />
+                                        </button>
+                                <p class="text-[15px] font-bold text-ink mb-3" x-text="selectedCategory"></p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
                                     <template x-for="type in typesInCategory" :key="type.i">
-                                        <label
-                                            class="relative flex flex-col rounded-xl border p-3.5 cursor-pointer transition-all duration-[220ms] ease-standard"
-                                            :class="selectedType === type.i ? 'border-purple-400 bg-purple-50/60 ring-4 ring-purple-100 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:-translate-y-0.5'"
-                                        >
-                                            <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
-                                            <div class="flex items-center justify-between mb-2.5">
-                                                <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedType === type.i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-ink-muted'">
-                                                    <i :data-lucide="type.icon" class="w-4 h-4"></i>
-                                                </span>
-                                                <i data-lucide="circle-check" class="w-4 h-4 text-purple-500" x-show="selectedType === type.i" x-cloak></i>
-                                            </div>
-                                            <p class="text-sm font-medium text-slate-700 leading-snug" x-text="type.name"></p>
-                                            <p class="text-xs text-ink-muted mt-1 truncate" x-text="type.office_short"></p>
-                                            <span
-                                                class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
-                                                x-text="type.amount"
-                                            ></span>
-                                        </label>
+                                        <label class="choice-card" :class="selectedType === type.i && 'is-selected'">
+                                                    <input type="radio" name="assist_type" class="sr-only" :checked="selectedType === type.i" @change="selectType(type.i)">
+                                                    <span class="choice-icon">
+                                                        <i :data-lucide="type.icon" class="w-5 h-5" x-show="selectedType !== type.i"></i>
+                                                        <i data-lucide="check" class="w-5 h-5" x-show="selectedType === type.i" x-cloak></i>
+                                                    </span>
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block text-[14.5px] font-semibold text-ink leading-snug" x-text="type.name"></span>
+                                                        <span class="block text-[12.5px] text-ink-muted mt-0.5 truncate" x-text="type.office_short"></span>
+                                                    </span>
+                                                    <span class="shrink-0 self-start text-[11.5px] font-bold rounded-full px-2.5 py-1" :class="type.fee === 'Free' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70' : 'bg-brand-50 text-brand-700 ring-1 ring-brand-200/70'" x-text="type.amount"></span>
+                                                </label>
                                     </template>
                                 </div>
                             </div>
@@ -646,16 +629,16 @@
 
                             <!-- Live request summary -->
                             <div class="lg:col-span-2">
-                                <div class="lg:sticky lg:top-0 rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50/60 to-white p-4">
-                                    <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-purple-500"></i><x-ui.t fil="Buod ng Kahilingan" en="Request Summary" /></p>
+                                <div class="lg:sticky lg:top-0 rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50/60 to-white p-4">
+                                    <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-brand-500"></i><x-ui.t fil="Buod ng Kahilingan" en="Request Summary" /></p>
                                     <div class="flex items-center gap-2.5 mb-3">
-                                        <span class="w-10 h-10 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0"><i :data-lucide="types[selectedType]?.icon || 'hand-heart'" class="w-4.5 h-4.5"></i></span>
+                                        <span class="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0"><i :data-lucide="types[selectedType]?.icon || 'hand-heart'" class="w-4.5 h-4.5"></i></span>
                                         <div class="min-w-0">
                                             <p class="text-sm font-medium text-ink leading-snug" x-text="types[selectedType]?.name"></p>
                                             <p class="text-xs text-ink-muted truncate" x-text="types[selectedType]?.office"></p>
                                         </div>
                                     </div>
-                                    <div class="space-y-1.5 text-xs border-t border-purple-100/70 pt-3">
+                                    <div class="space-y-1.5 text-xs border-t border-brand-100/70 pt-3">
                                         <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Tinatayang Halaga" en="Estimated Amount" /></span><span class="font-semibold text-ink text-right" x-text="types[selectedType]?.amount"></span></div>
                                         <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Oras ng Pagproseso" en="Processing Time" /></span><span class="font-medium text-slate-600" x-text="types[selectedType]?.days"></span></div>
                                         <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (types[selectedType]?.requirements || []).filter(q => reqKind(q) !== 'office').length + ' attached'"></span></div>
@@ -668,7 +651,7 @@
                         <!-- Generic purpose (assistance types without structured fields) -->
                         <div class="mb-6" x-show="!(types[selectedType]?.fields?.length)">
                             <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Detalye ng Kahilingan" en="Details of Request" /></label>
-                            <textarea x-model="formData.purpose" aria-label="Briefly describe your situation and needs" rows="3" placeholder="Briefly describe your situation and needs" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <textarea x-model="formData.purpose" aria-label="Briefly describe your situation and needs" rows="3" placeholder="Briefly describe your situation and needs" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                         </div>
 
                         <div class="mb-6" x-show="types[selectedType]?.fields?.length" x-cloak>
@@ -684,14 +667,14 @@
                                                     :type="f.type" x-model="formData[f.key]"
                                                     :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
                                                     @input="if (f.type === 'tel') formData[f.key] = window.phMobile.clean($event.target.value)"
-                                                    class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard"
+                                                    class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                 >
                                             </div>
                                         </template>
                                         <template x-if="f.type === 'select'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                     <option value="">—</option>
                                                     <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                 </select>
@@ -702,8 +685,8 @@
                                                 <label class="block text-xs font-medium text-slate-700 mb-2" x-text="f.label"></label>
                                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                                     <template x-for="opt in f.options" :key="opt">
-                                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 text-xs text-slate-600 cursor-pointer hover:border-slate-300 transition-colors" :class="(formData[f.key] || []).includes(opt) && 'border-purple-300 bg-purple-50/60 text-purple-700'">
-                                                            <input type="checkbox" class="rounded text-purple-600 focus:ring-purple-200" :checked="(formData[f.key] || []).includes(opt)" @change="toggleChecklist(f.key, opt)">
+                                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 text-xs text-slate-600 cursor-pointer hover:border-slate-300 transition-colors" :class="(formData[f.key] || []).includes(opt) && 'border-brand-300 bg-brand-50/60 text-brand-700'">
+                                                            <input type="checkbox" class="rounded text-brand-600 focus:ring-brand-200" :checked="(formData[f.key] || []).includes(opt)" @change="toggleChecklist(f.key, opt)">
                                                             <span x-text="opt"></span>
                                                         </label>
                                                     </template>
@@ -729,7 +712,7 @@
                                     <template x-for="(row, ri) in (formData[f.key] || [])" :key="ri">
                                         <div class="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
                                             <div class="flex items-center justify-between mb-3">
-                                                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-700 bg-purple-100/70 rounded-full pl-1.5 pr-2.5 py-1">
+                                                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-700 bg-brand-100/70 rounded-full pl-1.5 pr-2.5 py-1">
                                                     <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3"></i>
                                                     <span x-text="row[f.columns[0].key] || ((f.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
                                                 </span>
@@ -742,13 +725,13 @@
                                                     <div>
                                                         <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
                                                         <template x-if="col.options">
-                                                            <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-purple-400 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                                                            <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                                                                 <option value="">—</option>
                                                                 <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                             </select>
                                                         </template>
                                                         <template x-if="!col.options">
-                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-purple-400 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                                                         </template>
                                                     </div>
                                                 </template>
@@ -763,7 +746,7 @@
 
                                     <button
                                         type="button" @click="addTableRow(f)"
-                                        class="w-full flex items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 hover:border-purple-300 hover:bg-purple-50/40 text-xs font-medium text-ink-muted hover:text-purple-600 py-2.5 transition-all duration-[160ms] ease-standard"
+                                        class="w-full flex items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-ink-muted hover:text-brand-600 py-2.5 transition-all duration-[160ms] ease-standard"
                                     >
                                         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                         <span x-text="($store.lang.current === 'en' ? 'Add ' : 'Magdagdag ng ') + (f.rowLabel || 'Entry')"></span>
@@ -788,7 +771,7 @@
                                         <button
                                             type="button" x-show="!attachments[i] && reqKind(req) !== 'office'"
                                             @click="showFilePicker = (showFilePicker === i ? null : i)"
-                                            class="text-[11px] font-medium text-purple-600 hover:underline shrink-0 whitespace-nowrap"
+                                            class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap"
                                         ><x-ui.t fil="Ikabit ang File" en="Attach File" /></button>
                                         <div class="flex items-center gap-1.5 shrink-0" x-show="attachments[i]">
                                             <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
@@ -798,14 +781,14 @@
                                         </div>
                                     </div>
                                     <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-brand-600/10 space-y-2">
-                                        <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-white bg-purple-600 rounded-lg px-2.5 py-1.5 hover:bg-purple-700 transition-colors cursor-pointer">
+                                        <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-white bg-brand-600 rounded-lg px-2.5 py-1.5 hover:bg-brand-700 transition-colors cursor-pointer">
                                             <i data-lucide="upload" class="w-3.5 h-3.5"></i><x-ui.t fil="Mag-upload ng file" en="Upload a file" />
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachFile(i, $event.target.files[0]); $event.target.value = ''">
                                         </label>
                                         <div x-show="papeles.length" class="space-y-1">
                                             <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted"><x-ui.t fil="O gamitin mula sa Papeles" en="Or reuse from Papeles" /></p>
                                             <template x-for="doc in papeles" :key="doc.id">
-                                                <button type="button" @click="attachPapeles(i, doc)" class="w-full text-left text-[11px] text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl px-2 py-1 truncate" x-text="doc.name"></button>
+                                                <button type="button" @click="attachPapeles(i, doc)" class="w-full text-left text-[11px] text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded-xl px-2 py-1 truncate" x-text="doc.name"></button>
                                             </template>
                                         </div>
                                     </div>
@@ -831,7 +814,7 @@
                                 <div class="lg:col-span-3 order-2 lg:order-1">
                                     <p class="text-sm font-semibold text-ink mb-2"><x-ui.t fil="Paano magbayad" en="How to pay" /></p>
                                     <div class="rounded-xl border-0 surface-pressed p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
-                                        <p class="flex items-start gap-2"><i data-lucide="landmark" class="w-4 h-4 text-purple-600 shrink-0 mt-0.5"></i><x-ui.t fil="Babayaran mo ang bayarin nang personal sa tanggapang nakalista, at bibigyan ka roon ng opisyal na resibo." en="You pay the fee in person at the office listed, which gives you an official receipt." /></p>
+                                        <p class="flex items-start gap-2"><i data-lucide="landmark" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i><x-ui.t fil="Babayaran mo ang bayarin nang personal sa tanggapang nakalista, at bibigyan ka roon ng opisyal na resibo." en="You pay the fee in person at the office listed, which gives you an official receipt." /></p>
                                         <p class="flex items-start gap-2 text-amber-700"><i data-lucide="shield-alert" class="w-4 h-4 shrink-0 mt-0.5"></i><x-ui.t fil="Huwag magpadala ng bayad sa anumang e-wallet o account na hindi kinumpirma ng Munisipyo." en="Never send payment to an e-wallet or account the Municipality has not confirmed." /></p>
                                     </div>
                                 </div>
@@ -868,7 +851,7 @@
                                                         <i data-lucide="info" class="w-3 h-3 text-ink-faint hover:text-ink-muted cursor-help"></i>
                                                     </x-ui.tooltip>
                                                 </span>
-                                                <span class="text-base font-bold text-purple-700" x-text="types[selectedType]?.fee"></span>
+                                                <span class="text-base font-bold text-brand-700" x-text="types[selectedType]?.fee"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -883,28 +866,28 @@
                         <div class="rounded-xl border border-slate-200 overflow-hidden mb-5">
                             <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-brand-600/[.08] bg-slate-50/60">
                                 <div class="flex items-center gap-2.5 px-4 py-3">
-                                    <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i :data-lucide="types[selectedType]?.icon || 'hand-heart'" class="w-4 h-4"></i></span>
+                                    <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i :data-lucide="types[selectedType]?.icon || 'hand-heart'" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
                                         <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Uri ng Tulong" en="Assistance Type" /></p>
                                         <p class="text-sm font-medium text-ink truncate" x-text="types[selectedType]?.name || ''"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2.5 px-4 py-3">
-                                    <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
+                                    <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
                                         <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Nangangasiwang Opisina" en="Handling Office" /></p>
                                         <p class="text-sm font-medium text-ink truncate" x-text="types[selectedType]?.office || ''"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2.5 px-4 py-3">
-                                    <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
+                                    <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
                                         <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Aplikante" en="Applicant" /></p>
                                         <p class="text-sm font-medium text-ink truncate" x-text="applicant.firstName + ' ' + applicant.lastName"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2.5 px-4 py-3">
-                                    <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="wallet" class="w-4 h-4"></i></span>
+                                    <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="wallet" class="w-4 h-4"></i></span>
                                     <div class="min-w-0">
                                         <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Bayarin sa Dokumento" en="Documentary Fee" /></p>
                                         <p class="text-sm font-medium text-ink truncate">
@@ -931,15 +914,15 @@
                             <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type === 'table')" :key="f.key">
                                 <div class="mt-3" x-show="(formData[f.key] || []).length">
                                     <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                        <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3 text-purple-400"></i>
+                                        <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3 text-brand-400"></i>
                                         <span x-text="f.label"></span>
                                     </p>
                                     <div class="overflow-x-auto rounded-xl border border-slate-200">
                                         <table class="w-full text-xs">
                                             <thead>
-                                                <tr class="bg-purple-50/60 border-b border-slate-200">
+                                                <tr class="bg-brand-50/60 border-b border-slate-200">
                                                     <template x-for="col in f.columns" :key="col.key">
-                                                        <th class="px-2.5 py-2 text-left font-semibold text-purple-700 whitespace-nowrap" x-text="col.label"></th>
+                                                        <th class="px-2.5 py-2 text-left font-semibold text-brand-700 whitespace-nowrap" x-text="col.label"></th>
                                                     </template>
                                                 </tr>
                                             </thead>
@@ -973,10 +956,10 @@
                             <template x-for="(step_label, i) in types[selectedType]?.process || []" :key="i">
                                 <div class="flex-1 flex items-center">
                                     <div class="flex flex-col items-center gap-1.5 text-center">
-                                        <span class="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-sm" x-text="i + 1"></span>
+                                        <span class="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-sm" x-text="i + 1"></span>
                                         <span class="text-[10px] text-ink-muted max-w-[80px] leading-tight" x-text="step_label"></span>
                                     </div>
-                                    <div class="flex-1 h-0.5 bg-purple-200 -mt-5" x-show="i < (types[selectedType]?.process || []).length - 1"></div>
+                                    <div class="flex-1 h-0.5 bg-brand-200 -mt-5" x-show="i < (types[selectedType]?.process || []).length - 1"></div>
                                 </div>
                             </template>
                         </div>
@@ -1112,7 +1095,7 @@
                                     <div class="flex flex-col items-center gap-1.5 text-center">
                                         <span
                                             class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-[300ms] ease-standard"
-                                            :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-500 text-white' : (stepIndex(selectedRequest.status) === i ? 'bg-purple-600 text-white' : 'bg-slate-100 text-ink-muted')"
+                                            :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-500 text-white' : (stepIndex(selectedRequest.status) === i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-ink-muted')"
                                         >
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
                                             <span x-show="stepIndex(selectedRequest.status) <= i" x-text="i + 1"></span>
@@ -1160,11 +1143,11 @@
                                             {{-- A rejected document says why, and takes a replacement below. --}}
                                             <p x-show="req.status === 'Rejected' && (req.reject_reason || req.remarks)" class="text-[11px] text-rose-600 whitespace-normal" x-text="($store.lang.current === 'en' ? 'Reason: ' : 'Dahilan: ') + [req.reject_reason, req.remarks].filter((v, i, a) => v && a.indexOf(v) === i).join(' — ')"></p>
                                         </div>
-                                        <label x-show="req.attachable && reqKind(req.name) !== 'office'" class="shrink-0 text-[11px] font-medium text-purple-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                        <label x-show="req.attachable && reqKind(req.name) !== 'office'" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
                                             <span x-text="req._busy ? '…' : (req.file ? ($store.lang.current === 'en' ? 'Change' : 'Palitan') : ($store.lang.current === 'en' ? 'Attach' : 'Ikabit'))"></span>
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
                                         </label>
-                                        <label x-show="req.replaceable && req.status === 'Rejected'" class="shrink-0 text-[11px] font-medium text-purple-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
+                                        <label x-show="req.replaceable && req.status === 'Rejected'" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer" :class="req._busy && 'opacity-60 pointer-events-none'">
                                             <span x-text="req._busy ? '…' : ($store.lang.current === 'en' ? 'Upload replacement' : 'Mag-upload ng kapalit')"></span>
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="replaceRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
                                         </label>
@@ -1182,7 +1165,7 @@
                                     <p class="text-xs font-semibold text-ink"><x-ui.t fil="Patunay ng Pag-release" en="Proof of release" /></p>
                                     <p class="text-[11px] text-ink-muted truncate" x-text="selectedRequest.releaseProof?.name"></p>
                                 </div>
-                                <button type="button" class="shrink-0 text-[11px] font-medium text-purple-600 hover:underline" @click="proofOpen = !proofOpen" x-text="proofOpen ? lang('Hide', 'Itago') : lang('View', 'Tingnan')"></button>
+                                <button type="button" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline" @click="proofOpen = !proofOpen" x-text="proofOpen ? lang('Hide', 'Itago') : lang('View', 'Tingnan')"></button>
                             </div>
                             <div x-show="proofOpen" x-cloak x-data="pdfPreview" x-effect="show(proofOpen && selectedRequest.releaseProof ? selectedRequest.releaseProof.url : null, (selectedRequest.releaseProof?.mime || '') + ' ' + (selectedRequest.releaseProof?.name || ''))" class="mt-3 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
                                 <p x-show="loading" class="text-xs text-ink-muted text-center py-8"><x-ui.t fil="Binubuksan…" en="Opening…" /></p>

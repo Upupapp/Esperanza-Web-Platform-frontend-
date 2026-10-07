@@ -16,7 +16,7 @@
 @php
     // Clay design (STYLE_GUIDE §3.1): clay for anything you press, glass for
     // the secondary button; the pressed shadow is the press feedback (no scale).
-    $base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-2xl whitespace-nowrap transition-all duration-[160ms] ease-standard select-none focus:outline-none focus-visible:ring-4 active:duration-[80ms] disabled:opacity-50 disabled:pointer-events-none';
+    $base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-2xl whitespace-nowrap transition-all duration-[160ms] ease-standard select-none focus:outline-none focus-visible:ring-4 active:duration-[80ms] disabled:pointer-events-none disabled:bg-none disabled:bg-[#e4e9f4] disabled:text-ink-faint disabled:shadow-none disabled:border-transparent';
 
     // Explicit min-height guarantees the WCAG 2.5.5 touch-target floor
     // regardless of padding/line-height math. `sm` is the intentional

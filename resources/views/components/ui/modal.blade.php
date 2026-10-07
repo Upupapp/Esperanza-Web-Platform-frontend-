@@ -26,7 +26,7 @@
         @keydown.escape.window="if (window.closesOnEscape($el)) open = false"
         style="position: fixed; inset: 0; z-index: 90;"
     >
-        {{-- Clay design (STYLE_GUIDE §3.8): a frosted window over a softer backdrop. --}}
+        {{-- Clay design (STYLE_GUIDE §3.8): a light window (.modal-panel) over a softer backdrop. --}}
         <div x-show="open" x-transition.opacity @click="open = false" style="position: absolute; inset: 0;" class="bg-navy-950/50 backdrop-blur-md"
         role="button"
         tabindex="0"
@@ -57,15 +57,15 @@
                     aria-modal="true"
                     x-trap="open"
                     @if($bare) aria-label="Dialog" @else aria-labelledby="{{ $titleId }}" @endif
-                    class="absolute inset-0 bg-white/85 backdrop-blur-2xl border border-white/90 rounded-[28px] shadow-float flex flex-col overflow-hidden"
+                    class="absolute inset-0 modal-panel border border-white rounded-[28px] shadow-float flex flex-col overflow-hidden"
                 >
                     @if($bare)
                         {{ $slot }}
                     @else
-                        <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
+                        <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-brand-600/10 shrink-0">
                             <h3 id="{{ $titleId }}" class="text-base font-extrabold text-ink" x-text="$store.lang.current === 'en' ? @js($titleEn ?? $title) : @js($title)">{{ $title }}</h3>
                             <div class="flex items-center gap-1">
-                                <button type="button" @click="compact = !compact" :aria-label="compact ? 'Expand to full screen' : 'Shrink to popup'" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-white/60 hover:shadow-glass-sm transition-all" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
+                                <button type="button" @click="compact = !compact" :aria-label="compact ? 'Expand to full screen' : 'Shrink to popup'" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
                                     <span x-show="compact"><i data-lucide="maximize-2" class="w-4 h-4"></i></span>
                                     <span x-show="!compact"><i data-lucide="minimize-2" class="w-4 h-4"></i></span>
                                 </button>
@@ -73,7 +73,7 @@
                                      button, so a second x here was one too many
                                      (live test 2026-10-07, UX-5). --}}
                                 @if($title)
-                                <button type="button" @click="open = false" aria-label="Close dialog" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-white/60 hover:shadow-glass-sm transition-all">
+                                <button type="button" @click="open = false" aria-label="Close dialog" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all">
                                     <i data-lucide="x" class="w-5 h-5"></i>
                                 </button>
                                 @endif
@@ -85,7 +85,7 @@
                             </div>
                         </div>
                         @isset($footer)
-                            <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-well/50 shrink-0">
+                            <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
                                 {{ $footer }}
                             </div>
                         @endisset
@@ -112,14 +112,14 @@
                     x-trap="open"
                     @if($bare) aria-label="Dialog" @else aria-labelledby="{{ $titleId }}" @endif
                     style="max-height: 88vh; width: calc(100vw - 2rem);"
-                    class="relative bg-white/85 backdrop-blur-2xl border border-white/90 rounded-[28px] shadow-float {{ $w }} flex flex-col overflow-hidden"
+                    class="relative modal-panel border border-white rounded-[28px] shadow-float {{ $w }} flex flex-col overflow-hidden"
                 >
                     @if($bare)
                         {{ $slot }}
                     @else
-                        <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
+                        <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-brand-600/10 shrink-0">
                             <h3 id="{{ $titleId }}" class="text-base font-extrabold text-ink" x-text="$store.lang.current === 'en' ? @js($titleEn ?? $title) : @js($title)">{{ $title }}</h3>
-                            <button type="button" @click="open = false" aria-label="Close dialog" class="w-9 h-9 -mr-2 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-white/60 hover:shadow-glass-sm transition-all">
+                            <button type="button" @click="open = false" aria-label="Close dialog" class="w-9 h-9 -mr-2 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all">
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -127,7 +127,7 @@
                             {{ $slot }}
                         </div>
                         @isset($footer)
-                            <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-well/50 shrink-0">
+                            <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
                                 {{ $footer }}
                             </div>
                         @endisset

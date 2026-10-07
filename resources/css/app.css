@@ -338,6 +338,35 @@
     .clay-navy { background: linear-gradient(160deg, #1f3b7a, var(--color-navy-900)); color: #fff; box-shadow: var(--shadow-clay-navy); }
     .clay-rose { background: linear-gradient(160deg, #f43f5e, #e11d48); color: #fff; box-shadow: var(--shadow-clay-rose); }
     .clay-gold-light { background: var(--color-gold-100); color: var(--color-gold-700); box-shadow: 5px 7px 14px rgb(227 188 0 / .20), inset 2px 2px 4px rgb(255 255 255 / .90), inset -3px -3px 6px rgb(140 110 0 / .14); }
+    /* Windows (x-ui.modal): an opaque light surface with a white header and
+       footer. The frosted window over the dark backdrop read as muddy grey,
+       and the glass cards and wells inside blended into it (owner, 2026-10-08:
+       "the colors look off"). Inside a window, glass is plain white and the
+       pressed well a lighter one. */
+    .modal-panel { background: #f5f7fc; }
+    .modal-panel .surface-glass, .modal-panel .surface-glass-sm, .modal-panel .glass-panel {
+        background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none;
+        border-color: rgb(29 71 214 / .08);
+        box-shadow: 0 1px 2px rgb(11 23 48 / .04), 0 6px 16px rgb(29 71 214 / .06);
+    }
+    .modal-panel .surface-pressed, .modal-panel .surface-pressed-sm {
+        background: #edf1fa;
+        box-shadow: inset 1px 2px 4px rgb(29 71 214 / .10), inset -1px -1px 3px rgb(255 255 255 / .9);
+    }
+    /* A choice in a list (a document, a programme, a category): white, one
+       clear blue selected state, the icon turning solid blue with a check. */
+    .choice-card {
+        position: relative; display: flex; align-items: center; gap: .875rem; width: 100%;
+        text-align: left; cursor: pointer; background: #fff; border: 1px solid rgb(29 71 214 / .10);
+        border-radius: 18px; padding: .875rem 1rem;
+        box-shadow: 0 1px 2px rgb(11 23 48 / .04), 0 4px 12px rgb(29 71 214 / .05);
+        transition: border-color .18s, box-shadow .18s, transform .18s, background-color .18s;
+    }
+    .choice-card:hover { border-color: rgb(47 98 245 / .45); box-shadow: 0 2px 4px rgb(11 23 48 / .05), 0 10px 24px rgb(29 71 214 / .10); transform: translateY(-1px); }
+    .choice-card:focus-visible, .choice-card:has(input:focus-visible) { outline: none; box-shadow: 0 0 0 4px var(--color-brand-100); }
+    .choice-card.is-selected { border-color: var(--color-brand-500); background: #f3f7ff; box-shadow: 0 0 0 3px rgb(47 98 245 / .18), 0 8px 20px rgb(29 71 214 / .10); transform: none; }
+    .choice-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; background: var(--color-brand-50); color: var(--color-brand-600); transition: background .18s, color .18s, box-shadow .18s; }
+    .choice-card.is-selected .choice-icon { background: linear-gradient(160deg, var(--color-brand-500), var(--color-brand-600)); color: #fff; box-shadow: var(--shadow-clay-blue); }
     .sidebar-glass { background: linear-gradient(180deg, rgb(11 23 48 / .95), rgb(17 36 84 / .90)); backdrop-filter: blur(20px); border: 1px solid rgb(255 255 255 / .09); box-shadow: 16px 18px 44px rgb(11 23 48 / .30), inset 0 1px 0 rgb(255 255 255 / .14), inset -1px -2px 6px rgb(0 0 0 / .25); }
     .sidebar-well { background: rgb(255 255 255 / .05); border: 1px solid rgb(255 255 255 / .06); box-shadow: inset 4px 4px 10px rgb(0 0 0 / .35), inset -3px -3px 8px rgb(255 255 255 / .06); }
     /* The page canvas with its two colour washes. */
