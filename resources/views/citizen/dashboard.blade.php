@@ -117,7 +117,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 @for ($i = 0; $i < 4; $i++)
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4 space-y-3">
+                    <div class="surface-glass rounded-[26px] p-4 space-y-3">
                         <x-ui.skeleton class="w-10 h-10 rounded-xl" />
                         <x-ui.skeleton class="h-6 w-16" />
                         <x-ui.skeleton class="h-3 w-24" />
@@ -249,7 +249,7 @@
                         :href="'tel:' + ($store.barangay.mine?.contact || '').replace(/[^0-9+]/g, '')"
                         x-show="$store.barangay.mine?.contact"
                         :title="$store.barangay.mine?.contact"
-                        class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors shrink-0"
+                        class="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors shrink-0"
                     >
                         <i data-lucide="phone" class="w-3 h-3"></i>
                     </a>
@@ -336,7 +336,7 @@
                 <x-ui.card padded="false" class="lg:col-span-2">
 
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="text-sm font-semibold text-navy-900">
+                        <h3 class="text-sm font-semibold text-ink">
                             <x-ui.t fil="Mga Kamakailang Kahilingan" en="My Recent Requests" />
                         </h3>
 
@@ -348,16 +348,16 @@
                         </a>
                     </div>
 
-                    <div class="divide-y divide-slate-50">
+                    <div class="divide-y divide-brand-600/[.08]">
 
                         <template x-for="req in requests" :key="req.ref">
                             <a
                                 :href="(req.type === 'tulong' ? '{{ route('citizen.assistance-requests') }}' : '{{ route('citizen.document-requests') }}') + '?ref=' + encodeURIComponent(req.ref)"
-                                class="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-slate-50/70 transition-colors"
+                                class="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-white/60 transition-colors"
                             >
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700 truncate" x-text="req.service"></p>
-                                    <p class="text-xs text-slate-500 mt-0.5 font-mono">
+                                    <p class="text-xs text-ink-muted mt-0.5 font-mono">
                                         <span x-text="req.ref"></span> ·
                                         <x-ui.t fil="Isinumite" en="Submitted" />
                                         <span x-text="req.submitted ? new Date(req.submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></span>
@@ -367,7 +367,7 @@
                             </a>
                         </template>
 
-                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!requests.length">
+                        <p class="px-4 py-6 text-center text-xs text-ink-muted" x-show="!requests.length">
                             <x-ui.t fil="Wala ka pang kahilingan." en="You have no requests yet." />
                         </p>
 
@@ -378,7 +378,7 @@
                 <x-ui.card padded="false">
 
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="text-sm font-semibold text-navy-900">
+                        <h3 class="text-sm font-semibold text-ink">
                             Balita
                         </h3>
 
@@ -390,11 +390,11 @@
                         </a>
                     </div>
 
-                    <div class="divide-y divide-slate-50">
+                    <div class="divide-y divide-brand-600/[.08]">
 
                         <template x-for="post in balitaPreview" :key="post.id">
 
-                            <div class="px-4 py-2.5 hover:bg-slate-50/70 transition-colors">
+                            <div class="px-4 py-2.5 hover:bg-white/60 transition-colors">
 
                                 <a
                                     :href="'{{ route('citizen.announcements') }}'"
@@ -410,13 +410,13 @@
 
                                     <div
                                         x-show="!post.official"
-                                        class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold shrink-0 text-[10px]"
+                                        class="w-8 h-8 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-[10px]"
                                         x-text="post.initials"
                                     ></div>
 
                                     <div class="min-w-0 flex-1">
 
-                                        <p class="text-xs font-semibold text-navy-900 flex items-center gap-1 truncate">
+                                        <p class="text-xs font-semibold text-ink flex items-center gap-1 truncate">
 
                                             <span x-text="post.author"></span>
 
@@ -429,18 +429,18 @@
                                         </p>
 
                                         <p
-                                            class="text-xs font-medium text-navy-900 mt-0.5 line-clamp-1 leading-snug"
+                                            class="text-xs font-medium text-ink mt-0.5 line-clamp-1 leading-snug"
                                             x-show="post.title"
                                             x-text="post.title"
                                         ></p>
 
                                         <p
-                                            class="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-snug"
+                                            class="text-xs text-ink-muted mt-0.5 line-clamp-2 leading-snug"
                                             x-text="post.body"
                                         ></p>
 
                                         <p
-                                            class="text-[10.5px] text-slate-500 mt-1"
+                                            class="text-[10.5px] text-ink-muted mt-1"
                                             x-text="post.time"
                                         ></p>
 
@@ -454,7 +454,7 @@
                                         type="button"
                                         @click="toggleBalitaLike(post)"
                                         class="flex items-center gap-1 text-[10.5px] font-medium transition-colors"
-                                        :class="post.liked ? 'text-rose-600' : 'text-slate-500 hover:text-slate-600'"
+                                        :class="post.liked ? 'text-rose-600' : 'text-ink-muted hover:text-slate-600'"
                                     >
                                         <i
                                             data-lucide="heart"
@@ -468,7 +468,7 @@
 
                                     <a
                                         :href="'{{ route('citizen.announcements') }}'"
-                                        class="flex items-center gap-1 text-[10.5px] font-medium text-slate-500 hover:text-slate-600 transition-colors"
+                                        class="flex items-center gap-1 text-[10.5px] font-medium text-ink-muted hover:text-slate-600 transition-colors"
                                         x-show="post.commentCount > 0"
                                     >
                                         <i data-lucide="message-circle" class="w-3 h-3"></i>
@@ -481,7 +481,7 @@
 
                         </template>
 
-                        <p class="px-4 py-6 text-center text-xs text-slate-500" x-show="!balitaPreview.length">
+                        <p class="px-4 py-6 text-center text-xs text-ink-muted" x-show="!balitaPreview.length">
                             <x-ui.t fil="Wala pang balita." en="No announcements yet." />
                         </p>
 
@@ -495,7 +495,7 @@
             <x-ui.card padded="false">
 
                 <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                    <h3 class="text-sm font-semibold text-navy-900">
+                    <h3 class="text-sm font-semibold text-ink">
                         <x-ui.t fil="Mga Paparating na Kaganapan" en="Upcoming Events" />
                     </h3>
 
@@ -512,21 +512,21 @@
                     <template x-for="(event, i) in events" :key="i">
                         <a
                             href="{{ route('citizen.events') }}"
-                            class="block rounded-xl border border-slate-100 p-3.5 hover:border-brand-200 hover:shadow-card hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
+                            class="block rounded-2xl border border-brand-600/10 p-3.5 hover:border-brand-200 hover:shadow-card hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
                         >
                             <div class="flex items-center gap-2 text-xs font-medium text-brand-600 mb-1.5">
                                 <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
                                 <span x-text="event.date + ' · ' + event.time"></span>
                             </div>
                             <p class="text-sm font-medium text-slate-700 leading-snug" x-text="event.title"></p>
-                            <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                            <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5">
                                 <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                                 <span x-text="event.venue"></span>
                             </p>
                         </a>
                     </template>
 
-                    <p class="col-span-3 py-6 text-center text-xs text-slate-500" x-show="!events.length">
+                    <p class="col-span-3 py-6 text-center text-xs text-ink-muted" x-show="!events.length">
                         <x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." />
                     </p>
 

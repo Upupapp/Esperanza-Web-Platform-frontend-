@@ -39,14 +39,14 @@
         {{-- Back to wherever the link was (sign-up, Settings, the footer):
              the page used to be titled Settings (live test 2026-10-07, NAV-5). --}}
         <button type="button" @click="history.length > 1 ? history.back() : (window.location.href = '{{ route('citizen.dashboard') }}')"
-            class="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700">
+            class="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-slate-700">
             <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><x-ui.t fil="Bumalik" en="Back" />
         </button>
-        <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit mb-5">
-            <button @click="tab = 'privacy'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'privacy' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
+        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-5">
+            <button @click="tab = 'privacy'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'privacy' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="shield-check" class="w-3.5 h-3.5"></i><x-ui.t fil="Patakaran sa Privacy" en="Privacy Policy" />
             </button>
-            <button @click="tab = 'terms'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'terms' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
+            <button @click="tab = 'terms'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'terms' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tuntunin" en="Terms &amp; Conditions" />
             </button>
         </div>
@@ -59,19 +59,19 @@
                             <i :data-lucide="key === 'privacy' ? 'shield-check' : 'file-text'" class="w-5 h-5"></i>
                         </span>
                         <div class="min-w-0">
-                            <h2 class="text-lg font-bold text-navy-900" x-text="docs[key].title"></h2>
-                            <p class="text-xs text-slate-500 mt-0.5">
+                            <h2 class="text-lg font-bold text-ink" x-text="docs[key].title"></h2>
+                            <p class="text-xs text-ink-muted mt-0.5">
                                 <x-ui.t fil="Ipinatutupad simula" en="Effective" /> <span x-text="date(docs[key].effective_date)"></span>
                                 <span x-show="docs[key].last_updated">&middot; <x-ui.t fil="Huling na-update noong" en="Last updated" /> <span x-text="date(docs[key].last_updated)"></span></span>
                             </p>
                         </div>
                     </div>
-                    <p class="text-sm text-slate-600 leading-relaxed mt-4 pb-5 border-b border-slate-100" x-text="docs[key].intro"></p>
+                    <p class="text-sm text-slate-600 leading-relaxed mt-4 pb-5 border-b border-brand-600/10" x-text="docs[key].intro"></p>
 
                     <div class="space-y-5 mt-5">
                         <template x-for="(section, i) in docs[key].sections" :key="key + '-' + i">
                             <div>
-                                <h3 class="text-sm font-semibold text-navy-900 mb-1.5" x-text="section.heading"></h3>
+                                <h3 class="text-sm font-semibold text-ink mb-1.5" x-text="section.heading"></h3>
                                 <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line" x-text="section.body"></p>
                             </div>
                         </template>

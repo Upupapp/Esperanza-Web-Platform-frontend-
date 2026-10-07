@@ -75,17 +75,17 @@
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto">
-                    <button @click="tab = 'all'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'all' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><x-ui.t fil="Lahat" en="All" /></button>
-                    <button @click="tab = 'unread'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'unread' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+                    <button @click="tab = 'all'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'all' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Lahat" en="All" /></button>
+                    <button @click="tab = 'unread'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'unread' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <x-ui.t fil="Hindi Pa Nababasa" en="Unread" />
                         <span class="text-[9px] font-semibold bg-brand-100 text-brand-700 rounded-full px-1.5 py-0.5" x-show="unreadTotal > 0" x-text="unreadTotal"></span>
                     </button>
-                    <button @click="tab = 'read'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap" :class="tab === 'read' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"><x-ui.t fil="Nabasa Na" en="Read" /></button>
-                    <button @click="tab = 'dokyu'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'dokyu' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                    <button @click="tab = 'read'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'read' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Nabasa Na" en="Read" /></button>
+                    <button @click="tab = 'dokyu'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'dokyu' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="file-text" class="w-3 h-3"></i><x-ui.t fil="Dokyu" en="Dokyu" />
                     </button>
-                    <button @click="tab = 'tulong'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'tulong' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                    <button @click="tab = 'tulong'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'tulong' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="hand-heart" class="w-3 h-3"></i><x-ui.t fil="Tulong" en="Tulong" />
                     </button>
                 </div>
@@ -97,16 +97,16 @@
                     <span x-text="markingAll ? ($store.lang.current === 'en' ? 'Marking…' : 'Minamarkahan…') : ($store.lang.current === 'en' ? 'Mark all as read' : 'Markahan Lahat na Nabasa')"></span>
                 </button>
             </div>
-            <p class="text-[11px] text-slate-500" x-text="visible.length + ' ' + ($store.lang.current === 'en' ? 'shown' : 'ipinapakita')"></p>
+            <p class="text-[11px] text-ink-muted" x-text="visible.length + ' ' + ($store.lang.current === 'en' ? 'shown' : 'ipinapakita')"></p>
         </div>
 
         <x-ui.data-panel empty-title="Walang abisong tumutugma dito" empty-title-en="No notifications here" empty-icon="inbox">
                 <x-ui.card padded="false">
-                    <div class="divide-y divide-slate-50">
+                    <div class="divide-y divide-brand-600/[.08]">
                         <template x-for="n in visible" :key="n.id">
                             <div
                                 @click="goTo(n)"
-                                class="group flex items-start gap-3 px-4 py-4 hover:bg-slate-50/70 transition-colors relative cursor-pointer"
+                                class="group flex items-start gap-3 px-4 py-4 hover:bg-white/60 transition-colors relative cursor-pointer"
                                 role="button" tabindex="0"
                                 @keydown.enter.prevent="goTo(n)" @keydown.space.prevent="goTo(n)"
                             >
@@ -119,14 +119,14 @@
                                         <p class="text-sm font-medium text-slate-700 leading-snug" x-text="n.title"></p>
                                         <span class="text-[9px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 shrink-0" x-show="n.portal === 'dokyu' || n.portal === 'tulong'" :class="n.portal === 'tulong' ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'" x-text="n.portal === 'tulong' ? 'Tulong' : 'Dokyu'"></span>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-0.5" x-text="n.body"></p>
-                                    <p class="text-[11px] text-slate-300 mt-1.5" x-text="timeAgo(n.createdAt)"></p>
+                                    <p class="text-xs text-ink-muted mt-0.5" x-text="n.body"></p>
+                                    <p class="text-[11px] text-ink-faint mt-1.5" x-text="timeAgo(n.createdAt)"></p>
                                 </div>
-                                <span class="text-[10px] font-medium text-slate-300 shrink-0 mt-0.5 whitespace-nowrap" x-show="n.pinned"><x-ui.t fil="Awtomatiko" en="Automated" /></span>
+                                <span class="text-[10px] font-medium text-ink-faint shrink-0 mt-0.5 whitespace-nowrap" x-show="n.pinned"><x-ui.t fil="Awtomatiko" en="Automated" /></span>
                                 <button aria-label="Close"
                                     type="button" x-show="!n.pinned"
                                     @click.stop="$store.citizenNotifications.dismiss(n.id)"
-                                    class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
+                                    class="opacity-0 group-hover:opacity-100 text-ink-faint hover:text-rose-500 transition-opacity shrink-0 mt-0.5 focus-within:opacity-100 focus:opacity-100"
                                 ><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </template>

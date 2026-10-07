@@ -70,22 +70,22 @@
         class="animate-fade-up"
     >
 
-        <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+        <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input aria-label="Search" type="text" x-model="search" x-bind:placeholder="$store.lang.current === 'en' ? 'Search offices or barangays...' : 'Maghanap ng opisina o barangay...'" class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    <input aria-label="Search" type="text" x-model="search" x-bind:placeholder="$store.lang.current === 'en' ? 'Search offices or barangays...' : 'Maghanap ng opisina o barangay...'" class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                 </div>
-                <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit overflow-x-auto shrink-0">
-                    <button type="button" @click="tab = 'offices'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto shrink-0">
+                    <button type="button" @click="tab = 'offices'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="building-2" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Opisina" en="Municipal Offices" />
                     </button>
-                    <button type="button" @click="tab = 'barangays'" class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                    <button type="button" @click="tab = 'barangays'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="map-pin" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Barangay" en="Barangays" />
                     </button>
                 </div>
             </div>
-            <p class="text-[11px] text-slate-500" x-show="!loading && !failed" x-text="(tab === 'offices' ? filteredOffices.length + ' ' + ($store.lang.current === 'en' ? 'of ' + offices.length + ' offices' : 'sa ' + offices.length + ' opisina') : filteredBarangays.length + ' ' + ($store.lang.current === 'en' ? 'of ' + barangays.length + ' barangays' : 'sa ' + barangays.length + ' barangay'))"></p>
+            <p class="text-[11px] text-ink-muted" x-show="!loading && !failed" x-text="(tab === 'offices' ? filteredOffices.length + ' ' + ($store.lang.current === 'en' ? 'of ' + offices.length + ' offices' : 'sa ' + offices.length + ' opisina') : filteredBarangays.length + ' ' + ($store.lang.current === 'en' ? 'of ' + barangays.length + ' barangays' : 'sa ' + barangays.length + ' barangay'))"></p>
         </div>
 
         <div x-show="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -102,7 +102,7 @@
         <div x-show="!loading && !failed && tab === 'offices'">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <template x-for="office in filteredOffices" :key="office.name">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard group">
+                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard group">
                         <div class="h-20 bg-gradient-to-br flex items-center px-4 relative overflow-hidden" :class="office.color">
                             <i data-lucide="landmark" class="w-16 h-16 text-white/10 absolute -right-2 -bottom-3 rotate-12"></i>
                             <span class="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-white shrink-0 relative">
@@ -110,13 +110,13 @@
                             </span>
                         </div>
                         <div class="p-4">
-                            <p class="text-sm font-semibold text-navy-900 leading-snug" x-text="office.name"></p>
-                            <p class="text-xs text-slate-500 mt-0.5" x-text="office.head"></p>
-                            <div class="flex items-center gap-2 mt-3.5 pt-3.5 border-t border-slate-100">
-                                <a :href="'tel:' + office.contact.replace(/[^0-9+]/g, '')" class="flex-1 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg px-2.5 py-2 transition-colors">
+                            <p class="text-sm font-semibold text-ink leading-snug" x-text="office.name"></p>
+                            <p class="text-xs text-ink-muted mt-0.5" x-text="office.head"></p>
+                            <div class="flex items-center gap-2 mt-3.5 pt-3.5 border-t border-brand-600/10">
+                                <a :href="'tel:' + office.contact.replace(/[^0-9+]/g, '')" class="flex-1 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl px-2.5 py-2 transition-colors">
                                     <i data-lucide="phone" class="w-3.5 h-3.5"></i><span x-text="office.contact"></span>
                                 </a>
-                                <a :href="'mailto:' + office.email" class="w-9 h-9 shrink-0 inline-flex items-center justify-center text-slate-500 bg-slate-50 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors" :title="office.email">
+                                <a :href="'mailto:' + office.email" class="w-9 h-9 shrink-0 inline-flex items-center justify-center text-ink-muted bg-slate-50 hover:bg-brand-50 hover:text-brand-600 rounded-xl transition-colors" :title="office.email">
                                     <i data-lucide="mail" class="w-3.5 h-3.5"></i>
                                 </a>
                             </div>
@@ -124,8 +124,8 @@
                     </div>
                 </template>
             </div>
-            <div class="flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filteredOffices.length === 0">
-                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+            <div class="flex flex-col items-center text-center py-12 bg-white border border-brand-600/10 rounded-2xl" x-show="filteredOffices.length === 0">
+                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang natagpuang opisina." en="No offices match your search." /></p>
             </div>
         </div>
@@ -138,7 +138,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-center gap-3.5 flex-1 min-w-0">
                         <div class="relative w-14 h-14 shrink-0">
-                            <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-6 h-6"></i></div>
+                            <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-ink-faint"><i data-lucide="landmark" class="w-6 h-6"></i></div>
                             <img
                                 :src="$store.barangay.mine?.seal ? '{{ rtrim(asset(''), '/') }}/' + $store.barangay.mine.seal : ''"
                                 x-show="$store.barangay.mine?.seal" x-on:error="$el.style.display='none'" alt=""
@@ -146,22 +146,22 @@
                             >
                         </div>
                         <div class="min-w-0">
-                            <h3 class="text-base font-semibold text-navy-900 truncate"><x-ui.t fil="Barangay" en="Barangay" /> <span x-text="$store.barangay.mine?.label"></span></h3>
-                            <p class="text-xs text-slate-500 mt-0.5 truncate"><x-ui.t fil="Punong Barangay:" en="Punong Barangay:" /> <span class="font-medium text-slate-700" x-text="$store.barangay.mine?.officials?.punong_barangay"></span></p>
-                            <p class="text-xs text-slate-500 mt-0.5 truncate"><x-ui.t fil="Kalihim:" en="Barangay Secretary:" /> <span class="font-medium text-slate-700" x-text="$store.barangay.mine?.officials?.barangay_secretary"></span></p>
+                            <h3 class="text-base font-semibold text-ink truncate"><x-ui.t fil="Barangay" en="Barangay" /> <span x-text="$store.barangay.mine?.label"></span></h3>
+                            <p class="text-xs text-ink-muted mt-0.5 truncate"><x-ui.t fil="Punong Barangay:" en="Punong Barangay:" /> <span class="font-medium text-slate-700" x-text="$store.barangay.mine?.officials?.punong_barangay"></span></p>
+                            <p class="text-xs text-ink-muted mt-0.5 truncate"><x-ui.t fil="Kalihim:" en="Barangay Secretary:" /> <span class="font-medium text-slate-700" x-text="$store.barangay.mine?.officials?.barangay_secretary"></span></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <a
                             :href="'tel:' + ($store.barangay.mine?.contact || '').replace(/[^0-9+]/g, '')"
                             x-show="$store.barangay.mine?.contact"
-                            class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl px-3.5 py-2.5 transition-colors"
+                            class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-white/60 rounded-2xl px-3.5 py-2.5 transition-colors"
                         ><i data-lucide="phone" class="w-3.5 h-3.5"></i><span x-text="$store.barangay.mine?.contact"></span></a>
                         <button
                             type="button"
                             @click="myBarangayProfile && openBarangayProfile(myBarangayProfile)"
                             x-show="myBarangayProfile?.history"
-                            class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl px-3.5 py-2.5 transition-colors"
+                            class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-white/60 rounded-2xl px-3.5 py-2.5 transition-colors"
                         ><i data-lucide="book-open" class="w-3.5 h-3.5"></i><x-ui.t fil="Kasaysayan" en="History & Officials" /></button>
                         <x-ui.button :href="route('citizen.document-requests')" size="sm" icon="file-text"><x-ui.t fil="Humiling ng Dokyu" en="Request Documents" /></x-ui.button>
                     </div>
@@ -172,7 +172,7 @@
                 <template x-for="b in filteredBarangays" :key="b.name">
                     <button
                         type="button" @click="openBarangayProfile(b)"
-                        class="text-left bg-white rounded-2xl border border-slate-100 shadow-card p-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard flex items-center gap-3.5"
+                        class="text-left surface-glass rounded-[26px] p-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard flex items-center gap-3.5"
                     >
                         <div class="relative w-12 h-12 shrink-0">
                             <div class="absolute inset-0 rounded-full bg-gradient-to-br from-brand-50 to-purple-50 border-2 border-brand-100 flex items-center justify-center text-brand-400">
@@ -185,18 +185,18 @@
                             >
                         </div>
                         <div class="min-w-0 flex-1">
-                            <p class="text-sm font-semibold text-navy-900 truncate" x-text="'Brgy. ' + b.name"></p>
-                            <p class="text-xs text-slate-500 truncate" x-text="b.captain"></p>
+                            <p class="text-sm font-semibold text-ink truncate" x-text="'Brgy. ' + b.name"></p>
+                            <p class="text-xs text-ink-muted truncate" x-text="b.captain"></p>
                             <span class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 mt-1">
                                 <i data-lucide="phone" class="w-3 h-3"></i><span x-text="b.contact"></span>
                             </span>
                         </div>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint shrink-0"></i>
                     </button>
                 </template>
             </div>
-            <div class="flex flex-col items-center text-center py-12 bg-white border border-slate-100 rounded-2xl" x-show="filteredBarangays.length === 0">
-                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+            <div class="flex flex-col items-center text-center py-12 bg-white border border-brand-600/10 rounded-2xl" x-show="filteredBarangays.length === 0">
+                <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang natagpuang barangay." en="No barangays match your search." /></p>
             </div>
         </div>
@@ -213,72 +213,72 @@
             <div x-show="showBarangayProfile" x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                 class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
-                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="relative w-11 h-11 shrink-0">
                             <div class="absolute inset-0 rounded-full bg-gradient-to-br from-brand-50 to-purple-50 border-2 border-brand-100 flex items-center justify-center text-brand-400"><i data-lucide="map-pinned" class="w-5 h-5"></i></div>
                             <img :src="selectedBarangayProfile?.seal ? '{{ rtrim(asset(''), '/') }}/' + selectedBarangayProfile.seal : ''" x-show="selectedBarangayProfile?.seal" x-on:error="$el.style.display='none'" alt="" class="relative w-11 h-11 rounded-full object-cover border-2 border-brand-100">
                         </div>
                         <div class="min-w-0">
-                            <h3 class="font-semibold text-slate-800 truncate" x-text="'Barangay ' + (selectedBarangayProfile?.name ?? '')"></h3>
-                            <p class="text-xs text-slate-500 truncate" x-text="selectedBarangayProfile?.captain"></p>
+                            <h3 class="font-semibold text-ink-body truncate" x-text="'Barangay ' + (selectedBarangayProfile?.name ?? '')"></h3>
+                            <p class="text-xs text-ink-muted truncate" x-text="selectedBarangayProfile?.captain"></p>
                         </div>
                     </div>
-                    <button aria-label="Close" @click="showBarangayProfile = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    <button aria-label="Close" @click="showBarangayProfile = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
 
                 <template x-if="!selectedBarangayProfile?.history && !selectedBarangayProfile?.officialsRoster">
                     <div class="flex flex-col items-center text-center py-14 px-6">
-                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="book-open" class="w-7 h-7"></i></span>
+                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="book-open" class="w-7 h-7"></i></span>
                         <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Wala pang detalyadong profile para sa barangay na ito." en="A detailed profile isn't available for this barangay yet." /></p>
-                        <p class="text-xs text-slate-500 mt-1 max-w-xs"><x-ui.t fil="Ang kasaysayan at listahan ng opisyal ay unti-unting idadagdag." en="History and the officials roster are being added barangay by barangay." /></p>
+                        <p class="text-xs text-ink-muted mt-1 max-w-xs"><x-ui.t fil="Ang kasaysayan at listahan ng opisyal ay unti-unting idadagdag." en="History and the officials roster are being added barangay by barangay." /></p>
                     </div>
                 </template>
 
                 <template x-if="selectedBarangayProfile?.history || selectedBarangayProfile?.officialsRoster">
                     <div>
                         <div class="flex items-center gap-1.5 px-6 pt-4">
-                            <button type="button" @click="profileTab = 'history'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors" :class="profileTab === 'history' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-50'">History</button>
-                            <button type="button" @click="profileTab = 'officials'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors" :class="profileTab === 'officials' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-50'">Officials &amp; Staff</button>
+                            <button type="button" @click="profileTab = 'history'" class="px-3 py-1.5 text-xs font-medium rounded-xl transition-colors" :class="profileTab === 'history' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-white/60'">History</button>
+                            <button type="button" @click="profileTab = 'officials'" class="px-3 py-1.5 text-xs font-medium rounded-xl transition-colors" :class="profileTab === 'officials' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-white/60'">Officials &amp; Staff</button>
                         </div>
 
                         <!-- History Tab -->
                         <div x-show="profileTab === 'history'" class="p-6 pt-4 space-y-5 max-h-[65vh] overflow-y-auto scrollbar-thin">
                             <div>
-                                <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><i data-lucide="sprout" class="w-3.5 h-3.5 text-brand-500"></i>Founding</p>
+                                <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><i data-lucide="sprout" class="w-3.5 h-3.5 text-brand-500"></i>Founding</p>
                                 <p class="text-sm text-slate-600 leading-relaxed" x-text="selectedBarangayProfile?.history?.founding"></p>
                             </div>
                             <div>
-                                <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><i data-lucide="signpost" class="w-3.5 h-3.5 text-brand-500"></i>Renaming to its Present Name</p>
+                                <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><i data-lucide="signpost" class="w-3.5 h-3.5 text-brand-500"></i>Renaming to its Present Name</p>
                                 <p class="text-sm text-slate-600 leading-relaxed" x-text="selectedBarangayProfile?.history?.renaming"></p>
                             </div>
                             <div>
-                                <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5 text-brand-500"></i>Barangay Today</p>
+                                <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5 text-brand-500"></i>Barangay Today</p>
                                 <p class="text-sm text-slate-600 leading-relaxed" x-text="selectedBarangayProfile?.history?.today"></p>
                             </div>
 
                             <div x-show="(selectedBarangayProfile?.history?.leadership || []).length">
-                                <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="landmark" class="w-3.5 h-3.5 text-brand-500"></i>Leadership Timeline</p>
+                                <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="landmark" class="w-3.5 h-3.5 text-brand-500"></i>Leadership Timeline</p>
                                 <div class="space-y-2.5 relative pl-4">
                                     <div class="absolute left-[3px] top-1 bottom-1 w-px bg-slate-200"></div>
                                     <template x-for="(l, li) in (selectedBarangayProfile?.history?.leadership || [])" :key="li">
                                         <div class="relative">
                                             <span class="absolute -left-4 top-1.5 w-2 h-2 rounded-full bg-brand-400"></span>
                                             <p class="text-sm font-medium text-slate-700" x-text="l.name"></p>
-                                            <p class="text-xs text-slate-500" x-text="l.title + ' — ' + l.term"></p>
+                                            <p class="text-xs text-ink-muted" x-text="l.title + ' — ' + l.term"></p>
                                         </div>
                                     </template>
                                 </div>
                             </div>
 
                             <div x-show="(selectedBarangayProfile?.history?.landmarks || []).length">
-                                <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-500"></i>Landmarks &amp; Points of Interest</p>
+                                <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-2 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-500"></i>Landmarks &amp; Points of Interest</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <template x-for="(lm, li) in (selectedBarangayProfile?.history?.landmarks || [])" :key="li">
-                                        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                                        <div class="rounded-xl border-0 surface-pressed p-3">
                                             <p class="text-xs font-semibold text-slate-700" x-text="lm.name"></p>
-                                            <p class="text-[11px] text-slate-500 mt-0.5" x-text="lm.location"></p>
-                                            <p class="text-[11px] text-slate-500 mt-1" x-text="lm.note"></p>
+                                            <p class="text-[11px] text-ink-muted mt-0.5" x-text="lm.location"></p>
+                                            <p class="text-[11px] text-ink-muted mt-1" x-text="lm.note"></p>
                                         </div>
                                     </template>
                                 </div>
@@ -297,9 +297,9 @@
                                             class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
                                         >
                                         <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-slate-800 truncate" x-text="o.name"></p>
+                                            <p class="text-sm font-semibold text-ink-body truncate" x-text="o.name"></p>
                                             <p class="text-xs text-brand-600 font-medium truncate" x-text="o.position"></p>
-                                            <p class="text-[11px] text-slate-500 truncate" x-text="o.committee"></p>
+                                            <p class="text-[11px] text-ink-muted truncate" x-text="o.committee"></p>
                                         </div>
                                     </div>
                                 </template>

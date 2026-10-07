@@ -120,26 +120,26 @@
     >
 
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl p-1 shadow-card w-fit">
-                <button @click="tab = 'faqs'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'faqs' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="circle-question-mark" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tanong" en="FAQs" /></button>
-                <button x-show="hasTutorials" x-cloak @click="tab = 'tutorials'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'tutorials' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Gabay" en="Tutorials" /></button>
-                <button @click="tab = 'support'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="tab === 'support' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50'">
+            <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit">
+                <button @click="tab = 'faqs'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'faqs' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="circle-question-mark" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tanong" en="FAQs" /></button>
+                <button x-show="hasTutorials" x-cloak @click="tab = 'tutorials'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'tutorials' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Gabay" en="Tutorials" /></button>
+                <button @click="tab = 'support'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'support' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                     <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i><x-ui.t fil="Suporta" en="Support" />
-                    <span class="text-[9px] font-semibold bg-white/25 rounded-full px-1.5 py-0.5" :class="tab === 'support' ? 'text-white' : 'bg-slate-100 text-slate-500'" x-text="tickets.length"></span>
+                    <span class="text-[9px] font-semibold bg-white/25 rounded-full px-1.5 py-0.5" :class="tab === 'support' ? 'text-white' : 'bg-slate-100 text-ink-muted'" x-text="tickets.length"></span>
                 </button>
             </div>
         </div>
 
         <!-- FAQs -->
         <div x-show="tab === 'faqs'" class="max-w-3xl">
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4">
+            <div class="surface-glass rounded-[26px] p-3 mb-4">
                 <div class="flex flex-wrap items-center gap-2 mb-2.5">
                     <div class="relative flex-1 min-w-[180px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Faq search"
                             type="text" x-model="faqSearch"
                             x-bind:placeholder="$store.lang.current === 'en' ? 'Search FAQs...' : 'Maghanap ng tanong...'"
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                            class="w-full rounded-2xl border-0 surface-pressed py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
                     </div>
                 </div>
@@ -147,21 +147,21 @@
                     <template x-for="c in ['all', 'Documents', 'Assistance', 'Account', 'Payments', 'Technical']" :key="c">
                         <button
                             @click="faqCategory = c"
-                            class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
-                            :class="faqCategory === c ? 'bg-brand-600 text-white' : 'bg-slate-100/70 text-slate-500 hover:bg-slate-100'"
+                            class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                            :class="faqCategory === c ? 'clay-blue' : 'surface-pressed text-ink-muted hover:bg-slate-100'"
                             x-text="c === 'all' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : ($store.lang.current === 'en' ? c : (categoryNames[c] || c))"
                         ></button>
                     </template>
-                    <span class="text-[11px] text-slate-500 ml-auto" x-text="filteredFaqs.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
+                    <span class="text-[11px] text-ink-muted ml-auto" x-text="filteredFaqs.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
                 </div>
             </div>
 
             <div class="space-y-2.5" x-data="{ activeIndex: 0 }">
                 <template x-for="faq in filteredFaqs" :key="faq.i">
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+                    <div class="surface-glass rounded-[26px] overflow-hidden">
                         <button @click="activeIndex = activeIndex === faq.i ? null : faq.i" class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left">
                             <span class="text-sm font-medium text-slate-700" x-text="faqText(faq, 'q')"></span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 shrink-0 transition-transform duration-[160ms] ease-standard" :class="activeIndex === faq.i && 'rotate-180'"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-ink-muted shrink-0 transition-transform duration-[160ms] ease-standard" :class="activeIndex === faq.i && 'rotate-180'"></i>
                         </button>
                         <div
                             x-show="activeIndex === faq.i"
@@ -171,26 +171,26 @@
                             x-transition:enter-end="opacity-100 translate-y-0"
                             class="px-5 pb-4 -mt-1"
                         >
-                            <p class="text-sm text-slate-500 leading-relaxed" x-text="faqText(faq, 'a')"></p>
+                            <p class="text-sm text-ink-muted leading-relaxed" x-text="faqText(faq, 'a')"></p>
                             <div class="flex items-center gap-2.5 mt-3 pt-3 border-t border-slate-50">
-                                <span class="text-[11px] text-slate-500"><x-ui.t fil="Nakatulong ba ito?" en="Was this helpful?" /></span>
+                                <span class="text-[11px] text-ink-muted"><x-ui.t fil="Nakatulong ba ito?" en="Was this helpful?" /></span>
                                 <button aria-label="Helpful"
                                     @click="markHelpful(faq.i, true)"
-                                    class="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
-                                    :class="helpful[faq.i] === true ? 'bg-emerald-50 text-emerald-600' : 'text-slate-300 hover:bg-slate-50 hover:text-slate-500'"
+                                    class="w-6 h-6 rounded-xl flex items-center justify-center transition-colors"
+                                    :class="helpful[faq.i] === true ? 'bg-emerald-50 text-emerald-600' : 'text-ink-faint hover:bg-white/60 hover:text-ink-muted'"
                                 ><i data-lucide="thumbs-up" class="w-3.5 h-3.5" :style="helpful[faq.i] === true ? 'fill: currentColor' : ''"></i></button>
                                 <button aria-label="Not helpful"
                                     @click="markHelpful(faq.i, false)"
-                                    class="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
-                                    :class="helpful[faq.i] === false ? 'bg-rose-50 text-rose-600' : 'text-slate-300 hover:bg-slate-50 hover:text-slate-500'"
+                                    class="w-6 h-6 rounded-xl flex items-center justify-center transition-colors"
+                                    :class="helpful[faq.i] === false ? 'bg-rose-50 text-rose-600' : 'text-ink-faint hover:bg-white/60 hover:text-ink-muted'"
                                 ><i data-lucide="thumbs-down" class="w-3.5 h-3.5" :style="helpful[faq.i] === false ? 'fill: currentColor' : ''"></i></button>
                             </div>
                         </div>
                     </div>
                 </template>
 
-                <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="filteredFaqs.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-brand-600/10" x-show="filteredFaqs.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang tanong na tumutugma." en="No FAQs match your search." /></p>
                 </div>
             </div>
@@ -198,14 +198,14 @@
 
         <!-- Tutorials -->
         <div x-show="tab === 'tutorials'" x-cloak>
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-card p-3 mb-4">
+            <div class="surface-glass rounded-[26px] p-3 mb-4">
                 <div class="flex flex-wrap items-center gap-2 mb-2.5">
                     <div class="relative flex-1 min-w-[180px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Tutorial search"
                             type="text" x-model="tutorialSearch"
                             x-bind:placeholder="$store.lang.current === 'en' ? 'Search tutorials...' : 'Maghanap ng gabay...'"
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                            class="w-full rounded-2xl border-0 surface-pressed py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                         >
                     </div>
                 </div>
@@ -213,18 +213,18 @@
                     <template x-for="c in ['all', 'Documents', 'Account', 'Assistance', 'Payments']" :key="c">
                         <button
                             @click="tutorialCategory = c"
-                            class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
-                            :class="tutorialCategory === c ? 'bg-brand-600 text-white' : 'bg-slate-100/70 text-slate-500 hover:bg-slate-100'"
+                            class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                            :class="tutorialCategory === c ? 'clay-blue' : 'surface-pressed text-ink-muted hover:bg-slate-100'"
                             x-text="c === 'all' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : c"
                         ></button>
                     </template>
-                    <span class="text-[11px] text-slate-500 ml-auto" x-text="filteredTutorials.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
+                    <span class="text-[11px] text-ink-muted ml-auto" x-text="filteredTutorials.length + ' ' + ($store.lang.current === 'en' ? 'results' : 'resulta')"></span>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="tut in filteredTutorials" :key="tut.i">
-                    <div @click="watchTutorial(tut)" class="group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-[220ms] ease-standard overflow-hidden cursor-pointer"
+                    <div @click="watchTutorial(tut)" class="group surface-glass rounded-[26px] hover:shadow-card-hover transition-all duration-[220ms] ease-standard overflow-hidden cursor-pointer"
         role="button"
         tabindex="0"
         @keydown.enter.prevent="watchTutorial(tut)"
@@ -243,13 +243,13 @@
                                 <i :data-lucide="tut.icon" class="w-3 h-3"></i><span x-text="tut.category"></span>
                             </span>
                             <p class="text-sm font-medium text-slate-700 leading-snug" x-text="tut.title"></p>
-                            <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="tut.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
+                            <p class="text-[11px] text-ink-muted mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="tut.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
                         </div>
                     </div>
                 </template>
 
-                <div class="sm:col-span-2 xl:col-span-3 flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="filteredTutorials.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+                <div class="sm:col-span-2 xl:col-span-3 flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-brand-600/10" x-show="filteredTutorials.length === 0">
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                     <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang gabay na tumutugma." en="No tutorials match your search." /></p>
                 </div>
             </div>
@@ -259,12 +259,12 @@
         <div x-show="tab === 'support'" x-cloak class="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div class="lg:col-span-2 space-y-5">
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-navy-900 mb-4"><x-ui.t fil="Magsumite ng Support Ticket" en="Submit a Support Ticket" /></h3>
+                    <h3 class="text-sm font-semibold text-ink mb-4"><x-ui.t fil="Magsumite ng Support Ticket" en="Submit a Support Ticket" /></h3>
                     <div class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Kategorya" en="Category" /></label>
-                                <select aria-label="Category" x-model="ticketForm.category" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <select aria-label="Category" x-model="ticketForm.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                     <template x-for="c in ticketCategories" :key="c">
                                         <option :value="c" x-text="c"></option>
                                     </template>
@@ -274,7 +274,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Mensahe" en="Message" /></label>
-                            <textarea aria-label="Describe your issue in detail" rows="4" x-model="ticketForm.message" placeholder="Describe your issue in detail" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                            <textarea aria-label="Describe your issue in detail" rows="4" x-model="ticketForm.message" placeholder="Describe your issue in detail" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                         </div>
 
                         <div class="rounded-xl border border-slate-200 p-3">
@@ -289,10 +289,10 @@
                                     <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
                                         <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span x-text="ticketAttachment"></span>
                                     </span>
-                                    <button aria-label="Close" type="button" @click="ticketAttachment = null; ticketFile = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                    <button aria-label="Close" type="button" @click="ticketAttachment = null; ticketFile = null" class="text-ink-faint hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                 </div>
                             </div>
-                            <div x-show="showAttachPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100">
+                            <div x-show="showAttachPicker" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-brand-600/10">
                                 <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-600 hover:underline cursor-pointer">
                                     <i data-lucide="upload" class="w-3.5 h-3.5"></i><x-ui.t fil="Pumili ng larawan o PDF" en="Choose an image or PDF" />
                                     <input type="file" class="sr-only" accept="image/*,application/pdf"
@@ -305,7 +305,7 @@
                             type="button"
                             @click="submitTicket()"
                             :disabled="submitting || !ticketForm.subject || !ticketForm.message"
-                            class="btn-shine inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-white px-5 py-2.5 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-50"
+                            class="btn-shine inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-brand-500 to-brand-600 text-white px-5 py-2.5 text-sm font-medium shadow-card hover:shadow-card-hover transition-all duration-[160ms] ease-standard active:scale-[0.98] disabled:opacity-50"
                         >
                             <i data-lucide="loader-circle" class="w-4 h-4 animate-spin" x-show="submitting" x-cloak></i>
                             <span x-text="$store.lang.current === 'en' ? (submitting ? 'Submitting…' : 'Submit Ticket') : (submitting ? 'Sinusumite…' : 'Isumite ang Ticket')"></span>
@@ -315,15 +315,15 @@
 
                 <x-ui.card padded="false">
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="text-sm font-semibold text-navy-900"><x-ui.t fil="Aking mga Support Ticket" en="My Support Tickets" /></h3>
-                        <span class="text-[11px] text-slate-500" x-text="tickets.length + ' ' + ($store.lang.current === 'en' ? 'total' : 'kabuuan')"></span>
+                        <h3 class="text-sm font-semibold text-ink"><x-ui.t fil="Aking mga Support Ticket" en="My Support Tickets" /></h3>
+                        <span class="text-[11px] text-ink-muted" x-text="tickets.length + ' ' + ($store.lang.current === 'en' ? 'total' : 'kabuuan')"></span>
                     </div>
-                    <div class="divide-y divide-slate-50">
+                    <div class="divide-y divide-brand-600/[.08]">
                         <template x-for="t in tickets" :key="t.ref">
                             <div class="flex items-center justify-between gap-4 px-4 py-3">
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-700 truncate" x-text="t.subject"></p>
-                                    <p class="text-xs text-slate-500 mt-0.5 font-mono" x-text="t.ref + ' · ' + t.time"></p>
+                                    <p class="text-xs text-ink-muted mt-0.5 font-mono" x-text="t.ref + ' · ' + t.time"></p>
                                 </div>
                                 <span
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
@@ -346,8 +346,8 @@
                             </div>
                         </template>
                         <div class="flex flex-col items-center text-center py-10" x-show="tickets.length === 0">
-                            <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="inbox" class="w-4.5 h-4.5"></i></span>
-                            <p class="text-xs text-slate-500"><x-ui.t fil="Wala ka pang support ticket." en="You have no support tickets yet." /></p>
+                            <span class="w-10 h-10 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i data-lucide="inbox" class="w-4.5 h-4.5"></i></span>
+                            <p class="text-xs text-ink-muted"><x-ui.t fil="Wala ka pang support ticket." en="You have no support tickets yet." /></p>
                         </div>
                     </div>
                 </x-ui.card>
@@ -358,14 +358,14 @@
                     <x-ui.card class="flex items-center gap-3.5">
                         <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="ch.color"><i :data-lucide="ch.icon" class="w-5 h-5"></i></span>
                         <div class="min-w-0">
-                            <p class="text-xs text-slate-500" x-text="$store.lang.current === 'en' ? ch.label : (ch.label_fil || ch.label)"></p>
-                            <p class="text-sm font-medium text-navy-900 truncate" x-text="ch.value"></p>
+                            <p class="text-xs text-ink-muted" x-text="$store.lang.current === 'en' ? ch.label : (ch.label_fil || ch.label)"></p>
+                            <p class="text-sm font-medium text-ink truncate" x-text="ch.value"></p>
                         </div>
                     </x-ui.card>
                 </template>
 
                 <x-ui.card class="bg-slate-50/60">
-                    <p class="text-xs text-slate-500 flex items-center gap-1.5 mb-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i><x-ui.t fil="Oras ng Opisina" en="Office Hours" /></p>
+                    <p class="text-xs text-ink-muted flex items-center gap-1.5 mb-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i><x-ui.t fil="Oras ng Opisina" en="Office Hours" /></p>
                     <p class="text-sm text-slate-700 font-medium" x-text="$store.lang.current === 'en' ? officeHours : (officeHoursFil || officeHours)"></p>
                 </x-ui.card>
             </div>
@@ -379,8 +379,8 @@
                     <span class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full mb-2">
                         <i :data-lucide="activeTutorial.icon" class="w-3 h-3"></i><span x-text="activeTutorial.category"></span>
                     </span>
-                    <p class="text-sm font-semibold text-navy-900 leading-snug" x-text="activeTutorial.title"></p>
-                    <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="activeTutorial.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
+                    <p class="text-sm font-semibold text-ink leading-snug" x-text="activeTutorial.title"></p>
+                    <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i><span x-text="activeTutorial.views"></span> <x-ui.t fil="beses napanood" en="views" /></p>
                 </div>
             </template>
 

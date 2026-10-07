@@ -131,8 +131,8 @@
                 'Mark to Release': ['bg-teal-50 text-teal-700 ring-teal-200', 'bg-teal-500'],
                 'Released': ['bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
                 'Completed': ['bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
-                'Cancelled': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-400'],
-                'Archived': ['bg-slate-100 text-slate-500 ring-slate-200', 'bg-slate-300'],
+                'Cancelled': ['bg-slate-100 text-ink-muted ring-slate-200', 'bg-slate-400'],
+                'Archived': ['bg-slate-100 text-ink-muted ring-slate-200', 'bg-slate-300'],
             },
             // Rejected and cancelled requests have their own tab and tile, so the
             // tiles add up to the total (live test 2026-10-07, UX-7).
@@ -439,23 +439,23 @@
         </div>
 
         <div class="flex items-center gap-3 mb-3">
-            <h3 class="text-sm font-semibold text-navy-900"><x-ui.t fil="Aking mga Kahilingan" en="My Requests" /></h3>
+            <h3 class="text-sm font-semibold text-ink"><x-ui.t fil="Aking mga Kahilingan" en="My Requests" /></h3>
             <x-citizen.status-guide />
         </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2.5 mb-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex flex-wrap items-center gap-2.5 min-w-0 max-w-full">
-                    <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 max-w-full overflow-x-auto">
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto">
                         @foreach(['all' => ['Lahat', 'All'], 'active' => ['Isinasagawa', 'In Progress'], 'done' => ['Kumpleto', 'Completed'], 'stopped' => ['Hindi Natuloy', 'Not Completed']] as $key => [$labelFil, $labelEn])
                             <button
                                 @click="tab = '{{ $key }}'"
-                                class="px-3 py-1.5 text-[11px] font-medium rounded-lg transition-colors whitespace-nowrap"
-                                :class="tab === '{{ $key }}' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                                class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
+                                :class="tab === '{{ $key }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                             ><x-ui.t :fil="$labelFil" :en="$labelEn" /></button>
                         @endforeach
                     </div>
-                    <p class="text-[11px] text-slate-500 shrink-0" x-text="filteredRequests.length + ' ' + ($store.lang.current === 'en' ? 'of ' + requests.length + ' requests' : 'sa ' + requests.length + ' kahilingan')"></p>
+                    <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' ' + ($store.lang.current === 'en' ? 'of ' + requests.length + ' requests' : 'sa ' + requests.length + ' kahilingan')"></p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <div x-data="{ open: false, fileTab: 'all', uploading: false,
@@ -535,15 +535,15 @@
                 }" class="contents">
                     <x-ui.button @click="open = true; loadPapeles()" variant="secondary" icon="folder-open" size="sm" class="shrink-0"><x-ui.t fil="Aking mga Dokumento" en="My Documents" /></x-ui.button>
                     <x-ui.modal title="Aking mga Dokumento" titleEn="My Documents" maxWidth="2xl">
-                        <p class="text-sm text-slate-500 mb-4"><x-ui.t fil="Ang mga dokumentong naka-imbak sa iyong Papeles. Maaari mong gamitin muli ang mga ito sa iyong mga kahilingan." en="The documents kept in your Papeles. You can reuse them for your requests." /></p>
+                        <p class="text-sm text-ink-muted mb-4"><x-ui.t fil="Ang mga dokumentong naka-imbak sa iyong Papeles. Maaari mong gamitin muli ang mga ito sa iyong mga kahilingan." en="The documents kept in your Papeles. You can reuse them for your requests." /></p>
 
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                            <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit">
+                            <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit">
                                 @foreach(['all' => 'All', 'IMG' => 'Images', 'PDF' => 'PDF', 'DOCX' => 'DOCX'] as $key => $label)
                                     <button
                                         @click="fileTab = '{{ $key }}'"
-                                        class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
-                                        :class="fileTab === '{{ $key }}' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-xl transition-colors whitespace-nowrap"
+                                        :class="fileTab === '{{ $key }}' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
                                     >{{ $label }}</button>
                                 @endforeach
                             </div>
@@ -555,12 +555,12 @@
                         </div>
 
                         <div x-show="papelesLoading" class="grid grid-cols-2 sm:grid-cols-3 gap-3"><x-ui.skeleton class="h-32" /><x-ui.skeleton class="h-32 opacity-80" /></div>
-                        <p x-show="!papelesLoading && !papeles.length" class="text-sm text-slate-500 py-6 text-center"><x-ui.t fil="Wala ka pang naka-imbak na dokumento." en="You have no saved documents yet." /></p>
+                        <p x-show="!papelesLoading && !papeles.length" class="text-sm text-ink-muted py-6 text-center"><x-ui.t fil="Wala ka pang naka-imbak na dokumento." en="You have no saved documents yet." /></p>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-show="!papelesLoading">
                             <template x-for="doc in papeles" :key="doc.id">
-                                <div x-show="fileTab === 'all' || fileTab === fileKind(doc)" class="rounded-xl border border-slate-100 overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard group">
+                                <div x-show="fileTab === 'all' || fileTab === fileKind(doc)" class="rounded-xl border border-brand-600/10 overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard group">
                                     <div class="relative aspect-square bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
-                                        <i x-show="!['pdf', 'img'].includes(thumbs[doc.id]?.state)" :data-lucide="fileKind(doc) === 'PDF' ? 'file-text' : (fileKind(doc) === 'DOCX' ? 'file-type' : 'image')" class="w-9 h-9 text-slate-500" :class="thumbs[doc.id]?.state === 'loading' && 'animate-pulse'"></i>
+                                        <i x-show="!['pdf', 'img'].includes(thumbs[doc.id]?.state)" :data-lucide="fileKind(doc) === 'PDF' ? 'file-text' : (fileKind(doc) === 'DOCX' ? 'file-type' : 'image')" class="w-9 h-9 text-ink-muted" :class="thumbs[doc.id]?.state === 'loading' && 'animate-pulse'"></i>
                                         <div x-show="thumbs[doc.id]?.state === 'pdf'" x-effect="open && loadThumb(doc, $el)" class="absolute inset-0"></div>
                                         <img x-show="thumbs[doc.id]?.state === 'img'" x-cloak :src="thumbs[doc.id]?.src || ''" :alt="doc.name" class="absolute inset-0 w-full h-full object-cover">
                                         <span class="absolute top-1.5 left-1.5 text-[9px] font-bold bg-white/90 text-slate-600 rounded px-1.5 py-0.5" x-text="fileKind(doc)"></span>
@@ -568,7 +568,7 @@
                                     </div>
                                     <div class="p-2.5 bg-white">
                                         <p class="text-xs font-medium text-slate-700 truncate" x-text="doc.name"></p>
-                                        <p class="text-[10px] text-slate-500 mt-0.5" x-text="formatDay(doc.uploaded_at)"></p>
+                                        <p class="text-[10px] text-ink-muted mt-0.5" x-text="formatDay(doc.uploaded_at)"></p>
                                         <div x-show="doc.downloadable" class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                                             <button type="button" @click="view(doc)" class="text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Buksan" en="Open" /></button>
                                             <button type="button" @click="download(doc)" class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"><i data-lucide="download" class="w-3 h-3"></i><x-ui.t fil="I-download" en="Download" /></button>
@@ -586,10 +586,10 @@
                     {{-- Buksan: the file in a viewer over the list (a photo, or the PDF's pages). --}}
                     <div x-data="{ open: false }" x-on:papeles-view.window="open = true" class="contents">
                         <x-ui.modal title="Tingnan ang Dokumento" titleEn="View Document" maxWidth="lg">
-                            <p class="text-sm font-semibold text-navy-900 mb-3 break-words" x-text="viewing?.name"></p>
+                            <p class="text-sm font-semibold text-ink mb-3 break-words" x-text="viewing?.name"></p>
                             <p x-show="viewFailed" x-cloak class="text-xs text-rose-600 text-center py-8"><x-ui.t fil="Hindi mabuksan ang file. Subukang i-download ito." en="The file could not be opened. Try downloading it." /></p>
                             <div x-data="pdfPreview" x-effect="show(open && docKind(viewing) ? viewUrl : null, '.' + (viewing?.file_type || ''))" x-show="!viewFailed && docKind(viewing)" class="max-h-[65vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
-                                <p x-show="loading || !viewUrl" class="text-xs text-slate-500 text-center py-8"><x-ui.t fil="Binubuksan…" en="Opening…" /></p>
+                                <p x-show="loading || !viewUrl" class="text-xs text-ink-muted text-center py-8"><x-ui.t fil="Binubuksan…" en="Opening…" /></p>
                                 <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8"><x-ui.t fil="Hindi maipakita dito ang file. Subukang i-download ito." en="This file could not be shown here. Try downloading it." /></p>
                                 <img x-show="image" x-cloak :src="image" :alt="viewing?.name || ''" class="block w-full h-auto rounded-lg bg-white">
                                 <div x-ref="pages"></div>
@@ -917,11 +917,11 @@
                                     <i data-lucide="check" class="w-7 h-7"></i>
                                 </span>
                             </div>
-                            <p class="text-sm font-semibold text-navy-900">
+                            <p class="text-sm font-semibold text-ink">
                                 <x-ui.t fil="Naisumite ang Kahilingan!" en="Request Submitted!" />
                                 <span class="inline-block animate-check-pop" style="animation-delay: 0.3s;">🙂</span>
                             </p>
-                            <p class="text-xs text-slate-500 mt-1 max-w-[220px]"><x-ui.t fil="Aabisuhan ka namin kapag na-review na ang iyong kahilingan sa Dokyu." en="We'll notify you once your Dokyu request is reviewed." /></p>
+                            <p class="text-xs text-ink-muted mt-1 max-w-[220px]"><x-ui.t fil="Aabisuhan ka namin kapag na-review na ang iyong kahilingan sa Dokyu." en="We'll notify you once your Dokyu request is reviewed." /></p>
                         </div>
 
                         <div x-show="!submitted">
@@ -936,12 +936,12 @@
                                     <div x-show="i < 3" class="absolute top-4 left-[calc(50%_+_26px)] right-[calc(-50%_+_26px)] h-1 rounded-full transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'"></div>
                                     <span
                                         class="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
-                                        :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'bg-brand-600 text-white shadow-card ring-4 ring-brand-100' : 'bg-slate-100 text-slate-500')"
+                                        :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'clay-blue shadow-card ring-4 ring-brand-100' : 'bg-slate-100 text-ink-muted')"
                                     >
                                         <i data-lucide="check" class="w-4 h-4" x-show="step > i + 1" x-cloak></i>
                                         <i :data-lucide="stepIcons[i]" class="w-4 h-4" x-show="step <= i + 1"></i>
                                     </span>
-                                    <span class="mt-2 text-[11px] max-w-[110px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-navy-900 font-semibold' : 'text-slate-500'" x-text="label"></span>
+                                    <span class="mt-2 text-[11px] max-w-[110px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-ink font-semibold' : 'text-ink-muted'" x-text="label"></span>
                                 </div>
                             </template>
                         </div>
@@ -949,20 +949,20 @@
                         <!-- Step 1: choose document -->
                         <div x-show="step === 1">
                             <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 mb-4">
-                                <div class="flex items-center gap-1.5 bg-slate-100/70 rounded-xl p-1 w-fit shrink-0">
-                                    <button type="button" @click="catalogTab = 'barangay'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="catalogTab === 'barangay' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit shrink-0">
+                                    <button type="button" @click="catalogTab = 'barangay'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="catalogTab === 'barangay' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                                         <i data-lucide="map-pinned" class="w-3.5 h-3.5"></i><x-ui.t fil="Aking Barangay" en="My Barangay" />
                                     </button>
-                                    <button type="button" @click="catalogTab = 'municipal'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5" :class="catalogTab === 'municipal' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                                    <button type="button" @click="catalogTab = 'municipal'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="catalogTab === 'municipal' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                                         <i data-lucide="landmark" class="w-3.5 h-3.5"></i><x-ui.t fil="Munisipyo" en="Municipal" />
                                     </button>
                                 </div>
                                 <div class="relative flex-1">
-                                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    <i data-lucide="search" class="w-3.5 h-3.5 text-ink-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                                     <input aria-label="Search"
                                         type="text" x-model="search"
                                         x-bind:placeholder="$store.lang.current === 'en' ? 'Search documents...' : 'Maghanap ng dokumento...'"
-                                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                        class="w-full rounded-2xl border-0 surface-pressed py-2 pl-8 pr-3 text-xs text-slate-700 placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                     >
                                 </div>
                             </div>
@@ -973,7 +973,7 @@
                                     <div>
                                         <div class="flex items-center gap-3 rounded-xl bg-gradient-to-br from-brand-50 to-white border border-brand-100 px-4 py-3 mb-4">
                                             <div class="relative w-11 h-11 shrink-0">
-                                                <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-slate-300"><i data-lucide="landmark" class="w-5 h-5"></i></div>
+                                                <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-ink-faint"><i data-lucide="landmark" class="w-5 h-5"></i></div>
                                                 <img
                                                     :src="myBarangayInfo.seal ? '{{ rtrim(asset(''), '/') }}/' + myBarangayInfo.seal : null"
                                                     x-show="myBarangayInfo.seal" x-on:error="$el.style.display='none'"
@@ -982,11 +982,11 @@
                                                 >
                                             </div>
                                             <div class="min-w-0">
-                                                <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Barangay" en="Barangay" /> <span x-text="myBarangayInfo.label"></span></p>
-                                                <p class="text-xs text-slate-500"><x-ui.t fil="Punong Barangay:" en="Punong Barangay:" /> <span x-text="myBarangayInfo.officials.punong_barangay"></span></p>
+                                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Barangay" en="Barangay" /> <span x-text="myBarangayInfo.label"></span></p>
+                                                <p class="text-xs text-ink-muted"><x-ui.t fil="Punong Barangay:" en="Punong Barangay:" /> <span x-text="myBarangayInfo.officials.punong_barangay"></span></p>
                                             </div>
                                         </div>
-                                        <p class="text-sm text-slate-500 mb-3"><x-ui.t fil="Mga dokumentong maaari mong hilingin mula sa iyong barangay hall." en="Documents you can request from your own barangay hall." /></p>
+                                        <p class="text-sm text-ink-muted mb-3"><x-ui.t fil="Mga dokumentong maaari mong hilingin mula sa iyong barangay hall." en="Documents you can request from your own barangay hall." /></p>
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                             <template x-for="doc in filteredMyBarangayDocs" :key="doc.i">
                                                 <label
@@ -995,32 +995,32 @@
                                                 >
                                                     <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
                                                     <div class="flex items-center justify-between mb-2.5">
-                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'">
+                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'clay-blue' : 'bg-slate-100 text-ink-muted'">
                                                             <i data-lucide="file-text" class="w-4 h-4"></i>
                                                         </span>
                                                         <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
                                                     </div>
                                                     <p class="text-sm font-medium text-slate-700 leading-snug" x-text="doc.name"></p>
-                                                    <p class="text-xs text-slate-500 mt-1 truncate" x-text="doc.office + ' · ' + doc.days"></p>
+                                                    <p class="text-xs text-ink-muted mt-1 truncate" x-text="doc.office + ' · ' + doc.days"></p>
                                                     <span
                                                         class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
+                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
                                                         x-text="doc.fee"
                                                     ></span>
                                                 </label>
                                             </template>
                                             <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredMyBarangayDocs.length === 0">
-                                                <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
-                                                <p class="text-xs text-slate-500"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
+                                                <span class="w-10 h-10 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
+                                                <p class="text-xs text-ink-muted"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
                                             </div>
                                         </div>
                                     </div>
                                 </template>
                                 <template x-if="!myBarangayInfo">
                                     <div class="flex flex-col items-center text-center py-10 px-4">
-                                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="map-pinned" class="w-7 h-7"></i></span>
+                                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="map-pinned" class="w-7 h-7"></i></span>
                                         <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Hindi pa available online ang mga dokumento ng iyong barangay" en="Your barangay's documents aren't available online yet" /></p>
-                                        <p class="text-xs text-slate-500 mt-1 max-w-xs"><x-ui.t fil="Bisitahin ang iyong Barangay Hall, o pumili ng dokumentong munisipyo sa halip." en="Please visit your Barangay Hall directly, or choose a municipal document instead." /></p>
+                                        <p class="text-xs text-ink-muted mt-1 max-w-xs"><x-ui.t fil="Bisitahin ang iyong Barangay Hall, o pumili ng dokumentong munisipyo sa halip." en="Please visit your Barangay Hall directly, or choose a municipal document instead." /></p>
                                     </div>
                                 </template>
                             </div>
@@ -1030,21 +1030,21 @@
                                 <!-- Category grid (shown first, or when searching) -->
                                 <template x-if="!selectedCategory || search">
                                     <div>
-                                        <p class="text-sm text-slate-500 mb-3" x-show="!search"><x-ui.t fil="Piliin ang uri ng dokumentong kailangan mo." en="Choose the kind of document you need." /></p>
+                                        <p class="text-sm text-ink-muted mb-3" x-show="!search"><x-ui.t fil="Piliin ang uri ng dokumentong kailangan mo." en="Choose the kind of document you need." /></p>
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" x-show="!search">
                                             <template x-for="cat in municipalCategories" :key="cat.name">
                                                 <button
                                                     type="button" @click="chooseCategory(cat.name)"
-                                                    class="flex items-center gap-3 rounded-xl border border-slate-200 p-3.5 text-left hover:border-brand-300 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
+                                                    class="flex items-center gap-3 rounded-2xl border border-slate-200 p-3.5 text-left hover:border-brand-300 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
                                                 >
                                                     <span class="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
                                                         <i :data-lucide="cat.icon" class="w-5 h-5"></i>
                                                     </span>
                                                     <span class="min-w-0 flex-1">
                                                         <span class="block text-sm font-medium text-slate-700 truncate" x-text="cat.name"></span>
-                                                        <span class="block text-xs text-slate-500 mt-0.5" x-text="cat.count + (cat.count === 1 ? ' document' : ' documents')"></span>
+                                                        <span class="block text-xs text-ink-muted mt-0.5" x-text="cat.count + (cat.count === 1 ? ' document' : ' documents')"></span>
                                                     </span>
-                                                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
+                                                    <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint shrink-0"></i>
                                                 </button>
                                             </template>
                                         </div>
@@ -1058,23 +1058,23 @@
                                                 >
                                                     <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
                                                     <div class="flex items-center justify-between mb-2.5">
-                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'">
+                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'clay-blue' : 'bg-slate-100 text-ink-muted'">
                                                             <i data-lucide="landmark" class="w-4 h-4"></i>
                                                         </span>
                                                         <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
                                                     </div>
                                                     <p class="text-sm font-medium text-slate-700 leading-snug" x-text="doc.name"></p>
-                                                    <p class="text-xs text-slate-500 mt-1 truncate" x-text="doc.category + ' · ' + doc.office_short"></p>
+                                                    <p class="text-xs text-ink-muted mt-1 truncate" x-text="doc.category + ' · ' + doc.office_short"></p>
                                                     <span
                                                         class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
+                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
                                                         x-text="doc.fee"
                                                     ></span>
                                                 </label>
                                             </template>
                                             <div class="sm:col-span-2 flex flex-col items-center text-center py-8" x-show="filteredMunicipalDocs.length === 0">
-                                                <span class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
-                                                <p class="text-xs text-slate-500"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
+                                                <span class="w-10 h-10 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i data-lucide="search-x" class="w-4.5 h-4.5"></i></span>
+                                                <p class="text-xs text-ink-muted"><x-ui.t fil="Walang dokumentong tumutugma." en="No documents match your search." /></p>
                                             </div>
                                         </div>
                                     </div>
@@ -1083,11 +1083,11 @@
                                 <!-- Documents within the chosen category -->
                                 <template x-if="selectedCategory && !search">
                                     <div>
-                                        <button type="button" @click="backToCategories()" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-brand-600 mb-3 transition-colors">
+                                        <button type="button" @click="backToCategories()" class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-brand-600 mb-3 transition-colors">
                                             <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
                                             <x-ui.t fil="Bumalik sa mga kategorya" en="Back to categories" />
                                         </button>
-                                        <p class="text-sm font-semibold text-navy-900 mb-3" x-text="selectedCategory"></p>
+                                        <p class="text-sm font-semibold text-ink mb-3" x-text="selectedCategory"></p>
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                             <template x-for="doc in municipalDocsInCategory" :key="doc.i">
                                                 <label
@@ -1096,16 +1096,16 @@
                                                 >
                                                     <input type="radio" name="doc_type" class="sr-only" :checked="selectedDoc === doc.i" @change="selectDoc(doc.i)">
                                                     <div class="flex items-center justify-between mb-2.5">
-                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'">
+                                                        <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-[160ms] ease-standard" :class="selectedDoc === doc.i ? 'clay-blue' : 'bg-slate-100 text-ink-muted'">
                                                             <i data-lucide="landmark" class="w-4 h-4"></i>
                                                         </span>
                                                         <i data-lucide="circle-check" class="w-4 h-4 text-brand-500" x-show="selectedDoc === doc.i" x-cloak></i>
                                                     </div>
                                                     <p class="text-sm font-medium text-slate-700 leading-snug" x-text="doc.name"></p>
-                                                    <p class="text-xs text-slate-500 mt-1 truncate" x-text="doc.office_short + ' · ' + doc.days"></p>
+                                                    <p class="text-xs text-ink-muted mt-1 truncate" x-text="doc.office_short + ' · ' + doc.days"></p>
                                                     <span
                                                         class="inline-block w-fit mt-2.5 text-[11px] font-semibold rounded-full px-2.5 py-1"
-                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-navy-900'"
+                                                        :class="doc.fee === 'Free' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-ink'"
                                                         x-text="doc.fee"
                                                     ></span>
                                                 </label>
@@ -1120,8 +1120,8 @@
                         <div x-show="step === 2" x-cloak>
                             <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start mb-6">
                                 <div class="lg:col-span-3">
-                                    <p class="text-sm font-semibold text-navy-900 mb-1"><x-ui.t fil="Impormasyon ng Aplikante" en="Applicant Information" /></p>
-                                    <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Naka-prefill mula sa iyong resident profile — i-edit kung kailangan." en="Pre-filled from your resident profile — edit if needed." /></p>
+                                    <p class="text-sm font-semibold text-ink mb-1"><x-ui.t fil="Impormasyon ng Aplikante" en="Applicant Information" /></p>
+                                    <p class="text-xs text-ink-muted mb-3"><x-ui.t fil="Naka-prefill mula sa iyong resident profile — i-edit kung kailangan." en="Pre-filled from your resident profile — edit if needed." /></p>
                                     <div class="grid grid-cols-2 gap-3 mb-3">
                                         <x-ui.input name="req_first_name" label="First Name" x-model="applicant.firstName" />
                                         <x-ui.input name="req_last_name" label="Last Name" x-model="applicant.lastName" />
@@ -1138,18 +1138,18 @@
                                 <!-- Live request summary -->
                                 <div class="lg:col-span-2">
                                     <div class="lg:sticky lg:top-0 rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50/60 to-white p-4">
-                                        <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-brand-500"></i><x-ui.t fil="Buod ng Kahilingan" en="Request Summary" /></p>
+                                        <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-brand-500"></i><x-ui.t fil="Buod ng Kahilingan" en="Request Summary" /></p>
                                         <div class="flex items-center gap-2.5 mb-3">
-                                            <span class="w-10 h-10 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4.5 h-4.5"></i></span>
+                                            <span class="w-10 h-10 rounded-lg clay-blue flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4.5 h-4.5"></i></span>
                                             <div class="min-w-0">
-                                                <p class="text-sm font-medium text-navy-900 leading-snug" x-text="docs[selectedDoc]?.name"></p>
-                                                <p class="text-xs text-slate-500 truncate" x-text="docs[selectedDoc]?.office"></p>
+                                                <p class="text-sm font-medium text-ink leading-snug" x-text="docs[selectedDoc]?.name"></p>
+                                                <p class="text-xs text-ink-muted truncate" x-text="docs[selectedDoc]?.office"></p>
                                             </div>
                                         </div>
                                         <div class="space-y-1.5 text-xs border-t border-brand-100/70 pt-3">
-                                            <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Bayarin" en="Fee" /></span><span class="font-semibold text-navy-900" x-text="docs[selectedDoc]?.fee"></span></div>
-                                            <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Oras ng Pagproseso" en="Processing Time" /></span><span class="font-medium text-slate-600" x-text="docs[selectedDoc]?.days"></span></div>
-                                            <div class="flex items-center justify-between"><span class="text-slate-500"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length + ' attached'"></span></div>
+                                            <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Bayarin" en="Fee" /></span><span class="font-semibold text-ink" x-text="docs[selectedDoc]?.fee"></span></div>
+                                            <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Oras ng Pagproseso" en="Processing Time" /></span><span class="font-medium text-slate-600" x-text="docs[selectedDoc]?.days"></span></div>
+                                            <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length + ' attached'"></span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1158,19 +1158,19 @@
                             <!-- Full-width: generic purpose OR structured fields (barangay documents) — sits below the two-column grid so it isn't squeezed beside the sticky Request Summary -->
                             <div class="mb-6" x-show="!(docs[selectedDoc]?.fields?.length)">
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Layunin" en="Purpose" /></label>
-                                <textarea x-model="formData.purpose" aria-label="e.g. Employment requirement" rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                <textarea x-model="formData.purpose" aria-label="e.g. Employment requirement" rows="2" placeholder="e.g. Employment requirement" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                             </div>
 
                             <div class="mb-6" x-show="docs[selectedDoc]?.fields?.length" x-cloak>
-                                <p class="text-sm font-semibold text-navy-900 mb-1" x-text="docs[selectedDoc]?.certTitle || ''"></p>
-                                <p class="text-xs text-slate-500 mb-3" x-show="docs[selectedDoc]?.certSubtitle" x-text="docs[selectedDoc]?.certSubtitle"></p>
+                                <p class="text-sm font-semibold text-ink mb-1" x-text="docs[selectedDoc]?.certTitle || ''"></p>
+                                <p class="text-xs text-ink-muted mb-3" x-show="docs[selectedDoc]?.certSubtitle" x-text="docs[selectedDoc]?.certSubtitle"></p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     <template x-for="f in (docs[selectedDoc]?.fields || [])" :key="f.key">
                                         <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2 lg:col-span-3' : ''">
                                             <template x-if="f.type === 'derived_age'">
                                                 <div x-init="$watch(() => formData[f.derived_from], v => formData[f.key] = computeAge(v)); formData[f.key] = computeAge(formData[f.derived_from])">
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label"></label>
-                                                    <div class="w-full rounded-xl border border-slate-200 bg-slate-100/70 py-2.5 px-4 text-sm text-slate-500" x-text="(formData[f.key] ?? null) !== null ? formData[f.key] + ' years old' : 'Set birthdate first'"></div>
+                                                    <div class="w-full rounded-xl border border-slate-200 surface-pressed py-2.5 px-4 text-sm text-ink-muted" x-text="(formData[f.key] ?? null) !== null ? formData[f.key] + ' years old' : 'Set birthdate first'"></div>
                                                 </div>
                                             </template>
                                             <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date' || f.type === 'tel'">
@@ -1180,14 +1180,14 @@
                                                         :type="f.type" x-model="formData[f.key]"
                                                     :inputmode="f.type === 'tel' ? 'numeric' : null" :maxlength="f.type === 'tel' ? 11 : null" :placeholder="f.type === 'tel' ? '09XXXXXXXXX' : null"
                                                     @input="if (f.type === 'tel') formData[f.key] = window.phMobile.clean($event.target.value)"
-                                                        class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                                        class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                                                     >
                                                 </div>
                                             </template>
                                             <template x-if="f.type === 'select'">
                                                 <div>
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                    <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2.5 px-4 text-sm text-slate-700 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                    <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                         <option value="">—</option>
                                                         <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                     </select>
@@ -1205,24 +1205,24 @@
                                                         </template>
                                                     </div>
                                                     <div class="mt-2" x-show="f.allowOther">
-                                                        <input aria-label="Others (please specify)" type="text" x-model="otherPurposeText[f.key]" placeholder="Others (please specify)" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-2 px-3.5 text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                        <input aria-label="Others (please specify)" type="text" x-model="otherPurposeText[f.key]" placeholder="Others (please specify)" class="w-full rounded-2xl border-0 surface-pressed py-2 px-3.5 text-xs text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                     </div>
                                                 </div>
                                             </template>
                                         </div>
                                     </template>
                                 </div>
-                                <p class="text-[11px] text-slate-500 mt-3" x-show="docs[selectedDoc]?.validity" x-text="docs[selectedDoc]?.validity"></p>
+                                <p class="text-[11px] text-ink-muted mt-3" x-show="docs[selectedDoc]?.validity" x-text="docs[selectedDoc]?.validity"></p>
                             </div>
 
                             <div class="flex items-center justify-between mb-1">
-                                <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Mga Requirement" en="Requirements" /></p>
-                                <p class="text-[11px] font-medium text-slate-500" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length"></p>
+                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Mga Requirement" en="Requirements" /></p>
+                                <p class="text-[11px] font-medium text-ink-muted" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length"></p>
                             </div>
                             <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
                                 <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length ? Math.min(1, Object.keys(attachments).filter(k => attachments[k]).length / (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length) : 0) * 100) + '%'"></div>
                             </div>
-                            <p class="text-xs text-slate-500 mb-3"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
+                            <p class="text-xs text-ink-muted mb-3"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                 <template x-for="(req, i) in docs[selectedDoc]?.requirements || []" :key="i">
                                     <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
@@ -1237,18 +1237,18 @@
                                                 <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium whitespace-nowrap">
                                                     <i data-lucide="circle-check" class="w-3.5 h-3.5"></i><span class="truncate max-w-[140px]" x-text="attachments[i]?.name"></span>
                                                 </span>
-                                                <button aria-label="Close" type="button" @click="attachments[i] = null" class="text-slate-300 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                                                <button aria-label="Close" type="button" @click="attachments[i] = null" class="text-ink-faint hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                                             </div>
                                         </div>
-                                        <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
+                                        <div x-show="showFilePicker === i" x-cloak x-transition class="mt-2.5 pt-2.5 border-t border-brand-600/10 space-y-2">
                                             <label class="inline-flex items-center gap-1.5 text-[11px] font-medium text-white bg-brand-600 rounded-lg px-2.5 py-1.5 hover:bg-brand-700 transition-colors cursor-pointer">
                                                 <i data-lucide="upload" class="w-3.5 h-3.5"></i><x-ui.t fil="Mag-upload ng file" en="Upload a file" />
                                                 <input type="file" class="sr-only" accept="image/*,application/pdf" @change="attachFile(i, $event.target.files[0]); $event.target.value = ''">
                                             </label>
                                             <div x-show="papeles.length" class="space-y-1">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500"><x-ui.t fil="O gamitin mula sa Papeles" en="Or reuse from Papeles" /></p>
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted"><x-ui.t fil="O gamitin mula sa Papeles" en="Or reuse from Papeles" /></p>
                                                 <template x-for="doc in papeles" :key="doc.id">
-                                                    <button type="button" @click="attachPapeles(i, doc)" class="w-full text-left text-[11px] text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg px-2 py-1 truncate" x-text="doc.name"></button>
+                                                    <button type="button" @click="attachPapeles(i, doc)" class="w-full text-left text-[11px] text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded-xl px-2 py-1 truncate" x-text="doc.name"></button>
                                                 </template>
                                             </div>
                                         </div>
@@ -1264,8 +1264,8 @@
                                     <span class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-3">
                                         <i data-lucide="badge-check" class="w-6 h-6"></i>
                                     </span>
-                                    <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Walang Kailangang Bayaran" en="No Payment Required" /></p>
-                                    <p class="text-xs text-slate-500 mt-1 max-w-[260px]" x-text="docs[selectedDoc]?.name + ($store.lang.current === 'en' ? ' is issued free of charge.' : ' ay ibinibigay nang libre.')"></p>
+                                    <p class="text-sm font-semibold text-ink"><x-ui.t fil="Walang Kailangang Bayaran" en="No Payment Required" /></p>
+                                    <p class="text-xs text-ink-muted mt-1 max-w-[260px]" x-text="docs[selectedDoc]?.name + ($store.lang.current === 'en' ? ' is issued free of charge.' : ' ay ibinibigay nang libre.')"></p>
                                 </div>
                             </template>
 
@@ -1277,19 +1277,19 @@
                                                 <p class="text-xs text-slate-600" x-text="feeInputLabel(name) + ': ₱' + (feeInputValue(name) ?? 0).toLocaleString('en-PH') + ($store.lang.current === 'en' ? ' (from the details you gave)' : ' (mula sa detalyeng inilagay mo)')"></p>
                                             </template>
                                             <div>
-                                                <p class="text-sm font-semibold text-navy-900"><x-ui.t fil="Detalye para sa bayarin" en="Fee details" /></p>
-                                                <p class="text-xs text-slate-500 mt-0.5"><x-ui.t fil="Kinukuwenta ang bayarin mula sa halagang ilalagay mo. Kukumpirmahin ito ng opisina." en="The fee is computed from the amount you declare. The office confirms it during review." /></p>
+                                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Detalye para sa bayarin" en="Fee details" /></p>
+                                                <p class="text-xs text-ink-muted mt-0.5"><x-ui.t fil="Kinukuwenta ang bayarin mula sa halagang ilalagay mo. Kukumpirmahin ito ng opisina." en="The fee is computed from the amount you declare. The office confirms it during review." /></p>
                                             </div>
                                             <template x-for="name in feeInputsAsked" :key="name">
                                                 <label class="block">
                                                     <span class="text-xs font-medium text-slate-700" x-text="feeInputLabel(name)"></span>
                                                     <input type="text" inputmode="decimal" x-model="feeInputs[name]" :aria-label="feeInputLabel(name)" placeholder="50,000"
-                                                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none">
+                                                        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                                                 </label>
                                             </template>
                                         </div>
-                                        <p class="text-sm font-semibold text-navy-900 mb-2"><x-ui.t fil="Paano magbayad" en="How to pay" /></p>
-                                        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
+                                        <p class="text-sm font-semibold text-ink mb-2"><x-ui.t fil="Paano magbayad" en="How to pay" /></p>
+                                        <div class="rounded-xl border-0 surface-pressed p-4 space-y-2 text-xs text-slate-600 leading-relaxed">
                                             <p class="flex items-start gap-2"><i data-lucide="landmark" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i><x-ui.t fil="Babayaran mo ang bayarin nang personal sa tanggapang nakalista, at bibigyan ka roon ng opisyal na resibo." en="You pay the fee in person at the office listed, which gives you an official receipt." /></p>
                                             <p class="flex items-start gap-2"><i data-lucide="calculator" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i><x-ui.t fil="Kinukuwenta ang eksaktong halaga kapag naisumite mo na ang kahilingan, at makikita mo ito sa Subaybayan." en="The exact amount is assessed when you submit, and shows on Track Request." /></p>
                                             <p class="flex items-start gap-2" x-show="serviceMeta[docs[selectedDoc]?.key]?.policy_blocked"><i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i><x-ui.t fil="Hinihintay pa ang pagpapasya ng LGU sa bayarin ng serbisyong ito; kukumpirmahin ito ng opisina." en="The LGU has not yet ruled on this service's fee; the office will confirm it." /></p>
@@ -1300,29 +1300,29 @@
                                     <!-- Invoice -->
                                     <div class="lg:col-span-2 order-1 lg:order-2">
                                         <div class="lg:sticky lg:top-0 rounded-xl border border-slate-200 overflow-hidden">
-                                            <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
-                                                <p class="text-xs font-semibold text-navy-900 uppercase tracking-wide"><x-ui.t fil="Buod ng Invoice" en="Invoice Summary" /></p>
+                                            <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-brand-600/10">
+                                                <p class="text-xs font-semibold text-ink uppercase tracking-wide"><x-ui.t fil="Buod ng Invoice" en="Invoice Summary" /></p>
                                             </div>
                                             <div class="px-4 py-3.5 text-sm">
-                                                <p class="text-[10px] font-mono text-slate-500 mb-2">Municipality of Esperanza</p>
+                                                <p class="text-[10px] font-mono text-ink-muted mb-2">Municipality of Esperanza</p>
                                                 <div class="flex items-center justify-between py-1.5">
-                                                    <span class="text-slate-500"><x-ui.t fil="Sisingilin" en="Bill To" /></span>
+                                                    <span class="text-ink-muted"><x-ui.t fil="Sisingilin" en="Bill To" /></span>
                                                     <span class="text-slate-700 font-medium" x-text="applicant.firstName + ' ' + applicant.lastName"></span>
                                                 </div>
                                                 <div class="flex items-center justify-between py-1.5">
-                                                    <span class="text-slate-500"><x-ui.t fil="Item" en="Item" /></span>
+                                                    <span class="text-ink-muted"><x-ui.t fil="Item" en="Item" /></span>
                                                     <span class="text-slate-700 font-medium text-right" x-text="docs[selectedDoc]?.name"></span>
                                                 </div>
                                                 <div class="flex items-center justify-between py-1.5">
-                                                    <span class="text-slate-500"><x-ui.t fil="Kokolekta na Opisina" en="Collecting Office" /></span>
+                                                    <span class="text-ink-muted"><x-ui.t fil="Kokolekta na Opisina" en="Collecting Office" /></span>
                                                     <span class="text-slate-700 font-medium" x-text="docs[selectedDoc]?.office"></span>
                                                 </div>
                                                 <div class="border-t border-dashed border-slate-200 my-2"></div>
                                                 <div class="flex items-center justify-between py-1">
-                                                    <span class="text-sm font-semibold text-navy-900 inline-flex items-center gap-1">
+                                                    <span class="text-sm font-semibold text-ink inline-flex items-center gap-1">
                                                         <x-ui.t fil="Kabuuang Babayaran" en="Total Due" />
                                                         <x-ui.tooltip text="This is the official rate set by municipal ordinance — the same amount you'd pay at the counter.">
-                                                            <i data-lucide="info" class="w-3 h-3 text-slate-300 hover:text-slate-500 cursor-help"></i>
+                                                            <i data-lucide="info" class="w-3 h-3 text-ink-faint hover:text-ink-muted cursor-help"></i>
                                                         </x-ui.tooltip>
                                                     </span>
                                                     <span class="text-base font-bold text-brand-700" x-text="docs[selectedDoc]?.fee"></span>
@@ -1336,35 +1336,35 @@
 
                         <!-- Step 4: review & submit -->
                         <div x-show="step === 4" x-cloak>
-                            <p class="text-sm font-semibold text-navy-900 mb-3"><x-ui.t fil="I-review ang Iyong Kahilingan" en="Review Your Request" /></p>
+                            <p class="text-sm font-semibold text-ink mb-3"><x-ui.t fil="I-review ang Iyong Kahilingan" en="Review Your Request" /></p>
                             <div class="rounded-xl border border-slate-200 overflow-hidden mb-5">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 bg-slate-50/60">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-brand-600/[.08] bg-slate-50/60">
                                     <div class="flex items-center gap-2.5 px-4 py-3">
                                         <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="file-text" class="w-4 h-4"></i></span>
                                         <div class="min-w-0">
-                                            <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Dokumento" en="Document" /></p>
-                                            <p class="text-sm font-medium text-navy-900 truncate" x-text="docs[selectedDoc]?.name || ''"></p>
+                                            <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Dokumento" en="Document" /></p>
+                                            <p class="text-sm font-medium text-ink truncate" x-text="docs[selectedDoc]?.name || ''"></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2.5 px-4 py-3">
                                         <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                         <div class="min-w-0">
-                                            <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Opisinang Magpoproseso" en="Processing Office" /></p>
-                                            <p class="text-sm font-medium text-navy-900 truncate" x-text="docs[selectedDoc]?.office || ''"></p>
+                                            <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Opisinang Magpoproseso" en="Processing Office" /></p>
+                                            <p class="text-sm font-medium text-ink truncate" x-text="docs[selectedDoc]?.office || ''"></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2.5 px-4 py-3">
                                         <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                         <div class="min-w-0">
-                                            <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Aplikante" en="Applicant" /></p>
-                                            <p class="text-sm font-medium text-navy-900 truncate" x-text="applicant.firstName + ' ' + applicant.lastName"></p>
+                                            <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Aplikante" en="Applicant" /></p>
+                                            <p class="text-sm font-medium text-ink truncate" x-text="applicant.firstName + ' ' + applicant.lastName"></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2.5 px-4 py-3">
                                         <span class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="wallet" class="w-4 h-4"></i></span>
                                         <div class="min-w-0">
-                                            <p class="text-[10px] text-slate-500 uppercase tracking-wide"><x-ui.t fil="Bayad" en="Payment" /></p>
-                                            <p class="text-sm font-medium text-navy-900 truncate">
+                                            <p class="text-[10px] text-ink-muted uppercase tracking-wide"><x-ui.t fil="Bayad" en="Payment" /></p>
+                                            <p class="text-sm font-medium text-ink truncate">
                                                 <template x-if="docs[selectedDoc]?.fee === 'Free'"><span><x-ui.t fil="Hindi aplikable" en="Not applicable" /></span></template>
                                                 <template x-if="docs[selectedDoc]?.fee !== 'Free'"><span x-text="$store.lang.current === 'en' ? 'Pay at the office (' + docs[selectedDoc]?.fee + ')' : 'Bayaran sa opisina (' + docs[selectedDoc]?.fee + ')'"></span></template>
                                             </p>
@@ -1374,7 +1374,7 @@
                             </div>
 
                             <div class="mb-5" x-show="docs[selectedDoc]?.fields?.length" x-cloak>
-                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                                <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2">
                                     <x-ui.t fil="Preview" en="Preview" />
                                 </p>
                                 <template x-if="docs[selectedDoc]?.previewType === 'barangay'">
@@ -1406,23 +1406,23 @@
                                 </template>
                             </div>
 
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2"><x-ui.t fil="Mga Nakakabit na Requirement" en="Attached Requirements" /></p>
+                            <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2"><x-ui.t fil="Mga Nakakabit na Requirement" en="Attached Requirements" /></p>
                             <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 mb-5">
                                 <template x-for="(req, i) in docs[selectedDoc]?.requirements || []" :key="i">
                                     <li class="flex items-center gap-2 text-xs">
-                                        <i data-lucide="circle-check" class="w-3.5 h-3.5 shrink-0" :class="attachments[i] ? 'text-emerald-500' : 'text-slate-300'"></i>
-                                        <span :class="attachments[i] ? 'text-slate-600' : 'text-slate-500'" class="truncate" x-text="req"></span>
+                                        <i data-lucide="circle-check" class="w-3.5 h-3.5 shrink-0" :class="attachments[i] ? 'text-emerald-500' : 'text-ink-faint'"></i>
+                                        <span :class="attachments[i] ? 'text-slate-600' : 'text-ink-muted'" class="truncate" x-text="req"></span>
                                     </li>
                                 </template>
                             </ul>
 
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3"><x-ui.t fil="Ano ang Susunod" en="What Happens Next" /></p>
-                            <div class="flex items-center rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-4">
+                            <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3"><x-ui.t fil="Ano ang Susunod" en="What Happens Next" /></p>
+                            <div class="flex items-center rounded-xl border border-brand-600/10 bg-slate-50/60 px-4 py-4">
                                 <template x-for="(step_label, i) in docs[selectedDoc]?.process || []" :key="i">
                                     <div class="flex-1 flex items-center">
                                         <div class="flex flex-col items-center gap-1.5 text-center">
-                                            <span class="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-sm" x-text="i + 1"></span>
-                                            <span class="text-[10px] text-slate-500 max-w-[80px] leading-tight" x-text="step_label"></span>
+                                            <span class="w-7 h-7 rounded-full clay-blue flex items-center justify-center text-xs font-semibold shrink-0" x-text="i + 1"></span>
+                                            <span class="text-[10px] text-ink-muted max-w-[80px] leading-tight" x-text="step_label"></span>
                                         </div>
                                         <div class="flex-1 h-0.5 bg-brand-200 -mt-5" x-show="i < (docs[selectedDoc]?.process || []).length - 1"></div>
                                     </div>
@@ -1471,12 +1471,12 @@
              2026-10-07, BUG-4). --}}
         <div class="sm:hidden space-y-2.5">
             <template x-for="req in filteredRequests" :key="'card-' + req.ref">
-                <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+                <div class="surface-glass rounded-[26px] p-4">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <p class="font-mono text-[11px] text-slate-500" x-text="req.ref"></p>
-                            <p class="text-sm font-medium text-slate-800 mt-0.5 break-words" x-text="req.type"></p>
-                            <p class="text-[11px] text-slate-500 mt-0.5" x-show="req.submitted" x-text="($store.lang.current === 'en' ? 'Submitted ' : 'Isinumite ') + req.submitted"></p>
+                            <p class="font-mono text-[11px] text-ink-muted" x-text="req.ref"></p>
+                            <p class="text-sm font-medium text-ink-body mt-0.5 break-words" x-text="req.type"></p>
+                            <p class="text-[11px] text-ink-muted mt-0.5" x-show="req.submitted" x-text="($store.lang.current === 'en' ? 'Submitted ' : 'Isinumite ') + req.submitted"></p>
                         </div>
                         <span
                             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
@@ -1487,7 +1487,7 @@
                         </span>
                     </div>
                     <button type="button" @click="openProgress(req)"
-                        class="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-medium text-brand-700 hover:bg-slate-50">
+                        class="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white py-2 text-xs font-medium text-brand-700 hover:bg-white/60">
                         <i data-lucide="search" class="w-3.5 h-3.5"></i><x-ui.t fil="Subaybayan" en="Track" />
                     </button>
                 </div>
@@ -1496,27 +1496,27 @@
 
         <x-ui.table class="hidden sm:block">
             <thead>
-                <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Reference" en="Reference" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Uri ng Dokumento" en="Document Type" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell"><x-ui.t fil="Opisina" en="Office" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell"><x-ui.t fil="Layunin" en="Purpose" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden sm:table-cell"><x-ui.t fil="Isinumite" en="Submitted" /></th>
-                    <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"><x-ui.t fil="Status" en="Status" /></th>
+                <tr class="bg-well/70">
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted"><x-ui.t fil="Reference" en="Reference" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted"><x-ui.t fil="Uri ng Dokumento" en="Document Type" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden lg:table-cell"><x-ui.t fil="Opisina" en="Office" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell"><x-ui.t fil="Layunin" en="Purpose" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden sm:table-cell"><x-ui.t fil="Isinumite" en="Submitted" /></th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted"><x-ui.t fil="Status" en="Status" /></th>
                     <th class="px-4 py-2.5"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-50">
+            <tbody class="divide-y divide-brand-600/[.08]">
                 <template x-for="req in filteredRequests" :key="req.ref">
-                    <tr class="hover:bg-slate-50/70 transition-colors cursor-pointer" @click="openProgress(req)"
+                    <tr class="hover:bg-white/60 transition-colors cursor-pointer" @click="openProgress(req)"
         tabindex="0"
         @keydown.enter.prevent="openProgress(req)"
         @keydown.space.prevent="openProgress(req)">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="req.ref"></td>
+                        <td class="px-4 py-3 font-mono text-xs text-ink-muted" x-text="req.ref"></td>
                         <td class="px-4 py-3 text-slate-700 font-medium" x-text="req.type"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden lg:table-cell" x-text="req.office"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden md:table-cell" x-text="req.purpose"></td>
-                        <td class="px-4 py-3 text-slate-500 hidden sm:table-cell" x-text="req.submitted"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden lg:table-cell" x-text="req.office"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-text="req.purpose"></td>
+                        <td class="px-4 py-3 text-ink-muted hidden sm:table-cell" x-text="req.submitted"></td>
                         <td class="px-4 py-3">
                             <span
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"
@@ -1539,8 +1539,8 @@
 
         <div x-show="requestsLoading" class="space-y-2 mt-3"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
         <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="$store.lang.current === 'en' ? 'Could not load your requests.' : 'Hindi ma-load ang iyong mga kahilingan.'" retryExpr="loadRequests()" :retryable="true" /></div>
-        <div class="flex flex-col items-center text-center py-10 bg-white border border-slate-100 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
-            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
+        <div class="flex flex-col items-center text-center py-10 bg-white border border-brand-600/10 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
+            <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kahilingang tumutugma dito." en="No requests in this view." /></p>
         </div>
 
@@ -1549,9 +1549,9 @@
             <x-ui.modal title="Subaybayan ang Kahilingan" titleEn="Track Request" maxWidth="md">
                 <template x-if="selectedRequest">
                     <div>
-                        <p class="text-xs font-mono text-slate-500" x-text="selectedRequest.ref"></p>
-                        <p class="text-sm font-semibold text-navy-900" x-text="selectedRequest.type"></p>
-                        <p class="text-xs text-slate-500 mt-0.5" x-text="selectedRequest.purpose"></p>
+                        <p class="text-xs font-mono text-ink-muted" x-text="selectedRequest.ref"></p>
+                        <p class="text-sm font-semibold text-ink" x-text="selectedRequest.type"></p>
+                        <p class="text-xs text-ink-muted mt-0.5" x-text="selectedRequest.purpose"></p>
 
                         <!-- Progress stepper -->
                         <div class="flex items-center mt-6 mb-2" x-show="!['Rejected', 'Cancelled'].includes(selectedRequest.status)">
@@ -1560,12 +1560,12 @@
                                     <div class="flex flex-col items-center gap-1.5 text-center">
                                         <span
                                             class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-[300ms] ease-standard"
-                                            :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-500 text-white' : (stepIndex(selectedRequest.status) === i ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500')"
+                                            :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-500 text-white' : (stepIndex(selectedRequest.status) === i ? 'clay-blue' : 'bg-slate-100 text-ink-muted')"
                                         >
                                             <i data-lucide="check" class="w-3 h-3" x-show="stepIndex(selectedRequest.status) > i" x-cloak></i>
                                             <span x-show="stepIndex(selectedRequest.status) <= i" x-text="i + 1"></span>
                                         </span>
-                                        <span class="text-[9px] max-w-[60px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-navy-900 font-medium' : 'text-slate-500'" x-text="label"></span>
+                                        <span class="text-[9px] max-w-[60px] leading-tight" :class="stepIndex(selectedRequest.status) === i ? 'text-ink font-medium' : 'text-ink-muted'" x-text="label"></span>
                                     </div>
                                     <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="stepIndex(selectedRequest.status) > i ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < stepOrder.length - 1"></div>
                                 </div>
@@ -1615,13 +1615,13 @@
                         {{-- At every stage, so the resident sees which documents the office accepted
                              (Esperanza bugs QA, 2026-10-06); Attach shows only where a file can still go. --}}
                         <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="(selectedRequest.requirements || []).length" x-cloak>
-                            <p class="text-xs font-semibold text-navy-900 mb-2"><x-ui.t fil="Aking mga Dokumento para dito" en="My documents for this request" /></p>
+                            <p class="text-xs font-semibold text-ink mb-2"><x-ui.t fil="Aking mga Dokumento para dito" en="My documents for this request" /></p>
                             <div class="space-y-2">
                                 <template x-for="req in (selectedRequest.requirements || [])" :key="req.key">
-                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-2.5">
+                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-brand-600/10 p-2.5">
                                         <div class="min-w-0">
                                             <p class="text-xs font-medium text-slate-700 truncate"><span x-text="req.name"></span> <span x-show="req.status !== 'Approved'" class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req.name)" x-text="reqKindLabel(req.name)"></span></p>
-                                            <p class="text-[11px] truncate" :class="req.file ? 'text-slate-500' : 'text-amber-600'" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Nothing to upload: the office does this with you' : 'Walang ia-upload: gagawin ito ng opisina kasama ka') : ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file'))"></p>
+                                            <p class="text-[11px] truncate" :class="req.file ? 'text-ink-muted' : 'text-amber-600'" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Nothing to upload: the office does this with you' : 'Walang ia-upload: gagawin ito ng opisina kasama ka') : ($store.lang.current === 'en' ? 'No file attached yet' : 'Wala pang nakakabit na file'))"></p>
                                             {{-- A rejected document says why, and takes a replacement below. --}}
                                             <p x-show="req.status === 'Rejected' && (req.reject_reason || req.remarks)" class="text-[11px] text-rose-600 whitespace-normal" x-text="($store.lang.current === 'en' ? 'Reason: ' : 'Dahilan: ') + [req.reject_reason, req.remarks].filter((v, i, a) => v && a.indexOf(v) === i).join(' — ')"></p>
                                         </div>
@@ -1633,7 +1633,7 @@
                                             <span x-text="req._busy ? '…' : ($store.lang.current === 'en' ? 'Upload replacement' : 'Mag-upload ng kapalit')"></span>
                                             <input type="file" class="sr-only" accept="image/*,application/pdf" @change="replaceRequirementFile(req, $event.target.files[0]); $event.target.value = ''">
                                         </label>
-                                        <span x-show="!req.attachable && !(req.replaceable && req.status === 'Rejected')" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : (req.status === 'Rejected' ? 'text-rose-600 font-semibold' : 'text-slate-500')" x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : (req.status === 'Rejected' ? ($store.lang.current === 'en' ? 'Not accepted' : 'Hindi tinanggap') : req.status)"></span>
+                                        <span x-show="!req.attachable && !(req.replaceable && req.status === 'Rejected')" class="shrink-0 text-[11px]" :class="req.status === 'Approved' ? 'text-emerald-600 font-semibold' : (req.status === 'Rejected' ? 'text-rose-600 font-semibold' : 'text-ink-muted')" x-text="req.status === 'Approved' ? ($store.lang.current === 'en' ? 'Accepted' : 'Tinanggap') : (req.status === 'Rejected' ? ($store.lang.current === 'en' ? 'Not accepted' : 'Hindi tinanggap') : req.status)"></span>
                                     </div>
                                 </template>
                             </div>
@@ -1644,13 +1644,13 @@
                         <div class="rounded-xl border border-slate-200 mt-5 p-3.5" x-show="selectedRequest.releaseProof" x-cloak>
                             <div class="flex items-center justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-navy-900"><x-ui.t fil="Patunay ng Pag-release" en="Proof of release" /></p>
-                                    <p class="text-[11px] text-slate-500 truncate" x-text="selectedRequest.releaseProof?.name"></p>
+                                    <p class="text-xs font-semibold text-ink"><x-ui.t fil="Patunay ng Pag-release" en="Proof of release" /></p>
+                                    <p class="text-[11px] text-ink-muted truncate" x-text="selectedRequest.releaseProof?.name"></p>
                                 </div>
                                 <button type="button" class="shrink-0 text-[11px] font-medium text-brand-600 hover:underline" @click="proofOpen = !proofOpen" x-text="proofOpen ? lang('Hide', 'Itago') : lang('View', 'Tingnan')"></button>
                             </div>
                             <div x-show="proofOpen" x-cloak x-data="pdfPreview" x-effect="show(proofOpen && selectedRequest.releaseProof ? selectedRequest.releaseProof.url : null, (selectedRequest.releaseProof?.mime || '') + ' ' + (selectedRequest.releaseProof?.name || ''))" class="mt-3 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
-                                <p x-show="loading" class="text-xs text-slate-500 text-center py-8"><x-ui.t fil="Binubuksan…" en="Opening…" /></p>
+                                <p x-show="loading" class="text-xs text-ink-muted text-center py-8"><x-ui.t fil="Binubuksan…" en="Opening…" /></p>
                                 <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8"><x-ui.t fil="Hindi maipakita ang file. Isara at buksan muli ang kahilingan." en="The file could not be shown. Close and reopen the request." /></p>
                                 <img x-show="image" x-cloak :src="image" alt="Proof of release" class="block w-full h-auto rounded-lg bg-white">
                                 <div x-ref="pages"></div>
@@ -1670,10 +1670,10 @@
                                     <div class="rounded-xl border bg-white p-3" :class="{ 'border-emerald-200': req.status === 'Approved', 'border-rose-200': req.status === 'Rejected', 'border-amber-200': req.status === 'Flagged for Replacement', 'border-sky-200': req.status === 'Resubmitted', 'border-slate-200': req.status === 'Submitted' || req.status === 'Not submitted' }">
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-2.5 min-w-0">
-                                                <i data-lucide="file-text" class="w-4 h-4 text-slate-500 shrink-0"></i>
+                                                <i data-lucide="file-text" class="w-4 h-4 text-ink-muted shrink-0"></i>
                                                 <div class="min-w-0">
                                                     <p class="text-xs font-medium text-slate-700 truncate" x-text="req.name"></p>
-                                                    <p class="text-[11px] text-slate-500 truncate" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Done at the office' : 'Gagawin sa opisina') : ($store.lang.current === 'en' ? 'Not yet submitted' : 'Wala pang naisumite'))"></p>
+                                                    <p class="text-[11px] text-ink-muted truncate" x-text="req.file || (reqKind(req.name) === 'office' ? ($store.lang.current === 'en' ? 'Done at the office' : 'Gagawin sa opisina') : ($store.lang.current === 'en' ? 'Not yet submitted' : 'Wala pang naisumite'))"></p>
                                                 </div>
                                             </div>
                                             <span
@@ -1706,21 +1706,21 @@
                         <x-citizen.request-fee />
 
                         <div class="grid grid-cols-2 gap-3 mt-5">
-                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><x-ui.t fil="Inaasahang Petsa ng Release" en="Expected Release" /></p>
-                                <p class="text-sm font-semibold text-navy-900" x-text="expectedRelease"></p>
+                            <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5">
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-1"><x-ui.t fil="Inaasahang Petsa ng Release" en="Expected Release" /></p>
+                                <p class="text-sm font-semibold text-ink" x-text="expectedRelease"></p>
                             </div>
-                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1"><x-ui.t fil="Isinumite" en="Submitted" /></p>
-                                <p class="text-sm font-semibold text-navy-900" x-text="selectedRequest.submitted"></p>
+                            <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5">
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-1"><x-ui.t fil="Isinumite" en="Submitted" /></p>
+                                <p class="text-sm font-semibold text-ink" x-text="selectedRequest.submitted"></p>
                             </div>
                         </div>
 
                         <div class="rounded-xl border border-slate-200 p-3.5 mt-3">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
-                            <p class="text-sm font-medium text-navy-900" x-text="selectedRequest.office"></p>
-                            <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i><span x-text="pickupInfo?.address"></span></p>
-                            <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="phone" class="w-3.5 h-3.5 text-slate-300 shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
+                            <p class="text-sm font-medium text-ink" x-text="selectedRequest.office"></p>
+                            <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.address"></span></p>
+                            <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="phone" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
                         </div>
                     </div>
                 </template>
@@ -1743,7 +1743,7 @@
                 <template x-if="selectedRequest && documentReady">
                     <div>
                         <div id="dp-print-area">
-                            <div class="flex items-center justify-between mb-4 text-[11px] text-slate-500 dp-no-print">
+                            <div class="flex items-center justify-between mb-4 text-[11px] text-ink-muted dp-no-print">
                                 <span x-text="selectedRequest.ref"></span>
                                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium ring-1 ring-inset"
                                       :class="selectedRequest.status === 'Released' ? 'bg-cyan-50 text-cyan-700 ring-cyan-200' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'"
@@ -1777,7 +1777,7 @@
                                 />
                             </template>
                         </div>
-                        <p class="text-[11px] text-slate-500 text-center mt-4 dp-no-print">
+                        <p class="text-[11px] text-ink-muted text-center mt-4 dp-no-print">
                             <x-ui.t fil="Kopya para sa iyong sanggunian. Ang pirmadong kopya ay kinukuha sa opisina." en="Reference copy. The signed copy is released at the office." />
                         </p>
                     </div>

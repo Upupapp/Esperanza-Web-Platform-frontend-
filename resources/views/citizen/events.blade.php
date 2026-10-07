@@ -78,11 +78,11 @@
         class="animate-fade-up grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-5 items-start"
     >
         <!-- Calendar -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+        <div class="surface-glass rounded-[26px] p-4">
             <!-- Legend: fixed at the very top so it never shifts position -->
-            <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 mb-3 pb-3 border-b border-slate-100" x-show="categories.length">
+            <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 mb-3 pb-3 border-b border-brand-600/10" x-show="categories.length">
                 <template x-for="c in categories" :key="c.name">
-                    <span class="flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <span class="flex items-center gap-1.5 text-[11px] text-ink-muted">
                         <span class="w-2 h-2 rounded-full shrink-0" :class="c.color"></span>
                         <span x-text="c.name"></span>
                     </span>
@@ -90,12 +90,12 @@
             </div>
 
             <div class="flex items-center justify-between mb-3">
-                <p class="text-sm font-semibold text-navy-900" x-text="monthLabel"></p>
+                <p class="text-sm font-semibold text-ink" x-text="monthLabel"></p>
                 <div class="flex items-center gap-1">
-                    <button aria-label="Previous month" type="button" @click="prevMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button aria-label="Previous month" type="button" @click="prevMonth()" class="w-7 h-7 rounded-xl flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-left" class="w-4 h-4"></i>
                     </button>
-                    <button aria-label="Next month" type="button" @click="nextMonth()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                    <button aria-label="Next month" type="button" @click="nextMonth()" class="w-7 h-7 rounded-xl flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-slate-700 transition-colors">
                         <i data-lucide="chevron-right" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -103,7 +103,7 @@
 
             <div class="grid grid-cols-7 mb-1.5">
                 <template x-for="(d, i) in ['S','M','T','W','T','F','S']" :key="i">
-                    <p class="text-center text-[10px] font-semibold uppercase text-slate-500" x-text="d"></p>
+                    <p class="text-center text-[10px] font-semibold uppercase text-ink-muted" x-text="d"></p>
                 </template>
             </div>
 
@@ -114,8 +114,8 @@
                             type="button"
                             @click="selectDay(cell)"
                             :disabled="!cell"
-                            class="aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 text-xs transition-all duration-[160ms] ease-standard relative"
-                            :class="!cell ? 'pointer-events-none' : (selectedDate === cell.key ? 'bg-brand-600 text-white font-semibold shadow-sm' : (eventsOn(cell.key).length ? 'text-navy-900 font-medium hover:bg-brand-50' : 'text-slate-500 hover:bg-slate-50'))"
+                            class="aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs transition-all duration-[160ms] ease-standard relative"
+                            :class="!cell ? 'pointer-events-none' : (selectedDate === cell.key ? 'clay-blue font-semibold' : (eventsOn(cell.key).length ? 'text-ink font-medium hover:bg-brand-50' : 'text-ink-muted hover:bg-white/60'))"
                         >
                             <span x-show="cell" x-text="cell?.day"></span>
                             <span class="flex items-center gap-0.5" x-show="cell && eventsOn(cell.key).length">
@@ -128,8 +128,8 @@
                 </div>
             </template>
 
-            <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-100" x-show="selectedDate">
-                <p class="text-[11px] text-slate-500" x-text="$store.lang.current === 'en' ? 'Showing events for the selected date' : 'Ipinapakita ang mga kaganapan sa napiling petsa'"></p>
+            <div class="flex items-center justify-between mt-3 pt-3 border-t border-brand-600/10" x-show="selectedDate">
+                <p class="text-[11px] text-ink-muted" x-text="$store.lang.current === 'en' ? 'Showing events for the selected date' : 'Ipinapakita ang mga kaganapan sa napiling petsa'"></p>
                 <button type="button" @click="selectedDate = null" class="text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="I-clear" en="Clear" /></button>
             </div>
         </div>
@@ -137,11 +137,11 @@
         <!-- Event list -->
         <div class="space-y-3.5 min-w-0">
             <div class="flex items-center justify-between" x-show="$store.barangay.mine">
-                <p class="text-xs text-slate-500" x-text="selectedEvents.length + ' ' + ($store.lang.current === 'en' ? 'events' : 'kaganapan')"></p>
+                <p class="text-xs text-ink-muted" x-text="selectedEvents.length + ' ' + ($store.lang.current === 'en' ? 'events' : 'kaganapan')"></p>
                 <button
                     type="button" @click="myBarangayOnly = !myBarangayOnly"
-                    class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-lg px-2.5 py-1.5 transition-colors"
-                    :class="myBarangayOnly ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'"
+                    class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-xl px-2.5 py-1.5 transition-colors"
+                    :class="myBarangayOnly ? 'clay-blue' : 'bg-slate-100 text-ink-muted hover:bg-slate-200'"
                 ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Aking Barangay Lang" en="My Barangay Only" /></button>
             </div>
 
@@ -165,22 +165,22 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <p class="text-sm font-semibold text-navy-900" x-text="event.title"></p>
+                                        <p class="text-sm font-semibold text-ink" x-text="event.title"></p>
                                         <span class="text-[11px] font-medium text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2 py-0.5" x-text="event.category"></span>
                                         <span
                                             class="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5 inline-flex items-center gap-1"
                                             x-show="event.barangay && event.barangay === $store.citizenSession.account?.barangay"
                                         ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Sa Aking Barangay" en="In My Barangay" /></span>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                    <p class="text-xs text-ink-muted mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
                                         <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i><span x-text="event.time"></span></span>
                                         <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="event.venue"></span></span>
                                     </p>
                                 </div>
                                 <button
                                     type="button"
-                                    class="shrink-0 hidden sm:inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition-all duration-[160ms] ease-standard active:scale-[0.97]"
-                                    :class="reminders[event.key + event.title] ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-white text-slate-700 border border-slate-200 shadow-card hover:bg-slate-50 hover:border-slate-300'"
+                                    class="shrink-0 hidden sm:inline-flex items-center justify-center gap-2 rounded-2xl px-3.5 py-2 text-xs font-medium transition-all duration-[160ms] ease-standard active:scale-[0.97]"
+                                    :class="reminders[event.key + event.title] ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-white text-slate-700 border border-slate-200 shadow-card hover:bg-white/60 hover:border-slate-300'"
                                     @click="
                                         reminders[event.key + event.title] = !reminders[event.key + event.title];
                                         $dispatch('toast', { message: reminders[event.key + event.title] ? ($store.lang.current === 'en' ? 'We will remind you before this event starts.' : 'Paalalahanan ka namin bago magsimula ang kaganapang ito.') : ($store.lang.current === 'en' ? 'Reminder cancelled.' : 'Nakansela ang paalala.'), variant: reminders[event.key + event.title] ? 'success' : 'info' });
@@ -194,8 +194,8 @@
                         </x-ui.card>
                     </template>
 
-                    <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-slate-100" x-show="selectedEvents.length === 0">
-                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-4"><i data-lucide="calendar-x" class="w-7 h-7"></i></span>
+                    <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-brand-600/10" x-show="selectedEvents.length === 0">
+                        <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="calendar-x" class="w-7 h-7"></i></span>
                         <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kaganapan sa buwang ito." en="No events this month." /></p>
                     </div>
                 </div>
