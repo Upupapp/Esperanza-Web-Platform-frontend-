@@ -198,6 +198,17 @@ class LiveTestFixesTest extends TestCase
         $this->assertMatchesRegularExpression('/@keyframes fade-up \{\s*from \{[^}]*\}\s*to \{ opacity: 1; transform: none; \}/', $css);
     }
 
+    /** 2026-10-07: the request wizards' step indicator is equal columns joined centre to centre. */
+    public function test_the_request_wizards_step_indicator_is_even(): void
+    {
+        foreach (['document-requests' => 'grid grid-cols-4 mb-8', 'assistance-requests' => "tulongFree ? 'grid-cols-3' : 'grid-cols-4'"] as $page => $grid) {
+            $view = $this->source("resources/views/citizen/{$page}.blade.php");
+            $this->assertStringContainsString($grid, $view, $page);
+            $this->assertStringContainsString('absolute top-4 left-[calc(50%_+_26px)] right-[calc(-50%_+_26px)] h-1', $view, $page);
+            $this->assertStringNotContainsString('mx-1.5 -mt-6', $view, $page);
+        }
+    }
+
     /** UX-4, UX-13, UX-14, UX-5: one word per thing; counts that agree; offices spelled out; one close button. */
     public function test_staff_pages_use_one_word_per_thing(): void
     {

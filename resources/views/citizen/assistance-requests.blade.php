@@ -506,21 +506,23 @@
                     </div>
 
                     <div x-show="!submitted">
-                    <!-- Step indicator -->
-                    <div class="flex items-center mb-8 px-1">
+                    {{-- Step indicator: equal columns, each circle centred in its own, the label
+                         below, and each line drawn from one circle's centre to the next. It was a
+                         row sized by its labels: the lines came out of different lengths, the last
+                         step left a gap, and a one-line label ("Bayad") dropped its circle below
+                         the others (2026-10-07). --}}
+                    <div class="grid mb-8" :class="tulongFree ? 'grid-cols-3' : 'grid-cols-4'">
                         <template x-for="(label, i) in ($store.lang.current === 'en' ? stepLabels.en : stepLabels.fil)" :key="i">
-                            <div class="flex-1 flex items-center" x-show="!(i === 2 && tulongFree)">
-                                <div class="flex flex-col items-center gap-2 text-center">
-                                    <span
-                                        class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
-                                        :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-slate-500')"
-                                    >
-                                        <i data-lucide="check" class="w-4 h-4" x-show="step > i + 1" x-cloak></i>
-                                        <i :data-lucide="stepIcons[i]" class="w-4 h-4" x-show="step <= i + 1"></i>
-                                    </span>
-                                    <span class="text-[11px] max-w-[100px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-navy-900 font-semibold' : 'text-slate-500'" x-text="label"></span>
-                                </div>
-                                <div class="flex-1 h-1 rounded-full mx-1.5 -mt-6 transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < 3"></div>
+                            <div class="relative flex flex-col items-center text-center px-1" x-show="!(i === 2 && tulongFree)">
+                                <div x-show="i < 3" class="absolute top-4 left-[calc(50%_+_26px)] right-[calc(-50%_+_26px)] h-1 rounded-full transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'"></div>
+                                <span
+                                    class="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-[300ms] ease-standard"
+                                    :class="step > i + 1 ? 'bg-emerald-500 text-white shadow-sm' : (step === i + 1 ? 'bg-purple-600 text-white shadow-card ring-4 ring-purple-100' : 'bg-slate-100 text-slate-500')"
+                                >
+                                    <i data-lucide="check" class="w-4 h-4" x-show="step > i + 1" x-cloak></i>
+                                    <i :data-lucide="stepIcons[i]" class="w-4 h-4" x-show="step <= i + 1"></i>
+                                </span>
+                                <span class="mt-2 text-[11px] max-w-[110px] leading-tight transition-colors duration-[300ms] ease-standard" :class="step === i + 1 ? 'text-navy-900 font-semibold' : 'text-slate-500'" x-text="label"></span>
                             </div>
                         </template>
                     </div>
