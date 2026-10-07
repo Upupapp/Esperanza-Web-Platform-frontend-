@@ -88,10 +88,10 @@
         <div class="relative flex-1 min-w-48">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
             <input aria-label="Search by name, ref or category" type="text" x-model="resourceSearch" placeholder="Search by name, ref or category…"
-                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         </div>
         <select aria-label="Resource category filter" x-model="resourceCategoryFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Categories</option>
             <template x-for="cat in resourceCategories()" :key="cat"><option :value="cat" x-text="cat"></option></template>
         </select>
@@ -203,12 +203,12 @@
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="deploy-quantity">Quantity</label>
                 <input id="deploy-quantity" type="number" min="1" x-model="deployForm.quantity" placeholder="e.g. 2"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
 
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="deploy-incident">Incident (optional — only for deploy)</label>
-                <select id="deploy-incident" x-model="deployForm.incident_id" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <select id="deploy-incident" x-model="deployForm.incident_id" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="">— General standby, not tied to an incident —</option>
                     <template x-for="inc in resourceIncidentsOpen" :key="inc.id">
                         <option :value="inc.id" x-text="inc.ref + ' — ' + inc.type + ', ' + inc.barangay + ' (' + inc.status + ')'"></option>
@@ -336,12 +336,12 @@
             <div class="col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-name">Resource Name <span class="text-rose-500">*</span></label>
                 <input id="resource-name" type="text" x-model="resourceForm.name" placeholder="e.g. MDRRMO Rescue Boat C"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-category">Category <span class="text-rose-500">*</span></label>
                 <input id="resource-category" type="text" x-model="resourceForm.category" list="resource-category-suggestions" placeholder="e.g. Boats"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 <datalist id="resource-category-suggestions">
                     <template x-for="cat in resourceCategories()" :key="cat"><option :value="cat"></option></template>
                 </datalist>
@@ -349,21 +349,21 @@
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-quantity">Quantity <span class="text-rose-500">*</span></label>
                 <input id="resource-quantity" type="number" min="0" x-model="resourceForm.quantity" placeholder="e.g. 2"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-unit">Unit</label>
                 <input id="resource-unit" type="text" x-model="resourceForm.unit" placeholder="e.g. units, tanks, boxes"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-readiness">Readiness</label>
                 <input id="resource-readiness" type="text" x-model="resourceForm.readiness" placeholder="e.g. Ready"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div class="col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="resource-barangay">Barangay (optional — leave blank for a municipal-wide asset)</label>
-                <select id="resource-barangay" x-model="resourceForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <select id="resource-barangay" x-model="resourceForm.barangay" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="">— None —</option>
                     @foreach($barangays as $brgy)
                         <option>{{ $brgy }}</option>

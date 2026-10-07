@@ -93,15 +93,15 @@
         <div class="relative flex-1 min-w-48">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
             <input aria-label="Search by beneficiary, ref or item" type="text" x-model="reliefSearch" placeholder="Search by beneficiary, ref or item…"
-                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         </div>
         <select aria-label="Operation filter" x-model="reliefOperationFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Operations</option>
             <template x-for="op in reliefOperations()" :key="op"><option :value="op" x-text="op"></option></template>
         </select>
         <select aria-label="Relief status filter" x-model="reliefStatusFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Statuses</option>
             <option value="Submitted">Submitted</option>
             <option value="Released">Released</option>
@@ -193,7 +193,7 @@
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-operation">Operation <span class="text-rose-500">*</span></label>
                 <input id="dist-operation" type="text" x-model="distributionForm.operation" list="relief-operation-suggestions" placeholder="e.g. SWM-2026-07"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 <datalist id="relief-operation-suggestions">
                     <template x-for="op in reliefOperations()" :key="op"><option :value="op"></option></template>
                 </datalist>
@@ -201,11 +201,11 @@
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-beneficiary">Beneficiary Name <span class="text-rose-500">*</span></label>
                 <input id="dist-beneficiary" type="text" x-model="distributionForm.beneficiary_name" placeholder="Household head or individual name"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-barangay">Barangay <span class="text-rose-500">*</span></label>
-                <select id="dist-barangay" x-model="distributionForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <select id="dist-barangay" x-model="distributionForm.barangay" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="">Select barangay…</option>
                     @foreach($barangays as $brgy)
                         <option>{{ $brgy }}</option>
@@ -215,12 +215,12 @@
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-item">Item <span class="text-rose-500">*</span></label>
                 <input id="dist-item" type="text" x-model="distributionForm.item" placeholder="e.g. Family Food Pack"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-quantity">Quantity</label>
                 <input id="dist-quantity" type="number" min="1" x-model="distributionForm.quantity" placeholder="1"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
         </div>
 

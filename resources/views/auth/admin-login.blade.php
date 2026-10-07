@@ -109,7 +109,7 @@
         </div>
 
         <h1 class="text-xl font-semibold text-ink mt-3 animate-fade-up" style="animation-delay: 40ms">LGU Personnel Login</h1>
-        <p class="text-ink-muted text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="step === 'scope' ? 'First, select your assigned access scope.' : (step === 'mfa' ? 'Enter the 6-digit code sent to confirm it is you.' : 'Signing in to ' + (scope === 'Municipal' ? 'Municipal-wide access.' : 'Brgy. ' + scope + '.'))"></p>
+        <p class="text-ink-muted text-sm mt-1 animate-fade-up" style="animation-delay: 60ms" x-text="step === 'scope' ? 'First, select your assigned access scope.' : (step === 'mfa' ? 'Enter the 6-digit code sent to confirm it is you.' : (!scope ? 'Sign in with your Employee ID and password.' : 'Signing in to ' + (scope === 'Municipal' ? 'Municipal-wide access.' : 'Brgy. ' + scope + '.')))"></p>
 
         <!-- Step 1: choose access scope (informational only — the server returns the account's real scope) -->
         <div x-show="step === 'scope'" x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="mt-5 animate-fade-up" style="animation-delay: 90ms">
@@ -126,7 +126,7 @@
 
             <div class="relative mb-2.5">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input aria-label="Search your barangay" type="text" x-model="scopeSearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-navy-300 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard">
+                <input aria-label="Search your barangay" type="text" x-model="scopeSearch" placeholder="Search your barangay..." class="w-full pl-9 pr-3 py-2.5 text-sm rounded-2xl focus:border-navy-300 focus:ring-4 focus:ring-navy-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-brand-100">
             </div>
             <div class="grid grid-cols-2 gap-1.5 max-h-56 overflow-y-auto scrollbar-thin pr-0.5">
                 <template x-for="b in filteredScopes" :key="b">

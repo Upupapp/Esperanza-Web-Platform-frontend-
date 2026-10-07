@@ -73,7 +73,7 @@
             <x-ui.stat-card label="Tulong" labelEn="Tulong" valueBind="tulongTotalCount" icon="hand-heart" color="purple" :delay="120" />
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+        <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                     <button @click="tab = 'all'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'all' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Lahat" en="All" /></button>

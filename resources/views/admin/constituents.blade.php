@@ -676,7 +676,7 @@
         {{-- ── Registry tab ────────────────────────────────────────── --}}
         <div x-show="tab === 'registry'">
             {{-- Unified toolbar: view switcher on top, search/filters/actions below --}}
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+            <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
                 <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
                     <button @click="view='individuals';clearFilters()"
                             class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
@@ -704,10 +704,10 @@
                         <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                         <input aria-label="Search" x-model="search" type="text"
                                :placeholder="view==='individuals'?'Search residents...':view==='families'?'Search families...':'Search households...'"
-                               class="w-52 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                               class="w-52 sm:w-64 pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                     </div>
                     <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter"
-                            class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         <option value="">All Barangays</option>
                         @foreach($barangayOptions as $b)
                             <option value="{{ $b }}">{{ $b }}</option>
@@ -719,7 +719,7 @@
                     </span>
                     <div x-show="view==='individuals'" class="flex items-center gap-2">
                         <select aria-label="Verification filter" x-model="verificationFilter"
-                                class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                             <option value="">All Verification</option>
                             <option>Verified</option>
                             <option>Partially Verified</option>
@@ -727,7 +727,7 @@
                             <option>Unverified</option>
                         </select>
                         <select aria-label="Tag filter" x-model="tagFilter"
-                                class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                             <option value="">All Tags</option>
                             <option value="senior">Senior Citizen</option>
                             <option value="osca">OSCA Member</option>

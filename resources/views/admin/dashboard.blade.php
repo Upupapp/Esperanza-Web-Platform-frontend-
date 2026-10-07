@@ -220,7 +220,7 @@
 
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong') || $store.session.can('constituents')" x-cloak>
                 <x-ui.card>
-                    <div class="flex items-center justify-between gap-3 mb-5">
+                    <div class="flex flex-col items-start gap-3 mb-5">
                         <h3 class="text-lg font-extrabold text-ink leading-tight">Open requests by barangay</h3>
                         <div x-show="$store.session.can('dokyu') && $store.session.can('tulong')" class="inline-flex p-1 rounded-xl surface-pressed-sm shrink-0" role="tablist" aria-label="Module">
                             <button type="button" role="tab" x-show="$store.session.can('dokyu')" :aria-selected="brgyTab === 'dokyu'" @click="brgyTab = 'dokyu'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'dokyu' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Dokyu</button>
@@ -270,15 +270,12 @@
 
                 <x-ui.card x-show="$store.session.can('sakuna')" x-cloak>
                     <div class="flex items-center justify-between gap-3 mb-4">
-                        <h3 class="flex items-center gap-2.5 text-lg font-extrabold text-ink">
-                            Sakuna alerts
-                            <span class="min-w-[26px] h-[26px] px-2 rounded-full clay-gold grid place-items-center text-[12.5px] font-extrabold" x-text="(dash?.sakuna?.alerts || []).length"></span>
-                        </h3>
-                        <a href="{{ route('admin.sakuna.alerts') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View all alerts</a>
+                        <h3 class="text-lg font-extrabold text-ink">Sakuna alerts</h3>
+                        <span class="min-w-[26px] h-[26px] px-2 rounded-full clay-gold grid place-items-center text-[12.5px] font-extrabold" x-text="(dash?.sakuna?.alerts || []).length"></span>
                     </div>
                     <div class="space-y-3">
                         <template x-for="alert in (dash?.sakuna?.alerts || [])" :key="alert.ref">
-                            <a href="{{ route('admin.sakuna.alerts') }}" class="flex items-center gap-3 rounded-[18px] bg-white/55 border border-white/80 px-3.5 py-3 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200">
+                            <a href="{{ route('admin.sakuna.alerts') }}" class="flex items-start gap-3 rounded-[18px] bg-white/55 border border-white/80 px-3.5 py-3 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200">
                                 <span class="w-[42px] h-[42px] rounded-2xl clay-gold-light grid place-items-center shrink-0">
                                     <i data-lucide="triangle-alert" class="w-5 h-5"></i>
                                 </span>
@@ -291,6 +288,7 @@
                             </a>
                         </template>
                         <p class="py-6 text-center text-sm text-ink-muted" x-show="!(dash?.sakuna?.alerts || []).length">No active alerts.</p>
+                        <a href="{{ route('admin.sakuna.alerts') }}" class="inline-block text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View all alerts</a>
                     </div>
                 </x-ui.card>
 

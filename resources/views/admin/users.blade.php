@@ -155,7 +155,7 @@
             <div class="surface-glass rounded-[26px] p-3 mb-4 flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input aria-label="Search personnel" type="text" x-model="search" placeholder="Search personnel..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <input aria-label="Search personnel" type="text" x-model="search" placeholder="Search personnel..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                 </div>
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredUsers.length + ' of ' + users.length + ' personnel'"></p>
                 <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>

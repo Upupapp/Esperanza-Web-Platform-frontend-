@@ -237,9 +237,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search citizen name, ID, or document" type="text" x-model="search" placeholder="Search citizen name, ID, or document..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <input aria-label="Search citizen name, ID, or document" type="text" x-model="search" placeholder="Search citizen name, ID, or document..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
-                    <select aria-label="Sort" x-model="sort" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
+                    <select aria-label="Sort" x-model="sort" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0 border-0 surface-pressed-sm">
                         <option value="newest">Sort: Newest</option>
                         <option value="oldest">Sort: Oldest</option>
                         <option value="name_asc">Citizen A&ndash;Z</option>
@@ -253,11 +253,11 @@
                     ><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Advanced</button>
                 </div>
                 <div x-show="showAdvancedFilters" x-cloak x-transition:enter="transition duration-[220ms] ease-standard" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-wrap items-center gap-2">
-                    <select aria-label="Doc document category filter" x-model="docCategoryFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Doc document category filter" x-model="docCategoryFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="">All Document Categories</option>
                         <template x-for="c in docCategories" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select aria-label="Doc status filter" x-model="docStatusFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Doc status filter" x-model="docStatusFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="">All Statuses</option>
                         <template x-for="s in Object.keys(statusStyles)" :key="s"><option :value="s" x-text="s"></option></template>
                     </select>

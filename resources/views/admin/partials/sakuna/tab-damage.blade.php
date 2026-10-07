@@ -87,17 +87,17 @@
         <div class="relative flex-1 min-w-48">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
             <input aria-label="Search by ref, barangay or sector" type="text" x-model="damageSearch" placeholder="Search by ref, barangay or sector…"
-                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         </div>
         <select aria-label="Damage barangay filter" x-model="damageBarangayFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Barangays</option>
             @foreach($barangays as $brgy)
                 <option value="{{ $brgy }}">{{ $brgy }}</option>
             @endforeach
         </select>
         <select aria-label="Damage sector filter" x-model="damageSectorFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Sectors</option>
             <template x-for="s in damageSectors()" :key="s"><option :value="s" x-text="s"></option></template>
         </select>
@@ -245,7 +245,7 @@
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-barangay">Barangay <span class="text-rose-500">*</span></label>
-                <select id="dmg-barangay" x-model="damageForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <select id="dmg-barangay" x-model="damageForm.barangay" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="">Select barangay…</option>
                     @foreach($barangays as $brgy)
                         <option>{{ $brgy }}</option>
@@ -255,7 +255,7 @@
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-sector">Sector <span class="text-rose-500">*</span></label>
                 <input id="dmg-sector" type="text" x-model="damageForm.sector" list="damage-sector-suggestions" placeholder="e.g. Housing"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 <datalist id="damage-sector-suggestions">
                     <template x-for="s in damageSectors()" :key="s"><option :value="s"></option></template>
                 </datalist>
@@ -263,16 +263,16 @@
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-units">Units Affected</label>
                 <input id="dmg-units" type="number" min="0" x-model="damageForm.units_affected" placeholder="e.g. 48"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-cost">Estimated Cost (₱)</label>
                 <input id="dmg-cost" type="number" min="0" step="0.01" x-model="damageForm.estimated_cost" placeholder="0.00"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-incident">Related Incident (optional)</label>
-                <select id="dmg-incident" x-model="damageForm.incident_id" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <select id="dmg-incident" x-model="damageForm.incident_id" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="">— None —</option>
                     <template x-for="inc in damageIncidentsOpen" :key="inc.id">
                         <option :value="inc.id" x-text="inc.ref + ' — ' + inc.type + ', ' + inc.barangay"></option>
@@ -282,7 +282,7 @@
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-notes">Notes</label>
                 <textarea id="dmg-notes" x-model="damageForm.notes" rows="3" placeholder="Field observations…"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors resize-none border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></textarea>
             </div>
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-photo">

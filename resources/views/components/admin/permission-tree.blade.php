@@ -58,7 +58,7 @@
         <input aria-label="Search modules or permissions"
             type="text" x-model="permQuery"
             placeholder="Search modules or permissions..."
-            class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+            class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm"
         >
     </div>
 

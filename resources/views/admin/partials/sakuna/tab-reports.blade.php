@@ -37,7 +37,7 @@
         <p class="text-sm text-ink-muted mt-0.5">Live analytics derived from incidents, evacuation centers and vulnerability assessments.</p>
     </div>
     <select aria-label="Report barangay filter" x-model="reportBarangayFilter"
-        class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         <option value="">All Barangays</option>
         @foreach($barangays as $brgy)
             <option value="{{ $brgy }}">{{ $brgy }}</option>

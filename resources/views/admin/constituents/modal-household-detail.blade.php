@@ -225,20 +225,20 @@
                         <div class="max-w-xl space-y-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-address">Address</label>
-                                <input id="hh-edit-address" type="text" x-model="edit.address" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="hh-edit-address" type="text" x-model="edit.address" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-sitio">Sitio / Purok</label>
-                                <input id="hh-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="hh-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="hh-edit-head">Head of Household <span class="text-ink-muted font-normal">(leave blank to keep current)</span></label>
-                                <input id="hh-edit-head" type="text" x-model="edit.head_name" placeholder="Full name" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body placeholder-slate-400 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="hh-edit-head" type="text" x-model="edit.head_name" placeholder="Full name" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body placeholder-slate-400 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-xs font-medium text-slate-700 mb-1.5">Dwelling Type</label>
-                                    <select aria-label="Dwelling Type" x-model="edit.dwelling_type" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                    <select aria-label="Dwelling Type" x-model="edit.dwelling_type" class="w-full rounded-2xl py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                                         <option value="Single Detached">Single Detached</option>
                                         <option value="Single Attached">Single Attached</option>
                                         <option value="Apartment">Apartment</option>
@@ -247,7 +247,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-slate-700 mb-1.5">Housing Tenure</label>
-                                    <select aria-label="Housing Tenure" x-model="edit.housing_tenure" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                    <select aria-label="Housing Tenure" x-model="edit.housing_tenure" class="w-full rounded-2xl py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                                         <option value="Owner">Owner</option>
                                         <option value="Renter">Renter</option>
                                         <option value="Shared">Shared</option>
@@ -256,7 +256,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5">Flood Risk</label>
-                                <select aria-label="Flood Risk" x-model="edit.flood_risk" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <select aria-label="Flood Risk" x-model="edit.flood_risk" class="w-full rounded-2xl py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                                     <option value="Low">Low</option>
                                     <option value="Medium">Medium</option>
                                     <option value="High">High</option>

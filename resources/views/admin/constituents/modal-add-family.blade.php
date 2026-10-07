@@ -107,7 +107,7 @@
                         type="text"
                         x-model="form.surname"
                         placeholder="e.g. Santos"
-                        class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     />
                 </div>
 
@@ -146,7 +146,7 @@
                         </label>
                         <select id="barangay-2"
                             x-model="form.barangay"
-                            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            class="w-full px-3 py-2.5 text-sm rounded-xl text-ink focus:outline-none focus:ring-blue-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         >
                             <option value="">Select barangay…</option>
                             <template x-for="b in barangayOptions" :key="b">
@@ -160,7 +160,7 @@
                             type="text"
                             x-model="form.sitio"
                             placeholder="e.g. Sitio Magsaysay"
-                            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                 </div>
@@ -173,7 +173,7 @@
                             type="text"
                             x-model="form.head_name"
                             placeholder="Full name of head"
-                            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                         <p class="text-[10.5px] text-ink-muted mt-1">If they aren't already a resident on file, a new resident record is created for them.</p>
                     </div>
@@ -183,7 +183,7 @@
                             type="text"
                             x-model="form.household_ref"
                             placeholder="e.g. HH-2026-0001"
-                            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                 </div>
@@ -218,7 +218,7 @@
                         x-model="form.notes"
                         rows="4"
                         placeholder="Any additional notes about this family…"
-                        class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                        class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-transparent transition resize-none border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     ></textarea>
                 </div>
 

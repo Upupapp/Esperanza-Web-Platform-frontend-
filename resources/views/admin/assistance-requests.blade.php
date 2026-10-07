@@ -839,13 +839,13 @@
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="All Cases" value="0" valueBind="requests.length" icon="wallet" color="brand" sublabel="Every status" :delay="160" />
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-card p-3 mb-4 space-y-3">
+        <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center gap-2">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input aria-label="Search reference or citizen" type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <input aria-label="Search reference or citizen" type="text" x-model="search" placeholder="Search reference or citizen..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                 </div>
-                <select aria-label="Category filter" x-model="categoryFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0">
+                <select aria-label="Category filter" x-model="categoryFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shrink-0 border-0 surface-pressed-sm">
                     <option value="">All Categories</option>
                     <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                 </select>
@@ -889,27 +889,27 @@
                 {{-- Milestone 20 — every Tulong status individually
                      selectable, without crowding the quick-tab bar above
                      with 11 buttons. --}}
-                <select aria-label="Status filter" x-model="statusFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Status filter" x-model="statusFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     <option value="">All Statuses</option>
                     <template x-for="s in allTulongStatuses" :key="s"><option :value="s" x-text="s"></option></template>
                 </select>
-                <select aria-label="Office filter" x-model="officeFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Office filter" x-model="officeFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     <option value="">All Offices</option>
                     <template x-for="o in offices" :key="o"><option :value="o" x-text="o"></option></template>
                 </select>
-                <select aria-label="Level filter" x-model="levelFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Level filter" x-model="levelFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     <option value="">All Levels</option>
                     <option value="Municipal">Municipal</option>
                     <option value="Multi-Office">Multi-Office</option>
                 </select>
-                <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Barangay filter" x-show="isMunicipalScope" x-model="barangayFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     <option value="">All Barangays</option>
                     <template x-for="b in barangays" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                 </select>
                 <span x-show="!isMunicipalScope" x-cloak class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2">
                     <i data-lucide="lock" class="w-3 h-3"></i>Brgy. <span x-text="$store.session.account?.scope"></span>
                 </span>
-                <select aria-label="Assigned filter" x-model="assignedFilter" class="text-xs rounded-2xl bg-slate-50 border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <select aria-label="Assigned filter" x-model="assignedFilter" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     <option value="">Anyone / Unassigned</option>
                     <option value="unassigned">Unassigned only</option>
                     <option x-show="$store.session.account" :value="$store.session.account?.name || ''">Assigned to me</option>
@@ -1202,12 +1202,12 @@
 
                                     <div x-show="req._decidingOutcome" x-cloak class="mt-2.5 pt-2.5 border-t border-brand-600/10 space-y-2">
                                         <p class="text-[11px] font-semibold text-ink-muted" x-text="(decisionOutcomes[req._decidingOutcome]?.label || req._decidingOutcome) + ' — ' + req.name"></p>
-                                        <select aria-label="Reason" x-model="req._reason" class="w-full text-xs rounded-xl bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <select aria-label="Reason" x-model="req._reason" class="w-full text-xs rounded-xl py-1.5 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                                             <option value="">Select a reason...</option>
                                             <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
                                             <template x-for="reason in rejectReasons" :key="reason"><option :value="reason" x-text="reason"></option></template>
                                         </select>
-                                        <textarea aria-label="Remarks for the citizen (optional)" x-model="req._remarks" rows="2" placeholder="Remarks for the citizen (optional)..." class="w-full text-xs rounded-xl bg-slate-50 border border-slate-200 py-1.5 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                                        <textarea aria-label="Remarks for the citizen (optional)" x-model="req._remarks" rows="2" placeholder="Remarks for the citizen (optional)..." class="w-full text-xs rounded-xl py-1.5 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none border-0 surface-pressed-sm"></textarea>
                                         <div class="flex items-center gap-2">
                                             <button
                                                 type="button" x-bind:disabled="!req._reason" @click="confirmRequirementDecision(req)"
@@ -1267,11 +1267,11 @@
                         <p class="text-[11px] text-ink-muted mt-1">What you found and what you recommend. The approver reads this; the resident does not.</p>
                         <label for="tulong-assess-notes" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Findings <span class="text-rose-600">*</span></label>
                         <textarea id="tulong-assess-notes" x-model="assessNotes" rows="3" maxlength="4000" placeholder="e.g. Enrolled for SY 2026-2027; household income is below the program threshold."
-                            class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                            class="w-full rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none border-0 surface-pressed-sm"></textarea>
                         <div x-show="showsAmount" class="mt-2">
                             <label for="tulong-assess-amount" class="block text-[11px] font-medium text-slate-600 mb-1">Recommended amount (₱)</label>
                             <input id="tulong-assess-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="assessAmount" placeholder="0.00"
-                                class="w-full sm:w-48 rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                class="w-full sm:w-48 rounded-2xl py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         </div>
                     </div>
 
@@ -1282,7 +1282,7 @@
                         <p class="text-[11px] text-ink-muted mt-1">Approve at the recommended amount or set another. The recommendation stays on record either way.</p>
                         <label for="tulong-approve-amount" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Approved amount (₱)</label>
                         <input id="tulong-approve-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="approveAmount" placeholder="0.00"
-                            class="w-full sm:w-48 rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                            class="w-full sm:w-48 rounded-2xl py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
 
                     {{-- Release (Ready for Release): Completed records who released
@@ -1294,22 +1294,22 @@
                             <div>
                                 <label for="tulong-release-to" class="block text-[11px] font-medium text-slate-600 mb-1">Received by <span class="text-rose-600">*</span></label>
                                 <input id="tulong-release-to" type="text" maxlength="160" x-model="releaseTo" placeholder="Full name of the person who received it"
-                                    class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    class="w-full rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                             </div>
                             <div x-show="showsAmount">
                                 <label for="tulong-release-amount" class="block text-[11px] font-medium text-slate-600 mb-1">Actual amount (₱)</label>
                                 <input id="tulong-release-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="releaseAmount" placeholder="0.00"
-                                    class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    class="w-full rounded-2xl py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                             </div>
                             <div>
                                 <label for="tulong-release-ref" class="block text-[11px] font-medium text-slate-600 mb-1">Reference no.</label>
                                 <input id="tulong-release-ref" type="text" maxlength="120" x-model="releaseReference" placeholder="e.g. voucher or acknowledgement no."
-                                    class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    class="w-full rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                             </div>
                         </div>
                         <label for="tulong-release-note" class="block text-[11px] font-medium text-slate-600 mt-2 mb-1">Proof note</label>
                         <textarea id="tulong-release-note" x-model="releaseNote" rows="2" maxlength="2000" placeholder="e.g. Received at the MSWDO counter; the beneficiary signed the acknowledgement slip."
-                            class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                            class="w-full rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none border-0 surface-pressed-sm"></textarea>
                         <p class="text-[11px] text-ink-muted mt-1">Proof of Release is required: a photo (beside this) or this note.</p>
                     </div>
 
@@ -1322,7 +1322,7 @@
                         <div class="flex items-center gap-2 mt-2" x-show="sideForm === 'reject'">
                             <select aria-label="Insert a standard reason"
                                 @change="insertStandardReason($event.target.value); $event.target.value = ''"
-                                class="flex-1 min-w-0 text-xs rounded-2xl border border-slate-200 bg-white py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                class="flex-1 min-w-0 text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm"
                             >
                                 <option value="">Insert a standard reason…</option>
                                 <template x-for="reason in standardReasons" :key="reason.label"><option :value="reason.label" x-text="reason.label"></option></template>
@@ -1334,7 +1334,7 @@
                             >Use requirement reasons</button>
                         </div>
                         <textarea aria-label="Reason" x-model="sideReason" rows="3" maxlength="2000" placeholder="Type the reason…"
-                            class="w-full mt-2 rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none"></textarea>
+                            class="w-full mt-2 rounded-2xl py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none border-0 surface-pressed-sm"></textarea>
                         <div class="flex items-center gap-2 mt-2">
                             <button type="button" x-bind:disabled="processing || !sideReason.trim()" @click="confirmSideForm()"
                                 class="inline-flex items-center justify-center min-h-[36px] px-3.5 py-2 text-xs font-semibold rounded-2xl text-white shadow-card transition-colors disabled:opacity-40 disabled:pointer-events-none"

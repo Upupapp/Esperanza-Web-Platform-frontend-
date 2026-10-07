@@ -220,7 +220,7 @@
                         <div class="max-w-xl space-y-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5">Family Type</label>
-                                <select aria-label="Family Type" x-model="edit.family_type" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <select aria-label="Family Type" x-model="edit.family_type" class="w-full rounded-2xl py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                                     <option value="Nuclear">Nuclear</option>
                                     <option value="Extended">Extended</option>
                                     <option value="Single Parent">Single Parent</option>
@@ -228,15 +228,15 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-sitio">Sitio / Purok</label>
-                                <input id="fam-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="fam-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-head">Head of Family</label>
-                                <input id="fam-edit-head" type="text" x-model="edit.head_name" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <input id="fam-edit-head" type="text" x-model="edit.head_name" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="fam-edit-notes">Notes</label>
-                                <textarea id="fam-edit-notes" x-model="edit.notes" rows="3" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all resize-none"></textarea>
+                                <textarea id="fam-edit-notes" x-model="edit.notes" rows="3" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all resize-none border-0 surface-pressed-sm"></textarea>
                             </div>
                             <div class="flex items-center gap-2">
                                 <x-ui.button variant="secondary" size="sm" @click="editing = false">Cancel</x-ui.button>

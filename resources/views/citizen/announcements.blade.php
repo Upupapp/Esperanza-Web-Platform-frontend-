@@ -341,7 +341,7 @@
                                             x-model="commentDraft[post.id]"
                                             @keydown.enter="addComment(post)"
                                             x-bind:placeholder="$store.lang.current === 'en' ? 'Write a comment...' : 'Sumulat ng komento...'"
-                                            class="w-full rounded-full border border-slate-200 bg-white py-2 pl-4 pr-10 text-xs text-ink-body placeholder:text-ink-faint shadow-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+                                            class="w-full rounded-full py-2 pl-4 pr-10 text-xs text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm"
                                         >
                                         <button aria-label="Send"
                                             type="button" @click="addComment(post)"

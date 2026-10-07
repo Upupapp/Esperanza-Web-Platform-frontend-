@@ -118,7 +118,7 @@
                         </label>
                         <select id="barangay-3"
                             x-model="form.barangay"
-                            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                            class="w-full px-3 py-2.5 text-sm rounded-xl text-ink focus:outline-none focus:ring-indigo-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         >
                             <option value="">Select barangay…</option>
                             <template x-for="b in barangayOptions" :key="b">
@@ -132,7 +132,7 @@
                             type="text"
                             x-model="form.sitio"
                             placeholder="e.g. Sitio Bonbon"
-                            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                            class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                 </div>
@@ -146,7 +146,7 @@
                         type="text"
                         x-model="form.address"
                         placeholder="e.g. Purok 3, Brgy. Esperanza"
-                        class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     />
                 </div>
 
@@ -159,7 +159,7 @@
                         type="text"
                         x-model="form.head_name"
                         placeholder="Full name of household head"
-                        class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        class="w-full px-3 py-2.5 text-sm rounded-xl text-ink placeholder-slate-400 focus:outline-none focus:ring-indigo-500 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     />
                     <p class="text-xs text-ink-muted mt-1.5">This person will be listed as the primary occupant of this household. If they aren't already a resident on file, a new resident record is created for them.</p>
                 </div>

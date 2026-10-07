@@ -194,7 +194,7 @@
                             type="text"
                             x-model="form.first_name"
                             placeholder="e.g. Maria"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             required
                         />
                     </div>
@@ -204,7 +204,7 @@
                             type="text"
                             x-model="form.middle_name"
                             placeholder="e.g. Santos"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                     <div class="sm:col-span-1">
@@ -215,7 +215,7 @@
                             type="text"
                             x-model="form.last_name"
                             placeholder="e.g. Reyes"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             required
                         />
                     </div>
@@ -227,7 +227,7 @@
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="suffix">Suffix</label>
                         <select id="suffix"
                             x-model="form.suffix"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         >
                             <option value="">None</option>
                             <option value="Jr.">Jr.</option>
@@ -281,7 +281,7 @@
                         <input id="date-of-birth"
                             type="date"
                             x-model="form.dob"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             required
                         />
                     </div>
@@ -291,7 +291,7 @@
                         </label>
                         <select id="civil-status"
                             x-model="form.civil_status"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             required
                         >
                             <option value="" disabled selected>Select status</option>
@@ -317,7 +317,7 @@
                             x-model="form.contact"
                             placeholder="9XXXXXXXXX"
                             maxlength="10"
-                            class="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full pl-12 pr-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             required
                         />
                     </div>
@@ -347,7 +347,7 @@
                         </label>
                         <select id="barangay-4"
                             x-model="form.barangay"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             required
                         >
                             <option value="" disabled selected>Select barangay</option>
@@ -362,7 +362,7 @@
                             type="text"
                             x-model="form.sitio"
                             placeholder="e.g. Sitio Malago"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                 </div>
@@ -380,7 +380,7 @@
                                 type="text"
                                 x-model="form.household_ref"
                                 placeholder="e.g. HH-2026-0001"
-                                class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                                class="w-full pl-9 pr-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             />
                         </div>
                     </div>
@@ -393,7 +393,7 @@
                             type="text"
                             x-model="form.family_ref"
                             placeholder="e.g. FAM-2026-0001"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                 </div>
@@ -443,14 +443,14 @@
                             type="text"
                             x-model="form.occupation"
                             placeholder="e.g. Farmer, Teacher"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="highest-education">Highest Education</label>
                         <select id="highest-education"
                             x-model="form.education"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         >
                             <option value="" disabled selected>Select level</option>
                             <option value="No Formal Education">No Formal Education</option>
@@ -470,7 +470,7 @@
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="monthly-income-range">Monthly Income Range</label>
                         <select id="monthly-income-range"
                             x-model="form.income_range"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         >
                             <option value="" disabled selected>Select range</option>
                             <option value="No Income">No Income</option>

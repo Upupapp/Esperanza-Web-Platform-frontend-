@@ -287,7 +287,7 @@
             <x-citizen.status-guide type="tulong" />
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2.5 mb-4">
+        <div class="surface-glass rounded-[26px] px-3 py-2.5 mb-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex flex-wrap items-center gap-2.5 min-w-0 max-w-full">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto">
@@ -742,13 +742,13 @@
                                                     <div>
                                                         <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
                                                         <template x-if="col.options">
-                                                            <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-ink-body focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                            <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-purple-400 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                                                                 <option value="">—</option>
                                                                 <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
                                                             </select>
                                                         </template>
                                                         <template x-if="!col.options">
-                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-ink-body focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-purple-400 focus:ring-purple-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                                                         </template>
                                                     </div>
                                                 </template>
@@ -1294,7 +1294,7 @@
                                 <p class="text-xs font-semibold text-rose-700" x-text="lang('Withdraw ' + selectedRequest.ref + '?', 'Bawiin ang ' + selectedRequest.ref + '?')"></p>
                                 <p class="text-xs text-rose-600 mt-0.5"><x-ui.t fil="Ititigil ng opisina ang pagproseso nito at hindi na ito mabubuksan muli. Para humiling ulit, magsumite ng bago." en="The office stops working on it and it cannot be reopened. To ask again, file a new request." /></p>
                                 <label for="withdraw-reason" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1"><x-ui.t fil="Dahilan (hindi kailangan)" en="Reason (optional)" /></label>
-                                <textarea id="withdraw-reason" x-model="withdrawReason" rows="2" maxlength="500" class="w-full text-xs rounded-xl border border-slate-200 bg-white px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                <textarea id="withdraw-reason" x-model="withdrawReason" rows="2" maxlength="500" class="w-full text-xs rounded-xl px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-brand-100"></textarea>
                                 <div class="flex flex-wrap justify-end gap-2 mt-2">
                                     <x-ui.button variant="secondary" size="sm" @click="withdrawOpen = false"><x-ui.t fil="Huwag na" en="Keep it" /></x-ui.button>
                                     <x-ui.button variant="danger" size="sm" icon="undo-2" loading="withdrawing" @click="withdrawRequest()"><x-ui.t fil="Oo, bawiin" en="Yes, withdraw" /></x-ui.button>

@@ -94,15 +94,15 @@
         <div class="relative flex-1 min-w-48">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
             <input aria-label="Search by name or ID" type="text" x-model="evacueeSearch" placeholder="Search by name or ref…"
-                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         </div>
         <select aria-label="Ev center filter" x-model="evCenterFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Centers</option>
             <template x-for="c in evacueeCentersOpen" :key="c.ref"><option :value="c.name" x-text="c.name"></option></template>
         </select>
         <select aria-label="Ev status filter" x-model="evStatusFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Statuses</option>
             <option value="Processing">Checked In</option>
             <option value="Completed">Checked Out</option>
@@ -205,7 +205,7 @@
             </div>
         </div>
         <label class="block text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5" for="transfer-to-center">Destination Center</label>
-        <select id="transfer-to-center" x-model="transferToCenter" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors mb-5">
+        <select id="transfer-to-center" x-model="transferToCenter" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors mb-5 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">— Choose center —</option>
             <template x-for="c in evacueeCentersOpen.filter(c => c.name !== selectedEvacuee?.center)" :key="c.ref">
                 <option :value="c.ref" x-text="c.name + ' (' + c.individuals + '/' + c.capacity + ')'"></option>
@@ -373,7 +373,7 @@
         <div class="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-center">Evacuation Center <span class="text-rose-500">*</span></label>
-                <select id="checkin-center" x-model="checkInForm.center" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <select id="checkin-center" x-model="checkInForm.center" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="">— Choose center —</option>
                     <template x-for="c in evacueeCentersOpen" :key="c.ref">
                         <option :value="c.ref" x-text="c.name + ' — ' + c.individuals + '/' + c.capacity"></option>
@@ -384,11 +384,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-head">Household Head <span class="text-rose-500">*</span></label>
-                    <input id="checkin-head" type="text" x-model="checkInForm.head_name" placeholder="Full name" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <input id="checkin-head" type="text" x-model="checkInForm.head_name" placeholder="Full name" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 </div>
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-barangay">Home Barangay <span class="text-rose-500">*</span></label>
-                    <select id="checkin-barangay" x-model="checkInForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <select id="checkin-barangay" x-model="checkInForm.barangay" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                         <option value="">Select barangay…</option>
                         @foreach($barangays as $brgy)
                             <option>{{ $brgy }}</option>
@@ -397,7 +397,7 @@
                 </div>
                 <div class="sm:col-span-2">
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-sitio">Home Sitio/Purok</label>
-                    <input id="checkin-sitio" type="text" x-model="checkInForm.sitio" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <input id="checkin-sitio" type="text" x-model="checkInForm.sitio" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 </div>
             </div>
 

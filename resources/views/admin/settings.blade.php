@@ -334,7 +334,7 @@
                     </div>
                     <div class="relative">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search services" type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-2xl bg-white border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
+                        <input aria-label="Search services" type="text" x-model="search" placeholder="Search services..." class="w-56 pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
                 </div>
 
@@ -611,7 +611,7 @@
                                     <label class="block text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-1 mt-4">Section Content</label>
                                     <textarea aria-label="Section Content"
                                         rows="5" x-model="section.body" placeholder="Write what citizens need to know in this section…" :disabled="!can('set_site_content','edit')"
-                                        class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-3.5 text-sm text-slate-700 leading-relaxed focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+                                        class="w-full rounded-2xl py-2.5 px-3.5 text-sm text-slate-700 leading-relaxed focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard resize-none disabled:opacity-60 disabled:cursor-not-allowed border-0 surface-pressed-sm"
                                     ></textarea>
                                     <p class="text-[11px] text-ink-muted mt-1.5" x-text="(section.body || '').length + ' characters'"></p>
                                 </div>
@@ -888,9 +888,9 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div class="relative">
                         <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search actions or personnel" type="text" x-model="search" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-2xl bg-white border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard shadow-card">
+                        <input aria-label="Search actions or personnel" type="text" x-model="search" placeholder="Search actions or personnel..." class="w-64 pl-10 pr-4 py-2 text-sm rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
-                    <select aria-label="Module filter" x-model="moduleFilter" @change="load()" class="text-sm rounded-2xl border border-slate-200 bg-white py-2 px-3.5 shadow-card focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Module filter" x-model="moduleFilter" @change="load()" class="text-sm rounded-2xl py-2 px-3.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="">All Modules</option>
                         <option value="dokyu">Dokyu</option>
                         <option value="tulong">Tulong</option>

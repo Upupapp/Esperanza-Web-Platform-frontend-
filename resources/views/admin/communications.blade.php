@@ -143,13 +143,13 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search Balita titles" type="text" x-model="search" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <input aria-label="Search Balita titles" type="text" x-model="search" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
-                    <select aria-label="Balita category" x-model="category" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Balita category" x-model="category" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="All">All Categories</option>
                         <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select aria-label="Balita scope" x-model="scope" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Balita scope" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="All">All Audiences</option>
                         <option value="Municipal">Municipal-wide</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
@@ -391,13 +391,13 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search event titles" type="text" x-model="search" placeholder="Search event titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <input aria-label="Search event titles" type="text" x-model="search" placeholder="Search event titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
-                    <select aria-label="Events category" x-model="category" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Events category" x-model="category" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="All">All Categories</option>
                         <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select aria-label="Events scope" x-model="scope" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Events scope" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="All">All Audiences</option>
                         <option value="Municipal">Municipal-wide</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
@@ -640,7 +640,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search banner titles" type="text" x-model="search" placeholder="Search banner titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <input aria-label="Search banner titles" type="text" x-model="search" placeholder="Search banner titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
                     <x-ui.button @click="openAdd()" icon="plus" size="sm" class="shrink-0">New Banner</x-ui.button>
@@ -813,9 +813,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search author or post content" type="text" x-model="search" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <input aria-label="Search author or post content" type="text" x-model="search" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
-                    <select aria-label="Community scope" x-model="scope" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <select aria-label="Community scope" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         <option value="All">All Barangays</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
@@ -1115,9 +1115,9 @@
             <div class="flex flex-wrap items-center gap-2 mb-3">
                 <div class="relative flex-1 min-w-[200px]">
                     <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    <input aria-label="Search incident type or details" type="text" x-model="search" placeholder="Search incident type or details..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-white border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                    <input aria-label="Search incident type or details" type="text" x-model="search" placeholder="Search incident type or details..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                 </div>
-                <select aria-label="Blotter barangay filter" x-model="barangayFilter" class="text-xs border border-slate-200 rounded-2xl px-3 py-2 bg-white focus:border-brand-300 focus:outline-none transition-colors">
+                <select aria-label="Blotter barangay filter" x-model="barangayFilter" class="text-xs rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="All">All Barangays</option>
                     <template x-for="bn in barangayNames" :key="bn"><option :value="bn" x-text="bn"></option></template>
                 </select>

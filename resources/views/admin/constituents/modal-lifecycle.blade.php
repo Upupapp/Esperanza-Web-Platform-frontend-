@@ -189,7 +189,7 @@
                     </label>
                     <select id="target-barangay"
                         x-model="form.target_barangay"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                        class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-indigo-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         required
                     >
                         <option value="" disabled selected>Select destination barangay</option>
@@ -210,7 +210,7 @@
                         x-model="form.transfer_reason"
                         placeholder="Briefly state the reason for this transfer (e.g., marriage, employment relocation, family consolidation…)"
                         rows="3"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition resize-none"
+                        class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-indigo-400 focus:border-transparent transition resize-none border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     ></textarea>
                 </div>
 
@@ -222,7 +222,7 @@
                         <input id="effective-date"
                             type="date"
                             x-model="form.effective_date"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-indigo-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                     <div>
@@ -233,7 +233,7 @@
                             type="text"
                             x-model="form.certifying_officer"
                             placeholder="Full name of the barangay officer"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-indigo-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                 </div>
@@ -261,7 +261,7 @@
                         <input id="date-of-passing"
                             type="date"
                             x-model="form.date_of_passing"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-slate-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                             required
                         />
                     </div>
@@ -271,7 +271,7 @@
                             type="text"
                             x-model="form.cause_of_death"
                             placeholder="e.g. Natural causes, illness"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-slate-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         />
                     </div>
                 </div>
@@ -284,7 +284,7 @@
                         type="text"
                         x-model="form.informant_name"
                         placeholder="Name of the person reporting the death"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                        class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-slate-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     />
                 </div>
 
@@ -294,7 +294,7 @@
                         type="text"
                         x-model="form.death_cert_ref"
                         placeholder="e.g. 2026-DC-000123"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent transition"
+                        class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-slate-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                     />
                     <p class="text-xs text-ink-muted mt-1">Leave blank if PSA certificate is not yet available.</p>
                 </div>
@@ -332,7 +332,7 @@
                         x-model="form.archive_reason"
                         placeholder="Provide a reason (e.g., resident migrated permanently, duplicate record, data entry error…)"
                         rows="4"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-ink placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition resize-none"
+                        class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-amber-400 focus:border-transparent transition resize-none border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                         required
                     ></textarea>
                     <p class="text-xs text-ink-muted mt-1">This reason will be recorded in the audit log and is required by LGU data governance policy.</p>

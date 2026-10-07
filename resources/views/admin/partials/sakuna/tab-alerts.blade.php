@@ -92,22 +92,22 @@
         <div class="relative flex-1 min-w-48">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
             <input aria-label="Search by title or ref" type="text" x-model="alertSearch" placeholder="Search by title or ref…"
-                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         </div>
         <select aria-label="Alert type filter" x-model="alertTypeFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Types</option>
             <template x-for="t in alertTypes()" :key="t"><option :value="t" x-text="t"></option></template>
         </select>
         <select aria-label="Alert level filter" x-model="alertLevelFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Levels</option>
             @foreach(['Information','Advisory','Watch','Warning','Critical'] as $lvl)
                 <option value="{{ $lvl }}">{{ $lvl }}</option>
             @endforeach
         </select>
         <select aria-label="Alert status filter" x-model="alertStatusFilter"
-            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             <option value="">All Statuses</option>
             <option value="Draft">Draft</option>
             <option value="Released">Released</option>
@@ -246,7 +246,7 @@
         </p>
         <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="cancel-reason">Reason <span class="text-rose-500">*</span></label>
         <textarea id="cancel-reason" x-model="cancelReason" rows="2" placeholder="Why is this alert being cancelled?"
-            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none mb-5"></textarea>
+            class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors resize-none mb-5 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></textarea>
         <div class="flex gap-3">
             <button @click="showCancelAlert = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">Back</button>
             <button :disabled="cancelSaving || !cancelReason.trim()" @click="submitCancelAlert()"
@@ -282,14 +282,14 @@
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="alert-type">Type <span class="text-rose-500">*</span></label>
                     <input id="alert-type" type="text" x-model="alertForm.type" list="alert-type-suggestions" placeholder="e.g. Flood Warning"
-                        class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                        class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <datalist id="alert-type-suggestions">
                         <template x-for="t in alertTypes()" :key="t"><option :value="t"></option></template>
                     </datalist>
                 </div>
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="alert-level">Level <span class="text-rose-500">*</span></label>
-                    <select id="alert-level" x-model="alertForm.level" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <select id="alert-level" x-model="alertForm.level" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                         @foreach(['Information','Advisory','Watch','Warning','Critical'] as $lvl)
                             <option value="{{ $lvl }}">{{ $lvl }}</option>
                         @endforeach
@@ -300,19 +300,19 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="alert-title-en">Title (English) <span class="text-rose-500">*</span></label>
-                    <input id="alert-title-en" type="text" x-model="alertForm.title_en" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <input id="alert-title-en" type="text" x-model="alertForm.title_en" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 </div>
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="alert-title-fil">Title (Filipino) <span class="text-rose-500">*</span></label>
-                    <input id="alert-title-fil" type="text" x-model="alertForm.title_fil" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    <input id="alert-title-fil" type="text" x-model="alertForm.title_fil" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 </div>
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="alert-body-en">Message (English) <span class="text-rose-500">*</span></label>
-                    <textarea id="alert-body-en" x-model="alertForm.body_en" rows="3" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
+                    <textarea id="alert-body-en" x-model="alertForm.body_en" rows="3" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors resize-none border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></textarea>
                 </div>
                 <div>
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="alert-body-fil">Message (Filipino) <span class="text-rose-500">*</span></label>
-                    <textarea id="alert-body-fil" x-model="alertForm.body_fil" rows="3" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
+                    <textarea id="alert-body-fil" x-model="alertForm.body_fil" rows="3" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors resize-none border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></textarea>
                 </div>
             </div>
 

@@ -202,7 +202,7 @@
                 <label class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-1.5 block" for="merge-note">Note (optional)</label>
                 <textarea id="merge-note" x-model="note" rows="2"
                     placeholder="Why these are the same person, or anything the next reviewer should know."
-                    class="w-full text-sm rounded-xl border border-slate-200 bg-white p-3 placeholder-slate-400 text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
+                    class="w-full text-sm rounded-xl p-3 placeholder-slate-400 text-ink focus:outline-none transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                 ></textarea>
             </div>
 

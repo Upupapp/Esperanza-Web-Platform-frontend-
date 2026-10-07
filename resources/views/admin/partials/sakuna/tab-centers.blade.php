@@ -89,17 +89,17 @@
         <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
         <input aria-label="Search by name or barangay" type="text" x-model="centerSearch"
             placeholder="Search by name or barangay..."
-            class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-2xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-60 transition-colors">
+            class="pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none w-60 transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
     </div>
     <select aria-label="Center status filter" x-model="centerStatusFilter"
-        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         <option value="">All Statuses</option>
         <option value="Draft">Registered (not open)</option>
         <option value="Processing">Open</option>
         <option value="Archived">Closed</option>
     </select>
     <select aria-label="Center barangay filter" x-model="centerBarangayFilter"
-        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         <option value="">All Barangays</option>
         @foreach($barangays as $brgy)
             <option>{{ $brgy }}</option>
@@ -109,7 +109,7 @@
         class="inline-flex items-center gap-1.5 text-sm text-ink-muted bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
         <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
     </button>
-    <div class="ml-auto flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-card">
+    <div class="surface-glass rounded-[26px] ml-auto flex items-center overflow-hidden">
         <button aria-label="Card view" @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-ink-muted hover:text-slate-600'" class="px-3 py-2 transition-colors">
             <i data-lucide="layout-grid" class="w-4 h-4"></i>
         </button>

@@ -324,7 +324,7 @@
                     <div class="mt-3 space-y-2" x-show="selectedIndividual?.verification !== 'Verified'">
                         <x-ui.button size="sm" icon="shield-check" class="w-full justify-center" x-bind:disabled="profileReviewBusy" @click="verifyProfile(selectedIndividual)">Verify profile</x-ui.button>
                         <div class="space-y-2" x-show="selectedIndividual?.verification === 'For Validation'">
-                            <textarea aria-label="What the resident should change" x-model="profileReturnNote" rows="2" maxlength="1000" placeholder="What should the resident change? (at least 5 characters)" class="w-full text-xs rounded-xl bg-slate-50 border border-slate-200 py-2 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition"></textarea>
+                            <textarea aria-label="What the resident should change" x-model="profileReturnNote" rows="2" maxlength="1000" placeholder="What should the resident change? (at least 5 characters)" class="w-full text-xs rounded-xl py-2 px-2.5 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition border-0 surface-pressed-sm"></textarea>
                             <x-ui.button size="sm" variant="secondary" icon="undo-2" class="w-full justify-center" x-bind:disabled="profileReviewBusy || profileReturnNote.trim().length < 5" @click="returnProfile(selectedIndividual)">Send back for changes</x-ui.button>
                         </div>
                     </div>
@@ -356,14 +356,14 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5">Sex</label>
-                            <select aria-label="Sex" x-model="edit.sex" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <select aria-label="Sex" x-model="edit.sex" class="w-full rounded-2xl py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5">Civil Status</label>
-                            <select aria-label="Civil Status" x-model="edit.civil_status" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <select aria-label="Civil Status" x-model="edit.civil_status" class="w-full rounded-2xl py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                                 <option value="Single">Single</option>
                                 <option value="Married">Married</option>
                                 <option value="Widowed">Widowed</option>
@@ -376,25 +376,25 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-contact">Contact Number</label>
-                            <input id="ind-edit-contact" type="text" x-model="edit.contact" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <input id="ind-edit-contact" type="text" x-model="edit.contact" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-sitio">Sitio / Purok</label>
-                            <input id="ind-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <input id="ind-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-occ">Occupation</label>
-                            <input id="ind-edit-occ" type="text" x-model="edit.occupation" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <input id="ind-edit-occ" type="text" x-model="edit.occupation" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-edu">Education</label>
-                            <input id="ind-edit-edu" type="text" x-model="edit.education" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <input id="ind-edit-edu" type="text" x-model="edit.education" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-relation">Relation</label>
-                            <input id="ind-edit-relation" type="text" x-model="edit.relation" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                            <input id="ind-edit-relation" type="text" x-model="edit.relation" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
                     </div>
                     <div>

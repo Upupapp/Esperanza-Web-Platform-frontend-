@@ -160,7 +160,7 @@
                         </dd>
                         <div x-show="can('const_data_quality','assign') && selectedDQIssue?.status !== 'Resolved'" class="flex items-center gap-1.5">
                             <select aria-label="Assign to encoder" x-model="assignEncoderId"
-                                class="min-w-0 flex-1 text-[11px] rounded-xl border border-slate-200 bg-white py-1 px-1.5">
+                                class="min-w-0 flex-1 text-[11px] rounded-xl py-1 px-1.5 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                                 <option value="">Assign to…</option>
                                 <template x-for="e in encoders" :key="e.id">
                                     <option :value="e.id" x-text="e.name + ' (' + e.employee_id + ')'"></option>
@@ -249,7 +249,7 @@
                 </h3>
                 <textarea aria-label="Resolution note" x-model="resolutionNote" rows="2"
                     placeholder="What was done to resolve this issue? (required, min. 3 characters)"
-                    class="w-full text-sm rounded-xl border border-slate-200 bg-white p-3 placeholder-slate-400 text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
+                    class="w-full text-sm rounded-xl p-3 placeholder-slate-400 text-ink focus:outline-none transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                 ></textarea>
             </section>
 

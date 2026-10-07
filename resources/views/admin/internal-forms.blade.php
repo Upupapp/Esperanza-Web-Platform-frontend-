@@ -207,7 +207,7 @@
             </div>
             <div class="relative">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input aria-label="Search forms" type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                <input aria-label="Search forms" type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
             </div>
         </div>
 
@@ -289,7 +289,7 @@
                 </div>
                 <label class="block">
                     <span class="text-xs font-medium text-slate-600" x-text="decision?.kind === 'reject' ? 'Reason (required)' : 'Remarks (optional)'"></span>
-                    <textarea x-model="decisionRemarks" rows="3" class="mt-1 w-full text-sm rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                    <textarea x-model="decisionRemarks" rows="3" class="mt-1 w-full text-sm rounded-2xl px-3 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm"></textarea>
                 </label>
                 <div class="flex justify-end gap-2">
                     <button type="button" @click="decision = null" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl">Cancel</button>
@@ -423,7 +423,7 @@
                                                         <template x-for="col in currentFormStep.field.columns" :key="col.key">
                                                             <div>
                                                                 <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
-                                                                <input :aria-label="col.label" type="text" x-model="row[col.key]" class="w-full rounded-xl border border-slate-200 bg-white py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                                                <input :aria-label="col.label" type="text" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4">
                                                             </div>
                                                         </template>
                                                     </div>

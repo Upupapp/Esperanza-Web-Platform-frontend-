@@ -85,10 +85,10 @@
         <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
         <input aria-label="Search by ID, type, or barangay" type="text" x-model="incidentSearch"
             placeholder="Search by ID, type, or barangay..."
-            class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-2xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-64 transition-colors">
+            class="pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none w-64 transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
     </div>
     <select aria-label="Incident type filter" x-model="incidentTypeFilter"
-        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         <option value="">All Types</option>
         <option>Flood</option><option>Landslide</option><option>Fire</option><option>Earthquake</option>
         <option>Vehicular Accident</option><option>Medical Emergency</option><option>Missing Person</option>
@@ -99,12 +99,12 @@
         <option>Other</option>
     </select>
     <select aria-label="Incident severity filter" x-model="incidentSeverityFilter"
-        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         <option value="">All Severities</option>
         <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
     </select>
     <select aria-label="Incident status filter" x-model="incidentStatusFilter"
-        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         <option value="">All Statuses</option>
         <option value="Submitted">Reported</option>
         <option value="Under Verification">Validated</option>
@@ -114,7 +114,7 @@
         <option value="Archived">Closed</option>
     </select>
     <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter"
-        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
         <option value="">All Barangays</option>
         @foreach($barangays as $brgy)
             <option>{{ $brgy }}</option>

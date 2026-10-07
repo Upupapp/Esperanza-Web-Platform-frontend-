@@ -52,7 +52,7 @@
                     type="text"
                     x-model="search"
                     placeholder="Search by name, record ID, barangay…"
-                    class="w-full pl-8 pr-4 py-2 text-sm rounded-xl border border-slate-200 bg-white placeholder-slate-400 text-ink focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition"
+                    class="w-full pl-8 pr-4 py-2 text-sm rounded-xl placeholder-slate-400 text-ink focus:outline-none transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                 />
             </div>
 
@@ -63,7 +63,7 @@
                 </span>
                 <select aria-label="Data quality type filter"
                     x-model="dqTypeFilter"
-                    class="pl-8 pr-8 py-2 text-sm rounded-xl border border-slate-200 bg-white text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
+                    class="pl-8 pr-8 py-2 text-sm rounded-xl text-ink appearance-none focus:outline-none transition cursor-pointer border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                 >
                     <option value="">All Types</option>
                     <option value="Duplicate Suspected">Duplicate Suspected</option>
@@ -82,7 +82,7 @@
                 </span>
                 <select aria-label="Data quality status filter"
                     x-model="dqStatusFilter"
-                    class="pl-8 pr-8 py-2 text-sm rounded-xl border border-slate-200 bg-white text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition cursor-pointer"
+                    class="pl-8 pr-8 py-2 text-sm rounded-xl text-ink appearance-none focus:outline-none transition cursor-pointer border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
                 >
                     <option value="">All Statuses</option>
                     <option value="Open">Open</option>
