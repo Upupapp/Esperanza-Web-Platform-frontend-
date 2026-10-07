@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css">
+<style>
+html,body{margin:0;background:#E6EDFB;font-family:'Inter',system-ui,sans-serif;color:#0B1730;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1D47D6;text-decoration:none}a:hover{color:#1836A8}
+input::placeholder{color:#7D89A8}
+</style>
+</helmet>
+<div style="position:relative;display:flex;gap:20px;min-height:100vh;padding:16px;background:radial-gradient(760px 440px at 90% -8%,rgba(86,135,255,.42),transparent 70%),radial-gradient(600px 440px at 6% 106%,rgba(255,225,26,.36),transparent 70%),radial-gradient(900px 640px at 58% 58%,rgba(47,98,245,.12),transparent 70%),#E6EDFB;">
+
+  <aside style="position:sticky;top:16px;align-self:flex-start;height:calc(100vh - 32px);z-index:1;width:{{ sideW }};flex-shrink:0;display:flex;flex-direction:column;gap:18px;padding:18px 14px;border-radius:30px;background:linear-gradient(180deg,rgba(11,23,48,.95),rgba(17,36,84,.90));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.09);box-shadow:16px 18px 44px rgba(11,23,48,.30),inset 0 1px 0 rgba(255,255,255,.14),inset -1px -2px 6px rgba(0,0,0,.25);transition:width .25s;overflow:hidden;color:#fff;">
+    <div style="display:flex;align-items:center;gap:12px;padding:2px 4px;">
+      <div style="position:relative;width:46px;height:46px;flex-shrink:0;border-radius:50%;background:#FFE11A;box-shadow:5px 7px 14px rgba(0,0,0,.35),inset -3px -4px 7px rgba(140,110,0,.35),inset 3px 3px 5px rgba(255,255,255,.7);">
+        <img src="assets/esperanza-seal.png" alt="Municipality of Esperanza official seal" style="position:absolute;inset:2px;width:42px;height:42px;border-radius:50%;object-fit:cover;display:block;">
+      </div>
+      <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+        <div style="min-width:0;">
+          <div style="font-weight:800;font-size:16px;white-space:nowrap;">Esperanza LGU</div>
+          <div style="font-size:12px;color:#A9B8DD;white-space:nowrap;">Administrative Portal</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:14px 14px 16px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);box-shadow:inset 4px 4px 10px rgba(0,0,0,.35),inset -3px -3px 8px rgba(255,255,255,.06);">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#8E9DC4;">SIGNED IN AS</div>
+        <div style="font-weight:700;font-size:14.5px;margin-top:6px;color:#fff;">Test Super Admin</div>
+        <div style="font-size:12px;color:#A9B8DD;margin-top:2px;">SA-901 · Super Admin</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 11px;border-radius:999px;background:rgba(255,225,26,.14);border:1px solid rgba(255,225,26,.35);color:#FFE11A;font-size:11.5px;font-weight:700;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);"><i class="icon-landmark" style="font-size:12px;"></i>Municipality-wide</div>
+      </div>
+    </sc-if>
+
+    <nav style="display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 12px 14px;margin:0 -12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="12">
+        <button onClick="{{ n.onClick }}" title="{{ n.label }}" style="{{ n.style }}" style-hover="{{ n.hover }}">
+          <i class="{{ n.icon }}" style="font-size:18px;width:20px;text-align:center;flex-shrink:0;"></i>
+          <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+            <span style="flex:1;text-align:left;white-space:nowrap;">{{ n.label }}</span>
+          </sc-if>
+          <sc-if value="{{ n.showBadge }}" hint-placeholder-val="{{ false }}">
+            <span style="min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:linear-gradient(160deg,#FFEB5C,#F5CF00);color:#0B1730;font-size:11.5px;font-weight:800;display:grid;place-items:center;box-shadow:inset 1px 1px 2px rgba(255,255,255,.7),inset -1px -2px 3px rgba(140,110,0,.3),2px 3px 6px rgba(0,0,0,.3);">{{ n.badge }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+
+    <button onClick="{{ toggle }}" style="display:flex;align-items:center;justify-content:center;gap:10px;height:44px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.06);color:#C3CFEA;font:600 13.5px 'Inter';cursor:pointer;box-shadow:4px 5px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.12);" style-active="box-shadow:inset 3px 3px 7px rgba(0,0,0,.4),inset -2px -2px 6px rgba(255,255,255,.06);">
+      <i class="{{ collapseIcon }}" style="font-size:17px;"></i>
+      <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}"><span>Collapse</span></sc-if>
+    </button>
+  </aside>
+
+  <main style="position:relative;flex:1;min-width:0;padding-bottom:12px;display:flex;flex-direction:column;gap:22px;">
+    <div style="position:absolute;z-index:0;top:150px;right:30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#FFF4A3,#FFE11A 45%,#E3BC00 100%);box-shadow:14px 20px 40px rgba(227,188,0,.35),inset -10px -14px 24px rgba(140,110,0,.3),inset 8px 8px 16px rgba(255,255,255,.55);"></div>
+    <div style="position:absolute;z-index:0;top:1180px;left:40px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#9DB8FF,#2F62F5 50%,#1836A8 100%);box-shadow:16px 24px 48px rgba(29,71,214,.35),inset -12px -16px 28px rgba(11,23,48,.35),inset 8px 8px 18px rgba(255,255,255,.35);opacity:.75;"></div>
+
+    <header style="position:relative;z-index:1;flex-shrink:0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:4px 4px 0;">
+      <div style="flex:1;min-width:200px;">
+        <h1 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;">Dashboard</h1>
+        <div style="font-size:13.5px;color:#5F6B8A;margin-top:2px;">Requests, residents and alerts in your scope.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:44px;padding:0 16px;border-radius:16px;background:#E1E9F9;font:500 13px ui-monospace,'SF Mono',Menlo,Consolas,monospace;color:#3A4664;white-space:nowrap;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);"><span style="width:8px;height:8px;border-radius:50%;background:#FFE11A;box-shadow:0 0 0 3px rgba(255,225,26,.3);"></span>{{ time }}</div>
+      <label style="display:flex;align-items:center;gap:10px;height:44px;width:min(360px,100%);padding:0 16px;border-radius:16px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);">
+        <i class="icon-search" style="font-size:17px;color:#5F6B8A;"></i>
+        <input placeholder="Search residents, requests, barangays" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font:500 14px 'Inter';color:#0B1730;">
+      </label>
+      <button style="position:relative;width:44px;height:44px;border:1px solid rgba(255,255,255,.9);border-radius:16px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);color:#3A4664;cursor:pointer;display:grid;place-items:center;box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8),inset 0 1px 0 rgba(255,255,255,.95);">
+        <i class="icon-bell" style="font-size:18px;"></i>
+        <span style="position:absolute;top:10px;right:11px;width:8px;height:8px;border-radius:50%;background:#FFE11A;box-shadow:0 0 0 2px #fff;"></span>
+      </button>
+      <div style="display:flex;align-items:center;gap:10px;height:52px;padding:0 14px 0 6px;border-radius:20px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.6);backdrop-filter:blur(16px);box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(160deg,#5687FF,#1D47D6);color:#fff;font-weight:800;font-size:14px;display:grid;place-items:center;box-shadow:inset -3px -4px 6px rgba(11,23,48,.4),inset 2px 2px 4px rgba(255,255,255,.4),3px 4px 8px rgba(29,71,214,.3);">TS</div>
+        <div style="line-height:1.2;white-space:nowrap;">
+          <div style="font-weight:700;font-size:14px;">Test Super Admin</div>
+          <div style="font-size:12px;color:#5F6B8A;">Super Admin</div>
+        </div>
+        <i class="icon-chevron-down" style="font-size:16px;color:#5F6B8A;margin-left:4px;"></i>
+      </div>
+    </header>
+
+    <sc-if value="{{ showBanner }}" hint-placeholder-val="{{ true }}">
+    <section style="position:relative;z-index:1;flex-shrink:0;overflow:hidden;display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:30px 34px;border-radius:32px;background:linear-gradient(118deg,#0B1730 0%,#1836A8 52%,#2F62F5 100%);color:#fff;border:1px solid rgba(255,255,255,.18);box-shadow:16px 20px 44px rgba(24,54,168,.35),-8px -8px 20px rgba(255,255,255,.7),inset 0 1px 0 rgba(255,255,255,.35),inset -6px -8px 18px rgba(11,23,48,.45);">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 48%);pointer-events:none;"></div>
+      <div style="position:absolute;right:-90px;bottom:-150px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(255,225,26,.55),rgba(255,225,26,0) 68%);pointer-events:none;"></div>
+      <div style="position:absolute;left:38%;top:-120px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(86,135,255,.5),rgba(86,135,255,0) 68%);pointer-events:none;"></div>
+      <div style="position:relative;width:72px;height:72px;flex-shrink:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF3A0,#FFE11A 50%,#E8C200 100%);color:#0B1730;font-size:24px;font-weight:800;display:grid;place-items:center;box-shadow:inset -4px -6px 10px rgba(140,110,0,.35),inset 4px 4px 8px rgba(255,255,255,.7),6px 8px 18px rgba(0,0,0,.35);">TS</div>
+      <div style="flex:1 1 260px;position:relative;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.1em;color:#FFE11A;">{{ dateLabel }}</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:4px;">Good day, Test Super Admin</div>
+        <div style="font-size:15px;color:#DCE5FF;margin-top:4px;">Super Admin · Office of the Municipal Mayor · <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:13.5px;">SA-901</span></div>
+      </div>
+      <div style="flex:0 1 460px;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-content:center;margin-left:auto;position:relative;">
+        <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="5">
+          <span style="display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.14);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.28);font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 10px rgba(11,23,48,.2);"><i class="{{ s.icon }}" style="font-size:13px;"></i>{{ s.label }}</span>
+        </sc-for>
+      </div>
+    </section>
+    </sc-if>
+
+    <div style="position:relative;z-index:1;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 4px;">
+      <div style="font-size:14.5px;color:#3A4664;">Live counts, refreshed each time this page opens.</div>
+      <button style="display:flex;align-items:center;gap:9px;height:44px;padding:0 20px;border:none;border-radius:16px;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;font:700 13.5px 'Inter';white-space:nowrap;cursor:pointer;box-shadow:6px 8px 18px rgba(29,71,214,.35),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.35);" style-hover="background:linear-gradient(160deg,#1D47D6,#1836A8);" style-active="box-shadow:inset 3px 3px 8px rgba(11,23,48,.45),inset -2px -2px 6px rgba(255,255,255,.15);"><i class="icon-download" style="font-size:16px;"></i>Export Report</button>
+    </div>
+
+    <div style="position:relative;z-index:1;flex-shrink:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px;">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);" style-hover="transform:translateY(-4px);box-shadow:16px 22px 42px rgba(29,71,214,.20),-8px -8px 22px rgba(255,255,255,.85),inset 0 1px 0 #fff;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;line-height:1.35;max-width:112px;padding-top:4px;text-wrap:balance;">REGISTERED RESIDENTS</div>
+          <div style="width:44px;height:44px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#5687FF,#2F62F5);color:#fff;box-shadow:5px 7px 14px rgba(29,71,214,.28),inset 2px 2px 4px rgba(255,255,255,.45),inset -3px -4px 7px rgba(11,23,48,.3);"><i class="icon-users" style="font-size:19px;"></i></div>
+        </div>
+        <div style="font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;">11</div>
+        <div style="display:inline-flex;align-self:flex-start;max-width:100%;padding:5px 11px;border-radius:999px;background:#E1E9F9;font-size:12px;font-weight:600;color:#3A4664;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);">Across 20 barangays</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);" style-hover="transform:translateY(-4px);box-shadow:16px 22px 42px rgba(29,71,214,.20),-8px -8px 22px rgba(255,255,255,.85),inset 0 1px 0 #fff;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;line-height:1.35;max-width:112px;padding-top:4px;text-wrap:balance;">DOKYU OPEN</div>
+          <div style="width:44px;height:44px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#DBE7FF;color:#1D47D6;box-shadow:5px 7px 14px rgba(29,71,214,.14),inset 2px 2px 4px rgba(255,255,255,.9),inset -3px -3px 6px rgba(29,71,214,.14);"><i class="icon-file-text" style="font-size:19px;"></i></div>
+        </div>
+        <div style="font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;">2</div>
+        <div style="display:inline-flex;align-self:flex-start;max-width:100%;padding:5px 11px;border-radius:999px;background:#E1E9F9;font-size:12px;font-weight:600;color:#3A4664;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);">38 in all, any status</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);" style-hover="transform:translateY(-4px);box-shadow:16px 22px 42px rgba(29,71,214,.20),-8px -8px 22px rgba(255,255,255,.85),inset 0 1px 0 #fff;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;line-height:1.35;max-width:112px;padding-top:4px;text-wrap:balance;">WAITING ON STAFF</div>
+          <div style="width:44px;height:44px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#FFEB5C,#F5CF00);color:#0B1730;box-shadow:5px 7px 14px rgba(227,188,0,.3),inset 2px 2px 4px rgba(255,255,255,.7),inset -3px -4px 7px rgba(140,110,0,.28);"><i class="icon-inbox" style="font-size:19px;"></i></div>
+        </div>
+        <div style="font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;">2</div>
+        <div style="display:inline-flex;align-self:flex-start;max-width:100%;padding:5px 11px;border-radius:999px;background:#E1E9F9;font-size:12px;font-weight:600;color:#3A4664;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);">Dokyu 2 · Tulong 0</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);" style-hover="transform:translateY(-4px);box-shadow:16px 22px 42px rgba(29,71,214,.20),-8px -8px 22px rgba(255,255,255,.85),inset 0 1px 0 #fff;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;line-height:1.35;max-width:112px;padding-top:4px;text-wrap:balance;">TULONG OPEN</div>
+          <div style="width:44px;height:44px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#1D47D6,#1836A8);color:#fff;box-shadow:5px 7px 14px rgba(24,54,168,.3),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 7px rgba(11,23,48,.35);"><i class="icon-hand-heart" style="font-size:19px;"></i></div>
+        </div>
+        <div style="font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;">0</div>
+        <div style="display:inline-flex;align-self:flex-start;max-width:100%;padding:5px 11px;border-radius:999px;background:#E1E9F9;font-size:12px;font-weight:600;color:#3A4664;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);">27 in all, any status</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);" style-hover="transform:translateY(-4px);box-shadow:16px 22px 42px rgba(29,71,214,.20),-8px -8px 22px rgba(255,255,255,.85),inset 0 1px 0 #fff;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;line-height:1.35;max-width:112px;padding-top:4px;text-wrap:balance;">RELEASED THIS MONTH</div>
+          <div style="width:44px;height:44px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#1F3B7A,#0B1730);color:#fff;box-shadow:5px 7px 14px rgba(11,23,48,.3),inset 2px 2px 4px rgba(255,255,255,.25),inset -3px -4px 7px rgba(0,0,0,.4);"><i class="icon-package-check" style="font-size:19px;"></i></div>
+        </div>
+        <div style="font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;">17</div>
+        <div style="display:inline-flex;align-self:flex-start;max-width:100%;padding:5px 11px;border-radius:999px;background:#E1E9F9;font-size:12px;font-weight:600;color:#3A4664;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);">Document requests</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);" style-hover="transform:translateY(-4px);box-shadow:16px 22px 42px rgba(29,71,214,.20),-8px -8px 22px rgba(255,255,255,.85),inset 0 1px 0 #fff;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;line-height:1.35;max-width:112px;padding-top:4px;text-wrap:balance;">SUBMITTED TODAY</div>
+          <div style="width:44px;height:44px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#FFF4B8;color:#7A5E00;box-shadow:5px 7px 14px rgba(227,188,0,.2),inset 2px 2px 4px rgba(255,255,255,.9),inset -3px -3px 6px rgba(140,110,0,.14);"><i class="icon-calendar-clock" style="font-size:19px;"></i></div>
+        </div>
+        <div style="font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;">24</div>
+        <div style="display:inline-flex;align-self:flex-start;max-width:100%;padding:5px 11px;border-radius:999px;background:#E1E9F9;font-size:12px;font-weight:600;color:#3A4664;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);">Dokyu + Tulong</div>
+      </div>
+    </div>
+
+    <div style="position:relative;z-index:1;flex-shrink:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start;">
+      <div style="padding:24px;border-radius:28px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:18px;font-weight:800;">Dokyu</div><a href="#" style="font-size:13.5px;font-weight:700;white-space:nowrap;">View details</a></div>
+        <div onMouseLeave="{{ donutLeave }}" style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center;margin-top:18px;">
+          <div style="position:relative;width:200px;height:200px;flex-shrink:0;">
+            <svg viewBox="0 0 200 200" width="200" height="200" style="display:block;overflow:visible;">
+              <circle cx="100" cy="100" r="81" fill="none" stroke="rgba(29,71,214,.08)" stroke-width="31"></circle>
+              <sc-for list="{{ dokyuSegs }}" as="g" hint-placeholder-count="4">
+                <path d="{{ g.d }}" fill="{{ g.color }}" stroke="{{ g.color }}" stroke-width="5" stroke-linejoin="round" style="{{ g.style }}" onMouseEnter="{{ g.enter }}"></path>
+              </sc-for>
+            </svg>
+            <div style="position:absolute;inset:42px;border-radius:50%;background:#E6EDFB;display:grid;place-content:center;text-align:center;pointer-events:none;box-shadow:inset 5px 5px 12px rgba(29,71,214,.14),inset -5px -5px 12px rgba(255,255,255,.95);">
+              <div style="font-size:30px;font-weight:800;line-height:1;">{{ dokyuCenterValue }}</div>
+              <div style="font-size:11px;font-weight:600;color:#5F6B8A;margin-top:5px;padding:0 10px;line-height:1.25;">{{ dokyuCenterLabel }}</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:170px;">
+            <sc-for list="{{ dokyuSegs }}" as="g" hint-placeholder-count="4">
+              <div onMouseEnter="{{ g.enter }}" style="{{ g.rowStyle }}">
+                <span style="{{ g.dotStyle }}"></span>
+                <span style="flex:1;font-size:13px;font-weight:600;color:#3A4664;">{{ g.label }}</span>
+                <span style="font-size:13.5px;font-weight:800;">{{ g.value }}</span>
+                <span style="font-size:11.5px;font-weight:600;color:#7D89A8;width:34px;text-align:right;">{{ g.pct }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:24px;border-radius:28px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:18px;font-weight:800;">Tulong</div><a href="#" style="font-size:13.5px;font-weight:700;white-space:nowrap;">View details</a></div>
+        <div onMouseLeave="{{ donutLeave }}" style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center;margin-top:18px;">
+          <div style="position:relative;width:200px;height:200px;flex-shrink:0;">
+            <svg viewBox="0 0 200 200" width="200" height="200" style="display:block;overflow:visible;">
+              <circle cx="100" cy="100" r="81" fill="none" stroke="rgba(29,71,214,.08)" stroke-width="31"></circle>
+              <sc-for list="{{ tulongSegs }}" as="g" hint-placeholder-count="3">
+                <path d="{{ g.d }}" fill="{{ g.color }}" stroke="{{ g.color }}" stroke-width="5" stroke-linejoin="round" style="{{ g.style }}" onMouseEnter="{{ g.enter }}"></path>
+              </sc-for>
+            </svg>
+            <div style="position:absolute;inset:42px;border-radius:50%;background:#E6EDFB;display:grid;place-content:center;text-align:center;pointer-events:none;box-shadow:inset 5px 5px 12px rgba(29,71,214,.14),inset -5px -5px 12px rgba(255,255,255,.95);">
+              <div style="font-size:30px;font-weight:800;line-height:1;">{{ tulongCenterValue }}</div>
+              <div style="font-size:11px;font-weight:600;color:#5F6B8A;margin-top:5px;padding:0 10px;line-height:1.25;">{{ tulongCenterLabel }}</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:170px;">
+            <sc-for list="{{ tulongSegs }}" as="g" hint-placeholder-count="3">
+              <div onMouseEnter="{{ g.enter }}" style="{{ g.rowStyle }}">
+                <span style="{{ g.dotStyle }}"></span>
+                <span style="flex:1;font-size:13px;font-weight:600;color:#3A4664;">{{ g.label }}</span>
+                <span style="font-size:13.5px;font-weight:800;">{{ g.value }}</span>
+                <span style="font-size:11.5px;font-weight:600;color:#7D89A8;width:34px;text-align:right;">{{ g.pct }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:24px;border-radius:28px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="font-size:18px;font-weight:800;">Open requests by barangay</div>
+          <div style="display:flex;padding:4px;border-radius:14px;background:#E1E9F9;box-shadow:inset 3px 3px 7px rgba(29,71,214,.12),inset -3px -3px 7px rgba(255,255,255,.9);">
+            <button onClick="{{ pickDokyu }}" style="{{ dokyuTab }}">Dokyu</button>
+            <button onClick="{{ pickTulong }}" style="{{ tulongTab }}">Tulong</button>
+          </div>
+        </div>
+        <sc-if value="{{ isDokyu }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:22px;">
+            <div style="display:flex;justify-content:space-between;font-size:14.5px;"><span style="font-weight:600;">Brgy. Poblacion</span><span style="color:#5F6B8A;">2 requests</span></div>
+            <div style="height:14px;margin-top:10px;border-radius:999px;background:#DCE4F5;box-shadow:inset 2px 2px 5px rgba(29,71,214,.16),inset -2px -2px 4px rgba(255,255,255,.9);padding:2px;">
+              <div style="height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#5687FF,#1D47D6);box-shadow:inset 0 2px 2px rgba(255,255,255,.45),inset 0 -2px 3px rgba(11,23,48,.3);"></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isTulong }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:22px;padding:22px;border-radius:18px;text-align:center;background:#E1E9F9;box-shadow:inset 3px 3px 8px rgba(29,71,214,.12),inset -3px -3px 8px rgba(255,255,255,.9);">
+            <div style="font-weight:700;font-size:14.5px;">No open Tulong requests</div>
+            <div style="font-size:12.5px;color:#5F6B8A;margin-top:4px;">All 27 cases are resolved, closed or declined.</div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="position:relative;z-index:1;flex-shrink:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start;">
+      <div style="padding:24px;border-radius:28px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="font-size:18px;font-weight:800;">Requests trend</div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:13px;font-weight:600;color:#3A4664;">
+          <span style="color:#5F6B8A;font-weight:500;">Last 6 months</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:#2F62F5;box-shadow:inset -1px -1px 2px rgba(11,23,48,.3),inset 1px 1px 2px rgba(255,255,255,.5);"></span>Dokyu</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:#FFE11A;box-shadow:inset -1px -1px 2px rgba(140,110,0,.4),inset 1px 1px 2px rgba(255,255,255,.7);"></span>Tulong</span>
+        </div>
+        <div onMouseLeave="{{ trendLeave }}" style="position:relative;margin-top:18px;">
+          <svg viewBox="0 0 600 250" style="width:100%;height:auto;display:block;overflow:visible;">
+            <defs>
+              <linearGradient id="gDokyu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:#2F62F5;stop-opacity:.38;"></stop><stop offset="1" style="stop-color:#2F62F5;stop-opacity:0;"></stop></linearGradient>
+              <linearGradient id="gTulong" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:#F5CF00;stop-opacity:.45;"></stop><stop offset="1" style="stop-color:#F5CF00;stop-opacity:0;"></stop></linearGradient>
+            </defs>
+            <line x1="40" x2="584" y1="216" y2="216" stroke="rgba(29,71,214,.12)" stroke-dasharray="3 5"></line>
+            <text x="30" y="216" text-anchor="end" dominant-baseline="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;">0</text>
+            <line x1="40" x2="584" y1="166" y2="166" stroke="rgba(29,71,214,.12)" stroke-dasharray="3 5"></line>
+            <text x="30" y="166" text-anchor="end" dominant-baseline="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;">10</text>
+            <line x1="40" x2="584" y1="116" y2="116" stroke="rgba(29,71,214,.12)" stroke-dasharray="3 5"></line>
+            <text x="30" y="116" text-anchor="end" dominant-baseline="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;">20</text>
+            <line x1="40" x2="584" y1="66" y2="66" stroke="rgba(29,71,214,.12)" stroke-dasharray="3 5"></line>
+            <text x="30" y="66" text-anchor="end" dominant-baseline="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;">30</text>
+            <line x1="40" x2="584" y1="16" y2="16" stroke="rgba(29,71,214,.12)" stroke-dasharray="3 5"></line>
+            <text x="30" y="16" text-anchor="end" dominant-baseline="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;">40</text>
+            <text x="40" y="243" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;">2026-05</text>
+            <text x="149.6" y="243" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;">2026-06</text>
+            <text x="259.2" y="243" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;">2026-07</text>
+            <text x="368.8" y="243" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;">2026-08</text>
+            <text x="478.4" y="243" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;">2026-09</text>
+            <text x="588" y="243" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#7D89A8;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;">2026-10</text>
+            <path d="{{ trendTulongArea }}" fill="url(#gTulong)"></path>
+            <path d="{{ trendDokyuArea }}" fill="url(#gDokyu)"></path>
+            <path d="{{ trendTulongLine }}" fill="none" stroke="#E8C200" stroke-width="3.5" stroke-linecap="round"></path>
+            <path d="{{ trendDokyuLine }}" fill="none" stroke="#2F62F5" stroke-width="3.5" stroke-linecap="round"></path>
+            <sc-if value="{{ trendHas }}" hint-placeholder-val="{{ false }}">
+              <line x1="{{ trendHX }}" x2="{{ trendHX }}" y1="16" y2="216" stroke="rgba(11,23,48,.28)" stroke-dasharray="4 4"></line>
+              <circle cx="{{ trendHX }}" cy="{{ trendHYT }}" r="6.5" fill="#E8C200" stroke="#fff" stroke-width="3"></circle>
+              <circle cx="{{ trendHX }}" cy="{{ trendHYD }}" r="6.5" fill="#2F62F5" stroke="#fff" stroke-width="3"></circle>
+            </sc-if>
+            <sc-for list="{{ trendCols }}" as="c" hint-placeholder-count="6">
+              <rect x="{{ c.x }}" y="0" width="{{ c.w }}" height="250" fill="transparent" onMouseEnter="{{ c.enter }}"></rect>
+            </sc-for>
+          </svg>
+          <sc-if value="{{ trendHas }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:0;left:{{ trendTipLeft }};transform:translateX(-50%);padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.95);box-shadow:4px 6px 16px rgba(29,71,214,.16);font-size:12px;pointer-events:none;white-space:nowrap;">
+              <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-weight:500;color:#5F6B8A;">{{ trendTipMonth }}</div>
+              <div style="display:flex;gap:12px;margin-top:4px;font-weight:700;">
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#2F62F5;"></span>Dokyu {{ trendTipDokyu }}</span>
+                <span style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#E8C200;"></span>Tulong {{ trendTipTulong }}</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="padding:24px;border-radius:28px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div style="font-size:18px;font-weight:800;">Sakuna alerts</div>
+          <span style="min-width:26px;height:26px;padding:0 8px;border-radius:999px;display:grid;place-items:center;background:linear-gradient(160deg,#FFEB5C,#F5CF00);color:#0B1730;font-size:12.5px;font-weight:800;box-shadow:inset 1px 1px 2px rgba(255,255,255,.7),inset -1px -2px 3px rgba(140,110,0,.3),3px 4px 8px rgba(227,188,0,.3);">1</span>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start;margin-top:18px;padding:14px;border-radius:18px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.95);cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:4px 6px 14px rgba(29,71,214,.08),inset 0 1px 0 #fff;" style-hover="transform:translateY(-2px);box-shadow:8px 10px 22px rgba(29,71,214,.14),inset 0 1px 0 #fff;">
+          <div style="width:42px;height:42px;flex-shrink:0;border-radius:14px;display:grid;place-items:center;background:#FFF4B8;color:#7A5E00;box-shadow:4px 6px 12px rgba(227,188,0,.22),inset 2px 2px 4px rgba(255,255,255,.9),inset -3px -3px 6px rgba(140,110,0,.14);"><i class="icon-triangle-alert" style="font-size:19px;"></i></div>
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:15px;font-weight:700;">test</div>
+            <div style="font-size:12.5px;color:#5F6B8A;margin-top:2px;">test · Advisory</div>
+            <div style="font-size:11.5px;color:#7D89A8;margin-top:8px;">Oct 7</div>
+          </div>
+          <span style="padding:4px 10px;border-radius:999px;background:#E1E9F9;font-size:11px;font-weight:700;color:#3A4664;letter-spacing:.04em;box-shadow:inset 2px 2px 4px rgba(29,71,214,.12),inset -2px -2px 4px rgba(255,255,255,.9);">ADVISORY</span>
+        </div>
+        <a href="#" style="display:inline-block;margin-top:16px;font-size:13.5px;font-weight:700;">View all alerts</a>
+      </div>
+
+      <div style="padding:24px;border-radius:28px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;"><div style="font-size:18px;font-weight:800;">Recent activity</div><a href="#" style="font-size:13.5px;font-weight:700;">View all</a></div>
+        <div style="display:flex;flex-direction:column;margin-top:10px;">
+          <sc-for list="{{ activity }}" as="a" hint-placeholder-count="6">
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px 4px;border-top:1px solid rgba(29,71,214,.09);">
+              <div style="width:38px;height:38px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#E1E9F9;color:#1D47D6;box-shadow:inset 3px 3px 6px rgba(29,71,214,.12),inset -3px -3px 6px rgba(255,255,255,.9);"><i class="{{ a.icon }}" style="font-size:16px;"></i></div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:14px;font-weight:700;line-height:1.3;">{{ a.who }} <span style="color:#5F6B8A;font-weight:600;">— {{ a.what }}</span></div>
+                <div style="font-size:12px;color:#1D47D6;margin-top:3px;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;overflow-wrap:anywhere;">{{ a.meta }}</div>
+                <div style="font-size:11.5px;color:#7D89A8;margin-top:4px;">{{ a.time }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;sidebarCollapsed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;showBanner&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;barangayTab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Dokyu&quot;,&quot;options&quot;:[&quot;Dokyu&quot;,&quot;Tulong&quot;],&quot;tsType&quot;:&quot;'Dokyu' | 'Tulong'&quot;,&quot;section&quot;:&quot;Data&quot;}}">
+class Component extends DCLogic {
+  state = { now: new Date(), active: 'Dashboard', collapsed: null, tab: null, hover: null, trendHover: null };
+  componentDidMount() { this.t = setInterval(() => this.setState({ now: new Date() }), 1000); }
+  componentWillUnmount() { clearInterval(this.t); }
+
+  donut(key, data, totalLabel) {
+    const total = data.reduce((a, s) => a + s.value, 0);
+    const cx = 100, cy = 100, R = 94, r = 68, TAU = 2 * Math.PI;
+    // constant ~5px visual gap (path is also stroked 5px for rounded corners), min 16° so slivers read as pieces
+    const gap = data.length > 1 ? 10 / ((R + r) / 2) : 0, minA = 16 * Math.PI / 180;
+    let spans = data.map(s => s.value / total * TAU);
+    const small = spans.map(a => a < minA), nSmall = small.filter(Boolean).length;
+    const bigSum = spans.reduce((a, s, i) => a + (small[i] ? 0 : s), 0);
+    const k = bigSum ? (TAU - nSmall * minA) / bigSum : 1;
+    spans = spans.map((a, i) => small[i] ? minA : a * k);
+    const pt = (rad, a) => `${(cx + rad * Math.cos(a)).toFixed(2)} ${(cy + rad * Math.sin(a)).toFixed(2)}`;
+    const hov = this.state.hover;
+    let cur = -Math.PI / 2;
+    const segs = data.map((s, i) => {
+      const span = spans[i];
+      const a0 = cur + gap / 2, a1 = cur + span - gap / 2;
+      cur += span;
+      const L = a1 - a0 > Math.PI ? 1 : 0, mid = (a0 + a1) / 2;
+      const on = !!hov && hov.key === key && hov.i === i;
+      const dim = !!hov && hov.key === key && !on;
+      const pct = Math.round(s.value / total * 100) + '%';
+      return {
+        label: s.label, color: s.color, value: String(s.value), pct,
+        d: `M${pt(R, a0)}A${R} ${R} 0 ${L} 1 ${pt(R, a1)}L${pt(r, a1)}A${r} ${r} 0 ${L} 0 ${pt(r, a0)}Z`,
+        enter: () => this.setState({ hover: { key, i } }),
+        style: `cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s,filter .2s;transform:${on ? `translate(${(Math.cos(mid) * 7).toFixed(1)}px,${(Math.sin(mid) * 7).toFixed(1)}px)` : 'none'};opacity:${dim ? .35 : 1};filter:${on ? 'drop-shadow(0 8px 12px rgba(11,23,48,.32))' : 'drop-shadow(0 2px 3px rgba(11,23,48,.16))'};`,
+        rowStyle: 'display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;cursor:default;transition:all .2s;' + (on
+          ? 'background:rgba(255,255,255,.8);box-shadow:3px 4px 10px rgba(29,71,214,.12),-2px -2px 6px rgba(255,255,255,.9);'
+          : dim ? 'opacity:.5;' : ''),
+        dotStyle: `width:12px;height:12px;border-radius:4px;flex-shrink:0;background:${s.color};box-shadow:inset 1px 1px 2px rgba(255,255,255,.5),inset -1px -1px 2px rgba(0,0,0,.15);`,
+      };
+    });
+    const h = hov && hov.key === key ? segs[hov.i] : null;
+    return { segs, centerValue: h ? h.value : String(total), centerLabel: h ? `${h.label} · ${h.pct}` : totalLabel };
+  }
+
+  trend() {
+    const months = ['2026-05','2026-06','2026-07','2026-08','2026-09','2026-10'];
+    const dokyu = [0,0,0,0,0,38], tulong = [0,0,0,0,0,27];
+    const W = 600, H = 250, left = 40, right = 16, top = 16, bottom = 34, yMax = 40;
+    const x = i => left + i * (W - left - right) / (months.length - 1);
+    const y = v => +(top + (1 - v / yMax) * (H - top - bottom)).toFixed(2);
+    const line = vals => vals.map((v, i) => {
+      if (!i) return `M${x(0)} ${y(v)}`;
+      const x0 = x(i - 1), x1 = x(i), c = (x1 - x0) / 2;
+      return `C${x0 + c} ${y(vals[i - 1])} ${x1 - c} ${y(v)} ${x1} ${y(v)}`;
+    }).join('');
+    const area = vals => line(vals) + `L${x(vals.length - 1)} ${y(0)}L${x(0)} ${y(0)}Z`;
+    const hi = this.state.trendHover, has = hi !== null && hi !== undefined;
+    const colW = (W - left - right) / (months.length - 1);
+    return {
+      trendDokyuLine: line(dokyu), trendDokyuArea: area(dokyu), trendTulongLine: line(tulong), trendTulongArea: area(tulong),
+      trendCols: months.map((m, i) => ({ x: x(i) - colW / 2, w: colW, enter: () => this.setState({ trendHover: i }) })),
+      trendLeave: () => this.setState({ trendHover: null }),
+      trendHas: has,
+      trendHX: has ? x(hi) : 0, trendHYD: has ? y(dokyu[hi]) : 0, trendHYT: has ? y(tulong[hi]) : 0,
+      trendTipLeft: has ? `${Math.min(84, Math.max(16, x(hi) / W * 100)).toFixed(1)}%` : '0%',
+      trendTipMonth: has ? months[hi] : '', trendTipDokyu: has ? String(dokyu[hi]) : '', trendTipTulong: has ? String(tulong[hi]) : '',
+    };
+  }
+
+  renderVals() {
+    const collapsed = this.state.collapsed ?? (this.props.sidebarCollapsed ?? false);
+    const expanded = !collapsed;
+    const items = [
+      ['Dashboard','icon-layout-grid'],['Constituents','icon-users'],['Papeles','icon-folder-open'],
+      ['Dokyu','icon-file-text',1],['Tulong','icon-hand-heart'],['Sakuna','icon-shield-alert'],
+      ['Payments','icon-receipt'],['Balita','icon-megaphone'],['Reports & Analytics','icon-chart-pie'],
+      ['User Management','icon-user-cog'],['Internal Forms','icon-clipboard-list']];
+    const nav = items.map(([label, icon, badge]) => {
+      const on = this.state.active === label;
+      return {
+        label, icon, badge, showBadge: !!badge && expanded,
+        onClick: () => this.setState({ active: label }),
+        style: `display:flex;align-items:center;gap:12px;min-height:40px;padding:0 ${expanded?14:0}px;justify-content:${expanded?'flex-start':'center'};border:none;border-radius:16px;cursor:pointer;font:${on?700:600} 14.5px 'Inter';transition:all .2s;` + (on
+          ? 'background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:0 6px 14px -2px rgba(47,98,245,.5),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.4);'
+          : 'background:transparent;color:#C3CFEA;'),
+        hover: on ? '' : 'background:rgba(255,255,255,.07);color:#fff;'
+      };
+    });
+    const tab = this.state.tab ?? (this.props.barangayTab ?? 'Dokyu');
+    const tabStyle = (on) => `border:none;cursor:pointer;padding:6px 12px;border-radius:10px;font:${on?700:600} 12.5px 'Inter';transition:all .2s;` + (on
+      ? 'background:rgba(255,255,255,.85);color:#1D47D6;box-shadow:3px 4px 8px rgba(29,71,214,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 #fff;'
+      : 'background:transparent;color:#5F6B8A;');
+    const dokyu = this.donut('dokyu', [
+      { label:'Released', value:18, color:'#1D47D6' }, { label:'Processing', value:18, color:'#5687FF' },
+      { label:'Pending', value:1, color:'#FFE11A' }, { label:'Ready', value:1, color:'#0B1730' }], 'Total requests');
+    const tulong = this.donut('tulong', [
+      { label:'Resolved', value:10, color:'#2F62F5' }, { label:'Closed', value:14, color:'#B9C7E8' },
+      { label:'Declined', value:3, color:'#0B1730' }], 'Total cases');
+    const n = this.state.now;
+    return {
+      nav, expanded,
+      sideW: expanded ? '272px' : '84px',
+      collapseIcon: expanded ? 'icon-panel-left-close' : 'icon-panel-left-open',
+      toggle: () => this.setState({ collapsed: expanded }),
+      showBanner: this.props.showBanner ?? true,
+      isDokyu: tab === 'Dokyu', isTulong: tab === 'Tulong',
+      dokyuTab: tabStyle(tab === 'Dokyu'), tulongTab: tabStyle(tab === 'Tulong'),
+      pickDokyu: () => this.setState({ tab: 'Dokyu' }), pickTulong: () => this.setState({ tab: 'Tulong' }),
+      dokyuSegs: dokyu.segs, dokyuCenterValue: dokyu.centerValue, dokyuCenterLabel: dokyu.centerLabel,
+      tulongSegs: tulong.segs, tulongCenterValue: tulong.centerValue, tulongCenterLabel: tulong.centerLabel,
+      donutLeave: () => this.setState({ hover: null }),
+      ...this.trend(),
+      activity: [
+        { icon:'icon-bell-ring', who:'Test Super Admin', what:'Alert published', meta:'sakuna · ALT-2026-0009', time:'Oct 7, 11:27 PM' },
+        { icon:'icon-pencil-line', who:'Test Super Admin', what:'Alert drafted', meta:'sakuna · ALT-2026-0009', time:'Oct 7, 11:27 PM' },
+        { icon:'icon-log-in', who:'Test Super Admin', what:'Signed in', meta:'user_management · SA-901', time:'Oct 7, 11:16 PM' },
+        { icon:'icon-eye', who:'Ricardo Villanueva', what:'Viewed a sensitive record', meta:'communications', time:'Oct 7, 7:46 PM' },
+        { icon:'icon-log-in', who:'Test Resident', what:'Signed in', meta:'user_management · resident@esperanza.test', time:'Oct 7, 7:40 PM' },
+        { icon:'icon-log-in', who:'Test Super Admin', what:'Signed in', meta:'user_management · SA-901', time:'Oct 7, 7:40 PM' },
+      ],
+      time: n.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' }),
+      dateLabel: n.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }).toUpperCase(),
+      scopes: [
+        { icon:'icon-landmark', label:'Municipality-wide access' },
+        { icon:'icon-file-text', label:'Dokyu · Document Requests' },
+        { icon:'icon-hand-heart', label:'Tulong · Citizen Assistance' },
+        { icon:'icon-users', label:'Constituent Management' },
+        { icon:'icon-plus', label:'7 more' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

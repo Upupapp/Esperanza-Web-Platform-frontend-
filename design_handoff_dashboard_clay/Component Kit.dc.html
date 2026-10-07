@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css">
+<style>
+html,body{margin:0;background:#E6EDFB;font-family:'Inter',system-ui,sans-serif;color:#0B1730;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1D47D6;text-decoration:none}a:hover{color:#1836A8}
+input::placeholder,textarea::placeholder{color:#7D89A8}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:40px 44px 80px;background:radial-gradient(760px 440px at 90% -8%,rgba(86,135,255,.42),transparent 70%),radial-gradient(600px 440px at 6% 106%,rgba(255,225,26,.36),transparent 70%),radial-gradient(900px 640px at 58% 58%,rgba(47,98,245,.12),transparent 70%),#E6EDFB;">
+<div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:44px;">
+
+  <header style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+    <div>
+      <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">ESPERANZA · COMPONENT KIT · soft clay / pressed / glass</div>
+      <h1 style="margin:6px 0 0;font-size:30px;font-weight:800;letter-spacing:-.02em;">Shared components</h1>
+      <div style="font-size:14px;color:#5F6B8A;margin-top:4px;max-width:640px;">Reference renders for §3 of STYLE_GUIDE.md. Blue = primary, seal yellow = attention. Glass holds, pressed receives, clay acts.</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8);font-size:12.5px;font-weight:600;color:#3A4664;"><span style="width:14px;height:14px;border-radius:4px;background:#2F62F5;"></span>brand-500</div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8);font-size:12.5px;font-weight:600;color:#3A4664;"><span style="width:14px;height:14px;border-radius:4px;background:#FFE11A;"></span>gold-400</div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8);font-size:12.5px;font-weight:600;color:#3A4664;"><span style="width:14px;height:14px;border-radius:4px;background:#0B1730;"></span>navy-900</div>
+    </div>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:16px;">
+    <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">01 · SURFACES</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;">
+      <div style="padding:22px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="font-size:15px;font-weight:800;">.surface-glass</div>
+        <div style="font-size:12.5px;color:#5F6B8A;margin-top:4px;line-height:1.5;">Cards, tables, modals, dropdowns. White 58% · blur 22px · 1px white border.</div>
+      </div>
+      <div style="padding:22px;border-radius:26px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);">
+        <div style="font-size:15px;font-weight:800;">.surface-pressed</div>
+        <div style="font-size:12.5px;color:#5F6B8A;margin-top:4px;line-height:1.5;">Inputs, search, clock, tab tracks, progress tracks. Well #E1E9F9.</div>
+      </div>
+      <div style="padding:22px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="font-size:15px;font-weight:800;">.clay-*</div>
+        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+          <div title="clay-blue" style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:6px 8px 18px rgba(29,71,214,.35),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.35);"><i class="icon-users" style="font-size:19px;"></i></div>
+          <div title="clay-gold" style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#FFEB5C,#F5CF00);color:#0B1730;box-shadow:5px 7px 14px rgba(227,188,0,.3),inset 2px 2px 4px rgba(255,255,255,.7),inset -3px -4px 7px rgba(140,110,0,.28);"><i class="icon-inbox" style="font-size:19px;"></i></div>
+          <div title="clay-light" style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#DBE7FF;color:#1D47D6;box-shadow:5px 7px 14px rgba(29,71,214,.14),inset 2px 2px 4px rgba(255,255,255,.9),inset -3px -3px 6px rgba(29,71,214,.14);"><i class="icon-file-text" style="font-size:19px;"></i></div>
+          <div title="clay-navy" style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#1F3B7A,#0B1730);color:#fff;box-shadow:5px 7px 14px rgba(11,23,48,.3),inset 2px 2px 4px rgba(255,255,255,.25),inset -3px -4px 7px rgba(0,0,0,.4);"><i class="icon-package-check" style="font-size:19px;"></i></div>
+          <div title="clay-gold-light" style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#FFF4B8;color:#7A5E00;box-shadow:5px 7px 14px rgba(227,188,0,.2),inset 2px 2px 4px rgba(255,255,255,.9),inset -3px -3px 6px rgba(140,110,0,.14);"><i class="icon-calendar-clock" style="font-size:19px;"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px;">
+    <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">02 · BUTTONS — x-ui.button</div>
+    <div style="padding:26px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);display:flex;flex-direction:column;gap:22px;">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:none;border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:6px 8px 18px rgba(29,71,214,.35),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.35);" style-hover="filter:brightness(.95);" style-active="box-shadow:inset 3px 3px 8px rgba(11,23,48,.45),inset -2px -2px 6px rgba(255,255,255,.15);"><i class="icon-download" style="font-size:16px;"></i>Primary</button>
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:1px solid rgba(255,255,255,.9);border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);color:#3A4664;box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8),inset 0 1px 0 rgba(255,255,255,.95);" style-hover="background:rgba(255,255,255,.9);" style-active="background:#E1E9F9;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);"><i class="icon-filter" style="font-size:16px;"></i>Secondary</button>
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:none;border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:transparent;color:#5F6B8A;" style-hover="background:rgba(255,255,255,.6);color:#0B1730;">Ghost</button>
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:none;border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:linear-gradient(160deg,#F43F5E,#E11D48);color:#fff;box-shadow:6px 8px 18px rgba(225,29,72,.32),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(80,10,30,.35);" style-hover="filter:brightness(.95);"><i class="icon-trash-2" style="font-size:16px;"></i>Danger</button>
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:none;border-radius:16px;font:700 14px 'Inter';cursor:pointer;background:linear-gradient(160deg,#FFEB5C,#F5CF00);color:#0B1730;box-shadow:5px 7px 14px rgba(227,188,0,.3),inset 2px 2px 4px rgba(255,255,255,.7),inset -3px -4px 7px rgba(140,110,0,.28);" style-hover="filter:brightness(.97);"><i class="icon-sparkles" style="font-size:16px;"></i>Gold</button>
+        <button disabled style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:none;border-radius:16px;font:600 14px 'Inter';background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;opacity:.5;box-shadow:6px 8px 18px rgba(29,71,214,.35),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.35);">Disabled</button>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border:none;border-radius:14px;font:600 12px 'Inter';cursor:pointer;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:4px 6px 14px rgba(29,71,214,.32),inset 2px 2px 4px rgba(255,255,255,.35),inset -2px -3px 6px rgba(11,23,48,.35);">sm · 36px</button>
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:none;border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:6px 8px 18px rgba(29,71,214,.35),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.35);">md · 44px</button>
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 24px;border:none;border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:linear-gradient(160deg,#1F3B7A,#0B1730);color:#fff;box-shadow:6px 8px 18px rgba(11,23,48,.3),inset 2px 2px 4px rgba(255,255,255,.25),inset -3px -4px 8px rgba(0,0,0,.4);">lg · 48px · clay-navy (personnel sign-in)<i class="icon-arrow-right" style="font-size:16px;"></i></button>
+        <button title="icon button" style="width:44px;height:44px;border:1px solid rgba(255,255,255,.9);border-radius:16px;cursor:pointer;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);color:#3A4664;display:grid;place-items:center;box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8),inset 0 1px 0 rgba(255,255,255,.95);"><i class="icon-bell" style="font-size:18px;"></i></button>
+        <button title="row action" style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#5F6B8A;display:grid;place-items:center;" style-hover="background:rgba(255,255,255,.8);color:#1D47D6;box-shadow:4px 5px 10px rgba(29,71,214,.12);"><i class="icon-eye" style="font-size:16px;"></i></button>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px;">
+    <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">03 · FORM CONTROLS — x-ui.input · spec-field · toggles</div>
+    <div style="padding:26px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 26px;">
+      <label style="display:block;">
+        <span style="display:block;font-size:14px;font-weight:600;color:#3A4664;margin-bottom:6px;">Employee ID</span>
+        <span style="position:relative;display:flex;align-items:center;">
+          <i class="icon-badge-check" style="position:absolute;left:14px;font-size:18px;color:#5F6B8A;"></i>
+          <input placeholder="SA-001" style="width:100%;min-height:44px;border:none;border-radius:16px;padding:0 16px 0 42px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);font:500 14px ui-monospace,'SF Mono',Menlo,Consolas,monospace;color:#0B1730;outline:none;text-transform:uppercase;" style-focus="background:rgba(255,255,255,.9);box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9),0 0 0 4px #DBE7FF;">
+        </span>
+        <span style="display:block;font-size:12px;color:#5F6B8A;margin-top:6px;">Default · focus shows a 4px brand-100 ring</span>
+      </label>
+      <label style="display:block;">
+        <span style="display:block;font-size:14px;font-weight:600;color:#3A4664;margin-bottom:6px;">Email <span style="color:#E11D48;">*</span></span>
+        <input value="juan@esperanza" style="width:100%;min-height:44px;border:none;border-radius:16px;padding:0 16px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9),inset 0 0 0 2px #FDA4AF;font:500 14px 'Inter';color:#0B1730;outline:none;">
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E11D48;margin-top:6px;"><i class="icon-circle-alert" style="font-size:14px;"></i>Enter a valid email address</span>
+      </label>
+      <label style="display:block;">
+        <span style="display:block;font-size:14px;font-weight:600;color:#3A4664;margin-bottom:6px;">Barangay</span>
+        <span style="position:relative;display:flex;align-items:center;">
+          <select style="width:100%;min-height:44px;border:none;border-radius:16px;padding:0 42px 0 16px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);font:500 14px 'Inter';color:#0B1730;outline:none;appearance:none;-webkit-appearance:none;">
+            <option>Poblacion</option><option>Agpo</option><option>Villa</option>
+          </select>
+          <i class="icon-chevron-down" style="position:absolute;right:14px;font-size:16px;color:#5F6B8A;pointer-events:none;"></i>
+        </span>
+      </label>
+      <label style="display:block;">
+        <span style="display:block;font-size:14px;font-weight:600;color:#3A4664;margin-bottom:6px;">Purpose</span>
+        <textarea rows="2" placeholder="Why the document is needed" style="width:100%;border:none;border-radius:16px;padding:12px 16px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);font:500 14px 'Inter';color:#0B1730;outline:none;resize:vertical;"></textarea>
+      </label>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <span style="display:block;font-size:14px;font-weight:600;color:#3A4664;">Checkbox · radio · toggle</span>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#3A4664;cursor:pointer;"><span style="width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:3px 4px 8px rgba(29,71,214,.3),inset 1px 1px 2px rgba(255,255,255,.4),inset -2px -2px 4px rgba(11,23,48,.3);"><i class="icon-check" style="font-size:14px;"></i></span>Senior citizen (checked)</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#3A4664;cursor:pointer;"><span style="width:22px;height:22px;border-radius:7px;background:#E1E9F9;box-shadow:inset 2px 2px 5px rgba(29,71,214,.14),inset -2px -2px 5px rgba(255,255,255,.9);"></span>PWD</label>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#3A4664;cursor:pointer;"><span style="width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#E1E9F9;box-shadow:inset 2px 2px 5px rgba(29,71,214,.14),inset -2px -2px 5px rgba(255,255,255,.9);"><span style="width:11px;height:11px;border-radius:50%;background:linear-gradient(160deg,#2F62F5,#1D47D6);box-shadow:1px 2px 4px rgba(29,71,214,.4);"></span></span>Pick up</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#3A4664;cursor:pointer;"><span style="width:22px;height:22px;border-radius:50%;background:#E1E9F9;box-shadow:inset 2px 2px 5px rgba(29,71,214,.14),inset -2px -2px 5px rgba(255,255,255,.9);"></span>Deliver</label>
+        </div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#3A4664;cursor:pointer;"><span style="position:relative;width:44px;height:24px;border-radius:999px;background:linear-gradient(160deg,#2F62F5,#1D47D6);box-shadow:inset 2px 2px 4px rgba(11,23,48,.35),inset -1px -1px 2px rgba(255,255,255,.3);"><span style="position:absolute;top:2px;left:22px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:2px 3px 6px rgba(11,23,48,.25);"></span></span>Notify by SMS</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#3A4664;cursor:pointer;"><span style="position:relative;width:44px;height:24px;border-radius:999px;background:#E1E9F9;box-shadow:inset 2px 2px 5px rgba(29,71,214,.14),inset -2px -2px 5px rgba(255,255,255,.9);"><span style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:2px 3px 6px rgba(11,23,48,.2);"></span></span>Email</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px;">
+    <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">04 · STATUS BADGES · PILLS · TABS — x-ui.badge keeps its colour vocabulary</div>
+    <div style="padding:26px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);display:flex;flex-direction:column;gap:22px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <sc-for list="{{ badges }}" as="b" hint-placeholder-count="8">
+          <span style="{{ b.style }}"><span style="{{ b.dot }}"></span>{{ b.label }}</span>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <span style="display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:0 10px;border-radius:999px;background:#E1E9F9;color:#3A4664;font-size:12px;font-weight:600;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);">Pressed pill · sub-label</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:0 10px;border-radius:999px;background:rgba(255,225,26,.18);border:1px solid rgba(255,225,26,.5);color:#7A5E00;font-size:12px;font-weight:700;"><i class="icon-landmark" style="font-size:12px;"></i>Municipality-wide</span>
+        <span style="min-width:26px;height:26px;padding:0 8px;border-radius:999px;display:grid;place-items:center;background:linear-gradient(160deg,#FFEB5C,#F5CF00);color:#0B1730;font-size:12.5px;font-weight:800;box-shadow:inset 1px 1px 2px rgba(255,255,255,.7),inset -1px -2px 3px rgba(140,110,0,.3),3px 4px 8px rgba(227,188,0,.3);">3</span>
+        <span style="font-size:12px;color:#5F6B8A;">← clay-gold count badge (queue counts, alerts)</span>
+        <span style="display:inline-flex;padding:2px 6px;border-radius:6px;background:#FEF3C7;color:#B45309;font-size:10px;font-weight:700;letter-spacing:.04em;">SENIOR</span>
+        <span style="display:inline-flex;padding:2px 6px;border-radius:6px;background:#DBEAFE;color:#1D4ED8;font-size:10px;font-weight:700;letter-spacing:.04em;">PWD</span>
+        <span style="display:inline-flex;padding:2px 6px;border-radius:6px;background:#CFFAFE;color:#0E7490;font-size:10px;font-weight:700;letter-spacing:.04em;">4PS</span>
+      </div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;">
+        <div style="display:inline-flex;padding:4px;border-radius:16px;background:#E1E9F9;box-shadow:inset 2px 2px 5px rgba(29,71,214,.12),inset -2px -2px 5px rgba(255,255,255,.9);max-width:100%;overflow-x:auto;">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+            <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <span style="font-size:12px;color:#5F6B8A;">Segmented tabs — click to switch. Scrolls horizontally when >6 tabs (Sakuna).</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px;">
+    <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">05 · TABLE — x-ui.table + row pattern + pagination</div>
+    <div style="border-radius:26px;overflow:hidden;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:18px 22px;">
+        <div style="font-size:18px;font-weight:800;">Residents</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <span style="display:flex;align-items:center;gap:10px;height:40px;width:260px;max-width:100%;padding:0 14px;border-radius:14px;background:#E1E9F9;box-shadow:inset 3px 3px 7px rgba(29,71,214,.12),inset -3px -3px 7px rgba(255,255,255,.9);"><i class="icon-search" style="font-size:16px;color:#5F6B8A;"></i><input placeholder="Search name or ID" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font:500 13.5px 'Inter';color:#0B1730;"></span>
+          <button style="display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border:none;border-radius:14px;font:600 13px 'Inter';cursor:pointer;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:5px 7px 16px rgba(29,71,214,.33),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.35);"><i class="icon-user-plus" style="font-size:16px;"></i>Add resident</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <thead>
+            <tr style="background:rgba(225,233,249,.7);">
+              <th style="text-align:left;padding:12px 22px;font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;white-space:nowrap;">RESIDENT</th>
+              <th style="text-align:left;padding:12px 22px;font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;white-space:nowrap;">BARANGAY</th>
+              <th style="text-align:left;padding:12px 22px;font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;white-space:nowrap;">RECORD</th>
+              <th style="text-align:left;padding:12px 22px;font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;white-space:nowrap;">STATUS</th>
+              <th style="text-align:center;padding:12px 22px;font-size:11.5px;font-weight:700;letter-spacing:.07em;color:#5F6B8A;white-space:nowrap;">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+              <tr style="border-top:1px solid rgba(29,71,214,.08);transition:background .15s;cursor:pointer;" style-hover="background:rgba(255,255,255,.6);">
+                <td style="padding:14px 22px;">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:40px;height:40px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#5687FF,#1D47D6);color:#fff;font-weight:800;font-size:13px;box-shadow:3px 4px 8px rgba(29,71,214,.3),inset 2px 2px 4px rgba(255,255,255,.4),inset -3px -4px 6px rgba(11,23,48,.4);">{{ r.initials }}</div>
+                    <div style="min-width:0;">
+                      <div style="font-weight:700;color:#0B1730;white-space:nowrap;">{{ r.name }}</div>
+                      <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:#1D47D6;margin-top:2px;">{{ r.id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding:14px 22px;white-space:nowrap;"><div style="font-weight:600;color:#3A4664;">{{ r.brgy }}</div><div style="font-size:12px;color:#5F6B8A;margin-top:2px;">{{ r.sitio }}</div></td>
+                <td style="padding:14px 22px;white-space:nowrap;"><span style="{{ r.recStyle }}"><span style="{{ r.recDot }}"></span>{{ r.record }}</span></td>
+                <td style="padding:14px 22px;white-space:nowrap;"><span style="{{ r.statStyle }}"><span style="{{ r.statDot }}"></span>{{ r.status }}</span></td>
+                <td style="padding:14px 22px;">
+                  <div style="display:flex;justify-content:center;gap:4px;">
+                    <button title="View" style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#5F6B8A;display:grid;place-items:center;" style-hover="background:rgba(255,255,255,.85);color:#1D47D6;box-shadow:4px 5px 10px rgba(29,71,214,.12);"><i class="icon-eye" style="font-size:16px;"></i></button>
+                    <button title="Edit" style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#5F6B8A;display:grid;place-items:center;" style-hover="background:rgba(255,255,255,.85);color:#1D47D6;box-shadow:4px 5px 10px rgba(29,71,214,.12);"><i class="icon-pencil" style="font-size:16px;"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 22px;border-top:1px solid rgba(29,71,214,.08);font-size:13px;color:#5F6B8A;">
+        <div>Showing <b style="color:#0B1730;">1–3</b> of <b style="color:#0B1730;">38</b> residents</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button style="width:36px;height:36px;border:1px solid rgba(255,255,255,.9);border-radius:12px;cursor:pointer;background:rgba(255,255,255,.6);color:#3A4664;display:grid;place-items:center;box-shadow:4px 6px 14px rgba(29,71,214,.12),-4px -4px 10px rgba(255,255,255,.8);"><i class="icon-chevron-left" style="font-size:16px;"></i></button>
+          <button style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;font:700 13px 'Inter';box-shadow:4px 6px 14px rgba(29,71,214,.33),inset 2px 2px 4px rgba(255,255,255,.35),inset -2px -3px 6px rgba(11,23,48,.35);">1</button>
+          <button style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#3A4664;font:600 13px 'Inter';" style-hover="background:rgba(255,255,255,.7);">2</button>
+          <button style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#3A4664;font:600 13px 'Inter';" style-hover="background:rgba(255,255,255,.7);">3</button>
+          <span style="padding:0 4px;color:#7D89A8;">…</span>
+          <button style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#3A4664;font:600 13px 'Inter';" style-hover="background:rgba(255,255,255,.7);">13</button>
+          <button style="width:36px;height:36px;border:1px solid rgba(255,255,255,.9);border-radius:12px;cursor:pointer;background:rgba(255,255,255,.6);color:#3A4664;display:grid;place-items:center;box-shadow:4px 6px 14px rgba(29,71,214,.12),-4px -4px 10px rgba(255,255,255,.8);"><i class="icon-chevron-right" style="font-size:16px;"></i></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:start;">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">06 · TOASTS — x-ui.toast-container</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);box-shadow:16px 20px 48px rgba(11,23,48,.18),inset 0 1px 0 rgba(255,255,255,.9);">
+          <span style="width:32px;height:32px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;background:#D1FAE5;color:#047857;box-shadow:4px 5px 10px rgba(4,120,87,.14),inset 2px 2px 4px rgba(255,255,255,.9),inset -2px -2px 5px rgba(4,120,87,.12);"><i class="icon-circle-check" style="font-size:16px;"></i></span>
+          <div style="flex:1;font-size:14px;color:#3A4664;line-height:1.45;padding-top:4px;">Request DOK-2026-00030 marked to release.</div>
+          <i class="icon-x" style="font-size:14px;color:#7D89A8;margin-top:8px;cursor:pointer;"></i>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);box-shadow:16px 20px 48px rgba(11,23,48,.18),inset 0 1px 0 rgba(255,255,255,.9);">
+          <span style="width:32px;height:32px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;background:#DBE7FF;color:#1D47D6;box-shadow:4px 5px 10px rgba(29,71,214,.14),inset 2px 2px 4px rgba(255,255,255,.9),inset -2px -2px 5px rgba(29,71,214,.14);"><i class="icon-info" style="font-size:16px;"></i></span>
+          <div style="flex:1;font-size:14px;color:#3A4664;line-height:1.45;padding-top:4px;">Draft saved. You can continue later from Dokyu.</div>
+          <i class="icon-x" style="font-size:14px;color:#7D89A8;margin-top:8px;cursor:pointer;"></i>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);box-shadow:16px 20px 48px rgba(11,23,48,.18),inset 0 1px 0 rgba(255,255,255,.9);">
+          <span style="width:32px;height:32px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;background:#FFF4B8;color:#7A5E00;box-shadow:4px 5px 10px rgba(227,188,0,.2),inset 2px 2px 4px rgba(255,255,255,.9),inset -2px -2px 5px rgba(140,110,0,.14);"><i class="icon-triangle-alert" style="font-size:16px;"></i></span>
+          <div style="flex:1;font-size:14px;color:#3A4664;line-height:1.45;padding-top:4px;">Payment reference already used on another request.</div>
+          <i class="icon-x" style="font-size:14px;color:#7D89A8;margin-top:8px;cursor:pointer;"></i>
+        </div>
+      </div>
+      <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;margin-top:12px;">07 · EMPTY STATE — x-ui.empty-state</div>
+      <div style="padding:40px 26px;border-radius:26px;text-align:center;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);">
+        <div style="width:64px;height:64px;border-radius:22px;display:grid;place-items:center;background:#E1E9F9;color:#5F6B8A;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);"><i class="icon-inbox" style="font-size:28px;"></i></div>
+        <div style="font-size:15px;font-weight:700;margin-top:16px;">Wala pang kahilingan</div>
+        <div style="font-size:14px;color:#5F6B8A;margin-top:4px;max-width:320px;">No requests yet. New document requests from residents will appear here.</div>
+        <button style="display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;margin-top:18px;border:1px solid rgba(255,255,255,.9);border-radius:14px;font:600 12.5px 'Inter';cursor:pointer;background:rgba(255,255,255,.6);color:#3A4664;box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8);"><i class="icon-rotate-ccw" style="font-size:14px;"></i>Subukang muli</button>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;">08 · MODAL — x-ui.modal (static render)</div>
+      <div style="position:relative;padding:36px 28px;border-radius:26px;background:rgba(11,23,48,.5);backdrop-filter:blur(8px);display:flex;justify-content:center;">
+        <div style="width:100%;max-width:460px;border-radius:28px;overflow:hidden;background:rgba(255,255,255,.88);backdrop-filter:blur(28px);border:1px solid rgba(255,255,255,.9);box-shadow:16px 20px 48px rgba(11,23,48,.28),inset 0 1px 0 rgba(255,255,255,.9);">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid rgba(29,71,214,.1);">
+            <div style="font-size:16px;font-weight:800;">Assign request</div>
+            <div style="display:flex;gap:4px;">
+              <button title="Expand" style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#5F6B8A;display:grid;place-items:center;" style-hover="background:rgba(255,255,255,.9);color:#0B1730;box-shadow:4px 5px 10px rgba(29,71,214,.12);"><i class="icon-maximize-2" style="font-size:15px;"></i></button>
+              <button title="Close" style="width:36px;height:36px;border:none;border-radius:12px;cursor:pointer;background:transparent;color:#5F6B8A;display:grid;place-items:center;" style-hover="background:rgba(255,255,255,.9);color:#0B1730;box-shadow:4px 5px 10px rgba(29,71,214,.12);"><i class="icon-x" style="font-size:18px;"></i></button>
+            </div>
+          </div>
+          <div style="padding:22px;display:flex;flex-direction:column;gap:16px;">
+            <label style="display:block;">
+              <span style="display:block;font-size:14px;font-weight:600;color:#3A4664;margin-bottom:6px;">Assign to</span>
+              <span style="position:relative;display:flex;align-items:center;">
+                <select style="width:100%;min-height:44px;border:none;border-radius:16px;padding:0 42px 0 16px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);font:500 14px 'Inter';color:#0B1730;outline:none;appearance:none;-webkit-appearance:none;"><option>Ricardo Villanueva · Records</option><option>Ana Dela Cruz · Treasury</option></select>
+                <i class="icon-chevron-down" style="position:absolute;right:14px;font-size:16px;color:#5F6B8A;pointer-events:none;"></i>
+              </span>
+            </label>
+            <label style="display:block;">
+              <span style="display:block;font-size:14px;font-weight:600;color:#3A4664;margin-bottom:6px;">Note to officer</span>
+              <textarea rows="2" placeholder="Optional" style="width:100%;border:none;border-radius:16px;padding:12px 16px;background:#E1E9F9;box-shadow:inset 4px 4px 9px rgba(29,71,214,.12),inset -4px -4px 9px rgba(255,255,255,.9);font:500 14px 'Inter';color:#0B1730;outline:none;resize:vertical;"></textarea>
+            </label>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid rgba(29,71,214,.1);background:rgba(225,233,249,.5);">
+            <button style="display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border:1px solid rgba(255,255,255,.9);border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:rgba(255,255,255,.65);color:#3A4664;box-shadow:6px 8px 18px rgba(29,71,214,.14),-5px -5px 14px rgba(255,255,255,.8);">Cancel</button>
+            <button style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:none;border-radius:16px;font:600 14px 'Inter';cursor:pointer;background:linear-gradient(160deg,#2F62F5,#1D47D6);color:#fff;box-shadow:6px 8px 18px rgba(29,71,214,.35),inset 2px 2px 4px rgba(255,255,255,.35),inset -3px -4px 8px rgba(11,23,48,.35);"><i class="icon-user-check" style="font-size:16px;"></i>Assign</button>
+          </div>
+        </div>
+      </div>
+      <div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#5F6B8A;margin-top:12px;">09 · PROGRESS · DROPDOWN MENU</div>
+      <div style="padding:22px;border-radius:26px;background:rgba(255,255,255,.58);backdrop-filter:blur(22px) saturate(140%);border:1px solid rgba(255,255,255,.85);box-shadow:12px 14px 34px rgba(29,71,214,.12),-8px -8px 22px rgba(255,255,255,.75),inset 0 1px 0 rgba(255,255,255,.95);display:flex;flex-direction:column;gap:18px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="font-weight:600;">Evacuation center capacity</span><span style="color:#5F6B8A;">72%</span></div>
+          <div style="height:14px;margin-top:8px;border-radius:999px;background:#DCE4F5;box-shadow:inset 2px 2px 5px rgba(29,71,214,.16),inset -2px -2px 4px rgba(255,255,255,.9);padding:2px;"><div style="height:100%;width:72%;border-radius:999px;background:linear-gradient(90deg,#5687FF,#1D47D6);box-shadow:inset 0 2px 2px rgba(255,255,255,.45),inset 0 -2px 3px rgba(11,23,48,.3);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="font-weight:600;">Relief packs distributed</span><span style="color:#5F6B8A;">96% · near full</span></div>
+          <div style="height:14px;margin-top:8px;border-radius:999px;background:#DCE4F5;box-shadow:inset 2px 2px 5px rgba(29,71,214,.16),inset -2px -2px 4px rgba(255,255,255,.9);padding:2px;"><div style="height:100%;width:96%;border-radius:999px;background:linear-gradient(90deg,#FFEB5C,#F5CF00);box-shadow:inset 0 2px 2px rgba(255,255,255,.6),inset 0 -2px 3px rgba(140,110,0,.3);"></div></div>
+        </div>
+        <div style="width:240px;padding:6px;border-radius:22px;background:rgba(255,255,255,.7);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.9);box-shadow:16px 20px 48px rgba(11,23,48,.2),inset 0 1px 0 rgba(255,255,255,.9);">
+          <div style="padding:12px 14px 10px;border-bottom:1px solid rgba(29,71,214,.1);"><div style="font-size:14px;font-weight:700;">Test Super Admin</div><div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:#5F6B8A;margin-top:2px;">SA-901</div></div>
+          <a href="#" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;font-size:14px;color:#3A4664;margin-top:4px;" style-hover="background:rgba(255,255,255,.9);color:#0B1730;"><i class="icon-user" style="font-size:16px;color:#5F6B8A;"></i>My Profile</a>
+          <a href="#" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;font-size:14px;color:#3A4664;" style-hover="background:rgba(255,255,255,.9);color:#0B1730;"><i class="icon-settings" style="font-size:16px;color:#5F6B8A;"></i>Settings</a>
+          <a href="#" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;font-size:14px;color:#E11D48;" style-hover="background:#FFF1F2;color:#BE123C;"><i class="icon-log-out" style="font-size:16px;"></i>Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 'Individuals' };
+  renderVals() {
+    // Universal status vocabulary (badge.blade.php) — colours unchanged, only the pill gets a soft inner highlight
+    const sys = {
+      'Draft': ['#F1F5F9', '#475569', '#E2E8F0', '#94A3B8'],
+      'Submitted': ['#EFF6FF', '#1D4ED8', '#BFDBFE', '#3B82F6'],
+      'Pending Review': ['#FFFBEB', '#B45309', '#FDE68A', '#F59E0B'],
+      'Processing': ['#EEF4FF', '#1836A8', '#B8D0FF', '#2F62F5'],
+      'Approved': ['#ECFDF5', '#047857', '#A7F3D0', '#10B981'],
+      'Rejected': ['#FFF1F2', '#BE123C', '#FECDD3', '#F43F5E'],
+      'Mark to Release': ['#F0FDFA', '#0F766E', '#99F6E4', '#14B8A6'],
+      'Released': ['#ECFEFF', '#0E7490', '#A5F3FC', '#06B6D4'],
+      'Completed': ['#F0FDF4', '#15803D', '#BBF7D0', '#22C55E'],
+      'Verified': ['#ECFDF5', '#047857', '#A7F3D0', '#10B981'],
+      'Partially Verified': ['#F5F3FF', '#6D28D9', '#DDD6FE', '#8B5CF6'],
+      'For Validation': ['#F0F9FF', '#0369A1', '#BAE6FD', '#0EA5E9'],
+      'Unverified': ['#FFFBEB', '#B45309', '#FDE68A', '#F59E0B'],
+      'Active': ['#ECFDF5', '#047857', '#A7F3D0', '#10B981'],
+      'Archived': ['#E2E8F0', '#475569', '#CBD5E1', '#94A3B8'],
+    };
+    const badge = (name) => {
+      const [bg, fg, ring, dot] = sys[name] || sys.Draft;
+      return {
+        label: name,
+        style: `display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.02em;white-space:nowrap;background:${bg};color:${fg};box-shadow:inset 0 0 0 1px ${ring},inset 0 1px 0 rgba(255,255,255,.7);`,
+        dot: `width:6px;height:6px;border-radius:50%;background:${dot};`,
+      };
+    };
+    const badges = ['Draft','Submitted','Pending Review','Processing','Approved','Rejected','Mark to Release','Released','Completed'].map(badge);
+    const tabs = ['Individuals','Households','Families','Profiling','Data quality'].map(label => {
+      const on = this.state.tab === label;
+      return { label, onClick: () => this.setState({ tab: label }),
+        style: `border:none;cursor:pointer;padding:8px 14px;border-radius:12px;white-space:nowrap;font:${on?700:600} 13px 'Inter';transition:all .2s;` + (on
+          ? 'background:rgba(255,255,255,.85);color:#1D47D6;box-shadow:3px 4px 8px rgba(29,71,214,.16),-2px -2px 5px rgba(255,255,255,.9),inset 0 1px 0 #fff;'
+          : 'background:transparent;color:#5F6B8A;') };
+    });
+    const rows = [
+      ['Maria Santos','RES-2026-00112','Brgy. Poblacion','Sitio Centro','Verified','Active'],
+      ['Jose Ramirez','RES-2026-00098','Brgy. Agpo','Sitio Baybay','Partially Verified','Active'],
+      ['Liza Mendoza','RES-2026-00077','Brgy. Villa','—','For Validation','Archived'],
+    ].map(([name,id,brgy,sitio,record,status]) => {
+      const r = badge(record), s = badge(status);
+      return { name, id, brgy, sitio, record, status, initials: name.split(' ').map(w => w[0]).join(''), recStyle: r.style, recDot: r.dot, statStyle: s.style, statDot: s.dot };
+    });
+    return { badges, tabs, rows };
+  }
+}
+</script>
+</body>
+</html>
