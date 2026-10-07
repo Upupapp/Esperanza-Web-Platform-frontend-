@@ -251,12 +251,6 @@
                                 <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
                                 </div>
-                                {{-- The split per module, as plain text (owner, 2026-10-07): the
-                                     Dokyu and Tulong links above open the lists. --}}
-                                <div class="flex flex-wrap gap-x-3 mt-1 text-[11px] font-medium text-slate-500">
-                                    <span x-show="brgy.dokyu && $store.session.can('dokyu')" x-text="'Dokyu ' + brgy.dokyu"></span>
-                                    <span x-show="brgy.tulong && $store.session.can('tulong')" x-text="'Tulong ' + brgy.tulong"></span>
-                                </div>
                             </div>
                         </template>
                         <p class="text-xs text-slate-500" x-show="!barangayRequests.length">No open requests.</p>
