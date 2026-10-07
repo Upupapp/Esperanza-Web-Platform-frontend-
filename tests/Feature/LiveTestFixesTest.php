@@ -190,6 +190,14 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString('canvas.className = canvasClass;', $js);
     }
 
+    /** 2026-10-07: Log Blotter Entry covered only the page area. A page's fade-in must leave no transform behind. */
+    public function test_a_page_fade_in_leaves_no_transform_that_traps_a_dialog(): void
+    {
+        $css = $this->source('resources/css/app.css');
+        $this->assertStringContainsString('--animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;', $css);
+        $this->assertMatchesRegularExpression('/@keyframes fade-up \{\s*from \{[^}]*\}\s*to \{ opacity: 1; transform: none; \}/', $css);
+    }
+
     /** UX-4, UX-13, UX-14, UX-5: one word per thing; counts that agree; offices spelled out; one close button. */
     public function test_staff_pages_use_one_word_per_thing(): void
     {

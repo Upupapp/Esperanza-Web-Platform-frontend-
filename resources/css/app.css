@@ -113,7 +113,12 @@
     --ease-spring-soft: cubic-bezier(0.34, 1.56, 0.64, 1);
 
     --animate-fade-in: fade-in 0.4s ease-out both;
-    --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    /* `backwards`, ending at `transform: none`: a page wrapper that kept its
+       final translateY(0) became the containing block of every `fixed` pop-up
+       inside it, so Log Blotter Entry, the internal-form decision and the
+       resident Directory dialog covered only the page area and were cut off at
+       the top (2026-10-07). Once the fade ends, nothing is left applied. */
+    --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
     --animate-shimmer: shimmer 1.8s ease-in-out infinite;
     --animate-scale-in: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
     --animate-blob-float: blob-float 9s ease-in-out infinite;
@@ -131,7 +136,7 @@
     }
     @keyframes fade-up {
         from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        to { opacity: 1; transform: none; }
     }
     @keyframes shimmer {
         0% { background-position: -400px 0; }
