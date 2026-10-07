@@ -48,44 +48,12 @@
                 Status Breakdown
             </h3>
 
-            <div
-                x-data="{ chart: null }"
-                x-init="$watch('barangayStatusBreakdown', async (rows) => {
-                    const Chart = await window.loadChart();
-                    // Chart.js loads late: by then the canvas can be gone, or a
-                    // second draw already holds it, and drawing threw 'reading
-                    // ownerDocument' (QA run 2026-10-05).
-                    const canvas = $refs.canvas;
-                    if (!canvas || !canvas.isConnected) return;
-                    if (chart) { chart.destroy(); chart = null; }
-                    Chart.getChart?.(canvas)?.destroy();
-                    chart = new Chart(canvas, {
-                        type: 'doughnut',
-                        data: {
-                            labels: rows.map(r => r.label),
-                            datasets: [{
-                                data: rows.map(r => r.value),
-                                backgroundColor: rows.map(r => r.color),
-                                borderColor: '#ffffff',
-                                borderWidth: 3,
-                                hoverOffset: 6,
-                            }],
-                        },
-                        options: {
-                            cutout: '68%',
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { callbacks: { label: (ctx) => ' ' + ctx.label + ': ' + ctx.raw + ' barangay' + (ctx.raw > 1 ? 's' : '') } },
-                            },
-                        },
-                    });
-                }, { immediate: true })"
-                class="relative w-40 h-40"
-            >
+            <div x-data="centerDonut({ cutout: '68%', borderWidth: 3 })" x-effect="draw(barangayStatusBreakdown)" @mouseleave="hover = null" class="relative w-40 h-40">
                 <canvas x-ref="canvas" class="w-full h-full"></canvas>
-                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span class="text-2xl font-bold text-navy-900" x-text="barangayCoverage.length"></span>
-                    <span class="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Barangays</span>
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
+                    <span class="text-2xl font-bold text-navy-900 tabular-nums" x-text="hover ? hover.value.toLocaleString() : barangayCoverage.length"></span>
+                    <span x-show="!hover" class="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Barangays</span>
+                    <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-navy-900 leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
                 </div>
             </div>
 

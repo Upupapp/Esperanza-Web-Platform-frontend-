@@ -1028,6 +1028,57 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    // A doughnut with its total in the centre (dashboard, Reports, Constituents).
+    // The tooltip landed on the centre total and was clipped by the small canvas,
+    // so neither could be read (2026-10-07). No tooltip now: the centre shows the
+    // slice under the pointer (its number and name) and the total otherwise.
+    //   <div x-data="centerDonut()" x-effect="draw(rows)" @mouseleave="hover = null">
+    //     <canvas x-ref="canvas"></canvas> ... x-text="hover ? hover.value : total"
+    // The chart object stays out of Alpine's reactive state.
+    Alpine.data('centerDonut', (opts = {}) => {
+        let chart = null;
+        return {
+            hover: null,
+            async draw(rows) {
+                const list = (rows || []).map((r) => ({ label: r.label, value: Number(r.value) || 0, color: r.color }));
+                this.hover = null;
+                const Chart = await window.loadChart();
+                const canvas = this.$refs.canvas;
+                if (!canvas || !canvas.isConnected) return;
+                if (chart) { chart.destroy(); chart = null; }
+                Chart.getChart?.(canvas)?.destroy();
+                if (!list.length) return;
+                chart = new Chart(canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: list.map((r) => r.label),
+                        datasets: [{
+                            data: list.map((r) => r.value),
+                            backgroundColor: list.map((r) => r.color),
+                            borderColor: '#ffffff',
+                            borderWidth: opts.borderWidth ?? 0,
+                            hoverOffset: 4,
+                        }],
+                    },
+                    options: {
+                        cutout: opts.cutout || '72%',
+                        layout: { padding: 6 },
+                        maintainAspectRatio: false,
+                        animation: { duration: 600, easing: 'easeOutQuart' },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        onHover: (event, active) => {
+                            this.hover = active.length ? list[active[0].index] : null;
+                        },
+                    },
+                });
+            },
+            destroy() {
+                if (chart) chart.destroy();
+                chart = null;
+            },
+        };
+    });
+
     Alpine.data('donutChart', (config) => ({
         chart: null,
         async init() {

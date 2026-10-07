@@ -178,11 +178,12 @@
                         <h3 class="font-semibold text-navy-900">Dokyu</h3>
                         <a href="{{ route('admin.document-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
-                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('docStatus', async (rows) => { const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); chart = new Chart(canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
+                    <div class="relative w-40 h-40 mx-auto" x-data="centerDonut()" x-effect="draw(docStatus)" @mouseleave="hover = null">
                         <canvas x-ref="canvas"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="docStatusTotal.toLocaleString()"></span>
-                            <span class="text-[11px] text-slate-500">Total Requests</span>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
+                            <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="hover ? hover.value.toLocaleString() : docStatusTotal.toLocaleString()"></span>
+                            <span x-show="!hover" class="text-[11px] text-slate-500">Total Requests</span>
+                            <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-navy-900 leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2.5">
@@ -206,11 +207,12 @@
                         <h3 class="font-semibold text-navy-900">Tulong</h3>
                         <a href="{{ route('admin.assistance-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
                     </div>
-                    <div class="relative w-40 h-40 mx-auto" x-data="{ chart: null }" x-init="$watch('assistStatus', async (rows) => { const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); chart = new Chart(canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
+                    <div class="relative w-40 h-40 mx-auto" x-data="centerDonut()" x-effect="draw(assistStatus)" @mouseleave="hover = null">
                         <canvas x-ref="canvas"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="assistStatusTotal.toLocaleString()"></span>
-                            <span class="text-[11px] text-slate-500">Total Cases</span>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
+                            <span class="text-2xl font-semibold text-navy-900 tabular-nums" x-text="hover ? hover.value.toLocaleString() : assistStatusTotal.toLocaleString()"></span>
+                            <span x-show="!hover" class="text-[11px] text-slate-500">Total Cases</span>
+                            <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-navy-900 leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2.5">

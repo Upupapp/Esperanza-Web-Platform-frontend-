@@ -209,6 +209,26 @@ class LiveTestFixesTest extends TestCase
         }
     }
 
+    /** 2026-10-07: a doughnut's tooltip covered its centre total. The centre shows the hovered slice instead. */
+    public function test_doughnuts_show_the_hovered_slice_in_the_centre_not_a_tooltip(): void
+    {
+        $js = $this->source('resources/js/app.js');
+        $this->assertStringContainsString("Alpine.data('centerDonut'", $js);
+        $this->assertStringContainsString('tooltip: { enabled: false }', $js);
+        $this->assertStringContainsString('layout: { padding: 6 }', $js);
+        foreach ([
+            'resources/views/admin/dashboard.blade.php' => ['draw(docStatus)', 'draw(assistStatus)'],
+            'resources/views/admin/reports.blade.php' => ['draw(internalOfficeSplit)', 'draw(incidentSeveritySplit)'],
+            'resources/views/admin/constituents/tab-profiling.blade.php' => ['draw(barangayStatusBreakdown)'],
+        ] as $path => $draws) {
+            $view = $this->source($path);
+            foreach ($draws as $draw) {
+                $this->assertStringContainsString('x-effect="'.$draw.'" @mouseleave="hover = null"', $view, $path);
+            }
+            $this->assertStringNotContainsString("type: 'doughnut'", $view, $path.': one shared chart');
+        }
+    }
+
     /** UX-4, UX-13, UX-14, UX-5: one word per thing; counts that agree; offices spelled out; one close button. */
     public function test_staff_pages_use_one_word_per_thing(): void
     {

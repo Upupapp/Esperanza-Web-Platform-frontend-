@@ -280,11 +280,12 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <x-ui.card>
                 <h3 class="text-sm font-semibold text-navy-900 mb-4">Internal Forms by Office</h3>
-                <div class="relative w-36 h-36 mx-auto" x-data="{ chart: null }" x-init="$watch('internalOfficeSplit', async (rows) => { if (!rows.length) return; const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); chart = new Chart(canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
+                <div class="relative w-36 h-36 mx-auto" x-data="centerDonut()" x-effect="draw(internalOfficeSplit)" @mouseleave="hover = null">
                     <canvas x-ref="canvas"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-xl font-semibold text-navy-900 tabular-nums" x-text="internalForms?.totals?.submissions ?? 0"></span>
-                        <span class="text-[11px] text-slate-500">Total</span>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
+                        <span class="text-xl font-semibold text-navy-900 tabular-nums" x-text="hover ? hover.value.toLocaleString() : (internalForms?.totals?.submissions ?? 0)"></span>
+                        <span x-show="!hover" class="text-[11px] text-slate-500">Total</span>
+                        <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-navy-900 leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
                     </div>
                 </div>
                 <div class="mt-5 space-y-2.5">
@@ -303,11 +304,12 @@
 
             <x-ui.card>
                 <h3 class="text-sm font-semibold text-navy-900 mb-4">Incident Reports by Severity</h3>
-                <div class="relative w-36 h-36 mx-auto" x-data="{ chart: null }" x-init="$watch('incidentSeveritySplit', async (rows) => { if (!rows.length) return; const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); chart = new Chart(canvas, { type: 'doughnut', data: { labels: rows.map(r=>r.label), datasets: [{ data: rows.map(r=>r.value), backgroundColor: rows.map(r=>r.color), borderWidth: 0, hoverOffset: 6 }] }, options: { cutout: '72%', plugins: { legend: { display: false } }, maintainAspectRatio: false } }); }, { immediate: true })">
+                <div class="relative w-36 h-36 mx-auto" x-data="centerDonut()" x-effect="draw(incidentSeveritySplit)" @mouseleave="hover = null">
                     <canvas x-ref="canvas"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-xl font-semibold text-navy-900 tabular-nums" x-text="incidentTotal"></span>
-                        <span class="text-[11px] text-slate-500">Total</span>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
+                        <span class="text-xl font-semibold text-navy-900 tabular-nums" x-text="hover ? hover.value.toLocaleString() : incidentTotal"></span>
+                        <span x-show="!hover" class="text-[11px] text-slate-500">Total</span>
+                        <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-navy-900 leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
                     </div>
                 </div>
                 <div class="mt-5 space-y-2.5">
