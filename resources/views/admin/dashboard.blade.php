@@ -55,10 +55,34 @@
                 const s = this.$store.session.account?.scope;
                 return !s || s === 'Municipal' ? 'Across 20 barangays' : 'In Brgy. ' + s;
             },
-            get barangayRequests() {
-                const rows = this.dash?.requests?.by_barangay || [];
-                const max = Math.max(1, ...rows.map(r => r.open));
-                return rows.map(r => ({ name: r.barangay, count: r.open, dokyu: r.dokyu ?? null, tulong: r.tulong ?? null, pct: Math.round((r.open / max) * 100) }));
+            // Open requests by barangay, for the module the switch shows (README
+            // 'Open requests by barangay'); the bar is relative to the busiest.
+            // An account with neither module (Constituents only) sees all open.
+            brgyTab: $store.session.can('dokyu') ? 'dokyu' : ($store.session.can('tulong') ? 'tulong' : 'all'),
+            get barangayRows() {
+                const key = this.brgyTab;
+                const rows = (this.dash?.requests?.by_barangay || [])
+                    .map(r => ({ name: r.barangay, count: (key === 'dokyu' ? (r.dokyu ?? r.open) : key === 'tulong' ? r.tulong : r.open) ?? 0 }))
+                    .filter(r => r.count > 0);
+                const max = Math.max(1, ...rows.map(r => r.count));
+                return rows.map(r => ({ ...r, pct: Math.round((r.count / max) * 100) }));
+            },
+            get trendData() {
+                const t = this.dash?.requests?.trend;
+                if (!t) return { labels: [], series: [] };
+                return { labels: t.labels || [], series: [
+                    { label: 'Dokyu', values: t.documents || [], color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 },
+                    { label: 'Tulong', values: t.assistance || [], color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.45 },
+                ] };
+            },
+            // One icon per kind of action (README 'Recent activity').
+            activityIcon(a) {
+                const k = String(a.action || '').toLowerCase();
+                if (k.includes('login') || k.includes('sign')) return 'log-in';
+                if (k.includes('publish') || k.includes('alert')) return 'bell-ring';
+                if (k.includes('draft') || k.includes('creat') || k.includes('updat') || k.includes('edit')) return 'pencil-line';
+                if (k.includes('read') || k.includes('view')) return 'eye';
+                return 'activity';
             },
             get registeredResidents() {
                 return this.coverage?.meta?.municipal?.residents ?? this.coverage?.data?.[0]?.residents ?? null;
@@ -81,45 +105,47 @@
                 }
             },
         }"
+        class="flex flex-col gap-[22px]"
     >
 
-        <!-- Welcome hero — reflects the signed-in account -->
-        <div x-show="$store.session.account" x-cloak class="relative rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 shadow-card animate-fade-up">
-            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,theme(colors.white),transparent_55%)] pointer-events-none"></div>
-            <div class="relative px-5 py-6 sm:px-7 sm:py-7 flex flex-col lg:flex-row lg:items-center gap-5">
-                <div class="flex items-center gap-4 flex-1 min-w-0">
-                    <div class="w-14 h-14 text-lg rounded-full bg-white/15 backdrop-blur border-2 border-white/40 text-white flex items-center justify-center font-semibold shadow-lg shrink-0" x-text="$store.session.initials()"></div>
+        {{-- Clay design, the staff dashboard (design_handoff_dashboard_clay/README.md):
+             greeting banner, live KPI coins, doughnuts, open requests by barangay,
+             the six-month trend, Sakuna alerts and recent activity. --}}
+
+        <!-- Greeting banner — reflects the signed-in account -->
+        <div x-show="$store.session.account" x-cloak class="hero-banner animate-fade-up px-6 py-7 sm:px-[34px] sm:py-[30px]">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-6">
+                <div class="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
+                    <div class="w-14 h-14 sm:w-[72px] sm:h-[72px] rounded-full clay-gold grid place-items-center text-xl sm:text-2xl font-extrabold shrink-0" x-text="$store.session.initials()"></div>
                     <div class="min-w-0">
                         {{-- Today's date in the browser: now() here was the day the site was built. --}}
-                        <p class="text-[11px] font-medium text-white/50 uppercase tracking-wide" x-text="new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' })"></p>
-                        <h2 class="text-xl font-semibold text-white truncate">
+                        <p class="text-xs font-bold uppercase tracking-[.1em] text-gold-400" x-text="new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' })"></p>
+                        <h2 class="mt-1 text-[22px] sm:text-[28px] font-extrabold leading-tight tracking-[-.01em] text-white text-balance sm:truncate">
                             <span x-text="'Good day, ' + $store.session.account?.name"></span>
                         </h2>
-                        <p class="text-sm text-white/60 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p class="mt-1 text-[15px] text-[#dce5ff] flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span x-text="$store.session.account?.role + ' · ' + $store.session.account?.dept"></span>
-                            <span class="text-white/30">·</span>
-                            <span class="font-mono" x-text="$store.session.account?.id"></span>
+                            <span class="text-white/40">·</span>
+                            <span class="font-mono text-[13.5px]" x-text="$store.session.account?.id"></span>
                         </p>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-1.5 lg:max-w-xs xl:max-w-sm lg:justify-end">
-                    <span
-                        class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-full px-2.5 py-1 shrink-0 bg-white/10 text-white border border-white/20"
-                    >
-                        <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-3 h-3"></i>
+                <div class="flex flex-wrap items-center gap-2 lg:justify-end lg:basis-[460px] lg:shrink">
+                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-white bg-white/14 backdrop-blur-[10px] border border-white/28">
+                        <i :data-lucide="$store.session.account?.scope === 'Municipal' ? 'landmark' : 'map-pin'" class="w-[13px] h-[13px]"></i>
                         <span x-text="$store.session.account?.scope === 'Municipal' ? 'Municipality-wide access' : 'Brgy. ' + $store.session.account?.scope + ' only'"></span>
                     </span>
                     <template x-for="mod in myModules.slice(0, 3)" :key="mod.key">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-white/80 text-[10.5px] font-medium border border-white/10 shrink-0">
-                            <i :data-lucide="mod.icon" class="w-3 h-3"></i>
+                        <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-white bg-white/14 backdrop-blur-[10px] border border-white/28">
+                            <i :data-lucide="mod.icon" class="w-[13px] h-[13px]"></i>
                             <span x-text="mod.name"></span>
                         </span>
                     </template>
                     <span
                         x-show="myModules.length > 3"
                         x-cloak
-                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 text-white/60 text-[10.5px] font-medium border border-white/10 shrink-0"
+                        class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-white/85 bg-white/14 backdrop-blur-[10px] border border-white/28"
                         x-text="'+' + (myModules.length - 3) + ' more'"
                         :title="myModules.slice(3).map(m => m.name).join(', ')"
                     ></span>
@@ -127,27 +153,27 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-between mb-4">
-            <p class="text-sm text-ink-muted">Live counts, refreshed each time this page opens.</p>
-            <x-ui.button :href="route('admin.reports')" variant="secondary" size="sm" icon="download">Export Report</x-ui.button>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-[14.5px] text-ink-body">Live counts, refreshed each time this page opens.</p>
+            <x-ui.button :href="route('admin.reports')" icon="download">Export Report</x-ui.button>
         </div>
 
         <!-- Skeleton state -->
-        <div x-show="!ready" x-transition.opacity.duration.300ms>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">
+        <div x-show="!ready" x-transition.opacity.duration.300ms class="flex flex-col gap-5">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
                 @for ($i = 0; $i < 6; $i++)
-                    <div class="surface-glass rounded-[26px] p-4 space-y-3">
-                        <x-ui.skeleton class="w-10 h-10 rounded-xl" />
-                        <x-ui.skeleton class="h-6 w-16" />
+                    <div class="surface-glass rounded-[26px] p-[18px] space-y-3">
                         <x-ui.skeleton class="h-3 w-24" />
+                        <x-ui.skeleton class="h-9 w-16" />
+                        <x-ui.skeleton class="h-6 w-28 rounded-full" />
                     </div>
                 @endfor
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
                 @for ($i = 0; $i < 3; $i++)
                     <div class="surface-glass rounded-[26px] p-5 space-y-4">
                         <x-ui.skeleton class="h-4 w-40" />
-                        <x-ui.skeleton class="h-40 w-40 rounded-full mx-auto" />
+                        <x-ui.skeleton class="h-[200px] w-[200px] rounded-full mx-auto" />
                     </div>
                 @endfor
             </div>
@@ -158,166 +184,136 @@
         </div>
 
         <!-- Real content -->
-        <div x-show="ready && !failed" x-cloak x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="ready && !failed" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
-            <!-- KPI row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 mb-4">
-                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="green" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
-                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.assistance-requests') . '?open=1'" label="Tulong Open" valueBind="openTulong" icon="hand-heart" color="purple" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="teal" sublabel="Document requests" :delay="160" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="red" sublabel="Dokyu + Tulong" :delay="200" /></div>
+            <!-- KPI coins -->
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
+                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
+                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.assistance-requests') . '?open=1'" label="Tulong Open" valueBind="openTulong" icon="hand-heart" color="deep" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="slate" sublabel="Document requests" :delay="160" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="gold" sublabel="Dokyu + Tulong" :delay="200" /></div>
             </div>
 
-            <!-- Middle row: donuts + barangay list -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <!-- Row 1: doughnuts + barangays -->
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
                 <div x-show="$store.session.can('dokyu')" x-cloak>
                 <x-ui.card>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-ink">Dokyu</h3>
-                        <a href="{{ route('admin.document-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <h3 class="text-lg font-extrabold text-ink">Dokyu</h3>
+                        <a href="{{ route('admin.document-requests') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View details</a>
                     </div>
-                    <div class="relative w-40 h-40 mx-auto" x-data="centerDonut()" x-effect="draw(docStatus)" @mouseleave="hover = null">
-                        <canvas x-ref="canvas"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
-                            <span class="text-2xl font-semibold text-ink tabular-nums" x-text="hover ? hover.value.toLocaleString() : docStatusTotal.toLocaleString()"></span>
-                            <span x-show="!hover" class="text-[11px] text-ink-muted">Total Requests</span>
-                            <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-ink leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
-                        </div>
-                    </div>
-                    <div class="mt-4 space-y-2.5">
-                        <template x-for="row in docStatus" :key="row.label">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="flex items-center gap-2 text-ink-muted">
-                                    <span class="w-2 h-2 rounded-full" :style="'background-color:' + row.color"></span>
-                                    <span x-text="row.label"></span>
-                                </span>
-                                <span class="font-medium text-ink tabular-nums" x-text="row.value.toLocaleString()"></span>
-                            </div>
-                        </template>
-                        <p class="text-xs text-ink-muted" x-show="!docStatus.length">No Dokyu requests yet.</p>
-                    </div>
+                    <x-ui.clay-donut rows="docStatus" total-label="Total requests" empty="No Dokyu requests yet." />
                 </x-ui.card>
                 </div>
 
                 <div x-show="$store.session.can('tulong')" x-cloak>
                 <x-ui.card>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-ink">Tulong</h3>
-                        <a href="{{ route('admin.assistance-requests') }}" class="text-xs font-medium text-brand-600 hover:underline">View Details</a>
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <h3 class="text-lg font-extrabold text-ink">Tulong</h3>
+                        <a href="{{ route('admin.assistance-requests') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View details</a>
                     </div>
-                    <div class="relative w-40 h-40 mx-auto" x-data="centerDonut()" x-effect="draw(assistStatus)" @mouseleave="hover = null">
-                        <canvas x-ref="canvas"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
-                            <span class="text-2xl font-semibold text-ink tabular-nums" x-text="hover ? hover.value.toLocaleString() : assistStatusTotal.toLocaleString()"></span>
-                            <span x-show="!hover" class="text-[11px] text-ink-muted">Total Cases</span>
-                            <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-ink leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
-                        </div>
-                    </div>
-                    <div class="mt-4 space-y-2.5">
-                        <template x-for="row in assistStatus" :key="row.label">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="flex items-center gap-2 text-ink-muted">
-                                    <span class="w-2 h-2 rounded-full" :style="'background-color:' + row.color"></span>
-                                    <span x-text="row.label"></span>
-                                </span>
-                                <span class="font-medium text-ink tabular-nums" x-text="row.value.toLocaleString()"></span>
-                            </div>
-                        </template>
-                        <p class="text-xs text-ink-muted" x-show="!assistStatus.length">No Tulong requests yet.</p>
-                    </div>
+                    <x-ui.clay-donut rows="assistStatus" total-label="Total cases" empty="No Tulong requests yet." />
                 </x-ui.card>
                 </div>
 
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong') || $store.session.can('constituents')" x-cloak>
                 <x-ui.card>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-ink">Open Requests by Barangay</h3>
-                        {{-- It opened the Government Directory (under Balita). Each count
-                             opens the list it counts: open requests, by module. --}}
-                        <div class="flex items-center gap-2 text-xs font-medium">
-                            <a x-show="$store.session.can('dokyu')" href="{{ route('admin.document-requests') }}?open=1" class="text-brand-600 hover:underline">Dokyu</a>
-                            <a x-show="$store.session.can('tulong')" href="{{ route('admin.assistance-requests') }}?open=1" class="text-brand-600 hover:underline">Tulong</a>
+                    <div class="flex items-center justify-between gap-3 mb-5">
+                        <h3 class="text-lg font-extrabold text-ink leading-tight">Open requests by barangay</h3>
+                        <div x-show="$store.session.can('dokyu') && $store.session.can('tulong')" class="inline-flex p-1 rounded-xl surface-pressed-sm shrink-0" role="tablist" aria-label="Module">
+                            <button type="button" role="tab" x-show="$store.session.can('dokyu')" :aria-selected="brgyTab === 'dokyu'" @click="brgyTab = 'dokyu'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'dokyu' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Dokyu</button>
+                            <button type="button" role="tab" x-show="$store.session.can('tulong')" :aria-selected="brgyTab === 'tulong'" @click="brgyTab = 'tulong'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'tulong' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Tulong</button>
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <template x-for="brgy in barangayRequests" :key="brgy.name">
+                        <template x-for="brgy in barangayRows" :key="brgy.name">
                             <div>
-                                <div class="flex items-center justify-between text-sm mb-1.5">
-                                    <span class="text-slate-600 font-medium" x-text="'Brgy. ' + brgy.name"></span>
-                                    <span class="text-ink-muted" x-text="brgy.count + (brgy.count === 1 ? ' request' : ' requests')"></span>
+                                <div class="flex items-center justify-between gap-3 mb-2">
+                                    <span class="text-[14.5px] font-semibold text-ink-body truncate" x-text="'Brgy. ' + brgy.name"></span>
+                                    <span class="text-sm text-ink-muted shrink-0" x-text="brgy.count + (brgy.count === 1 ? ' request' : ' requests')"></span>
                                 </div>
-                                <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
+                                <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
+                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
                                 </div>
                             </div>
                         </template>
-                        <p class="text-xs text-ink-muted" x-show="!barangayRequests.length">No open requests.</p>
+                        <div x-show="!barangayRows.length" class="surface-pressed rounded-2xl px-4 py-5 text-center">
+                            <p class="text-[14.5px] font-bold text-ink" x-text="{ dokyu: 'No open Dokyu requests', tulong: 'No open Tulong requests' }[brgyTab] || 'No open requests'"></p>
+                            <p class="mt-1 text-[12.5px] text-ink-muted">Every request in your scope is released, completed or closed.</p>
+                        </div>
+                        {{-- The open requests of the module shown, one click away. --}}
+                        <a x-show="brgyTab !== 'all'" :href="brgyTab === 'dokyu' ? '{{ route('admin.document-requests') }}?open=1' : '{{ route('admin.assistance-requests') }}?open=1'" class="inline-flex items-center gap-1 text-[13.5px] font-bold text-brand-600 hover:text-brand-700">
+                            <span x-text="brgyTab === 'dokyu' ? 'Open Dokyu requests' : 'Open Tulong requests'"></span><i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
                     </div>
                 </x-ui.card>
                 </div>
             </div>
 
-            <!-- Bottom row: trend, alerts, activity -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Row 2: trend, alerts, activity -->
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak>
                 <x-ui.card>
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="font-semibold text-ink">Requests Trend (Last 6 Months)</h3>
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-3">
+                        <h3 class="text-lg font-extrabold text-ink">Requests trend</h3>
+                        <p class="flex items-center gap-3 text-[13px] font-semibold text-ink-muted">
+                            <span>Last 6 months</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gold-600"></span>Tulong</span>
+                        </p>
                     </div>
-                    <div class="flex items-center gap-4 text-xs text-ink-muted mb-4">
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
-                    </div>
-                    <div class="h-52" x-data="{ chart: null }" x-init="$watch('dash', async (d) => { if (!d?.requests?.trend) return; const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); const t = d.requests.trend; chart = new Chart(canvas, { type: 'line', data: { labels: t.labels, datasets: [ { label: 'Dokyu', data: t.documents, borderColor: '#2f62f5', backgroundColor: 'rgba(47,98,245,0.08)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 }, { label: 'Tulong', data: t.assistance, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.06)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 } ] }, options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } } } }); }, { immediate: true })">
-                        <canvas x-ref="canvas"></canvas>
-                    </div>
+                    <x-ui.clay-trend data="trendData" label="Dokyu and Tulong requests filed in each of the last six months" />
                 </x-ui.card>
                 </div>
 
-                <x-ui.card padded="false" x-show="$store.session.can('sakuna')" x-cloak>
-                    <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="font-semibold text-ink">Sakuna Alerts</h3>
-                        <span class="text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full" x-text="(dash?.sakuna?.alerts || []).length"></span>
+                <x-ui.card x-show="$store.session.can('sakuna')" x-cloak>
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <h3 class="flex items-center gap-2.5 text-lg font-extrabold text-ink">
+                            Sakuna alerts
+                            <span class="min-w-[26px] h-[26px] px-2 rounded-full clay-gold grid place-items-center text-[12.5px] font-extrabold" x-text="(dash?.sakuna?.alerts || []).length"></span>
+                        </h3>
+                        <a href="{{ route('admin.sakuna.alerts') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View all alerts</a>
                     </div>
-                    <div class="divide-y divide-brand-600/[.08]">
+                    <div class="space-y-3">
                         <template x-for="alert in (dash?.sakuna?.alerts || [])" :key="alert.ref">
-                            <a href="{{ route('admin.sakuna.alerts') }}" class="flex items-start gap-3 px-4 py-2.5 hover:bg-white/60 transition-colors">
-                                <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="alertColors[alert.level] || 'bg-slate-50 text-slate-600'">
-                                    <i data-lucide="triangle-alert" class="w-4 h-4"></i>
+                            <a href="{{ route('admin.sakuna.alerts') }}" class="flex items-center gap-3 rounded-[18px] bg-white/55 border border-white/80 px-3.5 py-3 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200">
+                                <span class="w-[42px] h-[42px] rounded-2xl clay-gold-light grid place-items-center shrink-0">
+                                    <i data-lucide="triangle-alert" class="w-5 h-5"></i>
                                 </span>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="alert.title?.en"></p>
-                                    <p class="text-xs text-ink-muted mt-0.5" x-text="alert.type + ' · ' + alert.level"></p>
-                                    <p class="text-[11px] text-ink-faint mt-1" x-text="alert.published_at ? new Date(alert.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[15px] font-bold text-ink leading-snug truncate" x-text="alert.title?.en"></p>
+                                    <p class="text-[12.5px] text-ink-muted" x-text="alert.type + ' · ' + alert.level"></p>
+                                    <p class="text-[11.5px] text-ink-faint mt-0.5" x-text="alert.published_at ? new Date(alert.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''"></p>
                                 </div>
+                                <span class="shrink-0 surface-pressed-sm rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[.04em] text-ink-body" x-text="alert.level"></span>
                             </a>
                         </template>
-                        <p class="px-4 py-6 text-center text-xs text-ink-muted" x-show="!(dash?.sakuna?.alerts || []).length">No active alerts.</p>
+                        <p class="py-6 text-center text-sm text-ink-muted" x-show="!(dash?.sakuna?.alerts || []).length">No active alerts.</p>
                     </div>
                 </x-ui.card>
 
-                <x-ui.card padded="false">
-                    <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="font-semibold text-ink">Recent Activity</h3>
-                        <a href="{{ route('admin.audit-logs') }}" class="text-xs font-medium text-brand-600 hover:underline">View All</a>
+                <x-ui.card>
+                    <div class="flex items-center justify-between gap-3 mb-1">
+                        <h3 class="text-lg font-extrabold text-ink">Recent activity</h3>
+                        <a href="{{ route('admin.audit-logs') }}" class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700">View all</a>
                     </div>
-                    <div class="divide-y divide-brand-600/[.08]">
-                        <template x-for="(activity, i) in (dash?.activities || [])" :key="i">
-                            <div class="flex items-start gap-3 px-4 py-2.5">
-                                <span class="w-8 h-8 rounded-lg bg-slate-50 text-ink-muted flex items-center justify-center shrink-0">
-                                    <i data-lucide="activity" class="w-4 h-4"></i>
+                    <div>
+                        <template x-for="(activity, i) in (dash?.activities || []).slice(0, 5)" :key="i">
+                            <div class="flex items-start gap-3 px-1 py-3.5" :class="i && 'border-t border-brand-600/[.09]'">
+                                <span class="w-[38px] h-[38px] rounded-full surface-pressed grid place-items-center text-brand-600 shrink-0">
+                                    <i :data-lucide="activityIcon(activity)" class="w-[17px] h-[17px]"></i>
                                 </span>
                                 <div class="min-w-0">
                                     {{-- In words: a failed sign-in read 'null — auth.login_failed' (QA run 2026-10-05). --}}
-                                    <p class="text-sm font-medium text-slate-700 leading-snug" x-text="(activity.actor || 'System') + ' — ' + (activity.summary || activity.action)"></p>
-                                    <p class="text-xs text-ink-muted mt-0.5" x-text="(activity.module || '') + (activity.target ? ' · ' + activity.target : '')"></p>
-                                    <p class="text-[11px] text-ink-faint mt-1" x-text="activity.at ? new Date(activity.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></p>
+                                    <p class="text-sm leading-snug"><span class="font-bold text-ink" x-text="activity.actor || 'System'"></span><span class="text-ink-muted"> — </span><span class="font-semibold text-ink-muted" x-text="activity.summary || activity.action"></span></p>
+                                    <p class="font-mono text-xs text-brand-600 mt-0.5 break-all" x-text="(activity.module || '') + (activity.target ? ' · ' + activity.target : '')"></p>
+                                    <p class="text-[11.5px] text-ink-faint mt-0.5" x-text="activity.at ? new Date(activity.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></p>
                                 </div>
                             </div>
                         </template>
-                        <p class="px-4 py-6 text-center text-xs text-ink-muted" x-show="!(dash?.activities || []).length">No recent activity.</p>
+                        <p class="py-6 text-center text-sm text-ink-muted" x-show="!(dash?.activities || []).length">No recent activity.</p>
                     </div>
                 </x-ui.card>
             </div>

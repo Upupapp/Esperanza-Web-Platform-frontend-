@@ -98,6 +98,14 @@
                 return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
             },
             get totalRequests() { return (this.docSummary?.totals?.requests || 0) + (this.assistSummary?.totals?.requests || 0); },
+            get trendData() {
+                const t = this.dash?.requests?.trend;
+                if (!t) return { labels: [], series: [] };
+                return { labels: t.labels || [], series: [
+                    { label: 'Dokyu', values: t.documents || [], color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 },
+                    { label: 'Tulong', values: t.assistance || [], color: '#e8c200', fill: '#f5cf00', fillOpacity: 0.45 },
+                ] };
+            },
             get incidentSeveritySplit() {
                 if (!this.sakunaIncidents) return [];
                 const totals = {};
@@ -146,7 +154,7 @@
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load reports.'" retryExpr="init()" :retryable="true" /></div>
 
             <div x-show="!loading && !failed">
-            <h3 class="text-sm font-semibold text-ink mb-3">Generate a Report</h3>
+            <h3 class="text-base font-extrabold text-ink mb-3">Generate a Report</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
                 <template x-for="(report, i) in reports" :key="report.key">
                     <x-ui.card
@@ -172,7 +180,7 @@
                 </template>
             </div>
 
-            <h3 class="text-sm font-semibold text-ink mb-3">Recently Generated</h3>
+            <h3 class="text-base font-extrabold text-ink mb-3">Recently Generated</h3>
             <x-ui.table>
                 <thead>
                     <tr class="bg-well/70">
@@ -208,27 +216,28 @@
 
         <!-- Analytics -->
         <div x-show="tab === 'analytics'" x-cloak>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="green" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction?.totals?.note || '')" :delay="0" />
-                <x-ui.stat-card label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="brand" sublabel="Dokyu + Tulong" :delay="40" />
-                <x-ui.stat-card label="Avg. Resolution Time" valueBind="avgResolutionDays !== null ? (avgResolutionDays + ' days') : '—'" icon="timer" color="purple" sublabel="Submission to release" :delay="80" />
-                <x-ui.stat-card label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="120" />
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
+                <x-ui.stat-card class="h-full" label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="brand" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction?.totals?.note || '')" :delay="0" />
+                <x-ui.stat-card class="h-full" label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="light" sublabel="Dokyu + Tulong" :delay="40" />
+                <x-ui.stat-card class="h-full" label="Avg. Resolution Time" valueBind="avgResolutionDays !== null ? (avgResolutionDays + ' days') : '—'" icon="timer" color="deep" sublabel="Submission to release" :delay="80" />
+                <x-ui.stat-card class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="120" />
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start mb-5">
                 <x-ui.card class="lg:col-span-2">
-                    <h3 class="text-sm font-semibold text-ink mb-1">Requests Trend (Last 6 Months)</h3>
-                    <div class="flex items-center gap-4 text-xs text-ink-muted mb-4">
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Tulong</span>
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-3">
+                        <h3 class="text-lg font-extrabold text-ink">Requests trend</h3>
+                        <p class="flex items-center gap-3 text-[13px] font-semibold text-ink-muted">
+                            <span>Last 6 months</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-brand-500"></span>Dokyu</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gold-600"></span>Tulong</span>
+                        </p>
                     </div>
-                    <div class="h-64" x-data="{ chart: null }" x-init="$watch('dash', async (d) => { if (!d?.requests?.trend) return; const Chart = await window.loadChart(); const canvas = $refs.canvas; if (!canvas || !canvas.isConnected) return; if (chart) { chart.destroy(); chart = null; } Chart.getChart?.(canvas)?.destroy(); const t = d.requests.trend; chart = new Chart(canvas, { type: 'line', data: { labels: t.labels, datasets: [ { label: 'Dokyu', data: t.documents, borderColor: '#2f62f5', backgroundColor: 'rgba(47,98,245,0.08)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 }, { label: 'Tulong', data: t.assistance, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.06)', tension: 0.4, fill: true, pointRadius: 0, borderWidth: 2.5 } ] }, options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#f1f5f9' } } } } }); }, { immediate: true })">
-                        <canvas x-ref="canvas"></canvas>
-                    </div>
+                    <x-ui.clay-trend data="trendData" label="Dokyu and Tulong requests filed in each of the last six months" />
                 </x-ui.card>
 
                 <x-ui.card>
-                    <h3 class="text-sm font-semibold text-ink mb-4">Revenue &amp; Fees</h3>
+                    <h3 class="text-lg font-extrabold text-ink mb-4">Revenue &amp; Fees</h3>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-ink-muted">Assessed</span>
@@ -251,79 +260,41 @@
             </div>
 
             <x-ui.card>
-                <h3 class="text-sm font-semibold text-ink mb-4">Requests by Barangay</h3>
+                <h3 class="text-lg font-extrabold text-ink mb-4">Requests by Barangay</h3>
                 <div class="space-y-4">
                     <template x-for="b in barangayRequestRows" :key="b.name">
                         <div>
-                            <div class="flex items-center justify-between text-sm mb-1.5">
-                                <span class="text-slate-600 font-medium" x-text="'Brgy. ' + b.name"></span>
-                                <span class="text-ink-muted" x-text="b.requests + ' requests'"></span>
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-[14.5px] font-semibold text-ink-body truncate" x-text="'Brgy. ' + b.name"></span>
+                                <span class="text-sm text-ink-muted shrink-0" x-text="b.requests + (b.requests === 1 ? ' request' : ' requests')"></span>
                             </div>
-                            <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-[600ms] ease-standard" :style="'width:' + b.pct + '%'"></div>
+                            <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
+                                <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard" :style="'width:' + b.pct + '%'"></div>
                             </div>
                         </div>
                     </template>
-                    <p class="text-xs text-ink-muted" x-show="!barangayRequestRows.length">No requests on file yet.</p>
+                    <div x-show="!barangayRequestRows.length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No requests on file yet.</div>
                 </div>
             </x-ui.card>
         </div>
 
-        <h3 class="text-sm font-semibold text-ink mb-3 mt-4">Internal Forms &amp; Incident Reports</h3>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card label="Internal Forms Submitted" valueBind="internalForms?.totals?.submissions ?? 0" icon="clipboard-list" color="purple" :delay="0" />
-            <x-ui.stat-card label="Offices Covered" valueBind="officesCovered" icon="building-2" color="brand" :delay="40" />
-            <x-ui.stat-card label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="80" />
-            <x-ui.stat-card label="Critical / High Severity" valueBind="criticalHighCount" icon="siren" color="red" :delay="120" />
+        <h3 class="text-base font-extrabold text-ink mb-3 mt-6">Internal Forms &amp; Incident Reports</h3>
+        <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
+            <x-ui.stat-card class="h-full" label="Internal Forms Submitted" valueBind="internalForms?.totals?.submissions ?? 0" icon="clipboard-list" color="light" :delay="0" />
+            <x-ui.stat-card class="h-full" label="Offices Covered" valueBind="officesCovered" icon="building-2" color="slate" :delay="40" />
+            <x-ui.stat-card class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="80" />
+            <x-ui.stat-card class="h-full" label="Critical / High Severity" valueBind="criticalHighCount" icon="siren" color="red" :delay="120" />
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start mb-5">
             <x-ui.card>
-                <h3 class="text-sm font-semibold text-ink mb-4">Internal Forms by Office</h3>
-                <div class="relative w-36 h-36 mx-auto" x-data="centerDonut()" x-effect="draw(internalOfficeSplit)" @mouseleave="hover = null">
-                    <canvas x-ref="canvas"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
-                        <span class="text-xl font-semibold text-ink tabular-nums" x-text="hover ? hover.value.toLocaleString() : (internalForms?.totals?.submissions ?? 0)"></span>
-                        <span x-show="!hover" class="text-[11px] text-ink-muted">Total</span>
-                        <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-ink leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
-                    </div>
-                </div>
-                <div class="mt-5 space-y-2.5">
-                    <template x-for="row in internalOfficeSplit" :key="row.label">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="flex items-center gap-2 text-ink-muted">
-                                <span class="w-2 h-2 rounded-full" :style="'background-color: ' + row.color"></span>
-                                <span x-text="row.label"></span>
-                            </span>
-                            <span class="font-medium text-ink tabular-nums" x-text="row.value"></span>
-                        </div>
-                    </template>
-                    <p class="text-xs text-ink-muted" x-show="!internalOfficeSplit.length">No submissions yet.</p>
-                </div>
+                <h3 class="text-lg font-extrabold text-ink mb-4">Internal Forms by Office</h3>
+                <x-ui.clay-donut rows="internalOfficeSplit" total-label="Submissions" empty="No submissions yet." />
             </x-ui.card>
 
             <x-ui.card>
-                <h3 class="text-sm font-semibold text-ink mb-4">Incident Reports by Severity</h3>
-                <div class="relative w-36 h-36 mx-auto" x-data="centerDonut()" x-effect="draw(incidentSeveritySplit)" @mouseleave="hover = null">
-                    <canvas x-ref="canvas"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
-                        <span class="text-xl font-semibold text-ink tabular-nums" x-text="hover ? hover.value.toLocaleString() : incidentTotal"></span>
-                        <span x-show="!hover" class="text-[11px] text-ink-muted">Total</span>
-                        <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-ink leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
-                    </div>
-                </div>
-                <div class="mt-5 space-y-2.5">
-                    <template x-for="row in incidentSeveritySplit" :key="row.label">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="flex items-center gap-2 text-ink-muted">
-                                <span class="w-2 h-2 rounded-full" :style="'background-color: ' + row.color"></span>
-                                <span x-text="row.label"></span>
-                            </span>
-                            <span class="font-medium text-ink tabular-nums" x-text="row.value"></span>
-                        </div>
-                    </template>
-                    <p class="text-xs text-ink-muted" x-show="!incidentSeveritySplit.length">No incidents logged yet.</p>
-                </div>
+                <h3 class="text-lg font-extrabold text-ink mb-4">Incident Reports by Severity</h3>
+                <x-ui.clay-donut rows="incidentSeveritySplit" total-label="Incidents" empty="No incidents logged yet." :keep-colors="true" />
             </x-ui.card>
         </div>
 

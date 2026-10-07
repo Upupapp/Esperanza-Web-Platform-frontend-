@@ -216,14 +216,19 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString("Alpine.data('centerDonut'", $js);
         $this->assertStringContainsString('tooltip: { enabled: false }', $js);
         $this->assertStringContainsString('layout: { padding: 6 }', $js);
+        $this->assertStringContainsString("Alpine.data('clayDonut'", $js);
+        // The clay doughnut (dashboard, reports): the centre is the total or the hovered slice.
+        $donut = $this->source('resources/views/components/ui/clay-donut.blade.php');
+        $this->assertStringContainsString('x-effect="draw({{ $rows }})" @mouseleave="hover = null"', $donut);
+        $this->assertStringContainsString("rows[hover].label + ' · ' + pct(rows[hover]) + '%'", $donut);
         foreach ([
-            'resources/views/admin/dashboard.blade.php' => ['draw(docStatus)', 'draw(assistStatus)'],
-            'resources/views/admin/reports.blade.php' => ['draw(internalOfficeSplit)', 'draw(incidentSeveritySplit)'],
-            'resources/views/admin/constituents/tab-profiling.blade.php' => ['draw(barangayStatusBreakdown)'],
+            'resources/views/admin/dashboard.blade.php' => ['<x-ui.clay-donut rows="docStatus"', '<x-ui.clay-donut rows="assistStatus"'],
+            'resources/views/admin/reports.blade.php' => ['<x-ui.clay-donut rows="internalOfficeSplit"', '<x-ui.clay-donut rows="incidentSeveritySplit"'],
+            'resources/views/admin/constituents/tab-profiling.blade.php' => ['x-effect="draw(barangayStatusBreakdown)" @mouseleave="hover = null"'],
         ] as $path => $draws) {
             $view = $this->source($path);
             foreach ($draws as $draw) {
-                $this->assertStringContainsString('x-effect="'.$draw.'" @mouseleave="hover = null"', $view, $path);
+                $this->assertStringContainsString($draw, $view, $path);
             }
             $this->assertStringNotContainsString("type: 'doughnut'", $view, $path.': one shared chart');
         }

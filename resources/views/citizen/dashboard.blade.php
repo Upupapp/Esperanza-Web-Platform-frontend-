@@ -113,14 +113,14 @@
 
         <!-- Skeleton state -->
         <div x-show="!ready" x-transition.opacity.duration.300ms>
-            <x-ui.skeleton class="h-28 w-full rounded-2xl mb-4" />
+            <x-ui.skeleton class="h-36 w-full rounded-[32px] mb-5" />
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
                 @for ($i = 0; $i < 4; $i++)
-                    <div class="surface-glass rounded-[26px] p-4 space-y-3">
-                        <x-ui.skeleton class="w-10 h-10 rounded-xl" />
-                        <x-ui.skeleton class="h-6 w-16" />
+                    <div class="surface-glass rounded-[26px] p-[18px] space-y-3">
                         <x-ui.skeleton class="h-3 w-24" />
+                        <x-ui.skeleton class="h-9 w-16" />
+                        <x-ui.skeleton class="h-6 w-28 rounded-full" />
                     </div>
                 @endfor
             </div>
@@ -154,36 +154,34 @@
             </template>
 
             <!-- Welcome hero -->
-            <div class="relative rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-navy-900 via-navy-800 to-brand-700 shadow-card">
-                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,theme(colors.white),transparent_55%)] pointer-events-none"></div>
+            <div class="hero-banner mb-5">
+                <div class="px-6 py-7 sm:px-[34px] sm:py-[30px] flex flex-col lg:flex-row lg:items-center gap-6">
 
-                <div class="relative px-5 py-6 sm:px-7 sm:py-7 flex flex-col lg:flex-row lg:items-center gap-5">
-
-                    <div class="flex items-center gap-4 flex-1 min-w-0">
+                    <div class="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
                         <div class="relative shrink-0">
                             <div
-                                class="w-14 h-14 text-lg rounded-full bg-white/15 backdrop-blur border-2 border-white/40 text-white flex items-center justify-center font-semibold shadow-lg"
+                                class="w-14 h-14 sm:w-[72px] sm:h-[72px] text-xl sm:text-2xl rounded-full clay-gold grid place-items-center font-extrabold"
                                 x-text="$store.citizenSession.initials()"
                             ></div>
 
-                            <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
-                                <i data-lucide="check" class="w-2.5 h-2.5 text-white"></i>
+                            <span class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
+                                <i data-lucide="check" class="w-3 h-3 text-white"></i>
                             </span>
                         </div>
 
                         <div class="min-w-0">
                             {{-- Today's date in the browser: now() here was the day the site was built. --}}
                             <p
-                                class="text-[11px] font-medium text-white/50 uppercase tracking-wide"
+                                class="text-xs font-bold uppercase tracking-[.1em] text-gold-400"
                                 x-text="new Date().toLocaleDateString($store.lang.current === 'en' ? 'en-US' : 'fil-PH', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' })"
                             ></p>
 
                             <h2
-                                class="text-xl font-semibold text-white truncate"
+                                class="mt-1 text-[22px] sm:text-[28px] font-extrabold leading-tight tracking-[-.01em] text-white text-balance sm:truncate"
                                 x-text="($store.lang.current === 'en' ? 'Good day, ' : 'Magandang araw, ') + ($store.citizenSession.account?.firstName ?? 'Guest') + ' 👋'"
                             ></h2>
 
-                            <p class="text-sm text-white/60 mt-0.5">
+                            <p class="text-[15px] text-[#dce5ff] mt-1">
                                 Brgy.
                                 <span x-text="$store.citizenSession.account?.barangay ?? '—'"></span>
                                 ·
@@ -192,23 +190,22 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
                         <x-ui.button
                             :href="route('citizen.assistance-requests')"
                             variant="ghost"
                             size="sm"
                             icon="hand-heart"
-                            class="!text-white !bg-white/10 hover:!bg-white/20 !border !border-white/20"
+                            class="!text-white !bg-white/14 hover:!bg-white/24 !border !border-white/28 backdrop-blur-[10px]"
                         >
                             Tulong
                         </x-ui.button>
 
                         <x-ui.button
                             :href="route('citizen.document-requests')"
-                            variant="secondary"
+                            variant="gold"
                             size="sm"
                             icon="file-plus"
-                            class="!border-0"
                         >
                             <x-ui.t fil="Bagong Kahilingan sa Dokyu" en="New Dokyu Request" />
                         </x-ui.button>
@@ -221,7 +218,7 @@
                 <div
                     x-show="$store.barangay.mine"
                     x-cloak
-                    class="relative flex items-center gap-3 px-5 sm:px-7 py-3 border-t border-white/10"
+                    class="flex items-center gap-3 px-6 sm:px-[34px] py-3.5 border-t border-white/15 bg-white/[.06]"
                 >
                     <div class="relative w-8 h-8 shrink-0">
                         <div class="absolute inset-0 rounded-full bg-white/10 flex items-center justify-center text-white/40">
@@ -237,7 +234,7 @@
                         >
                     </div>
 
-                    <p class="min-w-0 flex-1 text-xs text-white/60 truncate">
+                    <p class="min-w-0 flex-1 text-[13px] text-[#dce5ff] truncate">
                         <x-ui.t fil="Barangay" en="Barangay" />
                         <span class="font-semibold text-white" x-text="$store.barangay.mine?.label"></span>
                         <span class="text-white/25 mx-1">·</span>
@@ -284,9 +281,10 @@
             </x-ui.page-intro>
 
             <!-- KPI row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
 
                 <x-ui.stat-card
+                    class="h-full"
                     :href="route('citizen.document-requests')"
                     label="Dokyu"
                     valueBind="kpi.dokyu"
@@ -297,16 +295,18 @@
                 />
 
                 <x-ui.stat-card
+                    class="h-full"
                     :href="route('citizen.assistance-requests')"
                     label="Tulong"
                     valueBind="kpi.tulong"
                     icon="hand-heart"
-                    color="purple"
+                    color="deep"
                     sublabelBind="kpi.tulongApproved + ($store.lang.current === 'en' ? ' approved this month' : ' aprubado ngayong buwan')"
                     :delay="40"
                 />
 
                 <x-ui.stat-card
+                    class="h-full"
                     :href="route('citizen.notifications')"
                     label="Hindi Nabasang Abiso"
                     labelEn="Unread Notifications"
@@ -317,12 +317,13 @@
                 />
 
                 <x-ui.stat-card
+                    class="h-full"
                     :href="route('citizen.profile')"
                     label="Pagkakumpleto ng Profile"
                     labelEn="Profile Completeness"
                     valueBind="($store.citizenSession.account?.profileCompleteness ?? 0) + '%'"
                     icon="user-round-check"
-                    color="green"
+                    color="light"
                     sublabel="Magdagdag ng valid ID para matapos"
                     sublabelEn="Add a valid ID to finish"
                     :delay="120"
@@ -331,18 +332,18 @@
             </div>
 
             <!-- Middle row: my requests + announcements -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start mb-5">
 
                 <x-ui.card padded="false" class="lg:col-span-2">
 
-                    <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="text-sm font-semibold text-ink">
+                    <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
+                        <h3 class="text-lg font-extrabold text-ink">
                             <x-ui.t fil="Mga Kamakailang Kahilingan" en="My Recent Requests" />
                         </h3>
 
                         <a
                             href="{{ route('citizen.document-requests') }}"
-                            class="text-xs font-medium text-brand-600 hover:underline"
+                            class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
                         >
                             <x-ui.t fil="Tingnan Lahat" en="View All" />
                         </a>
@@ -377,14 +378,14 @@
 
                 <x-ui.card padded="false">
 
-                    <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                        <h3 class="text-sm font-semibold text-ink">
+                    <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
+                        <h3 class="text-lg font-extrabold text-ink">
                             Balita
                         </h3>
 
                         <a
                             href="{{ route('citizen.announcements') }}"
-                            class="text-xs font-medium text-brand-600 hover:underline"
+                            class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
                         >
                             <x-ui.t fil="Tingnan Lahat" en="View All" />
                         </a>
@@ -494,14 +495,14 @@
             <!-- Upcoming events -->
             <x-ui.card padded="false">
 
-                <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
-                    <h3 class="text-sm font-semibold text-ink">
+                <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
+                    <h3 class="text-lg font-extrabold text-ink">
                         <x-ui.t fil="Mga Paparating na Kaganapan" en="Upcoming Events" />
                     </h3>
 
                     <a
                         href="{{ route('citizen.events') }}"
-                        class="text-xs font-medium text-brand-600 hover:underline"
+                        class="text-[13.5px] font-bold text-brand-600 hover:text-brand-700 shrink-0"
                     >
                         <x-ui.t fil="Tingnan Lahat" en="View All" />
                     </a>

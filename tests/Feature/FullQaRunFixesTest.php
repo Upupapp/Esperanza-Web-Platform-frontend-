@@ -125,7 +125,9 @@ class FullQaRunFixesTest extends TestCase
     {
         $view = $this->source('resources/views/admin/dashboard.blade.php');
 
-        $this->assertStringContainsString("(activity.actor || 'System') + ' — ' + (activity.summary || activity.action)", $view);
+        // The actor and the action in words (the clay dashboard sets them apart).
+        $this->assertStringContainsString("x-text=\"activity.actor || 'System'\"", $view);
+        $this->assertStringContainsString('x-text="activity.summary || activity.action"', $view);
     }
 
     /** Resident profiling threw "reading 'ownerDocument'": a chart drew on a canvas that had gone. */
