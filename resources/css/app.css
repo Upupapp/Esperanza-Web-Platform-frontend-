@@ -7,10 +7,12 @@
 @source '../**/*.js';
 
 /*
-  Design tokens derived from the Bacoor City LGUID reference screenshots:
-  deep navy sidebar, blue-600 primary accent, soft pastel status tints,
-  rounded-xl cards with soft shadows. Gold is layered in as Esperanza's
-  own identity color (from the municipal seal) used sparingly for accents.
+  Design tokens. Since the clay handoff (design_handoff_dashboard_clay/
+  STYLE_GUIDE.md §1, 2026-10-08): three textures used consistently -
+  glass for containers, pressed for anything holding a value, clay for
+  anything you press or that signals. Blue is primary; the seal yellow
+  (gold-*) marks attention and identity, never success or error. The
+  universal status colours (badge.blade.php) are unchanged.
 */
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
@@ -73,18 +75,48 @@
     --color-brand-800: #162c85;
     --color-brand-900: #14276a;
 
-    --color-gold-50: #fdf9e7;
-    --color-gold-100: #fbf0c2;
-    --color-gold-200: #f7e28a;
-    --color-gold-300: #f2d24f;
-    --color-gold-400: #ecc02a;
-    --color-gold-500: #d9a91b;
-    --color-gold-600: #b48414;
-    --color-gold-700: #8a6412;
+    /* §1.1 The seal yellow. Every gold-* use (button and stat-card gold,
+       page-intro gold, blobs) picks it up. */
+    --color-gold-50: #fffbe0;
+    --color-gold-100: #fff4b8;   /* light tile background */
+    --color-gold-200: #ffee85;
+    --color-gold-300: #ffeb5c;   /* clay gradient start */
+    --color-gold-400: #ffe11a;   /* seal yellow: dots, text on navy */
+    --color-gold-500: #f5cf00;   /* clay gradient end */
+    --color-gold-600: #e8c200;   /* lines, strokes */
+    --color-gold-700: #7a5e00;   /* text and icons on gold-100 */
 
-    --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 8px -2px rgb(15 23 42 / 0.06);
-    --shadow-card-hover: 0 4px 16px -4px rgb(15 23 42 / 0.12), 0 2px 6px -2px rgb(15 23 42 / 0.06);
-    --shadow-float: 0 12px 32px -8px rgb(15 23 42 / 0.18);
+    /* §1.2 Surfaces and ink. Text contrast floor (4.5:1): body #3A4664,
+       muted #5F6B8A; faint #7D89A8 only for 12px+ non-essential meta. */
+    --color-canvas: #e6edfb;     /* page background */
+    --color-well: #e1e9f9;       /* pressed surfaces */
+    --color-track: #dce4f5;      /* progress and meter tracks */
+    --color-ink: #0b1730;        /* headings (= navy-900) */
+    --color-ink-body: #3a4664;
+    --color-ink-muted: #5f6b8a;
+    --color-ink-faint: #7d89a8;
+    --color-sidebar-text: #c3cfea;
+    --color-sidebar-muted: #a9b8dd;
+    --color-sidebar-label: #8e9dc4;
+
+    /* §1.3 Shadows. Glass for containers, pressed for wells, clay for
+       anything pressable, float for modals/dropdowns/toasts. */
+    --shadow-glass: 12px 14px 34px rgb(29 71 214 / .12), -8px -8px 22px rgb(255 255 255 / .75), inset 0 1px 0 rgb(255 255 255 / .95);
+    --shadow-glass-hover: 16px 22px 42px rgb(29 71 214 / .20), -8px -8px 22px rgb(255 255 255 / .85), inset 0 1px 0 #fff;
+    --shadow-glass-sm: 6px 8px 18px rgb(29 71 214 / .14), -5px -5px 14px rgb(255 255 255 / .80), inset 0 1px 0 rgb(255 255 255 / .95);
+    --shadow-pressed: inset 4px 4px 9px rgb(29 71 214 / .12), inset -4px -4px 9px rgb(255 255 255 / .90);
+    --shadow-pressed-sm: inset 2px 2px 5px rgb(29 71 214 / .12), inset -2px -2px 5px rgb(255 255 255 / .90);
+    --shadow-pressed-dark: inset 3px 3px 8px rgb(11 23 48 / .45), inset -2px -2px 6px rgb(255 255 255 / .15);
+    --shadow-clay-blue: 6px 8px 18px rgb(29 71 214 / .35), inset 2px 2px 4px rgb(255 255 255 / .35), inset -3px -4px 8px rgb(11 23 48 / .35);
+    --shadow-clay-gold: 5px 7px 14px rgb(227 188 0 / .30), inset 2px 2px 4px rgb(255 255 255 / .70), inset -3px -4px 7px rgb(140 110 0 / .28);
+    --shadow-clay-light: 5px 7px 14px rgb(29 71 214 / .14), inset 2px 2px 4px rgb(255 255 255 / .90), inset -3px -3px 6px rgb(29 71 214 / .14);
+    --shadow-clay-navy: 5px 7px 14px rgb(11 23 48 / .30), inset 2px 2px 4px rgb(255 255 255 / .25), inset -3px -4px 7px rgb(0 0 0 / .40);
+    --shadow-clay-rose: 6px 8px 18px rgb(225 29 72 / .32), inset 2px 2px 4px rgb(255 255 255 / .35), inset -3px -4px 8px rgb(80 10 30 / .35);
+    --shadow-float: 16px 20px 48px rgb(11 23 48 / .28), inset 0 1px 0 rgb(255 255 255 / .90);
+    /* The old names stay, pointing at the new look, so pages not yet swept
+       keep working. */
+    --shadow-card: var(--shadow-glass-sm);
+    --shadow-card-hover: var(--shadow-glass);
 
     /*
       Motion tokens — interaction-quality reference ported from an external
@@ -184,7 +216,7 @@
         scroll-behavior: smooth;
     }
     body {
-        @apply bg-slate-50 text-slate-800 antialiased;
+        @apply bg-canvas text-ink-body antialiased;
     }
     [x-cloak] {
         display: none !important;
@@ -288,8 +320,34 @@
         background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1px);
         background-size: 22px 22px;
     }
-    .glass-panel {
-        @apply bg-white/70 backdrop-blur-xl border border-white/60;
+    /* §1.4 Surface classes: background + blur + border + shadow, which a
+       utility run can't express and which repeat hundreds of times. Glass
+       goes on cards and containers only, never on rows, list items or
+       badges (backdrop-filter is costly on older LGU desktops). In Tailwind
+       v4 a class in this layer takes no variant prefix (no hover:surface-*):
+       write the hover state with plain utilities. */
+    .surface-glass { background: rgb(255 255 255 / .58); backdrop-filter: blur(22px) saturate(140%); border: 1px solid rgb(255 255 255 / .85); box-shadow: var(--shadow-glass); }
+    /* .glass-panel, the older glass panel, is this surface now. */
+    .surface-glass-sm, .glass-panel { background: rgb(255 255 255 / .60); backdrop-filter: blur(16px); border: 1px solid rgb(255 255 255 / .90); box-shadow: var(--shadow-glass-sm); }
+    .surface-pressed { background: var(--color-well); box-shadow: var(--shadow-pressed); }
+    .surface-pressed-sm { background: var(--color-well); box-shadow: var(--shadow-pressed-sm); }
+    .clay-blue { background: linear-gradient(160deg, var(--color-brand-500), var(--color-brand-600)); color: #fff; box-shadow: var(--shadow-clay-blue); }
+    .clay-gold { background: linear-gradient(160deg, var(--color-gold-300), var(--color-gold-500)); color: var(--color-navy-900); box-shadow: var(--shadow-clay-gold); }
+    .clay-light { background: var(--color-brand-100); color: var(--color-brand-600); box-shadow: var(--shadow-clay-light); }
+    .clay-navy { background: linear-gradient(160deg, #1f3b7a, var(--color-navy-900)); color: #fff; box-shadow: var(--shadow-clay-navy); }
+    .clay-rose { background: linear-gradient(160deg, #f43f5e, #e11d48); color: #fff; box-shadow: var(--shadow-clay-rose); }
+    .clay-gold-light { background: var(--color-gold-100); color: var(--color-gold-700); box-shadow: 5px 7px 14px rgb(227 188 0 / .20), inset 2px 2px 4px rgb(255 255 255 / .90), inset -3px -3px 6px rgb(140 110 0 / .14); }
+    .sidebar-glass { background: linear-gradient(180deg, rgb(11 23 48 / .95), rgb(17 36 84 / .90)); backdrop-filter: blur(20px); border: 1px solid rgb(255 255 255 / .09); box-shadow: 16px 18px 44px rgb(11 23 48 / .30), inset 0 1px 0 rgb(255 255 255 / .14), inset -1px -2px 6px rgb(0 0 0 / .25); }
+    .sidebar-well { background: rgb(255 255 255 / .05); border: 1px solid rgb(255 255 255 / .06); box-shadow: inset 4px 4px 10px rgb(0 0 0 / .35), inset -3px -3px 8px rgb(255 255 255 / .06); }
+    /* The page canvas with its two colour washes. */
+    .canvas-washed { background: radial-gradient(760px 440px at 90% -8%, rgb(86 135 255 / .42), transparent 70%), radial-gradient(600px 440px at 6% 106%, rgb(255 225 26 / .36), transparent 70%), radial-gradient(900px 640px at 58% 58%, rgb(47 98 245 / .12), transparent 70%), var(--color-canvas); }
+    /* No blur support, or the person prefers less transparency: solid. */
+    @supports not (backdrop-filter: blur(1px)) {
+        .surface-glass, .surface-glass-sm, .glass-panel { background: #f3f6fc; }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+        .surface-glass, .surface-glass-sm, .glass-panel, .sidebar-glass { backdrop-filter: none; background: #f3f6fc; }
+        .sidebar-glass { background: var(--color-navy-900); }
     }
     .btn-shine {
         position: relative;
