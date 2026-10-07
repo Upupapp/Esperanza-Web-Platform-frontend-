@@ -235,7 +235,6 @@
                         {{-- It opened the Government Directory (under Balita). Each count
                              opens the list it counts: open requests, by module. --}}
                         <div class="flex items-center gap-2 text-xs font-medium">
-                            <span class="text-slate-500">View all:</span>
                             <a x-show="$store.session.can('dokyu')" href="{{ route('admin.document-requests') }}?open=1" class="text-brand-600 hover:underline">Dokyu</a>
                             <a x-show="$store.session.can('tulong')" href="{{ route('admin.assistance-requests') }}?open=1" class="text-brand-600 hover:underline">Tulong</a>
                         </div>
