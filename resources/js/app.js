@@ -1079,6 +1079,200 @@ document.addEventListener('alpine:init', () => {
         };
     });
 
+    // ---- Clay charts (design_handoff_dashboard_clay README "Donut cards",
+    // "Requests trend"; STYLE_GUIDE §3.13). SVG built here, so the markup
+    // stays a <g x-ref> and the charts need no charting library.
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const svgEl = (name, attrs = {}) => {
+        const el = document.createElementNS(SVG_NS, name);
+        Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+        return el;
+    };
+    // Chart palette, largest slice first (§3.13).
+    const CLAY_PALETTE = ['#1d47d6', '#5687ff', '#ffe11a', '#0b1730', '#b9c7e8', '#2f62f5', '#e8c200', '#24396b', '#8ab0ff', '#7a5e00'];
+
+    // <x-ui.clay-donut rows="..."> -- rounded arcs with even ~10px gaps, a 16°
+    // minimum slice (the legend keeps the exact share), the hovered slice pops
+    // out 7px and the rest dim; the centre and the legend follow the hover.
+    Alpine.data('clayDonut', (opts = {}) => {
+        // `last`: x-effect can run before the <g x-ref> is registered; init()
+        // draws it again once the refs exist.
+        let paths = [], last = null;
+        return {
+            hover: null,
+            rows: [],
+            get total() { return this.rows.reduce((n, r) => n + r.value, 0); },
+            pct(row) { return this.total ? Math.round((row.value / this.total) * 100) : 0; },
+            draw(rows) {
+                let list = (rows || []).map((r) => ({ label: r.label, value: Number(r.value) || 0, color: r.color })).filter((r) => r.value > 0);
+                if (!opts.keep) list = list.sort((a, b) => b.value - a.value).map((r, i) => ({ ...r, color: CLAY_PALETTE[i % CLAY_PALETTE.length] }));
+                this.rows = list;
+                this.hover = null;
+                last = list;
+                this.build(list);
+            },
+            // Reads only `list`, never this.hover or this.rows: draw() runs in an
+            // x-effect, and reading the hover here would redraw on every hover.
+            build(list) {
+                const g = this.$refs.segs;
+                if (!g) return;
+                g.replaceChildren();
+                paths = [];
+                const total = list.reduce((n, r) => n + r.value, 0);
+                if (!total) return;
+                const cx = 100, cy = 100, R = 94, r = 68, TAU = 2 * Math.PI;
+                const pt = (rad, a) => `${(cx + rad * Math.cos(a)).toFixed(2)} ${(cy + rad * Math.sin(a)).toFixed(2)}`;
+                const add = (d, row, i, mid) => {
+                    const el = svgEl('path', { d, fill: row.color, stroke: row.color, 'stroke-width': 5, 'stroke-linejoin': 'round', 'fill-rule': 'evenodd' });
+                    el.style.cssText = 'cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s,filter .2s;filter:drop-shadow(0 2px 3px rgba(11,23,48,.16));';
+                    el.addEventListener('mouseenter', () => { this.hover = i; });
+                    g.appendChild(el);
+                    paths.push({ el, mid });
+                };
+                if (list.length === 1) {
+                    // A single slice is the whole ring.
+                    add(`M${cx + R} ${cy}A${R} ${R} 0 1 1 ${cx - R} ${cy}A${R} ${R} 0 1 1 ${cx + R} ${cy}Z M${cx + r} ${cy}A${r} ${r} 0 1 0 ${cx - r} ${cy}A${r} ${r} 0 1 0 ${cx + r} ${cy}Z`, list[0], 0, -Math.PI / 2);
+                    return;
+                }
+                const gap = 10 / ((R + r) / 2), minA = (16 * Math.PI) / 180;
+                let spans = list.map((s) => (s.value / total) * TAU);
+                const small = spans.map((a) => a < minA);
+                const nSmall = small.filter(Boolean).length;
+                const bigSum = spans.reduce((a, s, i) => a + (small[i] ? 0 : s), 0);
+                const k = bigSum ? (TAU - nSmall * minA) / bigSum : 1;
+                spans = spans.map((a, i) => (small[i] ? minA : a * k));
+                let cur = -Math.PI / 2;
+                list.forEach((row, i) => {
+                    const a0 = cur + gap / 2, a1 = cur + spans[i] - gap / 2;
+                    cur += spans[i];
+                    const L = a1 - a0 > Math.PI ? 1 : 0;
+                    add(`M${pt(R, a0)}A${R} ${R} 0 ${L} 1 ${pt(R, a1)}L${pt(r, a1)}A${r} ${r} 0 ${L} 0 ${pt(r, a0)}Z`, row, i, (a0 + a1) / 2);
+                });
+            },
+            paint() {
+                paths.forEach((p, i) => {
+                    const on = this.hover === i, dim = this.hover !== null && !on;
+                    p.el.style.transform = on ? `translate(${(Math.cos(p.mid) * 7).toFixed(1)}px,${(Math.sin(p.mid) * 7).toFixed(1)}px)` : 'none';
+                    p.el.style.opacity = dim ? '.35' : '1';
+                    p.el.style.filter = on ? 'drop-shadow(0 8px 12px rgba(11,23,48,.32))' : 'drop-shadow(0 2px 3px rgba(11,23,48,.16))';
+                });
+            },
+            init() {
+                this.$watch('hover', () => this.paint());
+                this.$nextTick(() => { if (last && !paths.length) this.build(last); });
+            },
+        };
+    });
+
+    // <x-ui.clay-trend data="{ labels: [...], series: [{ label, values, color, fill }] }">
+    // -- smooth curves with horizontal tangents, area fades, dashed grid; a hover
+    // column shows a guide, a dot on each line and a glass tooltip.
+    let trendSeq = 0;
+    // '2026-05' from the API reads 'May' on the axis and 'May 2026' in the tooltip.
+    const trendMonth = (m, year) => {
+        const k = /^(\d{4})-(\d{2})$/.exec(String(m));
+        return k ? new Date(+k[1], +k[2] - 1, 1).toLocaleDateString('en-US', year ? { month: 'short', year: 'numeric' } : { month: 'short' }) : String(m);
+    };
+    Alpine.data('clayTrend', () => {
+        const id = 'trend' + (++trendSeq);
+        let guide = null, dots = [], data = null, geo = null, last = null;
+        return {
+            tip: null,
+            // Drawn at the card's own width, so the 11px labels stay 11px in a
+            // narrow card (a fixed 600-wide viewBox shrank them to ~5px).
+            init() {
+                this.$nextTick(() => { if (last && !this.$refs.svg?.childNodes.length) this.draw(last); });
+                let width = 0, frame = 0;
+                new ResizeObserver(() => {
+                    const w = Math.round(this.$refs.svg?.clientWidth || 0);
+                    if (!w || w === width) return;
+                    width = w;
+                    cancelAnimationFrame(frame);
+                    frame = requestAnimationFrame(() => { if (last) this.draw(last); });
+                }).observe(this.$el);
+            },
+            draw(input) {
+                last = input;
+                const svg = this.$refs.svg;
+                if (!svg) return;
+                data = { labels: [...(input?.labels || [])], series: (input?.series || []).map((s) => ({ ...s, values: [...(s.values || [])].map((v) => Number(v) || 0) })) };
+                svg.replaceChildren();
+                dots = [];
+                this.tip = null;
+                const n = data.labels.length;
+                if (!n) return;
+                const W = Math.max(280, Math.round(svg.clientWidth) || 600), H = 250, left = 40, right = 16, top = 16, bottom = 34;
+                svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+                const max = Math.max(1, ...data.series.flatMap((s) => s.values));
+                const step = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000].find((s) => s * 4 >= max) || Math.ceil(max / 4);
+                const yMax = step * 4;
+                const x = (i) => left + (n === 1 ? (W - left - right) / 2 : (i * (W - left - right)) / (n - 1));
+                const y = (v) => +(top + (1 - v / yMax) * (H - top - bottom)).toFixed(2);
+                geo = { W, x, y, n };
+                const line = (vals) => vals.map((v, i) => {
+                    if (!i) return `M${x(0)} ${y(v)}`;
+                    const x0 = x(i - 1), x1 = x(i), c = (x1 - x0) / 2;
+                    return `C${x0 + c} ${y(vals[i - 1])} ${x1 - c} ${y(v)} ${x1} ${y(v)}`;
+                }).join('');
+                const defs = svgEl('defs');
+                data.series.forEach((s, k) => {
+                    const lg = svgEl('linearGradient', { id: `${id}-${k}`, x1: 0, y1: 0, x2: 0, y2: 1 });
+                    lg.append(svgEl('stop', { offset: '0%', 'stop-color': s.fill || s.color, 'stop-opacity': s.fillOpacity ?? 0.38 }));
+                    lg.append(svgEl('stop', { offset: '100%', 'stop-color': s.fill || s.color, 'stop-opacity': 0 }));
+                    defs.append(lg);
+                });
+                svg.append(defs);
+                for (let t = 0; t <= 4; t++) {
+                    const v = step * t, yy = y(v);
+                    svg.append(svgEl('line', { x1: left, x2: W - right, y1: yy, y2: yy, stroke: 'rgba(29,71,214,.12)', 'stroke-dasharray': '4 6' }));
+                    const label = svgEl('text', { x: left - 10, y: yy + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#7d89a8' });
+                    label.textContent = String(v);
+                    svg.append(label);
+                }
+                data.labels.forEach((m, i) => {
+                    const label = svgEl('text', { x: x(i), y: H - 10, 'text-anchor': 'middle', 'font-size': 11, fill: '#7d89a8', 'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' });
+                    label.textContent = trendMonth(m);
+                    svg.append(label);
+                });
+                data.series.forEach((s, k) => {
+                    svg.append(svgEl('path', { d: line(s.values) + `L${x(n - 1)} ${y(0)}L${x(0)} ${y(0)}Z`, fill: `url(#${id}-${k})` }));
+                });
+                data.series.forEach((s) => {
+                    svg.append(svgEl('path', { d: line(s.values), fill: 'none', stroke: s.color, 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                });
+                guide = svgEl('line', { y1: top, y2: H - bottom, stroke: 'rgba(11,23,48,.28)', 'stroke-dasharray': '4 4', visibility: 'hidden' });
+                svg.append(guide);
+                data.series.forEach((s) => {
+                    const dot = svgEl('circle', { r: 6.5, fill: s.color, stroke: '#fff', 'stroke-width': 3, visibility: 'hidden' });
+                    svg.append(dot);
+                    dots.push(dot);
+                });
+                const colW = n === 1 ? W - left - right : (W - left - right) / (n - 1);
+                data.labels.forEach((m, i) => {
+                    const hit = svgEl('rect', { x: x(i) - colW / 2, y: 0, width: colW, height: H, fill: 'transparent' });
+                    hit.addEventListener('mouseenter', () => this.show(i));
+                    svg.append(hit);
+                });
+            },
+            show(i) {
+                if (!data || !geo) return;
+                const xx = geo.x(i);
+                guide.setAttribute('x1', xx); guide.setAttribute('x2', xx); guide.setAttribute('visibility', 'visible');
+                data.series.forEach((s, k) => { dots[k].setAttribute('cx', xx); dots[k].setAttribute('cy', geo.y(s.values[i])); dots[k].setAttribute('visibility', 'visible'); });
+                this.tip = {
+                    label: trendMonth(data.labels[i], true),
+                    text: data.series.map((s) => `${s.label} ${s.values[i].toLocaleString()}`).join(' · '),
+                    left: Math.min(84, Math.max(16, (xx / geo.W) * 100)).toFixed(1) + '%',
+                };
+            },
+            hide() {
+                this.tip = null;
+                guide?.setAttribute('visibility', 'hidden');
+                dots.forEach((d) => d.setAttribute('visibility', 'hidden'));
+            },
+        };
+    });
+
     Alpine.data('donutChart', (config) => ({
         chart: null,
         async init() {

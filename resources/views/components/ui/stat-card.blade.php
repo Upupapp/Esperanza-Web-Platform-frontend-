@@ -24,6 +24,8 @@
         'red' => 'bg-rose-100 text-rose-700 shadow-clay-light',
         'gold' => 'clay-gold-light',
         'slate' => 'clay-navy',
+        'light' => 'clay-light',
+        'deep' => 'bg-gradient-to-br from-brand-600 to-brand-700 text-white shadow-clay-blue',
     ];
     $iconClasses = $colorMap[$color] ?? $colorMap['brand'];
     $tag = $href ? 'a' : 'div';
