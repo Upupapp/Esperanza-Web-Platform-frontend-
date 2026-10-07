@@ -151,16 +151,16 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString('x-show="selectedRequest.canWithdraw"', $view);
     }
 
-    /** Owner, 2026-10-07: as few sidebar entries as possible. Directory and Blotter are tabs of Balita; Settings and its Audit Logs are in the profile menu. */
+    /** Owner, 2026-10-07: as few sidebar entries as possible. Directory and Blotter are tabs of Balita; Settings, with Support Tickets and Audit Logs, is in the profile menu. */
     public function test_the_staff_sidebar_keeps_balita_whole_and_settings_in_the_profile_menu(): void
     {
         $sidebar = $this->source('resources/views/components/admin/sidebar.blade.php');
         $this->assertSame(1, substr_count($sidebar, ":href=\"route('admin.communications')\""), 'one Balita entry');
         $this->assertStringContainsString('label="Balita" :active="$active === \'communications\'"', $sidebar);
-        foreach (['Balita & Events', 'label="Directory"', 'label="Blotter"', 'label="Settings"', 'label="Audit Logs"'] as $gone) {
+        foreach (['Balita & Events', 'label="Directory"', 'label="Blotter"', 'label="Settings"', 'label="Audit Logs"', 'label="Support Tickets"'] as $gone) {
             $this->assertStringNotContainsString($gone, $sidebar, $gone);
         }
-        $this->assertStringContainsString('label="Support Tickets"', $sidebar);
+        $this->assertStringContainsString("'support' => ['life-buoy', 'Support Tickets']", $this->source('resources/views/admin/settings.blade.php'));
 
         $balita = $this->source('resources/views/admin/communications.blade.php');
         $this->assertStringContainsString('<x-layouts.admin title="Balita"', $balita);

@@ -64,11 +64,9 @@
         <x-ui.nav-item dense :href="route('admin.reports')" icon="file-chart-column" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />
         <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" moduleKey="user_management" />
         <x-ui.nav-item dense :href="route('admin.internal-forms')" icon="clipboard-list" label="Internal Forms" :active="$active === 'internal-forms'" />
-        {{-- Residents' tickets (live test 2026-10-07, BUG-5). Settings, with its
-             Audit Logs tab, is in the profile menu at the top right: the owner
-             wants as few sidebar entries as possible (2026-10-07). --}}
-        <x-ui.nav-item dense :href="route('admin.support')" icon="life-buoy" label="Support Tickets" :active="$active === 'support'"
-            showIf="$store.session.can('settings') && $store.session.canPerm('set_general', 'view')" />
+        {{-- Settings, with its Support Tickets and Audit Logs tabs, is in the
+             profile menu at the top right: the owner wants as few sidebar
+             entries as possible (2026-10-07). --}}
     </nav>
 
     <div class="border-t border-white/10 p-2.5 shrink-0">
