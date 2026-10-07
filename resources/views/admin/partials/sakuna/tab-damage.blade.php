@@ -45,16 +45,16 @@
 {{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-        <h2 class="text-base font-semibold text-slate-800">Damage Assessment</h2>
-        <p class="text-sm text-slate-500 mt-0.5">Barangay-level damage reports, with optional photo evidence.</p>
+        <h2 class="text-base font-semibold text-ink-body">Damage Assessment</h2>
+        <p class="text-sm text-ink-muted mt-0.5">Barangay-level damage reports, with optional photo evidence.</p>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredDamage, 'damage-assessments.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_damage', 'create')" @click="openCreateAssessment()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
             <i data-lucide="plus" class="w-4 h-4"></i> New Assessment
         </button>
     </div>
@@ -67,79 +67,79 @@
 
 {{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
-        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Total Assessments</p>
-        <p class="text-2xl font-bold text-slate-800 mt-1" x-text="damagesList.length"></p>
+    <div class="surface-glass rounded-[26px] p-4">
+        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Total Assessments</p>
+        <p class="text-2xl font-bold text-ink-body mt-1" x-text="damagesList.length"></p>
     </div>
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
-        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Units Affected</p>
+    <div class="surface-glass rounded-[26px] p-4">
+        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Units Affected</p>
         <p class="text-2xl font-bold text-amber-600 mt-1" x-text="damagesList.reduce((s,d) => s + (d.units_affected || 0), 0)"></p>
     </div>
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
-        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Est. Total Damage</p>
+    <div class="surface-glass rounded-[26px] p-4">
+        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Est. Total Damage</p>
         <p class="text-2xl font-bold text-rose-600 mt-1" x-text="'₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US')"></p>
     </div>
 </div>
 
 {{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
-<div class="bg-white rounded-2xl border border-slate-100 shadow-card p-4">
+<div class="surface-glass rounded-[26px] p-4">
     <div class="flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
             <input aria-label="Search by ref, barangay or sector" type="text" x-model="damageSearch" placeholder="Search by ref, barangay or sector…"
-                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
         </div>
         <select aria-label="Damage barangay filter" x-model="damageBarangayFilter"
-            class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Barangays</option>
             @foreach($barangays as $brgy)
                 <option value="{{ $brgy }}">{{ $brgy }}</option>
             @endforeach
         </select>
         <select aria-label="Damage sector filter" x-model="damageSectorFilter"
-            class="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+            class="text-sm border border-slate-200 rounded-2xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             <option value="">All Sectors</option>
             <template x-for="s in damageSectors()" :key="s"><option :value="s" x-text="s"></option></template>
         </select>
         <button @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''"
-            class="text-sm text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl hover:bg-slate-100 transition-colors">
+            class="text-sm text-ink-muted hover:text-slate-700 px-3 py-2 rounded-2xl hover:bg-slate-100 transition-colors">
             Clear filters
         </button>
     </div>
 </div>
 
 {{-- ── Assessment Table ────────────────────────────────────────────────────────────────── --}}
-<div class="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+<div class="surface-glass rounded-[26px] overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
-                <tr class="border-b border-slate-100 bg-slate-50/60">
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Ref</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Barangay</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Sector</th>
-                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Units Affected</th>
-                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Est. Damage</th>
-                    <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Photos</th>
-                    <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Status</th>
-                    <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
+                <tr class="bg-well/70">
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Ref</th>
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Barangay</th>
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Sector</th>
+                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Units Affected</th>
+                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Est. Damage</th>
+                    <th class="text-center px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Photos</th>
+                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
+                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-50">
+            <tbody class="divide-y divide-brand-600/[.08]">
                 <template x-for="d in filteredDamage" :key="d.ref">
-                    <tr class="hover:bg-slate-50/60 transition-colors cursor-pointer group" @click="openAssessmentDetail(d)" tabindex="0" @keydown.enter.prevent="openAssessmentDetail(d)">
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-slate-500" x-text="d.ref"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-800" x-text="d.barangay"></td>
+                    <tr class="hover:bg-white/60 transition-colors cursor-pointer group" @click="openAssessmentDetail(d)" tabindex="0" @keydown.enter.prevent="openAssessmentDetail(d)">
+                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="d.ref"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap font-medium text-ink-body" x-text="d.barangay"></td>
                         <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="d.sector"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700" x-text="d.units_affected || '—'"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right font-medium text-slate-800" x-text="d.estimated_cost ? '₱' + d.estimated_cost.toLocaleString('en-US') : '—'"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-center text-slate-500" x-text="d.photos || 0"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right font-medium text-ink-body" x-text="d.estimated_cost ? '₱' + d.estimated_cost.toLocaleString('en-US') : '—'"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center text-ink-muted" x-text="d.photos || 0"></td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap text-right" @click.stop>
                             <div class="flex items-center justify-end gap-1">
-                                <button @click="openAssessmentDetail(d)" class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View Details">
+                                <button @click="openAssessmentDetail(d)" class="p-1.5 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View Details">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
-                                <button x-show="can('sakuna_damage','edit')" @click="openEditAssessment(d)" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Edit">
+                                <button x-show="can('sakuna_damage','edit')" @click="openEditAssessment(d)" class="p-1.5 rounded-xl text-ink-muted hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Edit">
                                     <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -148,9 +148,9 @@
                 </template>
                 <tr x-show="filteredDamage.length === 0">
                     <td colspan="8" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-slate-500">
+                        <div class="flex flex-col items-center gap-3 text-ink-muted">
                             <i data-lucide="clipboard-list" class="w-10 h-10 opacity-30"></i>
-                            <p class="text-sm font-medium text-slate-500">No assessments match your filters.</p>
+                            <p class="text-sm font-medium text-ink-muted">No assessments match your filters.</p>
                             <button @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
                         </div>
                     </td>
@@ -158,8 +158,8 @@
             </tbody>
         </table>
     </div>
-    <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/40">
-        <p class="text-xs text-slate-500">Showing <strong x-text="filteredDamage.length"></strong> of <strong x-text="damagesList.length"></strong> assessments</p>
+    <div class="px-4 py-3 border-t border-brand-600/10 bg-slate-50/40">
+        <p class="text-xs text-ink-muted">Showing <strong x-text="filteredDamage.length"></strong> of <strong x-text="damagesList.length"></strong> assessments</p>
     </div>
 </div>
 
@@ -177,48 +177,48 @@
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
 
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
                 <div class="flex items-center gap-2">
-                    <h3 class="font-semibold text-slate-800" x-text="selectedAssessment?.ref ?? ''"></h3>
+                    <h3 class="font-semibold text-ink-body" x-text="selectedAssessment?.ref ?? ''"></h3>
                     <span :class="statusBadge(selectedAssessment?.status ?? '')" x-text="selectedAssessment?.status"></span>
                 </div>
-                <p class="text-xs text-slate-500 mt-0.5" x-text="(selectedAssessment?.sector ?? '') + ' · ' + (selectedAssessment?.barangay ?? '')"></p>
+                <p class="text-xs text-ink-muted mt-0.5" x-text="(selectedAssessment?.sector ?? '') + ' · ' + (selectedAssessment?.barangay ?? '')"></p>
             </div>
-            <button aria-label="Close" @click="showAssessmentDetail = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close" @click="showAssessmentDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
             <div>
-                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
+                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Details</h4>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Units Affected</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAssessment?.units_affected || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-slate-500">Estimated Cost</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAssessment?.estimated_cost ? '₱' + selectedAssessment.estimated_cost.toLocaleString('en-US') : '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-slate-500">Related Incident</p><p class="text-sm font-medium text-slate-800 mt-0.5" x-text="selectedAssessment?.incident_ref || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Units Affected</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAssessment?.units_affected || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Estimated Cost</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAssessment?.estimated_cost ? '₱' + selectedAssessment.estimated_cost.toLocaleString('en-US') : '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Related Incident</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAssessment?.incident_ref || '—'"></p></div>
                 </div>
             </div>
 
             <div>
-                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Notes</h4>
+                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Notes</h4>
                 <p class="text-sm text-slate-600 bg-slate-50 rounded-xl p-3" x-text="selectedAssessment?.notes || 'No notes recorded.'"></p>
             </div>
 
             <div>
-                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5"></i> Photo Evidence</h4>
+                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5"></i> Photo Evidence</h4>
                 <div class="grid grid-cols-3 gap-2">
                     <template x-for="(p, idx) in (selectedAssessment?.photos || [])" :key="idx">
-                        <a :href="p.url" target="_blank" rel="noopener" class="block aspect-square rounded-xl overflow-hidden border border-slate-100 bg-slate-50 hover:opacity-90 transition-opacity" :title="p.caption">
+                        <a :href="p.url" target="_blank" rel="noopener" class="block aspect-square rounded-2xl overflow-hidden border border-brand-600/10 bg-slate-50 hover:opacity-90 transition-opacity" :title="p.caption">
                             <img :src="p.url" :alt="p.caption || 'Damage photo'" class="w-full h-full object-cover" loading="lazy">
                         </a>
                     </template>
                 </div>
-                <p x-show="!Array.isArray(selectedAssessment?.photos) || !selectedAssessment.photos.length" class="text-xs text-slate-500 italic">No photos attached.</p>
+                <p x-show="!Array.isArray(selectedAssessment?.photos) || !selectedAssessment.photos.length" class="text-xs text-ink-muted italic">No photos attached.</p>
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center gap-2">
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex items-center gap-2">
             <button x-show="can('sakuna_damage','edit')" @click="showAssessmentDetail = false; openEditAssessment(selectedAssessment)"
-                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors">
+                class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 hover:border-slate-300 transition-colors">
                 <i data-lucide="pencil" class="w-4 h-4"></i> Edit
             </button>
         </div>
@@ -237,15 +237,15 @@
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-xl mb-8">
 
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 class="font-semibold text-slate-800" x-text="damageFormMode === 'create' ? 'New Damage Assessment' : 'Edit Assessment'"></h3>
-            <button aria-label="Close" @click="showCreateAssessment = false" class="p-2 rounded-xl text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
+            <h3 class="font-semibold text-ink-body" x-text="damageFormMode === 'create' ? 'New Damage Assessment' : 'Edit Assessment'"></h3>
+            <button aria-label="Close" @click="showCreateAssessment = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-barangay">Barangay <span class="text-rose-500">*</span></label>
-                <select id="dmg-barangay" x-model="damageForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-barangay">Barangay <span class="text-rose-500">*</span></label>
+                <select id="dmg-barangay" x-model="damageForm.barangay" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                     <option value="">Select barangay…</option>
                     @foreach($barangays as $brgy)
                         <option>{{ $brgy }}</option>
@@ -253,26 +253,26 @@
                 </select>
             </div>
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-sector">Sector <span class="text-rose-500">*</span></label>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-sector">Sector <span class="text-rose-500">*</span></label>
                 <input id="dmg-sector" type="text" x-model="damageForm.sector" list="damage-sector-suggestions" placeholder="e.g. Housing"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                 <datalist id="damage-sector-suggestions">
                     <template x-for="s in damageSectors()" :key="s"><option :value="s"></option></template>
                 </datalist>
             </div>
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-units">Units Affected</label>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-units">Units Affected</label>
                 <input id="dmg-units" type="number" min="0" x-model="damageForm.units_affected" placeholder="e.g. 48"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
             <div>
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-cost">Estimated Cost (₱)</label>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-cost">Estimated Cost (₱)</label>
                 <input id="dmg-cost" type="number" min="0" step="0.01" x-model="damageForm.estimated_cost" placeholder="0.00"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
             </div>
             <div class="sm:col-span-2">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-incident">Related Incident (optional)</label>
-                <select id="dmg-incident" x-model="damageForm.incident_id" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-incident">Related Incident (optional)</label>
+                <select id="dmg-incident" x-model="damageForm.incident_id" class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors">
                     <option value="">— None —</option>
                     <template x-for="inc in damageIncidentsOpen" :key="inc.id">
                         <option :value="inc.id" x-text="inc.ref + ' — ' + inc.type + ', ' + inc.barangay"></option>
@@ -280,23 +280,23 @@
                 </select>
             </div>
             <div class="sm:col-span-2">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-notes">Notes</label>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-notes">Notes</label>
                 <textarea id="dmg-notes" x-model="damageForm.notes" rows="3" placeholder="Field observations…"
-                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
+                    class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-brand-400 focus:outline-none transition-colors resize-none"></textarea>
             </div>
             <div class="sm:col-span-2">
-                <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block" for="dmg-photo">
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dmg-photo">
                     <span x-text="damageFormMode === 'create' ? 'Photo Evidence' : 'Add Another Photo'"></span>
                 </label>
                 <input id="dmg-photo" type="file" accept="image/*" @change="damageForm.photoFile = $event.target.files[0] || null"
-                    class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-700 file:text-sm file:font-medium hover:file:bg-brand-100">
+                    class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-2xl file:border-0 file:bg-brand-50 file:text-brand-700 file:text-sm file:font-medium hover:file:bg-brand-100">
             </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex gap-3">
-            <button @click="showCreateAssessment = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+        <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
+            <button @click="showCreateAssessment = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">Cancel</button>
             <button :disabled="damageSaving || !damageForm.barangay || !damageForm.sector" @click="saveDamage()"
-                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors disabled:opacity-50">
+                class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
                 <span x-text="damageSaving ? 'Saving…' : (damageFormMode === 'create' ? 'Record Assessment' : 'Save Changes')"></span>
             </button>
         </div>

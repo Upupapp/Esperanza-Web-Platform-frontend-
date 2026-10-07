@@ -51,16 +51,16 @@
 {{-- ── Header ──────────────────────────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
-        <h2 class="text-lg font-semibold text-slate-800">Incident Management</h2>
-        <p class="text-sm text-slate-500 mt-0.5">Report, track, validate, and coordinate response to all active incidents.</p>
+        <h2 class="text-lg font-semibold text-ink-body">Incident Management</h2>
+        <p class="text-sm text-ink-muted mt-0.5">Report, track, validate, and coordinate response to all active incidents.</p>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredIncidents, 'incidents-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-slate-500"></i> Export
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-3 py-2 shadow-card transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
             <i data-lucide="plus" class="w-4 h-4"></i> New Incident
         </button>
     </div>
@@ -82,13 +82,13 @@
 {{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
 <div class="flex flex-wrap gap-2 items-center">
     <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
         <input aria-label="Search by ID, type, or barangay" type="text" x-model="incidentSearch"
             placeholder="Search by ID, type, or barangay..."
-            class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-64 transition-colors">
+            class="pl-9 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-2xl shadow-card focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 w-64 transition-colors">
     </div>
     <select aria-label="Incident type filter" x-model="incidentTypeFilter"
-        class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Types</option>
         <option>Flood</option><option>Landslide</option><option>Fire</option><option>Earthquake</option>
         <option>Vehicular Accident</option><option>Medical Emergency</option><option>Missing Person</option>
@@ -99,12 +99,12 @@
         <option>Other</option>
     </select>
     <select aria-label="Incident severity filter" x-model="incidentSeverityFilter"
-        class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Severities</option>
         <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
     </select>
     <select aria-label="Incident status filter" x-model="incidentStatusFilter"
-        class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Statuses</option>
         <option value="Submitted">Reported</option>
         <option value="Under Verification">Validated</option>
@@ -114,39 +114,39 @@
         <option value="Archived">Closed</option>
     </select>
     <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter"
-        class="text-sm bg-white border border-slate-200 rounded-xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+        class="text-sm bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
         <option value="">All Barangays</option>
         @foreach($barangays as $brgy)
             <option>{{ $brgy }}</option>
         @endforeach
     </select>
     <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter='';"
-        class="inline-flex items-center gap-1.5 text-sm text-slate-500 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+        class="inline-flex items-center gap-1.5 text-sm text-ink-muted bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
         <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
     </button>
 </div>
 
 {{-- ── Incident Table ───────────────────────────────────────────────────────────────────── --}}
-<div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
+<div class="bg-white rounded-2xl shadow-card border border-brand-600/10 overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-slate-100">
+        <table class="min-w-full divide-y divide-brand-600/[.08]">
             <thead>
                 <tr class="bg-slate-50 text-left">
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Ref</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Type</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Reported</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Barangay / Sitio</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Severity</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Assigned To</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Elapsed</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Actions</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Ref</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Type</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Reported</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Barangay / Sitio</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Severity</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Assigned To</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Status</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Elapsed</th>
+                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-50">
+            <tbody class="divide-y divide-brand-600/[.08]">
                 <template x-for="inc in filteredIncidents" :key="inc.ref">
-                    <tr class="hover:bg-slate-50/60 transition-colors">
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-slate-500" x-text="inc.ref"></span></td>
+                    <tr class="hover:bg-white/60 transition-colors">
+                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="inc.ref"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <div class="flex items-center gap-2">
                                 <span class="flex-shrink-0 w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center">
@@ -157,11 +157,11 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="text-xs text-slate-600" x-text="inc.reported ? new Date(inc.reported).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></span><br>
-                            <span class="text-xs text-slate-500" x-text="inc.reported ? new Date(inc.reported).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''"></span>
+                            <span class="text-xs text-ink-muted" x-text="inc.reported ? new Date(inc.reported).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''"></span>
                         </td>
                         <td class="px-4 py-3">
                             <span class="text-sm font-medium text-slate-700" x-text="inc.barangay"></span><br>
-                            <span class="text-xs text-slate-500" x-text="inc.sitio || '—'"></span>
+                            <span class="text-xs text-ink-muted" x-text="inc.sitio || '—'"></span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="severityBadge(inc.severity)" class="px-2.5 py-0.5 rounded-full text-xs font-medium" x-text="inc.severity"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -169,15 +169,15 @@
                             <span class="text-xs italic text-amber-600" x-show="!inc.assigned_name">Unassigned</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(inc.status)" x-text="incidentStatusLabel(inc.status)" :title="'Status on record: ' + inc.status"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="text-xs text-slate-500" x-text="elapsed(inc.reported)"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap"><span class="text-xs text-ink-muted" x-text="elapsed(inc.reported)"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-1.5">
                                 <button @click="openIncidentDetail(inc)"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-lg transition-colors">
+                                    class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-xl transition-colors">
                                     <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
                                 </button>
                                 <button x-show="inc.available_verbs.includes('validate')" @click="actIncidentVerb(inc, 'validate')"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg transition-colors">
+                                    class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-xl transition-colors">
                                     <i data-lucide="check" class="w-3.5 h-3.5"></i> Validate
                                 </button>
                             </div>
@@ -188,9 +188,9 @@
                     <td colspan="9" class="px-4 py-12 text-center">
                         <div class="flex flex-col items-center gap-2">
                             <span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-1">
-                                <i data-lucide="search-x" class="w-5 h-5 text-slate-500"></i>
+                                <i data-lucide="search-x" class="w-5 h-5 text-ink-muted"></i>
                             </span>
-                            <p class="text-sm text-slate-500 font-medium">No incidents match your filters.</p>
+                            <p class="text-sm text-ink-muted font-medium">No incidents match your filters.</p>
                             <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter='';"
                                 class="text-sm text-brand-600 hover:underline mt-1">Clear filters</button>
                         </div>
@@ -227,17 +227,17 @@
         x-transition:enter-end="opacity-100 scale-100"
         class="bg-white rounded-2xl shadow-float w-full max-w-xl max-h-[90vh] overflow-y-auto">
 
-        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
+        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">
                 <span class="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center">
                     <i data-lucide="siren" class="w-5 h-5 text-rose-600"></i>
                 </span>
                 <div>
-                    <h3 class="text-base font-semibold text-slate-800">Report New Incident</h3>
-                    <p class="text-xs text-slate-500">The reporting officer is recorded automatically from your session.</p>
+                    <h3 class="text-base font-semibold text-ink-body">Report New Incident</h3>
+                    <p class="text-xs text-ink-muted">The reporting officer is recorded automatically from your session.</p>
                 </div>
             </div>
-            <button aria-label="Close" @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+            <button aria-label="Close" @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
@@ -246,12 +246,12 @@
             <div>
                 <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-title">Title <span class="text-rose-500">*</span></label>
                 <input id="incident-title" type="text" x-model="incidentForm.title" placeholder="e.g. Flooding along Sitio Lawod"
-                    class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-type">Incident Type <span class="text-rose-500">*</span></label>
-                    <select id="incident-type" x-model="incidentForm.type" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <select id="incident-type" x-model="incidentForm.type" class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select type...</option>
                         <option>Flood</option><option>Landslide</option><option>Fire</option><option>Earthquake</option>
                         <option>Vehicular Accident</option><option>Medical Emergency</option><option>Missing Person</option>
@@ -264,7 +264,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-barangay">Barangay <span class="text-rose-500">*</span></label>
-                    <select id="incident-barangay" x-model="incidentForm.barangay" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <select id="incident-barangay" x-model="incidentForm.barangay" class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select barangay...</option>
                         @foreach($barangays as $brgy)
                             <option>{{ $brgy }}</option>
@@ -274,18 +274,18 @@
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-sitio">Sitio / Exact Location</label>
                     <input id="incident-sitio" type="text" x-model="incidentForm.sitio" placeholder="e.g. Near the old bridge"
-                        class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                        class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-severity">Severity <span class="text-rose-500">*</span></label>
-                    <select id="incident-severity" x-model="incidentForm.severity" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <select id="incident-severity" x-model="incidentForm.severity" class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select severity...</option>
                         <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-source">Source / Channel</label>
-                    <select id="incident-source" x-model="incidentForm.source" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                    <select id="incident-source" x-model="incidentForm.source" class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
                         <option value="">Select source...</option>
                         <option>Barangay</option>
                         <option>MDRRMO Hotline</option>
@@ -299,15 +299,15 @@
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-description">Description</label>
                     <textarea id="incident-description" x-model="incidentForm.description" rows="4" placeholder="Describe the incident in detail — nature, current situation, immediate danger, etc."
-                        class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none transition-colors"></textarea>
+                        class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none transition-colors"></textarea>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl">
-            <button @click="showCreateIncident = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-xl transition-colors">Cancel</button>
+        <div class="flex items-center gap-3 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl">
+            <button @click="showCreateIncident = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
             <button :disabled="incidentSaving || !incidentForm.title || !incidentForm.type || !incidentForm.barangay || !incidentForm.severity" @click="submitIncident()"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-xl transition-colors ml-auto disabled:opacity-50">
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-2xl transition-colors ml-auto disabled:opacity-50">
                 <i data-lucide="save" class="w-4 h-4"></i>
                 <span x-text="incidentSaving ? 'Reporting…' : 'Submit Incident'"></span>
             </button>
