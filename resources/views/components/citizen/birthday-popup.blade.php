@@ -28,13 +28,13 @@
                  address used when we do not know the name; the English fallback
                  keeps the same warmth without pretending to translate it. --}}
             <h3
-                class="text-lg font-semibold text-navy-900"
+                class="text-lg font-semibold text-ink"
                 x-text="$store.lang.current === 'en'
                     ? 'Happy Birthday, ' + ($store.citizenSession.account?.firstName ?? 'Kabalen') + '! 🎉'
                     : 'Maligayang Kaarawan, ' + ($store.citizenSession.account?.firstName ?? 'Kabalen') + '! 🎉'"
             ></h3>
 
-            <p class="text-sm text-slate-500 mt-2 max-w-[320px]">
+            <p class="text-sm text-ink-muted mt-2 max-w-[320px]">
                 <x-ui.t
                     fil="Nawa'y biyayaan ka ng Pamahalaang Bayan ng Esperanza ng mabuting kalusugan, kaligayahan, at biyaya sa iyong natatanging araw. Salamat sa patuloy na pagtitiwala sa ating LGU!"
                     en="The Municipality of Esperanza wishes you good health, happiness, and blessings on your special day. Thank you for your continued trust in our LGU!" />

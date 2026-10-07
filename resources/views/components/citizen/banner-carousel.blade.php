@@ -60,7 +60,7 @@
                 <p class="text-white/85 text-xs sm:text-sm mt-1 max-w-md leading-snug hidden sm:block" x-text="b.subtitle"></p>
                 <span
                     x-show="b.cta_label"
-                    class="inline-flex items-center gap-1.5 mt-3 w-fit bg-white/95 text-navy-900 text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm group-hover:bg-white transition-colors"
+                    class="inline-flex items-center gap-1.5 mt-3 w-fit bg-white/95 text-ink text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm group-hover:bg-white transition-colors"
                 >
                     <span x-text="b.cta_label"></span>
                     <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>

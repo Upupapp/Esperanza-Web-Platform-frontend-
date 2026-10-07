@@ -23,7 +23,7 @@
 @endphp
 
 <div class="doc-floating-panel-header" @pointerdown="startPanelDrag($event, '{{ $panelKey }}')">
-    <span class="text-[12.5px] font-semibold text-navy-900 select-none">
+    <span class="text-[12.5px] font-semibold text-ink select-none">
         <x-ui.t :fil="$titleFil" :en="$title" />
     </span>
     <div class="flex items-center gap-0.5">

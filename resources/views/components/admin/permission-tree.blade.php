@@ -54,11 +54,11 @@
     class="space-y-2.5"
 >
     <div class="relative">
-        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
         <input aria-label="Search modules or permissions"
             type="text" x-model="permQuery"
             placeholder="Search modules or permissions..."
-            class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
+            class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
         >
     </div>
 
@@ -69,13 +69,13 @@
                     type="button" @click="toggleModule(mod.key)"
                     class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50/70 hover:bg-slate-100/70 transition-colors text-left"
                 >
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-500 transition-transform duration-[160ms] ease-standard shrink-0" :class="isOpen(mod.key) && 'rotate-90'"></i>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-ink-muted transition-transform duration-[160ms] ease-standard shrink-0" :class="isOpen(mod.key) && 'rotate-90'"></i>
                     <span class="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0 text-brand-600">
                         <i :data-lucide="mod.icon" class="w-3.5 h-3.5"></i>
                     </span>
                     <div class="min-w-0 flex-1">
-                        <p class="text-xs font-semibold text-navy-900 truncate" x-text="mod.name"></p>
-                        <p class="text-[10.5px] text-slate-500"><span x-text="moduleChecked(mod)"></span>/<span x-text="moduleTotal(mod)"></span> permissions</p>
+                        <p class="text-xs font-semibold text-ink truncate" x-text="mod.name"></p>
+                        <p class="text-[10.5px] text-ink-muted"><span x-text="moduleChecked(mod)"></span>/<span x-text="moduleTotal(mod)"></span> permissions</p>
                     </div>
                     <span
                         x-show="!({{ $locked }})"
@@ -91,7 +91,7 @@
                     x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100"
                     x-cloak
-                    class="divide-y divide-slate-100 border-t border-slate-100"
+                    class="divide-y divide-brand-600/[.08] border-t border-brand-600/10"
                 >
                     <template x-for="sub in mod.submodules" :key="sub.key">
                         <div class="px-3.5 py-2.5">
@@ -106,7 +106,7 @@
                                     >
                                     <span class="text-[11.5px] font-medium text-slate-700" x-text="sub.name"></span>
                                 </label>
-                                <span class="text-[10px] text-slate-500 shrink-0" x-text="subCount(sub.key) + '/' + sub.perms.length"></span>
+                                <span class="text-[10px] text-ink-muted shrink-0" x-text="subCount(sub.key) + '/' + sub.perms.length"></span>
                             </div>
                             <div class="flex flex-wrap gap-1.5 pl-6">
                                 <template x-for="perm in sub.perms" :key="perm">
@@ -114,9 +114,9 @@
                                         type="button"
                                         @click="togglePerm(sub.key, perm)"
                                         :disabled="{{ $locked }}"
-                                        class="px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors"
+                                        class="px-2.5 py-1 rounded-xl text-[10px] font-medium border transition-colors"
                                         :class="[
-                                            hasPerm(sub.key, perm) ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-200 text-slate-500',
+                                            hasPerm(sub.key, perm) ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-200 text-ink-muted',
                                             ({{ $locked }}) ? 'cursor-not-allowed opacity-70' : 'hover:border-slate-300'
                                         ]"
                                         x-text="permTypeLabels[perm] || perm"

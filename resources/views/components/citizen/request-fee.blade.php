@@ -10,8 +10,8 @@
     :class="selectedRequest?.payment?.status === 'Approved' ? 'border-emerald-200 bg-emerald-50/60' : (selectedRequest?.payment?.status === 'Rejected' ? 'border-rose-200 bg-rose-50/60' : 'border-amber-200 bg-amber-50/60')"
 >
     <div class="flex items-center justify-between gap-3">
-        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500"><x-ui.t fil="Bayarin" en="Fee" /></p>
-        <p class="text-sm font-semibold text-navy-900 tabular-nums" x-text="'₱' + Number(selectedRequest?.payment?.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></p>
+        <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted"><x-ui.t fil="Bayarin" en="Fee" /></p>
+        <p class="text-sm font-semibold text-ink tabular-nums" x-text="'₱' + Number(selectedRequest?.payment?.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })"></p>
     </div>
     <p x-show="selectedRequest?.payment?.status === 'Pending Review'" class="text-xs text-amber-800 mt-1">
         <x-ui.t fil="Babayaran sa opisina; dalhin ang reference number. Ang opisina ang magbibigay ng opisyal na resibo." en="Pay at the office and bring your reference number. The office issues the official receipt." />

@@ -25,13 +25,13 @@
                 <i data-lucide="party-popper" class="w-10 h-10 text-gold-600"></i>
             </div>
 
-            <h3 class="text-lg font-semibold text-navy-900">
+            <h3 class="text-lg font-semibold text-ink">
                 <x-ui.t
                     fil="Paparating na ang Fiesta ng Esperanza 2026!"
                     en="Fiesta ng Esperanza 2026 is Coming!" />
             </h3>
 
-            <p class="text-sm text-slate-500 mt-2 max-w-[320px]">
+            <p class="text-sm text-ink-muted mt-2 max-w-[320px]">
                 <x-ui.t
                     fil="Samahan ang pagdiriwang sa buong bayan ngayong Agosto — street dance, trade fair, at mga programa sa gabi. Ang Opening Program ay sa Agosto 14, 2026, 6:00 NG, sa Municipal Plaza."
                     en="Join the municipality-wide celebration this August — street dance, trade fair, and evening programs. Opening Program is Aug 14, 2026, 6:00 PM at the Municipal Plaza." />

@@ -17,7 +17,7 @@
                 <span class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0" aria-hidden="true"><i data-lucide="siren" class="w-5 h-5"></i></span>
                 <div class="min-w-0">
                     <p class="text-[11px] font-semibold uppercase tracking-wide text-rose-700" x-show="alert.pill" x-text="alert.pill"></p>
-                    <h3 class="text-base font-semibold text-navy-900" x-text="$store.lang.current === 'en' ? (alert.titleEn || alert.title) : (alert.titleFil || alert.title)"></h3>
+                    <h3 class="text-base font-semibold text-ink" x-text="$store.lang.current === 'en' ? (alert.titleEn || alert.title) : (alert.titleFil || alert.title)"></h3>
                     <p class="text-sm text-slate-600 mt-1.5 whitespace-pre-line" x-text="$store.lang.current === 'en' ? (alert.bodyEn || alert.body) : (alert.bodyFil || alert.body)"></p>
                 </div>
             </div>
