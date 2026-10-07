@@ -37,6 +37,27 @@ return [
             'desc' => 'Municipal scholarship and school supplies support for indigent students in good academic standing.',
             'requirements' => ['Certificate of Enrollment', 'Report Card / Form 138 (GWA 80 and above)', 'Certificate of Indigency (family income below ₱120,000/year)', 'Barangay Residency Certificate'],
             'process' => ['Submit Requirements', 'Scholarship Committee Review', 'Approval', 'Disbursement'],
+            // The scholarship form, as the app asks it (esperanza_service_form_specs:
+            // 'Educational Assistance'), so a website applicant gives the same
+            // details (QA2, 2026-10-07). The course is asked, and required, only
+            // for a college year (showIf); the average grade stays optional.
+            'fields' => [
+                ['key' => 'schoolName', 'label' => 'School Name', 'type' => 'text', 'required' => true],
+                ['key' => 'yearOrGradeLevel', 'label' => 'Year / Grade Level', 'type' => 'select', 'required' => true, 'options' => [
+                    'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
+                    'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12',
+                    '1st Year College', '2nd Year College', '3rd Year College', '4th Year College', '5th Year College',
+                ]],
+                ['key' => 'degreeProgramOrCourse', 'label' => 'Degree Program / Course', 'type' => 'text', 'required' => true, 'showIf' => ['field' => 'yearOrGradeLevel', 'contains' => 'College']],
+                ['key' => 'lastSchoolAverageGrade', 'label' => 'Last School Year Average Grade', 'type' => 'number'],
+                ['key' => 'placeOfBirth', 'label' => 'Place of Birth', 'type' => 'text'],
+                ['key' => 'fatherName', 'label' => "Father's Name", 'type' => 'text'],
+                ['key' => 'fatherOccupation', 'label' => "Father's Occupation", 'type' => 'text'],
+                ['key' => 'fatherMonthlyIncome', 'label' => "Father's Monthly Income (₱)", 'type' => 'number'],
+                ['key' => 'motherName', 'label' => "Mother's Name", 'type' => 'text'],
+                ['key' => 'motherOccupation', 'label' => "Mother's Occupation", 'type' => 'text'],
+                ['key' => 'motherMonthlyIncome', 'label' => "Mother's Monthly Income (₱)", 'type' => 'number'],
+            ],
         ],
         [
             'key' => 'tulong_financial', 'category' => 'Financial Assistance', 'level' => 'Municipal', 'processingKind' => 'cash',

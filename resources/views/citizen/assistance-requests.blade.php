@@ -78,6 +78,12 @@
             selectedRequest: null,
             resubmitNote: '',
             resubmitting: false,
+            // The resident withdraws their own request until the office has
+            // recommended it (end-to-end test 2026-10-07): confirmed in the
+            // panel itself, with an optional reason.
+            withdrawOpen: false,
+            withdrawReason: '',
+            withdrawing: false,
             lang(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
             apiMessage(err, fallback) { return err && err.localised ? err.localised(this.$store.lang.current) : fallback; },
             formatDay(iso) {
@@ -119,6 +125,7 @@
                 r.remarks = d.decision_remarks || null;
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : r.purpose;
                 r.canResubmit = !!d.can_resubmit;
+                r.canWithdraw = !!d.can_withdraw;
                 // Required documents not uploaded yet hold the resubmit back (QA run 2026-10-05).
                 r.missingRequired = d.missing_required || [];
                 r.payment = d.payment || null;
@@ -146,6 +153,8 @@
                 this.selectedRequest = r;
                 this.progressOpen = true;
                 this.proofOpen = false;
+                this.withdrawOpen = false;
+                this.withdrawReason = '';
                 try {
                     const res = await $api.get('/citizen/requests/' + encodeURIComponent(r.ref));
                     this.applyDetail(r, res.data);
@@ -183,6 +192,19 @@
                 } catch (err) {
                     this.$dispatch('toast', { message: this.apiMessage(err, 'Could not resubmit.'), variant: 'error' });
                 } finally { this.resubmitting = false; }
+            },
+            async withdrawRequest() {
+                const r = this.selectedRequest;
+                if (this.withdrawing || !r || !r.canWithdraw) return;
+                this.withdrawing = true;
+                try {
+                    const res = await $api.post('/citizen/requests/' + encodeURIComponent(r.ref) + '/withdraw', { reason: this.withdrawReason.trim() || null });
+                    this.applyDetail(r, res.data);
+                    this.withdrawOpen = false;
+                    this.$dispatch('toast', { message: this.lang(r.ref + ' withdrawn.', 'Binawi ang ' + r.ref + '.'), variant: 'success' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: this.apiMessage(err, this.lang('Could not withdraw the request.', 'Hindi mabawi ang kahilingan.')), variant: 'error' });
+                } finally { this.withdrawing = false; this.$nextTick(() => window.renderIcons?.()); }
             },
             // Tulong's main line, as config/esperanza_tulong_lifecycle.php
             // declares it (tests/Feature/TulongLifecycleTest.php pins the two).
@@ -342,9 +364,17 @@
                         }
                         return '';
                     },
+                    // A field asked only after another answer (the course, for a
+                    // college year: QA2 of 2026-10-07). Hidden, it is neither
+                    // required nor sent.
+                    fieldShown(f) {
+                        const rule = f?.showIf;
+                        if (!rule) return true;
+                        return String(this.formData[rule.field] ?? '').includes(rule.contains);
+                    },
                     missingRequired() {
                         return (this.types[this.selectedType]?.fields || []).filter((f) => {
-                            if (!f.required) return false;
+                            if (!f.required || !this.fieldShown(f)) return false;
                             const v = this.formData[f.key];
                             return Array.isArray(v) ? v.length === 0 : String(v ?? '').trim() === '';
                         }).map((f) => f.label);
@@ -416,6 +446,7 @@
                     async submitRequest() {
                         const type = this.types[this.selectedType];
                         const formData = JSON.parse(JSON.stringify(this.formData || {}));
+                        for (const f of (type?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];
                         // The applicant block says 'edit if needed', so what the
                         // resident confirmed or corrected goes with the request.
                         Object.assign(formData, {
@@ -643,7 +674,7 @@
                             <p class="text-xs text-slate-500 mb-3" x-show="types[selectedType]?.certSubtitle" x-text="types[selectedType]?.certSubtitle"></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type !== 'table')" :key="f.key">
-                                    <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2 lg:col-span-3' : ''">
+                                    <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2 lg:col-span-3' : ''" x-show="fieldShown(f)">
                                         <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date' || f.type === 'tel'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
@@ -888,7 +919,7 @@
                             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2"><x-ui.t fil="Detalye ng Aplikasyon" en="Application Details" /></p>
                             <div class="rounded-xl border border-slate-200 divide-y divide-slate-100">
                                 <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type !== 'table')" :key="f.key">
-                                    <div class="flex items-center justify-between gap-3 px-3.5 py-2 text-xs" x-show="formData[f.key] && (!Array.isArray(formData[f.key]) || formData[f.key].length)">
+                                    <div class="flex items-center justify-between gap-3 px-3.5 py-2 text-xs" x-show="fieldShown(f) && formData[f.key] && (!Array.isArray(formData[f.key]) || formData[f.key].length)">
                                         <span class="text-slate-500 shrink-0" x-text="f.label"></span>
                                         <span class="font-medium text-slate-700 text-right truncate" x-text="Array.isArray(formData[f.key]) ? formData[f.key].join(', ') : formData[f.key]"></span>
                                     </div>
@@ -1251,6 +1282,23 @@
                         </div>
 
                         <x-citizen.request-fee />
+
+                        {{-- Withdraw: until the office recommends it (end-to-end test 2026-10-07). --}}
+                        <div class="mt-5" x-show="selectedRequest.canWithdraw" x-cloak>
+                            <button type="button" x-show="!withdrawOpen" @click="withdrawOpen = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:underline">
+                                <i data-lucide="undo-2" class="w-3.5 h-3.5"></i><x-ui.t fil="Bawiin ang kahilingang ito" en="Withdraw this request" />
+                            </button>
+                            <div x-show="withdrawOpen" class="rounded-xl border border-rose-200 bg-rose-50 p-3.5">
+                                <p class="text-xs font-semibold text-rose-700" x-text="lang('Withdraw ' + selectedRequest.ref + '?', 'Bawiin ang ' + selectedRequest.ref + '?')"></p>
+                                <p class="text-xs text-rose-600 mt-0.5"><x-ui.t fil="Ititigil ng opisina ang pagproseso nito at hindi na ito mabubuksan muli. Para humiling ulit, magsumite ng bago." en="The office stops working on it and it cannot be reopened. To ask again, file a new request." /></p>
+                                <label for="withdraw-reason" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1"><x-ui.t fil="Dahilan (hindi kailangan)" en="Reason (optional)" /></label>
+                                <textarea id="withdraw-reason" x-model="withdrawReason" rows="2" maxlength="500" class="w-full text-xs rounded-lg border border-slate-200 bg-white px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                <div class="flex flex-wrap justify-end gap-2 mt-2">
+                                    <x-ui.button variant="secondary" size="sm" @click="withdrawOpen = false"><x-ui.t fil="Huwag na" en="Keep it" /></x-ui.button>
+                                    <x-ui.button variant="danger" size="sm" icon="undo-2" loading="withdrawing" @click="withdrawRequest()"><x-ui.t fil="Oo, bawiin" en="Yes, withdraw" /></x-ui.button>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="grid grid-cols-2 gap-3 mt-5">
                             <div class="rounded-xl bg-slate-50 border border-slate-100 p-3.5">

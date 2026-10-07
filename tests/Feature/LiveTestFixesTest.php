@@ -129,6 +129,28 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString('label-fil="Petsa ng Kapanganakan"', $this->source('resources/views/auth/citizen-register.blade.php'));
     }
 
+    /** End-to-end test 2026-10-07: Educational Assistance asks the scholarship form; a Tulong request can be withdrawn. */
+    public function test_educational_assistance_asks_the_school_and_a_request_can_be_withdrawn(): void
+    {
+        $types = (require base_path('config/esperanza_tulong_types.php'))['types'];
+        $educational = collect($types)->firstWhere('key', 'tulong_educational');
+        $this->assertNotNull($educational);
+        $fields = collect($educational['fields'] ?? [])->keyBy('key');
+        $this->assertSame('select', $fields['yearOrGradeLevel']['type']);
+        $this->assertContains('Grade 10', $fields['yearOrGradeLevel']['options']);
+        $this->assertSame(['field' => 'yearOrGradeLevel', 'contains' => 'College'], $fields['degreeProgramOrCourse']['showIf']);
+        $this->assertTrue($fields['degreeProgramOrCourse']['required']);
+        $this->assertTrue($fields->has('fatherMonthlyIncome') && $fields->has('motherMonthlyIncome'), 'one income per parent');
+
+        $view = $this->source('resources/views/citizen/assistance-requests.blade.php');
+        $this->assertStringContainsString('if (!f.required || !this.fieldShown(f)) return false;', $view);
+        $this->assertStringContainsString('for (const f of (type?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];', $view);
+        $this->assertStringContainsString('x-show="fieldShown(f)"', $view);
+        $this->assertStringContainsString("'/withdraw', { reason: this.withdrawReason.trim() || null }", $view);
+        $this->assertStringContainsString('r.canWithdraw = !!d.can_withdraw;', $view);
+        $this->assertStringContainsString('x-show="selectedRequest.canWithdraw"', $view);
+    }
+
     /** UX-4, UX-13, UX-14, UX-5: one word per thing; counts that agree; offices spelled out; one close button. */
     public function test_staff_pages_use_one_word_per_thing(): void
     {
