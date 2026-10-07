@@ -77,5 +77,5 @@
 # it used to answer 404 with the welcome page and no explanation.
 [[redirects]]
   from   = "/*"
-  to     = "/404/index.html"
+  to     = "/404.html"
   status = 404

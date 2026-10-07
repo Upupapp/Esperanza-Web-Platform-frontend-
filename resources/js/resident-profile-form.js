@@ -23,6 +23,16 @@ const blankPersonal = () => ({ sex: '', dob: '', civil_status: '', sitio: '', co
 const blankHousehold = () => ({ sitio: '', address: '', dwelling_type: '', housing_tenure: '', electricity: '', water: '', toilet: '' });
 const blankMember = () => ({ ref: null, name: '', sex: '', dob: '', civil_status: '', relation: '', occupation: '', education: '', contact: '' });
 
+// The record's contact is the email when the resident gave no mobile number:
+// only a Philippine mobile number belongs in a Mobile number box (retest
+// 2026-10-07: an email became "42607" here, and the form could not be sent).
+const mobileOrEmpty = (v) => {
+    const raw = String(v ?? '');
+    if (raw.includes('@')) return '';
+    const digits = window.phMobile.clean(raw.replace(/^\+?63/, '0'));
+    return /^09\d{9}$/.test(digits) ? digits : '';
+};
+
 const text = (v) => {
     const t = String(v ?? '').trim();
     return t === '' || t === '—' ? null : t;
@@ -55,7 +65,7 @@ export function residentProfileForm() {
                 dob: (me.dob || '').slice(0, 10),
                 civil_status: me.civil_status || '',
                 sitio: me.sitio || '',
-                contact: window.phMobile.clean(me.contact || account.mobile || ''),
+                contact: mobileOrEmpty(me.contact) || mobileOrEmpty(account.mobile),
                 occupation: me.occupation || '',
                 education: me.education || '',
                 income_range: me.income_range || '',
@@ -82,7 +92,7 @@ export function residentProfileForm() {
                 relation: m.relation || '',
                 occupation: m.occupation || '',
                 education: m.education || '',
-                contact: m.contact || '',
+                contact: mobileOrEmpty(m.contact),
             }));
             this.section = 'personal';
             this.error = '';

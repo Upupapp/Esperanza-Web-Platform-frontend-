@@ -156,6 +156,14 @@ foreach (['favicon.ico', 'robots.txt'] as $file) {
 $apiBase = getenv('VITE_API_BASE_URL') ?: ($_ENV['VITE_API_BASE_URL'] ?? 'https://esperanza.139-162-51-165.sslip.io/api/v1');
 $apiOrigin = preg_replace('#^(https?://[^/]+).*$#', '$1', (string) $apiBase);
 file_put_contents($distDir.'/_headers', esperanza_response_headers($apiOrigin));
+
+// Netlify serves /404.html at the publish root for any address that is not a
+// file (PR-3). The /404/ route renders it; the rule in netlify.toml pointing
+// at /404/index.html was not honoured live and answered with the welcome page.
+if (is_file($distDir.'/404/index.html')) {
+    copy($distDir.'/404/index.html', $distDir.'/404.html');
+    echo "  ✓  404.html (page not found)\n";
+}
 echo "  ✓  _headers (API origin {$apiOrigin})\n";
 
 // ── Summary ───────────────────────────────────────────────────────────────────

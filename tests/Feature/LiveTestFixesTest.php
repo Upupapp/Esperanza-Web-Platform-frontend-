@@ -47,7 +47,8 @@ class LiveTestFixesTest extends TestCase
     public function test_a_wrong_address_gets_a_page_not_found(): void
     {
         $this->get('/404')->assertOk()->assertSee('Hindi nahanap ang pahinang ito', false)->assertSee('This page was not found', false);
-        $this->assertStringContainsString('to     = "/404/index.html"', $this->source('netlify.toml'));
+        $this->assertStringContainsString('to     = "/404.html"', $this->source('netlify.toml'));
+        $this->assertStringContainsString("copy(\$distDir.'/404/index.html', \$distDir.'/404.html');", $this->source('export.php'));
     }
 
     /** PR-8: staff choose their own password; My Profile is real. */
@@ -106,7 +107,11 @@ class LiveTestFixesTest extends TestCase
     /** UX-8: the website fills and corrects the Resident Profile. */
     public function test_the_website_fills_the_resident_profile(): void
     {
-        $this->assertStringContainsString("await api.put('/citizen/resident-profile', this.payload());", $this->source('resources/js/resident-profile-form.js'));
+        $form = $this->source('resources/js/resident-profile-form.js');
+        $this->assertStringContainsString("await api.put('/citizen/resident-profile', this.payload());", $form);
+        // An email on file is not a mobile number (retest: it became "42607").
+        $this->assertStringContainsString("if (raw.includes('@')) return '';", $form);
+        $this->assertStringContainsString('contact: mobileOrEmpty(me.contact) || mobileOrEmpty(account.mobile),', $form);
         $this->assertStringContainsString("Alpine.data('residentProfileForm', residentProfileForm);", $this->source('resources/js/app.js'));
         $this->assertStringContainsString('<x-citizen.resident-profile-form />', $this->source('resources/views/citizen/profile.blade.php'));
     }
