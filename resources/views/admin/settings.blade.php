@@ -3,7 +3,7 @@
     $supportIconOptions = ['phone', 'mail', 'message-square', 'map-pin', 'clock', 'life-buoy', 'headset', 'globe'];
 @endphp
 
-<x-layouts.admin title="Settings" subtitle="Platform preferences and configuration." :active="$tab === 'audit-logs' ? 'audit-logs' : ($tab === 'support' ? 'support' : 'settings')">
+<x-layouts.admin title="Settings" subtitle="Platform preferences and configuration." :active="$tab === 'support' ? 'support' : 'settings'">
     <div x-data="{ tab: '{{ $tab }}', can(sub, perm) { return this.$store.session.canPerm ? this.$store.session.canPerm(sub, perm) : true; } }" class="animate-fade-up">
 
         <div x-show="!$store.session.can('settings')" x-cloak>

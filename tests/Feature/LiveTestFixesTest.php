@@ -151,6 +151,27 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString('x-show="selectedRequest.canWithdraw"', $view);
     }
 
+    /** Owner, 2026-10-07: as few sidebar entries as possible. Directory and Blotter are tabs of Balita; Settings and its Audit Logs are in the profile menu. */
+    public function test_the_staff_sidebar_keeps_balita_whole_and_settings_in_the_profile_menu(): void
+    {
+        $sidebar = $this->source('resources/views/components/admin/sidebar.blade.php');
+        $this->assertSame(1, substr_count($sidebar, ":href=\"route('admin.communications')\""), 'one Balita entry');
+        $this->assertStringContainsString('label="Balita" :active="$active === \'communications\'"', $sidebar);
+        foreach (['Balita & Events', 'label="Directory"', 'label="Blotter"', 'label="Settings"', 'label="Audit Logs"'] as $gone) {
+            $this->assertStringNotContainsString($gone, $sidebar, $gone);
+        }
+        $this->assertStringContainsString('label="Support Tickets"', $sidebar);
+
+        $balita = $this->source('resources/views/admin/communications.blade.php');
+        $this->assertStringContainsString('<x-layouts.admin title="Balita"', $balita);
+        $this->assertStringNotContainsString('inGroup(', $balita);
+        foreach (['balita', 'banners', 'community', 'events', 'offices', 'barangays', 'blotter'] as $tab) {
+            $this->assertStringContainsString("<button x-show=\"tabAllowed('{$tab}')\" @click=\"tab = '{$tab}'\"", $balita, $tab);
+        }
+        $this->assertStringContainsString('<i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>Settings', $this->source('resources/views/components/admin/topbar.blade.php'));
+        $this->assertStringContainsString("'audit-logs' => ['scroll-text', 'Audit Logs']", $this->source('resources/views/admin/settings.blade.php'));
+    }
+
     /** UX-4, UX-13, UX-14, UX-5: one word per thing; counts that agree; offices spelled out; one close button. */
     public function test_staff_pages_use_one_word_per_thing(): void
     {
