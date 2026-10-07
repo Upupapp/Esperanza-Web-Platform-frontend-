@@ -177,7 +177,7 @@ class LiveTestFixesTest extends TestCase
     {
         $view = $this->source('resources/views/citizen/document-requests.blade.php');
         $this->assertStringContainsString('x-effect="open && loadThumb(doc, $el)"', $view, 'a thumbnail per card, once the list is open');
-        $this->assertStringContainsString("await window.renderPdfInto(el, url, { maxPages: 1,", $view, 'page 1 of a PDF');
+        $this->assertStringContainsString('await window.renderPdfInto(el, url, { maxPages: 1,', $view, 'page 1 of a PDF');
         $this->assertStringContainsString("this.thumbs[doc.id] = { state: 'img', src: await window.imageBlobUrl(url, kind) };", $view, 'a photo');
         $this->assertStringContainsString('@click="view(doc)"', $view, 'Buksan opens a viewer');
         $this->assertStringContainsString('x-on:papeles-view.window="open = true"', $view);
