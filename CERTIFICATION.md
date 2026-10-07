@@ -141,7 +141,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (119 tests) → static export → assertions ON dist/ (incl. page-weight budget)
+vite build → pint --test → phpunit (120 tests) → static export → assertions ON dist/ (incl. page-weight budget)
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:
@@ -221,7 +221,7 @@ These are not oversights. The book says they need an answer, not a guess.
 | TAB | State | Note |
 | --- | --- | --- |
 | 01 The two production defects | **DONE** | 46 → 55 routes exported; 16 PDFs reach `dist/` |
-| 02 Test harness and gate | **DONE** (adapted) | 2 → 119 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below. The 36th asserts the hook is actually *enabled* in the clone, since a clone with it unset is how a broken tree reached main on 2026-09-01 |
+| 02 Test harness and gate | **DONE** (adapted) | 2 → 120 tests, all three TAB 02 gates. Enforced by a local pre-push hook, not CI — see below. The 36th asserts the hook is actually *enabled* in the clone, since a clone with it unset is how a broken tree reached main on 2026-09-01 |
 | 03 Local setup and the `.env` trap | **DONE** | Clean clone verified end to end on the merged tree — 11 tests from a fresh checkout |
 | 04 Lift 167 inline arrays | **DONE** | 136 top-level fixtures → 16; 1,431 lines → 129. 27 data files. Every wave verified byte-identical |
 | 05 The HTTP layer | **DONE** | Client + error envelope built; no screen consumes it yet |

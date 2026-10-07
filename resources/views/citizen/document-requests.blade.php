@@ -481,13 +481,55 @@
                             $dispatch('toast', { message: apiMessage(err, 'Could not upload the file.'), variant: 'error' });
                         } finally { this.uploading = false; }
                     },
-                    async download(doc) {
+                    // Each card shows the file itself: a photo, or page 1 of a PDF
+                    // (resident portal, 2026-10-07). The API sends files as downloads
+                    // only, so the page reads the bytes through a short-lived signed
+                    // link and draws them; a DOCX keeps its icon.
+                    thumbs: {},
+                    viewing: null,
+                    viewUrl: null,
+                    viewFailed: false,
+                    docKind(doc) { return doc ? window.previewKind('file', '.' + (doc.file_type || '')) : null; },
+                    async signedUrl(doc) {
+                        const res = await $api.get('/citizen/papeles/' + doc.id + '/download');
+                        return res.data?.url || res.data?.download_url || null;
+                    },
+                    async loadThumb(doc, el) {
+                        if (!doc.downloadable || this.thumbs[doc.id]) return;
+                        const kind = this.docKind(doc);
+                        if (!kind) { this.thumbs[doc.id] = { state: 'none' }; return; }
+                        this.thumbs[doc.id] = { state: 'loading' };
                         try {
-                            const res = await $api.get('/citizen/papeles/' + doc.id + '/download');
-                            const url = res.data?.url || res.data?.download_url;
-                            if (url) window.open(url, '_blank', 'noopener');
+                            const url = await this.signedUrl(doc);
+                            if (!url) throw new Error('no link');
+                            if (kind === 'pdf') {
+                                await window.renderPdfInto(el, url, { maxPages: 1, canvasClass: 'block w-full h-auto bg-white' });
+                                this.thumbs[doc.id] = { state: 'pdf' };
+                            } else {
+                                this.thumbs[doc.id] = { state: 'img', src: await window.imageBlobUrl(url, kind) };
+                            }
+                        } catch (err) { this.thumbs[doc.id] = { state: 'failed' }; }
+                    },
+                    // Buksan: the file in a viewer on this page, not a download.
+                    async view(doc) {
+                        this.viewing = doc;
+                        this.viewUrl = null;
+                        this.viewFailed = false;
+                        $dispatch('papeles-view');
+                        try {
+                            this.viewUrl = await this.signedUrl(doc);
+                            if (!this.viewUrl) this.viewFailed = true;
+                        } catch (err) { this.viewFailed = true; }
+                    },
+                    // I-download: saved as the document's name with its own extension.
+                    async download(doc) {
+                        if (!doc) return;
+                        try {
+                            const url = await this.signedUrl(doc);
+                            if (!url) throw new Error('no link');
+                            await window.downloadFile(url, window.downloadName(doc.name, doc.file_type));
                         } catch (err) {
-                            $dispatch('toast', { message: apiMessage(err, 'Could not open the file.'), variant: 'error' });
+                            $dispatch('toast', { message: apiMessage(err, lang('Could not download the file.', 'Hindi ma-download ang file.')), variant: 'error' });
                         }
                     },
                 }" class="contents">
@@ -517,15 +559,20 @@
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-show="!papelesLoading">
                             <template x-for="doc in papeles" :key="doc.id">
                                 <div x-show="fileTab === 'all' || fileTab === fileKind(doc)" class="rounded-xl border border-slate-100 overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard group">
-                                    <div class="relative aspect-square bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-                                        <i :data-lucide="fileKind(doc) === 'PDF' ? 'file-text' : (fileKind(doc) === 'DOCX' ? 'file-type' : 'image')" class="w-9 h-9 text-slate-500"></i>
+                                    <div class="relative aspect-square bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
+                                        <i x-show="!['pdf', 'img'].includes(thumbs[doc.id]?.state)" :data-lucide="fileKind(doc) === 'PDF' ? 'file-text' : (fileKind(doc) === 'DOCX' ? 'file-type' : 'image')" class="w-9 h-9 text-slate-500" :class="thumbs[doc.id]?.state === 'loading' && 'animate-pulse'"></i>
+                                        <div x-show="thumbs[doc.id]?.state === 'pdf'" x-effect="open && loadThumb(doc, $el)" class="absolute inset-0"></div>
+                                        <img x-show="thumbs[doc.id]?.state === 'img'" x-cloak :src="thumbs[doc.id]?.src || ''" :alt="doc.name" class="absolute inset-0 w-full h-full object-cover">
                                         <span class="absolute top-1.5 left-1.5 text-[9px] font-bold bg-white/90 text-slate-600 rounded px-1.5 py-0.5" x-text="fileKind(doc)"></span>
                                         <span class="absolute top-1.5 right-1.5"><x-ui.badge statusBind="doc.status" class="!px-1.5 !py-0.5 !text-[9px]" /></span>
                                     </div>
                                     <div class="p-2.5 bg-white">
                                         <p class="text-xs font-medium text-slate-700 truncate" x-text="doc.name"></p>
                                         <p class="text-[10px] text-slate-500 mt-0.5" x-text="formatDay(doc.uploaded_at)"></p>
-                                        <button type="button" x-show="doc.downloadable" @click="download(doc)" class="mt-1 text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Buksan" en="Open" /></button>
+                                        <div x-show="doc.downloadable" class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                            <button type="button" @click="view(doc)" class="text-[11px] font-medium text-brand-600 hover:underline"><x-ui.t fil="Buksan" en="Open" /></button>
+                                            <button type="button" @click="download(doc)" class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline"><i data-lucide="download" class="w-3 h-3"></i><x-ui.t fil="I-download" en="Download" /></button>
+                                        </div>
                                     </div>
                                 </div>
                             </template>
@@ -535,6 +582,27 @@
                             <x-ui.button size="sm" @click="open = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
                         </x-slot:footer>
                     </x-ui.modal>
+
+                    {{-- Buksan: the file in a viewer over the list (a photo, or the PDF's pages). --}}
+                    <div x-data="{ open: false }" x-on:papeles-view.window="open = true" class="contents">
+                        <x-ui.modal title="Tingnan ang Dokumento" titleEn="View Document" maxWidth="lg">
+                            <p class="text-sm font-semibold text-navy-900 mb-3 break-words" x-text="viewing?.name"></p>
+                            <p x-show="viewFailed" x-cloak class="text-xs text-rose-600 text-center py-8"><x-ui.t fil="Hindi mabuksan ang file. Subukang i-download ito." en="The file could not be opened. Try downloading it." /></p>
+                            <div x-data="pdfPreview" x-effect="show(open && docKind(viewing) ? viewUrl : null, '.' + (viewing?.file_type || ''))" x-show="!viewFailed && docKind(viewing)" class="max-h-[65vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
+                                <p x-show="loading || !viewUrl" class="text-xs text-slate-500 text-center py-8"><x-ui.t fil="Binubuksan…" en="Opening…" /></p>
+                                <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8"><x-ui.t fil="Hindi maipakita dito ang file. Subukang i-download ito." en="This file could not be shown here. Try downloading it." /></p>
+                                <img x-show="image" x-cloak :src="image" :alt="viewing?.name || ''" class="block w-full h-auto rounded-lg bg-white">
+                                <div x-ref="pages"></div>
+                            </div>
+                            <div x-show="viewing && !docKind(viewing)" class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 text-center py-12 px-4">
+                                <p class="text-sm text-slate-600"><x-ui.t fil="Hindi maipakita dito ang ganitong file. Pindutin ang I-download para mabuksan ito sa iyong device." en="This kind of file cannot be shown here. Press Download to open it on your device." /></p>
+                            </div>
+                            <x-slot:footer>
+                                <x-ui.button variant="secondary" size="sm" @click="open = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
+                                <x-ui.button size="sm" icon="download" @click="download(viewing)"><x-ui.t fil="I-download" en="Download" /></x-ui.button>
+                            </x-slot:footer>
+                        </x-ui.modal>
+                    </div>
                 </div>
                 <div
                     x-data="{

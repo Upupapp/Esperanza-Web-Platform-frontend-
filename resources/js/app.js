@@ -116,7 +116,8 @@ window.viewableImage = async (url, mime) => {
     return window.imageBlobUrl(url, window.previewKind(url, mime) || 'image/jpeg');
 };
 
-window.renderPdfInto = async (el, url, { maxPages = 15 } = {}) => {
+// `canvasClass` styles each page; a thumbnail draws page 1 only, edge to edge.
+window.renderPdfInto = async (el, url, { maxPages = 15, canvasClass = 'block w-full h-auto rounded-lg border border-slate-200 bg-white mb-2' } = {}) => {
     const pdfjs = await window.loadPdfJs();
     const res = await fetch(url);
     if (!res.ok) throw new Error('file ' + res.status);
@@ -130,13 +131,40 @@ window.renderPdfInto = async (el, url, { maxPages = 15 } = {}) => {
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        canvas.className = 'block w-full h-auto rounded-lg border border-slate-200 bg-white mb-2';
+        canvas.className = canvasClass;
         canvas.setAttribute('aria-label', 'Page ' + n + ' of ' + doc.numPages);
         el.appendChild(canvas);
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
     }
 
     return doc.numPages;
+};
+
+// Saving an uploaded file under a readable name (resident portal, 2026-10-07:
+// "Aking mga Dokumento" had no download). The API's signed link is a download
+// from its own origin, and a browser ignores a link's download name across
+// origins, so the page reads the bytes and saves them itself.
+window.downloadFile = async (url, name) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('file ' + res.status);
+    const blobUrl = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = name || 'document';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+};
+
+// A file name from a document's title and stored extension: no path or
+// reserved characters, at most 80 characters, the extension once.
+window.downloadName = (name, ext) => {
+    let base = String(name || '').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'document';
+    const e = String(ext || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (e && !base.toLowerCase().endsWith('.' + e)) base += '.' + e;
+    return base;
 };
 
 // Windows stacked on one another: the Prepared Document over its request, or a

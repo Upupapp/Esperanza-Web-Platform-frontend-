@@ -172,6 +172,24 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString("'audit-logs' => ['scroll-text', 'Audit Logs']", $this->source('resources/views/admin/settings.blade.php'));
     }
 
+    /** Resident portal, 2026-10-07: My Documents shows each file, opens it in place and downloads it. */
+    public function test_my_documents_show_the_file_open_it_in_place_and_download_it(): void
+    {
+        $view = $this->source('resources/views/citizen/document-requests.blade.php');
+        $this->assertStringContainsString('x-effect="open && loadThumb(doc, $el)"', $view, 'a thumbnail per card, once the list is open');
+        $this->assertStringContainsString("await window.renderPdfInto(el, url, { maxPages: 1,", $view, 'page 1 of a PDF');
+        $this->assertStringContainsString("this.thumbs[doc.id] = { state: 'img', src: await window.imageBlobUrl(url, kind) };", $view, 'a photo');
+        $this->assertStringContainsString('@click="view(doc)"', $view, 'Buksan opens a viewer');
+        $this->assertStringContainsString('x-on:papeles-view.window="open = true"', $view);
+        $this->assertStringContainsString('<x-ui.t fil="I-download" en="Download" />', $view);
+        $this->assertStringContainsString('await window.downloadFile(url, window.downloadName(doc.name, doc.file_type));', $view);
+        $this->assertStringNotContainsString("window.open(url, '_blank', 'noopener')", $view, 'no new tab that only downloads');
+
+        $js = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('window.downloadFile = async (url, name) => {', $js);
+        $this->assertStringContainsString('canvas.className = canvasClass;', $js);
+    }
+
     /** UX-4, UX-13, UX-14, UX-5: one word per thing; counts that agree; offices spelled out; one close button. */
     public function test_staff_pages_use_one_word_per_thing(): void
     {
