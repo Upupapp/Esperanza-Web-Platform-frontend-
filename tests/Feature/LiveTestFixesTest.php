@@ -244,4 +244,19 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString("officeNames: { hr: 'HR (MHRMO)'", $this->source('resources/views/admin/internal-forms.blade.php'));
         $this->assertStringContainsString('@if($title)', $this->source('resources/views/components/ui/modal.blade.php'));
     }
+
+    /** 2026-10-08: Download PDF saved a blank page (resident) or never finished (staff); the resident's threw on oklch. */
+    public function test_download_pdf_captures_the_document(): void
+    {
+        $css = $this->source('resources/css/app.css');
+        $this->assertStringContainsString('body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area):not(.html2canvas-container)', $css, "html2canvas's own iframe is never hidden");
+        $this->assertStringContainsString('body.dp-printing *:has(#dp-print-area):not(.html2pdf__overlay, .html2pdf__container) {', $css, "html2pdf's container keeps its A4 width");
+        $this->assertStringContainsString('body.dp-printing .html2pdf__container .doc-paper:last-child', $css, 'no blank second page');
+        $this->assertStringContainsString('export function exportClone(el)', $this->source('resources/js/dokyu-editor.js'));
+        foreach (['admin', 'citizen'] as $side) {
+            $view = $this->source("resources/views/{$side}/document-requests.blade.php");
+            $this->assertStringContainsString('.from(window.DokyuEditor.exportClone(el)).save()', $view, $side.': a copy Alpine never starts');
+            $this->assertStringContainsString('window.DokyuEditor.sanitizeExportColors(document.body)', $view, $side.': oklch swapped for rgb');
+        }
+    }
 }

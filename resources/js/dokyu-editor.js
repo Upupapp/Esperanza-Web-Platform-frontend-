@@ -719,6 +719,45 @@ export function sanitizeExportColors(rootEl) {
     return () => restores.forEach((restore) => restore());
 }
 
+// The element to hand html2pdf instead of #dp-print-area itself. html2pdf
+// copies what it is given into the live page (its toContainer overlay)
+// before html2canvas reads it, and Alpine's MutationObserver then starts
+// every x-show/x-text/:class in that copy outside its component: each one
+// throws a ReferenceError, and a failed x-show hides its element. The copy
+// measured 0x0, so the staff download hung and the resident's saved a blank
+// page (2026-10-08). This copy has the Alpine attributes already gone, the
+// current field values written in, and each canvas as an image. Call it
+// after sanitizeExportColors() so the copy carries the rgb() colours.
+export function exportClone(el) {
+    const clone = el.cloneNode(true);
+    const fields = el.querySelectorAll('input, textarea, select');
+    clone.querySelectorAll('input, textarea, select').forEach((field, i) => {
+        const live = fields[i];
+        if (!live) return;
+        if (field.tagName === 'TEXTAREA') field.textContent = live.value;
+        else if (field.tagName === 'SELECT') Array.from(field.options).forEach((o, k) => o.toggleAttribute('selected', !!live.options[k]?.selected));
+        else if (field.type === 'checkbox' || field.type === 'radio') field.toggleAttribute('checked', live.checked);
+        else field.setAttribute('value', live.value);
+    });
+    const canvases = el.querySelectorAll('canvas');
+    clone.querySelectorAll('canvas').forEach((canvas, i) => {
+        try {
+            const img = document.createElement('img');
+            img.src = canvases[i].toDataURL();
+            img.style.cssText = canvas.style.cssText;
+            img.className = canvas.className;
+            canvas.replaceWith(img);
+        } catch (e) { /* a tainted canvas stays as it is */ }
+    });
+    clone.querySelectorAll('template').forEach((t) => t.remove());
+    [clone, ...clone.querySelectorAll('*')].forEach((node) => {
+        Array.from(node.attributes).forEach((attr) => {
+            if (attr.name.startsWith('x-') || attr.name.startsWith(':') || attr.name.startsWith('@')) node.removeAttribute(attr.name);
+        });
+    });
+    return clone;
+}
+
 // Resolves once every <img> under rootEl has either finished loading or
 // failed — used before handing the document to html2canvas so a
 // still-loading default seal/watermark (or a freshly-uploaded custom one)

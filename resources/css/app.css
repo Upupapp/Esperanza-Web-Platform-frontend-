@@ -428,12 +428,14 @@
    selector below is deliberately written differently (:is(*) is a no-op
    that matches identically) purely to stop that merge from reintroducing
    the same bug. */
-body.dp-printing *:has(#dp-print-area):is(*) {
+body.dp-printing *:has(#dp-print-area):not(.html2pdf__overlay, .html2pdf__container):is(*) {
     translate: none !important;
     scale: none !important;
     rotate: none !important;
 }
-body.dp-printing *:has(#dp-print-area) {
+/* Not html2pdf's own overlay and A4-wide container (see .html2canvas-container
+   below): reset to width:auto, the copy it captures went 1440px wide. */
+body.dp-printing *:has(#dp-print-area):not(.html2pdf__overlay, .html2pdf__container) {
     position: static !important;
     inset: auto !important;
     transform: none !important;
@@ -488,6 +490,13 @@ body.dp-printing #dp-print-area {
     margin: 0 !important;
 }
 
+/* Download PDF only (html2pdf's copy): a full 297mm last sheet is 2246px at
+   scale 2, html2pdf's A4 page is floor(2245.9) = 2245px, and that one row
+   started a blank second page. 1mm of the sheet's own white is not missed. */
+body.dp-printing .html2pdf__container .doc-paper:last-child {
+    min-height: 296mm !important;
+}
+
 /* html2pdf captures screen styles rather than @media print, so this class
    is also used while generating a download. */
 body.dp-printing .dp-no-print {
@@ -514,10 +523,14 @@ body.dp-printing .dp-no-print {
    #dp-print-area inside the modal rather than of the modal itself) had
    the exact same @media-print-only gap and needs the same unscoped
    copy, for the same reason. */
-body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area) {
+/* Never html2canvas's own iframe (.html2canvas-container), which it appends
+   to body to lay out its copy of the page: hidden, that window was 0x0, so
+   every Download PDF captured nothing (blank page, or the staff download
+   never finished) — 2026-10-08. */
+body.dp-printing > *:not(:has(#dp-print-area)):not(#dp-print-area):not(.html2canvas-container) {
     display: none !important;
 }
-body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-print-area) {
+body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-print-area):not(.html2canvas-container) {
     display: none !important;
 }
 

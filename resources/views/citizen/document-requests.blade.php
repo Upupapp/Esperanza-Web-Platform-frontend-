@@ -387,18 +387,37 @@
                 const docName = (this.resolvedDocument?.certTitle || this.selectedRequest?.type || 'Document').replace(/[^a-z0-9]+/gi, '-');
                 document.body.classList.add('dp-printing');
                 await this.$nextTick();
+                // As the staff download does (admin/document-requests): the seal and
+                // watermark loaded, the oklch() colours swapped for rgb() while
+                // html2canvas reads the page, and Alpine stripped from its clone.
+                // Without the swap every download threw on oklch and saved nothing.
+                await window.DokyuEditor.waitForImages(el);
+                const restoreColors = window.DokyuEditor.sanitizeExportColors(document.body);
                 try {
                     await html2pdf().set({
                         margin: 0,
                         filename: 'Esperanza-' + docName + '-' + citizenName.replace(/[^a-z0-9-]+/gi, '') + '.pdf',
                         image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+                        html2canvas: {
+                            scale: 2, useCORS: true, allowTaint: false, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff',
+                            onclone: (clonedDoc) => {
+                                clonedDoc.querySelectorAll('*').forEach((node) => {
+                                    Array.from(node.attributes).forEach((attr) => {
+                                        if (attr.name.startsWith('x-') || attr.name.startsWith(':') || attr.name.startsWith('@')) {
+                                            node.removeAttribute(attr.name);
+                                        }
+                                    });
+                                });
+                            },
+                        },
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
                         pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['.doc-paper'] },
-                    }).from(el).save();
+                    }).from(window.DokyuEditor.exportClone(el)).save();
                 } catch (error) {
                     console.error('Citizen document PDF download failed:', error);
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Could not download the PDF. Use Print and choose Save as PDF.' : 'Hindi ma-download ang PDF. Gamitin ang I-print at piliin ang Save as PDF.', variant: 'error' });
                 } finally {
+                    restoreColors();
                     document.body.classList.remove('dp-printing');
                 }
             },
@@ -443,7 +462,7 @@
             <x-citizen.status-guide />
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-card px-3 py-2.5 mb-4">
+        <div class="surface-glass rounded-[26px] px-3 py-2.5 mb-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex flex-wrap items-center gap-2.5 min-w-0 max-w-full">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto">
@@ -1284,7 +1303,7 @@
                                                 <label class="block">
                                                     <span class="text-xs font-medium text-slate-700" x-text="feeInputLabel(name)"></span>
                                                     <input type="text" inputmode="decimal" x-model="feeInputs[name]" :aria-label="feeInputLabel(name)" placeholder="50,000"
-                                                        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                                        class="mt-1 w-full rounded-xl px-3 py-2 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
                                                 </label>
                                             </template>
                                         </div>
