@@ -14,7 +14,9 @@
 ])
 
 @php
-    $base = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-[160ms] ease-standard select-none focus:outline-none focus-visible:ring-4 active:duration-[80ms] active:scale-[0.985] disabled:opacity-50 disabled:pointer-events-none';
+    // Clay design (STYLE_GUIDE §3.1): clay for anything you press, glass for
+    // the secondary button; the pressed shadow is the press feedback (no scale).
+    $base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-2xl whitespace-nowrap transition-all duration-[160ms] ease-standard select-none focus:outline-none focus-visible:ring-4 active:duration-[80ms] disabled:opacity-50 disabled:pointer-events-none';
 
     // Explicit min-height guarantees the WCAG 2.5.5 touch-target floor
     // regardless of padding/line-height math. `sm` is the intentional
@@ -26,11 +28,11 @@
     ];
 
     $variants = [
-        'primary' => 'btn-shine bg-gradient-to-b from-brand-500 to-brand-600 text-white shadow-card hover:shadow-card-hover focus-visible:ring-brand-100',
-        'secondary' => 'bg-white text-slate-700 border border-slate-200 shadow-card hover:bg-slate-50 hover:border-slate-300 focus-visible:ring-slate-100',
-        'ghost' => 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-slate-100',
-        'danger' => 'bg-rose-600 text-white shadow-card hover:bg-rose-700 focus-visible:ring-rose-100',
-        'gold' => 'btn-shine bg-gradient-to-b from-gold-400 to-gold-500 text-navy-950 shadow-card hover:from-gold-300 hover:to-gold-400 focus-visible:ring-gold-100',
+        'primary' => 'clay-blue btn-shine hover:brightness-95 active:shadow-pressed-dark focus-visible:ring-brand-100',
+        'secondary' => 'surface-glass-sm text-ink-body hover:bg-white/90 hover:shadow-glass active:shadow-pressed-sm active:bg-well focus-visible:ring-brand-100',
+        'ghost' => 'bg-transparent text-ink-muted hover:bg-white/60 hover:text-ink focus-visible:ring-brand-100',
+        'danger' => 'clay-rose btn-shine hover:brightness-95 active:shadow-pressed-dark focus-visible:ring-rose-100',
+        'gold' => 'clay-gold btn-shine hover:brightness-[.97] active:shadow-[inset_3px_3px_8px_rgb(140_110_0/.35)] focus-visible:ring-gold-100',
     ];
 
     $classes = $base . ' ' . ($sizes[$size] ?? $sizes['md']) . ' ' . ($variants[$variant] ?? $variants['primary']);

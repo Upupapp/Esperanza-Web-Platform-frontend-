@@ -245,7 +245,7 @@
 
 @layer components {
     .skeleton {
-        @apply relative overflow-hidden bg-slate-200/70 rounded-lg;
+        @apply relative overflow-hidden bg-well rounded-xl;
         background-image: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%);
         background-size: 400px 100%;
         animation: var(--animate-shimmer);
@@ -254,10 +254,10 @@
     /* Section/card-level loading: skeleton lives inside an already-visible
        card shell so nothing jumps once real content resolves. */
     .card-skeleton {
-        @apply bg-white rounded-2xl border border-slate-100 shadow-card p-4 space-y-3;
+        @apply rounded-[26px] p-5 space-y-3;
     }
     .table-skeleton-row {
-        @apply flex items-center gap-4 px-4 py-3 border-b border-slate-50 last:border-0;
+        @apply flex items-center gap-4 px-5 py-3 border-b border-brand-600/[.08] last:border-0;
     }
 
     /* Typography hierarchy classes — see --text-* tokens above. Weight is
@@ -326,7 +326,8 @@
        badges (backdrop-filter is costly on older LGU desktops). In Tailwind
        v4 a class in this layer takes no variant prefix (no hover:surface-*):
        write the hover state with plain utilities. */
-    .surface-glass { background: rgb(255 255 255 / .58); backdrop-filter: blur(22px) saturate(140%); border: 1px solid rgb(255 255 255 / .85); box-shadow: var(--shadow-glass); }
+    /* .card-skeleton is a glass card too (§3.10). */
+    .surface-glass, .card-skeleton { background: rgb(255 255 255 / .58); backdrop-filter: blur(22px) saturate(140%); border: 1px solid rgb(255 255 255 / .85); box-shadow: var(--shadow-glass); }
     /* .glass-panel, the older glass panel, is this surface now. */
     .surface-glass-sm, .glass-panel { background: rgb(255 255 255 / .60); backdrop-filter: blur(16px); border: 1px solid rgb(255 255 255 / .90); box-shadow: var(--shadow-glass-sm); }
     .surface-pressed { background: var(--color-well); box-shadow: var(--shadow-pressed); }
@@ -343,10 +344,10 @@
     .canvas-washed { background: radial-gradient(760px 440px at 90% -8%, rgb(86 135 255 / .42), transparent 70%), radial-gradient(600px 440px at 6% 106%, rgb(255 225 26 / .36), transparent 70%), radial-gradient(900px 640px at 58% 58%, rgb(47 98 245 / .12), transparent 70%), var(--color-canvas); }
     /* No blur support, or the person prefers less transparency: solid. */
     @supports not (backdrop-filter: blur(1px)) {
-        .surface-glass, .surface-glass-sm, .glass-panel { background: #f3f6fc; }
+        .surface-glass, .surface-glass-sm, .glass-panel, .card-skeleton { background: #f3f6fc; }
     }
     @media (prefers-reduced-transparency: reduce) {
-        .surface-glass, .surface-glass-sm, .glass-panel, .sidebar-glass { backdrop-filter: none; background: #f3f6fc; }
+        .surface-glass, .surface-glass-sm, .glass-panel, .card-skeleton, .sidebar-glass { backdrop-filter: none; background: #f3f6fc; }
         .sidebar-glass { background: var(--color-navy-900); }
     }
     .btn-shine {
@@ -430,6 +431,13 @@ body.dp-printing *:has(#dp-print-area) {
     position: static !important;
     inset: auto !important;
     transform: none !important;
+    /* The clay design's frosted modal (STYLE_GUIDE §3.8): a backdrop-filter
+       also makes its element the containing block of positioned descendants,
+       and html2canvas cannot draw it. Nothing printable keeps it (§0.4). */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
     overflow: visible !important;
     max-height: none !important;
     max-width: none !important;

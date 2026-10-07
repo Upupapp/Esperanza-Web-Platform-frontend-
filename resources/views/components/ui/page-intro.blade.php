@@ -1,12 +1,13 @@
 @props(['id', 'icon' => 'sparkles', 'title', 'titleEn' => null, 'color' => 'brand'])
 
 @php
-    $colorMap = [
-        'brand' => ['border-brand-100', 'bg-brand-50/60', 'text-brand-600'],
-        'purple' => ['border-purple-100', 'bg-purple-50/60', 'text-purple-600'],
-        'gold' => ['border-gold-200', 'bg-gold-50/60', 'text-gold-700'],
+    // Clay design (STYLE_GUIDE §3.11): a small glass panel with a clay icon tile.
+    $tiles = [
+        'brand' => 'clay-light',
+        'purple' => 'bg-purple-100 text-purple-700 shadow-clay-light',
+        'gold' => 'clay-gold-light',
     ];
-    [$border, $bg, $iconColor] = $colorMap[$color] ?? $colorMap['brand'];
+    $tile = $tiles[$color] ?? $tiles['brand'];
 @endphp
 
 <div
@@ -18,16 +19,16 @@
     x-show="show"
     x-cloak
     x-transition
-    class="relative flex items-start gap-3 rounded-2xl border {{ $border }} {{ $bg }} px-4 py-3.5 mb-4"
+    class="relative flex items-start gap-3 surface-glass-sm rounded-[22px] px-4 py-3.5 mb-4"
 >
-    <span class="w-8 h-8 rounded-xl bg-white {{ $iconColor }} flex items-center justify-center shrink-0 shadow-card">
+    <span class="w-9 h-9 rounded-xl {{ $tile }} flex items-center justify-center shrink-0">
         <i data-lucide="{{ $icon }}" class="w-4 h-4"></i>
     </span>
     <div class="min-w-0 flex-1">
-        <p class="text-sm font-medium text-navy-900" x-text="$store.lang.current === 'en' ? @js($titleEn ?? $title) : @js($title)">{{ $title }}</p>
-        <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{{ $slot }}</p>
+        <p class="text-sm font-semibold text-ink" x-text="$store.lang.current === 'en' ? @js($titleEn ?? $title) : @js($title)">{{ $title }}</p>
+        <p class="text-xs text-ink-muted mt-0.5 leading-relaxed">{{ $slot }}</p>
     </div>
-    <button @click="dismiss()" class="text-slate-500 hover:text-slate-600 shrink-0 transition-colors" aria-label="Dismiss">
+    <button @click="dismiss()" class="text-ink-muted hover:text-ink shrink-0 transition-colors" aria-label="Dismiss">
         <i data-lucide="x" class="w-4 h-4"></i>
     </button>
 </div>

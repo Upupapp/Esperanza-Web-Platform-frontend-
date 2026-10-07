@@ -30,13 +30,17 @@
     $id = 'f-' . $key . '-' . substr(md5($key . $type . $label), 0, 6);
 
     $model = $formVar . "['" . $key . "']";
-    $control = 'w-full rounded-xl border bg-slate-50/60 py-2.5 px-4 text-sm text-slate-800 '
-        . 'focus:bg-white focus:ring-4 outline-none transition-all duration-[160ms] ease-standard';
+    // Clay design (STYLE_GUIDE §3.2): every control a pressed well that lifts on
+    // focus; an error is a rose ring inside it.
+    $control = 'w-full min-h-[44px] rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink placeholder:text-ink-faint '
+        . 'focus:bg-white/90 focus:ring-4 outline-none transition-all duration-[160ms] ease-standard';
+    $readonly = 'w-full min-h-[44px] rounded-2xl border-0 surface-pressed-sm py-2.5 px-4 text-sm text-ink-muted outline-none';
+    $errorRing = "hasError('" . $key . "') ? 'ring-2 ring-inset ring-rose-300 focus:ring-rose-100' : 'focus:ring-brand-100'";
 @endphp
 
 <div class="space-y-1.5">
     @if($type !== 'checkbox')
-        <label for="{{ $id }}" class="block text-sm font-medium text-slate-700">
+        <label for="{{ $id }}" class="block text-sm font-semibold text-ink-body">
             {{ $label }}
             @if($required)
                 <span class="text-rose-500" aria-hidden="true">*</span>
@@ -51,34 +55,37 @@
             @if($required) aria-required="true" @endif
             :aria-invalid="hasError('{{ $key }}') ? 'true' : 'false'"
             :aria-describedby="hasError('{{ $key }}') ? '{{ $id }}-error' : @js($hint ? $id . '-hint' : null)"
-            :class="hasError('{{ $key }}') ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100'"
-            class="{{ $control }}"
+            :class="{{ $errorRing }}"
+            class="{{ $control }} resize-y"
         ></textarea>
 
     @elseif($type === 'select')
-        <select
-            id="{{ $id }}" name="{{ $key }}"
-            x-model="{{ $model }}"
-            @if($required) aria-required="true" @endif
-            :aria-invalid="hasError('{{ $key }}') ? 'true' : 'false'"
-            :class="hasError('{{ $key }}') ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100'"
-            class="{{ $control }}"
-        >
-            <option value="" disabled>{{ __('Select') }} {{ $label }}</option>
-            @foreach($options as $opt)
-                <option value="{{ $opt }}">{{ $opt }}</option>
-            @endforeach
-        </select>
+        <div class="relative">
+            <select
+                id="{{ $id }}" name="{{ $key }}"
+                x-model="{{ $model }}"
+                @if($required) aria-required="true" @endif
+                :aria-invalid="hasError('{{ $key }}') ? 'true' : 'false'"
+                :class="{{ $errorRing }}"
+                class="{{ $control }} appearance-none pr-10"
+            >
+                <option value="" disabled>{{ __('Select') }} {{ $label }}</option>
+                @foreach($options as $opt)
+                    <option value="{{ $opt }}">{{ $opt }}</option>
+                @endforeach
+            </select>
+            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none" aria-hidden="true"></i>
+        </div>
 
     @elseif($type === 'multiselect')
         <div class="space-y-1.5" role="group" aria-labelledby="{{ $id }}-group">
             <span id="{{ $id }}-group" class="sr-only">{{ $label }}</span>
             @foreach($options as $i => $opt)
-                <label for="{{ $id }}-{{ $i }}" class="flex items-center gap-2.5 text-sm text-slate-700">
+                <label for="{{ $id }}-{{ $i }}" class="flex items-center gap-2.5 text-sm text-ink-body">
                     <input
                         type="checkbox" id="{{ $id }}-{{ $i }}" name="{{ $key }}"
                         value="{{ $opt }}" x-model="{{ $model }}"
-                        class="rounded border-slate-300 text-brand-600 focus:ring-4 focus:ring-brand-100"
+                        class="w-5 h-5 rounded-md accent-brand-600 focus:ring-4 focus:ring-brand-100"
                     >
                     {{ $opt }}
                 </label>
@@ -86,13 +93,13 @@
         </div>
 
     @elseif($type === 'checkbox')
-        <label for="{{ $id }}" class="flex items-start gap-2.5 text-sm text-slate-700">
+        <label for="{{ $id }}" class="flex items-start gap-2.5 text-sm text-ink-body">
             <input
                 type="checkbox" id="{{ $id }}" name="{{ $key }}"
                 x-model="{{ $model }}"
                 @if($required) aria-required="true" @endif
                 :aria-invalid="hasError('{{ $key }}') ? 'true' : 'false'"
-                class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-4 focus:ring-brand-100"
+                class="mt-0.5 w-5 h-5 rounded-md accent-brand-600 focus:ring-4 focus:ring-brand-100"
             >
             <span>{{ $label }}@if($required)<span class="text-rose-500" aria-hidden="true">*</span>@endif</span>
         </label>
@@ -104,7 +111,7 @@
             type="text" id="{{ $id }}" name="{{ $key }}" readonly
             x-model="{{ $model }}"
             aria-readonly="true"
-            class="{{ $control }} border-slate-200 bg-slate-100 text-slate-500"
+            class="{{ $readonly }}"
         >
 
     @else
@@ -115,13 +122,13 @@
             @if($required) aria-required="true" @endif
             :aria-invalid="hasError('{{ $key }}') ? 'true' : 'false'"
             :aria-describedby="hasError('{{ $key }}') ? '{{ $id }}-error' : @js($hint ? $id . '-hint' : null)"
-            :class="hasError('{{ $key }}') ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100'"
+            :class="{{ $errorRing }}"
             class="{{ $control }}"
         >
     @endif
 
     @if($hint)
-        <p id="{{ $id }}-hint" class="text-xs text-slate-500">{{ $hint }}</p>
+        <p id="{{ $id }}-hint" class="text-xs text-ink-muted">{{ $hint }}</p>
     @endif
 
     {{-- Server field errors land here, on the same key the spec uses. --}}

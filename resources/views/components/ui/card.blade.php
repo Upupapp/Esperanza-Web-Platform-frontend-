@@ -9,9 +9,10 @@
 @endphp
 
 <div {{ $attributes->merge([
-        'class' => 'bg-white rounded-2xl border border-slate-100 shadow-card '
-            . ($hover ? 'transition-shadow duration-[220ms] ease-standard hover:shadow-card-hover focus-within:shadow-card-hover ' : '')
-            . ($padded ? 'p-4' : ''),
+        // Clay design (STYLE_GUIDE §3.3): a glass container.
+        'class' => 'surface-glass rounded-[26px] '
+            . ($hover ? 'transition-[transform,box-shadow] duration-[220ms] ease-standard hover:-translate-y-1 hover:shadow-glass-hover focus-within:shadow-glass-hover ' : '')
+            . ($padded ? 'p-5' : ''),
     ]) }}
     @if($needsKeyboard)
         tabindex="0"

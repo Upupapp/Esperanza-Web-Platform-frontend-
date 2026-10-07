@@ -10,12 +10,12 @@
 
 <div class="w-full">
     @if($label)
-        <label for="{{ $name }}" class="block text-sm font-medium text-slate-700 mb-1.5">@if($labelFil)<x-ui.t :fil="$labelFil" :en="$label" />@else{{ $label }}@endif</label>
+        <label for="{{ $name }}" class="block text-sm font-semibold text-ink-body mb-1.5">@if($labelFil)<x-ui.t :fil="$labelFil" :en="$label" />@else{{ $label }}@endif</label>
     @endif
 
     <div class="relative">
         @if($icon)
-            <i data-lucide="{{ $icon }}" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-500"></i>
+            <i data-lucide="{{ $icon }}" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-ink-muted pointer-events-none"></i>
         @endif
 
         <input
@@ -24,17 +24,18 @@
             id="{{ $name }}"
             @if($error) aria-invalid="true" aria-describedby="{{ $name }}-error" @elseif($hint) aria-describedby="{{ $name }}-hint" @endif
             {{ $attributes->merge([
-                'class' => 'w-full min-h-[44px] rounded-xl border bg-slate-50/60 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 transition-all duration-[160ms] ease-standard focus:bg-white focus:outline-none focus:ring-4 '
+                // Clay design (STYLE_GUIDE §3.2): a pressed well that lifts on focus.
+                'class' => 'w-full min-h-[44px] rounded-2xl border-0 surface-pressed py-2.5 text-sm text-ink placeholder:text-ink-faint transition-all duration-[160ms] ease-standard focus:bg-white/90 focus:outline-none focus:ring-4 '
                     . ($error
-                        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
-                        : 'border-slate-200 focus:border-brand-400 focus:ring-brand-100')
+                        ? 'ring-2 ring-inset ring-rose-300 focus:ring-rose-100'
+                        : 'focus:ring-brand-100')
                     . ' ' . ($icon ? 'pl-10 pr-4' : 'px-4'),
             ]) }}
         >
     </div>
 
     @if($hint && ! $error)
-        <p id="{{ $name }}-hint" class="mt-1.5 text-xs text-slate-500">{{ $hint }}</p>
+        <p id="{{ $name }}-hint" class="mt-1.5 text-xs text-ink-muted">{{ $hint }}</p>
     @endif
 
     @if($error)

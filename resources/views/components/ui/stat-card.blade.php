@@ -15,14 +15,15 @@
 ])
 
 @php
+    // Clay design (STYLE_GUIDE §3.4, README "KPI cards"): the icon is a clay coin.
     $colorMap = [
-        'brand' => 'bg-brand-50 text-brand-600',
-        'green' => 'bg-emerald-50 text-emerald-600',
-        'purple' => 'bg-purple-50 text-purple-600',
-        'orange' => 'bg-orange-50 text-orange-600',
-        'red' => 'bg-rose-50 text-rose-600',
-        'gold' => 'bg-gold-50 text-gold-700',
-        'slate' => 'bg-slate-100 text-slate-500',
+        'brand' => 'clay-blue',
+        'green' => 'bg-emerald-100 text-emerald-700 shadow-clay-light',
+        'purple' => 'bg-purple-100 text-purple-700 shadow-clay-light',
+        'orange' => 'clay-gold',
+        'red' => 'bg-rose-100 text-rose-700 shadow-clay-light',
+        'gold' => 'clay-gold-light',
+        'slate' => 'clay-navy',
     ];
     $iconClasses = $colorMap[$color] ?? $colorMap['brand'];
     $tag = $href ? 'a' : 'div';
@@ -37,7 +38,7 @@
 
 <{{ $tag }}
     @if($href) href="{{ $href }}" @endif
-    {{ $attributes->merge(['class' => 'group bg-white rounded-2xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 p-3.5 animate-fade-up block' . ($href || $needsKeyboard ? ' cursor-pointer hover:-translate-y-0.5' : '')]) }}
+    {{ $attributes->merge(['class' => 'group surface-glass rounded-[26px] p-[18px] pb-4 flex flex-col gap-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-glass-hover animate-fade-up' . ($href || $needsKeyboard ? ' cursor-pointer' : '')]) }}
     @if($needsKeyboard)
         tabindex="0"
         role="button"
@@ -46,24 +47,24 @@
     @endif
     style="animation-delay: {{ $delay }}ms"
 >
-    <div class="flex items-start justify-between">
-        <div class="w-9 h-9 rounded-xl {{ $iconClasses }} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
-            <i data-lucide="{{ $icon }}" class="w-4 h-4"></i>
+    <div class="flex items-start justify-between gap-3">
+        <p class="text-[11.5px] font-bold uppercase tracking-[.07em] leading-snug text-ink-muted max-w-[112px] text-balance" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</p>
+        <div class="w-11 h-11 rounded-full {{ $iconClasses }} grid place-items-center shrink-0">
+            <i data-lucide="{{ $icon }}" class="w-[19px] h-[19px]"></i>
         </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+        <p class="text-3xl xl:text-4xl font-extrabold tracking-[-.03em] leading-none text-ink tabular-nums" @if($valueBind) x-text="{{ $valueBind }}" @endif>{{ $value }}</p>
         @if($trend)
-            <span class="inline-flex items-center gap-1 text-xs font-medium {{ $trendDirection === 'up' ? 'text-emerald-600' : 'text-rose-600' }}">
+            <span class="inline-flex items-center gap-1 text-xs font-semibold surface-pressed-sm rounded-full px-2 py-0.5 {{ $trendDirection === 'up' ? 'text-emerald-600' : 'text-rose-600' }}">
                 <i data-lucide="{{ $trendDirection === 'up' ? 'trending-up' : 'trending-down' }}" class="w-3.5 h-3.5"></i>
                 {{ $trend }}
             </span>
-        @elseif($href)
-            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-300 transition-all duration-300 group-hover:text-brand-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
         @endif
     </div>
-    <p class="mt-2.5 text-xl font-semibold text-navy-900 tabular-nums tracking-tight" @if($valueBind) x-text="{{ $valueBind }}" @endif>{{ $value }}</p>
-    <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mt-1" x-text="$store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label)">{{ $label }}</p>
     @if($sublabelBind)
-        <p class="text-[11px] text-slate-500 mt-0.5" x-text="{{ $sublabelBind }}"></p>
+        <p class="self-start surface-pressed-sm rounded-full px-2.5 py-1 text-xs font-semibold text-ink-body" x-text="{{ $sublabelBind }}"></p>
     @elseif($sublabel)
-        <p class="text-[11px] text-slate-500 mt-0.5" x-text="$store.lang.current === 'en' ? @js($sublabelEn ?? $sublabel) : @js($sublabel)">{{ $sublabel }}</p>
+        <p class="self-start surface-pressed-sm rounded-full px-2.5 py-1 text-xs font-semibold text-ink-body" x-text="$store.lang.current === 'en' ? @js($sublabelEn ?? $sublabel) : @js($sublabel)">{{ $sublabel }}</p>
     @endif
 </{{ $tag }}>

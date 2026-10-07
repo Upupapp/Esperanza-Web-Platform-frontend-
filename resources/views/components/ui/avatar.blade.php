@@ -18,10 +18,10 @@
     <img
         src="{{ $src }}"
         alt="{{ $name }}"
-        {{ $attributes->merge(['class' => "$dimension rounded-full object-cover ring-2 ring-white shadow-sm shrink-0"]) }}
+        {{ $attributes->merge(['class' => "$dimension rounded-full object-cover ring-2 ring-white/90 shadow-glass-sm shrink-0"]) }}
     >
 @else
-    <div {{ $attributes->merge(['class' => "$dimension rounded-full bg-gradient-to-br from-brand-500 to-navy-800 text-white flex items-center justify-center font-semibold ring-2 ring-white shadow-sm shrink-0"]) }}>
+    <div {{ $attributes->merge(['class' => "$dimension rounded-full clay-blue flex items-center justify-center font-extrabold shrink-0"]) }}>
         {{ strtoupper($initials) }}
     </div>
 @endif

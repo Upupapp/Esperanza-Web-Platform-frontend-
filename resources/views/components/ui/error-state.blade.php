@@ -37,18 +37,18 @@
     role="alert"
     aria-live="assertive"
 >
-    <div class="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center mb-4" aria-hidden="true">
+    <div class="w-16 h-16 rounded-[22px] bg-rose-50 shadow-pressed-sm flex items-center justify-center mb-4" aria-hidden="true">
         <i data-lucide="{{ $icon }}" class="w-7 h-7 text-rose-500"></i>
     </div>
 
-    <h3 class="text-sm font-semibold text-slate-700"
+    <h3 class="text-sm font-bold text-ink"
         @if($titleEn) x-text="$store.lang.current === 'en' ? @js($titleEn) : @js($title)" @endif
     >{{ $title }}</h3>
 
     @if($messageExpr)
-        <p class="text-sm text-slate-500 mt-1 max-w-sm" x-text="{{ $messageExpr }}"></p>
+        <p class="text-sm text-ink-muted mt-1 max-w-sm" x-text="{{ $messageExpr }}"></p>
     @elseif($message)
-        <p class="text-sm text-slate-500 mt-1 max-w-sm">{{ $message }}</p>
+        <p class="text-sm text-ink-muted mt-1 max-w-sm">{{ $message }}</p>
     @endif
 
     @if($retryable && $retryExpr)
