@@ -140,7 +140,9 @@ class BugsQaFixesTest extends TestCase
         $this->assertStringNotContainsString("route('admin.directory') }}\" class=\"text-xs font-medium text-brand-600 hover:underline\">View All", $dash);
         $this->assertStringContainsString("{{ route('admin.document-requests') }}?open=1", $dash);
         $this->assertStringContainsString("{{ route('admin.assistance-requests') }}?open=1", $dash);
-        $this->assertStringContainsString("?open=1&barangay=' + encodeURIComponent(brgy.name)", $dash, 'each count opens its barangay');
+        // Owner, 2026-10-07: each barangay's Dokyu / Tulong count is plain text, not a link.
+        $this->assertStringContainsString("<span x-show=\"brgy.dokyu && \$store.session.can('dokyu')\" x-text=\"'Dokyu ' + brgy.dokyu\"></span>", $dash);
+        $this->assertStringNotContainsString("?open=1&barangay=' + encodeURIComponent(brgy.name)", $dash);
 
         foreach (['document-requests', 'assistance-requests'] as $page) {
             $view = $this->source("resources/views/admin/{$page}.blade.php");
