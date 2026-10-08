@@ -179,8 +179,27 @@ hint: text-xs text-ink-muted mt-1.5
 ### 3.3 `card.blade.php`, `table.blade.php`, `file-picker.blade.php`, `card-skeleton`
 `bg-white rounded-2xl border border-slate-100 shadow-card` → `surface-glass rounded-[26px]`. Card padding `p-4` → `p-5`. Hover variant: `transition-[transform,box-shadow] duration-[220ms] hover:-translate-y-1 hover:shadow-glass-hover`. `overflow-hidden` stays on tables.
 
-### 3.4 `stat-card.blade.php` (KPI) — follow README §KPI cards
-`surface-glass rounded-[26px] p-[18px] pb-4 flex flex-col gap-3.5 hover:-translate-y-1 hover:shadow-glass-hover`. Row 1: label (`text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted max-w-[112px] text-balance`) left, icon **coin** right `w-11 h-11 rounded-full grid place-items-center` with the colour map rewritten as: `brand→clay-blue`, `green→bg-emerald-100 text-emerald-700 shadow-clay-light`, `purple→bg-purple-100 text-purple-700 shadow-clay-light`, `orange→clay-gold`, `red→bg-rose-100 text-rose-700 shadow-clay-light`, `gold→clay-gold-light`, `slate→clay-navy`. Value `text-4xl font-extrabold tracking-[-.03em] text-ink tabular-nums`. Sublabel → pressed pill `surface-pressed-sm rounded-full px-2.5 py-1 text-xs font-semibold text-ink-body self-start`. Trend chip: keep colours, add `surface-pressed-sm rounded-full px-2 py-0.5`. Remove `group-hover:scale-110 -rotate-3` on the icon.
+### 3.4 `stat-card.blade.php` (KPI) — colour slab + frosted object (colours and object recipes in README §KPI)
+Card: `relative overflow-hidden flex flex-col justify-center gap-[5px] min-h-[118px] rounded-3xl pl-[22px] pr-[130px] py-[18px] border border-white/30 cursor-pointer transition-[transform,box-shadow] duration-[220ms] hover:-translate-y-[3px] slab slab-{tone}`. Add to `@layer components`:
+```css
+.slab { color: var(--slab-text); background: linear-gradient(100deg, var(--slab-1) 0%, var(--slab-1) 45%, var(--slab-2) 100%); box-shadow: 12px 14px 32px var(--slab-shadow), -6px -6px 16px rgb(255 255 255 / .55), inset 0 1px 0 rgb(255 255 255 / .4), inset -4px -6px 14px rgb(0 0 0 / .12); }
+.slab:hover { box-shadow: 16px 20px 40px var(--slab-shadow), -6px -6px 16px rgb(255 255 255 / .6), inset 0 1px 0 rgb(255 255 255 / .45), inset -4px -6px 14px rgb(0 0 0 / .12); }
+.slab::before { content: ''; position: absolute; inset: 0; background: radial-gradient(180px 100px at 10% 0%, rgb(255 255 255 / .28), transparent 70%); pointer-events: none; }
+.slab-brand  { --slab-1:#2F62F5; --slab-2:#7C9FFF; --slab-text:#fff;    --slab-sub:#DCE5FF; --slab-shadow: rgb(29 71 214 / .30); }
+.slab-violet { --slab-1:#5B4FE0; --slab-2:#A39CF4; --slab-text:#fff;    --slab-sub:#E6E3FF; --slab-shadow: rgb(91 79 224 / .30); }
+.slab-gold   { --slab-1:#7F5E00; --slab-2:#E0B400; --slab-text:#fff;    --slab-sub:#FFF0BF; --slab-shadow: rgb(127 94 0 / .35); }
+.slab-teal   { --slab-1:#0A6F8F; --slab-2:#4FBAD6; --slab-text:#fff;    --slab-sub:#DDF4FA; --slab-shadow: rgb(10 111 143 / .30); }
+.slab-navy   { --slab-1:#142B66; --slab-2:#3F63C0; --slab-text:#fff;    --slab-sub:#BFCBEB; --slab-shadow: rgb(20 43 102 / .35); }
+.slab-amber  { --slab-1:#8C4500; --slab-2:#F08A1D; --slab-text:#fff;    --slab-sub:#FFE3C2; --slab-shadow: rgb(140 69 0 / .35); }
+.frost-0 { background: rgb(255 255 255 / .18); box-shadow: inset 1px 1px 0 rgb(255 255 255 / .35); }
+.frost-1 { background: rgb(255 255 255 / .30); box-shadow: inset 1px 1px 0 rgb(255 255 255 / .55), 0 8px 16px rgb(0 0 0 / .10); }
+.frost-2 { background: rgb(255 255 255 / .42); box-shadow: inset 1px 1px 0 rgb(255 255 255 / .70), 0 8px 16px rgb(0 0 0 / .10); }
+.frost-line { background: rgb(255 255 255 / .55); }
+```
+- Text: label `relative text-[12.5px] font-semibold text-[var(--slab-sub)]`; value row `relative flex items-baseline gap-1.5 whitespace-nowrap` → `text-[32px] leading-none font-extrabold tracking-[-.03em] tabular-nums` + context `text-[13px] font-semibold text-[var(--slab-sub)]`; footnote `relative text-xs text-[var(--slab-sub)]`.
+- Object: `<div aria-hidden="true" class="absolute right-2.5 top-1/2 w-[104px] h-[104px] -translate-y-1/2 -rotate-6 pointer-events-none">` containing `frost-*` divs. Make one Blade partial per object — `components/ui/kpi-object/{people,document,tray,ring,stamp,calendar}.blade.php` — copying the div coordinates from `Dashboard v3.dc.html`; `calendar` prints `now()->format('j')` and `now()->format('M')`.
+- Props: replace `icon`/`color` with `tone` (brand|violet|gold|teal|navy|amber) and `object` (people|document|tray|ring|stamp|calendar); keep old prop names accepted and map them (brand→brand/people, green→teal/ring, purple→violet/document, orange→gold/tray, red→amber/calendar, slate→navy/stamp) so existing callers render.
+- Row: `grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]`. Reuse on `citizen/dashboard` and `admin/reports`.
 
 ### 3.5 `badge.blade.php`, `pill.blade.php`
 **Keep `$styles` keys and colour classes untouched** (`tests/Feature/StatusVocabularyTest.php` and the JS mirror depend on them). Change only the shared base string:

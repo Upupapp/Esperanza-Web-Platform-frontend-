@@ -68,12 +68,18 @@ Sidebar 30px · banner 32px · cards 26–28px · inputs/buttons 16px · pills 9
 ### "Live counts…" row
 Text 14.5 `#3A4664`; **Export Report** = blue clay button 44px, radius 16, 13.5/700, download icon; hover darkens gradient to `#1D47D6→#1836A8`; `:active` becomes inset.
 
-### KPI cards (×6)
-Glass card, padding 18px 18px 16px, radius 26, flex column gap 14. Hover: `translateY(-4px)` + deeper shadow `16px 22px 42px rgba(29,71,214,.20)` (`transition .25s`).
-- Row 1: label (11.5/700 uppercase, `#5F6B8A`, max-width 112px, `text-wrap:balance`) left; 44px **clay coin** (circle) right with 19px icon.
-- Value 36/800.
-- Sub-line in a **pressed pill** (`#E1E9F9`, 12/600 `#3A4664`, padding 5px 11px).
-- Coins: Registered residents = blue gradient `#5687FF→#2F62F5` (users icon) · Dokyu open = light tile `#DBE7FF/#1D47D6` (file-text) · Waiting on staff = yellow clay (inbox) · Tulong open = `#1D47D6→#1836A8` (hand-heart) · Released this month = navy `#1F3B7A→#0B1730` (package-check) · Submitted today = `#FFF4B8/#7A5E00` (calendar-clock). Icons are Lucide.
+### KPI cards (×6) — colour slabs with a frosted object
+Grid `repeat(auto-fill, minmax(300px, 1fr))`, gap 20 (three per row on a ~1116px main column). Card: min-height 118, radius 24, padding 18px 130px 18px 22px (right padding reserves the object zone), `border: 1px solid rgba(255,255,255,.28)`, gradient `linear-gradient(100deg, C1 0%, C1 45%, C2 100%)` (the dark colour holds under the text; all text is white), clay shading `inset 0 1px 0 rgba(255,255,255,.4), inset -4px -6px 14px rgba(0,0,0,.12)`, outer shadow `12px 14px 32px <shadow>, -6px -6px 16px rgba(255,255,255,.55)`, sheen overlay `radial-gradient(180px 100px at 10% 0%, rgba(255,255,255,.28), transparent 70%)`. Hover: lift 3px, shadow grows to `16px 20px 40px`.
+- **Text** (left, vertically centred, gap 5): label 12.5/600 in the *sub* colour; value 32/800, letter-spacing -0.03em, tabular numerals, + optional context 13/600 (*sub*); footnote 12 (*sub*).
+- **Palette** — C1 → C2 · text · sub · shadow:
+  1. Registered residents · `#2F62F5 → #7C9FFF` · #fff · #DCE5FF · rgba(29,71,214,.30)
+  2. Dokyu open · `#5B4FE0 → #A39CF4` · #fff · #E6E3FF · rgba(91,79,224,.30)
+  3. Waiting on staff · `#7F5E00 → #E0B400` · #fff · #FFF0BF · rgba(127,94,0,.35)
+  4. Tulong open · `#0A6F8F → #4FBAD6` · #fff · #DDF4FA · rgba(10,111,143,.30)
+  5. Released this month · `#142B66 → #3F63C0` · #fff · #BFCBEB · rgba(20,43,102,.35)
+  6. Submitted today · `#8C4500 → #F08A1D` · #fff · #FFE3C2 · rgba(140,69,0,.35)
+  (Blue-only alternative if multi-hue feels off-brand: brand, navy, gold, sky `#1565D0 → #7CC4FF`, navy, gold.)
+- **Frosted object** — a 104×104 box at `right:10px`, vertically centred, `rotate(-6deg)`, `aria-hidden`, cropped by the card's `overflow:hidden`. Built from plain divs in three glass materials: *faint* `rgba(255,255,255,.18)` + `inset 1px 1px 0 rgba(255,255,255,.35)`; *mid* `rgba(255,255,255,.30)` + `inset 1px 1px 0 rgba(255,255,255,.55), 0 8px 16px rgba(0,0,0,.10)`; *solid* `rgba(255,255,255,.42)` + `inset 1px 1px 0 rgba(255,255,255,.7), 0 8px 16px rgba(0,0,0,.10)`; detail lines `rgba(255,255,255,.55)`. Objects: residents = three head-and-shoulders silhouettes · Dokyu = sheet with folded corner, three lines and a seal ring · waiting = tray with two sheets · Tulong = life ring (conic .48/.16, radial mask) · released = rubber stamp with a ring impression · submitted today = calendar page showing today's day and month (live). Exact coordinates: the KPI block of `Dashboard v3.dc.html`. No icon fonts anywhere in these cards.
 
 ### Donut cards (Dokyu, Tulong)
 - Header: title 18/800 + "View details" link 13.5/700 `#1D47D6`.

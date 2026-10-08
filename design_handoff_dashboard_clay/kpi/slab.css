@@ -1,0 +1,41 @@
+/* KPI colour slabs + frosted objects — paste inside @layer components in resources/css/app.css */
+
+.slab {
+  color: var(--slab-text);
+  background: linear-gradient(100deg, var(--slab-1) 0%, var(--slab-1) 45%, var(--slab-2) 100%);
+  box-shadow: 12px 14px 32px var(--slab-shadow), -6px -6px 16px rgb(255 255 255 / .55),
+              inset 0 1px 0 rgb(255 255 255 / .4), inset -4px -6px 14px rgb(0 0 0 / .12);
+}
+.slab:hover {
+  box-shadow: 16px 20px 40px var(--slab-shadow), -6px -6px 16px rgb(255 255 255 / .6),
+              inset 0 1px 0 rgb(255 255 255 / .45), inset -4px -6px 14px rgb(0 0 0 / .12);
+}
+.slab::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(180px 100px at 10% 0%, rgb(255 255 255 / .28), transparent 70%);
+}
+
+/* tones — all text is white; every sub colour passes 4.5:1 on the left 45% of the gradient */
+.slab-brand  { --slab-1:#2F62F5; --slab-2:#7C9FFF; --slab-text:#fff;    --slab-sub:#DCE5FF; --slab-shadow: rgb(29 71 214 / .30); }
+.slab-sky    { --slab-1:#1565D0; --slab-2:#7CC4FF; --slab-text:#fff;    --slab-sub:#D9ECFF; --slab-shadow: rgb(21 101 208 / .30); }
+.slab-deep   { --slab-1:#1836A8; --slab-2:#5B7FE6; --slab-text:#fff;    --slab-sub:#D6DEFA; --slab-shadow: rgb(24 54 168 / .32); }
+.slab-navy   { --slab-1:#142B66; --slab-2:#3F63C0; --slab-text:#fff;    --slab-sub:#BFCBEB; --slab-shadow: rgb(20 43 102 / .35); }
+.slab-violet { --slab-1:#5B4FE0; --slab-2:#A39CF4; --slab-text:#fff;    --slab-sub:#E6E3FF; --slab-shadow: rgb(91 79 224 / .30); }
+.slab-teal   { --slab-1:#0A6F8F; --slab-2:#4FBAD6; --slab-text:#fff;    --slab-sub:#DDF4FA; --slab-shadow: rgb(10 111 143 / .30); }
+.slab-gold   { --slab-1:#7F5E00; --slab-2:#E0B400; --slab-text:#fff;    --slab-sub:#FFF0BF; --slab-shadow: rgb(127 94 0 / .35); }
+.slab-amber  { --slab-1:#8C4500; --slab-2:#F08A1D; --slab-text:#fff;    --slab-sub:#FFE3C2; --slab-shadow: rgb(140 69 0 / .35); }
+.slab-rose   { --slab-1:#BE123C; --slab-2:#F27A93; --slab-text:#fff;    --slab-sub:#FFDDE5; --slab-shadow: rgb(190 18 60 / .30); }
+
+/* frosted-glass materials for the objects */
+.frost-0    { background: rgb(255 255 255 / .18); box-shadow: inset 1px 1px 0 rgb(255 255 255 / .35); }
+.frost-1    { background: rgb(255 255 255 / .30); box-shadow: inset 1px 1px 0 rgb(255 255 255 / .55), 0 8px 16px rgb(0 0 0 / .10); }
+.frost-2    { background: rgb(255 255 255 / .42); box-shadow: inset 1px 1px 0 rgb(255 255 255 / .70), 0 8px 16px rgb(0 0 0 / .10); }
+.frost-line { background: rgb(255 255 255 / .55); }
+.frost-ring {
+  background: conic-gradient(from 20deg, rgb(255 255 255 / .48) 0 25%, rgb(255 255 255 / .16) 25% 50%, rgb(255 255 255 / .48) 50% 75%, rgb(255 255 255 / .16) 75% 100%);
+  -webkit-mask: radial-gradient(circle, transparent 25px, #000 26px);
+  mask: radial-gradient(circle, transparent 25px, #000 26px);
+  filter: drop-shadow(0 8px 14px rgb(0 0 0 / .14));
+}
+
+@media (prefers-reduced-motion: reduce) { .slab { transition: none; } }
