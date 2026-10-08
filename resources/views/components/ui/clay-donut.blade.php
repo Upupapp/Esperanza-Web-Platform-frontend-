@@ -22,7 +22,7 @@
         <template x-for="(row, i) in rows" :key="row.label">
             <div
                 class="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-200 cursor-default"
-                :class="hover === i ? 'bg-white/80 shadow-[3px_4px_10px_rgb(29_71_214/.12),-2px_-2px_6px_rgb(255_255_255/.9)]' : (hover !== null ? 'opacity-50' : '')"
+                :class="hover === i ? 'bg-white/80 shadow-[0_1px_3px_rgb(11_23_48/.08)]' : (hover !== null ? 'opacity-50' : '')"
                 @mouseenter="hover = i"
             >
                 <span class="w-3 h-3 rounded-[4px] shrink-0 shadow-[inset_1px_1px_2px_rgb(255_255_255/.5),inset_-1px_-1px_2px_rgb(0_0_0/.15)]" :style="'background:' + row.color"></span>

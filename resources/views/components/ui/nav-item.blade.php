@@ -6,7 +6,7 @@
 <a
     href="{{ $href }}"
     class="group relative flex items-center gap-3 min-h-[40px] px-3.5 rounded-2xl font-semibold text-[14.5px] transition-all duration-200
-        {{ $active ? 'clay-blue font-bold shadow-[0_6px_14px_-2px_rgb(47_98_245/.5),inset_2px_2px_4px_rgb(255_255_255/.35),inset_-3px_-4px_8px_rgb(11_23_48/.4)]' : 'text-sidebar-text hover:bg-white/[.07] hover:text-white' }}"
+        {{ $active ? 'clay-blue font-bold shadow-[0_3px_8px_-3px_rgb(47_98_245/.35),inset_0_1px_0_rgb(255_255_255/.2)]' : 'text-sidebar-text hover:bg-white/[.07] hover:text-white' }}"
     :class="collapsed && 'justify-center px-0'"
     :title="collapsed ? (($store.lang.current === 'en' ? @js($labelEn ?? $label) : @js($label))) : ''"
     @if($showIf) x-show="{{ $showIf }}" x-cloak @elseif($moduleKey) x-show="$store.session.can('{{ $moduleKey }}')" x-cloak @endif

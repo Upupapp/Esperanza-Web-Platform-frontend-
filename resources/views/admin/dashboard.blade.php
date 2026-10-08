@@ -223,8 +223,8 @@
                     <div class="flex flex-col items-start gap-3 mb-5">
                         <h3 class="text-lg font-extrabold text-ink leading-tight">Open requests by barangay</h3>
                         <div x-show="$store.session.can('dokyu') && $store.session.can('tulong')" class="inline-flex p-1 rounded-xl surface-pressed-sm shrink-0" role="tablist" aria-label="Module">
-                            <button type="button" role="tab" x-show="$store.session.can('dokyu')" :aria-selected="brgyTab === 'dokyu'" @click="brgyTab = 'dokyu'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'dokyu' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Dokyu</button>
-                            <button type="button" role="tab" x-show="$store.session.can('tulong')" :aria-selected="brgyTab === 'tulong'" @click="brgyTab = 'tulong'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'tulong' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Tulong</button>
+                            <button type="button" role="tab" x-show="$store.session.can('dokyu')" :aria-selected="brgyTab === 'dokyu'" @click="brgyTab = 'dokyu'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'dokyu' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Dokyu</button>
+                            <button type="button" role="tab" x-show="$store.session.can('tulong')" :aria-selected="brgyTab === 'tulong'" @click="brgyTab = 'tulong'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'tulong' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Tulong</button>
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -235,7 +235,7 @@
                                     <span class="text-sm text-ink-muted shrink-0" x-text="brgy.count + (brgy.count === 1 ? ' request' : ' requests')"></span>
                                 </div>
                                 <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
+                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
                                 </div>
                             </div>
                         </template>

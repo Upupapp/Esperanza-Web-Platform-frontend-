@@ -1263,7 +1263,7 @@
                         href="{{ $tabUrls[$t['key']] }}"
                         x-show="permsReady && tabAllowed('{{ $t['key'] }}')" x-cloak
                         @if($activeTab === $t['key']) aria-current="page" @endif
-                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all duration-200 {{ $activeTab === $t['key'] ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink' }}"
+                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all duration-200 {{ $activeTab === $t['key'] ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink' }}"
                     >
                         <i data-lucide="{{ $t['icon'] }}" class="w-4 h-4"></i>
                         {{ $t['label'] }}

@@ -85,7 +85,7 @@
                         <span class="text-sm text-ink-muted shrink-0 tabular-nums" x-text="(c.individuals || 0) + ' / ' + (c.capacity || 0) + ' · ' + pct + '%'"></span>
                     </div>
                     <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard" :class="pct >= 100 ? 'from-rose-400 to-rose-600' : (pct >= 75 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, pct) + '%'"></div>
+                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard" :class="pct >= 100 ? 'from-rose-400 to-rose-600' : (pct >= 75 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, pct) + '%'"></div>
                     </div>
                 </div>
             </template>
@@ -104,7 +104,7 @@
                         <span class="text-sm text-ink-muted shrink-0 tabular-nums" x-text="(v.readiness_score || 0) + ' / 100'"></span>
                     </div>
                     <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard" :class="v.readiness_score < 50 ? 'from-rose-400 to-rose-600' : (v.readiness_score < 70 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, v.readiness_score || 0) + '%'"></div>
+                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard" :class="v.readiness_score < 50 ? 'from-rose-400 to-rose-600' : (v.readiness_score < 70 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, v.readiness_score || 0) + '%'"></div>
                     </div>
                 </div>
             </template>

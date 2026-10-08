@@ -43,10 +43,10 @@
             <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><x-ui.t fil="Bumalik" en="Back" />
         </button>
         <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-5">
-            <button @click="tab = 'privacy'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'privacy' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
+            <button @click="tab = 'privacy'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'privacy' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="shield-check" class="w-3.5 h-3.5"></i><x-ui.t fil="Patakaran sa Privacy" en="Privacy Policy" />
             </button>
-            <button @click="tab = 'terms'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'terms' ? 'bg-white/85 text-brand-600 font-bold shadow-[3px_4px_8px_rgb(29_71_214/.16),-2px_-2px_5px_rgb(255_255_255/.9),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
+            <button @click="tab = 'terms'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'terms' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tuntunin" en="Terms &amp; Conditions" />
             </button>
         </div>

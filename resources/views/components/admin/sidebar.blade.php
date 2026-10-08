@@ -75,7 +75,7 @@
     <div class="pt-1.5 shrink-0">
         <button
             @click="collapsed = !collapsed"
-            class="w-full h-11 hidden lg:flex items-center justify-center gap-2 rounded-2xl bg-white/[.06] border border-white/[.08] text-[13px] font-semibold text-sidebar-text hover:text-white hover:bg-white/[.09] shadow-[4px_5px_12px_rgb(0_0_0/.25),inset_0_1px_0_rgb(255_255_255/.12)] active:shadow-pressed-dark transition-colors"
+            class="w-full h-11 hidden lg:flex items-center justify-center gap-2 rounded-2xl bg-white/[.06] border border-white/[.08] text-[13px] font-semibold text-sidebar-text hover:text-white hover:bg-white/[.09] shadow-[0_2px_6px_rgb(0_0_0/.18),inset_0_1px_0_rgb(255_255_255/.1)] active:shadow-pressed-dark transition-colors"
         >
             <i data-lucide="panel-left-close" class="w-4 h-4 transition-transform duration-[160ms] ease-standard" :class="collapsed && 'rotate-180'"></i>
             <span x-show="!collapsed">Collapse</span>
