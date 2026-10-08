@@ -67,10 +67,10 @@
     >
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card label="Kabuuan" labelEn="Total" valueBind="totalCount" icon="inbox" color="brand" :delay="0" />
-            <x-ui.stat-card label="Hindi Pa Nababasa" labelEn="Unread" valueBind="unreadTotal" icon="bell" color="orange" :delay="40" />
-            <x-ui.stat-card label="Dokyu" labelEn="Dokyu" valueBind="dokyuTotalCount" icon="file-text" color="brand" :delay="80" />
-            <x-ui.stat-card label="Tulong" labelEn="Tulong" valueBind="tulongTotalCount" icon="hand-heart" color="purple" :delay="120" />
+            <x-ui.stat-card layout="compact" label="Kabuuan" labelEn="Total" valueBind="totalCount" icon="inbox" color="brand" :delay="0" />
+            <x-ui.stat-card layout="compact" label="Hindi Pa Nababasa" labelEn="Unread" valueBind="unreadTotal" icon="bell" color="orange" :delay="40" />
+            <x-ui.stat-card layout="compact" label="Dokyu" labelEn="Dokyu" valueBind="dokyuTotalCount" icon="file-text" color="brand" :delay="80" />
+            <x-ui.stat-card layout="compact" label="Tulong" labelEn="Tulong" valueBind="tulongTotalCount" icon="hand-heart" color="purple" :delay="120" />
         </div>
 
         <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">

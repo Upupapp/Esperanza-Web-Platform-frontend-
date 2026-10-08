@@ -217,10 +217,10 @@
         <!-- Analytics -->
         <div x-show="tab === 'analytics'" x-cloak>
             <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
-                <x-ui.stat-card class="h-full" label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="brand" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction?.totals?.note || '')" :delay="0" />
-                <x-ui.stat-card class="h-full" label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="light" sublabel="Dokyu + Tulong" :delay="40" />
-                <x-ui.stat-card class="h-full" label="Avg. Resolution Time" valueBind="avgResolutionDays !== null ? (avgResolutionDays + ' days') : '—'" icon="timer" color="deep" sublabel="Submission to release" :delay="80" />
-                <x-ui.stat-card class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="120" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="brand" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction?.totals?.note || '')" :delay="0" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="light" sublabel="Dokyu + Tulong" :delay="40" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Avg. Resolution Time" valueBind="avgResolutionDays !== null ? (avgResolutionDays + ' days') : '—'" icon="timer" color="deep" sublabel="Submission to release" :delay="80" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="120" />
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start mb-5">
@@ -280,10 +280,10 @@
 
         <h3 class="text-base font-extrabold text-ink mb-3 mt-6">Internal Forms &amp; Incident Reports</h3>
         <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
-            <x-ui.stat-card class="h-full" label="Internal Forms Submitted" valueBind="internalForms?.totals?.submissions ?? 0" icon="clipboard-list" color="light" :delay="0" />
-            <x-ui.stat-card class="h-full" label="Offices Covered" valueBind="officesCovered" icon="building-2" color="slate" :delay="40" />
-            <x-ui.stat-card class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="80" />
-            <x-ui.stat-card class="h-full" label="Critical / High Severity" valueBind="criticalHighCount" icon="siren" color="red" :delay="120" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Internal Forms Submitted" valueBind="internalForms?.totals?.submissions ?? 0" icon="clipboard-list" color="light" :delay="0" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Offices Covered" valueBind="officesCovered" icon="building-2" color="slate" :delay="40" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="80" />
+            <x-ui.stat-card layout="compact" class="h-full" label="Critical / High Severity" valueBind="criticalHighCount" icon="siren" color="red" :delay="120" />
         </div>
 
         <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start mb-5">

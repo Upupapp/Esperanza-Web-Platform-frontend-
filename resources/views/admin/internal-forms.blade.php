@@ -188,10 +188,10 @@
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Submissions" valueBind="submissions.length" icon="clipboard-list" color="brand" :delay="0" />
-            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" valueBind="needingAction" icon="inbox" color="orange" :delay="40" />
-            <x-ui.stat-card label="Offices Covered" valueBind="Object.keys(offices).length" icon="building-2" color="purple" :delay="80" />
-            <x-ui.stat-card label="Forms Available" valueBind="totalForms" icon="file-stack" color="green" :delay="120" />
+            <x-ui.stat-card layout="compact" @click="tab = 'all'" class="cursor-pointer" label="Total Submissions" valueBind="submissions.length" icon="clipboard-list" color="brand" :delay="0" />
+            <x-ui.stat-card layout="compact" @click="tab = 'action'" class="cursor-pointer" label="Needs Action" valueBind="needingAction" icon="inbox" color="orange" :delay="40" />
+            <x-ui.stat-card layout="compact" label="Offices Covered" valueBind="Object.keys(offices).length" icon="building-2" color="purple" :delay="80" />
+            <x-ui.stat-card layout="compact" label="Forms Available" valueBind="totalForms" icon="file-stack" color="green" :delay="120" />
         </div>
 
         <!-- Office tabs + search -->

@@ -1,4 +1,4 @@
-{{-- Today's date in the browser: now() is the day the static site was built. --}}
+{{-- Today's date in the browser: the server's date is the day the static site was built. --}}
 <div class="absolute left-[14px] top-[12px] w-[78px] h-[84px] rounded-[14px] frost-1">
     <div class="absolute left-0 top-0 w-[78px] h-[24px] rounded-[14px_14px_0_0] frost-2"></div>
     <div class="absolute left-[16px] -top-[6px] w-[9px] h-[18px] rounded-[5px] bg-white/80"></div>

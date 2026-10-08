@@ -9,28 +9,28 @@
 
     {{-- ── SUMMARY STAT CARDS ─────────────────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="Open Issues"
             valueBind="qualityIssues.filter(i => i.status === 'Open').length"
             icon="circle-alert"
             color="orange"
             :delay="0"
         />
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="Critical / High"
             valueBind="qualityIssues.filter(i => ['Critical','High'].includes(i.severity)).length"
             icon="flame"
             color="red"
             :delay="75"
         />
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="In Review"
             valueBind="qualityIssues.filter(i => i.status === 'In Review').length"
             icon="search"
             color="brand"
             :delay="150"
         />
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="Resolved"
             valueBind="qualityIssues.filter(i => i.status === 'Resolved').length"
             icon="circle-check"

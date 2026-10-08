@@ -29,27 +29,27 @@
 
     {{-- ── SUMMARY STAT CARDS — Individual ─────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4" x-show="cvType === 'Individual'">
-        <x-ui.stat-card @click="cvStatusFilter = 'Pending Review'" class="cursor-pointer" label="Pending Review" valueBind="cvCounts.pending" icon="clock" color="orange" :delay="0" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Under Verification'" class="cursor-pointer" label="Under Verification" valueBind="cvCounts.underVerification" icon="search" color="brand" :delay="75" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Approved'" class="cursor-pointer" label="Approved" valueBind="cvCounts.verified" icon="badge-check" color="green" :delay="150" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvCounts.rejected" icon="circle-x" color="red" :delay="225" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Not Registered'" class="cursor-pointer" label="Not Registered" sublabel="No Citizen Portal account on file" valueBind="cvCounts.notRegistered" icon="user-round-x" color="slate" :delay="300" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Pending Review'" class="cursor-pointer" label="Pending Review" valueBind="cvCounts.pending" icon="clock" color="orange" :delay="0" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Under Verification'" class="cursor-pointer" label="Under Verification" valueBind="cvCounts.underVerification" icon="search" color="brand" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Approved'" class="cursor-pointer" label="Approved" valueBind="cvCounts.verified" icon="badge-check" color="green" :delay="150" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvCounts.rejected" icon="circle-x" color="red" :delay="225" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Not Registered'" class="cursor-pointer" label="Not Registered" sublabel="No Citizen Portal account on file" valueBind="cvCounts.notRegistered" icon="user-round-x" color="slate" :delay="300" />
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Family ─────────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Family'" x-cloak>
-        <x-ui.stat-card @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvFamilyCounts.unverified" icon="shield-x" color="red" :delay="0" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvFamilyCounts.verified" icon="shield-check" color="green" :delay="150" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvFamilyCounts.rejected" icon="circle-x" color="red" :delay="225" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvFamilyCounts.unverified" icon="shield-x" color="red" :delay="0" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvFamilyCounts.verified" icon="shield-check" color="green" :delay="150" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvFamilyCounts.rejected" icon="circle-x" color="red" :delay="225" />
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Household ──────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Household'" x-cloak>
-        <x-ui.stat-card @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvHouseholdCounts.unverified" icon="shield-x" color="red" :delay="0" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvHouseholdCounts.verified" icon="shield-check" color="green" :delay="150" />
-        <x-ui.stat-card @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvHouseholdCounts.rejected" icon="circle-x" color="red" :delay="225" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvHouseholdCounts.unverified" icon="shield-x" color="red" :delay="0" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvHouseholdCounts.verified" icon="shield-check" color="green" :delay="150" />
+        <x-ui.stat-card layout="compact" @click="cvStatusFilter = 'Rejected'" class="cursor-pointer" label="Rejected" valueBind="cvHouseholdCounts.rejected" icon="circle-x" color="red" :delay="225" />
     </div>
 
     {{-- ── FILTER BAR ──────────────────────────────────────────────────────── --}}

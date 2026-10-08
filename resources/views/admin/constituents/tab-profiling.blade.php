@@ -8,28 +8,28 @@
 
     {{-- ── SUMMARY STAT CARDS ─────────────────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="Barangays Complete"
             valueBind="barangayCoverage.filter(b => b.status === 'Complete').length + '/' + barangayCoverage.length"
             icon="map-pin"
             color="brand"
             :delay="0"
         />
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="Households Recorded"
             valueBind="(coverageMunicipal?.households ?? barangayCoverage.reduce((s,b) => s + b.hh, 0)).toLocaleString()"
             icon="house"
             color="green"
             :delay="75"
         />
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="Avg. Completion Rate"
             valueBind="(coverageMunicipal?.coveragePct ?? Math.round(barangayCoverage.reduce((s,b) => s + b.pct, 0) / (barangayCoverage.length || 1))) + '%'"
             icon="clipboard-check"
             color="purple"
             :delay="150"
         />
-        <x-ui.stat-card
+        <x-ui.stat-card layout="compact"
             label="Barangays Below 60%"
             valueBind="barangayCoverage.filter(b => b.pct < 60).length"
             icon="triangle-alert"

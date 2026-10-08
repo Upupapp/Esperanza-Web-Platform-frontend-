@@ -833,15 +833,15 @@
              own pattern — these used to be hardcoded literals ("417",
              "34", "112") that never actually reflected the mock data. --}}
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Active Cases" value="{{ collect($requests)->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled', 'Archived'])->count() }}" valueBind="requests.filter(r => !terminalStatuses.includes(r.status)).length" icon="hand-heart" color="purple" :delay="0" />
-            <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or assessment" :delay="40" />
-            <x-ui.stat-card @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card layout="compact" @click="tab = 'all'" class="cursor-pointer" label="Active Cases" value="{{ collect($requests)->whereNotIn('status', ['Completed', 'Rejected', 'Cancelled', 'Archived'])->count() }}" valueBind="requests.filter(r => !terminalStatuses.includes(r.status)).length" icon="hand-heart" color="purple" :delay="0" />
+            <x-ui.stat-card layout="compact" @click="tab = 'action'" class="cursor-pointer" label="Needs Action" value="{{ collect($requests)->whereIn('status', $actionStatuses)->count() }}" valueBind="requests.filter(r => actionStatuses.includes(r.status)).length" icon="inbox" color="orange" sublabel="Review or assessment" :delay="40" />
+            <x-ui.stat-card layout="compact" @click="tab = 'release'" class="cursor-pointer" label="Ready for Release" value="0" valueBind="requests.filter(r => r.status === 'Ready for Release').length" icon="package-check" color="green" :delay="80" />
             {{-- These two were hard-coded peso figures ("₱1.8M of ₱2.5M") shown as
                  if they were the municipality's budget. No budget or
                  disbursement amount is recorded anywhere, so they count what is
                  real instead. --}}
-            <x-ui.stat-card @click="tab = 'done'" class="cursor-pointer" label="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="hand-coins" color="gold" sublabel="Assistance received" :delay="120" />
-            <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="All Cases" value="0" valueBind="requests.length" icon="wallet" color="brand" sublabel="Every status" :delay="160" />
+            <x-ui.stat-card layout="compact" @click="tab = 'done'" class="cursor-pointer" label="Completed" value="0" valueBind="requests.filter(r => r.status === 'Completed').length" icon="hand-coins" color="gold" sublabel="Assistance received" :delay="120" />
+            <x-ui.stat-card layout="compact" @click="tab = 'all'" class="cursor-pointer" label="All Cases" value="0" valueBind="requests.length" icon="wallet" color="brand" sublabel="Every status" :delay="160" />
         </div>
 
         <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">

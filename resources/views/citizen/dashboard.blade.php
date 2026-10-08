@@ -280,7 +280,7 @@
             <!-- KPI row -->
             <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
 
-                <x-ui.stat-card
+                <x-ui.stat-card layout="compact"
                     class="h-full"
                     :href="route('citizen.document-requests')"
                     label="Dokyu"
@@ -291,7 +291,7 @@
                     :delay="0"
                 />
 
-                <x-ui.stat-card
+                <x-ui.stat-card layout="compact"
                     class="h-full"
                     :href="route('citizen.assistance-requests')"
                     label="Tulong"
@@ -302,7 +302,7 @@
                     :delay="40"
                 />
 
-                <x-ui.stat-card
+                <x-ui.stat-card layout="compact"
                     class="h-full"
                     :href="route('citizen.notifications')"
                     label="Hindi Nabasang Abiso"
@@ -313,7 +313,7 @@
                     :delay="80"
                 />
 
-                <x-ui.stat-card
+                <x-ui.stat-card layout="compact"
                     class="h-full"
                     :href="route('citizen.profile')"
                     label="Pagkakumpleto ng Profile"

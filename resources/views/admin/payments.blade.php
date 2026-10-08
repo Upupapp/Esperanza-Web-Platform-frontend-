@@ -93,11 +93,11 @@
         <div x-show="$store.session.can('payments')" x-cloak>
 
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card label="Total Invoiced" valueBind="'₱' + totalInvoiced.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="receipt" color="brand" sublabel="Not counting closed requests" :delay="0" />
-            <x-ui.stat-card label="Total Collected" valueBind="'₱' + totalCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="banknote" color="green" :delay="40" />
-            <x-ui.stat-card label="Paid" valueBind="payments.filter(p => p.status === 'Approved').length" icon="circle-check" color="green" :delay="80" />
-            <x-ui.stat-card label="Pending Review" valueBind="payments.filter(p => p.status === 'Pending Review').length" icon="clock" color="orange" sublabel="Awaiting receipt" :delay="120" />
-            <x-ui.stat-card label="Rejected" valueBind="payments.filter(p => p.status === 'Rejected').length" icon="circle-x" color="red" :delay="160" />
+            <x-ui.stat-card layout="compact" label="Total Invoiced" valueBind="'₱' + totalInvoiced.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="receipt" color="brand" sublabel="Not counting closed requests" :delay="0" />
+            <x-ui.stat-card layout="compact" label="Total Collected" valueBind="'₱' + totalCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="banknote" color="green" :delay="40" />
+            <x-ui.stat-card layout="compact" label="Paid" valueBind="payments.filter(p => p.status === 'Approved').length" icon="circle-check" color="green" :delay="80" />
+            <x-ui.stat-card layout="compact" label="Pending Review" valueBind="payments.filter(p => p.status === 'Pending Review').length" icon="clock" color="orange" sublabel="Awaiting receipt" :delay="120" />
+            <x-ui.stat-card layout="compact" label="Rejected" valueBind="payments.filter(p => p.status === 'Rejected').length" icon="circle-x" color="red" :delay="160" />
         </div>
 
         <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">

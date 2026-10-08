@@ -422,6 +422,10 @@
       background: radial-gradient(180px 100px at 10% 0%, rgb(255 255 255 / .28), transparent 70%);
     }
 
+    /* compact variant (6-up grids): diagonal gradient so the faded object sits in the light corner */
+    .slab-diag { background: linear-gradient(135deg, var(--slab-1) 0%, var(--slab-1) 50%, var(--slab-2) 100%); }
+    .slab-diag::before { background: radial-gradient(140px 80px at 10% 0%, rgb(255 255 255 / .26), transparent 70%); }
+
     /* tones — all text is white; every sub colour passes 4.5:1 on the left 45% of the gradient */
     .slab-brand  { --slab-1:#2F62F5; --slab-2:#7C9FFF; --slab-text:#fff;    --slab-sub:#DCE5FF; --slab-shadow: rgb(29 71 214 / .30); }
     .slab-sky    { --slab-1:#1565D0; --slab-2:#7CC4FF; --slab-text:#fff;    --slab-sub:#D9ECFF; --slab-shadow: rgb(21 101 208 / .30); }

@@ -28,10 +28,9 @@
     {{-- KPI skeleton --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
         @for ($i = 0; $i < 6; $i++)
-            <div class="surface-glass rounded-[26px] p-4 space-y-3 animate-pulse">
-                <div class="w-10 h-10 bg-slate-100 rounded-xl"></div>
-                <div class="h-6 bg-slate-100 rounded-lg w-14"></div>
+            <div class="surface-glass rounded-[22px] min-h-[136px] p-4 space-y-3 animate-pulse">
                 <div class="h-3 bg-slate-100 rounded w-20"></div>
+                <div class="h-7 bg-slate-100 rounded-lg w-12"></div>
                 <div class="h-3 bg-slate-100 rounded w-16"></div>
             </div>
         @endfor
@@ -93,58 +92,12 @@
 
     {{-- ── B1. KPI Cards ──────────────────────────────────────────────────── --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-
-        <div class="group surface-glass rounded-[26px] hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('incidents')">
-            <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
-                <i data-lucide="flame" class="w-5 h-5 text-rose-600"></i>
-            </div>
-            <p class="mt-3 text-2xl font-bold text-ink-body tabular-nums tracking-tight" x-text="commandBoard.counts.incidents_open"></p>
-            <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mt-0.5">Open Incidents</p>
-            <p class="text-xs text-rose-600 mt-0.5 font-medium" x-text="commandBoard.counts.incidents_total + ' total'"></p>
-        </div>
-
-        <div class="group surface-glass rounded-[26px] hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('evacuation-centers')">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
-                <i data-lucide="building-2" class="w-5 h-5 text-emerald-600"></i>
-            </div>
-            <p class="mt-3 text-2xl font-bold text-ink-body tabular-nums tracking-tight" x-text="commandBoard.counts.centers_open"></p>
-            <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mt-0.5">Evac. Centers Open</p>
-            <p class="text-xs text-amber-600 mt-0.5 font-medium" x-text="commandBoard.centers.filter(c => c.pct >= 75).length + ' near/over capacity'"></p>
-        </div>
-
-        <div class="group surface-glass rounded-[26px] hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('evacuees')">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
-                <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
-            </div>
-            <p class="mt-3 text-2xl font-bold text-ink-body tabular-nums tracking-tight" x-text="commandBoard.counts.families_sheltered"></p>
-            <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mt-0.5">Families Sheltered</p>
-            <p class="text-xs text-blue-600 mt-0.5 font-medium" x-text="commandBoard.counts.individuals_sheltered + ' individuals'"></p>
-        </div>
-
-        <div class="group surface-glass rounded-[26px] hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('relief')">
-            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
-                <i data-lucide="package" class="w-5 h-5 text-amber-600"></i>
-            </div>
-            <p class="mt-3 text-2xl font-bold text-ink-body tabular-nums tracking-tight" x-text="commandBoard.counts.relief_released"></p>
-            <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mt-0.5">Relief Released</p>
-        </div>
-
-        <div class="group surface-glass rounded-[26px] hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('damage-assessment')">
-            <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
-                <i data-lucide="clipboard-list" class="w-5 h-5 text-purple-600"></i>
-            </div>
-            <p class="mt-3 text-2xl font-bold text-ink-body tabular-nums tracking-tight" x-text="commandBoard.counts.damage_reports"></p>
-            <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mt-0.5">Damage Reports</p>
-        </div>
-
-        <div class="group surface-glass rounded-[26px] hover:shadow-card-hover transition-all duration-[220ms] ease-standard p-4 cursor-pointer" @click="setTab('alerts')">
-            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center transition-transform duration-[220ms] ease-standard group-hover:scale-110 group-hover:-rotate-3">
-                <i data-lucide="bell-ring" class="w-5 h-5 text-orange-600"></i>
-            </div>
-            <p class="mt-3 text-2xl font-bold text-ink-body tabular-nums tracking-tight" x-text="commandBoard.counts.alerts_live"></p>
-            <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mt-0.5">Active Public Alerts</p>
-        </div>
-
+        <x-ui.stat-card layout="compact" tone="rose"   object="flame"    label="Open Incidents"       valueBind="commandBoard.counts.incidents_open"     sublabelBind="commandBoard.counts.incidents_total + ' total'" @click="setTab('incidents')" :delay="0" />
+        <x-ui.stat-card layout="compact" tone="teal"   object="building" label="Evac. Centers Open"   valueBind="commandBoard.counts.centers_open"       sublabelBind="commandBoard.centers.filter(c => c.pct >= 75).length + ' near/over capacity'" @click="setTab('evacuation-centers')" :delay="40" />
+        <x-ui.stat-card layout="compact" tone="brand"  object="people"   label="Families Sheltered"   valueBind="commandBoard.counts.families_sheltered" sublabelBind="commandBoard.counts.individuals_sheltered + ' individuals'" @click="setTab('evacuees')" :delay="80" />
+        <x-ui.stat-card layout="compact" tone="gold"   object="box"      label="Relief Released"      valueBind="commandBoard.counts.relief_released"    @click="setTab('relief')" :delay="120" />
+        <x-ui.stat-card layout="compact" tone="violet" object="document" label="Damage Reports"       valueBind="commandBoard.counts.damage_reports"     @click="setTab('damage-assessment')" :delay="160" />
+        <x-ui.stat-card layout="compact" tone="amber"  object="bell"     label="Active Public Alerts" valueBind="commandBoard.counts.alerts_live"        @click="setTab('alerts')" :delay="200" />
     </div>{{-- /KPI Cards --}}
 
 

@@ -450,11 +450,11 @@
         <x-citizen.approval-notice service="Dokyu" />
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
-            <x-ui.stat-card label="Isinasagawa" labelEn="In Progress" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="orange" :delay="40" />
-            <x-ui.stat-card label="Handa nang Kunin" labelEn="Mark to Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
-            <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed', 'Archived'].includes(r.status)).length" icon="circle-check" color="deep" :delay="120" />
-            <x-ui.stat-card label="Hindi Natuloy" labelEn="Not Completed" value="0" valueBind="requests.filter(r => stoppedStatuses.includes(r.status)).length" icon="circle-x" color="red" :delay="160" sublabel="Tinanggihan o kinansela" sublabelEn="Rejected or cancelled" />
+            <x-ui.stat-card layout="compact" class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
+            <x-ui.stat-card layout="compact" label="Isinasagawa" labelEn="In Progress" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="orange" :delay="40" />
+            <x-ui.stat-card layout="compact" label="Handa nang Kunin" labelEn="Mark to Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
+            <x-ui.stat-card layout="compact" label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed', 'Archived'].includes(r.status)).length" icon="circle-check" color="deep" :delay="120" />
+            <x-ui.stat-card layout="compact" label="Hindi Natuloy" labelEn="Not Completed" value="0" valueBind="requests.filter(r => stoppedStatuses.includes(r.status)).length" icon="circle-x" color="red" :delay="160" sublabel="Tinanggihan o kinansela" sublabelEn="Rejected or cancelled" />
         </div>
 
         <div class="flex items-center gap-3 mb-3">
