@@ -1,5 +1,34 @@
 @props(['title' => 'Dashboard', 'subtitle' => null])
 
+@php
+    // The top bar's search (x-ui.global-search): the pages this account holds
+    // (by module), and where its results open; the rest loads on first focus.
+    $searchConfig = [
+        'portal' => 'admin',
+        'pages' => [
+            ['en' => 'Dashboard', 'icon' => 'layout-dashboard', 'href' => route('admin.dashboard')],
+            ['en' => 'Constituents', 'icon' => 'users', 'href' => route('admin.constituents'), 'module' => 'constituents'],
+            ['en' => 'Papeles', 'icon' => 'folder-open', 'href' => route('admin.papeles'), 'module' => 'papeles'],
+            ['en' => 'Dokyu — Document Requests', 'icon' => 'file-text', 'href' => route('admin.document-requests'), 'module' => 'dokyu'],
+            ['en' => 'Tulong — Assistance Requests', 'icon' => 'hand-heart', 'href' => route('admin.assistance-requests'), 'module' => 'tulong'],
+            ['en' => 'Sakuna — Disaster Management', 'icon' => 'shield-alert', 'href' => route('admin.sakuna'), 'module' => 'sakuna'],
+            ['en' => 'Payments', 'icon' => 'receipt', 'href' => route('admin.payments'), 'module' => 'payments'],
+            ['en' => 'Balita — News, Events, Directory', 'icon' => 'megaphone', 'href' => route('admin.communications'), 'module' => 'communications'],
+            ['en' => 'Reports & Analytics', 'icon' => 'file-chart-column', 'href' => route('admin.reports'), 'module' => 'reports'],
+            ['en' => 'User Management', 'icon' => 'user-cog', 'href' => route('admin.users'), 'module' => 'user_management'],
+            ['en' => 'Internal Forms', 'icon' => 'clipboard-list', 'href' => route('admin.internal-forms')],
+            ['en' => 'Settings', 'icon' => 'settings', 'href' => route('admin.settings')],
+            ['en' => 'Audit Logs', 'icon' => 'scroll-text', 'href' => route('admin.audit-logs')],
+        ],
+        'routes' => [
+            'dokyu' => route('admin.document-requests'),
+            'tulong' => route('admin.assistance-requests'),
+            'constituents' => route('admin.constituents'),
+        ],
+        'barangays' => config('esperanza.barangays'),
+    ];
+@endphp
+
 {{-- Clay design (STYLE_GUIDE §2): no full-width bar. The title sits on the
      canvas; the clock and search are pressed wells, the bell and the user chip
      glass, the menus glass panels. --}}
@@ -26,14 +55,7 @@
             <span x-text="time"></span>
         </div>
 
-        <label class="hidden md:flex items-center gap-2.5 h-11 w-56 lg:w-64 2xl:w-[360px] px-4 rounded-2xl surface-pressed transition-all duration-[160ms] ease-standard focus-within:bg-white/90 focus-within:shadow-[var(--shadow-pressed-sm),0_0_0_4px_var(--color-brand-100)]">
-            <i data-lucide="search" class="w-[18px] h-[18px] text-ink-muted shrink-0 pointer-events-none"></i>
-            <input aria-label="Search residents, requests, barangays"
-                type="text"
-                placeholder="Search residents, requests, barangays..."
-                class="w-full min-w-0 bg-transparent border-0 p-0 text-sm text-ink placeholder:text-ink-faint focus:ring-0 focus:outline-none"
-            >
-        </label>
+<x-ui.global-search :config="$searchConfig" placeholder-en="Search residents, requests, barangays..." />
 
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" aria-label="Notifications" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">

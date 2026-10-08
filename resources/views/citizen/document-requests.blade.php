@@ -921,7 +921,7 @@
                             return { ref: created.ref, failed };
                         },
                     }"
-                    x-init="catalogTab = myBarangayInfo ? 'barangay' : 'municipal'; seedApplicant(); loadCatalog(); $watch('$store.citizenSession.account', () => seedApplicant())"
+                    x-init="catalogTab = myBarangayInfo ? 'barangay' : 'municipal'; seedApplicant(); loadCatalog(); $nextTick(() => { const want = new URLSearchParams(window.location.search).get('new'); if (!want) return; const i = docs.findIndex(d => d.key === want && (!d.barangay || d.barangay === myBarangayInfo?.label)); if (i >= 0) { catalogTab = docs[i].barangay ? 'barangay' : 'municipal'; search = docs[i].name; selectDoc(i); } open = true; }); $watch('$store.citizenSession.account', () => seedApplicant())"
                     x-effect="!open && reset()"
                     class="contents"
                 >

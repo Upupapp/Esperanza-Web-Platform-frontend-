@@ -656,6 +656,9 @@ document.addEventListener('alpine:init', () => {
                 capabilities: p.capabilities,
                 profileCompleteness: p.profile_completeness,
                 identityLocked: p.identity_locked,
+                // The LGU-approved photo: a short-lived signed link, renewed by
+                // refresh() on every page (the top bar showed initials only).
+                photoUrl: p.photo?.url || null,
             };
             writeJson('esperanza_citizen_session', this.account);
         },
@@ -689,6 +692,15 @@ document.addEventListener('alpine:init', () => {
         initials() {
             if (!this.account) return 'CI';
             return ((this.account.firstName?.[0] || '') + (this.account.lastName?.[0] || '')).toUpperCase();
+        },
+
+        // <x-citizen.avatar>: the photo, or null for the initials. A link that
+        // has run out falls back to the initials until refresh() renews it.
+        photo() {
+            return this.account?.photoUrl || null;
+        },
+        photoFailed() {
+            if (this.account?.photoUrl) this.account = { ...this.account, photoUrl: null };
         },
     });
 
@@ -1094,6 +1106,146 @@ document.addEventListener('alpine:init', () => {
     // <x-ui.clay-donut rows="..."> -- rounded arcs with even ~10px gaps, a 16°
     // minimum slice (the legend keeps the exact share), the hovered slice pops
     // out 7px and the rest dim; the centre and the legend follow the hover.
+    // <x-ui.global-search>: the top bar's search, both portals (owner,
+    // 2026-10-08: "make the search bars work"). The staff box did nothing and
+    // the resident one matched page names only. On first focus it loads what
+    // the account may open, then filters as you type: every word must appear,
+    // the best matches first, a few per group. Arrows and Enter pick one.
+    //   resident: pages, their own requests, the documents and programmes they
+    //             can apply for (the wizard opens on it), Balita, events
+    //   staff:    pages they hold, Dokyu and Tulong requests (opened), residents
+    //             (their record opens), barangays (the registry, filtered)
+    Alpine.data('globalSearch', (cfg) => ({
+        q: '',
+        open: false,
+        loading: false,
+        loaded: false,
+        active: 0,
+        items: [],
+        t(en, fil) {
+            if (cfg.portal === 'admin') return en;
+            return Alpine.store('lang')?.current === 'en' ? en : (fil || en);
+        },
+        focus() {
+            this.open = true;
+            this.load();
+        },
+        async load() {
+            if (this.loaded || this.loading) return;
+            this.loading = true;
+            const rows = (promise) => promise.then((r) => r?.data || []).catch(() => []);
+            const R = cfg.routes || {};
+            const out = [];
+            try {
+                if (cfg.portal === 'citizen') {
+                    const [requests, dokyu, tulong, posts, events] = await Promise.all([
+                        rows(api.getAll('/citizen/requests', { params: { sort: '-submitted_at' } })),
+                        rows(api.get('/services', { params: { type: 'dokyu' } })),
+                        rows(api.get('/services', { params: { type: 'tulong' } })),
+                        rows(api.get('/announcements', { params: { per_page: 50 } })),
+                        rows(api.get('/events', { params: { per_page: 50 } })),
+                    ]);
+                    requests.forEach((r) => out.push({
+                        group: 'requests', icon: r.type === 'tulong' ? 'hand-heart' : 'file-text',
+                        title: r.ref + ' · ' + (r.service || ''), sub: r.status || '',
+                        href: (r.type === 'tulong' ? R.tulong : R.dokyu) + '?ref=' + encodeURIComponent(r.ref),
+                    }));
+                    dokyu.forEach((sv) => out.push({
+                        group: 'dokyu', icon: sv.level === 'Barangay' ? 'map-pinned' : 'landmark',
+                        title: sv.name, sub: [sv.category, sv.fee?.display].filter(Boolean).join(' · '),
+                        href: R.dokyu + '?new=' + encodeURIComponent(sv.key),
+                    }));
+                    tulong.forEach((sv) => out.push({
+                        group: 'tulong', icon: 'hand-heart', title: sv.name, sub: sv.category || '',
+                        href: R.tulong + '?new=' + encodeURIComponent(sv.key),
+                    }));
+                    posts.forEach((p) => out.push({ group: 'balita', icon: 'megaphone', title: p.title || '', sub: p.category || '', href: R.balita + '?post=' + p.id }));
+                    events.forEach((e) => out.push({ group: 'events', icon: 'calendar', title: e.title || '', sub: [e.date, e.venue].filter(Boolean).join(' · '), href: R.events }));
+                } else {
+                    const session = Alpine.store('session');
+                    await session.whenReady?.();
+                    const can = (m) => session.can(m);
+                    const [dokyu, tulong, residents] = await Promise.all([
+                        can('dokyu') ? rows(api.getAll('/admin/dokyu/requests')) : [],
+                        can('tulong') ? rows(api.getAll('/admin/tulong/requests')) : [],
+                        can('constituents') ? rows(api.getAll('/admin/residents')) : [],
+                    ]);
+                    const request = (type, base) => (r) => out.push({
+                        group: type, icon: type === 'tulong' ? 'hand-heart' : 'file-text', photo: r.applicant_photo || null,
+                        title: r.ref + ' · ' + (r.applicant || ''),
+                        sub: [r.service, r.status, r.barangay ? 'Brgy. ' + r.barangay : null].filter(Boolean).join(' · '),
+                        href: base + '?ref=' + encodeURIComponent(r.ref),
+                    });
+                    dokyu.forEach(request('dokyu', R.dokyu));
+                    tulong.forEach(request('tulong', R.tulong));
+                    residents.forEach((r) => out.push({
+                        group: 'residents', icon: 'user-round', title: r.name || r.ref,
+                        sub: [r.ref, r.barangay ? 'Brgy. ' + r.barangay : null].filter(Boolean).join(' · '),
+                        href: R.constituents + '?ref=' + encodeURIComponent(r.ref),
+                    }));
+                    if (can('constituents')) {
+                        (cfg.barangays || []).forEach((b) => out.push({ group: 'barangays', icon: 'map-pin', title: 'Brgy. ' + b, sub: '', href: R.constituents + '?barangay=' + encodeURIComponent(b) }));
+                    }
+                }
+            } finally {
+                this.items = out;
+                this.loaded = true;
+                this.loading = false;
+            }
+        },
+        get pages() {
+            const session = cfg.portal === 'admin' ? Alpine.store('session') : null;
+            return (cfg.pages || [])
+                .filter((pg) => !pg.module || !session || session.can(pg.module))
+                .map((pg) => ({ group: 'pages', icon: pg.icon, title: this.t(pg.en, pg.fil), alt: pg.fil || '', sub: '', href: pg.href }));
+        },
+        get results() {
+            const words = this.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+            if (!words.length) return [];
+            const phrase = words.join(' ');
+            const order = ['pages', 'requests', 'dokyu', 'tulong', 'residents', 'barangays', 'balita', 'events'];
+            const groups = {};
+            [...this.pages, ...this.items].forEach((it) => {
+                const hay = (it.title + ' ' + (it.alt || '') + ' ' + it.sub).toLowerCase();
+                if (!words.every((w) => hay.includes(w))) return;
+                const title = it.title.toLowerCase();
+                const rank = (title.startsWith(phrase) ? 4 : 0) + (title.includes(phrase) ? 2 : 0) + (title.split(/[\s·(-]+/).some((w) => w.startsWith(words[0])) ? 1 : 0);
+                (groups[it.group] ||= []).push({ ...it, rank });
+            });
+            // The group holding the best match comes first: a name puts Residents
+            // on top, a barangay's name its barangay, a reference its request.
+            const best = (g) => Math.max(...groups[g].map((it) => it.rank));
+            return order.filter((g) => groups[g])
+                .sort((x, y) => best(y) - best(x) || order.indexOf(x) - order.indexOf(y))
+                .flatMap((g) => groups[g].sort((a, b) => b.rank - a.rank).slice(0, g === 'pages' ? 4 : 6));
+        },
+        groupLabel(g) {
+            const staff = cfg.portal === 'admin';
+            const labels = {
+                pages: ['Pages', 'Mga Pahina'],
+                requests: ['My requests', 'Aking mga kahilingan'],
+                dokyu: staff ? ['Dokyu requests'] : ['Request a document', 'Humiling ng dokumento'],
+                tulong: staff ? ['Tulong requests'] : ['Apply for assistance', 'Mag-apply ng tulong'],
+                residents: ['Residents'],
+                barangays: ['Barangays'],
+                balita: ['Balita', 'Balita'],
+                events: ['Events', 'Mga Kaganapan'],
+            };
+            const [en, fil] = labels[g] || [g];
+            return this.t(en, fil);
+        },
+        move(step) {
+            const n = this.results.length;
+            if (!n) return;
+            this.open = true;
+            this.active = (this.active + step + n) % n;
+        },
+        go() {
+            const it = this.results[this.active];
+            if (it) window.location.href = it.href;
+        },
+    }));
+
     Alpine.data('clayDonut', (opts = {}) => {
         // `last`: x-effect can run before the <g x-ref> is registered; init()
         // draws it again once the refs exist.

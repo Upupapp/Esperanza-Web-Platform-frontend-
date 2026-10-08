@@ -104,7 +104,6 @@
             requestsLoading: true,
             requestsFailed: false,
             detailLoading: false,
-            citizenAvatars: {},
             actionStatuses: @js($actionStatuses),
             allTulongStatuses: @js($allTulongStatuses),
             formSpecsByType: @js($formSpecsByType),
@@ -286,6 +285,10 @@
                 return {
                     ref: row.ref,
                     citizen: row.applicant || '—',
+                    // The requester's approved photo (signed, short-lived), or null.
+                    photo: row.applicant_photo || null,
+                    // The requester's approved photo (signed, short-lived), or null.
+                    photo: row.applicant_photo || null,
                     type,
                     service_key: row.service_key,
                     office: row.office || cls.office || '—',
@@ -397,6 +400,8 @@
             },
             applyDetail(r, d) {
                 r.status = d.status;
+                r.photo = d.applicant_photo || r.photo || null;
+                r.photo = d.applicant_photo || r.photo || null;
                 r.office = d.office || r.office;
                 r.permitted = d.permitted || null;
                 // Reject and Cancel both record their reason as the decision
@@ -941,8 +946,8 @@
                         <td class="px-4 py-3 font-mono text-xs text-ink-muted hidden xl:table-cell" x-text="r.ref" @click.stop="openRequest(r)"></td>
                         <td class="px-4 py-3" @click.stop="openRequest(r)">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <img x-show="citizenAvatars[r.citizen]" :src="citizenAvatars[r.citizen]" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" :alt="r.citizen">
-                                <div x-show="!citizenAvatars[r.citizen]" class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                <img x-show="r.photo" x-cloak :src="r.photo" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" :alt="r.citizen" x-on:error="r.photo = null">
+                                <div x-show="!r.photo" class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
                                 <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
                             </div>
                         </td>
@@ -1043,7 +1048,8 @@
                     <div class="rounded-xl border border-slate-200 overflow-hidden">
                         <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-brand-600/[.08] bg-slate-50/60">
                             <div class="flex items-center gap-2.5 px-4 py-3">
-                                <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
+                                <img x-show="selected.photo" x-cloak :src="selected.photo" :alt="'Photo of ' + selected.citizen" class="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" x-on:error="selected.photo = null">
+                                <span x-show="!selected.photo" class="w-8 h-8 rounded-lg bg-white text-brand-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
                                     <p class="text-[10px] text-ink-muted uppercase tracking-wide">Citizen</p>
                                     <p class="text-sm font-medium text-ink truncate" x-text="selected.citizen"></p>

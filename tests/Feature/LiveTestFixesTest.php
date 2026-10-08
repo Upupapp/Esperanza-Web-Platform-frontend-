@@ -259,4 +259,30 @@ class LiveTestFixesTest extends TestCase
             $this->assertStringContainsString('window.DokyuEditor.sanitizeExportColors(document.body)', $view, $side.': oklch swapped for rgb');
         }
     }
+
+    /** 2026-10-08: the photo showed on the profile only; the top-bar searches found nothing; dropdown arrows sat on the edge. */
+    public function test_the_photo_shows_where_the_resident_does_and_the_searches_work(): void
+    {
+        $js = $this->source('resources/js/app.js');
+        $this->assertStringContainsString('photoUrl: p.photo?.url || null,', $js, 'the session keeps the approved photo');
+        $this->assertStringContainsString("Alpine.data('globalSearch', (cfg) => ({", $js);
+        foreach (['resources/views/components/citizen/topbar.blade.php', 'resources/views/citizen/dashboard.blade.php'] as $path) {
+            $this->assertStringContainsString('<x-citizen.avatar', $this->source($path), $path);
+        }
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $view = $this->source("resources/views/admin/{$page}.blade.php");
+            $this->assertStringContainsString('photo: row.applicant_photo || null,', $view, $page);
+            $this->assertStringContainsString(':src="selected.photo"', $view, $page.': the Citizen cell');
+            $this->assertStringNotContainsString('citizenAvatars', $view, $page);
+        }
+        $this->assertStringContainsString('photoOf(r.ref)', $this->source('resources/views/admin/constituents/view-individuals.blade.php'));
+        foreach (['components/citizen/topbar', 'components/admin/topbar'] as $bar) {
+            $this->assertStringContainsString('<x-ui.global-search :config="$searchConfig"', $this->source("resources/views/{$bar}.blade.php"), $bar);
+        }
+        $this->assertStringContainsString("const wanted = params.get('ref');", $this->source('resources/views/admin/constituents.blade.php'), 'a resident opens from search');
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $this->assertStringContainsString("get('new'); if (!want) return;", $this->source("resources/views/citizen/{$page}.blade.php"), $page.': the wizard opens from search');
+        }
+        $this->assertStringContainsString('select:not([multiple]):not([size]):not(.appearance-none):not(.doc-toolbar-select)', $this->source('resources/css/app.css'));
+    }
 }

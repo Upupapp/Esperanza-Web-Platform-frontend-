@@ -81,7 +81,7 @@
                         <td class="px-4 py-3">
                             <div class="flex items-start gap-3 min-w-0">
                                 <div class="flex-shrink-0 relative">
-                                    <div class="w-10 h-10 text-sm rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
+                                    <div class="relative overflow-hidden w-10 h-10 text-sm rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0"><span x-text="(r.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span><img x-show="photoOf(r.ref)" x-cloak :src="photoOf(r.ref)" alt="" class="absolute inset-0 w-full h-full object-cover" x-on:error="$el.style.display='none'"></div>
                                     {{-- Sex indicator dot --}}
                                     <span
                                         class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center text-white"

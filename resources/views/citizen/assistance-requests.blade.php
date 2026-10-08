@@ -482,7 +482,7 @@
                         return { ref: created.ref, failed };
                     },
                 }"
-                x-init="seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant())"
+                x-init="seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant()); $nextTick(() => { const want = new URLSearchParams(window.location.search).get('new'); if (!want) return; const i = types.findIndex(t => t.key === want); if (i >= 0) { search = types[i].name; selectType(i); } open = true; })"
                 x-effect="!open && reset()"
                 class="contents"
             >

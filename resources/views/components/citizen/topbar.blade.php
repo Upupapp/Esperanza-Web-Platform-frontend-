@@ -28,6 +28,32 @@
     $filSubtitle = $filSubtitles[$active] ?? $subtitle;
 @endphp
 
+@php
+    // The top bar's search (x-ui.global-search): the pages, and where its
+    // results open; the rest is loaded on first focus.
+    $searchConfig = [
+        'portal' => 'citizen',
+        'pages' => [
+            ['en' => 'Dashboard', 'fil' => 'Home', 'icon' => 'layout-dashboard', 'href' => route('citizen.dashboard')],
+            ['en' => 'Dokyu — Document Requests', 'fil' => 'Dokyu — Kahilingan sa Dokumento', 'icon' => 'file-text', 'href' => route('citizen.document-requests')],
+            ['en' => 'Tulong — Assistance Requests', 'fil' => 'Tulong — Kahilingan sa Tulong', 'icon' => 'hand-heart', 'href' => route('citizen.assistance-requests')],
+            ['en' => 'Balita — Announcements', 'fil' => 'Balita', 'icon' => 'megaphone', 'href' => route('citizen.announcements')],
+            ['en' => 'Events', 'fil' => 'Mga Kaganapan', 'icon' => 'calendar', 'href' => route('citizen.events')],
+            ['en' => 'Government Directory', 'fil' => 'Direktoryo ng Pamahalaan', 'icon' => 'building-2', 'href' => route('citizen.directory')],
+            ['en' => 'Help & Support', 'fil' => 'Suporta', 'icon' => 'life-buoy', 'href' => route('citizen.faqs')],
+            ['en' => 'My Profile', 'fil' => 'Aking Profile', 'icon' => 'user-round', 'href' => route('citizen.profile')],
+            ['en' => 'Notifications', 'fil' => 'Mga Abiso', 'icon' => 'bell', 'href' => route('citizen.notifications')],
+            ['en' => 'Settings', 'fil' => 'Mga Setting', 'icon' => 'settings', 'href' => route('citizen.settings')],
+        ],
+        'routes' => [
+            'dokyu' => route('citizen.document-requests'),
+            'tulong' => route('citizen.assistance-requests'),
+            'balita' => route('citizen.announcements'),
+            'events' => route('citizen.events'),
+        ],
+    ];
+@endphp
+
 {{-- Clay design (STYLE_GUIDE §2): no full-width bar. The title sits on the
      canvas; the clock and search are pressed wells, the buttons and the user
      chip glass, the menus glass panels. --}}
@@ -35,25 +61,6 @@
     class="relative z-20 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{
         time: '',
-        searchQuery: '',
-        searchOpen: false,
-        searchIndex: [
-            { en: 'Dashboard', fil: 'Home', icon: 'layout-dashboard', href: '{{ route('citizen.dashboard') }}' },
-            { en: 'Dokyu — Document Requests', fil: 'Dokyu — Kahilingan sa Dokumento', icon: 'file-text', href: '{{ route('citizen.document-requests') }}' },
-            { en: 'Tulong — Assistance Requests', fil: 'Tulong — Kahilingan sa Tulong', icon: 'hand-heart', href: '{{ route('citizen.assistance-requests') }}' },
-            { en: 'Balita — Announcements', fil: 'Balita', icon: 'megaphone', href: '{{ route('citizen.announcements') }}' },
-            { en: 'Events', fil: 'Mga Kaganapan', icon: 'calendar', href: '{{ route('citizen.events') }}' },
-            { en: 'Government Directory', fil: 'Direktoryo ng Pamahalaan', icon: 'building-2', href: '{{ route('citizen.directory') }}' },
-            { en: 'Help & Support', fil: 'Suporta', icon: 'life-buoy', href: '{{ route('citizen.faqs') }}' },
-            { en: 'My Profile', fil: 'Aking Profile', icon: 'user-round', href: '{{ route('citizen.profile') }}' },
-            { en: 'Notifications', fil: 'Mga Abiso', icon: 'bell', href: '{{ route('citizen.notifications') }}' },
-            { en: 'Settings', fil: 'Mga Setting', icon: 'settings', href: '{{ route('citizen.settings') }}' },
-        ],
-        get filteredSearch() {
-            const q = this.searchQuery.trim().toLowerCase();
-            if (q === '') return [];
-            return this.searchIndex.filter(i => i.en.toLowerCase().includes(q) || i.fil.toLowerCase().includes(q));
-        },
     }"
     x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.citizenNotifications.load(); $store.citizenNotifications.poll()"
 >
@@ -174,41 +181,7 @@
             </div>
         </div>
 
-        <div class="hidden md:block relative" @click.outside="searchOpen = false">
-            <label class="flex items-center gap-2.5 h-11 w-56 2xl:w-[360px] px-4 rounded-2xl surface-pressed transition-all duration-[160ms] ease-standard focus-within:bg-white/90 focus-within:shadow-[var(--shadow-pressed-sm),0_0_0_4px_var(--color-brand-100)]">
-                <i data-lucide="search" class="w-[18px] h-[18px] text-ink-muted shrink-0 pointer-events-none"></i>
-                <input aria-label="Search query"
-                    type="text"
-                    x-model="searchQuery"
-                    @focus="searchOpen = true"
-                    x-bind:placeholder="$store.lang.current === 'en' ? 'Search dokyu, tulong, balita...' : 'Maghanap ng dokyu, tulong, balita...'"
-                    class="w-full min-w-0 bg-transparent border-0 p-0 text-sm text-ink placeholder:text-ink-faint focus:ring-0 focus:outline-none"
-                >
-            </label>
-            <div
-                x-show="searchOpen && searchQuery.trim() !== ''"
-                x-transition:enter="transition duration-[200ms] ease-emphasized"
-                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                x-cloak
-                class="absolute left-0 right-0 mt-2 surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top"
-            >
-                <template x-for="item in filteredSearch" :key="item.href">
-                    <a :href="item.href" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
-                        <i :data-lucide="item.icon" class="w-4 h-4 text-ink-muted shrink-0"></i>
-                        <span x-text="$store.lang.current === 'en' ? item.en : item.fil"></span>
-                    </a>
-                </template>
-                <div class="px-4 py-3 text-center" x-show="filteredSearch.length === 0">
-                    <p class="text-xs font-medium text-slate-500">
-                        <x-ui.t fil="Walang nahanap." en="No matches found." />
-                    </p>
-                    <p class="text-[11px] text-slate-500 mt-0.5">
-                        <x-ui.t fil="Subukan ang ibang salita." en="Try a different search term." />
-                    </p>
-                </div>
-            </div>
-        </div>
+        <x-ui.global-search :config="$searchConfig" placeholder-en="Search dokyu, tulong, balita..." placeholder-fil="Maghanap ng dokyu, tulong, balita..." width="w-56 2xl:w-[360px]" />
 
         {{-- Real, request- and account-driven notifications from
              $store.citizenNotifications (production-readiness programme,
@@ -271,7 +244,7 @@
 
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" class="h-[52px] pl-1.5 pr-1.5 lg:pr-3.5 flex items-center gap-2.5 rounded-[20px] surface-glass-sm hover:bg-white/80 transition-colors">
-                <div class="w-10 h-10 rounded-full clay-blue grid place-items-center font-extrabold text-sm shrink-0" x-text="$store.citizenSession.initials()"></div>
+                <x-citizen.avatar class="w-10 h-10 text-sm" />
                 <span class="hidden lg:block text-left max-w-[140px]">
                     <span class="block text-sm font-bold text-ink leading-tight truncate" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></span>
                     <span class="block text-xs text-ink-muted leading-tight truncate" x-text="$store.citizenSession.account ? (($store.lang.current === 'en' ? 'Resident — Brgy. ' : 'Residente — Brgy. ') + $store.citizenSession.account.barangay) : ($store.lang.current === 'en' ? 'Not signed in' : 'Hindi naka-sign in')"></span>
@@ -287,9 +260,12 @@
                 x-cloak
                 class="absolute right-0 mt-2 w-60 surface-glass rounded-[22px] shadow-float border-white/90 overflow-hidden z-50 origin-top-right py-1.5"
             >
-                <div class="px-4 py-3 border-b border-brand-600/10">
-                    <p class="text-sm font-bold text-ink" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></p>
-                    <p class="text-xs text-slate-500" x-text="$store.citizenSession.account?.email ?? 'No account selected'"></p>
+                <div class="flex items-center gap-3 px-4 py-3 border-b border-brand-600/10">
+                    <x-citizen.avatar class="w-11 h-11 text-sm" />
+                    <div class="min-w-0">
+                        <p class="text-sm font-bold text-ink truncate" x-text="$store.citizenSession.account?.fullName ?? 'Guest Citizen'"></p>
+                        <p class="text-xs text-slate-500 truncate" x-text="$store.citizenSession.account?.email ?? 'No account selected'"></p>
+                    </div>
                 </div>
                 <a href="{{ route('citizen.profile') }}" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-ink-muted"></i><x-ui.t fil="Aking Profile" en="My Profile" />

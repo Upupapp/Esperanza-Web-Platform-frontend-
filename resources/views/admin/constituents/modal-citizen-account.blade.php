@@ -10,7 +10,11 @@
          is left out. --}}
     <x-ui.modal maxWidth="2xl" :bare="true">
         <div class="flex items-start justify-between gap-4 p-6 pb-4 border-b border-brand-600/10 shrink-0">
-            <div class="min-w-0">
+            <div class="relative overflow-hidden w-12 h-12 rounded-full clay-blue grid place-items-center text-sm font-extrabold shrink-0">
+                <span x-text="(accountDetail?.name || accountRow?.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()"></span>
+                <img x-show="accountDetail?.photo?.current?.file?.url || accountRow?.citizen_account?.photo_url" x-cloak :src="accountDetail?.photo?.current?.file?.url || accountRow?.citizen_account?.photo_url" alt="" class="absolute inset-0 w-full h-full object-cover" x-on:error="$el.style.display='none'">
+            </div>
+            <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2 mb-1">
                     <h2 class="text-base font-bold text-ink truncate" x-text="accountDetail?.name || accountRow?.name || 'Citizen account'"></h2>
                     <x-ui.badge statusBind="accountDetail?.status || accountRow?.citizen_account?.status" />

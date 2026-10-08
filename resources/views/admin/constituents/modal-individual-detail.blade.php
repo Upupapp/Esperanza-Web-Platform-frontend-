@@ -72,8 +72,9 @@
             </div>
 
             <div class="flex items-start gap-5 relative z-10">
-                <div class="flex-shrink-0 w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase">
+                <div class="relative overflow-hidden flex-shrink-0 w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xl uppercase ring-2 ring-white/25">
                     <span x-text="(selectedIndividual?.name || '').split(' ').map(w=>w[0]).slice(0,2).join('')"></span>
+                    <img x-show="photoOf(selectedIndividual?.ref)" x-cloak :src="photoOf(selectedIndividual?.ref)" alt="" class="absolute inset-0 w-full h-full object-cover" x-on:error="$el.style.display='none'">
                 </div>
 
                 {{-- Identity block --}}

@@ -159,10 +159,7 @@
 
                     <div class="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
                         <div class="relative shrink-0">
-                            <div
-                                class="w-14 h-14 sm:w-[72px] sm:h-[72px] text-xl sm:text-2xl rounded-full clay-gold grid place-items-center font-extrabold"
-                                x-text="$store.citizenSession.initials()"
-                            ></div>
+                            <x-citizen.avatar fallback="clay-gold" class="w-14 h-14 sm:w-[72px] sm:h-[72px] text-xl sm:text-2xl ring-2 ring-white/40" />
 
                             <span class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
                                 <i data-lucide="check" class="w-3 h-3 text-white"></i>

@@ -38,6 +38,15 @@
 
         async init() {
             await this.loadRegistry();
+            // From the top bar's search: a resident's record (?ref=) or a
+            // barangay's registry (?barangay=).
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('barangay')) this.barangayFilter = params.get('barangay');
+            const wanted = params.get('ref');
+            if (wanted) {
+                const person = this.individuals.find(i => i.ref === wanted);
+                if (person) this.$nextTick(() => this.openIndividual(person));
+            }
             // Landed here via the Back to Profile link from Dokyu/Tulong — reopen
             // exactly the resident that navigation started from, then forget the flag.
             const stored = sessionStorage.getItem('reopenResident');
@@ -82,6 +91,7 @@
                 const citizensByRef = {};
                 (citizens.data || []).forEach(c => { if (c.resident_profile?.ref) citizensByRef[c.resident_profile.ref] = c; });
                 this.individuals = (residents.data || []).map(i => ({ ...i, citizen_account: citizensByRef[i.ref] || null }));
+                this.photoByRef = Object.fromEntries(this.individuals.filter(i => i.citizen_account?.photo_url).map(i => [i.ref, i.citizen_account.photo_url]));
                 this.households = households.data || [];
                 this.families = families.data || [];
                 this.citizens = citizens.data || [];
@@ -156,6 +166,10 @@
         accountDetail: null,
         accountLoading: false,
         photoRejectRemarks: '',
+        // A resident's approved photo by registry ref (from GET /admin/citizens), for
+        // the rows, the detail and household and family members.
+        photoByRef: {},
+        photoOf(ref) { return this.photoByRef[ref] || null; },
         // Every resident in scope belongs here, not just the ones who signed
         // up on the Citizen Portal — Individual/Family/Household already show
         // everyone, so Citizen Verification's Individual list matches that

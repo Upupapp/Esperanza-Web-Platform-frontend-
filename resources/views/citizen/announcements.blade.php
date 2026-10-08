@@ -334,7 +334,7 @@
                                 </template>
 
                                 <div class="flex items-center gap-2.5">
-                                    <div class="w-7 h-7 text-[10px] rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="$store.citizenSession.initials()"></div>
+                                    <x-citizen.avatar class="w-7 h-7 text-[10px]" />
                                     <div class="flex-1 relative">
                                         <input aria-label="Comment draft"
                                             type="text"

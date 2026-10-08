@@ -213,7 +213,7 @@
         @keydown.space.prevent="i.accountOnly ? openAccount(i) : openIndividual(i)">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2.5">
-                                    <span class="w-8 h-8 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold text-xs shrink-0" x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span>
+                                    <span class="relative overflow-hidden w-8 h-8 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold text-xs shrink-0"><span x-text="(i.name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></span><img x-show="i.citizen_account?.photo_url || photoOf(i.ref)" x-cloak :src="i.citizen_account?.photo_url || photoOf(i.ref)" alt="" class="absolute inset-0 w-full h-full object-cover" x-on:error="$el.style.display='none'"></span>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" x-text="i.name"></p>
                                         <p class="text-xs text-ink-muted truncate" x-text="i.citizen_account ? i.citizen_account.email : 'Not registered on Citizen Portal'"></p>
