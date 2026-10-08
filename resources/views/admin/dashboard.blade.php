@@ -160,7 +160,7 @@
 
         <!-- Skeleton state -->
         <div x-show="!ready" x-transition.opacity.duration.300ms class="flex flex-col gap-5">
-            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
                 @for ($i = 0; $i < 6; $i++)
                     <div class="surface-glass rounded-[26px] p-[18px] space-y-3">
                         <x-ui.skeleton class="h-3 w-24" />
@@ -187,7 +187,7 @@
         <div x-show="ready && !failed" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
             <!-- KPI coins -->
-            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
                 <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
                 <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>

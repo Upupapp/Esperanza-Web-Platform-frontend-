@@ -132,7 +132,7 @@
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load Balita.'" retryExpr="load()" :retryable="true" /></div>
 
             <div x-show="!loading && !failed">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
                 <x-ui.stat-card label="Published" valueBind="posts.filter(a => a.status === 'Released').length" icon="megaphone" color="brand" :delay="0" />
                 <x-ui.stat-card label="Pending Review" valueBind="posts.filter(a => a.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="40" />
                 <x-ui.stat-card label="Drafts" valueBind="posts.filter(a => a.status === 'Draft').length" icon="pencil-line" color="purple" :delay="80" />
@@ -380,7 +380,7 @@
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load events.'" retryExpr="load()" :retryable="true" /></div>
 
             <div x-show="!loading && !failed">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
                 <x-ui.stat-card label="Published" valueBind="events.filter(e => e.status === 'Released').length" icon="calendar-check" color="brand" :delay="0" />
                 <x-ui.stat-card label="Pending Review" valueBind="events.filter(e => e.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="40" />
                 <x-ui.stat-card label="Drafts" valueBind="events.filter(e => e.status === 'Draft').length" icon="pencil-line" color="purple" :delay="80" />
@@ -629,7 +629,7 @@
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load banners.'" retryExpr="load()" :retryable="true" /></div>
 
             <div x-show="!loading && !failed">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
                 <x-ui.stat-card label="Total Banners" valueBind="banners.length" icon="gallery-horizontal" color="brand" :delay="0" />
                 <x-ui.stat-card label="Live on Dashboard" valueBind="banners.filter(b => b.live).length" icon="eye" color="green" sublabel="Released &amp; within its date window" :delay="40" />
                 <x-ui.stat-card label="Pending Review" valueBind="banners.filter(b => b.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="80" />
@@ -802,7 +802,7 @@
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load community posts.'" retryExpr="load()" :retryable="true" /></div>
 
             <div x-show="!loading && !failed">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
                 <x-ui.stat-card label="Total Posts" valueBind="posts.length" icon="users-round" color="brand" :delay="0" />
                 <x-ui.stat-card label="Awaiting Moderation" valueBind="posts.filter(p => p.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="40" />
                 <x-ui.stat-card label="Reported" valueBind="posts.filter(p => p.report_count > 0).length" icon="flag" color="red" sublabel="At least one citizen report" :delay="80" />

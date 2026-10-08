@@ -8,7 +8,7 @@
 <div class="space-y-6">
 
     {{-- ── SUMMARY STAT CARDS ─────────────────────────────────────────────── --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
         <x-ui.stat-card
             label="Open Issues"
             valueBind="qualityIssues.filter(i => i.status === 'Open').length"

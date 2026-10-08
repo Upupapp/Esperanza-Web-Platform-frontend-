@@ -449,8 +449,8 @@
 
         <x-citizen.approval-notice service="Dokyu" />
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
-            <x-ui.stat-card class="col-span-2 sm:col-span-1" label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
+        <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
+            <x-ui.stat-card label="Kabuuang Kahilingan" labelEn="Total Requests" value="0" valueBind="requests.length" icon="file-text" color="brand" :delay="0" />
             <x-ui.stat-card label="Isinasagawa" labelEn="In Progress" value="0" valueBind="requests.filter(r => !doneStatuses.includes(r.status) && r.status !== 'Mark to Release').length" icon="loader" color="orange" :delay="40" />
             <x-ui.stat-card label="Handa nang Kunin" labelEn="Mark to Release" value="0" valueBind="requests.filter(r => r.status === 'Mark to Release').length" icon="package-check" color="green" :delay="80" />
             <x-ui.stat-card label="Kumpleto" labelEn="Completed" value="0" valueBind="requests.filter(r => ['Released', 'Completed', 'Archived'].includes(r.status)).length" icon="circle-check" color="deep" :delay="120" />

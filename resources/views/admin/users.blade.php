@@ -143,7 +143,7 @@
             @personnel-created.window="loadUsers()"
             x-show="tab === 'personnel'"
         >
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
                 {{-- Same words as the status in the list, and the same count as the
                      Roles tab (live test 2026-10-07, UX-13). --}}
                 <x-ui.stat-card label="All Staff Accounts" valueBind="totalCount" icon="users" color="brand" :delay="0" sublabel="Including archived" />

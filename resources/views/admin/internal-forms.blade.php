@@ -187,7 +187,7 @@
             <p class="text-xs text-purple-700">Personal view — you can only see forms <strong>you</strong> submitted. Other staff members' submissions are hidden.</p>
         </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
             <x-ui.stat-card @click="tab = 'all'" class="cursor-pointer" label="Total Submissions" valueBind="submissions.length" icon="clipboard-list" color="brand" :delay="0" />
             <x-ui.stat-card @click="tab = 'action'" class="cursor-pointer" label="Needs Action" valueBind="needingAction" icon="inbox" color="orange" :delay="40" />
             <x-ui.stat-card label="Offices Covered" valueBind="Object.keys(offices).length" icon="building-2" color="purple" :delay="80" />
