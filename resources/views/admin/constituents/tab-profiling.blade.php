@@ -7,7 +7,7 @@
 <div class="space-y-6">
 
     {{-- ── SUMMARY STAT CARDS ─────────────────────────────────────────────── --}}
-    <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <x-ui.stat-card
             label="Barangays Complete"
             valueBind="barangayCoverage.filter(b => b.status === 'Complete').length + '/' + barangayCoverage.length"

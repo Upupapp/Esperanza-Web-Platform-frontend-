@@ -66,7 +66,7 @@
         class="animate-fade-up max-w-3xl"
     >
 
-        <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <x-ui.stat-card label="Kabuuan" labelEn="Total" valueBind="totalCount" icon="inbox" color="brand" :delay="0" />
             <x-ui.stat-card label="Hindi Pa Nababasa" labelEn="Unread" valueBind="unreadTotal" icon="bell" color="orange" :delay="40" />
             <x-ui.stat-card label="Dokyu" labelEn="Dokyu" valueBind="dokyuTotalCount" icon="file-text" color="brand" :delay="80" />

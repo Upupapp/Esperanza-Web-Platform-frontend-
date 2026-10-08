@@ -28,7 +28,7 @@
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Individual ─────────────────────────────────── --}}
-    <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]" x-show="cvType === 'Individual'">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4" x-show="cvType === 'Individual'">
         <x-ui.stat-card @click="cvStatusFilter = 'Pending Review'" class="cursor-pointer" label="Pending Review" valueBind="cvCounts.pending" icon="clock" color="orange" :delay="0" />
         <x-ui.stat-card @click="cvStatusFilter = 'Under Verification'" class="cursor-pointer" label="Under Verification" valueBind="cvCounts.underVerification" icon="search" color="brand" :delay="75" />
         <x-ui.stat-card @click="cvStatusFilter = 'Approved'" class="cursor-pointer" label="Approved" valueBind="cvCounts.verified" icon="badge-check" color="green" :delay="150" />
@@ -37,7 +37,7 @@
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Family ─────────────────────────────────────── --}}
-    <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]" x-show="cvType === 'Family'" x-cloak>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Family'" x-cloak>
         <x-ui.stat-card @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvFamilyCounts.unverified" icon="shield-x" color="red" :delay="0" />
         <x-ui.stat-card @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvFamilyCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvFamilyCounts.verified" icon="shield-check" color="green" :delay="150" />
@@ -45,7 +45,7 @@
     </div>
 
     {{-- ── SUMMARY STAT CARDS — Household ──────────────────────────────────── --}}
-    <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]" x-show="cvType === 'Household'" x-cloak>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" x-show="cvType === 'Household'" x-cloak>
         <x-ui.stat-card @click="cvStatusFilter = 'Unverified'" class="cursor-pointer" label="Unverified" valueBind="cvHouseholdCounts.unverified" icon="shield-x" color="red" :delay="0" />
         <x-ui.stat-card @click="cvStatusFilter = 'Partially Verified'" class="cursor-pointer" label="Needs Review" valueBind="cvHouseholdCounts.partial" icon="shield-half" color="orange" :delay="75" />
         <x-ui.stat-card @click="cvStatusFilter = 'Verified'" class="cursor-pointer" label="Verified" valueBind="cvHouseholdCounts.verified" icon="shield-check" color="green" :delay="150" />

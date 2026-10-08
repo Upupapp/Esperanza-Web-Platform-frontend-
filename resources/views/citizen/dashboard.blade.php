@@ -115,7 +115,7 @@
         <div x-show="!ready" x-transition.opacity.duration.300ms>
             <x-ui.skeleton class="h-36 w-full rounded-[32px] mb-5" />
 
-            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
                 @for ($i = 0; $i < 4; $i++)
                     <div class="surface-glass rounded-[26px] p-[18px] space-y-3">
                         <x-ui.skeleton class="h-3 w-24" />
@@ -278,7 +278,7 @@
             </x-ui.page-intro>
 
             <!-- KPI row -->
-            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-5">
+            <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
 
                 <x-ui.stat-card
                     class="h-full"

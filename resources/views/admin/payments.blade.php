@@ -92,7 +92,7 @@
 
         <div x-show="$store.session.can('payments')" x-cloak>
 
-        <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] mb-4">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
             <x-ui.stat-card label="Total Invoiced" valueBind="'₱' + totalInvoiced.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="receipt" color="brand" sublabel="Not counting closed requests" :delay="0" />
             <x-ui.stat-card label="Total Collected" valueBind="'₱' + totalCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })" icon="banknote" color="green" :delay="40" />
             <x-ui.stat-card label="Paid" valueBind="payments.filter(p => p.status === 'Approved').length" icon="circle-check" color="green" :delay="80" />
