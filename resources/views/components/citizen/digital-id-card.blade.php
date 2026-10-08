@@ -47,7 +47,7 @@
     <template x-if="!loading && !failed && card">
         <div>
             <p class="text-center text-[11px] text-slate-500 mb-3 flex items-center justify-center gap-1.5">
-                <i data-lucide="hand-pointer" class="w-3 h-3"></i>
+                <i data-lucide="pointer" class="w-3 h-3"></i>
                 <x-ui.t fil="I-tap ang card para baligtarin" en="Tap the card to flip" />
             </p>
 

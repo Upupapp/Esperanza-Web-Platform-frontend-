@@ -5,7 +5,8 @@ import { specForm } from './api/form';
 import { residentProfileForm } from './resident-profile-form';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
-import { createIcons, icons } from 'lucide';
+import { createIcons } from 'lucide';
+import icons from './lucide-icons';
 import * as DokyuEditor from './dokyu-editor';
 
 // x-trap gives modals a real focus trap and, on close, restores focus to the
@@ -1587,8 +1588,22 @@ document.addEventListener('alpine:init', () => {
 // Lucide swaps each <i data-lucide> for a brand new <svg> node. Any Alpine
 // directive on that icon (x-show, :class) only binds if Alpine walks the
 // DOM *after* the swap — so icons must render before Alpine.start().
+//
+// Only the icons the site names are in the bundle (resources/js/lucide-icons.js,
+// written by scripts/lucide-icons.mjs): all ~1,700 were, and they were most of
+// the initial JavaScript (the 150 KB budget, 2026-10-08). An <i data-lucide>
+// left undrawn names one outside that set (a record's own icon); the full set
+// is then fetched once, in its own chunk, and draws it.
+let allIcons = null;
+let allIconsLoading = null;
 function renderIcons() {
-    createIcons({ icons });
+    createIcons({ icons: allIcons || icons });
+    if (!allIcons && !allIconsLoading && document.querySelector('i[data-lucide]:not([data-lucide=""])')) {
+        allIconsLoading = import('./lucide-all').then((m) => {
+            allIcons = m.icons;
+            createIcons({ icons: allIcons });
+        }).catch(() => { allIconsLoading = null; });
+    }
 }
 
 window.renderIcons = renderIcons;
