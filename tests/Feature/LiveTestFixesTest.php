@@ -213,10 +213,9 @@ class LiveTestFixesTest extends TestCase
     public function test_doughnuts_show_the_hovered_slice_in_the_centre_not_a_tooltip(): void
     {
         $js = $this->source('resources/js/app.js');
-        $this->assertStringContainsString("Alpine.data('centerDonut'", $js);
-        $this->assertStringContainsString('tooltip: { enabled: false }', $js);
-        $this->assertStringContainsString('layout: { padding: 6 }', $js);
+        // 2026-10-08: one look for every chart; Chart.js is gone.
         $this->assertStringContainsString("Alpine.data('clayDonut'", $js);
+        $this->assertStringNotContainsString("import('chart.js')", $js);
         // The clay doughnut (dashboard, reports): the centre is the total or the hovered slice.
         $donut = $this->source('resources/views/components/ui/clay-donut.blade.php');
         $this->assertStringContainsString('x-effect="draw({{ $rows }})" @mouseleave="hover = null"', $donut);
@@ -224,7 +223,8 @@ class LiveTestFixesTest extends TestCase
         foreach ([
             'resources/views/admin/dashboard.blade.php' => ['<x-ui.clay-donut rows="docStatus"', '<x-ui.clay-donut rows="assistStatus"'],
             'resources/views/admin/reports.blade.php' => ['<x-ui.clay-donut rows="internalOfficeSplit"', '<x-ui.clay-donut rows="incidentSeveritySplit"'],
-            'resources/views/admin/constituents/tab-profiling.blade.php' => ['x-effect="draw(barangayStatusBreakdown)" @mouseleave="hover = null"'],
+            'resources/views/admin/constituents/tab-profiling.blade.php' => ['<x-ui.clay-donut rows="barangayStatusBreakdown"'],
+            'resources/views/admin/partials/sakuna/tab-reports.blade.php' => ['<x-ui.clay-donut rows="reportTypeBreakdown()', '<x-ui.clay-trend data="{ labels: reportTrendLabels()'],
         ] as $path => $draws) {
             $view = $this->source($path);
             foreach ($draws as $draw) {

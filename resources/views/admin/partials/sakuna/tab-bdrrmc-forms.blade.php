@@ -154,7 +154,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         @foreach($bdrrmcForms as $f)
-            <div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-4 hover:shadow-md transition-shadow">
+            <div class="surface-glass rounded-[26px] p-4 hover:shadow-glass-hover transition-shadow">
                 <div class="flex items-start gap-3 mb-3">
                     <div class="w-9 h-9 rounded-xl {{ $f['color'] }} flex items-center justify-center flex-shrink-0">
                         <i data-lucide="{{ $f['icon'] }}" class="w-4 h-4"></i>
@@ -175,7 +175,7 @@
         @endforeach
     </div>
 
-    <div x-show="canListSubmissions" x-cloak class="bg-white rounded-2xl shadow-card border border-brand-600/10">
+    <div x-show="canListSubmissions" x-cloak class="surface-glass rounded-[26px]">
         <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-brand-600/10">
             <div>
                 <h3 class="text-sm font-semibold text-ink-body">Submitted forms</h3>
@@ -237,7 +237,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide">Dromic Form 1.2</p>
@@ -336,7 +336,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -437,7 +437,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -526,7 +526,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -601,7 +601,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide">BDRRMC Capture Form</p>
@@ -695,7 +695,7 @@
         @keydown.enter.prevent="openForm = null"
         @keydown.space.prevent="openForm = null"></div>
         <div style="position: fixed; inset: 0.75rem;" class="sm:inset-4">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-2xl shadow-float w-full h-full flex flex-col overflow-hidden">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-[0.98]" x-transition:enter-end="opacity-100 scale-100" data-print-area class="relative bg-white rounded-[28px] shadow-float w-full h-full flex flex-col overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 shrink-0">
                 <div>
                     <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide">RDS</p>

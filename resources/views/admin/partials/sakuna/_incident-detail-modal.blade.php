@@ -27,7 +27,7 @@
         x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-        class="bg-white rounded-2xl shadow-float w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+        class="bg-white rounded-[28px] shadow-float w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
     >
         {{-- Modal Header --}}
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10 flex-shrink-0">

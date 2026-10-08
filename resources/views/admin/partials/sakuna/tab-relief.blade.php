@@ -52,7 +52,7 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredRelief, 'relief-distributions.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
             <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_relief', 'create')" @click="openCreateDistribution()"
@@ -69,22 +69,10 @@
 
 {{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Total Distributions</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="reliefList.length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Beneficiaries Served</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="new Set(reliefList.map(d => d.beneficiary)).size"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Released</p>
-        <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="reliefList.filter(d => d.status === 'Released').length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Awaiting Release</p>
-        <p class="text-2xl font-bold text-amber-600 mt-1" x-text="reliefList.filter(d => d.status === 'Submitted').length"></p>
-    </div>
+    <x-ui.stat-card layout="compact" tone="gold" object="box" label="Total Distributions" valueBind="reliefList.length" />
+    <x-ui.stat-card layout="compact" tone="brand" object="people" label="Beneficiaries Served" valueBind="new Set(reliefList.map(d => d.beneficiary)).size" />
+    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Released" valueBind="reliefList.filter(d => d.status === 'Released').length" />
+    <x-ui.stat-card layout="compact" tone="amber" object="tray" label="Awaiting Release" valueBind="reliefList.filter(d => d.status === 'Submitted').length" />
 </div>
 
 {{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
@@ -179,7 +167,7 @@
         aria-modal="true"
         @keydown.escape.window="showCreateDistribution = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-xl">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>

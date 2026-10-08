@@ -56,7 +56,7 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredIncidents, 'incidents-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
             <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()"
@@ -121,13 +121,13 @@
         @endforeach
     </select>
     <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter='';"
-        class="inline-flex items-center gap-1.5 text-sm text-ink-muted bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+        class="inline-flex items-center gap-1.5 text-sm text-ink-muted surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
         <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
     </button>
 </div>
 
 {{-- ── Incident Table ───────────────────────────────────────────────────────────────────── --}}
-<div class="bg-white rounded-2xl shadow-card border border-brand-600/10 overflow-hidden">
+<div class="surface-glass rounded-[26px] overflow-hidden">
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-brand-600/[.08]">
             <thead>
@@ -225,7 +225,7 @@
     <div x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-xl max-h-[90vh] overflow-y-auto">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl max-h-[90vh] overflow-y-auto">
 
         <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">

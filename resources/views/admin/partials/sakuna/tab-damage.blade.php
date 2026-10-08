@@ -50,7 +50,7 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredDamage, 'damage-assessments.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
             <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_damage', 'create')" @click="openCreateAssessment()"
@@ -67,18 +67,9 @@
 
 {{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Total Assessments</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="damagesList.length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Units Affected</p>
-        <p class="text-2xl font-bold text-amber-600 mt-1" x-text="damagesList.reduce((s,d) => s + (d.units_affected || 0), 0)"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Est. Total Damage</p>
-        <p class="text-2xl font-bold text-rose-600 mt-1" x-text="'₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US')"></p>
-    </div>
+    <x-ui.stat-card layout="compact" tone="violet" object="document" label="Total Assessments" valueBind="damagesList.length" />
+    <x-ui.stat-card layout="compact" tone="amber" object="building" label="Units Affected" valueBind="damagesList.reduce((s,d) => s + (d.units_affected || 0), 0)" />
+    <x-ui.stat-card layout="compact" tone="rose" object="flame" label="Est. Total Damage" valueBind="'₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US')" />
 </div>
 
 {{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
@@ -175,7 +166,7 @@
         aria-modal="true"
         @keydown.escape.window="showAssessmentDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
@@ -235,7 +226,7 @@
         aria-modal="true"
         @keydown.escape.window="showCreateAssessment = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <h3 class="font-semibold text-ink-body" x-text="damageFormMode === 'create' ? 'New Damage Assessment' : 'Edit Assessment'"></h3>

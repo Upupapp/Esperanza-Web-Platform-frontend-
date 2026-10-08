@@ -51,7 +51,7 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredEvacuees, 'evacuees-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
             <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_evacuees', 'check_in')" @click="openEvacueeReg()"
@@ -68,24 +68,10 @@
 
 {{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Total Individuals</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="evacueesList.reduce((s,e) => s + e.member_count, 0)"></p>
-        <p class="text-xs text-ink-muted mt-0.5" x-text="evacueesList.filter(e => e.status === 'Processing').length + ' families sheltered'"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Currently Sheltered</p>
-        <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="evacueesList.filter(e => e.status === 'Processing').reduce((s,e) => s + e.member_count, 0)"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Checked Out</p>
-        <p class="text-2xl font-bold text-ink-muted mt-1" x-text="evacueesList.filter(e => e.status === 'Completed').length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Unregistered</p>
-        <p class="text-2xl font-bold text-amber-600 mt-1" x-text="evacueesList.filter(e => !e.registered).length"></p>
-        <p class="text-xs text-ink-muted mt-0.5">Not linked to a resident record</p>
-    </div>
+    <x-ui.stat-card layout="compact" tone="brand" object="people" label="Total Individuals" valueBind="evacueesList.reduce((s,e) => s + e.member_count, 0)" sublabelBind="evacueesList.filter(e => e.status === 'Processing').length + ' families sheltered'" />
+    <x-ui.stat-card layout="compact" tone="teal" object="building" label="Currently Sheltered" valueBind="evacueesList.filter(e => e.status === 'Processing').reduce((s,e) => s + e.member_count, 0)" />
+    <x-ui.stat-card layout="compact" tone="navy" object="stamp" label="Checked Out" valueBind="evacueesList.filter(e => e.status === 'Completed').length" />
+    <x-ui.stat-card layout="compact" tone="amber" object="document" label="Unregistered" valueBind="evacueesList.filter(e => !e.registered).length" sublabel="Not linked to a resident record" />
 </div>
 
 {{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
@@ -196,7 +182,7 @@
 <div x-show="showTransferForm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm" @click.self="showTransferForm = false"
      x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
      x-trap="showTransferForm" role="dialog" aria-modal="true" @keydown.escape.window="showTransferForm = false">
-    <div class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
+    <div class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0"><i data-lucide="arrow-right-left" class="w-5 h-5 text-blue-600"></i></div>
             <div>
@@ -229,7 +215,7 @@
         aria-modal="true"
         @keydown.escape.window="showCheckoutConfirm = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
                 <i data-lucide="log-out" class="w-5 h-5 text-amber-600"></i>
@@ -261,7 +247,7 @@
         aria-modal="true"
         @keydown.escape.window="showEvacueeDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">
@@ -360,7 +346,7 @@
         aria-modal="true"
         @keydown.escape.window="showEvacueeReg = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>

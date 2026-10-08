@@ -68,22 +68,10 @@
 
 {{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Total Alerts</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="alertsList.length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Draft</p>
-        <p class="text-2xl font-bold text-slate-600 mt-1" x-text="alertsList.filter(a => a.status === 'Draft').length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Released</p>
-        <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="alertsList.filter(a => a.status === 'Released').length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Cancelled</p>
-        <p class="text-2xl font-bold text-rose-600 mt-1" x-text="alertsList.filter(a => a.status === 'Cancelled').length"></p>
-    </div>
+    <x-ui.stat-card layout="compact" tone="navy" object="bell" label="Total Alerts" valueBind="alertsList.length" />
+    <x-ui.stat-card layout="compact" tone="amber" object="document" label="Draft" valueBind="alertsList.filter(a => a.status === 'Draft').length" />
+    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Released" valueBind="alertsList.filter(a => a.status === 'Released').length" />
+    <x-ui.stat-card layout="compact" tone="rose" object="ring" label="Cancelled" valueBind="alertsList.filter(a => a.status === 'Cancelled').length" />
 </div>
 
 {{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
@@ -123,7 +111,7 @@
 {{-- ── Alert List ───────────────────────────────────────────────────────────────────────── --}}
 <div class="space-y-3">
     <template x-for="a in filteredAlerts" :key="a.ref">
-        <div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-4 hover:shadow-md transition-shadow cursor-pointer" @click="openAlertDetail(a)">
+        <div class="surface-glass rounded-[26px] p-4 hover:shadow-glass-hover transition-shadow cursor-pointer" @click="openAlertDetail(a)">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap mb-1">
@@ -174,7 +162,7 @@
         aria-modal="true"
         @keydown.escape.window="showAlertDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>
@@ -233,7 +221,7 @@
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showCancelAlert = false">
-    <div class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
+    <div class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-11 h-11 rounded-2xl bg-rose-100 flex items-center justify-center flex-shrink-0"><i data-lucide="octagon-x" class="w-5 h-5 text-rose-600"></i></div>
             <div>
@@ -267,7 +255,7 @@
         aria-modal="true"
         @keydown.escape.window="showCreateAlert = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div>

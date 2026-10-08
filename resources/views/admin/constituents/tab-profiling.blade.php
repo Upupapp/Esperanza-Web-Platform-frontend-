@@ -43,37 +43,16 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {{-- Donut chart card --}}
-        <x-ui.card class="flex flex-col items-center justify-center py-6 gap-4">
-            <h3 class="text-sm font-semibold text-ink tracking-tight self-start px-1">
-                Status Breakdown
-            </h3>
+        <x-ui.card class="flex flex-col items-center gap-4">
+            <h3 class="text-lg font-extrabold text-ink self-start px-1">Status Breakdown</h3>
 
-            <div x-data="centerDonut({ cutout: '68%', borderWidth: 3 })" x-effect="draw(barangayStatusBreakdown)" @mouseleave="hover = null" class="relative w-40 h-40">
-                <canvas x-ref="canvas" class="w-full h-full"></canvas>
-                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-7">
-                    <span class="text-2xl font-bold text-ink tabular-nums" x-text="hover ? hover.value.toLocaleString() : barangayCoverage.length"></span>
-                    <span x-show="!hover" class="text-[10px] text-ink-muted uppercase tracking-wider mt-0.5">Barangays</span>
-                    <span x-show="hover" x-cloak class="inline-flex items-start gap-1 text-[11px] font-medium text-ink leading-tight"><span class="w-2 h-2 rounded-full shrink-0 mt-[3px]" :style="'background-color:' + (hover?.color || '')"></span><span x-text="hover?.label"></span></span>
-                </div>
-            </div>
-
-            {{-- Legend --}}
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs w-full px-2">
-                <template x-for="row in barangayStatusBreakdown" :key="row.label">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="'background-color:' + row.color"></span>
-                        <span class="text-slate-600" x-text="row.label"></span>
-                        <span class="font-semibold text-ink" x-text="'(' + row.value + ')'"></span>
-                    </div>
-                </template>
-            </div>
+            {{-- The dashboard's clay doughnut; the status colours mean something, so they stay. --}}
+            <x-ui.clay-donut rows="barangayStatusBreakdown" total-label="Barangays" :keep-colors="true" empty="No barangay coverage data yet." class="w-full" />
         </x-ui.card>
 
         {{-- Coverage progress overview --}}
-        <x-ui.card class="lg:col-span-2 flex flex-col gap-3 py-5 px-5">
-            <h3 class="text-sm font-semibold text-ink tracking-tight mb-1">
-                Overall Municipal Coverage
-            </h3>
+        <x-ui.card class="lg:col-span-2 flex flex-col gap-3">
+            <h3 class="text-lg font-extrabold text-ink mb-1">Overall Municipal Coverage</h3>
 
             <div class="space-y-3">
                 {{-- Resident profiling bar --}}
@@ -82,15 +61,15 @@
                     get d() { return coverageMunicipal?.residents ?? barangayCoverage.reduce((s,b) => s + b.residents, 0) },
                     get pct() { return this.d === 0 ? 0 : Math.round((this.n / this.d) * 100) },
                 }">
-                    <div class="flex justify-between text-xs text-slate-600 mb-1">
+                    <div class="flex justify-between gap-3 text-[13.5px] font-semibold text-ink-body mb-2">
                         <span>Residents Profiled</span>
                         <span class="font-semibold text-ink">
                             <span x-text="n.toLocaleString()"></span> / <span x-text="d.toLocaleString()"></span> &mdash;
-                            <span class="text-emerald-600" x-text="pct + '%'"></span>
+                            <span class="text-brand-600" x-text="pct + '%'"></span>
                         </span>
                     </div>
-                    <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + pct + '%'"></div>
+                    <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
+                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard from-brand-400 to-brand-600" :style="'width:' + pct + '%'"></div>
                     </div>
                 </div>
                 {{-- Household profiling bar --}}
@@ -99,15 +78,15 @@
                     get d() { return barangayCoverage.reduce((s,b) => s + b.hh, 0) },
                     get pct() { return this.d === 0 ? 0 : Math.round((this.n / this.d) * 100) },
                 }">
-                    <div class="flex justify-between text-xs text-slate-600 mb-1">
+                    <div class="flex justify-between gap-3 text-[13.5px] font-semibold text-ink-body mb-2">
                         <span>Households Profiled</span>
                         <span class="font-semibold text-ink">
                             <span x-text="n.toLocaleString()"></span> / <span x-text="d.toLocaleString()"></span> &mdash;
-                            <span class="text-blue-600" x-text="pct + '%'"></span>
+                            <span class="text-brand-600" x-text="pct + '%'"></span>
                         </span>
                     </div>
-                    <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-blue-500 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + pct + '%'"></div>
+                    <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
+                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard from-brand-500 to-brand-700" :style="'width:' + pct + '%'"></div>
                     </div>
                 </div>
                 {{-- Barangays with ≥80% bar --}}
@@ -116,15 +95,15 @@
                     get d() { return barangayCoverage.length },
                     get pct() { return this.d === 0 ? 0 : Math.round((this.n / this.d) * 100) },
                 }">
-                    <div class="flex justify-between text-xs text-slate-600 mb-1">
+                    <div class="flex justify-between gap-3 text-[13.5px] font-semibold text-ink-body mb-2">
                         <span>Barangays &ge; 80% Complete</span>
                         <span class="font-semibold text-ink">
                             <span x-text="n"></span> / <span x-text="d"></span> &mdash;
-                            <span class="text-purple-600" x-text="pct + '%'"></span>
+                            <span class="text-brand-600" x-text="pct + '%'"></span>
                         </span>
                     </div>
-                    <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-purple-500 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + pct + '%'"></div>
+                    <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
+                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard from-gold-300 to-gold-500" :style="'width:' + pct + '%'"></div>
                     </div>
                 </div>
             </div>
@@ -140,7 +119,7 @@
     <x-ui.card class="overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-brand-600/10">
             <div>
-                <h3 class="text-sm font-semibold text-ink tracking-tight">Barangay-Level Coverage</h3>
+                <h3 class="text-lg font-extrabold text-ink">Barangay-Level Coverage</h3>
                 <p class="text-xs text-ink-muted mt-0.5">
                     <span x-text="isMunicipalScope ? barangayCoverage.length + ' barangays of Esperanza' : 'Brgy. ' + $store.session.account?.scope"></span>
                 </p>
@@ -148,7 +127,7 @@
             <div class="flex items-center gap-2 shrink-0">
                 <button
                     @click="exportCSV(barangayCoverage, 'profiling-coverage-export.csv')"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-white/60 hover:border-slate-300 transition"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-2xl surface-glass-sm text-ink-body hover:bg-white/90 transition"
                 >
                     <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
                 </button>
@@ -169,7 +148,7 @@
                         <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-brand-600/[.08] bg-white">
+                <tbody class="divide-y divide-brand-600/[.08]">
                     <template x-for="b in barangayCoverage" :key="b.name">
                         <tr x-show="$store.session.inScope(b.name)" class="hover:bg-white/60 transition-colors group" x-cloak>
                             {{-- Barangay name --}}
@@ -196,7 +175,7 @@
                             {{-- Coverage % with progress bar --}}
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2 min-w-[90px]">
-                                    <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="flex-1 h-2.5 rounded-full bg-track shadow-pressed-sm p-[1.5px]">
                                         <div class="h-full rounded-full"
                                              :class="b.pct >= 90 ? 'bg-emerald-500' : (b.pct >= 70 ? 'bg-amber-400' : 'bg-rose-500')"
                                              :style="'width:' + b.pct + '%'"></div>
@@ -257,7 +236,7 @@
         </x-ui.table>
 
         {{-- Table footer --}}
-        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-brand-600/10 bg-slate-50/50">
+        <div class="flex items-center justify-between gap-2 px-5 py-3 border-t border-brand-600/10 bg-well/50">
             <p class="text-xs text-ink-muted">
                 Showing <span class="font-semibold text-ink" x-text="barangayCoverage.length"></span> barangay(s) &mdash; Municipality of Esperanza, Masbate
             </p>

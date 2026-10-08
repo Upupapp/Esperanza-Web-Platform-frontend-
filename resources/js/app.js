@@ -17,35 +17,15 @@ Alpine.plugin(focus);
 
 window.Alpine = Alpine;
 // The one HTTP client (resources/js/api/client.js). Exposed globally for the
-// same reason Chart and html2pdf are: inline Alpine expressions call it
+// same reason html2pdf is: inline Alpine expressions call it
 // directly. Do NOT add a per-page fetch() -- base URL, auth header, request id,
 // timeout, cancellation and the 401/403/422/5xx mapping all live in there.
 window.EsperanzaApi = api;
-// TAB 11: chart.js and html2pdf.js are loaded ON DEMAND, not on every page.
-// They were static imports, so the login screen shipped a charting library and
-// a PDF engine (html2pdf bundles jsPDF and html2canvas) it can never use.
-// Each loader caches its promise, so concurrent callers share one download.
-let chartModulePromise = null;
-
-window.loadChart = () => {
-    if (!chartModulePromise) {
-        chartModulePromise = import('chart.js').then((m) => {
-            m.Chart.register(
-                m.ArcElement, m.DoughnutController, m.LineElement, m.LineController,
-                m.PointElement, m.BarElement, m.BarController, m.LinearScale,
-                m.CategoryScale, m.Filler, m.Tooltip, m.Legend,
-            );
-            m.Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
-            m.Chart.defaults.color = '#64748b';
-            window.Chart = m.Chart;
-
-            return m.Chart;
-        });
-    }
-
-    return chartModulePromise;
-};
-
+// TAB 11: html2pdf.js is loaded ON DEMAND, not on every page. It was a static
+// import, so the login screen shipped a PDF engine (html2pdf bundles jsPDF and
+// html2canvas) it can never use. The loader caches its promise, so concurrent
+// callers share one download. (Chart.js went 2026-10-08: every chart is the
+// clay SVG doughnut and trend, or the pressed track bars.)
 let pdfModulePromise = null;
 
 window.loadHtml2Pdf = () => {
@@ -1041,57 +1021,6 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    // A doughnut with its total in the centre (dashboard, Reports, Constituents).
-    // The tooltip landed on the centre total and was clipped by the small canvas,
-    // so neither could be read (2026-10-07). No tooltip now: the centre shows the
-    // slice under the pointer (its number and name) and the total otherwise.
-    //   <div x-data="centerDonut()" x-effect="draw(rows)" @mouseleave="hover = null">
-    //     <canvas x-ref="canvas"></canvas> ... x-text="hover ? hover.value : total"
-    // The chart object stays out of Alpine's reactive state.
-    Alpine.data('centerDonut', (opts = {}) => {
-        let chart = null;
-        return {
-            hover: null,
-            async draw(rows) {
-                const list = (rows || []).map((r) => ({ label: r.label, value: Number(r.value) || 0, color: r.color }));
-                this.hover = null;
-                const Chart = await window.loadChart();
-                const canvas = this.$refs.canvas;
-                if (!canvas || !canvas.isConnected) return;
-                if (chart) { chart.destroy(); chart = null; }
-                Chart.getChart?.(canvas)?.destroy();
-                if (!list.length) return;
-                chart = new Chart(canvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: list.map((r) => r.label),
-                        datasets: [{
-                            data: list.map((r) => r.value),
-                            backgroundColor: list.map((r) => r.color),
-                            borderColor: '#ffffff',
-                            borderWidth: opts.borderWidth ?? 0,
-                            hoverOffset: 4,
-                        }],
-                    },
-                    options: {
-                        cutout: opts.cutout || '72%',
-                        layout: { padding: 6 },
-                        maintainAspectRatio: false,
-                        animation: { duration: 600, easing: 'easeOutQuart' },
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        onHover: (event, active) => {
-                            this.hover = active.length ? list[active[0].index] : null;
-                        },
-                    },
-                });
-            },
-            destroy() {
-                if (chart) chart.destroy();
-                chart = null;
-            },
-        };
-    });
-
     // ---- Clay charts (design_handoff_dashboard_clay README "Donut cards",
     // "Requests trend"; STYLE_GUIDE §3.13). SVG built here, so the markup
     // stays a <g x-ref> and the charts need no charting library.
@@ -1382,7 +1311,10 @@ document.addEventListener('alpine:init', () => {
                     label.textContent = String(v);
                     svg.append(label);
                 }
+                // Fourteen days in a half-width card overlapped: every k-th label.
+                const every = Math.max(1, Math.ceil((n * 46) / (W - left - right)));
                 data.labels.forEach((m, i) => {
+                    if (i % every) return;
                     const label = svgEl('text', { x: x(i), y: H - 10, 'text-anchor': 'middle', 'font-size': 11, fill: '#7d89a8', 'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' });
                     label.textContent = trendMonth(m);
                     svg.append(label);
@@ -1425,102 +1357,6 @@ document.addEventListener('alpine:init', () => {
             },
         };
     });
-
-    Alpine.data('donutChart', (config) => ({
-        chart: null,
-        async init() {
-            const Chart = await window.loadChart();
-
-            this.chart = new Chart(this.$refs.canvas, {
-                type: 'doughnut',
-                data: {
-                    labels: config.labels,
-                    datasets: [{
-                        data: config.values,
-                        backgroundColor: config.colors,
-                        borderWidth: 0,
-                        hoverOffset: 6,
-                    }],
-                },
-                options: {
-                    cutout: '72%',
-                    plugins: { legend: { display: false }, tooltip: { padding: 10, cornerRadius: 8 } },
-                    animation: { duration: 900, easing: 'easeOutQuart' },
-                    maintainAspectRatio: false,
-                },
-            });
-        },
-    }));
-
-    Alpine.data('lineChart', (config) => ({
-        chart: null,
-        async init() {
-            const Chart = await window.loadChart();
-
-            this.chart = new Chart(this.$refs.canvas, {
-                type: 'line',
-                data: {
-                    labels: config.labels,
-                    datasets: config.datasets.map((set) => ({
-                        label: set.label,
-                        data: set.data,
-                        borderColor: set.color,
-                        backgroundColor: set.fill ?? 'transparent',
-                        tension: 0.4,
-                        fill: !!set.fill,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointBackgroundColor: set.color,
-                        borderWidth: 2.5,
-                    })),
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    animation: { duration: 900, easing: 'easeOutQuart' },
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { display: false }, tooltip: { padding: 10, cornerRadius: 8 } },
-                    scales: {
-                        x: { grid: { display: false }, border: { display: false } },
-                        y: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { callback: (v) => config.yPrefix ? config.yPrefix + v : v } },
-                    },
-                },
-            });
-        },
-    }));
-
-    Alpine.data('barChart', (config) => ({
-        chart: null,
-        async init() {
-            const Chart = await window.loadChart();
-
-            this.chart = new Chart(this.$refs.canvas, {
-                type: 'bar',
-                data: {
-                    labels: config.labels,
-                    datasets: (config.datasets || [{ label: config.label, data: config.values, backgroundColor: config.colors || config.color }]).map((ds) => ({
-                        label: ds.label,
-                        data: ds.data,
-                        backgroundColor: ds.color || ds.backgroundColor,
-                        borderRadius: 6,
-                        borderSkipped: false,
-                    })),
-                },
-                options: {
-                    indexAxis: config.horizontal ? 'y' : 'x',
-                    maintainAspectRatio: false,
-                    animation: { duration: 900, easing: 'easeOutQuart' },
-                    plugins: {
-                        legend: { display: !!config.showLegend },
-                        tooltip: { padding: 10, cornerRadius: 8 },
-                    },
-                    scales: {
-                        x: { grid: { display: config.horizontal ? false : true, color: '#f1f5f9' }, border: { display: false } },
-                        y: { grid: { display: config.horizontal ? true : false, color: '#f1f5f9' }, border: { display: false } },
-                    },
-                },
-            });
-        },
-    }));
 
     Alpine.data('passwordField', () => ({
         visible: false,

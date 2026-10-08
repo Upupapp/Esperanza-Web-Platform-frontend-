@@ -47,7 +47,7 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredResources, 'resources-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
             <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_resources', 'create')" @click="openCreateResource()"
@@ -64,22 +64,10 @@
 
 {{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Resource Types</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="resourcesList.length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Total Units</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="resourcesList.reduce((s,r) => s + r.quantity, 0)"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Deployed</p>
-        <p class="text-2xl font-bold text-orange-600 mt-1" x-text="resourcesList.reduce((s,r) => s + r.deployed, 0)"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Available</p>
-        <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="resourcesList.reduce((s,r) => s + r.available, 0)"></p>
-    </div>
+    <x-ui.stat-card layout="compact" tone="navy" object="box" label="Resource Types" valueBind="resourcesList.length" />
+    <x-ui.stat-card layout="compact" tone="gold" object="box" label="Total Units" valueBind="resourcesList.reduce((s,r) => s + r.quantity, 0)" />
+    <x-ui.stat-card layout="compact" tone="amber" object="tray" label="Deployed" valueBind="resourcesList.reduce((s,r) => s + r.deployed, 0)" />
+    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Available" valueBind="resourcesList.reduce((s,r) => s + r.available, 0)" />
 </div>
 
 {{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
@@ -181,7 +169,7 @@
         aria-modal="true"
         @keydown.escape.window="showDeployModal = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-md">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-md">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">
@@ -240,7 +228,7 @@
         aria-modal="true"
         @keydown.escape.window="showResourceDetail = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-2xl mb-8">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-2xl mb-8">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <div class="flex items-center gap-3">
@@ -325,7 +313,7 @@
         aria-modal="true"
         @keydown.escape.window="showCreateResource = false">
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-xl">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
             <h3 class="font-semibold text-ink-body" x-text="resourceFormMode === 'create' ? 'Add Resource to Inventory' : 'Edit Resource'"></h3>

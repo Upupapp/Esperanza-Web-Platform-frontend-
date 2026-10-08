@@ -53,83 +53,72 @@
 
 {{-- ── KPI Tiles ────────────────────────────────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Incidents</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="reportScopedIncidents.length"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Incidents Resolved</p>
-        <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="reportScopedIncidents.length ? Math.round(reportScopedIncidents.filter(i => ['Completed','Archived'].includes(i.status)).length / reportScopedIncidents.length * 100) + '%' : '—'"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Evacuees Sheltered</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="reportScopedCenters.reduce((s,c) => s + (c.individuals || 0), 0)"></p>
-    </div>
-    <div class="surface-glass rounded-[26px] p-4">
-        <p class="text-xs text-ink-muted font-medium uppercase tracking-wide">Avg. Readiness Score</p>
-        <p class="text-2xl font-bold text-ink-body mt-1" x-text="reportScopedVulnerability.length ? Math.round(reportScopedVulnerability.reduce((s,v) => s + (v.readiness_score || 0), 0) / reportScopedVulnerability.length) : '—'"></p>
-    </div>
+    <x-ui.stat-card layout="compact" tone="rose" object="flame" label="Incidents" valueBind="reportScopedIncidents.length" />
+    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Incidents Resolved" valueBind="reportScopedIncidents.length ? Math.round(reportScopedIncidents.filter(i => ['Completed','Archived'].includes(i.status)).length / reportScopedIncidents.length * 100) + '%' : '—'" />
+    <x-ui.stat-card layout="compact" tone="brand" object="people" label="Evacuees Sheltered" valueBind="reportScopedCenters.reduce((s,c) => s + (c.individuals || 0), 0)" />
+    <x-ui.stat-card layout="compact" tone="violet" object="ring" label="Avg. Readiness Score" valueBind="reportScopedVulnerability.length ? Math.round(reportScopedVulnerability.reduce((s,v) => s + (v.readiness_score || 0), 0) / reportScopedVulnerability.length) : '—'" />
 </div>
 
-{{-- ── Charts (2×2) ─────────────────────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+{{-- ── Charts (2×2): the dashboard's clay charts (owner, 2026-10-08) ───────────────────── --}}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
-    <div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-5">
-        <h3 class="text-sm font-bold text-ink-body mb-0.5">Incident Trend</h3>
-        <p class="text-xs text-ink-muted mb-4">Last 14 days · <span x-text="reportBarangayFilter || 'All Barangays'"></span></p>
-        <div x-data="lineChart({ labels: reportTrendLabels(), datasets: [{ label: 'Incidents', data: reportTrendData(), color: '#2f62f5', fill: 'rgba(47,98,245,0.08)' }] })" class="relative">
-            <canvas x-ref="canvas" style="height:200px"></canvas>
-        </div>
+    <div class="surface-glass rounded-[26px] p-5">
+        <h3 class="text-lg font-extrabold text-ink">Incident Trend</h3>
+        <p class="text-[13px] text-ink-muted mb-3">Last 14 days · <span x-text="reportBarangayFilter || 'All Barangays'"></span></p>
+        <x-ui.clay-trend data="{ labels: reportTrendLabels(), series: [{ label: 'Incidents', values: reportTrendData(), color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 }] }" label="Incidents reported on each of the last 14 days" />
     </div>
 
-    <div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-5">
-        <h3 class="text-sm font-bold text-ink-body mb-0.5">Incidents by Type</h3>
-        <p class="text-xs text-ink-muted mb-4">Current data</p>
-        <template x-if="reportTypeBreakdown().length">
-            <div x-data="donutChart({ labels: reportTypeBreakdown().map(t => t[0]), values: reportTypeBreakdown().map(t => t[1]), colors: ['#2f62f5','#f59e0b','#f97316','#ec4899','#22c55e','#8b5cf6','#64748b','#94a3b8','#14b8a6','#e11d48'] })" class="relative">
-                <canvas x-ref="canvas" style="height:180px"></canvas>
-            </div>
-        </template>
-        <div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-slate-50">
-            <template x-for="t in reportTypeBreakdown()" :key="t[0]">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs text-ink-muted" x-text="t[0]"></span>
-                    <span class="text-xs font-semibold text-slate-700" x-text="t[1]"></span>
+    <div class="surface-glass rounded-[26px] p-5">
+        <h3 class="text-lg font-extrabold text-ink">Incidents by Type</h3>
+        <p class="text-[13px] text-ink-muted mb-4">Current data</p>
+        <x-ui.clay-donut rows="reportTypeBreakdown().map(t => ({ label: t[0], value: t[1] }))" total-label="Incidents" empty="No incidents to chart." />
+    </div>
+
+    <div class="surface-glass rounded-[26px] p-5">
+        <h3 class="text-lg font-extrabold text-ink">Center Occupancy vs Capacity</h3>
+        <p class="text-[13px] text-ink-muted mb-4" x-text="reportScopedCenters.length + ' center(s)'"></p>
+        <div class="space-y-4">
+            <template x-for="c in reportScopedCenters" :key="c.name">
+                <div x-data="{ get pct() { return c.capacity ? Math.round((c.individuals || 0) / c.capacity * 100) : 0 } }">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <span class="text-[14.5px] font-semibold text-ink-body truncate" x-text="c.name"></span>
+                        <span class="text-sm text-ink-muted shrink-0 tabular-nums" x-text="(c.individuals || 0) + ' / ' + (c.capacity || 0) + ' · ' + pct + '%'"></span>
+                    </div>
+                    <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
+                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard" :class="pct >= 100 ? 'from-rose-400 to-rose-600' : (pct >= 75 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, pct) + '%'"></div>
+                    </div>
                 </div>
             </template>
+            <div x-show="!reportScopedCenters.length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No centers to chart.</div>
         </div>
-        <p x-show="!reportTypeBreakdown().length" class="text-xs text-ink-muted italic">No incidents to chart.</p>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-5">
-        <h3 class="text-sm font-bold text-ink-body mb-0.5">Center Occupancy vs Capacity</h3>
-        <p class="text-xs text-ink-muted mb-4" x-text="reportScopedCenters.length + ' center(s)'"></p>
-        <template x-if="reportScopedCenters.length">
-            <div x-data="barChart({ labels: reportScopedCenters.map(c => c.name), datasets: [{ label: 'Occupancy', data: reportScopedCenters.map(c => c.individuals || 0), color: '#2f62f5' }, { label: 'Capacity', data: reportScopedCenters.map(c => c.capacity || 0), color: '#e2e8f0' }], showLegend: true })" class="relative">
-                <canvas x-ref="canvas" style="height:200px"></canvas>
-            </div>
-        </template>
-        <p x-show="!reportScopedCenters.length" class="text-xs text-ink-muted italic">No centers to chart.</p>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-5">
-        <h3 class="text-sm font-bold text-ink-body mb-0.5">Readiness Score — Lowest Barangays</h3>
-        <p class="text-xs text-ink-muted mb-4">Score out of 100</p>
-        <template x-if="reportLowestReadiness(8).length">
-            <div x-data="barChart({ horizontal: true, labels: reportLowestReadiness(8).map(v => v.barangay), values: reportLowestReadiness(8).map(v => v.readiness_score), colors: reportLowestReadiness(8).map(v => v.readiness_score < 50 ? '#f43f5e' : v.readiness_score < 70 ? '#f59e0b' : '#2f62f5'), label: 'Readiness Score' })" class="relative">
-                <canvas x-ref="canvas" style="height:220px"></canvas>
-            </div>
-        </template>
-        <p x-show="!reportLowestReadiness(8).length" class="text-xs text-ink-muted italic">No assessed barangays to chart.</p>
+    <div class="surface-glass rounded-[26px] p-5">
+        <h3 class="text-lg font-extrabold text-ink">Readiness Score — Lowest Barangays</h3>
+        <p class="text-[13px] text-ink-muted mb-4">Score out of 100</p>
+        <div class="space-y-4">
+            <template x-for="v in reportLowestReadiness(8)" :key="v.barangay">
+                <div>
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <span class="text-[14.5px] font-semibold text-ink-body truncate" x-text="'Brgy. ' + v.barangay"></span>
+                        <span class="text-sm text-ink-muted shrink-0 tabular-nums" x-text="(v.readiness_score || 0) + ' / 100'"></span>
+                    </div>
+                    <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
+                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_2px_2px_rgb(255_255_255/.45),inset_0_-2px_3px_rgb(11_23_48/.3)] transition-all duration-[600ms] ease-standard" :class="v.readiness_score < 50 ? 'from-rose-400 to-rose-600' : (v.readiness_score < 70 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, v.readiness_score || 0) + '%'"></div>
+                    </div>
+                </div>
+            </template>
+            <div x-show="!reportLowestReadiness(8).length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No assessed barangays to chart.</div>
+        </div>
     </div>
 </div>
 
 {{-- ── Export ───────────────────────────────────────────────────────────────────────────── --}}
-<div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-5">
-    <h3 class="text-sm font-bold text-ink-body mb-3">Export Data</h3>
+<div class="surface-glass rounded-[26px] p-5">
+    <h3 class="text-lg font-extrabold text-ink mb-3">Export Data</h3>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button @click="exportCSV(reportScopedIncidents, 'incidents-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 transition-colors">
+            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="flame" class="w-4 h-4"></i></span>
             <span>
                 <span class="block text-sm font-medium text-slate-700">Incidents</span>
@@ -137,7 +126,7 @@
             </span>
         </button>
         <button @click="exportCSV(reportScopedCenters, 'centers-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 transition-colors">
+            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="house" class="w-4 h-4"></i></span>
             <span>
                 <span class="block text-sm font-medium text-slate-700">Evacuation Centers</span>
@@ -145,7 +134,7 @@
             </span>
         </button>
         <button @click="exportCSV(reportScopedVulnerability, 'vulnerability-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 transition-colors">
+            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="shield-alert" class="w-4 h-4"></i></span>
             <span>
                 <span class="block text-sm font-medium text-slate-700">Vulnerability Assessments</span>

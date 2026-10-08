@@ -1225,7 +1225,7 @@
             <span x-text="opStatus"></span>
         </span>
 
-        <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors" title="Open the alerts or incidents behind this">
+        <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-1.5 hover:bg-white/90 transition-colors" title="Open the alerts or incidents behind this">
             <i data-lucide="radio-tower" class="w-4 h-4 text-ink-muted"></i>
             <span x-text="activeEventLabel" class="max-w-48 truncate"></span>
         </button>
@@ -1236,7 +1236,7 @@
         </button>
 
         <div class="ml-auto flex items-center gap-2">
-            <button x-show="tabAllowed('reports')" @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5 shadow-card hover:border-slate-300 transition-colors">
+            <button x-show="tabAllowed('reports')" @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-1.5 hover:bg-white/90 transition-colors">
                 <i data-lucide="file-bar-chart" class="w-4 h-4 text-ink-muted"></i> SitRep &amp; Reports
             </button>
             {{-- Warning the public must never be past the edge of the tab row
@@ -1390,7 +1390,7 @@
         role="dialog"
         aria-modal="true"
         @keydown.escape.window="showEOCConfirm = false">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
+        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center flex-shrink-0">
                     <i data-lucide="siren" class="w-6 h-6 text-rose-600"></i>

@@ -46,7 +46,7 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredCenters, 'evacuation-centers-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
             <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
         </button>
         <button x-show="can('sakuna_centers', 'create')" @click="openCreateCenter()"
@@ -106,7 +106,7 @@
         @endforeach
     </select>
     <button @click="centerSearch=''; centerStatusFilter=''; centerBarangayFilter='';"
-        class="inline-flex items-center gap-1.5 text-sm text-ink-muted bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+        class="inline-flex items-center gap-1.5 text-sm text-ink-muted surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
         <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
     </button>
     <div class="surface-glass rounded-[26px] ml-auto flex items-center overflow-hidden">
@@ -122,7 +122,7 @@
 {{-- ── Centers Grid View ────────────────────────────────────────────────────────────────── --}}
 <div x-show="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
     <template x-for="c in filteredCenters" :key="c.ref">
-        <div class="bg-white rounded-2xl shadow-card border border-brand-600/10 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+        <div class="surface-glass rounded-[26px] p-5 flex flex-col gap-3 hover:shadow-glass-hover transition-shadow">
             <div class="flex items-start justify-between gap-2">
                 <div>
                     <h3 class="text-sm font-semibold text-ink-body leading-tight" x-text="c.name"></h3>
@@ -177,7 +177,7 @@
 </div>
 
 {{-- ── Centers Table View ───────────────────────────────────────────────────────────────── --}}
-<div x-show="viewMode === 'table'" x-cloak class="bg-white rounded-2xl shadow-card border border-brand-600/10 overflow-hidden">
+<div x-show="viewMode === 'table'" x-cloak class="surface-glass rounded-[26px] overflow-hidden">
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-brand-600/[.08]">
             <thead>
@@ -250,7 +250,7 @@
         x-transition:enter="transition duration-[200ms] ease-emphasized"
         x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-3xl max-h-[90vh] overflow-y-auto">
 
         <div class="flex items-start justify-between px-6 pt-6 pb-4 border-b border-brand-600/10 sticky top-0 bg-white rounded-t-2xl z-10">
             <div class="flex items-start gap-3">
@@ -361,7 +361,7 @@
         @keydown.escape.window="showOpenCenterConfirm = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
 
         <div class="flex items-center gap-3 mb-4">
             <span class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0"><i data-lucide="door-open" class="w-5 h-5 text-emerald-600"></i></span>
@@ -396,7 +396,7 @@
         @keydown.escape.window="showCloseCenterConfirm = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-md p-6">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
 
         <div class="flex items-center gap-3 mb-4">
             <span class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><i data-lucide="circle-x" class="w-5 h-5 text-rose-600"></i></span>
@@ -439,7 +439,7 @@
         @keydown.escape.window="showCreateCenter = false">
 
     <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-        class="bg-white rounded-2xl shadow-float w-full max-w-xl max-h-[90vh] overflow-y-auto">
+        class="bg-white rounded-[28px] shadow-float w-full max-w-xl max-h-[90vh] overflow-y-auto">
 
         <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-brand-600/10 sticky top-0 bg-white rounded-t-2xl z-10">
             <div class="flex items-center gap-3">
