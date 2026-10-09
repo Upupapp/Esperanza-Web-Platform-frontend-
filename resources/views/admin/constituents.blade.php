@@ -169,6 +169,10 @@
         // Identity (2026-10-09): the reason an officer gives to verify an
         // identity by hand, restore one, or revoke it. Kept on the record.
         identityReason: '',
+        // The registry record registration recognised the resident as, and
+        // records the account may really be (2026-10-09).
+        registryMatch: null,
+        registryBusy: false,
         // A resident's approved photo by registry ref (from GET /admin/citizens), for
         // the rows, the detail and household and family members.
         photoByRef: {},
@@ -197,6 +201,8 @@
             this.identityReason = '';
             this.showAccountReview = true;
             this.accountLoading = true;
+            this.registryMatch = null;
+            this.loadRegistryMatch(i);
             try {
                 this.accountDetail = (await $api.get('/admin/citizens/' + encodeURIComponent(i.citizen_account.account_no))).data;
             } catch (err) {
@@ -204,6 +210,30 @@
                 this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not open this account.', variant: 'error' });
             } finally {
                 this.accountLoading = false;
+                this.$nextTick(() => window.renderIcons?.());
+            }
+        },
+        async loadRegistryMatch(i) {
+            try {
+                this.registryMatch = (await $api.get('/admin/citizens/' + encodeURIComponent(i.citizen_account.account_no) + '/registry-match')).data;
+            } catch { this.registryMatch = null; }
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        async decideRegistryMatch(action, ref = null) {
+            const i = this.accountRow;
+            if (!i || this.registryBusy) return;
+            if (action === 'reject' && !window.confirm('Not the same person? ' + (this.registryMatch?.record?.ref || 'The record') + ' stays as it is, and the account gets a record of its own.')) return;
+            if (action === 'link' && !window.confirm('Use ' + ref + ' as this resident\'s record? Their account and requests move to it; the record made at registration is merged into it (it can be reverted from Data Quality).')) return;
+            this.registryBusy = true;
+            try {
+                const url = '/admin/citizens/' + encodeURIComponent(i.citizen_account.account_no) + '/registry-match/' + action;
+                this.registryMatch = (await $api.post(url, action === 'link' ? { ref } : {})).data;
+                this.$dispatch('toast', { message: { confirm: 'Confirmed: the record is this resident\'s.', reject: 'The account has a record of its own now.', link: 'The account now uses ' + ref + '.' }[action], variant: 'success' });
+                this.loadRegistry();
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not update the registry record.', variant: 'error' });
+            } finally {
+                this.registryBusy = false;
                 this.$nextTick(() => window.renderIcons?.());
             }
         },
@@ -462,7 +492,7 @@
                 if (this.tagFilter && !(r.tags||[]).includes(this.tagFilter)) return false;
                 if (this.search) {
                     const q = this.search.toLowerCase();
-                    return (r.name||'').toLowerCase().includes(q)||(r.ref||'').toLowerCase().includes(q)||(r.barangay||'').toLowerCase().includes(q)||(r.occupation||'').toLowerCase().includes(q);
+                    return (r.name||'').toLowerCase().includes(q)||(r.ref||'').toLowerCase().includes(q)||(r.barangay||'').toLowerCase().includes(q)||(r.occupation||'').toLowerCase().includes(q)||(r.imported_from||'').toLowerCase()===q;
                 }
                 return true;
             });
@@ -626,6 +656,8 @@
         clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.cvSearch='';this.cvStatusFilter='';this.cvBarangayFilter='';this.cvTagFilter=''; },
     }"
     x-init="init()"
+    x-on:residents-imported.window="loadRegistry()"
+    x-on:registry-show-import.window="tab='registry';view='individuals';clearFilters();search=$event.detail.ref"
     class="animate-fade-up"
 >
 
@@ -655,7 +687,7 @@
                     <i data-lucide="chevron-down" class="w-3 h-3 opacity-70 transition-transform" :class="showAddMenu&&'rotate-180'"></i>
                 </button>
                 <div x-show="showAddMenu" x-transition.origin.top.right x-cloak
-                     class="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl border border-slate-200 shadow-lg z-30 overflow-hidden">
+                     class="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl border border-slate-200 shadow-lg z-30 overflow-hidden">
                     <button x-show="can('const_resident','create')" @click="addIndividualStep=1;showAddIndividual=true;showAddMenu=false;$nextTick(()=>window.renderIcons?.())"
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
                         <i data-lucide="user-plus" class="w-3.5 h-3.5 text-brand-500"></i>New Resident
@@ -668,6 +700,17 @@
                             class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
                         <i data-lucide="house" class="w-3.5 h-3.5 text-emerald-500"></i>New Household
                     </button>
+                    {{-- The LGU's own resident lists, in bulk (owner, 2026-10-09). --}}
+                    <div x-show="can('const_resident','create')" class="border-t border-slate-100">
+                        <button @click="showAddMenu=false;$dispatch('open-resident-import')"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
+                            <i data-lucide="file-up" class="w-3.5 h-3.5 text-gold-600"></i>Import from a file
+                        </button>
+                        <button @click="showAddMenu=false;$dispatch('open-resident-import',{panel:'history'})"
+                                class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-white/60 flex items-center gap-2.5">
+                            <i data-lucide="history" class="w-3.5 h-3.5 text-slate-400"></i>Past imports
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -850,6 +893,7 @@
     <div x-show="showMerge"            x-cloak>@include('admin.constituents.modal-merge')</div>
     <div x-show="showDQDetail"         x-cloak>@include('admin.constituents.modal-dq-detail')</div>
     <div x-show="showAccountReview"    x-cloak>@include('admin.constituents.modal-citizen-account')</div>
+    @include('admin.constituents.modal-import')
 
 </div>
 </x-layouts.admin>

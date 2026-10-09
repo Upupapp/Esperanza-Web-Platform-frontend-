@@ -37,6 +37,48 @@
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted">Address</dt><dd class="font-semibold text-ink text-right" x-text="accountDetail?.address || '—'"></dd></div>
             </dl>
 
+            {{-- Registry record (owner, 2026-10-09): the record the LGU
+                 already had that registration recognised this resident as, or
+                 records they may be. --}}
+            <section x-show="registryMatch && (registryMatch.status || registryMatch.candidates?.length)" x-cloak class="rounded-2xl border p-4 space-y-3" :class="registryMatch?.status === 'pending' ? 'border-amber-200 bg-amber-50/50' : 'border-slate-200'">
+                <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="user-search" class="w-3.5 h-3.5"></i> Registry record</p>
+                <template x-if="registryMatch?.record && ['pending', 'confirmed'].includes(registryMatch?.status)">
+                    <div class="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+                        <p class="text-sm font-semibold text-ink"><span x-text="registryMatch.record.name"></span> <span class="text-xs font-mono text-ink-muted" x-text="registryMatch.record.ref"></span></p>
+                        <p class="text-xs text-ink-muted" x-text="[registryMatch.record.age != null ? registryMatch.record.age + ' yrs' : null, registryMatch.record.sex, registryMatch.record.household?.label, registryMatch.record.imported_from ? 'imported from ' + registryMatch.record.imported_from.filename : null].filter(Boolean).join(' · ')"></p>
+                        <p x-show="registryMatch.reasons?.length" class="text-xs text-emerald-700 mt-1" x-text="'Matched on: ' + window.registryReasonText(registryMatch.reasons)"></p>
+                    </div>
+                </template>
+                <template x-if="registryMatch?.status === 'pending'">
+                    <div class="space-y-2">
+                        <p class="text-xs text-ink">Registration recognised this resident as a record the barangay already had. Until an officer confirms it, the resident sees only the details they gave themselves. <strong>Verifying the account confirms it.</strong></p>
+                        <p x-show="registryMatch.held_profile" class="text-xs text-ink-muted">They have sent their Resident Profile; it goes onto the record once confirmed.</p>
+                        <div class="flex flex-wrap gap-2" x-show="can('const_citizen_verification','verify')">
+                            <x-ui.button size="sm" icon="user-check" x-bind:disabled="registryBusy" @click="decideRegistryMatch('confirm')">It is them</x-ui.button>
+                            <button type="button" @click="decideRegistryMatch('reject')" :disabled="registryBusy" class="text-xs font-semibold rounded-xl px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50">Not the same person</button>
+                        </div>
+                    </div>
+                </template>
+                <p x-show="registryMatch?.status === 'confirmed'" class="text-xs text-ink-muted" x-text="(registryMatch?.linked_by_officer ? 'Linked' : 'Confirmed') + (registryMatch?.decided_by ? ' by ' + registryMatch.decided_by : '') + (registryMatch?.decided_at ? ', ' + new Date(registryMatch.decided_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '') + '.'"></p>
+                <p x-show="registryMatch?.status === 'rejected'" class="text-xs text-ink-muted" x-text="'Not ' + (registryMatch?.rejected_ref || 'the matched record') + (registryMatch?.decided_by ? ' (decided by ' + registryMatch.decided_by + ')' : '') + '. The account has a record of its own.'"></p>
+                <template x-if="registryMatch?.candidates?.length">
+                    <div class="space-y-2">
+                        <p class="text-xs text-ink">Records already in the registry that may be this resident:</p>
+                        <template x-for="c in registryMatch.candidates" :key="c.ref">
+                            <div class="flex flex-wrap items-start gap-3 rounded-xl bg-white border border-slate-200 px-3 py-2.5">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-ink"><span x-text="c.name"></span> <span class="text-xs font-mono text-ink-muted" x-text="c.ref"></span>
+                                        <span class="ml-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ring-1" :class="c.strength === 'strong' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-amber-200'" x-text="c.strength === 'strong' ? 'Strong match' : 'Possible match'"></span></p>
+                                    <p class="text-xs text-ink-muted" x-text="[c.age != null ? c.age + ' yrs' : null, c.sex, c.household?.label, c.imported_from ? 'imported from ' + c.imported_from.filename : null].filter(Boolean).join(' · ')"></p>
+                                    <p class="text-xs text-ink-muted mt-0.5" x-text="window.registryReasonText(c.reasons)"></p>
+                                </div>
+                                <button type="button" x-show="can('const_citizen_verification','verify')" @click="decideRegistryMatch('link', c.ref)" :disabled="registryBusy" class="text-xs font-semibold rounded-xl px-3 py-2 bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:opacity-50">Use this record</button>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </section>
+
             {{-- Identity (2026-10-09). Separate from the residency decision
                  at the bottom: the automated check (Didit) says whether the
                  person is who the ID says; it never says they live here. --}}

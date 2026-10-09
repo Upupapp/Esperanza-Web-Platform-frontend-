@@ -97,6 +97,7 @@
                                     <p class="text-xs text-ink-muted mt-0.5 flex items-center gap-1">
                                         <span x-text="'ID: ' + r.ref"></span>
                                         <i x-show="r.citizen_account" data-lucide="smartphone" class="w-3 h-3 text-brand-500" title="Linked to Citizen Portal account"></i>
+                                        <span x-show="r.imported_from" x-cloak class="px-1.5 rounded bg-slate-100 text-[10px] font-semibold text-slate-500" :title="'Imported from a file (' + r.imported_from + ')'">Imported</span>
                                     </p>
                                     {{-- Tag chips --}}
                                     <div class="flex flex-wrap gap-1 mt-1.5">

@@ -3,6 +3,7 @@ import api from './api/client';
 import { resource } from './api/resource';
 import { specForm } from './api/form';
 import { residentProfileForm } from './resident-profile-form';
+import { residentImport, reasonText } from './resident-import-ui';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons } from 'lucide';
@@ -451,6 +452,12 @@ document.addEventListener('alpine:init', () => {
 
     // The Resident Profile form on the website (live test 2026-10-07, UX-8).
     Alpine.data('residentProfileForm', residentProfileForm);
+
+    // Constituents -> Import from a file (owner, 2026-10-09). Reading the
+    // file is a separate chunk, loaded when the window first opens.
+    Alpine.data('residentImport', residentImport);
+    // Why a record matched, for the account review's Registry record panel.
+    window.registryReasonText = reasonText;
 
     // The staff site is English-only by owner ruling (TAB 09). The document
     // editor it shares with the resident site follows this store, so staff saw
