@@ -32,7 +32,7 @@
         'secondary' => 'surface-glass-sm text-ink-body hover:bg-white/90 hover:shadow-glass active:shadow-pressed-sm active:bg-well focus-visible:ring-brand-100',
         'ghost' => 'bg-transparent text-ink-muted hover:bg-white/60 hover:text-ink focus-visible:ring-brand-100',
         'danger' => 'clay-rose btn-shine hover:brightness-95 active:shadow-pressed-dark focus-visible:ring-rose-100',
-        'gold' => 'clay-gold btn-shine hover:brightness-[.97] active:shadow-[inset_3px_3px_8px_rgb(140_110_0/.35)] focus-visible:ring-gold-100',
+        'gold' => 'clay-gold btn-shine hover:brightness-[.97] active:shadow-[inset_0_1px_2px_rgb(140_110_0/.25)] focus-visible:ring-gold-100',
     ];
 
     $classes = $base . ' ' . ($sizes[$size] ?? $sizes['md']) . ' ' . ($variants[$variant] ?? $variants['primary']);

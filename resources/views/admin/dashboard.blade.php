@@ -160,9 +160,9 @@
 
         <!-- Skeleton state -->
         <div x-show="!ready" x-transition.opacity.duration.300ms class="flex flex-col gap-5">
-            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
+            <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
                 @for ($i = 0; $i < 6; $i++)
-                    <div class="surface-glass rounded-[26px] p-[18px] space-y-3">
+                    <div class="surface-glass rounded-[22px] min-h-[136px] p-4 space-y-3">
                         <x-ui.skeleton class="h-3 w-24" />
                         <x-ui.skeleton class="h-9 w-16" />
                         <x-ui.skeleton class="h-6 w-28 rounded-full" />
@@ -186,14 +186,14 @@
         <!-- Real content -->
         <div x-show="ready && !failed" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
-            <!-- KPI coins -->
-            <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
-                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
-                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.assistance-requests') . '?open=1'" label="Tulong Open" valueBind="openTulong" icon="hand-heart" color="deep" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="slate" sublabel="Document requests" :delay="160" /></div>
-                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card class="h-full" :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="gold" sublabel="Dokyu + Tulong" :delay="200" /></div>
+            <!-- KPI cards: all six in one row on a wide screen (owner, 2026-10-09), so compact -->
+            <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
+                <div x-show="$store.session.can('constituents')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.constituents')" label="Registered Residents" valueBind="registeredResidents ?? '—'" icon="users" color="brand" sublabelBind="scopeLabel" :delay="0" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
+                <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.assistance-requests') . '?open=1'" label="Tulong Open" valueBind="openTulong" icon="hand-heart" color="deep" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
+                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="slate" sublabel="Document requests" :delay="160" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="gold" sublabel="Dokyu + Tulong" :delay="200" /></div>
             </div>
 
             <!-- Row 1: doughnuts + barangays -->
@@ -223,8 +223,8 @@
                     <div class="flex flex-col items-start gap-3 mb-5">
                         <h3 class="text-lg font-extrabold text-ink leading-tight">Open requests by barangay</h3>
                         <div x-show="$store.session.can('dokyu') && $store.session.can('tulong')" class="inline-flex p-1 rounded-xl surface-pressed-sm shrink-0" role="tablist" aria-label="Module">
-                            <button type="button" role="tab" x-show="$store.session.can('dokyu')" :aria-selected="brgyTab === 'dokyu'" @click="brgyTab = 'dokyu'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'dokyu' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Dokyu</button>
-                            <button type="button" role="tab" x-show="$store.session.can('tulong')" :aria-selected="brgyTab === 'tulong'" @click="brgyTab = 'tulong'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'tulong' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'font-semibold text-ink-muted hover:text-ink'">Tulong</button>
+                            <button type="button" role="tab" x-show="$store.session.can('dokyu')" :aria-selected="brgyTab === 'dokyu'" @click="brgyTab = 'dokyu'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'dokyu' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'">Dokyu</button>
+                            <button type="button" role="tab" x-show="$store.session.can('tulong')" :aria-selected="brgyTab === 'tulong'" @click="brgyTab = 'tulong'" class="px-3 py-1.5 rounded-[10px] text-[12.5px] transition-all duration-200" :class="brgyTab === 'tulong' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'">Tulong</button>
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -235,7 +235,7 @@
                                     <span class="text-sm text-ink-muted shrink-0" x-text="brgy.count + (brgy.count === 1 ? ' request' : ' requests')"></span>
                                 </div>
                                 <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
+                                    <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all duration-[600ms] ease-standard" :style="'width:' + brgy.pct + '%'"></div>
                                 </div>
                             </div>
                         </template>

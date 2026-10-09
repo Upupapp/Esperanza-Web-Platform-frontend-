@@ -57,9 +57,9 @@
                      UX-6): the only switch used to be in Settings, after sign-in. --}}
                 <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 inline-flex p-1 rounded-2xl surface-pressed-sm text-[13px] font-semibold" role="group" aria-label="Wika / Language">
                     <button type="button" @click="$store.lang.set('fil')" :aria-pressed="$store.lang.current !== 'en'"
-                        :class="$store.lang.current !== 'en' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'" class="px-3.5 py-2 rounded-xl transition-all duration-200">Filipino</button>
+                        :class="$store.lang.current !== 'en' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" class="px-3.5 py-2 rounded-xl transition-all duration-200">Filipino</button>
                     <button type="button" @click="$store.lang.set('en')" :aria-pressed="$store.lang.current === 'en'"
-                        :class="$store.lang.current === 'en' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'" class="px-3.5 py-2 rounded-xl transition-all duration-200">English</button>
+                        :class="$store.lang.current === 'en' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" class="px-3.5 py-2 rounded-xl transition-all duration-200">English</button>
                 </div>
             @endif
             <main class="w-full max-w-md animate-fade-up surface-glass rounded-[32px] p-7 sm:p-9 {{ $fullscreen ? 'max-h-full overflow-y-auto scrollbar-thin' : '' }}">

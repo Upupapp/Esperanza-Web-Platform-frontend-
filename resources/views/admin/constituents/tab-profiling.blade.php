@@ -69,7 +69,7 @@
                         </span>
                     </div>
                     <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard from-brand-400 to-brand-600" :style="'width:' + pct + '%'"></div>
+                        <div class="h-full rounded-full bg-gradient-to-r transition-all duration-[600ms] ease-standard from-brand-400 to-brand-600" :style="'width:' + pct + '%'"></div>
                     </div>
                 </div>
                 {{-- Household profiling bar --}}
@@ -86,7 +86,7 @@
                         </span>
                     </div>
                     <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard from-brand-500 to-brand-700" :style="'width:' + pct + '%'"></div>
+                        <div class="h-full rounded-full bg-gradient-to-r transition-all duration-[600ms] ease-standard from-brand-500 to-brand-700" :style="'width:' + pct + '%'"></div>
                     </div>
                 </div>
                 {{-- Barangays with ≥80% bar --}}
@@ -103,7 +103,7 @@
                         </span>
                     </div>
                     <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                        <div class="h-full rounded-full bg-gradient-to-r shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard from-gold-300 to-gold-500" :style="'width:' + pct + '%'"></div>
+                        <div class="h-full rounded-full bg-gradient-to-r transition-all duration-[600ms] ease-standard from-gold-300 to-gold-500" :style="'width:' + pct + '%'"></div>
                     </div>
                 </div>
             </div>

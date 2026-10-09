@@ -142,8 +142,8 @@
         </div>
 
         <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-4">
-            <button @click="tab = 'reports'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'reports' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="file-chart-column" class="w-3.5 h-3.5"></i>Reports</button>
-            <button @click="tab = 'analytics'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'analytics' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'"><i data-lucide="trending-up" class="w-3.5 h-3.5"></i>Analytics</button>
+            <button @click="tab = 'reports'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'reports' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="file-chart-column" class="w-3.5 h-3.5"></i>Reports</button>
+            <button @click="tab = 'analytics'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'analytics' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="trending-up" class="w-3.5 h-3.5"></i>Analytics</button>
         </div>
 
         <!-- Reports -->
@@ -269,7 +269,7 @@
                                 <span class="text-sm text-ink-muted shrink-0" x-text="b.requests + (b.requests === 1 ? ' request' : ' requests')"></span>
                             </div>
                             <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                                <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 shadow-[inset_0_1px_0_rgb(255_255_255/.3)] transition-all duration-[600ms] ease-standard" :style="'width:' + b.pct + '%'"></div>
+                                <div class="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all duration-[600ms] ease-standard" :style="'width:' + b.pct + '%'"></div>
                             </div>
                         </div>
                     </template>

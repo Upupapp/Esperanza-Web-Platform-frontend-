@@ -686,24 +686,24 @@
         <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-5">
             <button @click="tab='registry';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
-                    :class="tab==='registry'     ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
+                    :class="tab==='registry'     ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="users" class="w-3.5 h-3.5"></i>Registry
             </button>
             <button @click="tab='profiling';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
-                    :class="tab==='profiling'    ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
+                    :class="tab==='profiling'    ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="user-round-search" class="w-3.5 h-3.5"></i>Profiling Coverage
             </button>
             <button @click="tab='data-quality';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
-                    :class="tab==='data-quality' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
+                    :class="tab==='data-quality' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>Data Quality
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                       :class="tab==='data-quality' ? 'bg-white/25 text-white' : 'bg-rose-100 text-rose-600'" x-text="qualityIssues.length"></span>
             </button>
             <button @click="tab='citizen-verification';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
-                    :class="tab==='citizen-verification' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_3px_rgb(11_23_48/.08),inset_0_1px_0_#fff]' : 'text-ink-muted hover:text-ink'">
+                    :class="tab==='citizen-verification' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>To Verify
                 <span
                     :title="verificationQueueBreakdown"

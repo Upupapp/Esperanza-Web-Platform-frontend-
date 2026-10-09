@@ -1233,7 +1233,7 @@ document.addEventListener('alpine:init', () => {
                 const pt = (rad, a) => `${(cx + rad * Math.cos(a)).toFixed(2)} ${(cy + rad * Math.sin(a)).toFixed(2)}`;
                 const add = (d, row, i, mid) => {
                     const el = svgEl('path', { d, fill: row.color, stroke: row.color, 'stroke-width': 5, 'stroke-linejoin': 'round', 'fill-rule': 'evenodd' });
-                    el.style.cssText = 'cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s,filter .2s;filter:drop-shadow(0 1px 2px rgba(11,23,48,.10));';
+                    el.style.cssText = 'cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s,filter .2s;';
                     el.addEventListener('mouseenter', () => { this.hover = i; });
                     g.appendChild(el);
                     paths.push({ el, mid });
