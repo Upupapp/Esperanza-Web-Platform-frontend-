@@ -84,6 +84,13 @@ export function residentImport() {
         history: [],
         historyLoading: false,
         historyFailed: false,
+        // The row being corrected in the review (owner, 2026-10-09: fix what
+        // was not accepted here, not in the file).
+        editing: null,
+        draft: {},
+        draftErrors: [],
+        checkingRow: false,
+
         undoTarget: null,
         undoReason: '',
         undoing: false,
@@ -121,6 +128,7 @@ export function residentImport() {
                 step: 1, error: '', fileName: '', format: '', tables: [], tableIndex: 0, headerRow: 0, headers: [], body: [], mapping: [],
                 fixedBarangay: '', barangayValues: [], rows: [], filter: 'all', page: 1, importRef: null, summary: null, stoppedAt: null,
                 progress: { done: 0, total: 0 }, onMatch: 'skip', verification: 'Unverified', surnameFirst: false, groupHouseholds: true,
+                editing: null, draftErrors: [],
             });
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -287,14 +295,9 @@ export function residentImport() {
                 return;
             }
 
-            // The same person twice in this file: the first one counts.
-            const seen = {};
-            for (const r of rows) {
-                if (r.status !== 'ready' || !r.key) continue;
-                const k = r.key + '|' + (r.dob || '') + '|' + r.barangay;
-                if (seen[k]) { r.status = 'twice'; r.twinOf = seen[k]; r.action = 'skip'; } else seen[k] = r.row;
-            }
             this.rows = rows;
+            this.editing = null;
+            this.recountTwins();
             this.filter = this.counts.error ? 'error' : this.counts.match ? 'match' : 'all';
             this.page = 1;
             this.step = 3;
@@ -312,12 +315,111 @@ export function residentImport() {
             };
         },
 
+        // The same person twice in this file: the first one counts. Run again
+        // after a correction, which can make or break a pair.
+        recountTwins() {
+            const seen = {};
+            for (const r of this.pending) {
+                if (r.status === 'twice') { r.keepNew = r.action === 'new'; r.status = 'ready'; r.twinOf = null; r.action = 'auto'; }
+            }
+            for (const r of this.pending) {
+                if (r.status !== 'ready' || !r.key) continue;
+                const k = r.key + '|' + (r.dob || '') + '|' + r.barangay;
+                if (seen[k]) { r.status = 'twice'; r.twinOf = seen[k]; r.action = r.keepNew ? 'new' : 'skip'; } else seen[k] = r.row;
+            }
+        },
+
+        // Rows not yet sent in an import: all of them, until an import has
+        // run; then the ones left to fix.
+        get pending() { return this.rows.filter((r) => !r.outcome); },
         get counts() {
-            const c = { all: this.rows.length, ready: 0, match: 0, twice: 0, error: 0 };
-            this.rows.forEach((r) => { c[r.status]++; });
+            const c = { all: 0, ready: 0, match: 0, twice: 0, error: 0 };
+            this.pending.forEach((r) => { c.all++; c[r.status]++; });
             return c;
         },
-        get filtered() { return this.filter === 'all' ? this.rows : this.rows.filter((r) => r.status === this.filter); },
+        get filtered() { return this.filter === 'all' ? this.pending : this.pending.filter((r) => r.status === this.filter); },
+
+        // ---------------------------------------------------- Correcting a row
+
+        fileValue(r, field) {
+            const at = this.mapping.indexOf(field);
+            return at >= 0 ? (r.cells[at] || '') : '';
+        },
+
+        startEdit(r) {
+            this.editing = r.row;
+            this.draftErrors = [];
+            this.draft = {
+                first_name: r.first_name || '', middle_name: r.middle_name || '', last_name: r.last_name || '', suffix: r.suffix || '',
+                sex: r.sex || '', dob: r.dob || '', civil_status: r.civil_status || '', barangay: r.barangay || (this.scope || ''),
+                sitio: r.sitio || '', relation: r.relation || '', household_key: r.household_key || '', contact: r.contact || '',
+            };
+            this.$nextTick(() => window.renderIcons?.());
+        },
+
+        cancelEdit() {
+            this.editing = null;
+            this.draftErrors = [];
+            this.$nextTick(() => window.renderIcons?.());
+        },
+
+        async saveEdit(r) {
+            if (this.checkingRow) return;
+            const d = Object.fromEntries(Object.entries(this.draft).map(([k, v]) => [k, String(v ?? '').trim()]));
+            const errors = [];
+            if (!d.first_name) errors.push('First name is missing');
+            if (!d.last_name) errors.push('Last name is missing');
+            if (d.dob) {
+                const today = new Date().toISOString().slice(0, 10);
+                if (this.lib.parseDate(d.dob).error) errors.push('Birth date is not a date');
+                else if (d.dob >= today || d.dob <= '1900-01-01') errors.push('Birth date must be between 1900 and today');
+            }
+            if (!d.barangay) errors.push('Choose the barangay');
+            else if (this.scope && d.barangay !== this.scope) errors.push('Outside your barangay (' + this.scope + ')');
+            if (errors.length) { this.draftErrors = errors; return; }
+
+            const before = r.status;
+            const blankToNull = (v) => (v === '' ? null : v);
+            Object.assign(r, {
+                first_name: d.first_name, middle_name: blankToNull(d.middle_name), last_name: d.last_name, suffix: blankToNull(d.suffix),
+                sex: blankToNull(d.sex), dob: blankToNull(d.dob), civil_status: blankToNull(d.civil_status), barangay: d.barangay,
+                sitio: blankToNull(d.sitio), relation: blankToNull(d.relation), household_key: blankToNull(d.household_key),
+                contact: blankToNull(d.contact), is_head: d.relation === 'Head', edited: true, action: 'auto', match: null, twinOf: null,
+            });
+            this.checkingRow = true;
+            try {
+                const res = await api.post('/admin/resident-imports/check', { rows: [this.payload(r)] });
+                const result = res.data?.rows?.[0] || {};
+                r.key = result.key;
+                if (result.status === 'error') {
+                    r.status = 'error';
+                    r.errors = (result.errors || []).map((e) => e.message);
+                    this.draftErrors = r.errors;
+                    return;
+                }
+                r.status = result.status === 'match' ? 'match' : 'ready';
+                r.errors = [];
+                r.match = result.match || null;
+                this.recountTwins();
+                this.editing = null;
+                const now = { ready: 'it will be added as a new resident', match: 'it is already in the registry as ' + (r.match?.ref || ''), twice: 'it is the same person as row ' + r.twinOf }[r.status];
+                emit('toast', { message: 'Row ' + r.row + (before === 'error' ? ' is fixed: ' : ' is updated: ') + now + '.', variant: 'success' });
+            } catch (e) {
+                this.draftErrors = [e?.localised ? e.localised('en') : 'Could not check the row. Check the connection and try again.'];
+            } finally {
+                this.checkingRow = false;
+                this.$nextTick(() => window.renderIcons?.());
+            }
+        },
+
+        // After an import: the rows it left out, back in the review to fix
+        // and import on their own.
+        get leftovers() { return this.rows.filter((r) => r.status === 'error' && !r.outcome).length; },
+        fixLeftovers() {
+            if (this.running) return;
+            Object.assign(this, { importRef: null, summary: null, stoppedAt: null, progress: { done: 0, total: 0 }, error: '', step: 3, filter: 'error', page: 1, editing: null });
+            this.$nextTick(() => window.renderIcons?.());
+        },
         get pageRows() { return this.filtered.slice((this.page - 1) * this.perPage, this.page * this.perPage); },
         get pages() { return Math.max(1, Math.ceil(this.filtered.length / this.perPage)); },
         setFilter(f) { this.filter = f; this.page = 1; this.$nextTick(() => window.renderIcons?.()); },
@@ -334,7 +436,7 @@ export function residentImport() {
             let fill = 0;
             let leave = 0;
             let fix = 0;
-            this.rows.forEach((r) => {
+            this.pending.forEach((r) => {
                 if (r.status === 'error') fix++;
                 else if (this.willAdd(r)) add++;
                 else if (this.willFill(r)) fill++;
@@ -343,7 +445,7 @@ export function residentImport() {
             return { add, fill, leave, fix };
         },
         get households() {
-            const keys = new Set(this.rows.filter((r) => r.household_key && this.willAdd(r)).map((r) => r.barangay + '|' + r.household_key));
+            const keys = new Set(this.pending.filter((r) => r.household_key && this.willAdd(r)).map((r) => r.barangay + '|' + r.household_key));
             return keys.size;
         },
         displayName(r) { return [r.first_name, r.middle_name, r.last_name, r.suffix].filter(Boolean).join(' '); },
@@ -353,7 +455,7 @@ export function residentImport() {
         // Rows to send, a household's rows together and its head first, in
         // batches that never split a household.
         batches() {
-            const send = this.rows.filter((r) => r.status !== 'error' && (this.willAdd(r) || this.willFill(r) || r.status === 'match' || r.status === 'twice'));
+            const send = this.pending.filter((r) => r.status !== 'error' && (this.willAdd(r) || this.willFill(r) || r.status === 'match' || r.status === 'twice'));
             const groups = [];
             const byKey = {};
             for (const r of send) {
@@ -388,7 +490,7 @@ export function residentImport() {
                     const res = await api.post('/admin/resident-imports', {
                         filename: this.fileName.slice(0, 255),
                         format: this.format,
-                        total_rows: Math.max(1, this.rows.length),
+                        total_rows: Math.max(1, this.pending.length),
                         on_match: this.onMatch,
                         verification: this.verification,
                         group_households: this.groupHouseholds && (this.hasHouseholdNo || this.hasRelation),
@@ -406,9 +508,16 @@ export function residentImport() {
                         const byRow = Object.fromEntries((res.data?.results || []).map((x) => [x.row, x]));
                         batches[i].forEach((r) => {
                             const x = byRow[r.row];
-                            r.outcome = x?.outcome || 'failed';
-                            r.outcomeRef = x?.ref || null;
-                            r.outcomeMessage = x?.message || null;
+                            if (!x || x.outcome === 'failed') {
+                                // Refused by the server: back with the rows to fix.
+                                r.status = 'error';
+                                r.errors = [x?.message || 'Not imported'];
+                                r.outcome = null;
+                                return;
+                            }
+                            r.outcome = x.outcome;
+                            r.outcomeRef = x.ref || null;
+                            r.outcomeMessage = x.message || null;
                         });
                         this.progress.done += batches[i].length;
                     } catch (e) {
@@ -431,13 +540,12 @@ export function residentImport() {
             try {
                 const res = await api.post('/admin/resident-imports/' + encodeURIComponent(this.importRef) + '/finish');
                 const d = res.data;
-                const notSent = this.rows.filter((r) => r.status === 'error').length;
                 this.summary = {
                     ref: d.ref,
                     created: d.created,
                     filled: d.filled,
-                    skipped: d.skipped + this.rows.filter((r) => r.status !== 'error' && !r.outcome && !this.stopRequested).length,
-                    failed: d.failed + notSent,
+                    skipped: d.skipped + this.pending.filter((r) => r.status !== 'error' && !this.stopRequested).length,
+                    failed: this.leftovers,
                     households: d.households_created,
                     stopped: this.stopRequested,
                 };

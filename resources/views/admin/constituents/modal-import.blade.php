@@ -197,18 +197,18 @@
         <div class="rounded-2xl bg-white border border-slate-200 overflow-hidden">
             <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-50 text-xs">
                 <span class="font-semibold text-ink" x-text="(filter==='all' ? 'All rows' : {ready:'New residents',match:'Already in the registry',twice:'Listed twice',error:'Need fixing'}[filter]) + ' · ' + filtered.length.toLocaleString()"></span>
-                <span x-show="filter==='error' && counts.error" class="text-ink-muted">These rows are left out. Download them after the import, fix them, and import that file.</span>
+                <span x-show="filter==='error' && counts.error" class="text-ink-muted">Fix each row here and it is checked again. Rows still needing a fix are left out of the import.</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-xs">
                     <thead class="text-[11px] uppercase tracking-wide text-ink-muted">
                         <tr class="border-b border-slate-100"><th class="text-left font-bold px-4 py-2">Row</th><th class="text-left font-bold px-2 py-2">Name</th><th class="text-left font-bold px-2 py-2">Sex</th><th class="text-left font-bold px-2 py-2">Birth date</th><th class="text-left font-bold px-2 py-2">Barangay</th><th class="text-left font-bold px-2 py-2">Household</th><th class="text-left font-bold px-2 py-2 min-w-[16rem]">What happens</th></tr>
                     </thead>
-                    <tbody>
-                        <template x-for="r in pageRows" :key="r.row">
-                            <tr class="border-b border-slate-100 align-top">
+                    <template x-for="r in pageRows" :key="r.row">
+                        <tbody>
+                            <tr class="border-b border-slate-100 align-top" :class="editing===r.row ? 'bg-brand-50/50' : ''">
                                 <td class="px-4 py-2 text-ink-muted tabular-nums" x-text="r.row"></td>
-                                <td class="px-2 py-2 font-semibold text-ink" x-text="displayName(r) || '—'"></td>
+                                <td class="px-2 py-2 font-semibold text-ink"><span x-text="displayName(r) || '—'"></span> <span x-show="r.edited" class="ml-1 px-1.5 rounded bg-brand-100 text-[10px] font-semibold text-brand-700">Edited</span></td>
                                 <td class="px-2 py-2 text-ink-muted" x-text="r.sex || '—'"></td>
                                 <td class="px-2 py-2 text-ink-muted tabular-nums" x-text="r.dob || '—'"></td>
                                 <td class="px-2 py-2 text-ink-muted" x-text="r.barangay || '—'"></td>
@@ -236,12 +236,54 @@
                                         </div>
                                     </template>
                                     <template x-if="r.status==='error'">
-                                        <p class="text-rose-700"><i data-lucide="circle-alert" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i><span x-text="r.errors.join('; ')"></span></p>
+                                        <div class="flex flex-wrap items-start gap-2">
+                                            <p class="text-rose-700 flex-1 min-w-[10rem]"><i data-lucide="circle-alert" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i><span x-text="r.errors.join('; ')"></span></p>
+                                            <button type="button" x-show="editing!==r.row" @click="startEdit(r)" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700"><i data-lucide="pencil" class="w-3 h-3"></i>Fix</button>
+                                        </div>
                                     </template>
+                                    <button type="button" x-show="r.status!=='error' && editing!==r.row" @click="startEdit(r)" class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:underline"><i data-lucide="pencil" class="w-3 h-3"></i>Edit</button>
                                 </td>
                             </tr>
-                        </template>
-                    </tbody>
+                            {{-- Correct the row here; it is checked again on save. --}}
+                            <template x-if="editing===r.row">
+                                <tr class="border-b border-slate-200 bg-brand-50/50">
+                                    <td colspan="7" class="px-4 pb-4 pt-1">
+                                        <div class="rounded-xl bg-white border border-brand-200 p-4 space-y-3">
+                                            <p class="text-[11px] text-ink-muted"><span class="font-semibold text-ink" x-text="'Row ' + r.row + ' in the file:'"></span> <span x-text="r.cells.filter(Boolean).join(' · ')"></span></p>
+                                            <div x-show="draftErrors.length" class="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-800" role="alert" x-text="draftErrors.join('; ')"></div>
+                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                <label class="text-[11px] font-semibold text-slate-600">First name <span class="text-rose-500">*</span><input type="text" x-model="draft.first_name" maxlength="100" aria-label="First name" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Middle name<input type="text" x-model="draft.middle_name" maxlength="100" aria-label="Middle name" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Last name <span class="text-rose-500">*</span><input type="text" x-model="draft.last_name" maxlength="100" aria-label="Last name" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Suffix
+                                                    <select x-model="draft.suffix" aria-label="Suffix" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"><option value="">None</option><option>Jr.</option><option>Sr.</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Sex
+                                                    <select x-model="draft.sex" aria-label="Sex" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"><option value="">Not given</option><option>Male</option><option>Female</option></select></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Birth date
+                                                    <input type="date" x-model="draft.dob" min="1900-01-02" :max="new Date().toISOString().slice(0, 10)" aria-label="Birth date" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60">
+                                                    <span x-show="fileValue(r, 'dob')" class="block font-normal text-ink-muted mt-0.5" x-text="'In the file: ' + fileValue(r, 'dob')"></span></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Civil status
+                                                    <select x-model="draft.civil_status" aria-label="Civil status" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"><option value="">Not given</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option><option>Annulled</option><option>Live-in</option><template x-if="draft.civil_status && !['Single','Married','Widowed','Separated','Annulled','Live-in'].includes(draft.civil_status)"><option :value="draft.civil_status" x-text="draft.civil_status"></option></template></select></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Barangay <span class="text-rose-500">*</span>
+                                                    <select x-model="draft.barangay" aria-label="Barangay" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60" :disabled="!!scope"><option value="">Choose the barangay</option><template x-for="b in barangays" :key="b"><option :value="b" x-text="b" :selected="b===draft.barangay"></option></template></select>
+                                                    <span x-show="fileValue(r, 'barangay') && !draft.barangay" class="block font-normal text-ink-muted mt-0.5" x-text="'In the file: ' + fileValue(r, 'barangay')"></span></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Purok / Sitio<input type="text" x-model="draft.sitio" maxlength="120" aria-label="Purok or sitio" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Relationship to head
+                                                    <select x-model="draft.relation" aria-label="Relationship to head" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"><option value="">Not given</option><option>Head</option><option>Spouse</option><option>Son</option><option>Daughter</option><option>Child</option><option>Grandchild</option><option>Other</option><template x-if="draft.relation && !['Head','Spouse','Son','Daughter','Child','Grandchild','Other'].includes(draft.relation)"><option :value="draft.relation" x-text="draft.relation"></option></template></select></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Household number<input type="text" x-model="draft.household_key" maxlength="80" aria-label="Household number" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"></label>
+                                                <label class="text-[11px] font-semibold text-slate-600">Contact number<input type="text" x-model="draft.contact" maxlength="40" aria-label="Contact number" class="mt-1 w-full px-3 py-2 rounded-lg text-xs font-normal text-ink border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200 disabled:opacity-60"></label>
+                                            </div>
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <button type="button" @click="saveEdit(r)" :disabled="checkingRow" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold clay-blue disabled:opacity-50"><i data-lucide="check" class="w-3.5 h-3.5"></i><span x-text="checkingRow ? 'Checking…' : 'Save and check again'"></span></button>
+                                                <button type="button" @click="cancelEdit()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-ink hover:bg-slate-100">Cancel</button>
+                                                <p class="text-[11px] text-ink-muted">The file is not changed; the corrected row is what gets imported.</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </template>
                 </table>
             </div>
             <div x-show="pages > 1" class="flex items-center justify-between px-4 py-2.5 border-t border-slate-100 text-xs">
@@ -280,10 +322,11 @@
                 <div class="rounded-2xl bg-slate-50 px-3 py-2.5"><dt class="text-[11px] font-semibold text-slate-600">Left as they were</dt><dd class="text-xl font-extrabold text-ink tabular-nums" x-text="(summary?.skipped ?? 0).toLocaleString()"></dd></div>
                 <div class="rounded-2xl bg-rose-50 px-3 py-2.5"><dt class="text-[11px] font-semibold text-rose-700">Not imported</dt><dd class="text-xl font-extrabold text-ink tabular-nums" x-text="(summary?.failed ?? 0).toLocaleString()"></dd></div>
             </dl>
-            <p x-show="summary?.households" class="text-xs text-ink-muted mb-4" x-text="summary?.households + ' household(s) and their families were made from the household numbers.'"></p>
+            <p x-show="summary?.households" class="text-xs text-ink-muted mb-4" x-text="summary?.households + (summary?.households === 1 ? ' household and its family was' : ' households and their families were') + ' made from the household numbers.'"></p>
             <p x-show="summary?.undone" class="text-xs text-amber-700 mb-4">This import was undone.</p>
             <div class="flex flex-wrap gap-2">
                 <button type="button" @click="showImported(summary.ref)" x-show="!summary?.undone" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue"><i data-lucide="users" class="w-4 h-4"></i>Show the imported residents</button>
+                <button type="button" @click="fixLeftovers()" x-show="!summary?.undone && leftovers" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100"><i data-lucide="pencil" class="w-4 h-4"></i><span x-text="leftovers === 1 ? 'Fix the row that needs it' : 'Fix the ' + leftovers + ' rows that need it'"></span></button>
                 <button type="button" @click="downloadNotAdded()" x-show="notAdded.length" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-ink hover:bg-slate-200"><i data-lucide="download" class="w-4 h-4"></i><span x-text="'Rows not added (' + notAdded.length + ')'"></span></button>
                 <button type="button" @click="startOver()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-ink hover:bg-slate-200"><i data-lucide="file-up" class="w-4 h-4"></i>Import another file</button>
                 <button type="button" x-show="mayUndo && !summary?.undone" @click="panel='history';loadHistory().then(()=>askUndo(history.find(h=>h.ref===summary.ref)))" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-rose-700 hover:bg-rose-50"><i data-lucide="undo-2" class="w-4 h-4"></i>Undo this import</button>
@@ -335,7 +378,7 @@
             <div class="flex items-center gap-2.5 w-full">
                 <p class="text-xs text-ink-muted mr-auto" x-text="plan.add.toLocaleString() + ' to add · ' + plan.fill.toLocaleString() + ' to fill in · ' + plan.leave.toLocaleString() + ' left as they are · ' + plan.fix.toLocaleString() + ' need fixing' + (households ? ' · ' + households + ' households' : '')"></p>
                 <button type="button" @click="step=2;$nextTick(()=>window.renderIcons?.())" class="px-4 py-2 rounded-xl text-sm font-semibold text-ink hover:bg-slate-100">Back</button>
-                <button type="button" @click="runImport()" :disabled="!(plan.add + plan.fill) || running" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue disabled:opacity-50"><i data-lucide="file-up" class="w-4 h-4"></i><span x-text="'Import ' + (plan.add + plan.fill).toLocaleString() + ' rows'"></span></button>
+                <button type="button" @click="runImport()" :disabled="!(plan.add + plan.fill) || running" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue disabled:opacity-50"><i data-lucide="file-up" class="w-4 h-4"></i><span x-text="'Import ' + (plan.add + plan.fill).toLocaleString() + ((plan.add + plan.fill) === 1 ? ' row' : ' rows')"></span></button>
             </div>
         </template>
         <template x-if="!(panel==='import' && (step===2 || step===3))">

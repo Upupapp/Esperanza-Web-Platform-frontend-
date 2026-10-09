@@ -33,6 +33,23 @@ class ResidentImportTest extends TestCase
         $this->assertStringNotContainsString('FormData', $ui, 'the file itself is never uploaded; only mapped rows are sent');
     }
 
+    /**
+     * Owner, 2026-10-09: a row that was not accepted is corrected in the
+     * window, not by editing the file and importing it again - in the review,
+     * and after the import for the rows it left out.
+     */
+    public function test_rows_that_need_fixing_are_corrected_in_the_window(): void
+    {
+        $modal = file_get_contents(resource_path('views/admin/constituents/modal-import.blade.php'));
+        $ui = file_get_contents(base_path('resources/js/resident-import-ui.js'));
+
+        $this->assertMatchesRegularExpression('/x-show="editing!==r\.row" @click="startEdit\(r\)"[^>]*>.*Fix<\/button>/', $modal);
+        $this->assertStringContainsString('@click="saveEdit(r)"', $modal);
+        $this->assertStringContainsString('@click="fixLeftovers()"', $modal);
+        // A correction is checked against the registry again, like the file was.
+        $this->assertMatchesRegularExpression("/async saveEdit\(r\) \{.*api\.post\('\/admin\/resident-imports\/check'/s", $ui);
+    }
+
     public function test_the_registry_offers_the_import_to_who_may_add_residents(): void
     {
         $page = file_get_contents(resource_path('views/admin/constituents.blade.php'));
