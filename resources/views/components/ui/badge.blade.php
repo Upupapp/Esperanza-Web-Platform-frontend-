@@ -55,7 +55,7 @@
         ? $styles[$status]
         : ['bg-white text-slate-500 ring-slate-300 border-dashed', 'bg-slate-300'];
 
-    $badgeAttributes = ['class' => "inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap shadow-[inset_0_1px_0_rgb(255_255_255/.7)] $classes"];
+    $badgeAttributes = ['class' => "inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap $classes"];
 
     // Merged in PHP rather than written as a Blade conditional inside the tag:
     // an @unless there leaves its surrounding whitespace in the output, which
@@ -72,7 +72,7 @@
             get known() { return Object.prototype.hasOwnProperty.call(this.styles, {{ $statusBind }}); },
             get style() { return this.known ? this.styles[{{ $statusBind }}] : { classes: 'bg-white text-slate-500 ring-slate-300 border-dashed', dot: 'bg-slate-300' }; },
         }"
-        {{ $attributes->class(['inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap shadow-[inset_0_1px_0_rgb(255_255_255/.7)]']) }}
+        {{ $attributes->class(['inline-flex items-center gap-1.5 min-h-[26px] px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap']) }}
         :class="style.classes"
         :data-unknown-status="!known ? {{ $statusBind }} : null"
     >

@@ -25,7 +25,7 @@
                 :class="hover === i ? 'bg-white/80 shadow-[0_1px_3px_rgb(11_23_48/.08)]' : (hover !== null ? 'opacity-50' : '')"
                 @mouseenter="hover = i"
             >
-                <span class="w-3 h-3 rounded-[4px] shrink-0 shadow-[inset_1px_1px_2px_rgb(255_255_255/.5),inset_-1px_-1px_2px_rgb(0_0_0/.15)]" :style="'background:' + row.color"></span>
+                <span class="w-3 h-3 rounded-[4px] shrink-0" :style="'background:' + row.color"></span>
                 <span class="flex-1 min-w-0 truncate text-[13px] font-semibold text-ink-body" x-text="row.label"></span>
                 <span class="text-[13.5px] font-extrabold text-ink tabular-nums" x-text="row.value.toLocaleString()"></span>
                 <span class="w-10 text-right text-[11.5px] font-semibold text-ink-faint tabular-nums" x-text="pct(row) + '%'"></span>
