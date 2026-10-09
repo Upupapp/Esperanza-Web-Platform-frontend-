@@ -37,6 +37,75 @@
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted">Address</dt><dd class="font-semibold text-ink text-right" x-text="accountDetail?.address || '—'"></dd></div>
             </dl>
 
+            {{-- Identity (2026-10-09). Separate from the residency decision
+                 at the bottom: the automated check (Didit) says whether the
+                 person is who the ID says; it never says they live here. --}}
+            <section class="rounded-2xl border border-slate-200 p-4 space-y-3" x-show="accountDetail?.identity">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Identity verification</p>
+                    <span class="inline-flex items-center text-[11px] font-semibold rounded-full px-2 py-0.5 ring-1" :class="identityPillClass(accountDetail?.identity?.status)" x-text="accountDetail?.identity?.status || 'Not checked'"></span>
+                </div>
+                <p class="text-[11px] text-ink-muted" x-text="accountDetail?.identity?.note"></p>
+                <p x-show="accountDetail?.identity?.needs_officer" x-cloak class="text-xs text-rose-700">Revoked earlier: only an officer can restore this identity, whatever a new check says.</p>
+
+                {{-- The latest check, exactly as it found it. --}}
+                <template x-if="accountDetail?.identity?.checks?.length">
+                    <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3 space-y-2" x-data="{ get c() { return accountDetail.identity.checks[0] } }">
+                        <div class="flex flex-wrap items-center gap-2 text-[11px] text-ink-muted">
+                            <span class="font-semibold text-ink">Latest check</span>
+                            <span x-text="c.completed_at ? new Date(c.completed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'not finished'"></span>
+                            <span class="font-bold uppercase tracking-wide rounded px-1.5 py-0.5" x-show="c.environment !== 'live'" :class="c.environment === 'sandbox' ? 'bg-amber-100 text-amber-800' : 'bg-violet-100 text-violet-800'" x-text="c.environment === 'sandbox' ? 'Sandbox - not a real check' : 'Simulated - not a real check'"></span>
+                        </div>
+                        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <div><dt class="text-ink-muted">Document</dt><dd class="font-semibold text-ink" x-text="c.document?.status || 'Not run'"></dd></div>
+                            <div><dt class="text-ink-muted">Face match</dt><dd class="font-semibold text-ink" x-text="(c.face_match?.status || 'Not run') + (c.face_match?.score != null ? ' (' + c.face_match.score + ')' : '')"></dd></div>
+                            <div><dt class="text-ink-muted">Liveness</dt><dd class="font-semibold text-ink" x-text="(c.liveness?.status || 'Not run') + (c.liveness?.score != null ? ' (' + c.liveness.score + ')' : '')"></dd></div>
+                        </dl>
+                        <p x-show="(c.reasons || []).length" class="text-xs text-slate-700" x-text="'Reasons: ' + (c.reasons || []).join(', ')"></p>
+                        <p x-show="[...(c.document?.warnings || []), ...(c.face_match?.warnings || []), ...(c.liveness?.warnings || [])].length" class="text-[11px] text-ink-muted" x-text="'Provider warnings: ' + [...(c.document?.warnings || []), ...(c.face_match?.warnings || []), ...(c.liveness?.warnings || [])].join(', ')"></p>
+                        <p x-show="c.error" class="text-xs text-amber-700" x-text="'Could not run yet (' + c.error + '), attempt ' + c.attempts + '. It is retried automatically.'"></p>
+                        {{-- What the ID says, beside what the account says. --}}
+                        <dl x-show="c.extracted && Object.keys(c.extracted).length" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs pt-1 border-t border-brand-600/10">
+                            <div class="flex justify-between gap-2"><dt class="text-ink-muted">Name on ID</dt><dd class="font-semibold text-ink text-right" x-text="c.extracted?.full_name || [c.extracted?.first_name, c.extracted?.last_name].filter(Boolean).join(' ') || '—'"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-ink-muted">Birthdate on ID</dt><dd class="font-semibold text-right" :class="c.extracted?.date_of_birth && accountDetail?.birthdate && c.extracted.date_of_birth !== accountDetail.birthdate ? 'text-rose-700' : 'text-ink'" x-text="(c.extracted?.date_of_birth || '—') + (c.extracted?.date_of_birth && accountDetail?.birthdate && c.extracted.date_of_birth !== accountDetail.birthdate ? ' (differs from account)' : '')"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-ink-muted">Document</dt><dd class="font-semibold text-ink text-right" x-text="[c.extracted?.document_type, c.extracted?.issuing_state].filter(Boolean).join(' · ') || '—'"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-ink-muted">Number (last 4)</dt><dd class="font-semibold text-ink font-mono" x-text="c.extracted?.document_number_last4 || '—'"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-ink-muted">Expires</dt><dd class="font-semibold text-ink" x-text="c.extracted?.expiration_date || '—'"></dd></div>
+                        </dl>
+                    </div>
+                </template>
+
+                {{-- Officer actions. A reason is required and kept. --}}
+                <div class="space-y-2" x-show="can('const_citizen_verification','verify') || can('const_citizen_verification','reject')">
+                    <textarea aria-label="Reason" x-model="identityReason" rows="2"
+                              :placeholder="accountDetail?.identity?.status === 'Verified' ? 'Reason for revoking (the resident will read it)...' : 'Why the identity is verified by hand (e.g. checked in person against the original ID)...'"
+                              x-show="(accountDetail?.identity?.status === 'Verified' && can('const_citizen_verification','reject')) || (accountDetail?.identity?.status !== 'Verified' && can('const_citizen_verification','verify'))"
+                              class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                    <div class="flex flex-wrap gap-2">
+                        <x-ui.button size="sm" icon="user-check" x-show="accountDetail?.identity?.status !== 'Verified' && can('const_citizen_verification','verify')" x-bind:disabled="processingCitizen || identityReason.trim().length < 5" @click="decideIdentity('verify')">
+                            <span x-text="(accountDetail?.identity?.status === 'Revoked' || accountDetail?.identity?.needs_officer) ? 'Restore identity' : 'Verify identity manually'"></span>
+                        </x-ui.button>
+                        <button type="button" x-show="accountDetail?.identity?.status === 'Verified' && can('const_citizen_verification','reject')" @click="decideIdentity('revoke')" :disabled="processingCitizen || identityReason.trim().length < 5" class="text-xs font-semibold rounded-xl px-3 py-2 bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">Revoke identity</button>
+                        <button type="button" x-show="['Pending', 'In Progress'].includes(accountDetail?.identity?.status) && can('const_citizen_verification','verify')" @click="decideIdentity('recheck')" :disabled="processingCitizen" class="text-xs font-semibold rounded-xl px-3 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50">Run check again</button>
+                    </div>
+                </div>
+
+                {{-- Who verified, revoked or restored it, and why. --}}
+                <details x-show="accountDetail?.identity?.history?.length" class="text-xs">
+                    <summary class="cursor-pointer text-ink-muted hover:text-ink">History (<span x-text="accountDetail?.identity?.history?.length || 0"></span>)</summary>
+                    <ul class="mt-2 space-y-1.5">
+                        <template x-for="(h, k) in (accountDetail?.identity?.history || [])" :key="k">
+                            <li class="flex flex-wrap gap-x-2 text-slate-700">
+                                <span class="text-ink-muted" x-text="h.at ? new Date(h.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span>
+                                <span class="font-semibold" x-text="(h.from || '—') + ' → ' + h.to"></span>
+                                <span x-text="'(' + h.method + (h.actor_name ? ', ' + h.actor_name : (h.actor_type === 'system' ? ', automated' : '')) + ')'"></span>
+                                <span x-show="h.reason" class="basis-full text-ink-muted" x-text="h.reason"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </details>
+            </section>
+
             {{-- The valid ID --}}
             <section class="rounded-2xl border border-slate-200 p-4">
                 <div class="flex items-center justify-between gap-2 mb-3">
@@ -101,9 +170,14 @@
 
             {{-- The account decision --}}
             <section x-show="['Pending Review', 'Rejected'].includes(accountDetail?.status) && (can('const_citizen_verification','verify') || can('const_citizen_verification','reject'))" class="space-y-2.5 pt-1">
-                <p class="text-xs text-ink-muted">Compare the ID and the selfie with the account and the resident record before deciding.</p>
+                <p class="text-xs font-semibold text-ink uppercase tracking-wide">Residency decision</p>
+                <p class="text-xs text-ink-muted">Compare the ID and the selfie with the account and the resident record before deciding. Approving confirms residency, and needs a verified identity first.</p>
+                {{-- Only when the backend reports identity: an older backend
+                     (staging before it is updated) sends none, and approval
+                     must keep working there exactly as before. --}}
+                <p x-show="accountDetail?.identity && accountDetail.identity.status !== 'Verified'" x-cloak class="text-xs text-amber-700">The identity is not verified yet. Verify it above (by hand, with a reason, if the automated check could not) before approving the account.</p>
                 <div class="flex flex-wrap gap-2">
-                    <x-ui.button size="sm" icon="check" x-show="can('const_citizen_verification','verify')" x-bind:disabled="processingCitizen" @click="decideAccount('verify')">Verify Account</x-ui.button>
+                    <x-ui.button size="sm" icon="check" x-show="can('const_citizen_verification','verify')" x-bind:disabled="processingCitizen || (accountDetail?.identity && accountDetail.identity.status !== 'Verified')" @click="decideAccount('verify')">Verify Account</x-ui.button>
                 </div>
                 <div x-show="accountDetail?.status === 'Pending Review' && can('const_citizen_verification','reject')" class="space-y-2">
                     <textarea aria-label="Rejection remarks" x-model="rejectAccountRemarks" rows="2" placeholder="Reason for rejection (the resident will read it)..." class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none"></textarea>

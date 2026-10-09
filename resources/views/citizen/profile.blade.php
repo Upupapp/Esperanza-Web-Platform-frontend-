@@ -12,13 +12,111 @@
             // list, never typed here), whether one may be sent, and the latest
             // submission with its review status. The ID used to go to Papeles,
             // which no officer reads when verifying an account.
-            idView: { id_types: [], can_submit: false, submission: null },
+            // `identity` (2026-10-09): every ID sent is checked automatically -
+            // the document, the selfie against the ID's photo, and that the
+            // selfie is live - and an officer can verify or revoke it. It is
+            // the IDENTITY result only; residency stays the officer's decision
+            // (the account status). Its six values are their own vocabulary.
+            idView: { id_types: [], can_submit: false, submission: null, identity: { status: null, reasons: [], awaiting_check: false }, capture: 'own', session: null },
+            launchingDidit: false,
+            checking: false,
+            selfieError: '',
             async loadIdView() {
                 try { this.idView = (await $api.get('/citizen/verification/id')).data || this.idView; } catch { /* keeps the last view */ }
             },
-            reset() { this.open = false; this.submitted = false; this.idType = ''; this.idFile = null; this.idBack = null; this.idSelfie = null; },
+            // Sending again is offered where the server takes it and the last
+            // ID is not waiting for an officer - unless its check failed or was
+            // revoked, which only new photos can fix.
+            get canResend() {
+                const s = this.idView.identity?.status;
+                return this.idView.can_submit && (this.idView.submission?.status !== 'Pending Review' || s === 'Failed' || s === 'Revoked');
+            },
+            identityPill(s) {
+                return {
+                    'Pending': 'text-slate-100 bg-white/10 border-white/20',
+                    'In Progress': 'text-sky-100 bg-sky-500/20 border-sky-400/30',
+                    'Verified': 'text-emerald-100 bg-emerald-500/20 border-emerald-400/30',
+                    'Failed': 'text-rose-100 bg-rose-500/25 border-rose-400/40',
+                    'Requires Review': 'text-amber-100 bg-amber-500/20 border-amber-400/30',
+                    'Revoked': 'text-rose-100 bg-rose-500/25 border-rose-400/40',
+                }[s] || 'text-slate-100 bg-white/10 border-white/20';
+            },
+            identityText(s) {
+                const en = this.$store.lang.current === 'en';
+                return {
+                    'Pending': en ? 'Your ID and selfie are waiting to be checked. This usually takes a few minutes.' : 'Naghihintay masuri ang iyong ID at selfie. Karaniwang ilang minuto lamang ito.',
+                    'In Progress': en ? 'Your ID and selfie are being checked now.' : 'Sinusuri na ngayon ang iyong ID at selfie.',
+                    'Verified': en ? 'Your identity is confirmed. Your residency is reviewed separately by the LGU.' : 'Kumpirmado ang iyong pagkakakilanlan. Hiwalay na sinusuri ng LGU ang iyong paninirahan.',
+                    'Failed': en ? 'We could not confirm your identity from the photos you sent. Please send a new ID photo and selfie.' : 'Hindi namin makumpirma ang iyong pagkakakilanlan mula sa mga ipinadalang litrato. Magpadala ng bagong litrato ng ID at selfie.',
+                    'Requires Review': en ? 'LGU staff will review your ID and selfie themselves. No action needed from you right now.' : 'Susuriin ng staff ng LGU ang iyong ID at selfie. Wala ka pang kailangang gawin.',
+                    'Revoked': en ? 'The LGU withdrew the verification of your identity. Send a new ID and selfie, or visit your barangay office. Requests are paused until then.' : 'Binawi ng LGU ang beripikasyon ng iyong pagkakakilanlan. Magpadala ng bagong ID at selfie, o bumisita sa inyong barangay. Nakahinto muna ang mga request.',
+                }[s] || '';
+            },
+            reasonText(code) {
+                const en = this.$store.lang.current === 'en';
+                return {
+                    FACE_MISMATCH: en ? 'Your selfie did not match the photo on your ID.' : 'Hindi tugma ang iyong selfie sa litrato sa iyong ID.',
+                    LIVENESS_FAILED: en ? 'Take the selfie live with the camera, not a photo of a photo or a screen.' : 'Kunan ang selfie nang live sa camera, hindi litrato ng litrato o ng screen.',
+                    SELFIE_UNUSABLE: en ? 'We could not see your face clearly in the selfie.' : 'Hindi malinaw ang iyong mukha sa selfie.',
+                    DOCUMENT_NOT_GENUINE: en ? 'Photograph the ID card itself, not a screen, a photocopy or a printout.' : 'Kunan ng litrato ang mismong ID, hindi ang screen, photocopy o printout.',
+                    DOCUMENT_EXPIRED: en ? 'The ID has expired. Please use a valid, unexpired ID.' : 'Expired na ang ID. Gumamit ng valid at hindi pa expired na ID.',
+                }[code] || null;
+            },
+            // The check runs right after the upload is answered: poll until
+            // it settles (seconds when the service is up), then refresh the
+            // session so access reflects it. Gives up quietly - it stays
+            // Pending and is checked shortly; nothing is lost.
+            async awaitCheck() {
+                if (!this.idView.identity?.awaiting_check) return;
+                this.checking = true;
+                try {
+                    for (let i = 0; i < 12; i++) {
+                        await new Promise((r) => setTimeout(r, 2000));
+                        try { this.idView = (await $api.get('/citizen/verification/id')).data || this.idView; } catch { /* try again */ }
+                        if (!this.idView.identity?.awaiting_check) break;
+                    }
+                    try { await this.$store.citizenSession.refresh(); } catch { /* the next page load refreshes it */ }
+                } finally { this.checking = false; }
+            },
+            // Live camera only (owner, 2026-10-09): the liveness check must
+            // see a capture taken now, so there is no file fallback.
+            async captureSelfie() {
+                const en = this.$store.lang.current === 'en';
+                const file = await window.takeSelfie({ title: en ? 'Take a selfie' : 'Mag-selfie', capture: en ? 'Capture' : 'Kunan', cancel: en ? 'Cancel' : 'Kanselahin' });
+                if (file === undefined) {
+                    this.selfieError = en
+                        ? 'A camera is needed to take your selfie. Allow camera access in your browser, or use a phone or computer with a camera.'
+                        : 'Kailangan ng camera para sa iyong selfie. Payagan ang camera sa iyong browser, o gumamit ng telepono o computer na may camera.';
+                    return;
+                }
+                if (file) { this.idSelfie = file; this.selfieError = ''; }
+            },
+            // identity_capture = hosted (2026-10-09): the ID scan and the face
+            // check run on Didit's page. The portal only opens it; the result is
+            // read from Didit by the server when the resident is back.
+            async startDidit() {
+                if (this.launchingDidit) return;
+                this.launchingDidit = true;
+                try {
+                    const r = await $api.post('/citizen/verification/session', { platform: 'web' });
+                    if (r.data?.url) { window.location.href = r.data.url; return; }
+                    this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Verification could not be opened. Please try again.' : 'Hindi mabuksan ang beripikasyon. Pakisubukang muli.', variant: 'error' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not start verification.', variant: 'error' });
+                } finally { this.launchingDidit = false; }
+            },
+            // Back from Didit's page (?verification=done): have the server read
+            // the result of the open session, then wait for it to settle.
+            async resumeFromDidit() {
+                const id = this.idView.session?.id;
+                if (!id) return;
+                try { this.idView = (await $api.post('/citizen/verification/session/' + encodeURIComponent(id) + '/sync')).data || this.idView; } catch { /* the poll below retries */ }
+                await this.awaitCheck();
+                history.replaceState(null, '', window.location.pathname);
+            },
+            reset() { this.open = false; this.submitted = false; this.idType = ''; this.idFile = null; this.idBack = null; this.idSelfie = null; this.selfieError = ''; },
             async submitId() {
-                if (this.submitting || !this.idType || !this.idFile) return;
+                if (this.submitting || !this.idType || !this.idFile || !this.idSelfie) return;
                 this.submitting = true;
                 try {
                     const form = new FormData();
@@ -29,7 +127,8 @@
                     const result = await $api.post('/citizen/verification/id', form);
                     this.idView = result.data || this.idView;
                     this.submitted = true;
-                    setTimeout(() => { this.reset(); this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Valid ID submitted for verification.' : 'Naisumite ang valid ID para sa beripikasyon.', variant: 'success' }); }, 1400);
+                    setTimeout(() => { this.reset(); this.$dispatch('toast', { message: this.$store.lang.current === 'en' ? 'Valid ID sent. Checking your ID and selfie now.' : 'Naipadala ang valid ID. Sinusuri na ang iyong ID at selfie.', variant: 'success' }); }, 1400);
+                    this.awaitCheck();
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not submit ID.', variant: 'error' });
                 } finally {
@@ -88,7 +187,9 @@
             async init() {
                 await this.loadResidentProfile();
                 this.loadDocuments();
-                this.loadIdView();
+                const back = new URLSearchParams(window.location.search).has('verification');
+                await this.loadIdView();
+                if (back && this.idView.capture === 'hosted') this.resumeFromDidit();
                 this.loadPhoto();
             },
 
@@ -212,18 +313,32 @@
                        x-text="($store.lang.current === 'en' ? 'Your new photo was not approved: ' : 'Hindi naaprubahan ang bagong litrato: ') + (photo.latest?.remarks || '')"></p>
                     <p class="text-xs text-white/60 mt-1.5" x-show="!photo.can_change && photo.next_change_at" x-cloak
                        x-text="($store.lang.current === 'en' ? 'You can change your photo again on ' : 'Maaari mong palitan muli ang litrato sa ') + formatDate(photo.next_change_at)"></p>
+                    {{-- Identity, apart from residency (2026-10-09). The six
+                         names are a fixed vocabulary, shown as they are. --}}
+                    <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/80" x-show="idView.identity?.status" x-cloak>
+                        <span><x-ui.t fil="Pagkakakilanlan:" en="Identity:" /></span>
+                        <span class="inline-flex items-center gap-1 font-semibold rounded-full px-2 py-0.5 border" :class="identityPill(idView.identity?.status)" x-text="idView.identity?.status"></span>
+                        <span x-show="checking" x-cloak class="inline-flex items-center gap-1 text-white/70"><i data-lucide="loader-circle" class="w-3 h-3 animate-spin"></i> <x-ui.t fil="Sinusuri..." en="Checking..." /></span>
+                    </div>
+                    <p class="text-xs text-white/75 mt-1 max-w-xl" x-show="['Failed', 'Revoked', 'Requires Review'].includes(idView.identity?.status)" x-cloak x-text="identityText(idView.identity?.status)"></p>
+                    <template x-for="r in (idView.identity?.reasons || [])" :key="r">
+                        <p class="text-xs text-rose-100 mt-0.5" x-show="reasonText(r)" x-text="'• ' + reasonText(r)"></p>
+                    </template>
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
-                    <span x-show="idView.submission?.status === 'Pending Review'" x-cloak
+                    <span x-show="idView.submission?.status === 'Pending Review' && !canResend" x-cloak
                           class="inline-flex items-center gap-1.5 text-xs font-medium text-amber-100 bg-amber-500/20 border border-amber-400/30 rounded-xl px-3.5 py-2.5">
-                        <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> <x-ui.t fil="Sinusuri ang ID" en="ID under review" />
+                        {{-- Once the identity is verified, what waits is the LGU's
+                             residency decision, not the ID (2026-10-09). --}}
+                        <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> <span x-text="idView.identity?.status === 'Verified' ? ($store.lang.current === 'en' ? 'Awaiting LGU approval' : 'Hinihintay ang pag-apruba ng LGU') : ($store.lang.current === 'en' ? 'ID under review' : 'Sinusuri ang ID')"></span>
                     </span>
                     <button
-                        x-show="idView.can_submit && idView.submission?.status !== 'Pending Review'" x-cloak
-                        @click="open = true"
+                        x-show="canResend" x-cloak
+                        @click="idView.capture === 'hosted' ? startDidit() : (open = true)"
+                        :disabled="launchingDidit"
                         class="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl px-3.5 py-2.5 transition-colors"
-                    ><i data-lucide="shield-plus" class="w-3.5 h-3.5"></i> <span x-text="idView.submission?.status === 'Rejected' ? ($store.lang.current === 'en' ? 'Send a new ID' : 'Magpadala ng bagong ID') : ($store.lang.current === 'en' ? 'Verify ID' : 'Mag-verify ng ID')"></span></button>
+                    ><i data-lucide="shield-plus" class="w-3.5 h-3.5"></i> <span x-text="(idView.submission?.status === 'Rejected' || ['Failed', 'Revoked'].includes(idView.identity?.status)) ? ($store.lang.current === 'en' ? 'Send a new ID' : 'Magpadala ng bagong ID') : ($store.lang.current === 'en' ? 'Verify ID' : 'Mag-verify ng ID')"></span></button>
                     <button
                         @click="openEditProfile()"
                         class="inline-flex items-center gap-1.5 text-xs font-medium text-ink bg-white hover:bg-slate-100 rounded-2xl px-3.5 py-2.5 transition-colors shadow-sm"
@@ -448,13 +563,19 @@
                     <x-ui.t fil="Naisumite para sa Beripikasyon!" en="Submitted for Verification!" />
                     <span class="inline-block animate-check-pop" style="animation-delay: 0.3s;">🙂</span>
                 </p>
-                <p class="text-xs text-ink-muted mt-1 max-w-[240px]"><x-ui.t fil="Susuriin ng aming staff ang iyong ID at ia-update ang iyong profile sa lalong madaling panahon." en="Our staff will review your ID and update your profile shortly." /></p>
+                <p class="text-xs text-ink-muted mt-1 max-w-[240px]"><x-ui.t fil="Sinusuri na ang iyong ID at selfie. Makikita mo ang resulta sa iyong profile." en="We are checking your ID and selfie now. You will see the result on your profile." /></p>
             </div>
 
             <div x-show="!submitted">
                 <p class="text-sm text-ink-muted mb-4"><x-ui.t fil="Magsumite ng valid ID para ma-verify ng aming staff ang iyong account." en="Submit a valid ID so our staff can verify your account." /></p>
                 <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800" x-show="idView.submission?.status === 'Rejected'" x-cloak>
                     <span x-text="($store.lang.current === 'en' ? 'Your last ID was not accepted: ' : 'Hindi tinanggap ang huling ID: ') + (idView.submission?.remarks || '')"></span>
+                </div>
+                <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800 space-y-1" x-show="['Failed', 'Revoked'].includes(idView.identity?.status)" x-cloak>
+                    <p x-text="identityText(idView.identity?.status)"></p>
+                    <template x-for="r in (idView.identity?.reasons || [])" :key="r">
+                        <p x-show="reasonText(r)" x-text="'• ' + reasonText(r)"></p>
+                    </template>
                 </div>
 
                 <div class="mb-3">
@@ -490,16 +611,17 @@
                     </div>
                 </div>
 
-                <p class="text-sm font-semibold text-ink mt-4 mb-1"><x-ui.t fil="Selfie (opsyonal)" en="Selfie (optional)" /></p>
-                <p class="text-xs text-ink-muted mb-3"><x-ui.t fil="Isang malinaw na larawan ng iyong mukha, para maihambing ng staff sa iyong ID." en="A clear photo of your face, so staff can compare it with your ID." /></p>
+                <p class="text-sm font-semibold text-ink mt-4 mb-1"><x-ui.t fil="Selfie" en="Selfie" /></p>
+                <p class="text-xs text-ink-muted mb-3"><x-ui.t fil="Kunan ngayon gamit ang camera. Ihahambing ito sa litrato sa iyong ID para makumpirmang ikaw ito." en="Taken now with your camera. It is compared with the photo on your ID to confirm it is you." /></p>
                 <div class="rounded-xl border border-slate-200 p-3">
                     <div class="flex items-center justify-between gap-3">
-                        <p class="text-xs text-slate-600 flex-1" x-text="idSelfie ? idSelfie.name : ($store.lang.current === 'en' ? 'No photo chosen' : 'Walang napiling litrato')"></p>
-                        <label class="text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap cursor-pointer">
-                            <x-ui.t fil="Pumili ng Litrato" en="Choose Photo" />
-                            <input type="file" accept="image/jpeg,image/png,image/webp" capture="user" class="sr-only" @change="idSelfie = $event.target.files[0] || null">
-                        </label>
+                        <p class="text-xs text-slate-600 flex-1" x-text="idSelfie ? ($store.lang.current === 'en' ? 'Selfie taken' : 'Nakuha ang selfie') : ($store.lang.current === 'en' ? 'No selfie yet' : 'Wala pang selfie')"></p>
+                        <button type="button" @click="captureSelfie()" class="inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:underline shrink-0 whitespace-nowrap">
+                            <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                            <span x-text="idSelfie ? ($store.lang.current === 'en' ? 'Retake' : 'Kunan muli') : ($store.lang.current === 'en' ? 'Take Selfie' : 'Mag-selfie')"></span>
+                        </button>
                     </div>
+                    <p x-show="selfieError" x-cloak class="text-xs text-rose-600 mt-2" x-text="selfieError"></p>
                 </div>
             </div>
 
@@ -508,7 +630,7 @@
                 <x-ui.button
                     size="sm"
                     x-show="!submitted"
-                    ::disabled="!idType || !idFile || submitting"
+                    ::disabled="!idType || !idFile || !idSelfie || submitting"
                     @click="submitId()"
                 >
                     <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="submitting" x-cloak></i>

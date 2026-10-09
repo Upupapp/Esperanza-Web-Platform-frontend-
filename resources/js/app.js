@@ -173,10 +173,29 @@ window.closesOnEscape = (layer) => openLayers[openLayers.length - 1] === layer
 // the caller should fall back to the file input instead: on a phone (whose
 // own camera input is better), with no camera, or with access refused.
 window.takePhoto = async () => {
-    if (window.matchMedia?.('(pointer: coarse)').matches || !navigator.mediaDevices?.getUserMedia) return undefined;
+    if (window.matchMedia?.('(pointer: coarse)').matches) return undefined;
+    return openCamera({ facingMode: 'environment', title: 'Take a photo', capture: 'Capture', cancel: 'Cancel', fileName: 'proof-of-release' });
+};
+
+// The registration selfie (2026-10-09): LIVE camera only, front-facing, on a
+// phone and a computer alike - never a file, so the identity check's
+// liveness test sees a capture taken now, not an old photo. Resolves the
+// JPEG, null when cancelled, or undefined with no camera or access refused
+// (the caller says so; there is deliberately no file fallback).
+window.takeSelfie = (labels = {}) => openCamera({
+    facingMode: 'user',
+    mirror: true,
+    title: labels.title || 'Take a selfie',
+    capture: labels.capture || 'Capture',
+    cancel: labels.cancel || 'Cancel',
+    fileName: 'selfie',
+});
+
+async function openCamera({ facingMode, mirror = false, title, capture, cancel, fileName }) {
+    if (!navigator.mediaDevices?.getUserMedia) return undefined;
     let stream;
     try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: false });
     } catch (e) {
         return undefined;
     }
@@ -186,15 +205,20 @@ window.takePhoto = async () => {
         overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/70';
         overlay.setAttribute('role', 'dialog');
         overlay.setAttribute('aria-modal', 'true');
-        overlay.setAttribute('aria-label', 'Take a photo');
+        overlay.setAttribute('aria-label', title);
         overlay.setAttribute('data-modal-overlay', '');
         overlay.innerHTML = '<div class="bg-white rounded-2xl shadow-float w-full max-w-lg p-4 space-y-3">'
-            + '<p class="text-sm font-semibold text-navy-900">Take a photo</p>'
+            + '<p class="text-sm font-semibold text-navy-900"></p>'
             + '<video autoplay playsinline muted class="w-full rounded-xl bg-black aspect-video object-contain"></video>'
             + '<div class="flex justify-end gap-2">'
-            + '<button type="button" data-act="cancel" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Cancel</button>'
-            + '<button type="button" data-act="shoot" class="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl">Capture</button>'
+            + '<button type="button" data-act="cancel" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl"></button>'
+            + '<button type="button" data-act="shoot" class="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl"></button>'
             + '</div></div>';
+        // Labels as text, never as markup.
+        overlay.querySelector('p').textContent = title;
+        overlay.querySelector('[data-act=cancel]').textContent = cancel;
+        overlay.querySelector('[data-act=shoot]').textContent = capture;
+        if (mirror) overlay.querySelector('video').style.transform = 'scaleX(-1)';
         document.body.appendChild(overlay);
         const video = overlay.querySelector('video');
         video.srcObject = stream;
@@ -214,11 +238,11 @@ window.takePhoto = async () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            canvas.toBlob((blob) => done(blob ? new File([blob], 'proof-of-release-' + Date.now() + '.jpg', { type: 'image/jpeg' }) : null), 'image/jpeg', 0.9);
+            canvas.toBlob((blob) => done(blob ? new File([blob], fileName + '-' + Date.now() + '.jpg', { type: 'image/jpeg' }) : null), 'image/jpeg', 0.9);
         });
         overlay.querySelector('[data-act=shoot]').focus();
     });
-};
+}
 
 // Exposed globally for the same reason — the admin Dokyu "Edit Document"
 // rich-text editor (document-requests.blade.php + document-editor-toolbar/
@@ -634,6 +658,9 @@ document.addEventListener('alpine:init', () => {
                 status: p.status,
                 accessLevel: p.access_level,
                 fullServiceAccess: p.full_service_access,
+                // Identity, apart from residency (`status`): Pending, In
+                // Progress, Verified, Failed, Requires Review, Revoked.
+                identityStatus: p.identity_status ?? null,
                 capabilities: p.capabilities,
                 profileCompleteness: p.profile_completeness,
                 identityLocked: p.identity_locked,

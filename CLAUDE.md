@@ -262,6 +262,23 @@ here before using it, exactly as with the axes above.
 | **Record activity** | Active · Under Review | `households[].status`, `families[].status`, `individuals[].status` |
 | **Profiling coverage** | Not Started (Re-visit Required) · In Progress · Needs Follow-up · Complete | `barangayCoverage[].status` |
 | **Issue triage** | Open · In Review · Resolved | `dataQualityIssues[].status`, `individuals[].incident_reports[].status` |
+| **Identity verification** (2026-10-09) | Pending · In Progress · Verified · Failed · Requires Review · Revoked | `identity_status` on a citizen account, `identity.status` from `GET /citizen/verification/id` and `GET /admin/citizens/{accountNo}` (backend `CitizenAccount::IDENTITY_STATUSES`) |
+
+**Identity verification is not residency.** It says whether the person is who
+their ID says (an automated Didit check of the document, the selfie against the
+ID's photo, and the selfie's liveness - or an officer, by hand, with a reason).
+Residency is still the account `status` the officer decides. An officer can
+revoke a verified identity (with a reason); that drops `access_level` to
+Unverified without touching `status`, and only an officer restores it. Its
+`Verified` is not axis 2's or axis 3's: render it through its own class map
+(`identityPillClass` / `identityPill`), never `x-ui.badge`.
+
+Where the ID and selfie are captured is the server's `capture` (on
+`GET /citizen/verification/id`): `hosted` sends the resident to Didit's page
+(`POST /citizen/verification/session`, `platform: web`) and, back on
+`/citizen/profile?verification=done`, asks the server to read the result
+(`.../session/{id}/sync`); `own` keeps the portal's form with the live-camera
+selfie. The portal never decides the outcome from the redirect itself.
 
 Nested REQUEST rows are not module-local and do use the lifecycle:
 `individuals[].document_requests[].status`, `.assistance_requests[].status` and

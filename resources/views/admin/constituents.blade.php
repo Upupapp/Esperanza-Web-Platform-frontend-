@@ -166,6 +166,9 @@
         accountDetail: null,
         accountLoading: false,
         photoRejectRemarks: '',
+        // Identity (2026-10-09): the reason an officer gives to verify an
+        // identity by hand, restore one, or revoke it. Kept on the record.
+        identityReason: '',
         // A resident's approved photo by registry ref (from GET /admin/citizens), for
         // the rows, the detail and household and family members.
         photoByRef: {},
@@ -191,6 +194,7 @@
             this.accountRow = i;
             this.accountDetail = null;
             this.photoRejectRemarks = '';
+            this.identityReason = '';
             this.showAccountReview = true;
             this.accountLoading = true;
             try {
@@ -208,6 +212,44 @@
             if (!i) return;
             if (action === 'verify') await this.verifyCitizenAccount(i); else await this.rejectCitizenAccount(i);
             await this.openAccount(i);
+        },
+        // Identity, apart from residency (2026-10-09). verify = by hand or
+        // restoring a revoked identity (const_citizen_verification,verify);
+        // revoke (…,reject) asks for confirmation; recheck runs a check the
+        // service could not finish. None of them approves the account.
+        async decideIdentity(action) {
+            const i = this.accountRow;
+            if (!i || this.processingCitizen) return;
+            const reason = this.identityReason.trim();
+            if (action !== 'recheck' && reason.length < 5) return;
+            if (action === 'revoke' && !window.confirm('Revoke ' + (i.name || 'this resident') + '\'s identity verification? Their access drops to Unverified until an officer restores it. Their residency decision and the original check stay as they are.')) return;
+            this.processingCitizen = true;
+            try {
+                const url = '/admin/citizens/' + encodeURIComponent(i.citizen_account.account_no) + '/identity/' + action;
+                const res = await $api.post(url, action === 'recheck' ? {} : { reason });
+                this.accountDetail = res.data;
+                i.citizen_account = { ...i.citizen_account, identity_status: res.data?.identity?.status, access_level: res.data?.access_level };
+                this.identityReason = '';
+                this.$dispatch('toast', {
+                    message: { verify: 'Identity verified. Approve the account separately.', revoke: 'Identity revoked; the resident was told why.', recheck: 'Check run again.' }[action],
+                    variant: action === 'revoke' ? 'info' : 'success',
+                });
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not update the identity.', variant: 'error' });
+            } finally {
+                this.processingCitizen = false;
+                this.$nextTick(() => window.renderIcons?.());
+            }
+        },
+        identityPillClass(s) {
+            return {
+                'Pending': 'bg-slate-100 text-slate-700 ring-slate-200',
+                'In Progress': 'bg-sky-50 text-sky-700 ring-sky-200',
+                'Verified': 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+                'Failed': 'bg-rose-50 text-rose-700 ring-rose-200',
+                'Requires Review': 'bg-amber-50 text-amber-700 ring-amber-200',
+                'Revoked': 'bg-rose-50 text-rose-700 ring-rose-200',
+            }[s] || 'bg-slate-100 text-slate-700 ring-slate-200';
         },
         async decideAccountPhoto(action) {
             const i = this.accountRow;
