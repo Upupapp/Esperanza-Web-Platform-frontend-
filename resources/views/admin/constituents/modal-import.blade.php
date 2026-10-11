@@ -128,6 +128,7 @@
                     <template x-if="column('barangay') >= 0">
                         <div class="space-y-1.5 max-h-72 overflow-y-auto scrollbar-thin pr-1">
                             <p class="text-xs text-ink-muted mb-1">How each value in your file reads:</p>
+                            <p x-show="scope" class="text-xs text-ink-muted mb-1" x-text="'You import for Brgy. ' + scope + '; rows of other barangays are left out.'"></p>
                             <template x-for="v in barangayValues" :key="v.raw">
                                 <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 items-center">
                                     <span class="text-xs text-ink truncate" :title="v.raw"><span x-text="v.raw"></span> <span class="text-ink-muted" x-text="'(' + v.count + ')'"></span></span>
@@ -179,6 +180,11 @@
             </template>
         </div>
 
+        <p x-show="counts.outside" x-cloak class="flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs text-ink-muted">
+            <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+            <span x-text="counts.outside.toLocaleString() + ' row(s) are from other barangays and are left out: you import for Brgy. ' + scope + '. Municipal staff can import the whole list.'"></span>
+        </p>
+
         <div class="grid md:grid-cols-2 gap-4">
             <div class="rounded-2xl bg-white border border-slate-200 p-4">
                 <p class="text-sm font-bold text-ink mb-2">Residents already in the registry</p>
@@ -198,6 +204,10 @@
             <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-50 text-xs">
                 <span class="font-semibold text-ink" x-text="(filter==='all' ? 'All rows' : {ready:'New residents',match:'Already in the registry',twice:'Listed twice',error:'Need fixing'}[filter]) + ' · ' + filtered.length.toLocaleString()"></span>
                 <span x-show="filter==='error' && counts.error" class="text-ink-muted">Fix each row here and it is checked again. Rows still needing a fix are left out of the import.</span>
+                <label class="relative ml-auto">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="search" :value="reviewSearch" @input.debounce.250ms="setReviewSearch($event.target.value)" aria-label="Find a row" placeholder="Find a name, row or household no." class="w-64 max-w-full pl-8 pr-3 py-1.5 rounded-lg text-xs border-0 surface-pressed-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-200">
+                </label>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-xs">

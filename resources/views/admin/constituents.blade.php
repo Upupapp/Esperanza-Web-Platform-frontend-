@@ -19,6 +19,22 @@
         // these are every resident.
         registryTruncated: false,
         registryTotals: { residents: 0, households: 0, families: 0 },
+        // Once the registry is bigger than one load (getAll's 2,000), search
+        // and the filters go to the server, so they find every resident
+        // (live test 2026-10-12: after a 2,000-row import they missed most).
+        remote: { key: '', rows: null, loading: false, total: 0 },
+        // Fifty rows a list at a time (live test 2026-10-12): with thousands
+        // of residents every list here drew them all, hidden tabs included,
+        // and the page took minutes to open. x-admin.pager draws the controls.
+        pageSize: 50,
+        pages: {},
+        pageCount(list) { return Math.max(1, Math.ceil((list || []).length / this.pageSize)); },
+        pageOf(key, list) { return Math.min(Math.max(1, this.pages[key] || 1), this.pageCount(list)); },
+        paged(list, key) { const p = this.pageOf(key, list); return (list || []).slice((p - 1) * this.pageSize, p * this.pageSize); },
+        turnPage(key, step, list) { this.pages = { ...this.pages, [key]: this.pageOf(key, list) + step }; this.$nextTick(() => window.renderIcons?.()); },
+        get filterKey() { return [this.tab, this.view, this.search, this.barangayFilter, this.verificationFilter, this.statusFilter, this.tagFilter, this.dqTypeFilter, this.dqStatusFilter, this.cvSearch, this.cvStatusFilter, this.cvBarangayFilter, this.cvTagFilter, this.cvType].join('|'); },
+        remoteTimer: null,
+        citizensByRef: {},
         // The resident detail colours profile completeness by how far along
         // it is; it called this helper, which did not exist, and threw.
         completionTextColor(pct) {
@@ -37,6 +53,8 @@
         barangayOptions: @js($barangayOptions),
 
         async init() {
+            this.$watch('remoteKey', () => this.queueRemoteSearch());
+            this.$watch('filterKey', () => { this.pages = {}; });
             await this.loadRegistry();
             // From the top bar's search: a resident's record (?ref=) or a
             // barangay's registry (?barangay=).
@@ -90,6 +108,7 @@
                 ]);
                 const citizensByRef = {};
                 (citizens.data || []).forEach(c => { if (c.resident_profile?.ref) citizensByRef[c.resident_profile.ref] = c; });
+                this.citizensByRef = citizensByRef;
                 this.individuals = (residents.data || []).map(i => ({ ...i, citizen_account: citizensByRef[i.ref] || null }));
                 this.photoByRef = Object.fromEntries(this.individuals.filter(i => i.citizen_account?.photo_url).map(i => [i.ref, i.citizen_account.photo_url]));
                 this.households = households.data || [];
@@ -105,8 +124,45 @@
                     households: households.meta?.total ?? this.households.length,
                     families: families.meta?.total ?? this.families.length,
                 };
-            } catch { this.failed = true; } finally { this.loading = false; }
+            } catch { this.failed = true; } finally {
+                this.loading = false;
+                this.remote = { key: '', rows: null, loading: false, total: 0 };
+                this.queueRemoteSearch(0);
+            }
         },
+
+        // What the server is asked for while the registry is too big to hold:
+        // empty when everything is loaded or nothing is being looked for.
+        get remoteKey() {
+            const q = this.search.trim();
+            if (!this.registryTruncated || !(q || this.barangayFilter || this.verificationFilter || this.tagFilter)) return '';
+            return [q, this.barangayFilter, this.verificationFilter, this.tagFilter].join('|');
+        },
+        queueRemoteSearch(delay = 350) {
+            clearTimeout(this.remoteTimer);
+            this.remoteTimer = setTimeout(() => this.searchRegistry(), delay);
+        },
+        async searchRegistry() {
+            const key = this.remoteKey;
+            if (!key) { this.remote = { key: '', rows: null, loading: false, total: 0 }; return; }
+            if (key === this.remote.key && (this.remote.rows || this.remote.loading)) return;
+            this.remote = { key, rows: this.remote.rows, loading: true, total: this.remote.total };
+            const q = this.search.trim();
+            const params = {};
+            if (/^IMP-\d{4}-\d+$/i.test(q)) params.import = q.toUpperCase(); else if (q) params.q = q;
+            if (this.barangayFilter) params.barangay = this.barangayFilter;
+            if (this.verificationFilter) params.verification = this.verificationFilter;
+            if (this.tagFilter) params.tag = this.tagFilter;
+            try {
+                const res = await $api.getAll('/admin/residents', { params, maxPages: 30 });
+                if (this.remoteKey !== key) return;
+                this.remote = { key, rows: (res.data || []).map(i => ({ ...i, citizen_account: this.citizensByRef[i.ref] || null })), loading: false, total: res.meta?.total ?? (res.data || []).length };
+            } catch {
+                if (this.remoteKey === key) this.remote = { key, rows: null, loading: false, total: 0 };
+            }
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        get remoteActive() { return !!this.remoteKey && this.remote.key === this.remoteKey && !!this.remote.rows; },
 
         search:             '',
         barangayFilter:     '',
@@ -143,9 +199,9 @@
         },
         get activeStats() {
             return {
-                residents: this.individuals.length,
-                households: this.households.length,
-                families: this.families.length,
+                residents: this.registryTruncated ? this.registryTotals.residents : this.individuals.length,
+                households: this.registryTruncated ? this.registryTotals.households : this.households.length,
+                families: this.registryTruncated ? this.registryTotals.families : this.families.length,
                 verified: this.individuals.filter(i => i.verification === 'Verified').length,
                 pending: this.individuals.filter(i => i.verification === 'For Validation').length,
                 issues: this.qualityIssues.length,
@@ -485,7 +541,7 @@
         },
 
         get filteredIndividuals() {
-            return this.individuals.filter(r => {
+            return (this.remoteActive ? this.remote.rows : this.individuals).filter(r => {
                 if (!this.$store.session.inScope(r.barangay)) return false;
                 if (this.barangayFilter && r.barangay !== this.barangayFilter) return false;
                 if (this.verificationFilter && r.verification !== this.verificationFilter) return false;
@@ -764,10 +820,9 @@
              class="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <i data-lucide="info" class="w-4 h-4 mt-0.5 shrink-0"></i>
             <span>
-                Showing the first <strong x-text="individuals.length.toLocaleString()"></strong> of
-                <strong x-text="registryTotals.residents.toLocaleString()"></strong> residents
-                (<span x-text="households.length.toLocaleString() + ' of ' + registryTotals.households.toLocaleString()"></span> households).
-                Counts and filters on this page cover the records shown.
+                The registry has <strong x-text="registryTotals.residents.toLocaleString()"></strong> residents; the list shows the first
+                <strong x-text="individuals.length.toLocaleString()"></strong>. Search, the barangay and the filters look through all of them.
+                The Records Confirmed and Profiles to Review counts, and the family and household lists, cover the records shown.
             </span>
         </div>
 

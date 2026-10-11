@@ -172,13 +172,27 @@ async function send(method, url, { data, params, group, ...rest } = {}) {
  * screen can say "showing N of M" instead of pretending.
  */
 async function getAll(url, { params = {}, maxPages = 20, ...options } = {}) {
-    const data = [];
-    let meta = null;
-    for (let page = 1; page <= maxPages; page += 1) {
-        const result = await send('get', url, { ...options, params: { ...params, per_page: 100, page } });
+    const first = await send('get', url, { ...options, params: { ...params, per_page: 100, page: 1 } });
+    const data = [...(first?.data || [])];
+    let meta = first?.meta || null;
+    // The rest four at a time, kept in order: one after another, the
+    // registry's 25 pages of an imported municipality took most of a
+    // minute to arrive (live test 2026-10-12).
+    const last = Math.min(maxPages, meta?.last_page || 1);
+    const pages = [];
+    for (let page = 2; page <= last; page += 1) pages.push(page);
+    const results = new Array(pages.length);
+    let next = 0;
+    const worker = async () => {
+        while (next < pages.length) {
+            const i = next++;
+            results[i] = await send('get', url, { ...options, params: { ...params, per_page: 100, page: pages[i] } });
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, pages.length) }, worker));
+    for (const result of results) {
         data.push(...(result?.data || []));
-        meta = result?.meta || null;
-        if (!meta || !meta.last_page || page >= meta.last_page) break;
+        meta = result?.meta || meta;
     }
     const total = meta?.total ?? data.length;
 

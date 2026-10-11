@@ -15,6 +15,7 @@
                 email: '', mobile: '', password: '',
             },
             accountNo: null,
+            foundInRegistry: false,
             otpDestination: '',
             otpCode: '',
             loading: false,
@@ -53,6 +54,7 @@
                 try {
                     const result = await $api.post('/auth/citizen/register', { ...this.form, accepts_terms: true });
                     this.accountNo = result.data.account_no;
+                    this.foundInRegistry = result.data.registry_match === 'pending';
                     this.otpDestination = result.data.verification?.destination || '';
                 } catch (err) {
                     this.error = err.explain ? err.explain($store.lang.current) : 'Registration failed.';
@@ -225,6 +227,9 @@
             </div>
             <h1 class="text-xl font-semibold text-ink"><x-ui.t fil="Kumpirmahin ang Account" en="Confirm your account" /></h1>
             <p class="text-ink-muted text-sm mt-1.5" x-text="($store.lang.current === 'en' ? 'Enter the 6-digit code sent to ' : 'Ilagay ang 6-digit code na ipinadala sa ') + otpDestination"></p>
+
+            {{-- Recognised as a record the barangay already had (2026-10-09). --}}
+            <p x-show="foundInRegistry" x-cloak class="mt-4 flex gap-2 rounded-xl bg-brand-50 px-3.5 py-2.5 text-xs leading-relaxed text-brand-800"><i data-lucide="user-check" class="w-4 h-4 shrink-0 mt-0.5"></i><x-ui.t fil="Nakita ka namin sa talaan ng iyong barangay. Iuugnay ito sa iyong account kapag na-verify ka ng barangay office." en="We found you in your barangay's registry. It will be linked to your account when the barangay office verifies you." /></p>
 
             <form class="mt-6 space-y-4" @submit.prevent="verify">
                 <x-ui.input name="code" type="text" label="6-digit code" label-fil="6-digit na code" icon="shield-check" class="font-mono text-center tracking-[0.4em]" x-model="otpCode" maxlength="6" required />

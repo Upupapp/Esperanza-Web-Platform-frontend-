@@ -69,6 +69,7 @@ export function residentImport() {
 
         rows: [],
         filter: 'all',
+        reviewSearch: '',
         page: 1,
         perPage: 50,
         onMatch: 'skip',
@@ -259,7 +260,9 @@ export function residentImport() {
             let lastKey = null;
             const rows = this.body.map((r) => {
                 const row = this.lib.buildRow(r.cells, r.line, opts);
-                if (this.scope && row.barangay && row.barangay !== this.scope) row.issues.push('Outside your barangay (' + this.scope + ')');
+                // A barangay officer imports their barangay's rows; the rest of
+                // a municipal list is left out, not something to fix.
+                const outside = !!(this.scope && row.barangay && row.barangay !== this.scope && !row.issues.length);
                 if (!this.groupHouseholds) row.household_key = null;
                 else if (this.hasHouseholdNo) {
                     // Registers write the number on the head's row only: a
@@ -273,7 +276,7 @@ export function residentImport() {
                     if (row.is_head) head = 'H' + row.row;
                     row.household_key = head;
                 }
-                return { ...row, cells: r.cells, status: row.issues.length ? 'error' : 'ready', errors: [...row.issues], match: null, twinOf: null, action: 'auto', outcome: null, outcomeRef: null, outcomeMessage: null };
+                return { ...row, cells: r.cells, status: outside ? 'outside' : row.issues.length ? 'error' : 'ready', errors: [...row.issues], match: null, twinOf: null, action: 'auto', outcome: null, outcomeRef: null, outcomeMessage: null };
             });
 
             try {
@@ -317,15 +320,20 @@ export function residentImport() {
 
         // The same person twice in this file: the first one counts. Run again
         // after a correction, which can make or break a pair.
+        // Judged the way the server judges a resident already there: the same
+        // name in the same barangay, middle initials that agree (or one
+        // missing), and birth dates that agree (or one missing).
         recountTwins() {
-            const seen = {};
             for (const r of this.pending) {
                 if (r.status === 'twice') { r.keepNew = r.action === 'new'; r.status = 'ready'; r.twinOf = null; r.action = 'auto'; }
             }
+            const groups = {};
+            const initial = (r) => (r.middle_name || '').normalize('NFD').replace(/[^A-Za-z]/g, '').charAt(0).toLowerCase();
             for (const r of this.pending) {
                 if (r.status !== 'ready' || !r.key) continue;
-                const k = r.key + '|' + (r.dob || '') + '|' + r.barangay;
-                if (seen[k]) { r.status = 'twice'; r.twinOf = seen[k]; r.action = r.keepNew ? 'new' : 'skip'; } else seen[k] = r.row;
+                const g = (groups[r.key + '|' + r.barangay + '|' + (r.suffix || '')] ||= []);
+                const twin = g.find((o) => (!o.dob || !r.dob || o.dob === r.dob) && (!initial(o) || !initial(r) || initial(o) === initial(r)));
+                if (twin) { r.status = 'twice'; r.twinOf = twin.row; r.action = r.keepNew ? 'new' : 'skip'; } else g.push(r);
             }
         },
 
@@ -333,11 +341,18 @@ export function residentImport() {
         // run; then the ones left to fix.
         get pending() { return this.rows.filter((r) => !r.outcome); },
         get counts() {
-            const c = { all: 0, ready: 0, match: 0, twice: 0, error: 0 };
+            const c = { all: 0, ready: 0, match: 0, twice: 0, error: 0, outside: 0 };
             this.pending.forEach((r) => { c.all++; c[r.status]++; });
             return c;
         },
-        get filtered() { return this.filter === 'all' ? this.pending : this.pending.filter((r) => r.status === this.filter); },
+        get filtered() {
+            const rows = this.filter === 'all' ? this.pending.filter((r) => r.status !== 'outside') : this.pending.filter((r) => r.status === this.filter);
+            const q = this.reviewSearch.trim().toLowerCase();
+            if (!q) return rows;
+            // A name, a row number, a household number or a matched ref.
+            return rows.filter((r) => String(r.row) === q || this.displayName(r).toLowerCase().includes(q)
+                || (r.household_key || '').toLowerCase() === q || (r.match?.ref || '').toLowerCase() === q);
+        },
 
         // ---------------------------------------------------- Correcting a row
 
@@ -423,6 +438,7 @@ export function residentImport() {
         get pageRows() { return this.filtered.slice((this.page - 1) * this.perPage, this.page * this.perPage); },
         get pages() { return Math.max(1, Math.ceil(this.filtered.length / this.perPage)); },
         setFilter(f) { this.filter = f; this.page = 1; this.$nextTick(() => window.renderIcons?.()); },
+        setReviewSearch(v) { this.reviewSearch = v; this.page = 1; this.editing = null; this.$nextTick(() => window.renderIcons?.()); },
 
         willAdd(r) {
             if (r.status === 'ready') return r.action !== 'skip';
@@ -437,6 +453,7 @@ export function residentImport() {
             let leave = 0;
             let fix = 0;
             this.pending.forEach((r) => {
+                if (r.status === 'outside') return;
                 if (r.status === 'error') fix++;
                 else if (this.willAdd(r)) add++;
                 else if (this.willFill(r)) fill++;
@@ -455,7 +472,7 @@ export function residentImport() {
         // Rows to send, a household's rows together and its head first, in
         // batches that never split a household.
         batches() {
-            const send = this.pending.filter((r) => r.status !== 'error' && (this.willAdd(r) || this.willFill(r) || r.status === 'match' || r.status === 'twice'));
+            const send = this.pending.filter((r) => r.status !== 'error' && r.status !== 'outside' && (this.willAdd(r) || this.willFill(r) || r.status === 'match' || r.status === 'twice'));
             const groups = [];
             const byKey = {};
             for (const r of send) {
@@ -563,6 +580,7 @@ export function residentImport() {
         },
 
         rowReason(r) {
+            if (r.status === 'outside') return 'Brgy. ' + r.barangay + ': not your barangay (' + this.scope + ')';
             if (r.status === 'error') return r.errors.join('; ');
             if (r.outcome === 'failed') return r.outcomeMessage || 'Not imported';
             if (r.outcome === 'filled') return 'Already in the registry as ' + r.outcomeRef + '; blank details filled in';

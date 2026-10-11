@@ -12,8 +12,9 @@
             Showing
             <span class="font-semibold text-ink" x-text="filteredIndividuals.length"></span>
             of
-            <span class="font-semibold text-ink" x-text="individuals.length"></span>
+            <span class="font-semibold text-ink" x-text="(registryTruncated ? registryTotals.residents : individuals.length).toLocaleString()"></span>
             residents
+            <span x-show="remote.loading" x-cloak class="ml-2 inline-flex items-center gap-1 text-xs text-brand-700"><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i>Searching the whole registry…</span>
         </p>
     </div>
 
@@ -68,7 +69,7 @@
                 </template>
 
                 {{-- ── Individual rows ── --}}
-                <template x-for="r in filteredIndividuals" :key="r.ref">
+                <template x-for="r in paged(filteredIndividuals, 'ind')" :key="r.ref">
                     <tr
                         class="hover:bg-white/60 transition-colors cursor-pointer group"
                         @click="openIndividual(r)"
@@ -203,5 +204,6 @@
             </tbody>
         </table>
     </x-ui.table>
+    <x-admin.pager list="filteredIndividuals" key="ind" />
 
 </div>

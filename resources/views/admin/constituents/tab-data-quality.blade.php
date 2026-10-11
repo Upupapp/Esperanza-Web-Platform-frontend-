@@ -157,7 +157,7 @@
                 </thead>
                 <tbody class="divide-y divide-brand-600/[.08] bg-white">
 
-                    <template x-for="issue in filteredQualityIssues" :key="issue.ref">
+                    <template x-for="issue in paged(filteredQualityIssues, 'dq')" :key="issue.ref">
                         <tr
                             @click="openDQIssue(issue)"
                             class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
@@ -285,6 +285,7 @@
                 </tbody>
             </table>
         </x-ui.table>
+        <x-admin.pager list="filteredQualityIssues" key="dq" />
 
         {{-- Table footer --}}
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-5 py-3 border-t border-brand-600/10 bg-slate-50/50">

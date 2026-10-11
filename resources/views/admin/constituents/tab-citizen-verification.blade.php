@@ -206,7 +206,7 @@
                             </td>
                         </tr>
                     </template>
-                    <template x-for="i in filteredCitizenAccounts" :key="i.ref">
+                    <template x-for="i in paged(filteredCitizenAccounts, 'cv')" :key="i.ref">
                         <tr @click="i.accountOnly ? openAccount(i) : openIndividual(i)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
         tabindex="0"
         @keydown.enter.prevent="i.accountOnly ? openAccount(i) : openIndividual(i)"
@@ -254,6 +254,8 @@
                                     ></span>
                                     <span x-text="i.citizen_account?.status"></span>
                                 </span>
+                                <span x-show="i.citizen_account?.registry_match === 'pending'" x-cloak title="Registration recognised this resident as a record the registry already had. Open the account to confirm it."
+                                      class="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200 whitespace-nowrap"><i data-lucide="user-search" class="w-3 h-3"></i>Found in registry</span>
                                 <span
                                     x-show="!i.citizen_account"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-ink-muted ring-1 ring-inset ring-slate-200 whitespace-nowrap"
@@ -298,6 +300,7 @@
                 </tbody>
             </table>
     </x-ui.table>
+    <x-admin.pager list="filteredCitizenAccounts" key="cv" />
 
     {{-- ── FAMILY QUEUE TABLE ──────────────────────────────────────────────── --}}
     <x-ui.table x-show="cvType === 'Family'" x-cloak>
@@ -320,7 +323,7 @@
                             </td>
                         </tr>
                     </template>
-                    <template x-for="f in filteredCvFamilies" :key="f.ref">
+                    <template x-for="f in paged(filteredCvFamilies, 'cvFam')" :key="f.ref">
                         <tr @click="openFamily(f)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
         tabindex="0"
         @keydown.enter.prevent="openFamily(f)"
@@ -368,6 +371,7 @@
                 </tbody>
             </table>
     </x-ui.table>
+    <x-admin.pager list="filteredCvFamilies" key="cvFam" />
 
     {{-- ── HOUSEHOLD QUEUE TABLE ───────────────────────────────────────────── --}}
     <x-ui.table x-show="cvType === 'Household'" x-cloak>
@@ -390,7 +394,7 @@
                             </td>
                         </tr>
                     </template>
-                    <template x-for="h in filteredCvHouseholds" :key="h.ref">
+                    <template x-for="h in paged(filteredCvHouseholds, 'cvHh')" :key="h.ref">
                         <tr @click="openHousehold(h)" class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
         tabindex="0"
         @keydown.enter.prevent="openHousehold(h)"
@@ -438,4 +442,5 @@
                 </tbody>
             </table>
     </x-ui.table>
+    <x-admin.pager list="filteredCvHouseholds" key="cvHh" />
 </div>

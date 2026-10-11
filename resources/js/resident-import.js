@@ -319,7 +319,7 @@ const SYNONYMS = {
     address: ['address', 'house no', 'house number', 'street', 'house no street', 'tirahan', 'lot blk', 'block lot', 'complete address', 'residence address', 'home address', 'house no and street', 'house no street name', 'street name'],
     contact: ['contact', 'contact no', 'contact number', 'mobile', 'mobile no', 'mobile number', 'cellphone', 'cellphone no', 'cp no', 'cp', 'cell no', 'phone', 'phone no', 'telephone', 'tel no', 'numero'],
     occupation: ['occupation', 'trabaho', 'hanapbuhay', 'work', 'job', 'profession', 'employment', 'source of livelihood', 'livelihood'],
-    education: ['education', 'educational attainment', 'highest educational attainment', 'edukasyon', 'highest grade completed', 'educ attainment', 'educ', 'highest education'],
+    education: ['education', 'educational attainment', 'highest educational attainment', 'edukasyon', 'highest grade completed', 'educ attainment', 'educ', 'highest education', 'natapos na pag aaral', 'pinakamataas na natapos', 'antas ng pinag aralan', 'pinag aralan', 'natapos'],
     income_range: ['income', 'monthly income', 'average monthly income', 'kita', 'buwanang kita', 'income range', 'monthly family income'],
     relation: ['relationship', 'relation', 'relationship to head', 'relationship to household head', 'rel to head', 'relasyon', 'relation to head', 'relationship to the head', 'role in household', 'position in household', 'relasyon sa puno', 'relasyon sa puno ng pamilya', 'relasyon sa puno ng sambahayan', 'kaugnayan sa puno', 'kaugnayan'],
     household_key: ['household no', 'household number', 'hh no', 'hh number', 'hh id', 'household id', 'hh', 'household', 'hh code', 'household code', 'household serial no', 'family no', 'family number', 'hh num', 'household num', 'household ref'],
@@ -339,7 +339,8 @@ export function fieldForHeader(text) {
     if (/\bmiddle\b/.test(h)) return 'middle_name';
     if (/\bhousehold (no|number|id|code)\b|\bhh (no|number|id|code)\b/.test(h)) return 'household_key';
     if (/\bcontact|mobile|cellphone/.test(h)) return 'contact';
-    if (/\beducation/.test(h)) return 'education';
+    if (/\beducation|attainment|pag aaral|pinag aralan|\bnatapos\b/.test(h)) return 'education';
+    if (/\btirahan\b|\bkalye\b|\baddress\b|\bhouse (no|number)\b|\bstreet\b|\bbahay blg\b/.test(h)) return 'address';
     if (/\bincome\b/.test(h)) return 'income_range';
     if (/\brelation|\brelasyon\b|\bkaugnayan\b/.test(h)) return 'relation';
     if (/\bcivil\b|\bmarital\b/.test(h)) return 'civil_status';
@@ -383,6 +384,12 @@ export function guessMapping(headers, sampleRows, barangays) {
     if (map.includes('first_name') && map.includes('last_name')) {
         const at = map.indexOf('full_name');
         if (at >= 0) map[at] = '';
+    }
+    // The DILG RBI form: Apelyido | Pangalan | Gitnang Pangalan. Beside a
+    // surname column, "Pangalan" (or "Name") is the given name, not the whole
+    // name: read whole, "MA. LUISA" lost its "Luisa".
+    if (map.includes('last_name') && !map.includes('first_name') && map.includes('full_name')) {
+        map[map.indexOf('full_name')] = 'first_name';
     }
     return map;
 }
@@ -482,7 +489,13 @@ const RELATIONS = [
     [/^(son|anak na lalaki)$/, 'Son'],
     [/^(daughter|anak na babae)$/, 'Daughter'],
     [/^(child|anak|children|step ?(son|daughter|child)|adopted (son|daughter|child))$/, 'Child'],
-    [/^(grand ?(son|daughter|child)|apo)$/, 'Grandchild'],
+    [/^(grand ?(son|daughter|child)|apo|apo sa tuhod)$/, 'Grandchild'],
+    [/^(father|ama|tatay)$/, 'Father'],
+    [/^(mother|ina|nanay)$/, 'Mother'],
+    [/^(parent|parents|magulang)$/, 'Parent'],
+    [/^(sibling|brother|sister|kapatid)$/, 'Sibling'],
+    [/^(in law|.* in law|biyenan|manugang|bayaw|hipag|pamangkin|niece|nephew|tiyo|tiya|tito|tita|uncle|aunt|pinsan|cousin|lolo|lola|grand ?(father|mother|parent)|relative|other relative|kamag anak)$/, 'Other Relative'],
+    [/^(boarder|kasambahay|katulong|helper|maid|non relative|nonrelative|border|caretaker)$/, 'Non-Relative'],
 ];
 
 export function normRelation(value) {
@@ -492,15 +505,25 @@ export function normRelation(value) {
     return titleCase(String(value).trim());
 }
 
-/** "MARIA" -> "Maria", "dela cruz" -> "Dela Cruz"; mixed case is left alone. */
-export function titleCase(s) {
+const ACRONYMS = new Set(['OFW', 'BPO', 'PNP', 'AFP', 'BFP', 'BJMP', 'LGU', 'BHW', 'BNS', 'TESDA', 'CHED', 'DEPED', 'PWD', 'IT', 'HR', 'OJT', 'ALS', 'SHS', 'HS', 'BS', 'BSED', 'BEED', 'BSBA', 'BSN', 'BSIT', 'RN', 'LPT', 'CPA', 'MD', 'TODA', 'NGO', 'DSWD', 'DOH', 'SK', 'GSIS', 'SSS', 'AB', 'MA', 'PHD']);
+
+/**
+ * "MARIA" -> "Maria", "dela cruz" -> "Dela Cruz"; mixed case is left alone.
+ * With `acronyms`, OFW and TESDA stay as written (an occupation, not a name:
+ * "LUZ" is a name, "OFW" is not).
+ */
+export function titleCase(s, acronyms = false) {
     const v = String(s || '').trim();
     if (!v || (v !== v.toUpperCase() && v !== v.toLowerCase())) return v;
-    return v.toLowerCase().replace(/(^|[\s\-'.(])([a-zñ])/g, (_, p, c) => p + c.toUpperCase())
+    const t = v.toLowerCase().replace(/(^|[\s\-'.(/])([a-zñ])/g, (_, p, c) => p + c.toUpperCase())
         .replace(/\b(Ii|Iii|Iv|Vi)\b/g, (r) => r.toUpperCase());
+    return acronyms ? t.replace(/[A-Za-zÑñ]+/g, (w) => (ACRONYMS.has(w.toUpperCase()) ? (w.toUpperCase() === 'DEPED' ? 'DepEd' : w.toUpperCase() === 'PHD' ? 'PhD' : w.toUpperCase()) : w)) : t;
 }
 
-const SUFFIX_RE = /^(jr|sr|ii|iii|iv|v|vi|2nd|3rd|4th)\.?$/i;
+// No lone "V": in a written name it is a middle initial ("VILLANUEVA, SHIELA
+// V." became "Shiela Villanueva V", live test 2026-10-12). A fifth comes only
+// from a suffix column, which cleanSuffix reads.
+const SUFFIX_RE = /^(jr|sr|ii|iii|iv|vi|2nd|3rd|4th)\.?$/i;
 const PARTICLES = ['de', 'del', 'dela', 'delas', 'delos', 'la', 'las', 'los', 'san', 'santa', 'sta', 'sta.', 'santo', 'sto', 'sto.', 'van', 'von', 'di', 'da', 'dos', 'das', 'y'];
 const isInitial = (w) => /^[A-Za-zÑñ]\.?$/.test(w);
 
@@ -641,21 +664,24 @@ export function buildRow(cells, index, opts) {
         else if (!barangay) issues.push('Barangay "' + raw.slice(0, 40) + '" is not matched to a barangay');
     }
 
-    const relation = normRelation(get('relation'));
+    const sex = normSex(get('sex'));
+    let relation = normRelation(get('relation'));
+    // "Anak" is a son or a daughter, as the registry records it.
+    if (relation === 'Child' && sex) relation = sex === 'Male' ? 'Son' : 'Daughter';
     const civilRaw = get('civil_status');
     const household = get('household_key');
     return {
         row: index,
         ...name,
-        sex: normSex(get('sex')),
+        sex,
         dob,
         civil_status: civilRaw ? (CIVIL[headerKey(civilRaw)] || titleCase(civilRaw)) : null,
         barangay,
         sitio: titleCase(get('sitio')) || null,
         address: get('address') || null,
         contact: normContact(get('contact')),
-        occupation: titleCase(get('occupation')) || null,
-        education: titleCase(get('education')) || null,
+        occupation: titleCase(get('occupation'), true) || null,
+        education: titleCase(get('education'), true) || null,
         income_range: get('income_range') || null,
         relation,
         household_key: household ? household.replace(/\.0+$/, '') : null,

@@ -47,7 +47,7 @@
             </template>
 
             {{-- Family rows --}}
-            <template x-for="f in filteredFamilies" :key="f.ref">
+            <template x-for="f in paged(filteredFamilies, 'fam')" :key="f.ref">
                 <tr
                     class="hover:bg-blue-50/40 cursor-pointer transition-colors group"
                     @click="openFamily(f)"
@@ -138,6 +138,7 @@
 
         </tbody>
     </x-ui.table>
+    <x-admin.pager list="filteredFamilies" key="fam" />
 
     {{-- Footer pagination hint --}}
     <template x-if="filteredFamilies.length > 0">

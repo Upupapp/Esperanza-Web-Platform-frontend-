@@ -48,7 +48,7 @@
             </template>
 
             {{-- Household rows --}}
-            <template x-for="h in filteredHouseholds" :key="h.ref">
+            <template x-for="h in paged(filteredHouseholds, 'hh')" :key="h.ref">
                 <tr
                     class="hover:bg-blue-50/40 cursor-pointer transition-colors group"
                     @click="openHousehold(h)"
@@ -149,6 +149,7 @@
 
         </tbody>
     </x-ui.table>
+    <x-admin.pager list="filteredHouseholds" key="hh" />
 
     {{-- Footer pagination hint --}}
     <template x-if="filteredHouseholds.length > 0">

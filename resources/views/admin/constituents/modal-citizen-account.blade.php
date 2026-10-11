@@ -47,6 +47,21 @@
                         <p class="text-sm font-semibold text-ink"><span x-text="registryMatch.record.name"></span> <span class="text-xs font-mono text-ink-muted" x-text="registryMatch.record.ref"></span></p>
                         <p class="text-xs text-ink-muted" x-text="[registryMatch.record.age != null ? registryMatch.record.age + ' yrs' : null, registryMatch.record.sex, registryMatch.record.household?.label, registryMatch.record.imported_from ? 'imported from ' + registryMatch.record.imported_from.filename : null].filter(Boolean).join(' · ')"></p>
                         <p x-show="registryMatch.reasons?.length" class="text-xs text-emerald-700 mt-1" x-text="'Matched on: ' + window.registryReasonText(registryMatch.reasons)"></p>
+                        <template x-if="registryMatch.record.comparison?.length">
+                            <table class="mt-2 w-full text-[11px]">
+                                <thead class="text-ink-muted"><tr><th class="text-left font-semibold py-1 pr-2">&nbsp;</th><th class="text-left font-semibold py-1 pr-2">Registered as</th><th class="text-left font-semibold py-1 pr-2">In the registry</th><th></th></tr></thead>
+                                <tbody>
+                                    <template x-for="c in registryMatch.record.comparison" :key="c.field">
+                                        <tr class="border-t border-slate-100">
+                                            <td class="py-1 pr-2 text-ink-muted" x-text="c.label"></td>
+                                            <td class="py-1 pr-2 text-ink" x-text="c.account || '—'"></td>
+                                            <td class="py-1 pr-2 text-ink"><span x-show="!c.record_hidden" x-text="c.record || '—'"></span><span x-show="c.record_hidden" class="text-ink-muted" title="Only officers who may see sensitive details see this value">hidden</span></td>
+                                            <td class="py-1 text-right whitespace-nowrap font-semibold" :class="{ same: 'text-emerald-700', similar: 'text-amber-700', different: 'text-rose-700', missing: 'text-ink-muted' }[c.status]" x-text="{ same: '✓ same', similar: '≈ written differently', different: '✗ different', missing: 'not given' }[c.status]"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
                     </div>
                 </template>
                 <template x-if="registryMatch?.status === 'pending'">
@@ -71,6 +86,21 @@
                                         <span class="ml-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ring-1" :class="c.strength === 'strong' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-amber-200'" x-text="c.strength === 'strong' ? 'Strong match' : 'Possible match'"></span></p>
                                     <p class="text-xs text-ink-muted" x-text="[c.age != null ? c.age + ' yrs' : null, c.sex, c.household?.label, c.imported_from ? 'imported from ' + c.imported_from.filename : null].filter(Boolean).join(' · ')"></p>
                                     <p class="text-xs text-ink-muted mt-0.5" x-text="window.registryReasonText(c.reasons)"></p>
+                                    <details x-show="c.comparison?.length" class="mt-1 text-[11px]">
+                                        <summary class="cursor-pointer text-brand-700">Compare</summary>
+                                        <table class="mt-1 w-full">
+                                            <tbody>
+                                                <template x-for="f in (c.comparison || [])" :key="f.field">
+                                                    <tr class="border-t border-slate-100">
+                                                        <td class="py-0.5 pr-2 text-ink-muted" x-text="f.label"></td>
+                                                        <td class="py-0.5 pr-2 text-ink" x-text="f.account || '—'"></td>
+                                                        <td class="py-0.5 pr-2 text-ink"><span x-show="!f.record_hidden" x-text="f.record || '—'"></span><span x-show="f.record_hidden" class="text-ink-muted">hidden</span></td>
+                                                        <td class="py-0.5 text-right font-semibold" :class="{ same: 'text-emerald-700', similar: 'text-amber-700', different: 'text-rose-700', missing: 'text-ink-muted' }[f.status]" x-text="{ same: '✓', similar: '≈', different: '✗', missing: '–' }[f.status]"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </details>
                                 </div>
                                 <button type="button" x-show="can('const_citizen_verification','verify')" @click="decideRegistryMatch('link', c.ref)" :disabled="registryBusy" class="text-xs font-semibold rounded-xl px-3 py-2 bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:opacity-50">Use this record</button>
                             </div>
