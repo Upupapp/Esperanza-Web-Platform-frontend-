@@ -171,25 +171,38 @@ async function send(method, url, { data, params, group, ...rest } = {}) {
  * with meta.total (the server's count), meta.loaded and meta.truncated, so a
  * screen can say "showing N of M" instead of pretending.
  */
+// At most three extra list pages in flight across the whole page.
+const EXTRA_PAGE_SLOTS = 3;
+let extraInFlight = 0;
+const extraQueue = [];
+function extraPage(run) {
+    return new Promise((resolve, reject) => {
+        const start = () => {
+            extraInFlight += 1;
+            run().then(resolve, reject).finally(() => {
+                extraInFlight -= 1;
+                extraQueue.shift()?.();
+            });
+        };
+        if (extraInFlight < EXTRA_PAGE_SLOTS) start(); else extraQueue.push(start);
+    });
+}
+
 async function getAll(url, { params = {}, maxPages = 20, ...options } = {}) {
     const first = await send('get', url, { ...options, params: { ...params, per_page: 100, page: 1 } });
     const data = [...(first?.data || [])];
     let meta = first?.meta || null;
-    // The rest four at a time, kept in order: one after another, the
-    // registry's 25 pages of an imported municipality took most of a
-    // minute to arrive (live test 2026-10-12).
+    // The rest a few at a time, kept in order: one after another, the
+    // registry's 25 pages of an imported municipality took most of a minute
+    // to arrive (live test 2026-10-12). The few are shared by every list on
+    // the page: four per list (seven lists at once on Constituents) queued
+    // past the 15-second timeout on a one-CPU server and the page failed.
     const last = Math.min(maxPages, meta?.last_page || 1);
     const pages = [];
     for (let page = 2; page <= last; page += 1) pages.push(page);
-    const results = new Array(pages.length);
-    let next = 0;
-    const worker = async () => {
-        while (next < pages.length) {
-            const i = next++;
-            results[i] = await send('get', url, { ...options, params: { ...params, per_page: 100, page: pages[i] } });
-        }
-    };
-    await Promise.all(Array.from({ length: Math.min(4, pages.length) }, worker));
+    // One slow page is asked for again rather than failing the whole list.
+    const fetchPage = (page) => send('get', url, { ...options, params: { ...params, per_page: 100, page } });
+    const results = await Promise.all(pages.map((page) => extraPage(() => fetchPage(page).catch(() => fetchPage(page)))));
     for (const result of results) {
         data.push(...(result?.data || []));
         meta = result?.meta || meta;
