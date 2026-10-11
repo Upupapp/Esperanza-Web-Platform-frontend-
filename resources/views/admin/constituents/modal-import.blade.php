@@ -90,6 +90,11 @@
             </div>
         </div>
 
+        <p x-show="!body.length" x-cloak class="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800" role="alert">
+            <i data-lucide="triangle-alert" class="w-4 h-4 mt-0.5 shrink-0"></i>
+            <span>There are no rows under the column names. If the first row is a resident, set <strong>Column names are on</strong> to <strong>No column names</strong>; otherwise choose another sheet or file.</span>
+        </p>
+
         <div class="flex flex-wrap gap-2 text-xs">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ring-1" :class="hasName ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-rose-50 text-rose-700 ring-rose-200'"><i :data-lucide="hasName ? 'circle-check' : 'circle-alert'" class="w-3.5 h-3.5"></i>Name (a full name, or first and last)</span>
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ring-1" :class="hasBarangay && !unmatchedBarangays ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-rose-50 text-rose-700 ring-rose-200'"><i :data-lucide="hasBarangay && !unmatchedBarangays ? 'circle-check' : 'circle-alert'" class="w-3.5 h-3.5"></i>Barangay</span>
@@ -381,7 +386,7 @@
             <div class="flex items-center gap-2.5 w-full">
                 <p class="text-xs text-ink-muted mr-auto" x-text="mappedCount + ' of ' + headers.length + ' columns will be imported'"></p>
                 <button type="button" @click="startOver()" class="px-4 py-2 rounded-xl text-sm font-semibold text-ink hover:bg-slate-100">Back</button>
-                <button type="button" @click="toReview()" :disabled="!hasName || !hasBarangay || busy" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue disabled:opacity-50">Check the rows<i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+                <button type="button" @click="toReview()" :disabled="!hasName || !hasBarangay || busy || !body.length" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue disabled:opacity-50">Check the rows<i data-lucide="arrow-right" class="w-4 h-4"></i></button>
             </div>
         </template>
         <template x-if="panel==='import' && step===3">

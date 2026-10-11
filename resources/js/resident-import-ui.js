@@ -24,6 +24,9 @@ const REASONS = {
     near_birth_date: 'nearly the same birth date',
     no_birth_date: 'no birth date to compare',
     mobile: 'same mobile number',
+    different_sex: 'sex differs',
+    different_suffix: 'suffix differs (Jr., Sr.)',
+    different_middle_name: 'middle name differs',
 };
 
 // Told to the page on window, not with $dispatch: a button that starts a step
@@ -244,7 +247,7 @@ export function residentImport() {
         // ---------------------------------------------------- 3 Review
 
         async toReview() {
-            if (!this.hasName || !this.hasBarangay || this.busy) return;
+            if (!this.hasName || !this.hasBarangay || this.busy || !this.body.length) return;
             this.busy = true;
             this.error = '';
             this.busyText = 'Checking ' + this.body.length.toLocaleString() + ' rows…';

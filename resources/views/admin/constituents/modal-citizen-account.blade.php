@@ -40,7 +40,7 @@
             {{-- Registry record (owner, 2026-10-09): the record the LGU
                  already had that registration recognised this resident as, or
                  records they may be. --}}
-            <section x-show="registryMatch && (registryMatch.status || registryMatch.candidates?.length)" x-cloak class="rounded-2xl border p-4 space-y-3" :class="registryMatch?.status === 'pending' ? 'border-amber-200 bg-amber-50/50' : 'border-slate-200'">
+            <section x-show="registryMatch && (registryMatch.status || registryMatch.candidates?.length || registryMatch.claimed?.length)" x-cloak class="rounded-2xl border p-4 space-y-3" :class="registryMatch?.status === 'pending' ? 'border-amber-200 bg-amber-50/50' : 'border-slate-200'">
                 <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="user-search" class="w-3.5 h-3.5"></i> Registry record</p>
                 <template x-if="registryMatch?.record && ['pending', 'confirmed'].includes(registryMatch?.status)">
                     <div class="rounded-xl bg-white border border-slate-200 px-3 py-2.5">
@@ -76,6 +76,15 @@
                 </template>
                 <p x-show="registryMatch?.status === 'confirmed'" class="text-xs text-ink-muted" x-text="(registryMatch?.linked_by_officer ? 'Linked' : 'Confirmed') + (registryMatch?.decided_by ? ' by ' + registryMatch.decided_by : '') + (registryMatch?.decided_at ? ', ' + new Date(registryMatch.decided_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '') + '.'"></p>
                 <p x-show="registryMatch?.status === 'rejected'" class="text-xs text-ink-muted" x-text="'Not ' + (registryMatch?.rejected_ref || 'the matched record') + (registryMatch?.decided_by ? ' (decided by ' + registryMatch.decided_by + ')' : '') + '. The account has a record of its own.'"></p>
+                <template x-if="registryMatch?.claimed?.length">
+                    <div class="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 space-y-1">
+                        <p class="text-xs font-semibold text-amber-800 flex items-center gap-1.5"><i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>A record like this resident's already has an account</p>
+                        <template x-for="c in registryMatch.claimed" :key="c.ref">
+                            <p class="text-xs text-amber-900"><span class="font-semibold" x-text="c.name"></span> <span class="font-mono" x-text="c.ref"></span> belongs to <span class="font-mono" x-text="c.account_no"></span> (<span x-text="c.account_status"></span>) · <span x-text="window.registryReasonText(c.reasons)"></span></p>
+                        </template>
+                        <p class="text-[11px] text-amber-800">This may be a second account of the same person, or someone registering as them. Check the ID before approving.</p>
+                    </div>
+                </template>
                 <template x-if="registryMatch?.candidates?.length">
                     <div class="space-y-2">
                         <p class="text-xs text-ink">Records already in the registry that may be this resident:</p>
