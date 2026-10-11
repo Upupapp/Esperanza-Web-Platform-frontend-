@@ -67,9 +67,18 @@ async function readSpreadsheet(buffer, ext) {
             const text = decodeText(buffer);
             wb = XLSX.read(text, { type: 'string', raw: true, FS: delimiterOf(text), dense: true });
         } else {
+            // A workbook that is a zip inside (xlsx, ods, numbers) and is not
+            // one: SheetJS would read the bytes as text and show nonsense
+            // (live test 2026-10-12, a damaged .xlsx).
+            if (['xlsx', 'xlsm', 'xlsb', 'xltx', 'xltm', 'ods', 'numbers'].includes(ext)) {
+                try { XLSX.CFB.read(new Uint8Array(buffer), { type: 'array' }); } catch {
+                    throw new ReadError('This file is damaged or is not really a spreadsheet. Open it in Excel and save it again, or save it as CSV, and choose that.');
+                }
+            }
             wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: false, cellNF: true, dense: true });
         }
     } catch (e) {
+        if (e instanceof ReadError) throw e;
         if (/password|encrypt/i.test(String(e?.message))) throw new ReadError('This file is protected with a password. Open it, remove the password (or save an unprotected copy), and choose it again.');
         throw new ReadError('The portal could not read this file (' + (e?.message || 'unknown format') + '). Save it as Excel (.xlsx) or CSV and try again.');
     }
