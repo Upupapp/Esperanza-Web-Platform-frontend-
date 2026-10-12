@@ -723,7 +723,9 @@
         can(sub,perm) { return this.$store.session.canPerm?this.$store.session.canPerm(sub,perm):true; },
         clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.cvSearch='';this.cvStatusFilter='';this.cvBarangayFilter='';this.cvTagFilter=''; },
     }"
-    x-init="init()"
+    {{-- No x-init="init()": Alpine runs init() by itself, and calling it
+         again loaded the whole registry twice (live test 2026-10-12: every
+         list fetched twice with 14,584 residents). --}}
     x-on:residents-imported.window="loadRegistry()"
     x-on:registry-show-import.window="tab='registry';view='individuals';clearFilters();search=$event.detail.ref"
     class="animate-fade-up"
