@@ -141,7 +141,7 @@ There is **no CI on this project** by standing instruction. `scripts/gate.sh` is
 the gate and it runs on every push via `scripts/hooks/pre-push`:
 
 ```
-vite build → pint --test → phpunit (130 tests) → static export → assertions ON dist/ (incl. page-weight budget)
+vite build → pint --test → phpunit (136 tests) → static export → assertions ON dist/ (incl. page-weight budget)
 ```
 
 The `dist/` assertions deliberately do not trust the exporter's own summary:

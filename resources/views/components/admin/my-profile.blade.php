@@ -11,7 +11,7 @@
         open: false,
         forced: false,
         form: { current_password: '', password: '', password_confirmation: '' },
-        show: { current: false, next: false },
+        show: { current: false, next: false, confirm: false },
         saving: false,
         error: '',
         done: false,
@@ -118,8 +118,11 @@
                         </div>
                         <div>
                             <label for="mp-confirm" class="block text-xs font-medium text-slate-700 mb-1">Confirm new password</label>
-                            <input id="mp-confirm" type="password" x-model="form.password_confirmation" autocomplete="new-password"
-                                   class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                            <div class="relative">
+                                <input id="mp-confirm" :type="show.confirm ? 'text' : 'password'" x-model="form.password_confirmation" autocomplete="new-password"
+                                       class="w-full rounded-2xl border-0 surface-pressed py-2.5 pl-4 pr-10 text-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                <button type="button" @click="show.confirm = !show.confirm" :aria-label="show.confirm ? 'Hide password' : 'Show password'" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-ink-faint hover:text-slate-600"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                            </div>
                             <p class="text-[11px] text-rose-600 mt-1" x-show="form.password_confirmation !== '' && form.password !== form.password_confirmation" x-cloak>The two new passwords do not match.</p>
                             <p class="text-[11px] text-rose-600 mt-1" x-show="form.password !== '' && form.password === form.current_password" x-cloak>The new password must be different.</p>
                         </div>

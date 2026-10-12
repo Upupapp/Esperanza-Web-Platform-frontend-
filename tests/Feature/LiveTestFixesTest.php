@@ -126,7 +126,8 @@ class LiveTestFixesTest extends TestCase
         $this->assertStringContainsString("x-text=\"faqText(faq, 'q')\"", $this->source('resources/views/citizen/help.blade.php'));
         $this->assertStringNotContainsString('walang aktwal na video na naka-play', $this->source('resources/views/citizen/help.blade.php'));
         $this->assertStringContainsString('active="legal"', $this->source('resources/views/citizen/legal.blade.php'));
-        $this->assertStringContainsString('label-fil="Petsa ng Kapanganakan"', $this->source('resources/views/auth/citizen-register.blade.php'));
+        // Sign-up follows the app since 2026-10-12 (no date of birth there); its labels stay bilingual.
+        $this->assertStringContainsString('label-fil="Pangalan"', $this->source('resources/views/auth/citizen-register.blade.php'));
     }
 
     /** End-to-end test 2026-10-07: Educational Assistance asks the scholarship form; a Tulong request can be withdrawn. */
