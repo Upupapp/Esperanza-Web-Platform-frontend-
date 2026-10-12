@@ -393,7 +393,7 @@
         </template>
         <template x-if="panel==='import' && step===3">
             <div class="flex items-center gap-2.5 w-full">
-                <p class="text-xs text-ink-muted mr-auto" x-text="plan.add.toLocaleString() + ' to add · ' + plan.fill.toLocaleString() + ' to fill in · ' + plan.leave.toLocaleString() + ' left as they are · ' + plan.fix.toLocaleString() + ' need fixing' + (households ? ' · ' + households + ' households' : '')"></p>
+                <p class="text-xs mr-auto" :class="!(plan.add + plan.fill) && (plan.fix || plan.leave) ? 'font-semibold text-ink' : 'text-ink-muted'" x-text="!(plan.add + plan.fill) && plan.fix ? 'Nothing to add yet: fix the rows that need it.' : !(plan.add + plan.fill) && plan.leave ? 'Everyone in this file is already in the registry. To complete their records, choose “Fill in details their records are missing”.' : plan.add.toLocaleString() + ' to add · ' + plan.fill.toLocaleString() + ' to fill in · ' + plan.leave.toLocaleString() + ' left as they are · ' + plan.fix.toLocaleString() + ' need fixing' + (households ? ' · ' + households + ' households' : '')"></p>
                 <button type="button" @click="step=2;$nextTick(()=>window.renderIcons?.())" class="px-4 py-2 rounded-xl text-sm font-semibold text-ink hover:bg-slate-100">Back</button>
                 <button type="button" @click="runImport()" :disabled="!(plan.add + plan.fill) || running" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue disabled:opacity-50"><i data-lucide="file-up" class="w-4 h-4"></i><span x-text="'Import ' + (plan.add + plan.fill).toLocaleString() + ((plan.add + plan.fill) === 1 ? ' row' : ' rows')"></span></button>
             </div>
