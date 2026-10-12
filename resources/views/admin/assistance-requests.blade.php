@@ -1128,7 +1128,7 @@
 
                     <div
                         class="flex items-center justify-between gap-2 mt-3"
-                        x-show="!selected.assigned && (!$store.session.account || ['department_head', 'municipal_admin', 'super_admin'].includes($store.session.account?.roleKey))"
+                        x-show="!selected.assigned && !terminalStatuses.includes(selected.status) && (!$store.session.account || ['department_head', 'municipal_admin', 'super_admin'].includes($store.session.account?.roleKey))"
                     >
                         <p class="text-xs text-ink-muted">This case hasn't been routed to a processor yet.</p>
                         <x-ui.button
