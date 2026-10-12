@@ -22,7 +22,7 @@
         // Once the registry is bigger than one load (getAll's 2,000), search
         // and the filters go to the server, so they find every resident
         // (live test 2026-10-12: after a 2,000-row import they missed most).
-        remote: { key: '', rows: null, loading: false, total: 0 },
+        remote: { key: '', rows: null, loading: false, total: 0, page: 1, lastPage: 1, params: {} },
         // Fifty rows a list at a time (live test 2026-10-12): with thousands
         // of residents every list here drew them all, hidden tabs included,
         // and the page took minutes to open. x-admin.pager draws the controls.
@@ -126,7 +126,7 @@
                 };
             } catch { this.failed = true; } finally {
                 this.loading = false;
-                this.remote = { key: '', rows: null, loading: false, total: 0 };
+                this.remote = { key: '', rows: null, loading: false, total: 0, page: 1, lastPage: 1, params: {} };
                 this.queueRemoteSearch(0);
             }
         },
@@ -142,25 +142,37 @@
             clearTimeout(this.remoteTimer);
             this.remoteTimer = setTimeout(() => this.searchRegistry(), delay);
         },
-        async searchRegistry() {
+        // One page of 50 from the server at a time, so any number of matches
+        // works (live test 2026-10-12: fetching them all stopped at 3,000 of
+        // an import's 4,999).
+        async searchRegistry(page = 1) {
             const key = this.remoteKey;
-            if (!key) { this.remote = { key: '', rows: null, loading: false, total: 0 }; return; }
-            if (key === this.remote.key && (this.remote.rows || this.remote.loading)) return;
-            this.remote = { key, rows: this.remote.rows, loading: true, total: this.remote.total };
+            if (!key) { this.remote = { key: '', rows: null, loading: false, total: 0, page: 1, lastPage: 1, params: {} }; return; }
+            if (key === this.remote.key && page === this.remote.page && (this.remote.rows || this.remote.loading)) return;
             const q = this.search.trim();
             const params = {};
             if (/^IMP-\d{4}-\d+$/i.test(q)) params.import = q.toUpperCase(); else if (q) params.q = q;
             if (this.barangayFilter) params.barangay = this.barangayFilter;
             if (this.verificationFilter) params.verification = this.verificationFilter;
             if (this.tagFilter) params.tag = this.tagFilter;
+            this.remote = { ...this.remote, key, page, loading: true, params };
             try {
-                const res = await $api.getAll('/admin/residents', { params, maxPages: 30 });
-                if (this.remoteKey !== key) return;
-                this.remote = { key, rows: (res.data || []).map(i => ({ ...i, citizen_account: this.citizensByRef[i.ref] || null })), loading: false, total: res.meta?.total ?? (res.data || []).length };
+                const res = await $api.get('/admin/residents', { params: { ...params, per_page: this.pageSize, page } });
+                if (this.remoteKey !== key || this.remote.page !== page) return;
+                this.remote = { key, page, params, loading: false, rows: (res.data || []).map(i => ({ ...i, citizen_account: this.citizensByRef[i.ref] || null })), total: res.meta?.total ?? (res.data || []).length, lastPage: res.meta?.last_page || 1 };
             } catch {
-                if (this.remoteKey === key) this.remote = { key, rows: null, loading: false, total: 0 };
+                if (this.remoteKey === key) this.remote = { key, page, params, rows: null, loading: false, total: 0, lastPage: 1 };
             }
             this.$nextTick(() => window.renderIcons?.());
+        },
+        turnRemotePage(step) { this.searchRegistry(Math.min(Math.max(1, this.remote.page + step), this.remote.lastPage)); },
+        // Exporting what the server found: every page of it, not the one shown.
+        async exportIndividuals() {
+            if (!this.remoteActive) return this.exportCSV(this.filteredIndividuals, 'individuals-export.csv');
+            try {
+                const res = await $api.getAll('/admin/residents', { params: this.remote.params, maxPages: 200 });
+                this.exportCSV(res.data || [], 'individuals-export.csv');
+            } catch { this.$dispatch('toast', { message: 'Could not export these residents.', variant: 'error' }); }
         },
         get remoteActive() { return !!this.remoteKey && this.remote.key === this.remoteKey && !!this.remote.rows; },
 
@@ -836,7 +848,7 @@
                             class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                             :class="view==='individuals' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="user" class="w-3.5 h-3.5"></i>Individuals
-                        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="filteredIndividuals.length"></span>
+                        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600" x-text="(remoteActive ? remote.total : filteredIndividuals.length).toLocaleString()"></span>
                     </button>
                     <button @click="view='families';clearFilters()"
                             class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
@@ -902,7 +914,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button @click="exportCSV(view==='individuals'?filteredIndividuals:view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
+                    <button @click="view==='individuals'?exportIndividuals():exportCSV(view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV
                     </button>

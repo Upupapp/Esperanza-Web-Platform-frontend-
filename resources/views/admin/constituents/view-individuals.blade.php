@@ -10,7 +10,7 @@
     <div class="flex items-center justify-between px-1">
         <p class="text-sm text-ink-muted">
             Showing
-            <span class="font-semibold text-ink" x-text="filteredIndividuals.length"></span>
+            <span class="font-semibold text-ink" x-text="(remoteActive ? remote.total : filteredIndividuals.length).toLocaleString()"></span>
             of
             <span class="font-semibold text-ink" x-text="(registryTruncated ? registryTotals.residents : individuals.length).toLocaleString()"></span>
             residents
@@ -204,6 +204,15 @@
             </tbody>
         </table>
     </x-ui.table>
-    <x-admin.pager list="filteredIndividuals" key="ind" />
+    <div x-show="!remoteActive"><x-admin.pager list="filteredIndividuals" key="ind" /></div>
+    {{-- Searching the whole registry: the server's pages. --}}
+    <div x-show="remoteActive && remote.lastPage > 1" x-cloak class="flex flex-wrap items-center justify-between gap-2 px-1 pt-3 text-xs text-ink-muted">
+        <span x-text="'Showing ' + (((remote.page - 1) * pageSize) + 1).toLocaleString() + '–' + Math.min(remote.page * pageSize, remote.total).toLocaleString() + ' of ' + remote.total.toLocaleString() + ' found'"></span>
+        <div class="flex items-center gap-1">
+            <button type="button" class="px-2.5 py-1 rounded-lg hover:bg-white/70 disabled:opacity-40" :disabled="remote.page <= 1 || remote.loading" @click="turnRemotePage(-1)">Previous</button>
+            <span class="px-1" x-text="'Page ' + remote.page + ' of ' + remote.lastPage"></span>
+            <button type="button" class="px-2.5 py-1 rounded-lg hover:bg-white/70 disabled:opacity-40" :disabled="remote.page >= remote.lastPage || remote.loading" @click="turnRemotePage(1)">Next</button>
+        </div>
+    </div>
 
 </div>
