@@ -161,7 +161,11 @@
                         <div class="relative shrink-0">
                             <x-citizen.avatar fallback="clay-gold" class="w-14 h-14 sm:w-[72px] sm:h-[72px] text-xl sm:text-2xl ring-2 ring-white/40" />
 
-                            <span class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
+                            {{-- Only for a verified resident, as on the profile (live test
+                                 2026-10-12: every account had it, one still Pending Review too). --}}
+                            <span x-show="$store.citizenSession.account?.fullServiceAccess" x-cloak
+                                  :title="$store.lang.current === 'en' ? 'Verified Resident' : 'Verified na Residente'"
+                                  class="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-emerald-500 border-2 border-navy-900 flex items-center justify-center">
                                 <i data-lucide="check" class="w-3 h-3 text-white"></i>
                             </span>
                         </div>
