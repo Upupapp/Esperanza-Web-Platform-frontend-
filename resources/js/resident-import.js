@@ -44,7 +44,7 @@ export async function readFile(file) {
     else throw new ReadError('The portal cannot read .' + ext + ' files. Save the list as Excel (.xlsx) or CSV and choose that.');
 
     tables = tables
-        .map((t) => ({ name: t.name, rows: trimRows(t.rows) }))
+        .map((t) => ({ name: t.name, ...trimRows(t.rows, t.lines) }))
         .filter((t) => t.rows.length > 0);
     if (!tables.length) throw new ReadError('No rows were found in this file. If it is a scanned document, type the list into the template instead.');
     return { format: ext || 'txt', tables };
@@ -84,7 +84,7 @@ async function readSpreadsheet(buffer, ext) {
     }
     return wb.SheetNames
         .filter((name) => !wb.Workbook?.Sheets?.find((s) => s.name === name && s.Hidden))
-        .map((name) => ({ name, rows: sheetRows(XLSX, wb.Sheets[name]) }));
+        .map((name) => ({ name, ...sheetRows(XLSX, wb.Sheets[name]) }));
 }
 
 function delimiterOf(text) {
@@ -97,10 +97,11 @@ function delimiterOf(text) {
 // Cells as text, with a date cell as YYYY-MM-DD read from its serial number,
 // so no time zone can move a birthday by a day.
 function sheetRows(XLSX, sheet) {
-    if (!sheet || !sheet['!ref']) return [];
+    if (!sheet || !sheet['!ref']) return { rows: [], lines: [] };
     const range = XLSX.utils.decode_range(sheet['!ref']);
     const dense = sheet['!data'];
     const rows = [];
+    const lines = [];
     const lastRow = Math.min(range.e.r, range.s.r + 60000);
     for (let r = range.s.r; r <= lastRow; r++) {
         const row = [];
@@ -109,6 +110,7 @@ function sheetRows(XLSX, sheet) {
             row.push(cellText(XLSX, cell));
         }
         rows.push(row);
+        lines.push(r + 1);
     }
     // A merged cell (a household number down its members' rows, a heading
     // across its sub-columns) holds its value in its first cell only.
@@ -122,7 +124,7 @@ function sheetRows(XLSX, sheet) {
             }
         }
     }
-    return rows;
+    return { rows, lines };
 }
 
 function cellText(XLSX, cell) {
@@ -285,11 +287,20 @@ function mergeClose(items) {
     return out;
 }
 
-function trimRows(rows) {
-    const clean = rows.map((r) => r.map((v) => String(v ?? '').replace(/\s+/g, ' ').trim()));
-    const nonEmpty = clean.filter((r) => r.some(Boolean));
-    const width = Math.max(0, ...nonEmpty.map((r) => r.reduce((w, v, i) => (v ? i + 1 : w), 0)));
-    return nonEmpty.map((r) => r.slice(0, width).concat(Array(Math.max(0, width - r.length)).fill('')));
+// Empty rows go, but every row keeps the number it has in the file, so "row
+// 6" in the review is row 6 in Excel (live test 2026-10-12: a blank line
+// under the title moved every number up by one).
+function trimRows(rows, lines) {
+    const kept = [];
+    rows.forEach((r, i) => {
+        const clean = r.map((v) => String(v ?? '').replace(/\s+/g, ' ').trim());
+        if (clean.some(Boolean)) kept.push([clean, lines ? lines[i] : i + 1]);
+    });
+    const width = Math.max(0, ...kept.map(([r]) => r.reduce((w, v, i) => (v ? i + 1 : w), 0)));
+    return {
+        rows: kept.map(([r]) => r.slice(0, width).concat(Array(Math.max(0, width - r.length)).fill(''))),
+        lines: kept.map(([, line]) => line),
+    };
 }
 
 // ------------------------------------------------------------- Columns
@@ -434,9 +445,12 @@ export function parseDate(value, order = 'mdy') {
         return d ? { date: d } : { error: 'is not a date' };
     }
     if ((m = v.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/))) {
-        let [a, b] = [+m[1], +m[2]];
-        if (order === 'dmy' || a > 12) [a, b] = [b, a];
-        const d = validDate(+m[3], a, b);
+        // A number over 12 can only be the day, whatever the column's order:
+        // a day-first list with one month-first row (01/13/1990) read it as
+        // month 13 (live test 2026-10-12). The order decides the rest.
+        const [a, b] = [+m[1], +m[2]];
+        const dayFirst = a > 12 && b <= 12 ? true : b > 12 && a <= 12 ? false : order === 'dmy';
+        const d = dayFirst ? validDate(+m[3], b, a) : validDate(+m[3], a, b);
         return d ? { date: d } : { error: 'is not a date' };
     }
     if ((m = v.match(/^([A-Za-z]+)\.?\s+(\d{1,2}),?\s+(\d{2,4})$/))) { // March 14, 1985

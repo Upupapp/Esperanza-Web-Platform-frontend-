@@ -177,14 +177,16 @@ export function residentImport() {
             this.bodyStart = h + 1;
             const headerLine = h >= 0 ? all[h].join('|') : null;
             // A PDF repeats its header on every page; those lines are not people.
-            this.body = all.slice(h + 1).map((cells, k) => ({ cells, line: h + 2 + k })).filter((r) => r.cells.join('|') !== headerLine && r.cells.some(Boolean));
+            const lines = this.tables[this.tableIndex].lines || all.map((_, i) => i + 1);
+            this.body = all.slice(h + 1).map((cells, k) => ({ cells, line: lines[h + 1 + k] })).filter((r) => r.cells.join('|') !== headerLine && r.cells.some(Boolean));
             if (guess) this.mapping = this.lib.guessMapping(this.headers, this.body.slice(0, 300).map((r) => r.cells), this.barangays);
             this.refreshValues();
         },
 
         get headerChoices() {
             const rows = this.tables[this.tableIndex]?.rows || [];
-            return rows.slice(0, 15).map((r, i) => ({ value: i, label: 'Row ' + (i + 1) + ': ' + r.filter(Boolean).slice(0, 4).join(', ').slice(0, 60) }));
+            const lines = this.tables[this.tableIndex]?.lines || [];
+            return rows.slice(0, 15).map((r, i) => ({ value: i, label: 'Row ' + (lines[i] || i + 1) + ': ' + r.filter(Boolean).slice(0, 4).join(', ').slice(0, 60) }));
         },
 
         setField(col, field) {
