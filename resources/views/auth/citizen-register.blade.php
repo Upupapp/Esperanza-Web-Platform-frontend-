@@ -96,24 +96,29 @@
             <h1 class="text-2xl font-semibold text-ink"><x-ui.t fil="Gumawa ng Account ng Mamamayan" en="Create your Citizen Account" /></h1>
             <p class="text-ink-muted text-sm mt-1.5"><x-ui.t fil="Magrehistro para humiling ng dokumento at ma-access ang mga serbisyo ng munisipyo online." en="Register to request documents and access municipal services online." /></p>
 
-            <!-- Step indicator -->
-            <div class="flex items-center mt-6 mb-1">
+            <!-- Step indicator: three equal columns, the line running from one
+                 circle's centre to the next, so the spacing never depends on
+                 how long a label is. An upcoming step is an outlined circle
+                 (slate-100 fill vanished on the card: step 3 showed as a bare
+                 "3" with no line before it). -->
+            <ol class="grid grid-cols-3 mt-6 mb-1" :aria-label="$store.lang.current === 'en' ? 'Sign-up steps' : 'Mga hakbang sa pagrehistro'">
                 <template x-for="(label, i) in ($store.lang.current === 'en' ? stepLabels.en : stepLabels.fil)" :key="i">
-                    <div class="flex-1 flex items-center">
-                        <div class="flex flex-col items-center gap-1.5 text-center">
-                            <span
-                                class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-[300ms] ease-standard"
-                                :class="step > i + 1 ? 'bg-emerald-500 text-white' : (step === i + 1 ? 'clay-blue' : 'bg-slate-100 text-ink-muted')"
-                            >
-                                <i data-lucide="check" class="w-3 h-3" x-show="step > i + 1" x-cloak></i>
-                                <span x-show="step <= i + 1" x-text="i + 1"></span>
-                            </span>
-                            <span class="text-[10px] max-w-[90px] leading-tight" :class="step === i + 1 ? 'text-ink font-medium' : 'text-ink-muted'" x-text="label"></span>
-                        </div>
-                        <div class="flex-1 h-0.5 -mt-4 transition-colors duration-[300ms] ease-standard" :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-100'" x-show="i < 2"></div>
-                    </div>
+                    <li class="relative flex flex-col items-center gap-1.5 text-center" :aria-current="step === i + 1 ? 'step' : null">
+                        <span x-show="i < 2" aria-hidden="true"
+                              class="absolute top-[13px] left-1/2 w-full h-0.5 rounded-full transition-colors duration-[300ms] ease-standard"
+                              :class="step > i + 1 ? 'bg-emerald-400' : 'bg-slate-300'"></span>
+                        <span
+                            class="relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors duration-[300ms] ease-standard"
+                            :class="step > i + 1 ? 'bg-emerald-500 text-white' : (step === i + 1 ? 'clay-blue ring-4 ring-brand-100' : 'bg-white text-ink-muted border-2 border-slate-300')"
+                        >
+                            <i data-lucide="check" class="w-3.5 h-3.5" x-show="step > i + 1" x-cloak></i>
+                            <span x-show="step <= i + 1" x-text="i + 1"></span>
+                        </span>
+                        <span class="text-[11px] leading-tight max-w-[7.5rem] px-1"
+                              :class="step === i + 1 ? 'text-ink font-semibold' : (step > i + 1 ? 'text-ink' : 'text-ink-muted')" x-text="label"></span>
+                    </li>
                 </template>
-            </div>
+            </ol>
 
             <form class="mt-5 space-y-5" novalidate @submit.prevent="step === totalSteps ? submit() : next()">
                 <!-- Step 1: Personal Information -->
