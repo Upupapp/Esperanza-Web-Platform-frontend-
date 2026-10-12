@@ -282,23 +282,26 @@
                             All Household Members
                             <span
                                 class="ml-1.5 px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold"
-                                x-text="individuals.filter(r => r.household?.ref === selectedHousehold?.ref).length"
+                                x-text="members.loading && !members.rows.length ? (selectedHousehold?.member_count ?? '…') : members.rows.length"
                             ></span>
                         </h3>
                     </div>
 
                     <x-ui.card class="overflow-hidden">
-                        <template x-if="individuals.filter(r => r.household?.ref === selectedHousehold?.ref).length === 0">
+                        <template x-if="members.rows.length === 0">
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
-                                    <i data-lucide="user-x" class="w-8 h-8 text-ink-faint"></i>
-                                    <p class="text-sm text-ink-muted">No individuals linked to this household.</p>
+                                    <span x-show="members.loading"><i data-lucide="loader-circle" class="w-8 h-8 text-ink-faint animate-spin"></i></span>
+                                    <span x-show="!members.loading"><i data-lucide="user-x" class="w-8 h-8 text-ink-faint"></i></span>
+                                    <p x-show="members.loading" class="text-sm text-ink-muted">Loading members…</p>
+                                    <p x-show="!members.loading && members.failed" class="text-sm text-rose-700">Could not load the members. <button type="button" class="underline" @click="loadMembers('household', selectedHousehold.ref)">Try again</button></p>
+                                    <p x-show="!members.loading && !members.failed" class="text-sm text-ink-muted">No individuals linked to this household.</p>
                                 </div>
                             </div>
                         </template>
 
                         <ul class="divide-y divide-brand-600/[.08]">
-                            <template x-for="r in individuals.filter(r => r.household?.ref === selectedHousehold?.ref)" :key="r.ref">
+                            <template x-for="r in members.rows" :key="r.ref">
                                 <li
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50/40 cursor-pointer transition-colors"
                                     @click="openIndividual(r)"

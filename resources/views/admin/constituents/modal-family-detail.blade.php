@@ -57,7 +57,7 @@
                     {{-- Identity block --}}
                     <div class="flex-1 min-w-0 pt-1">
                         <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white" x-text="selectedFamily?.family_type"></span>
+                            <span x-show="selectedFamily?.family_type" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white" x-text="selectedFamily?.family_type"></span>
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-white/80">
                                 <i data-lucide="shield-check" class="w-3 h-3"></i>
                                 <span x-text="verificationBadge(selectedFamily?.verification).label"></span>
@@ -143,7 +143,7 @@
                                 <dl class="space-y-2.5">
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-ink-muted">Family Type</dt>
-                                        <dd class="text-xs font-semibold text-ink" x-text="selectedFamily.family_type"></dd>
+                                        <dd class="text-xs font-semibold text-ink" x-text="selectedFamily.family_type || '—'"></dd>
                                     </div>
                                     <div class="flex justify-between items-start gap-2">
                                         <dt class="text-xs text-ink-muted">Barangay</dt>
@@ -256,17 +256,20 @@
                     </div>
 
                     <x-ui.card class="overflow-hidden">
-                        <template x-if="(individuals.filter(r => r.family?.ref === selectedFamily?.ref)).length === 0">
+                        <template x-if="members.rows.length === 0">
                             <div class="py-10 text-center">
                                 <div class="flex flex-col items-center gap-2">
-                                    <i data-lucide="user-x" class="w-8 h-8 text-ink-faint"></i>
-                                    <p class="text-sm text-ink-muted">No members linked to this family yet.</p>
+                                    <span x-show="members.loading"><i data-lucide="loader-circle" class="w-8 h-8 text-ink-faint animate-spin"></i></span>
+                                    <span x-show="!members.loading"><i data-lucide="user-x" class="w-8 h-8 text-ink-faint"></i></span>
+                                    <p x-show="members.loading" class="text-sm text-ink-muted">Loading members…</p>
+                                    <p x-show="!members.loading && members.failed" class="text-sm text-rose-700">Could not load the members. <button type="button" class="underline" @click="loadMembers('family', selectedFamily.ref)">Try again</button></p>
+                                    <p x-show="!members.loading && !members.failed" class="text-sm text-ink-muted">No members linked to this family yet.</p>
                                 </div>
                             </div>
                         </template>
 
                         <ul class="divide-y divide-brand-600/[.08]">
-                            <template x-for="r in individuals.filter(r => r.family?.ref === selectedFamily?.ref)" :key="r.ref">
+                            <template x-for="r in members.rows" :key="r.ref">
                                 <li
                                     class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50/40 cursor-pointer transition-colors"
                                     @click="openIndividual(r)"

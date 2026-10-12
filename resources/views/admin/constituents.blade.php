@@ -196,6 +196,10 @@
         selectedIndividual:   null,
         selectedFamily:       null,
         selectedHousehold:    null,
+        // The open family's or household's members, from the server: the page
+        // holds only the first 2,000 residents (live test 2026-10-12: a family
+        // of four showed no members at all).
+        members: { key: '', rows: [], loading: false, failed: false },
         selectedDQIssue:      null,
         lifecycleAction:      '',
         addIndividualStep: 1,
@@ -697,8 +701,26 @@
             const q = ref ? 'ref=' + encodeURIComponent(ref) : 'citizen=' + encodeURIComponent(r.name);
             window.location.href = '/admin/assistance-requests?' + q;
         },
-        openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.$nextTick(()=>window.renderIcons?.()); },
-        openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.$nextTick(()=>window.renderIcons?.()); },
+        openFamily(f)     { this.selectedFamily=f;     this.familyTab='overview';     this.showFamilyDetail=true;     this.loadMembers('family', f.ref);     this.$nextTick(()=>window.renderIcons?.()); },
+        openHousehold(h)  { this.selectedHousehold=h;  this.householdTab='overview';  this.showHouseholdDetail=true;  this.loadMembers('household', h.ref);  this.$nextTick(()=>window.renderIcons?.()); },
+        // What the page already has shows at once; the server's list replaces it.
+        async loadMembers(kind, ref) {
+            const key = kind + ':' + ref;
+            const here = this.individuals.filter(r => r[kind]?.ref === ref);
+            this.members = { key, rows: here, loading: true, failed: false };
+            try {
+                const res = await $api.getAll('/admin/residents', { params: { [kind]: ref }, maxPages: 10 });
+                if (this.members.key !== key) return;
+                // The head first, then the spouse or partner, then the eldest down.
+                const rank = (r) => (r.relation === 'Head' ? 0 : ['Spouse', 'Partner'].includes(r.relation) ? 1 : 2);
+                const rows = (res.data || []).map(i => ({ ...i, citizen_account: this.citizensByRef[i.ref] || null }))
+                    .sort((x, y) => rank(x) - rank(y) || (y.age ?? -1) - (x.age ?? -1));
+                this.members = { key, loading: false, failed: false, rows };
+            } catch {
+                if (this.members.key === key) this.members = { ...this.members, loading: false, failed: true };
+            }
+            this.$nextTick(() => window.renderIcons?.());
+        },
         openLifecycle(r, action) { this.selectedIndividual=r; this.lifecycleAction=action; this.showLifecycle=true; this.$nextTick(()=>window.renderIcons?.()); },
         openDQIssue(issue)       { this.selectedDQIssue=issue; this.showDQDetail=true; this.$nextTick(()=>window.renderIcons?.()); },
         verificationBadge(v) {
