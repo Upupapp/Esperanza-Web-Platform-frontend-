@@ -474,10 +474,17 @@ export function residentImport() {
 
         // ---------------------------------------------------- 4 Import
 
-        // Rows to send, a household's rows together and its head first, in
-        // batches that never split a household.
+        // Rows the server is told about: what is added or filled, and what is
+        // already there (it anchors a household even when left as it is).
+        sendable(r) {
+            return r.status !== 'error' && r.status !== 'outside' && (this.willAdd(r) || this.willFill(r) || r.status === 'match' || r.status === 'twice');
+        },
+
+        // Rows still to send, a household's rows together and its head first,
+        // in batches that never split a household. Rows already answered are
+        // not in them, so a resumed import starts at the first batch.
         batches() {
-            const send = this.pending.filter((r) => r.status !== 'error' && r.status !== 'outside' && (this.willAdd(r) || this.willFill(r) || r.status === 'match' || r.status === 'twice'));
+            const send = this.pending.filter((r) => this.sendable(r));
             const groups = [];
             const byKey = {};
             for (const r of send) {
@@ -497,7 +504,7 @@ export function residentImport() {
             return out;
         },
 
-        async runImport(resume = false) {
+        async runImport() {
             if (this.running) return;
             const batches = this.batches();
             if (!batches.length) return;
@@ -521,9 +528,11 @@ export function residentImport() {
                     this.importRef = res.data.ref;
                     this.progress = { done: 0, total: batches.reduce((n, b) => n + b.length, 0) };
                 }
-                const start = resume && this.stoppedAt !== null ? this.stoppedAt : 0;
+                // Not from where it stopped: batches() holds only the rows not
+                // yet answered, so counting on from there skipped a batch (live
+                // test 2026-10-12: 250 of 600 never sent after Try again).
                 this.stoppedAt = null;
-                for (let i = start; i < batches.length; i++) {
+                for (let i = 0; i < batches.length; i++) {
                     if (this.stopRequested) { this.stoppedAt = i; break; }
                     try {
                         const res = await api.post('/admin/resident-imports/' + encodeURIComponent(this.importRef) + '/rows', { rows: batches[i].map((r) => this.payload(r)) });
@@ -544,7 +553,9 @@ export function residentImport() {
                         this.progress.done += batches[i].length;
                     } catch (e) {
                         this.stoppedAt = i;
-                        this.error = (e?.localised ? e.localised('en') : 'The connection dropped.') + ' Nothing after row ' + (batches[i][0]?.row ?? '') + ' was sent. Try again to carry on from there; rows already in are not added twice.';
+                        const at = batches[i][0]?.row ?? '';
+                        this.error = (e?.localised ? e.localised('en') : 'The connection dropped.') + ' The import paused at row ' + at + '. Try again to carry on from there; no one is added twice.';
+                        if (!this.open) emit('toast', { message: 'Import ' + this.importRef + ' paused at row ' + at + ': the connection dropped. Open Add Record, Import from a file to carry on.', variant: 'error' });
                         break;
                     }
                 }
@@ -566,10 +577,13 @@ export function residentImport() {
                     ref: d.ref,
                     created: d.created,
                     filled: d.filled,
-                    skipped: d.skipped + this.pending.filter((r) => r.status !== 'error' && !this.stopRequested).length,
+                    // Rows left out in the review; rows not sent are not "left
+                    // as they were" (live test 2026-10-12).
+                    skipped: d.skipped + this.pending.filter((r) => r.status !== 'error' && !this.sendable(r)).length,
                     failed: this.leftovers,
                     households: d.households_created,
-                    stopped: this.stopRequested,
+                    // Stopped, or finished with what is in after a drop.
+                    stopped: this.stoppedAt !== null,
                 };
                 emit('residents-imported', { ref: d.ref });
                 if (!this.open) emit('toast', { message: 'Import ' + d.ref + ' finished: ' + d.created + ' residents added.', variant: 'success' });
@@ -579,6 +593,13 @@ export function residentImport() {
         },
 
         stop() { this.stopRequested = true; },
+
+        // Leaving the page ends the import part way: the browser asks first.
+        guardLeave(e) {
+            if (!this.running) return;
+            e.preventDefault();
+            e.returnValue = '';
+        },
 
         get notAdded() {
             return this.rows.filter((r) => r.status === 'error' || (r.outcome && r.outcome !== 'created') || (!r.outcome && r.status !== 'error'));

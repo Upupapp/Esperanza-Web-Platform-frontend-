@@ -6,7 +6,7 @@
      resident-import.js (reading the file; loaded on first open).
      LANGUAGE (TAB 09): staff site, English only by owner ruling.
      ============================================================ --}}
-<div x-data="residentImport" x-on:open-resident-import.window="openImport($event.detail?.panel || 'import')">
+<div x-data="residentImport" x-on:open-resident-import.window="openImport($event.detail?.panel || 'import')" x-on:beforeunload.window="guardLeave($event)">
 <x-ui.modal title="Import residents from a file" maxWidth="3xl" :fullscreen="true">
 
     {{-- Tabs + steps --}}
@@ -317,10 +317,10 @@
             <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden mb-5"><div class="h-full bg-brand-600 rounded-full transition-all duration-300" :style="'width:' + (progress.total ? Math.round(progress.done*100/progress.total) : 0) + '%'"></div></div>
             <div class="flex flex-wrap justify-center gap-2">
                 <button type="button" x-show="running" @click="stop()" :disabled="stopRequested" class="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-ink hover:bg-slate-200 disabled:opacity-50" x-text="stopRequested ? 'Stopping after this batch…' : 'Stop'"></button>
-                <button type="button" x-show="!running && stoppedAt !== null" @click="runImport(true)" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Try again</button>
+                <button type="button" x-show="!running && stoppedAt !== null" @click="runImport()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Try again</button>
                 <button type="button" x-show="!running && stoppedAt !== null" @click="finish()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-ink hover:bg-slate-200">Finish with what is in</button>
             </div>
-            <p class="text-xs text-ink-muted mt-4">You can close this window; the import carries on.</p>
+            <p class="text-xs text-ink-muted mt-4">You can close this window; the import carries on. Stay on this page until it finishes.</p>
         </div>
 
         <div x-show="summary" class="rounded-3xl bg-white border border-slate-200 p-6">
@@ -337,6 +337,7 @@
                 <div class="rounded-2xl bg-slate-50 px-3 py-2.5"><dt class="text-[11px] font-semibold text-slate-600">Left as they were</dt><dd class="text-xl font-extrabold text-ink tabular-nums" x-text="(summary?.skipped ?? 0).toLocaleString()"></dd></div>
                 <div class="rounded-2xl bg-rose-50 px-3 py-2.5"><dt class="text-[11px] font-semibold text-rose-700">Not imported</dt><dd class="text-xl font-extrabold text-ink tabular-nums" x-text="(summary?.failed ?? 0).toLocaleString()"></dd></div>
             </dl>
+            <p x-show="summary?.stopped" class="text-xs text-ink-muted mb-4">The rest of the file was not sent. To add it, import the same file again: the residents already in are recognised and left as they are.</p>
             <p x-show="summary?.households" class="text-xs text-ink-muted mb-4" x-text="summary?.households + (summary?.households === 1 ? ' household and its family was' : ' households and their families were') + ' made from the household numbers.'"></p>
             <p x-show="summary?.undone" class="text-xs text-amber-700 mb-4">This import was undone.</p>
             <div class="flex flex-wrap gap-2">
@@ -362,6 +363,7 @@
                         <p class="text-sm font-bold text-ink"><span x-text="h.filename"></span> <span class="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1" :class="{'Completed':'bg-emerald-50 text-emerald-700 ring-emerald-200','In Progress':'bg-sky-50 text-sky-700 ring-sky-200','Undone':'bg-slate-100 text-slate-600 ring-slate-200'}[h.status]" x-text="h.status"></span></p>
                         <p class="text-xs text-ink-muted" x-text="h.ref + ' · ' + (h.created_by || '—') + ' · ' + new Date(h.created_at).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) + (h.scope ? ' · Brgy. ' + h.scope : '')"></p>
                         <p class="text-xs text-ink mt-1" x-text="h.created + ' added · ' + h.filled + ' filled in · ' + h.skipped + ' left as they were · ' + h.failed + ' not imported' + (h.households_created ? ' · ' + h.households_created + ' households' : '')"></p>
+                        <p x-show="h.status==='In Progress' && !(running && h.ref===importRef)" class="text-xs text-sky-700 mt-1">Not finished. If it was left part way (the page was closed or the connection dropped), import the same file again to add the rest: the residents already in are left as they are.</p>
                         <p x-show="h.status==='Undone'" class="text-xs text-amber-700 mt-1" x-text="'Undone by ' + (h.undone_by || '—') + ': ' + undoneText(h) + (h.undo_reason ? ' · ' + h.undo_reason : '')"></p>
                     </div>
                     <div class="flex items-center gap-1.5">

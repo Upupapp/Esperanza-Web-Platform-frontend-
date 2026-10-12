@@ -225,8 +225,10 @@ export const api = {
     baseUrl: BASE_URL,
 };
 
-// Navigating away must not leave requests resolving into a dead page.
-window.addEventListener('beforeunload', () => {
+// Navigating away must not leave requests resolving into a dead page. On
+// pagehide, not beforeunload: a page that asks "Leave site?" (an import
+// running) keeps its requests when the officer stays.
+window.addEventListener('pagehide', () => {
     controllers.forEach((controller) => controller.abort());
     controllers.clear();
 });
