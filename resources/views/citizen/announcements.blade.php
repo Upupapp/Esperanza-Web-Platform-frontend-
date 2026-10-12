@@ -141,7 +141,7 @@
                 return this.posts.filter(p => p.author === author && p.at && new Date(p.at).toDateString() === today).length;
             },
         }"
-        x-init="init()"
+        {{-- No x-init="init()": Alpine runs init() by itself (every list loaded twice). --}}
         class="animate-fade-up max-w-6xl mx-auto"
     >
         <x-ui.page-intro id="balita-feed" icon="users-round" title="Manatiling Updated sa Balita" titleEn="Stay Updated with Balita">

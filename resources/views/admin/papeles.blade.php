@@ -174,7 +174,7 @@
             },
             can(action) { return this.$store.session.canPerm('papeles_documents', action); },
         }"
-        x-init="init()"
+        {{-- No x-init="init()": Alpine runs init() by itself (it loaded twice). --}}
     >
         <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-40 opacity-80" /></div>
         <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the document repository.'" retryExpr="load()" :retryable="true" /></div>
