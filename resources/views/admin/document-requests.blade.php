@@ -104,6 +104,8 @@
             barangayFilter: '',
             // Only requests still open (not released, completed, rejected or cancelled).
             openOnly: false,
+            // One import's records (Show the imported records), or empty.
+            importFilter: '',
             showAdvancedFilters: false,
             open: false,
             selected: null,
@@ -1771,10 +1773,10 @@
                     citizen: row.applicant || '—',
                     // The requester's approved photo (signed, short-lived), or null.
                     photo: row.applicant_photo || null,
-                    // The requester's approved photo (signed, short-lived), or null.
-                    photo: row.applicant_photo || null,
-                    // The requester's approved photo (signed, short-lived), or null.
-                    photo: row.applicant_photo || null,
+                    // Brought in from the office's own records, and the registry
+                    // resident it was matched to (2026-10-12).
+                    imported_from: row.imported_from || null,
+                    resident_ref: row.resident_ref || null,
                     type,
                     service_key: row.service_key,
                     office: row.office || cls.office || '—',
@@ -1969,6 +1971,7 @@
                     (this.levelFilter === '' || r.level === this.levelFilter) &&
                     (this.assignedFilter === '' || (this.assignedFilter === 'unassigned' ? !r.assigned : r.assigned === this.assignedFilter)) &&
                     (this.barangayFilter === '' || r.barangay === this.barangayFilter) &&
+                    (this.importFilter === '' || r.imported_from === this.importFilter) &&
                     (!this.openOnly || !this.terminalStatuses.includes(r.status)) &&
                     (q === '' || r.ref.toLowerCase().includes(q) || r.citizen.toLowerCase().includes(q))
                 );
@@ -2279,7 +2282,9 @@
             <x-admin.access-restricted module="Dokyu (Document Requests)" icon="file-text" />
         </div>
 
-        <div x-show="$store.session.can('dokyu')" x-cloak>
+        <div x-show="$store.session.can('dokyu')" x-cloak
+             x-on:requests-imported.window="if ($event.detail?.type === 'dokyu') loadRequests()"
+             x-on:requests-show-import.window="if ($event.detail?.type === 'dokyu') { importFilter = $event.detail.ref; tab = 'all'; openOnly = false; search = ''; loadRequests(); }">
 
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
         <div
@@ -2343,6 +2348,7 @@
                 >
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
                 </button>
+                @include('admin.partials.modal-request-import', ['importType' => 'dokyu'])
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
@@ -2355,6 +2361,11 @@
                     @endforeach
                 </div>
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' requests'"></p>
+                <p x-show="importFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
+                    <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
+                    <span x-text="'Showing the ' + filteredRequests.length.toLocaleString() + ' records imported from ' + importFilter + '.'"></span>
+                    <button type="button" class="font-medium underline" @click="importFilter = ''">Show all</button>
+                </p>
                 <p x-show="openOnly || barangayFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
                     <span x-text="'Showing ' + (openOnly ? 'open requests' : 'requests') + (barangayFilter ? ' in Brgy. ' + barangayFilter : '') + '.'"></span>
                     <button type="button" class="font-medium underline" @click="openOnly = false; barangayFilter = ''">Show all</button>
@@ -2417,7 +2428,10 @@
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <img x-show="r.photo" x-cloak :src="r.photo" class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0" :alt="r.citizen" x-on:error="r.photo = null">
                                 <div x-show="!r.photo" class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="(r.citizen || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
-                                <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
+                                <div class="min-w-0">
+                                    <p class="text-slate-700 font-medium whitespace-nowrap truncate group-hover:text-brand-600 transition-colors" x-text="r.citizen"></p>
+                                    <p x-show="r.imported_from" x-cloak class="text-[10px] font-semibold text-brand-700" :title="'Imported from ' + r.imported_from + (r.resident_ref ? '; matched to resident ' + r.resident_ref : '; not matched to a resident')"><span x-text="'Imported · ' + (r.resident_ref || 'no resident record')"></span></p>
+                                </div>
                             </div>
                         </td>
                         <td class="px-4 py-3">

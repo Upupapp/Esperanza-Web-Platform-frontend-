@@ -200,6 +200,9 @@
         // holds only the first 2,000 residents (live test 2026-10-12: a family
         // of four showed no members at all).
         members: { key: '', rows: [], loading: false, failed: false },
+        // The open resident's documents and assistance received, filed on the
+        // portal or imported from an office's records (2026-10-12).
+        residentRequests: { ref: '', rows: [], loading: false, failed: false },
         selectedDQIssue:      null,
         lifecycleAction:      '',
         addIndividualStep: 1,
@@ -678,6 +681,7 @@
             this.rejectAccountRemarks = '';
             this.showIndividualDetail = true;
             this.$nextTick(() => window.renderIcons?.());
+            this.loadResidentRequests(r.ref);
             // The list row is intentionally lean (no tags/household/family/
             // sensitive fields) -- the detail endpoint has the rest.
             try {
@@ -687,6 +691,19 @@
                 const idx = this.individuals.findIndex(x => x.ref === r.ref);
                 if (idx !== -1) this.individuals[idx] = { ...this.individuals[idx], ...merged };
             } catch { /* keep the list row's fields if the detail fetch fails */ }
+        },
+        async loadResidentRequests(ref) {
+            this.residentRequests = { ref, rows: [], loading: true, failed: false };
+            try {
+                const res = await $api.get('/admin/residents/' + encodeURIComponent(ref) + '/requests');
+                if (this.residentRequests.ref === ref) this.residentRequests = { ref, rows: res.data || [], loading: false, failed: false };
+            } catch {
+                if (this.residentRequests.ref === ref) this.residentRequests = { ...this.residentRequests, loading: false, failed: true };
+            }
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        get residentAssistanceTotal() {
+            return this.residentRequests.rows.filter(q => q.type === 'tulong' && q.status === 'Completed' && q.amount).reduce((n, q) => n + Number(q.amount), 0);
         },
         // Real cross-module navigation, not just a sub-tab switch: leaves the
         // Constituents page entirely, lands on this resident's requests in the

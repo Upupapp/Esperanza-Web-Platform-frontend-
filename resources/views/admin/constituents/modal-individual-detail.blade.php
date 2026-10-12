@@ -258,6 +258,43 @@
             {{-- Right column --}}
             <div class="flex flex-col gap-4">
 
+                {{-- Documents and assistance received (owner, 2026-10-12): filed on
+                     the portal or imported from an office's own records and matched
+                     to this resident. GET /admin/residents/{ref}/requests. --}}
+                <div class="surface-glass rounded-[26px] p-4">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Documents &amp; Assistance Received</h3>
+                        <span x-show="residentRequests.rows.length" x-cloak class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-50 text-brand-700" x-text="residentRequests.rows.length"></span>
+                    </div>
+                    <p x-show="residentRequests.loading" class="text-xs text-ink-muted flex items-center gap-1.5"><span><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i></span>Loading…</p>
+                    <p x-show="!residentRequests.loading && residentRequests.failed" x-cloak class="text-xs text-rose-700">Could not load them. <button type="button" class="underline" @click="loadResidentRequests(selectedIndividual.ref)">Try again</button></p>
+                    <p x-show="!residentRequests.loading && !residentRequests.failed && !residentRequests.rows.length" x-cloak class="text-xs text-ink-muted">No documents or assistance on record yet.</p>
+                    <ul x-show="residentRequests.rows.length" x-cloak class="divide-y divide-brand-600/[.08] -mx-1">
+                        <template x-for="q in residentRequests.rows" :key="q.ref">
+                            <li class="flex items-start gap-3 py-2.5 px-1 rounded-xl cursor-pointer hover:bg-white/60 transition-colors" role="button" tabindex="0"
+                                :title="'Open ' + q.ref + ' in ' + (q.type === 'tulong' ? 'Tulong' : 'Dokyu')"
+                                @click="q.type === 'tulong' ? goToTulong(selectedIndividual, q.ref) : goToDokyu(selectedIndividual, q.ref)"
+                                @keydown.enter.prevent="q.type === 'tulong' ? goToTulong(selectedIndividual, q.ref) : goToDokyu(selectedIndividual, q.ref)">
+                                <span class="w-8 h-8 rounded-xl grid place-items-center shrink-0" :class="q.type === 'tulong' ? 'bg-rose-50 text-rose-600' : 'bg-brand-50 text-brand-600'">
+                                    <span x-show="q.type === 'tulong'"><i data-lucide="hand-heart" class="w-4 h-4"></i></span>
+                                    <span x-show="q.type !== 'tulong'"><i data-lucide="file-text" class="w-4 h-4"></i></span>
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-ink leading-snug" x-text="q.service || '—'"></p>
+                                    <p class="text-xs text-ink-muted mt-0.5" x-text="[q.type === 'tulong' ? 'Tulong' : 'Dokyu', q.date ? new Date(q.date + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : null, q.amount ? '₱' + Number(q.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : null, q.ref].filter(Boolean).join(' · ')"></p>
+                                    <p x-show="q.purpose" class="text-xs text-ink-muted" x-text="'For: ' + q.purpose"></p>
+                                    <p x-show="q.imported_from" class="text-[11px] font-semibold text-brand-700 mt-0.5" x-text="'Imported from ' + q.imported_from + (q.reference ? ' · ' + q.reference : '')"></p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap shrink-0"
+                                      :class="['Completed', 'Released'].includes(q.status) ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : (['Rejected', 'Cancelled'].includes(q.status) ? 'bg-rose-50 text-rose-700 ring-rose-200' : 'bg-amber-50 text-amber-700 ring-amber-200')"
+                                      x-text="q.status"></span>
+                            </li>
+                        </template>
+                    </ul>
+                    <p x-show="residentAssistanceTotal" x-cloak class="mt-2 pt-2 border-t border-brand-600/[.08] text-xs text-ink"
+                       x-text="'Assistance received in all: ₱' + residentAssistanceTotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })"></p>
+                </div>
+
                 {{-- Citizen Portal Account — real fields and real verify/reject
                      actions only. The mock's per-signal ID/face/mobile/terms
                      review, face-match state, and duplicate-account flagging

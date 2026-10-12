@@ -4,6 +4,7 @@ import { resource } from './api/resource';
 import { specForm } from './api/form';
 import { residentProfileForm } from './resident-profile-form';
 import { residentImport, reasonText } from './resident-import-ui';
+import { requestImport } from './request-import-ui';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons } from 'lucide';
@@ -456,6 +457,7 @@ document.addEventListener('alpine:init', () => {
     // Constituents -> Import from a file (owner, 2026-10-09). Reading the
     // file is a separate chunk, loaded when the window first opens.
     Alpine.data('residentImport', residentImport);
+    Alpine.data('requestImport', requestImport);
     // Why a record matched, for the account review's Registry record panel.
     window.registryReasonText = reasonText;
 

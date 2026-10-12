@@ -18,7 +18,7 @@ const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp',
 export const ACCEPT = '.xlsx,.xlsm,.xlsb,.xls,.xlt,.xltx,.ods,.fods,.numbers,.csv,.tsv,.txt,.prn,.tab,.dif,.slk,.dbf,.html,.htm,.xml,.json,.docx,.odt,.pdf,.doc,.rtf,.jpg,.jpeg,.png,.heic';
 
 let xlsxPromise = null;
-const loadXlsx = () => (xlsxPromise ??= import('xlsx'));
+export const loadXlsx = () => (xlsxPromise ??= import('xlsx'));
 
 export class ReadError extends Error {}
 
@@ -359,7 +359,7 @@ const SYNONYMS = {
     household_key: ['household no', 'household number', 'hh no', 'hh number', 'hh id', 'household id', 'hh', 'household', 'hh code', 'household code', 'household serial no', 'family no', 'family number', 'hh num', 'household num', 'household ref'],
 };
 
-const headerKey = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+export const headerKey = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 export function fieldForHeader(text) {
     const h = headerKey(text);
@@ -560,11 +560,11 @@ export function titleCase(s, acronyms = false) {
 // No lone "V": in a written name it is a middle initial ("VILLANUEVA, SHIELA
 // V." became "Shiela Villanueva V", live test 2026-10-12). A fifth comes only
 // from a suffix column, which cleanSuffix reads.
-const SUFFIX_RE = /^(jr|sr|ii|iii|iv|vi|2nd|3rd|4th)\.?$/i;
+export const SUFFIX_RE = /^(jr|sr|ii|iii|iv|vi|2nd|3rd|4th)\.?$/i;
 const PARTICLES = ['de', 'del', 'dela', 'delas', 'delos', 'la', 'las', 'los', 'san', 'santa', 'sta', 'sta.', 'santo', 'sto', 'sto.', 'van', 'von', 'di', 'da', 'dos', 'das', 'y'];
 const isInitial = (w) => /^[A-Za-zÑñ]\.?$/.test(w);
 
-function cleanSuffix(s) {
+export function cleanSuffix(s) {
     const v = String(s || '').trim().replace(/\.$/, '');
     if (!v) return '';
     const low = v.toLowerCase();
@@ -641,7 +641,7 @@ export function matchBarangay(value, barangays) {
     return loose.length === 1 ? loose[0] : null;
 }
 
-const blank = (v) => {
+export const blank = (v) => {
     const s = String(v ?? '').trim();
     return !s || /^(n\/?a|none|null|-+|—|\.|wala|not applicable)$/i.test(s) ? '' : s;
 };
