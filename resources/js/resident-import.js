@@ -51,6 +51,20 @@ export async function readFile(file) {
 }
 
 function decodeText(buffer) {
+    // Excel's "Unicode Text" (.txt) is UTF-16, with or without the mark that
+    // says so; read as UTF-8 it was letters between nulls (live test
+    // 2026-10-12). Every other character of a Latin-script list is a null.
+    const head = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 4096));
+    if (head[0] === 0xff && head[1] === 0xfe) return new TextDecoder('utf-16le').decode(buffer);
+    if (head[0] === 0xfe && head[1] === 0xff) return new TextDecoder('utf-16be').decode(buffer);
+    let odd = 0;
+    let even = 0;
+    for (let i = 0; i < head.length; i++) {
+        if (head[i] !== 0) continue;
+        if (i % 2) odd++; else even++;
+    }
+    if (odd > head.length / 4) return new TextDecoder('utf-16le').decode(buffer);
+    if (even > head.length / 4) return new TextDecoder('utf-16be').decode(buffer);
     try {
         return new TextDecoder('utf-8', { fatal: true }).decode(buffer).replace(/^﻿/, '');
     } catch {
