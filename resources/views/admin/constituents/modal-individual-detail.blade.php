@@ -263,7 +263,7 @@
                      to this resident. GET /admin/residents/{ref}/requests. --}}
                 <div class="surface-glass rounded-[26px] p-4">
                     <div class="flex items-center justify-between gap-2 mb-3">
-                        <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Documents &amp; Assistance Received</h3>
+                        <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Dokyu &amp; Tulong Received</h3>
                         <span x-show="residentRequests.rows.length" x-cloak class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-50 text-brand-700" x-text="residentRequests.rows.length"></span>
                     </div>
                     <p x-show="residentRequests.loading" class="text-xs text-ink-muted flex items-center gap-1.5"><span><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i></span>Loading…</p>
