@@ -27,6 +27,8 @@ const REASONS = {
     different_sex: 'sex differs',
     different_suffix: 'suffix differs (Jr., Sr.)',
     different_middle_name: 'middle name differs',
+    id_document: 'name and birth date on the verified ID',
+    resident_profile: 'birth date from the Resident Profile',
 };
 
 // Told to the page on window, not with $dispatch: a button that starts a step

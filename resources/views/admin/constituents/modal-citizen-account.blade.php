@@ -66,7 +66,8 @@
                 </template>
                 <template x-if="registryMatch?.status === 'pending'">
                     <div class="space-y-2">
-                        <p class="text-xs text-ink">Registration recognised this resident as a record the barangay already had. Until an officer confirms it, the resident sees only the details they gave themselves. <strong>Verifying the account confirms it.</strong></p>
+                        <p class="text-xs text-ink"><span x-text="({ id_document: 'Their verified ID recognised this resident: the name and birth date on it match a record the barangay already had.', resident_profile: 'The birth date in their Resident Profile recognised this resident as a record the barangay already had.' })[registryMatch.source] || 'Registration recognised this resident as a record the barangay already had.'"></span> Until an officer confirms it, the resident sees only the details they gave themselves. <strong>Verifying the account confirms it.</strong></p>
+                        <p x-show="registryMatch.set_aside" class="text-xs text-ink-muted" x-text="'The record made when they signed up, ' + (registryMatch.set_aside?.ref || '') + ', is merged into this one when you confirm (Data Quality can undo it). If it is not them, the account keeps that record.'"></p>
                         <p x-show="registryMatch.held_profile" class="text-xs text-ink-muted">They have sent their Resident Profile; it goes onto the record once confirmed.</p>
                         <div class="flex flex-wrap gap-2" x-show="can('const_citizen_verification','verify')">
                             <x-ui.button size="sm" icon="user-check" x-bind:disabled="registryBusy" @click="decideRegistryMatch('confirm')">It is them</x-ui.button>
