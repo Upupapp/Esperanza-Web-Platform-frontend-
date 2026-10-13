@@ -446,6 +446,18 @@
                                 </div>
                             </template>
                         </dl>
+                        {{-- What the ID says, as the resident entered it (2026-10-13), to check
+                             against the photo: only with view_sensitive, and every
+                             reveal is logged server side. --}}
+                        <div x-show="isWalletId(previewDoc) && viewing?.id_details" x-cloak class="rounded-xl border border-slate-200 px-3 py-2.5">
+                            <p class="text-xs font-semibold text-ink mb-1.5">What the ID says (as the resident entered it)</p>
+                            <p x-show="viewing?.id_details?.restricted" class="text-xs text-ink-muted">Hidden: seeing ID numbers and personal details needs the Papeles "view sensitive" permission.</p>
+                            <dl x-show="viewing?.id_details && !viewing.id_details.restricted" class="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                                <template x-for="row in [['ID number', viewing?.id_details?.id_number], ['Name', viewing?.id_details?.holder_name], ['Date of birth', viewing?.id_details?.birthdate], ['Sex', viewing?.id_details?.sex], ['Address', viewing?.id_details?.address], ...Object.entries(viewing?.id_details?.details || {}).map(([k, v]) => [k.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()), v])]" :key="row[0]">
+                                    <div class="min-w-0"><dt class="text-ink-muted" x-text="row[0]"></dt><dd class="font-semibold text-ink break-words" x-text="row[1] || '—'"></dd></div>
+                                </template>
+                            </dl>
+                        </div>
                         <p x-show="isWalletId(previewDoc)" x-cloak class="text-xs text-ink-muted rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">An ID the resident keeps in their Digital ID wallet. Verifying it puts the Esperanza seal on it in their wallet. It does not change the resident's identity status, and it does not check the ID with the agency that issued it.</p>
                         <p x-show="previewDoc.status === 'Rejected' && previewDoc.review_remarks" x-cloak class="text-xs text-rose-700" x-text="'Returned: ' + (previewDoc.review_remarks || '')"></p>
                         <div class="flex items-center justify-between gap-3">

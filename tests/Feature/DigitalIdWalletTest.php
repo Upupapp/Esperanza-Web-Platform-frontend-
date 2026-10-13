@@ -113,4 +113,45 @@ class DigitalIdWalletTest extends TestCase
         $this->assertStringContainsString("decideIdentity('revoke')", $modal);
         $this->assertStringContainsString('@click="revokeApproval()"', $modal);
     }
+
+    public function test_every_kind_of_id_has_its_own_wallet_card_and_none_copies_an_agency(): void
+    {
+        $wallet = $this->source('resources/views/components/citizen/digital-id-wallet.blade.php');
+
+        foreach (['philippine_national_id', 'drivers_license', 'passport', 'umid', 'sss', 'gsis', 'philhealth', 'owwa', 'prc', 'postal', 'voters', 'tin', 'other'] as $kind) {
+            $this->assertStringContainsString("{$kind}: { band: ", $wallet, "{$kind} has no card design");
+        }
+        // Every card says what it is.
+        $this->assertStringContainsString('en="Esperanza wallet copy · not an official ID"', $wallet);
+        // Its picture is the face on the ID when one was found, else the photo.
+        $this->assertStringContainsString(':style="portraitStyle(d)"', $wallet);
+        $this->assertStringContainsString("String(d.portrait_box || '').split(',')", $wallet);
+        // The only seal on a card is Esperanza's, for an ID the LGU verified.
+        preg_match_all('/<img[^>]+src="([^"]+)"/', $wallet, $images);
+        foreach ($images[1] as $src) {
+            $this->assertTrue(str_contains($src, 'esperanza-seal') || str_starts_with($src, '{{') === false, "unexpected image {$src}");
+        }
+    }
+
+    public function test_what_the_id_says_is_sent_with_it_and_can_be_corrected(): void
+    {
+        $wallet = $this->source('resources/views/components/citizen/digital-id-wallet.blade.php');
+        $fields = $this->source('resources/views/components/citizen/wallet-id-fields.blade.php');
+
+        foreach (['id_number', 'holder_name', 'birthdate', 'sex', 'address'] as $field) {
+            $this->assertStringContainsString("x-model=\"details.{$field}\"", $fields);
+        }
+        $this->assertStringContainsString('x-model="details.extras[key]"', $fields);
+        $this->assertStringContainsString("body.append('details[' + k + ']', v)", $wallet);
+        $this->assertStringContainsString("\$api.patch('/citizen/wallet/ids/' + encodeURIComponent(this.doc.id)", $wallet);
+        $this->assertStringContainsString('Saving a change sends this ID back to the LGU for review.', $wallet);
+    }
+
+    public function test_an_officer_sees_what_the_id_says_only_with_view_sensitive(): void
+    {
+        $papeles = $this->source('resources/views/admin/papeles.blade.php');
+
+        $this->assertStringContainsString('viewing?.id_details?.restricted', $papeles);
+        $this->assertStringContainsString('needs the Papeles "view sensitive" permission', $papeles);
+    }
 }

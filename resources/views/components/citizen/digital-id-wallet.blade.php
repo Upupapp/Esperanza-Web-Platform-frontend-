@@ -32,6 +32,97 @@
         formError: '',
         tried: false,
         t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+        // Each kind of ID as the wallet draws it (owner, 2026-10-13), the same
+        // as the app's lib/widgets/wallet_id_card.dart: its colours, icon, the
+        // name its number goes by, and the fields on its front and back. Not
+        // the agency's design: no seal, logo or layout of the real card.
+        designs: {
+            philippine_national_id: { band: 'from-navy-700 to-brand-600', icon: 'fingerprint', number: 'PCN', front: ['birthdate', 'sex'], back: ['address', 'blood_type', 'civil_status', 'place_of_birth'] },
+            drivers_license: { band: 'from-blue-700 to-sky-700', icon: 'car', number: 'License no.', front: ['birthdate', 'sex', 'expires_on'], back: ['address', 'blood_type', 'restrictions', 'conditions'] },
+            passport: { band: 'from-navy-900 to-indigo-700', icon: 'plane', number: 'Passport no.', front: ['birthdate', 'sex', 'expires_on'], back: ['nationality', 'place_of_birth'] },
+            umid: { band: 'from-teal-700 to-cyan-700', icon: 'credit-card', number: 'CRN', front: ['birthdate', 'sex'], back: ['address'] },
+            sss: { band: 'from-blue-700 to-brand-500', icon: 'shield', number: 'SS no.', front: ['birthdate'], back: ['address'] },
+            gsis: { band: 'from-emerald-700 to-teal-500', icon: 'landmark', number: 'BP no.', front: ['birthdate'], back: ['address'] },
+            philhealth: { band: 'from-green-700 to-emerald-500', icon: 'heart-pulse', number: 'PIN', front: ['birthdate', 'sex'], back: ['address'] },
+            owwa: { band: 'from-sky-700 to-blue-500', icon: 'globe', number: 'OWWA no.', front: ['birthdate'], back: ['destination_country', 'address'] },
+            prc: { band: 'from-indigo-700 to-purple-500', icon: 'award', number: 'Reg. no.', front: ['profession', 'expires_on'], back: ['registered_on', 'birthdate'] },
+            postal: { band: 'from-orange-700 to-amber-500', icon: 'mail', number: 'PRN', front: ['birthdate', 'expires_on'], back: ['address', 'nationality'] },
+            voters: { band: 'from-purple-700 to-indigo-500', icon: 'vote', number: 'VIN', front: ['birthdate'], back: ['address', 'precinct'] },
+            tin: { band: 'from-slate-700 to-slate-500', icon: 'receipt', number: 'TIN', front: ['birthdate'], back: ['address'] },
+            other: { band: 'from-navy-800 to-slate-600', icon: 'id-card', number: 'ID no.', front: ['birthdate', 'expires_on'], back: ['address'] },
+        },
+        extraLabels: {
+            blood_type: ['Blood type', 'Uri ng dugo'], civil_status: ['Civil status', 'Katayuang sibil'], place_of_birth: ['Place of birth', 'Lugar ng kapanganakan'],
+            restrictions: ['Restrictions', 'Mga restriksyon'], conditions: ['Conditions', 'Mga kondisyon'], nationality: ['Nationality', 'Nasyonalidad'],
+            destination_country: ['Country of work', 'Bansang pinagtatrabahuhan'], profession: ['Profession', 'Propesyon'], registered_on: ['Registered', 'Nairehistro'], precinct: ['Precinct', 'Presinto'],
+        },
+        design(kind) { return this.designs[kind] || this.designs.other; },
+        // The face on the front photo (found on the phone), as the card's
+        // picture: the photo sized and placed so only that box shows.
+        portraitStyle(d) {
+            const b = String(d.portrait_box || '').split(',').map(Number);
+            if (b.length !== 4 || b.some((v) => !(v >= 0 && v <= 1)) || !b[2] || !b[3] || !d.front_url) return '';
+            const pos = (start, size) => (size >= 1 ? 0 : (start / (1 - size)) * 100);
+            return 'background-image: url(' + JSON.stringify(d.front_url) + '); background-size: ' + (100 / b[2]) + '% ' + (100 / b[3]) + '%; background-position: ' + pos(b[0], b[2]) + '% ' + pos(b[1], b[3]) + '%;';
+        },
+        fieldLabel(key) {
+            const base = { birthdate: ['Date of birth', 'Petsa ng kapanganakan'], sex: ['Sex', 'Kasarian'], address: ['Address', 'Tirahan'], expires_on: ['Valid until', 'Valid hanggang'] };
+            const l = base[key] || this.extraLabels[key];
+            return l ? this.t(l[0], l[1]) : key;
+        },
+        fieldValue(key, d) {
+            if (key === 'birthdate') return d.birthdate ? this.date(d.birthdate) : '';
+            if (key === 'sex') return d.sex ? (d.sex === 'Male' ? this.t('Male', 'Lalaki') : this.t('Female', 'Babae')) : '';
+            if (key === 'address') return d.address || '';
+            if (key === 'expires_on') return d.expires_on ? this.date(d.expires_on) : '';
+            const v = (d.details || {})[key] || '';
+            return key === 'registered_on' && v ? this.date(v) : v;
+        },
+        sideFields(d, side) { return this.design(d.id_kind)[side].map((k) => [this.fieldLabel(k), this.fieldValue(k, d)]).filter((f) => f[1]); },
+        extrasFor(kind) { const ds = this.design(kind); return [...ds.front, ...ds.back].filter((k) => this.extraLabels[k]); },
+        usesSex(kind) { const ds = this.design(kind); return [...ds.front, ...ds.back].includes('sex'); },
+        details: { id_number: '', holder_name: '', birthdate: '', sex: '', address: '', extras: {} },
+        editing: false,
+        savingDetails: false,
+        fillDetails(d) {
+            this.details = {
+                id_number: d?.id_number || '', holder_name: d?.holder_name || '', birthdate: d?.birthdate || '',
+                sex: d?.sex || '', address: d?.address || '', extras: { ...((d && d.details) || {}) },
+            };
+        },
+        detailsPayload() {
+            const extras = {};
+            for (const k of this.extrasFor(this.form.kind)) {
+                const v = (this.details.extras[k] || '').trim();
+                if (v) extras[k] = v;
+            }
+            return {
+                id_number: this.details.id_number.trim() || null, holder_name: this.details.holder_name.trim() || null,
+                birthdate: this.details.birthdate || null, sex: this.details.sex || null, address: this.details.address.trim() || null, details: extras,
+            };
+        },
+        startEdit(doc) {
+            this.form = { ...this.form, kind: doc.id_kind, expires: doc.expires_on || '' };
+            this.fillDetails(doc);
+            this.formError = '';
+            this.editing = true;
+        },
+        async saveDetails() {
+            if (this.savingDetails || !this.doc) return;
+            this.savingDetails = true;
+            this.formError = '';
+            try {
+                const res = await $api.patch('/citizen/wallet/ids/' + encodeURIComponent(this.doc.id), { ...this.detailsPayload(), expires_on: this.form.expires || null });
+                this.doc = res.data;
+                this.editing = false;
+                this.$dispatch('toast', { message: this.t('Details saved.', 'Na-save ang mga detalye.'), variant: 'success' });
+                await this.load();
+            } catch (err) {
+                this.formError = err?.localised ? err.localised(this.$store.lang.current) : this.t('Could not save the details.', 'Hindi ma-save ang mga detalye.');
+            } finally {
+                this.savingDetails = false;
+            }
+        },
         get card() {
             return this.wallet?.resident_id?.state === 'active' ? this.wallet.resident_id.card : null;
         },
@@ -75,11 +166,12 @@
             }[s] || [this.t('Uploaded — Not checked', 'Na-upload — Hindi nasuri'), 'bg-slate-100 text-slate-700 ring-slate-200'];
         },
         date(d) { return d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; },
-        open(doc) { this.doc = doc; this.view = 'doc'; this.$nextTick(() => window.renderIcons?.()); },
+        open(doc) { this.doc = doc; this.editing = false; this.view = 'doc'; this.$nextTick(() => window.renderIcons?.()); },
         startAdd(replacing = null) {
             this.form = { kind: replacing ? replacing.id_kind : '', name: replacing?.id_kind === 'other' ? replacing.name : '', issuer: replacing?.id_kind === 'other' ? (replacing.issuer || '') : '', expires: replacing?.expires_on || '', replaces: replacing?.id || null, replacingName: replacing?.name || '' };
             this.clear('front');
             this.clear('back');
+            this.fillDetails(replacing);
             this.formError = '';
             this.tried = false;
             this.view = 'add';
@@ -125,6 +217,12 @@
             if (this.form.replaces) body.append('replaces', String(this.form.replaces));
             body.append('front', this.front);
             if (this.back) body.append('back', this.back);
+            // What the ID says, for its card.
+            const said = this.detailsPayload();
+            for (const k of ['id_number', 'holder_name', 'birthdate', 'sex', 'address']) {
+                if (said[k]) body.append(k, said[k]);
+            }
+            for (const [k, v] of Object.entries(said.details)) body.append('details[' + k + ']', v);
             this.sending = true;
             this.formError = '';
             try {
@@ -221,18 +319,37 @@
                 <p x-show="!wallet.documents.length" class="text-xs text-ink-muted mt-3 rounded-xl border border-dashed border-slate-200 p-4 text-center"><x-ui.t fil="Wala pang naidagdag na ID." en="No IDs added yet." /></p>
                 <div class="space-y-3 mt-3">
                     <template x-for="d in wallet.documents" :key="d.id">
-                        <button type="button" @click="open(d)" class="w-full text-left rounded-2xl bg-gradient-to-br from-navy-800 to-brand-700 text-white p-4 flex items-start gap-3 shadow-card hover:shadow-card-hover transition-shadow">
-                            <div class="min-w-0 flex-1">
-                                <p class="text-[10px] uppercase tracking-wide text-brand-200 truncate" x-text="d.issuer || ''"></p>
-                                <p class="text-sm font-semibold truncate" x-text="d.name"></p>
-                                <p class="text-[11px] text-brand-100 mt-1" x-text="d.expires_on ? t('Expires ', 'Mag-e-expire sa ') + date(d.expires_on) : t('No expiry date given', 'Walang petsa ng pag-expire')"></p>
-                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 mt-2" :class="docStatus(d.document_status)[1]" x-text="docStatus(d.document_status)[0]"></span>
+                        {{-- The wallet's card for this kind of ID, from what it says. --}}
+                        <button type="button" @click="open(d)" class="relative w-full text-left rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-card hover:shadow-card-hover transition-shadow flex flex-col">
+                            <div class="bg-gradient-to-r text-white h-12 pl-3 pr-28 flex items-center gap-2" :class="design(d.id_kind).band">
+                                <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0"><i :data-lucide="design(d.id_kind).icon" class="w-4 h-4"></i></span>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-extrabold truncate" x-text="d.name"></p>
+                                    <p class="text-[10px] uppercase tracking-wide text-white/80 truncate" x-text="d.issuer || ''"></p>
+                                </div>
                             </div>
-                            <div class="relative shrink-0">
-                                <img x-show="d.front_url" :src="d.front_url" :alt="d.name" class="w-20 h-14 rounded-lg object-cover bg-navy-700">
-                                {{-- Verified by the LGU: the Esperanza seal on it. --}}
-                                <img x-show="d.document_status === 'verified_by_lgu'" x-cloak src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" :alt="t('Esperanza seal: verified by the LGU', 'Tatak ng Esperanza: beripikado ng LGU')" class="absolute -top-2 -right-2 w-9 h-9 rounded-full ring-2 ring-white shadow-card">
+                            <div class="flex gap-3 p-3">
+                                <div class="w-16 h-20 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                                    <div x-show="portraitStyle(d)" role="img" :aria-label="t('Photo on the ID', 'Litrato sa ID')" class="w-full h-full bg-no-repeat" :style="portraitStyle(d)"></div>
+                                    <img x-show="d.front_url && !portraitStyle(d)" :src="d.front_url" :alt="t('Your photo of the ID', 'Iyong litrato ng ID')" class="w-full h-full object-cover">
+                                    <i x-show="!d.front_url" data-lucide="image" class="w-5 h-5 text-slate-400"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[10px] uppercase tracking-wide text-slate-600"><x-ui.t fil="Pangalan" en="Name" /></p>
+                                    <p class="text-sm font-bold truncate" :class="d.holder_name ? 'text-ink' : 'text-ink-muted'" x-text="d.holder_name || t('Not entered', 'Wala pang nailagay')"></p>
+                                    <p class="text-[10px] uppercase tracking-wide text-slate-600 mt-1" x-text="design(d.id_kind).number"></p>
+                                    <p class="text-sm font-bold tabular-nums tracking-wide truncate" :class="d.id_number ? 'text-navy-800' : 'text-ink-muted'" x-text="d.id_number || t('Not entered', 'Wala pang nailagay')"></p>
+                                    <div class="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                                        <template x-for="f in sideFields(d, 'front')" :key="f[0]">
+                                            <div><p class="text-[10px] uppercase tracking-wide text-slate-600" x-text="f[0]"></p><p class="text-xs font-semibold text-ink" x-text="f[1]"></p></div>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
+                            <p class="h-6 px-3 flex items-center text-[10px] text-slate-600 bg-slate-50"><x-ui.t fil="Kopya sa wallet ng Esperanza · hindi opisyal na ID" en="Esperanza wallet copy · not an official ID" /></p>
+                            {{-- Verified by the LGU: the Esperanza seal on it. --}}
+                            <img x-show="d.document_status === 'verified_by_lgu'" x-cloak src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" :alt="t('Esperanza seal: verified by the LGU', 'Tatak ng Esperanza: beripikado ng LGU')" class="absolute top-2 right-2 w-12 h-12 rounded-full ring-2 ring-white shadow-card opacity-90">
+                            <span x-show="d.document_status !== 'verified_by_lgu'" class="absolute top-3 right-3 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1" :class="docStatus(d.document_status)[1]" x-text="d.document_status === 'returned_by_lgu' ? t('Returned', 'Ibinalik') : t('Not checked', 'Hindi nasuri')"></span>
                         </button>
                     </template>
                 </div>
@@ -258,7 +375,25 @@
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Nag-isyu" en="Issued by" /></dt><dd class="font-semibold text-ink text-right" x-text="doc.issuer || '—'"></dd></div>
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Pag-expire" en="Expires" /></dt><dd class="font-semibold text-ink text-right" x-text="doc.expires_on ? date(doc.expires_on) : t('No expiry date given', 'Walang petsa ng pag-expire')"></dd></div>
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Idinagdag" en="Added" /></dt><dd class="font-semibold text-ink text-right" x-text="date(doc.uploaded_at) || '—'"></dd></div>
+                <div class="flex justify-between gap-2"><dt class="text-ink-muted" x-text="design(doc.id_kind).number"></dt><dd class="font-semibold text-ink text-right tabular-nums" x-text="doc.id_number || t('Not entered', 'Wala pang nailagay')"></dd></div>
+                <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Pangalan" en="Name" /></dt><dd class="font-semibold text-ink text-right" x-text="doc.holder_name || t('Not entered', 'Wala pang nailagay')"></dd></div>
+                <template x-for="f in [...sideFields(doc, 'front'), ...sideFields(doc, 'back')].filter((f, i, all) => all.findIndex((g) => g[0] === f[0]) === i)" :key="f[0]">
+                    <div class="flex justify-between gap-2"><dt class="text-ink-muted" x-text="f[0]"></dt><dd class="font-semibold text-ink text-right" x-text="f[1]"></dd></div>
+                </template>
             </dl>
+            <div x-show="!editing">
+                <x-ui.button size="sm" variant="secondary" icon="pencil" @click="startEdit(doc)"><x-ui.t fil="I-edit ang mga detalye" en="Edit details" /></x-ui.button>
+            </div>
+            <div x-show="editing" x-cloak class="rounded-2xl border border-slate-200 p-4 space-y-4">
+                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Ano ang nakasulat sa ID" en="What the ID says" /></p>
+                <p x-show="doc.document_status !== 'uploaded_not_checked'" class="text-[11px] text-amber-700"><x-ui.t fil="Ang pagbabago ay ibabalik ang ID na ito sa LGU para suriin." en="Saving a change sends this ID back to the LGU for review." /></p>
+                <x-citizen.wallet-id-fields />
+                <p x-show="formError" x-cloak class="text-xs text-rose-700" x-text="formError"></p>
+                <div class="flex gap-2">
+                    <x-ui.button size="sm" x-bind:disabled="savingDetails" @click="saveDetails()"><x-ui.t fil="I-save" en="Save" /></x-ui.button>
+                    <x-ui.button size="sm" variant="secondary" @click="editing = false"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
+                </div>
+            </div>
             <div class="rounded-2xl border border-slate-200 p-4 space-y-3 text-xs">
                 <p class="text-sm font-semibold text-ink"><x-ui.t fil="Mga pagsusuri sa ID na ito" en="Checks on this ID" /></p>
                 <div>
@@ -322,11 +457,6 @@
                 </label>
             </div>
 
-            <label class="block">
-                <span class="text-xs font-medium text-slate-700"><x-ui.t fil="Petsa ng pag-expire (kung nakalimbag sa ID)" en="Expiry date (if printed on the ID)" /></span>
-                <input type="date" x-model="form.expires" class="mt-1 w-full text-sm rounded-xl border border-slate-200 px-3 py-2 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none">
-            </label>
-
             <template x-for="side in [['front', t('Front (required)', 'Harap (kailangan)')], ['back', t('Back (optional)', 'Likod (opsyonal)')]]" :key="side[0]">
                 <div class="rounded-xl border p-3" :class="side[0] === 'front' && tried && !front ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200'">
                     <p class="text-xs font-semibold text-ink mb-2" x-text="side[1]"></p>
@@ -343,6 +473,11 @@
             </template>
 
             <p class="text-[11px] text-ink-muted"><x-ui.t fil="Itatago ang iyong ID bilang na-upload at hindi ito susuriin. JPG, PNG, WebP o PDF, hanggang 10 MB bawat panig." en="Your ID is kept as uploaded and is not checked. JPG, PNG, WebP or PDF, up to 10 MB per side." /></p>
+            <div x-show="form.kind" x-cloak class="space-y-3 pt-2">
+                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Ano ang nakasulat sa ID" en="What the ID says" /></p>
+                <p class="text-[11px] text-ink-muted"><x-ui.t fil="Lalabas ito sa card ng iyong ID sa wallet. Ilagay gaya ng nakalimbag." en="These go on your ID's card in the wallet. Type them as printed." /></p>
+                <x-citizen.wallet-id-fields />
+            </div>
             <p x-show="formError" x-cloak class="text-xs text-rose-700" x-text="formError"></p>
             <x-ui.button size="sm" x-bind:disabled="sending" @click="submit()">
                 <span class="inline-flex items-center gap-1.5">
