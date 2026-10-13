@@ -1539,6 +1539,9 @@
             <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang kahilingang tumutugma dito." en="No requests in this view." /></p>
         </div>
 
+        {{-- What the office recorded for them before they had an account (2026-10-13). --}}
+        <x-citizen.records type="dokyu" class="mt-6" />
+
         <!-- Track Request -->
         <div x-data="{ get open() { return progressOpen }, set open(v) { progressOpen = v } }">
             <x-ui.modal title="Subaybayan ang Kahilingan" titleEn="Track Request" maxWidth="md">

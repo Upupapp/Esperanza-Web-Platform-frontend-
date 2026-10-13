@@ -435,6 +435,9 @@
                         </div>
                     </div>
                 </x-ui.card>
+
+                {{-- The Dokyu and Tulong on their record, the offices' included (2026-10-13). --}}
+                <x-citizen.records />
             </div>
 
             <div class="space-y-5">

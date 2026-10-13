@@ -5,6 +5,7 @@ import { specForm } from './api/form';
 import { residentProfileForm } from './resident-profile-form';
 import { residentImport, reasonText } from './resident-import-ui';
 import { requestImport } from './request-import-ui';
+import { citizenRecords } from './citizen-records';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons } from 'lucide';
@@ -458,6 +459,7 @@ document.addEventListener('alpine:init', () => {
     // file is a separate chunk, loaded when the window first opens.
     Alpine.data('residentImport', residentImport);
     Alpine.data('requestImport', requestImport);
+    Alpine.data('citizenRecords', citizenRecords);
     // Why a record matched, for the account review's Registry record panel.
     window.registryReasonText = reasonText;
 
