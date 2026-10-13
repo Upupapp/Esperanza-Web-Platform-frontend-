@@ -244,6 +244,9 @@
         // Identity (2026-10-09): the reason an officer gives to verify an
         // identity by hand, restore one, or revoke it. Kept on the record.
         identityReason: '',
+        // Residency, apart from identity (2026-10-13): the reason an officer
+        // gives to withdraw an approved residency. The resident reads it.
+        revokeApprovalReason: '',
         // The registry record registration recognised the resident as, and
         // records the account may really be (2026-10-09).
         registryMatch: null,
@@ -274,6 +277,7 @@
             this.accountDetail = null;
             this.photoRejectRemarks = '';
             this.identityReason = '';
+            this.revokeApprovalReason = '';
             this.showAccountReview = true;
             this.accountLoading = true;
             this.registryMatch = null;
@@ -341,6 +345,29 @@
                 });
             } catch (err) {
                 this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not update the identity.', variant: 'error' });
+            } finally {
+                this.processingCitizen = false;
+                this.$nextTick(() => window.renderIcons?.());
+            }
+        },
+        // Withdraw an approved residency (const_citizen_verification,reject).
+        // The account goes back to Rejected, the Resident ID is suspended and
+        // its QR stops verifying; the identity is left as it is. Approving the
+        // account again restores it.
+        async revokeApproval() {
+            const i = this.accountRow;
+            const reason = this.revokeApprovalReason.trim();
+            if (!i || this.processingCitizen || reason.length < 5) return;
+            if (!window.confirm('Revoke ' + (i.name || 'this resident') + '\'s residency approval? Their Resident ID is suspended and its QR stops verifying until the account is approved again. Their identity verification stays as it is.')) return;
+            this.processingCitizen = true;
+            try {
+                const res = await $api.post('/admin/citizens/' + encodeURIComponent(i.citizen_account.account_no) + '/revoke-approval', { reason });
+                this.accountDetail = res.data;
+                i.citizen_account = { ...i.citizen_account, status: res.data?.status, access_level: res.data?.access_level };
+                this.revokeApprovalReason = '';
+                this.$dispatch('toast', { message: 'Residency approval revoked; the resident was told why.', variant: 'info' });
+            } catch (err) {
+                this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not revoke the approval.', variant: 'error' });
             } finally {
                 this.processingCitizen = false;
                 this.$nextTick(() => window.renderIcons?.());

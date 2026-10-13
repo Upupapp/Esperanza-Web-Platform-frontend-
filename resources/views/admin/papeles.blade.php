@@ -9,10 +9,17 @@
     group or label by; and there was no admin download route at all, only
     the citizen portal's own.
 
-    Real lifecycle: Submitted -> Approved via verify, that's it -- no Reject,
-    no Under Verification/Under Review/Completed. The mock's 6-status map
-    and its avatar-by-name lookup (a parallel identity source, dropped from
-    Constituents for the same reason) are both trimmed accordingly.
+    Real lifecycle: Submitted -> Approved via verify. A government ID a
+    resident keeps in their Digital ID wallet (category "Government ID",
+    2026-10-13) can also go Submitted/Approved -> Rejected via return, with
+    the reason the resident reads; nothing else can be returned. Verifying
+    one puts the Esperanza seal on it in the resident's wallet ("Verified by
+    the LGU"). It never changes the resident's identity status and never
+    checks the ID with the agency that issued it, and the page says so where
+    the officer decides. No Under Verification/Under
+    Review/Completed. The mock's 6-status map and its avatar-by-name lookup
+    (a parallel identity source, dropped from Constituents for the same
+    reason) are both trimmed accordingly.
 --}}
 @php
     $barangayOptions = config('esperanza.barangays');
@@ -39,12 +46,15 @@
             docCategoryFilter: '',
             docStatusFilter: '',
             archiveReason: '',
+            returnReason: '',
+            viewSide: 'front',
             processingDoc: null,
             documents: [],
             barangayOptions: @js($barangayOptions),
             statusStyles: {
                 'Submitted': ['bg-amber-50 text-amber-700 ring-amber-200', 'bg-amber-500'],
                 'Approved': ['bg-emerald-50 text-emerald-700 ring-emerald-200', 'bg-emerald-500'],
+                'Rejected': ['bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
             },
             fileIcons: { jpg: 'image', jpeg: 'image', png: 'image', pdf: 'file-text', docx: 'file-type-2' },
 
@@ -118,6 +128,11 @@
             // A type stored as a key (affidavit_of_no_pension_income_or_family_support_notarized)
             // has no spaces, so it could not wrap and ran into the next column. Shown as words.
             typeLabel(t) { const s = String(t || ''); return /\s/.test(s) || !s.includes('_') ? s : s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' '); },
+            // A wallet ID's own name (PhilHealth ID, or the resident's for Other);
+            // every other document by its type.
+            isWalletId(doc) { return doc?.category === 'Government ID'; },
+            docLabel(doc) { return this.isWalletId(doc) && doc.name ? doc.name : this.typeLabel(doc.type); },
+            closePreview() { this.previewDoc = null; this.archiveReason = ''; this.returnReason = ''; this.viewSide = 'front'; },
 
             openBarangay(name) { this.selectedBarangay = name; this.selectedCitizenId = null; this.search = ''; this.sort = 'newest'; this.$nextTick(() => window.renderIcons?.()); },
             openCitizen(id) { this.selectedCitizenId = id; this.open = true; this.$nextTick(() => window.renderIcons?.()); },
@@ -128,10 +143,25 @@
                 this.processingDoc = doc.id;
                 try {
                     const res = await $api.post('/admin/papeles/' + doc.id + '/verify', {});
-                    Object.assign(doc, res.data);
-                    this.$dispatch('toast', { message: doc.type + ' marked verified.', variant: 'success' });
+                    Object.assign(doc, res.data, { review_remarks: null });
+                    this.$dispatch('toast', { message: (this.isWalletId(doc) ? this.docLabel(doc) : doc.type) + ' marked verified.', variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not verify this document.', variant: 'error' });
+                } finally { this.processingDoc = null; }
+            },
+            // A wallet ID sent back to the resident with the reason they read.
+            async returnDoc(doc) {
+                const reason = this.returnReason.trim();
+                if (this.processingDoc || reason.length < 5) return;
+                if (!window.confirm('Return ' + this.docLabel(doc) + ' to the resident? They will see your reason and can replace it.')) return;
+                this.processingDoc = doc.id;
+                try {
+                    const res = await $api.post('/admin/papeles/' + doc.id + '/return', { reason });
+                    Object.assign(doc, { status: res.data.status, review_remarks: res.data.review_remarks });
+                    this.returnReason = '';
+                    this.$dispatch('toast', { message: this.docLabel(doc) + ' returned; the resident was told why.', variant: 'info' });
+                } catch (err) {
+                    this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not return this ID.', variant: 'error' });
                 } finally { this.processingDoc = null; }
             },
             async archiveDoc(doc) {
@@ -152,21 +182,22 @@
             // returns the same short-lived link with the file type.
             viewing: null,
             viewFailed: false,
-            async openView(doc) {
+            async openView(doc, side = 'front') {
                 this.viewing = null;
                 this.viewFailed = false;
+                this.viewSide = side;
                 if (!doc?.has_file) return;
                 try {
-                    const res = await $api.get('/admin/papeles/' + doc.id + '/view');
+                    const res = await $api.get('/admin/papeles/' + doc.id + '/view' + (side === 'back' ? '?side=back' : ''));
                     if (this.previewDoc?.id === doc.id) this.viewing = res.data;
                 } catch { this.viewFailed = true; }
             },
             get viewingImage() { return !!this.viewing?.url && /^image\//i.test(this.viewing.mime || ''); },
             get viewingPdf() { return !!this.viewing?.url && /pdf/i.test((this.viewing.mime || '') + ' ' + (this.viewing.name || '')); },
-            async downloadDoc(doc) {
+            async downloadDoc(doc, side = 'front') {
                 if (!doc.has_file) { this.$dispatch('toast', { message: 'No file was uploaded for this document.', variant: 'warning' }); return; }
                 try {
-                    const res = await $api.get('/admin/papeles/' + doc.id + '/download');
+                    const res = await $api.get('/admin/papeles/' + doc.id + '/download' + (side === 'back' ? '?side=back' : ''));
                     window.open(res.data.url, '_blank', 'noopener');
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not get a download link.', variant: 'error' });
@@ -335,7 +366,7 @@
                                     <li class="flex items-center gap-3 px-4 py-3">
                                         <span class="w-9 h-9 rounded-lg bg-slate-100 text-ink-muted flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[doc.file_type] || 'file'" class="w-4 h-4"></i></span>
                                         <div class="min-w-0 flex-1">
-                                            <p class="text-sm font-medium text-slate-700 truncate" x-text="typeLabel(doc.type)"></p>
+                                            <p class="text-sm font-medium text-slate-700 truncate" x-text="docLabel(doc)"></p>
                                             <p class="text-xs text-ink-muted" x-text="doc.category + ' · ' + fmtDate(doc.uploaded)"></p>
                                         </div>
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0" :class="(statusStyles[doc.status] || statusStyles['Submitted'])[0]">
@@ -345,7 +376,7 @@
                                         <div class="flex items-center gap-1 shrink-0">
                                             <button x-show="can('view')" @click="previewDoc = doc; openView(doc); $nextTick(() => window.renderIcons?.())" class="p-1.5 rounded-lg text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View"><i data-lucide="eye" class="w-4 h-4"></i></button>
                                             <button x-show="can('export')" :disabled="processingDoc === doc.id" @click="downloadDoc(doc)" class="p-1.5 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors disabled:opacity-40" title="Download"><i data-lucide="download" class="w-4 h-4"></i></button>
-                                            <button x-show="can('verify') && doc.status !== 'Approved'" :disabled="processingDoc === doc.id" @click="verifyDoc(doc)" class="p-1.5 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40" title="Verify"><i data-lucide="check-check" class="w-4 h-4"></i></button>
+                                            <button x-show="can('verify') && doc.status !== 'Approved'" :disabled="processingDoc === doc.id" @click="verifyDoc(doc)" class="p-1.5 rounded-xl text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40" title="Verify" aria-label="Verify"><i data-lucide="check-check" class="w-4 h-4"></i></button>
                                         </div>
                                     </li>
                                 </template>
@@ -367,7 +398,7 @@
             x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
             x-transition:leave="transition duration-[150ms] ease-exit" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
-            @click.self="previewDoc = null; archiveReason = ''" @keydown.escape.window="previewDoc = null; archiveReason = ''"
+            @click.self="closePreview()" @keydown.escape.window="closePreview()"
             role="dialog" aria-modal="true"
         >
             <template x-if="previewDoc">
@@ -378,11 +409,16 @@
                     <div class="flex items-center justify-between px-5 py-4 border-b border-brand-600/10">
                         <div class="flex items-center gap-2.5 min-w-0">
                             <span class="w-9 h-9 rounded-lg bg-slate-100 text-ink-muted flex items-center justify-center shrink-0"><i :data-lucide="fileIcons[previewDoc.file_type] || 'file'" class="w-4 h-4"></i></span>
-                            <p class="text-sm font-semibold text-ink truncate" x-text="typeLabel(previewDoc.type)"></p>
+                            <p class="text-sm font-semibold text-ink truncate" x-text="docLabel(previewDoc)"></p>
                         </div>
-                        <button aria-label="Close" @click="previewDoc = null; archiveReason = ''" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button aria-label="Close" @click="closePreview()" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 space-y-4">
+                        {{-- A wallet ID has a front and, often, a back. --}}
+                        <div x-show="previewDoc.has_back" x-cloak class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-medium" role="group" aria-label="Side of the ID">
+                            <button type="button" @click="openView(previewDoc, 'front')" :aria-pressed="viewSide === 'front'" class="px-3 py-1.5 rounded-lg transition-colors" :class="viewSide === 'front' ? 'bg-white text-ink shadow-card' : 'text-ink-muted hover:text-ink'">Front</button>
+                            <button type="button" @click="openView(previewDoc, 'back')" :aria-pressed="viewSide === 'back'" class="px-3 py-1.5 rounded-lg transition-colors" :class="viewSide === 'back' ? 'bg-white text-ink shadow-card' : 'text-ink-muted hover:text-ink'">Back</button>
+                        </div>
                         <div x-data="pdfPreview" x-effect="show(viewingImage || viewingPdf ? viewing.url : null, (viewing?.mime || '') + ' ' + (viewing?.name || ''))" x-show="viewingImage || viewingPdf" x-cloak class="max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-2">
                             <p x-show="loading" class="text-xs text-ink-muted text-center py-8">Opening the document…</p>
                             <p x-show="failed" x-cloak class="text-xs text-rose-600 text-center py-8">This file could not be shown here. Use Download.</p>
@@ -401,7 +437,17 @@
                             <div class="min-w-0"><dt class="text-xs text-ink-muted">Barangay</dt><dd class="text-sm font-semibold text-ink break-words" x-text="'Brgy. ' + selectedBarangay"></dd></div>
                             <div class="min-w-0"><dt class="text-xs text-ink-muted">Document Type</dt><dd class="text-sm font-semibold text-ink break-words [overflow-wrap:anywhere]" x-text="typeLabel(previewDoc.type)"></dd></div>
                             <div class="min-w-0"><dt class="text-xs text-ink-muted">Submitted</dt><dd class="text-sm font-semibold text-ink" x-text="fmtDate(previewDoc.uploaded)"></dd></div>
+                            <template x-if="isWalletId(previewDoc)">
+                                <div class="contents">
+                                    <div class="min-w-0"><dt class="text-xs text-ink-muted">Issued By</dt><dd class="text-sm font-semibold text-ink break-words" x-text="previewDoc.issuer || '—'"></dd></div>
+                                    <div class="min-w-0"><dt class="text-xs text-ink-muted">Expires</dt><dd class="text-sm font-semibold text-ink" x-text="previewDoc.expires_on ? fmtDate(previewDoc.expires_on) : 'Not given'"></dd></div>
+                                    <div class="min-w-0"><dt class="text-xs text-ink-muted">Sides</dt><dd class="text-sm font-semibold text-ink" x-text="previewDoc.has_back ? 'Front and back' : 'Front only'"></dd></div>
+                                    <div class="min-w-0"><dt class="text-xs text-ink-muted">Verified</dt><dd class="text-sm font-semibold text-ink" x-text="previewDoc.status === 'Approved' && previewDoc.verified_at ? fmtDate(previewDoc.verified_at) : 'Not yet'"></dd></div>
+                                </div>
+                            </template>
                         </dl>
+                        <p x-show="isWalletId(previewDoc)" x-cloak class="text-xs text-ink-muted rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">An ID the resident keeps in their Digital ID wallet. Verifying it puts the Esperanza seal on it in their wallet. It does not change the resident's identity status, and it does not check the ID with the agency that issued it.</p>
+                        <p x-show="previewDoc.status === 'Rejected' && previewDoc.review_remarks" x-cloak class="text-xs text-rose-700" x-text="'Returned: ' + (previewDoc.review_remarks || '')"></p>
                         <div class="flex items-center justify-between gap-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[previewDoc.status] || statusStyles['Submitted'])[0]">
                                 <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[previewDoc.status] || statusStyles['Submitted'])[1]"></span>
@@ -410,6 +456,15 @@
                             <button x-show="can('verify') && previewDoc.status !== 'Approved'" :disabled="processingDoc === previewDoc.id" @click="verifyDoc(previewDoc)" class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-800 transition-colors disabled:opacity-40">
                                 <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Verify
                             </button>
+                        </div>
+                        <div x-show="can('verify') && isWalletId(previewDoc) && previewDoc.status !== 'Rejected'" x-cloak class="pt-3 border-t border-brand-600/10">
+                            <label class="text-xs font-medium text-ink-muted mb-1 block" for="papeles-return-reason">Return this ID to the resident (they will read the reason, min. 5 characters)</label>
+                            <div class="flex items-center gap-2">
+                                <input id="papeles-return-reason" type="text" maxlength="500" x-model="returnReason" placeholder="e.g. The photo is too blurry to read" class="flex-1 text-xs rounded-xl border border-slate-200 py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                                <button :disabled="processingDoc === previewDoc.id || returnReason.trim().length < 5" @click="returnDoc(previewDoc)" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 transition disabled:opacity-40 disabled:pointer-events-none">
+                                    <i data-lucide="undo-2" class="w-3.5 h-3.5"></i> Return
+                                </button>
+                            </div>
                         </div>
                         <div x-show="can('edit')" class="pt-3 border-t border-brand-600/10">
                             <label class="text-xs font-medium text-ink-muted mb-1 block" for="papeles-archive-reason">Archive this document (requires a reason, min. 5 characters)</label>
@@ -422,8 +477,8 @@
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-brand-600/10 bg-slate-50/60">
-                        <x-ui.button variant="secondary" size="sm" @click="previewDoc = null; archiveReason = ''">Close</x-ui.button>
-                        <x-ui.button size="sm" icon="download" x-show="can('export')" @click="downloadDoc(previewDoc)">Download</x-ui.button>
+                        <x-ui.button variant="secondary" size="sm" @click="closePreview()">Close</x-ui.button>
+                        <x-ui.button size="sm" icon="download" x-show="can('export')" @click="downloadDoc(previewDoc, viewSide)"><span x-text="previewDoc.has_back ? 'Download ' + viewSide : 'Download'"></span></x-ui.button>
                     </div>
                 </div>
             </template>

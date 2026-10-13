@@ -254,6 +254,7 @@
             <section x-show="['Pending Review', 'Rejected'].includes(accountDetail?.status) && (can('const_citizen_verification','verify') || can('const_citizen_verification','reject'))" class="space-y-2.5 pt-1">
                 <p class="text-xs font-semibold text-ink uppercase tracking-wide">Residency decision</p>
                 <p class="text-xs text-ink-muted">Compare the ID and the selfie with the account and the resident record before deciding. Approving confirms residency, and needs a verified identity first.</p>
+                <p x-show="accountDetail?.residency?.approval_revoked" x-cloak class="text-xs text-rose-700">The residency approval was revoked. Verifying the account again restores it.</p>
                 {{-- Only when the backend reports identity: an older backend
                      (staging before it is updated) sends none, and approval
                      must keep working there exactly as before. --}}
@@ -266,6 +267,30 @@
                     <button type="button" @click="decideAccount('reject')" :disabled="processingCitizen || rejectAccountRemarks.trim().length < 5" class="text-xs font-semibold rounded-xl px-3 py-2 bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">Reject Account</button>
                 </div>
             </section>
+
+            {{-- Withdraw an approved residency (2026-10-13). Separate from
+                 revoking the identity: that one is above, with its own history. --}}
+            <section x-show="accountDetail?.status === 'Approved' && can('const_citizen_verification','reject')" class="space-y-2.5 pt-1">
+                <p class="text-xs font-semibold text-ink uppercase tracking-wide">Revoke residency approval</p>
+                <p class="text-xs text-ink-muted">For a resident whose approval no longer holds (moved away, approved in error). The account goes back to Rejected, the Resident ID is suspended and its QR stops verifying. The identity verification is not touched, and the approval stays in the history.</p>
+                <textarea aria-label="Reason for revoking the approval" x-model="revokeApprovalReason" rows="2" placeholder="Reason for revoking the approval (the resident will read it)..." class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none"></textarea>
+                <button type="button" @click="revokeApproval()" :disabled="processingCitizen || revokeApprovalReason.trim().length < 5" class="text-xs font-semibold rounded-xl px-3 py-2 bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">Revoke approval</button>
+            </section>
+
+            {{-- Every residency decision: approved, rejected, revoked, restored. --}}
+            <details x-show="accountDetail?.residency?.history?.length" class="text-xs">
+                <summary class="cursor-pointer text-ink-muted hover:text-ink">Residency history (<span x-text="accountDetail?.residency?.history?.length || 0"></span>)</summary>
+                <ul class="mt-2 space-y-1.5">
+                    <template x-for="(h, k) in (accountDetail?.residency?.history || [])" :key="k">
+                        <li class="flex flex-wrap gap-x-2 text-slate-700">
+                            <span class="text-ink-muted" x-text="h.at ? new Date(h.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''"></span>
+                            <span class="font-semibold" x-text="(h.from_status || '—') + ' → ' + h.to_status"></span>
+                            <span x-text="'(' + h.action + (h.actor_name ? ', ' + h.actor_name : '') + ')'"></span>
+                            <span x-show="h.reason" class="basis-full text-ink-muted" x-text="h.reason"></span>
+                        </li>
+                    </template>
+                </ul>
+            </details>
         </div>
     </x-ui.modal>
 </div>

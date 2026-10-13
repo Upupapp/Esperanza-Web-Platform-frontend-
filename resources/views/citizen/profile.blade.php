@@ -441,14 +441,14 @@
             </div>
 
             <div class="space-y-5">
-                {{-- Digital ID — a wallet for already-issued official credentials,
-                     a different concept from the "Verify ID" flow above (which
-                     submits evidence for LGU review). Backed by GET /citizen/digital-id
-                     (App\Domain\Identity\DigitalId), available once the account
-                     has full service access. --}}
+                {{-- Digital ID — the Unified Digital ID Wallet (2026-10-13), a
+                     different concept from the "Verify ID" flow above (which
+                     submits evidence for LGU review). Backed by GET /citizen/wallet:
+                     the Resident ID once it is issued, each status on its own, and
+                     the government IDs the resident keeps for reference. Open to
+                     every signed-in resident; the Resident ID inside it is not. --}}
                 <button
                     type="button"
-                    x-show="$store.citizenSession.account?.fullServiceAccess" x-cloak
                     @click="showDigitalId = true"
                     class="w-full text-left rounded-2xl bg-gradient-to-br from-navy-950 via-navy-900 to-brand-900 border border-navy-800 shadow-card p-4 flex items-center gap-3 hover:shadow-card-hover transition-all duration-[220ms] ease-standard group"
                 >
@@ -457,7 +457,7 @@
                     </div>
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-semibold text-white">Digital ID</p>
-                        <p class="text-[11px] text-white/50">Your Barangay Resident ID, always with you</p>
+                        <p class="text-[11px] text-white/50"><x-ui.t fil="Ang iyong Resident ID at iba pang ID" en="Your Resident ID and your other IDs" /></p>
                     </div>
                     <i data-lucide="chevron-right" class="w-4 h-4 text-white/40 shrink-0"></i>
                 </button>
@@ -646,7 +646,9 @@
 
         <div x-data="{ get open() { return showDigitalId }, set open(v) { showDigitalId = v } }">
             <x-ui.modal title="Digital ID" titleEn="Digital ID" maxWidth="md">
-                <x-citizen.digital-id-card />
+                <template x-if="showDigitalId">
+                    <x-citizen.digital-id-wallet />
+                </template>
             </x-ui.modal>
         </div>
 

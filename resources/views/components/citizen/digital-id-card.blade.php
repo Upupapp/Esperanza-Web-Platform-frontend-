@@ -1,10 +1,9 @@
 {{-- Esperanza Digital ID — a flippable Barangay Resident ID card, styled
-     after the Esperanza Mobile app's own Digital ID wallet. Loaded from
-     GET /citizen/digital-id (App\Domain\Identity\DigitalId::card(), a
-     projection of the citizen account plus an HMAC-signed QR payload) when
-     the card's modal opens — production-readiness programme, 2026-09-25.
-     Used to be hardcoded to one fixture resident (RES-2026-104 / Cristy);
-     every citizen sees their own card now. --}}
+     after the Esperanza Mobile app's own Digital ID. It shows `card` from the
+     wallet around it (x-citizen.digital-id-wallet, GET /citizen/wallet ->
+     resident_id.card, DigitalId::card() with its HMAC-signed QR payload), and
+     the wallet renders it only while the Resident ID is active: a suspended or
+     not-yet-issued card is never drawn as a credential (2026-10-13). --}}
 {{-- LANGUAGE (TAB 09): the CARD FACE stays English in both languages, on
      purpose. These are the printed labels of a Philippine Barangay ID
      ("Republic of the Philippines", "Civil Status") and they are part of
@@ -15,36 +14,13 @@
 <div
     x-data="{
         flipped: false,
-        card: null,
-        loading: true,
-        failed: false,
         get initials() {
-            return (this.card?.name || '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('');
-        },
-        async init() {
-            this.loading = true;
-            this.failed = false;
-            try {
-                const result = await $api.get('/citizen/digital-id');
-                this.card = result.data;
-            } catch {
-                this.failed = true;
-            } finally {
-                this.loading = false;
-            }
+            return (card?.name || '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('');
         },
     }"
     class="w-full max-w-[360px] mx-auto select-none"
 >
-    <div x-show="loading" class="space-y-3">
-        <x-ui.skeleton class="aspect-[1.58/1] rounded-2xl" />
-    </div>
-
-    <div x-show="failed" x-cloak>
-        <x-ui.error-state messageExpr="($store.lang.current === 'en' ? 'Could not load your Digital ID.' : 'Hindi ma-load ang iyong Digital ID.')" retryExpr="init()" :retryable="true" />
-    </div>
-
-    <template x-if="!loading && !failed && card">
+    <template x-if="card">
         <div>
             <p class="text-center text-[11px] text-slate-500 mb-3 flex items-center justify-center gap-1.5">
                 <i data-lucide="pointer" class="w-3 h-3"></i>
