@@ -896,17 +896,23 @@ document.addEventListener('alpine:init', () => {
         dokyu: null,
         tulong: null,
         loaded: false,
-        async load(side) {
+        // What a badge means, for its title: "3 requests need action".
+        needsAction(n) { return n === 1 ? '1 request needs action' : n + ' requests need action'; },
+        async load(side, needsAction = null) {
             if (this.loaded) return;
             this.loaded = true;
             const total = (result) => result?.meta?.total ?? null;
             if (side === 'admin') {
                 const session = Alpine.store('session');
                 if (!session.account) return;
-                // Waiting on a first look, in each type's own vocabulary: a
-                // resident's corrections make a Dokyu request Resubmitted and
-                // return a Tulong case to Initial Screening.
-                const waiting = { dokyu: 'Submitted,Resubmitted', tulong: 'Submitted,Initial Screening' };
+                // What each page's "Needs Action" card counts (the sidebar
+                // passes resources/data/admin/*.php actionStatuses), so the
+                // badge and the page agree; each page also updates it when its
+                // list loads.
+                const waiting = {
+                    dokyu: (needsAction?.dokyu || ['Submitted', 'Under Verification', 'Under Review', 'Resubmitted']).join(','),
+                    tulong: (needsAction?.tulong || ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Returned for Reassessment', 'Assistance Processing']).join(','),
+                };
                 const count = (type) => (session.can(type)
                     ? api.get('/admin/' + type + '/requests', { params: { status: waiting[type], per_page: 1 } }).then(total).catch(() => null)
                     : Promise.resolve(null));

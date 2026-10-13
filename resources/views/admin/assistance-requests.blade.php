@@ -817,6 +817,7 @@
 
         <div x-show="$store.session.can('tulong')" x-cloak
              x-on:requests-imported.window="if ($event.detail?.type === 'tulong') loadRequests()"
+             x-effect="!requestsLoading && !requestsFailed && ($store.queueCounts.tulong = requests.filter((r) => actionStatuses.includes(r.status)).length)"
              x-on:requests-show-import.window="if ($event.detail?.type === 'tulong') { importFilter = $event.detail.ref; tab = 'all'; openOnly = false; search = ''; loadRequests(); }">
 
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}

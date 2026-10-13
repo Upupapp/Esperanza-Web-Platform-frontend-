@@ -850,8 +850,9 @@
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
                     :class="tab==='data-quality' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>Data Quality
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                      :class="tab==='data-quality' ? 'bg-white/25 text-white' : 'bg-rose-100 text-rose-600'" x-text="qualityIssues.length"></span>
+                {{-- The same colours on the active tab: it is white now, and white
+                     text on it hid the count (live test 2026-10-13). --}}
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600" x-text="qualityIssues.length"></span>
             </button>
             <button @click="tab='citizen-verification';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
@@ -860,8 +861,7 @@
                 <span
                     :title="verificationQueueBreakdown"
                     x-show="pendingCitizenVerificationCount > 0"
-                    class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                    :class="tab==='citizen-verification' ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-600'"
+                    class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600"
                     x-text="pendingCitizenVerificationCount"
                 ></span>
             </button>

@@ -2284,6 +2284,7 @@
 
         <div x-show="$store.session.can('dokyu')" x-cloak
              x-on:requests-imported.window="if ($event.detail?.type === 'dokyu') loadRequests()"
+             x-effect="!requestsLoading && !requestsFailed && ($store.queueCounts.dokyu = requests.filter((r) => actionStatuses.includes(r.status)).length)"
              x-on:requests-show-import.window="if ($event.detail?.type === 'dokyu') { importFilter = $event.detail.ref; tab = 'all'; openOnly = false; search = ''; loadRequests(); }">
 
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}

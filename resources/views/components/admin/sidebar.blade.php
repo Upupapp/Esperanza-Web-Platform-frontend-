@@ -14,8 +14,17 @@
 
 {{-- Clay design (STYLE_GUIDE §2): a dark glass panel, rounded and inset from
      the page on large screens; the mobile drawer stays full height and square. --}}
+@php
+    // The Dokyu and Tulong badges count what each page's "Needs Action" card
+    // counts, from the same lists (live test 2026-10-13: the badge said 1
+    // while the page said 3 needed action).
+    $needsAction = [
+        'dokyu' => (require base_path('resources/data/admin/document-requests.php'))['actionStatuses'],
+        'tulong' => (require base_path('resources/data/admin/assistance-requests.php'))['actionStatuses'],
+    ];
+@endphp
 <aside
-    x-init="$store.queueCounts.load('admin')"
+    x-init="$store.queueCounts.load('admin', @js($needsAction))"
     class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col sidebar-glass lg:rounded-[30px] lg:my-0 lg:h-[calc(100vh-2.5rem)] text-white shrink-0 w-64 px-3 py-3 transition-transform duration-[260ms] ease-standard -translate-x-full lg:translate-x-0"
     :class="[collapsed ? 'lg:w-[76px]' : 'lg:w-64', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
 >
@@ -54,8 +63,8 @@
         <x-ui.nav-item dense :href="route('admin.dashboard')" icon="layout-dashboard" label="Dashboard" :active="$active === 'dashboard'" />
         <x-ui.nav-item dense :href="route('admin.constituents')" icon="users" label="Constituents" :active="$active === 'constituents'" moduleKey="constituents" />
         <x-ui.nav-item dense :href="route('admin.papeles')" icon="folder-open" label="Papeles" :active="$active === 'papeles'" moduleKey="papeles" />
-        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badgeBind="$store.queueCounts.dokyu" :active="$active === 'document-requests'" moduleKey="dokyu" />
-        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badgeBind="$store.queueCounts.tulong" :active="$active === 'assistance-requests'" moduleKey="tulong" />
+        <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badgeBind="$store.queueCounts.dokyu" badgeTitle="$store.queueCounts.needsAction($store.queueCounts.dokyu)" :active="$active === 'document-requests'" moduleKey="dokyu" />
+        <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badgeBind="$store.queueCounts.tulong" badgeTitle="$store.queueCounts.needsAction($store.queueCounts.tulong)" :active="$active === 'assistance-requests'" moduleKey="tulong" />
         <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />
         <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
         {{-- One entry: the Directory and the Blotter are tabs of Balita. The

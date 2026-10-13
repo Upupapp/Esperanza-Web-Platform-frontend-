@@ -1,4 +1,4 @@
-@props(['href' => '#', 'icon', 'label', 'labelEn' => null, 'active' => false, 'badge' => null, 'badgeBind' => null, 'dense' => false, 'moduleKey' => null, 'showIf' => null])
+@props(['href' => '#', 'icon', 'label', 'labelEn' => null, 'active' => false, 'badge' => null, 'badgeBind' => null, 'badgeTitle' => null, 'dense' => false, 'moduleKey' => null, 'showIf' => null])
 
 {{-- Clay design (STYLE_GUIDE §2): 40px items. The active one is blue clay whose
      shadow falls straight down, so the scrolling nav cannot clip it sideways.
@@ -16,7 +16,7 @@
     {{-- badgeBind: a live count (an Alpine expression), hidden while it is
          unknown or zero. A count is a yellow clay pill, active or not. --}}
     @if($badgeBind)
-        <span x-show="!collapsed && {{ $badgeBind }}" x-cloak x-text="{{ $badgeBind }}" class="ml-auto min-w-[22px] h-[22px] px-1.5 rounded-full clay-gold text-[11.5px] font-extrabold grid place-items-center"></span>
+        <span x-show="!collapsed && {{ $badgeBind }}" x-cloak x-text="{{ $badgeBind }}" @if($badgeTitle) :title="{{ $badgeTitle }}" :aria-label="{{ $badgeTitle }}" @endif class="ml-auto min-w-[22px] h-[22px] px-1.5 rounded-full clay-gold text-[11.5px] font-extrabold grid place-items-center"></span>
     @elseif($badge)
         <span x-show="!collapsed" class="ml-auto min-w-[22px] h-[22px] px-1.5 rounded-full clay-gold text-[11.5px] font-extrabold grid place-items-center">{{ $badge }}</span>
     @endif
