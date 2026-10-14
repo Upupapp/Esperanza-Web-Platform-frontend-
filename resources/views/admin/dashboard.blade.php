@@ -8,6 +8,11 @@
 @endphp
 
 <x-layouts.admin title="Dashboard" subtitle="Requests, residents and alerts in your scope." active="dashboard">
+    {{-- Tabs (owner, 2026-10-14): the overview, the office dashboards and the
+         barangay dashboards, on this one page rather than new sidebar entries.
+         A department account lands on its office, a barangay account on its
+         barangay (dashboardHost, resources/js/dashboards.js). --}}
+    <div x-data="dashboardHost()">
     <div
         x-data="{
             ready: false,
@@ -153,13 +158,21 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div x-show="subjectsReady && (subjects.offices.length || subjects.barangays.length)" x-cloak class="flex flex-wrap items-center gap-3">
+            <div class="inline-flex flex-wrap p-1 rounded-2xl surface-pressed-sm" role="tablist" aria-label="Dashboard">
+                <button type="button" role="tab" :aria-selected="view === 'overview'" @click="show('overview')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'overview' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview</button>
+                <button type="button" role="tab" x-show="subjects.offices.length" :aria-selected="view === 'department'" @click="show('department')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'department' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-4 h-4"></i><span x-text="officeTabLabel"></span></button>
+                <button type="button" role="tab" x-show="subjects.barangays.length" :aria-selected="view === 'barangay'" @click="show('barangay')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'barangay' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="map-pinned" class="w-4 h-4"></i><span x-text="barangayTabLabel"></span></button>
+            </div>
+        </div>
+
+        <div x-show="view === 'overview'" class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-[14.5px] text-ink-body">Live counts, refreshed each time this page opens.</p>
             <x-ui.button :href="route('admin.reports')" icon="download">Export Report</x-ui.button>
         </div>
 
         <!-- Skeleton state -->
-        <div x-show="!ready" x-transition.opacity.duration.300ms class="flex flex-col gap-5">
+        <div x-show="!ready && view === 'overview'" x-transition.opacity.duration.300ms class="flex flex-col gap-5">
             <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
                 @for ($i = 0; $i < 6; $i++)
                     <div class="surface-glass rounded-[22px] min-h-[136px] p-4 space-y-3">
@@ -179,12 +192,19 @@
             </div>
         </div>
 
-        <div x-show="failed" x-cloak>
+        <div x-show="failed && view === 'overview'" x-cloak>
             <x-ui.error-state messageExpr="'Could not load the dashboard.'" retryExpr="init()" :retryable="true" />
         </div>
 
+        <template x-if="view === 'department'">
+            <x-admin.dashboards.department />
+        </template>
+        <template x-if="view === 'barangay'">
+            <x-admin.dashboards.barangay />
+        </template>
+
         <!-- Real content -->
-        <div x-show="ready && !failed" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="ready && !failed && view === 'overview'" x-cloak class="flex flex-col gap-[22px]" x-transition:enter="transition duration-[300ms] ease-standard" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
 
             <!-- KPI cards: all six in one row on a wide screen (owner, 2026-10-09), so compact -->
             <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
@@ -192,7 +212,7 @@
                 <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Dokyu Open" valueBind="openDokyu" icon="file-text" color="light" sublabelBind="docStatusTotal + ' in all, any status'" :delay="40" /></div>
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests') . '?open=1'" label="Waiting on Staff" valueBind="($store.session.can('dokyu') ? waitingDokyu : 0) + ($store.session.can('tulong') ? waitingTulong : 0)" icon="inbox" color="orange" sublabelBind="[$store.session.can('dokyu') ? 'Dokyu ' + waitingDokyu : null, $store.session.can('tulong') ? 'Tulong ' + waitingTulong : null].filter(Boolean).join(' · ')" :delay="80" /></div>
                 <div x-show="$store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.assistance-requests') . '?open=1'" label="Tulong Open" valueBind="openTulong" icon="hand-heart" color="deep" sublabelBind="assistStatusTotal + ' in all, any status'" :delay="120" /></div>
-                <div x-show="$store.session.can('dokyu')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="slate" sublabel="Document requests" :delay="160" /></div>
+                <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Released This Month" valueBind="dash?.requests?.released_this_month ?? 0" icon="package-check" color="slate" sublabel="Dokyu released + Tulong completed" :delay="160" /></div>
                 <div x-show="$store.session.can('dokyu') || $store.session.can('tulong')" x-cloak><x-ui.stat-card layout="compact" class="h-full" :href="route('admin.document-requests')" label="Submitted Today" valueBind="dash?.requests?.submitted_today ?? 0" icon="calendar-clock" color="gold" sublabel="Dokyu + Tulong" :delay="200" /></div>
             </div>
 
@@ -316,5 +336,7 @@
                 </x-ui.card>
             </div>
         </div>
+    </div>
+    <x-admin.report-sheet />
     </div>
 </x-layouts.admin>

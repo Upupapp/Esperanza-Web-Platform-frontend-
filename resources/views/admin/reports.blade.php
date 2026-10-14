@@ -9,6 +9,7 @@
             loading: true,
             failed: false,
             reports: [],
+            printable: null,
             runs: [],
             generating: null,
             dash: null,
@@ -40,6 +41,7 @@
                         $api.get('/admin/reports/runs', { params: { per_page: 10 } }).catch(() => ({ data: [] })),
                     ]);
                     this.reports = reportsRes.data || [];
+                    this.printable = reportsRes.meta?.printable || null;
                     this.runs = runsRes.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }
                 this.loadAnalytics();
@@ -154,7 +156,60 @@
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load reports.'" retryExpr="init()" :retryable="true" /></div>
 
             <div x-show="!loading && !failed">
-            <h3 class="text-base font-extrabold text-ink mb-3">Generate a Report</h3>
+
+            {{-- The standard printed reports of an office or a barangay (owner,
+                 2026-10-14): the LGU's report format, previewed, printed or
+                 saved to Excel (resources/js/dashboards.js printableReports). --}}
+            <div x-data="printableReports()" x-effect="printable && setCatalog(printable)" x-show="ready && catalog.reports.length" x-cloak class="mb-6">
+                <h3 class="text-base font-extrabold text-ink mb-1">Printable Reports</h3>
+                <p class="text-[13px] text-ink-muted mb-3">The office and barangay reports in the LGU's format, with the letterhead, totals and signature lines. Choose whose and the period, then preview and print.</p>
+                <x-ui.card>
+                    <div class="flex flex-wrap items-end gap-3 mb-5">
+                        <div x-show="catalog.offices.length > 1" class="flex flex-col gap-1">
+                            <label for="pr-office" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office</label>
+                            <select id="pr-office" x-model="office" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[260px]">
+                                <template x-for="o in catalog.offices" :key="o.name">
+                                    <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div x-show="catalog.barangays.length > 1" class="flex flex-col gap-1">
+                            <label for="pr-barangay" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Barangay</label>
+                            <select id="pr-barangay" x-model="barangay" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                <template x-for="b in catalog.barangays" :key="b">
+                                    <option :value="b" x-text="'Brgy. ' + b" :selected="b === barangay"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Period</span>
+                            <x-admin.dashboards.period-picker />
+                        </div>
+                    </div>
+
+                    <template x-for="group in [{ title: 'Office reports', who: officeEntry ? (officeEntry.short || officeEntry.name) : '', rows: office ? departmentReports : [] }, { title: 'Barangay reports', who: barangay ? 'Brgy. ' + barangay : '', rows: barangay ? barangayReports : [] }]" :key="group.title">
+                        <div x-show="group.rows.length" class="mb-4 last:mb-0">
+                            <p class="text-[12.5px] font-bold text-ink-body mb-2"><span x-text="group.title"></span><span class="text-ink-muted font-semibold" x-text="group.who ? ' · ' + group.who : ''"></span></p>
+                            <div class="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                                <template x-for="r in group.rows" :key="r.key">
+                                    <button type="button" @click="mayOpen(r) && open(r)" :disabled="!mayOpen(r)" class="flex items-start text-left rounded-[18px] bg-white/60 border border-white/80 px-4 py-3.5 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200 disabled:opacity-55 disabled:hover:translate-y-0">
+                                        <span class="flex items-start gap-3">
+                                            <span class="w-10 h-10 rounded-xl grid place-items-center shrink-0 bg-brand-50 text-brand-600"><i :data-lucide="info(r.key).icon" class="w-5 h-5"></i></span>
+                                            <span class="min-w-0">
+                                                <span class="block text-[14px] font-bold text-ink" x-text="titleOf(r)"></span>
+                                                <span class="block text-[12px] text-ink-muted mt-0.5" x-text="info(r.key).desc"></span>
+                                                <span class="block text-[11.5px] font-semibold mt-1.5" :class="mayOpen(r) ? 'text-brand-600' : 'text-ink-faint'" x-text="mayOpen(r) ? 'Preview and print' : 'Department Head and administrators only'"></span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </x-ui.card>
+            </div>
+
+            <h3 class="text-base font-extrabold text-ink mb-3">Data Exports</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
                 <template x-for="(report, i) in reports" :key="report.key">
                     <x-ui.card
@@ -299,5 +354,6 @@
         </div>
 
         </div>
+        <x-admin.report-sheet />
     </div>
 </x-layouts.admin>
