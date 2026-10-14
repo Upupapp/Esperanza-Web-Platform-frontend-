@@ -207,7 +207,8 @@ export function deptDashboard() {
             Object.assign(this, periodRange(this.period));
             const offices = this.subjects?.offices || [];
             const asked = query().get('office');
-            const found = offices.find((o) => o.name === asked || o.short === asked);
+            // Only when the address names one: PESO has no short name, and null matched it.
+            const found = asked ? offices.find((o) => o.name === asked || o.short === asked) : null;
             this.office = found?.name || (offices.find((o) => o.short === 'MSWDO') || offices[0])?.name || null;
             this.load();
         },

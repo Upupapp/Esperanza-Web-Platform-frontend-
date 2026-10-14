@@ -854,8 +854,17 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
 .rep-signatures-2 {
     grid-template-columns: repeat(2, 1fr);
 }
+/* Role on top, then the name, bottom-aligned so the three signature lines
+   stay level when one name (the Mayor's) wraps to two lines. */
+.rep-sign {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
 .rep-sign-role {
     margin: 0 0 9mm;
+}
+.rep-sign .rep-sign-name {
+    align-self: end;
 }
 .rep-sign-name,
 .rep-sign-position {
