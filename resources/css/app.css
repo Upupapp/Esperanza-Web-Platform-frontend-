@@ -896,6 +896,14 @@ body.dp-printing .rep-sign-name::placeholder,
 body.dp-printing .rep-sign-position::placeholder {
     color: transparent;
 }
+/* On screen an empty line says what to do, in a light hint that is clearly not a name. */
+.rep-sign-name::placeholder,
+.rep-sign-position::placeholder {
+    color: #9aa6c0;
+    font-weight: 400;
+    font-style: italic;
+    text-transform: none;
+}
 .rep-sign-name:focus,
 .rep-sign-position:focus {
     background: rgb(59 130 246 / 0.08);

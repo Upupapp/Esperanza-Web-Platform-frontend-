@@ -89,8 +89,8 @@
                                     <div class="rep-sign">
                                         <p class="rep-sign-role" x-text="sig.role + ':'"></p>
                                         {{-- Text areas, not inputs: a long name (HON. ... T. TALISIC) wraps instead of being cut off on the page. --}}
-                                        <textarea rows="1" class="rep-sign-name" x-model="sig.name" :aria-label="sig.role + ', name'" placeholder="Name"></textarea>
-                                        <textarea rows="1" class="rep-sign-position" x-model="sig.position" :aria-label="sig.role + ', position'" placeholder="Position"></textarea>
+                                        <textarea rows="1" class="rep-sign-name" x-model="sig.name" :aria-label="sig.role + ', name'" placeholder="Type the name"></textarea>
+                                        <textarea rows="1" class="rep-sign-position" x-model="sig.position" :aria-label="sig.role + ', position'" placeholder="Type the position"></textarea>
                                     </div>
                                 </template>
                             </div>
