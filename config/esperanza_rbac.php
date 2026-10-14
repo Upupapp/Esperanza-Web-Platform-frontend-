@@ -125,6 +125,22 @@ $permissionModules = [
             // resolved to `approve` — semantically wrong, though it failed safe
             // (approve is the stronger permission, so nobody gained authority).
             ['key' => 'comm_banners', 'name' => 'Banners', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'reject', 'archive']],
+            // Residents' feedback and support tickets (scope round 2026-10-15):
+            // routed to an office, assigned, answered in a conversation and
+            // resolved. They rode on set_general before, so only the two
+            // administrators could answer them.
+            ['key' => 'comm_feedback', 'name' => 'Feedback & Support Tickets', 'perms' => ['view', 'assign', 'edit']],
+        ],
+    ],
+    [
+        // Appointments (scope round 2026-10-15): an office or a barangay hall
+        // sets the days, hours and slots it receives residents; residents
+        // book a slot; staff confirm, complete or cancel. Shown as a tab on
+        // the Dashboard, so no sidebar entry of its own.
+        'key' => 'appointments', 'name' => 'Appointments', 'icon' => 'calendar-clock',
+        'submodules' => [
+            ['key' => 'appt_schedules', 'name' => 'Schedules & Slots', 'perms' => ['view', 'create', 'edit', 'delete']],
+            ['key' => 'appt_bookings', 'name' => 'Bookings', 'perms' => ['view', 'approve', 'reject', 'edit']],
         ],
     ],
     [
@@ -151,6 +167,11 @@ $permissionModules = [
             ['key' => 'set_branding', 'name' => 'Municipality Branding', 'perms' => ['view', 'edit']],
             ['key' => 'set_site_content', 'name' => 'Site Content (Privacy, Terms, Support)', 'perms' => ['view', 'edit']],
             ['key' => 'set_service_catalog', 'name' => 'Service Catalog (Dokyu/Tulong Fees & Requirements)', 'perms' => ['view', 'edit']],
+            // System status, integrations and backups (scope round 2026-10-15):
+            // for technical administrators only, so no default role but the
+            // Super Administrator holds it (municipal_admin's settings bundle
+            // leaves it out below).
+            ['key' => 'set_system', 'name' => 'System Status & Integrations', 'perms' => ['view', 'edit']],
         ],
     ],
     [
@@ -370,6 +391,30 @@ $sakunaGrantsByRoleName = [
 foreach ($roles as &$role) {
     if (isset($sakunaGrantsByRoleName[$role['name']])) {
         $role['permissions'] = array_merge($role['permissions'], $sakunaGrantsByRoleName[$role['name']]);
+    }
+}
+unset($role);
+
+// ---------------------------------------------------------------
+// Scope round 2026-10-15: feedback, appointments and system status.
+// An office's head runs its schedule and answers its feedback; staff and
+// the front desk handle bookings and reply to feedback; a barangay
+// secretary does both for the barangay hall. System status is for the
+// Super Administrator (technical administrator) only.
+// ---------------------------------------------------------------
+$scopeRoundGrants = [
+    'municipal_admin' => ['appt_schedules' => ['view', 'create', 'edit', 'delete'], 'appt_bookings' => ['view', 'approve', 'reject', 'edit']],
+    'department_head' => ['appt_schedules' => ['view', 'create', 'edit', 'delete'], 'appt_bookings' => ['view', 'approve', 'reject', 'edit'], 'comm_feedback' => ['view', 'assign', 'edit']],
+    'department_staff' => ['appt_schedules' => ['view'], 'appt_bookings' => ['view', 'approve', 'reject', 'edit'], 'comm_feedback' => ['view', 'edit']],
+    'front_desk' => ['appt_schedules' => ['view'], 'appt_bookings' => ['view', 'approve', 'reject', 'edit'], 'comm_feedback' => ['view', 'edit']],
+    'barangay_secretary' => ['appt_schedules' => ['view', 'create', 'edit', 'delete'], 'appt_bookings' => ['view', 'approve', 'reject', 'edit'], 'comm_feedback' => ['view', 'edit']],
+];
+foreach ($roles as &$role) {
+    if ($role['key'] === 'municipal_admin') {
+        unset($role['permissions']['set_system']);
+    }
+    if (isset($scopeRoundGrants[$role['key']])) {
+        $role['permissions'] = array_merge($role['permissions'], $scopeRoundGrants[$role['key']]);
     }
 }
 unset($role);
