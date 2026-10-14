@@ -443,6 +443,8 @@
                                     <div class="min-w-0"><dt class="text-xs text-ink-muted">Expires</dt><dd class="text-sm font-semibold text-ink" x-text="previewDoc.expires_on ? fmtDate(previewDoc.expires_on) : 'Not given'"></dd></div>
                                     <div class="min-w-0"><dt class="text-xs text-ink-muted">Sides</dt><dd class="text-sm font-semibold text-ink" x-text="previewDoc.has_back ? 'Front and back' : 'Front only'"></dd></div>
                                     <div class="min-w-0"><dt class="text-xs text-ink-muted">Verified</dt><dd class="text-sm font-semibold text-ink" x-text="previewDoc.status === 'Approved' && previewDoc.verified_at ? fmtDate(previewDoc.verified_at) : 'Not yet'"></dd></div>
+                                    {{-- Didit read and approved it (2026-10-14): at registration, or scanned for the wallet. --}}
+                                    <div class="min-w-0"><dt class="text-xs text-ink-muted">Checked by Didit</dt><dd class="text-sm font-semibold" :class="previewDoc.checked_by_didit_at ? 'text-sky-700' : 'text-ink'" x-text="previewDoc.checked_by_didit_at ? fmtDate(previewDoc.checked_by_didit_at) : 'No'"></dd></div>
                                 </div>
                             </template>
                         </dl>
@@ -458,7 +460,7 @@
                                 </template>
                             </dl>
                         </div>
-                        <p x-show="isWalletId(previewDoc)" x-cloak class="text-xs text-ink-muted rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">An ID the resident keeps in their Digital ID wallet. Verifying it puts the Esperanza seal on it in their wallet. It does not change the resident's identity status, and it does not check the ID with the agency that issued it.</p>
+                        <p x-show="isWalletId(previewDoc)" x-cloak class="text-xs text-ink-muted rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">An ID the resident keeps in their Digital ID wallet. Verifying it puts the Esperanza seal on it in their wallet. It does not change the resident's identity status, and it does not check the ID with the agency that issued it. "Checked by Didit" means Didit read and approved the ID; the seal is still only yours to give.</p>
                         <p x-show="previewDoc.status === 'Rejected' && previewDoc.review_remarks" x-cloak class="text-xs text-rose-700" x-text="'Returned: ' + (previewDoc.review_remarks || '')"></p>
                         <div class="flex items-center justify-between gap-3">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold tracking-[0.02em] ring-1 ring-inset whitespace-nowrap" :class="(statusStyles[previewDoc.status] || statusStyles['Submitted'])[0]">

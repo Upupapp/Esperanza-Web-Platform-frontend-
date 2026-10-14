@@ -31,6 +31,10 @@
         removing: false,
         formError: '',
         tried: false,
+        // A kind Didit reads is scanned on its page (2026-10-14), unless the
+        // resident chooses to upload photos instead.
+        uploadInstead: false,
+        scanning: false,
         t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
         // Each kind of ID as the wallet draws it (owner, 2026-10-13), the same
         // as the app's lib/widgets/wallet_id_card.dart: its colours, icon, the
@@ -128,7 +132,51 @@
         },
         get kind() { return (this.wallet?.id_types || []).find((k) => k.key === this.form.kind) || null; },
         get isOther() { return this.form.kind === 'other'; },
-        async init() { await this.load(); },
+        get scan() { return !this.uploadInstead && (this.wallet?.didit_check?.kinds || []).includes(this.form.kind); },
+        async init() {
+            await this.load();
+            if (new URLSearchParams(window.location.search).has('wallet_check')) await this.resumeScan(null);
+        },
+        // The ID is scanned on Didit's page; the card is made from what the
+        // server reads from Didit afterwards, never from what the page says.
+        async scanWithDidit() {
+            if (this.scanning) return;
+            this.scanning = true;
+            this.formError = '';
+            try {
+                const r = await $api.post('/citizen/wallet/ids/check', { id_kind: this.form.kind, platform: 'web', replaces: this.form.replaces || null });
+                try { sessionStorage.setItem('esperanza.walletScan', r.data?.session_id || ''); } catch { /* a private window */ }
+                if (r.data?.url) { window.location.href = r.data.url; return; }
+                await this.resumeScan(r.data?.session_id);
+            } catch (err) {
+                this.formError = err?.localised ? err.localised(this.$store.lang.current) : this.t('The scan could not be started. Try again, or upload photos instead.', 'Hindi masimulan ang pag-scan. Subukang muli, o i-upload ang mga larawan.');
+            } finally {
+                this.scanning = false;
+            }
+        },
+        // Back from Didit (?wallet_check=done): have the server read the result.
+        async resumeScan(id) {
+            let sessionId = id;
+            if (!sessionId) {
+                try { sessionId = sessionStorage.getItem('esperanza.walletScan'); sessionStorage.removeItem('esperanza.walletScan'); } catch { sessionId = null; }
+            }
+            sessionId = sessionId || new URLSearchParams(window.location.search).get('verificationSessionId');
+            if (new URLSearchParams(window.location.search).has('wallet_check')) history.replaceState(null, '', window.location.pathname);
+            if (!sessionId) return;
+            let r = null;
+            try { r = (await $api.post('/citizen/wallet/ids/check/' + encodeURIComponent(sessionId) + '/sync')).data; } catch { r = null; }
+            const said = {
+                checked: [this.t('Added to your wallet, checked by Didit.', 'Naidagdag sa iyong wallet, sinuri ng Didit.'), 'success'],
+                not_checked: [this.t('Added to your wallet. Didit did not finish checking it.', 'Naidagdag sa iyong wallet. Hindi natapos ng Didit ang pagsusuri nito.'), 'success'],
+                pending: [this.t('Didit is still checking your ID. It appears in your wallet when it is done.', 'Sinusuri pa ng Didit ang iyong ID. Lalabas ito sa iyong wallet kapag tapos na.'), 'success'],
+                declined: [this.t('Didit could not confirm this ID. Try again, or upload photos instead.', 'Hindi makumpirma ng Didit ang ID na ito. Subukang muli, o i-upload ang mga larawan.'), 'error'],
+            }[r?.outcome] || [this.t('The scan was not finished. Try again, or upload photos instead.', 'Hindi natapos ang pag-scan. Subukang muli, o i-upload ang mga larawan.'), 'error'];
+            this.$dispatch('toast', { message: said[0], variant: said[1] });
+            this.view = 'wallet';
+            await this.load();
+        },
+        // The number in full, or the last four a registration check kept.
+        numberText(d) { return d.id_number || (d.number_last4 ? '•••• ' + d.number_last4 : this.t('Not entered', 'Wala pang nailagay')); },
         async load() {
             this.loading = true;
             this.failed = false;
@@ -162,6 +210,7 @@
         docStatus(s) {
             return {
                 verified_by_lgu: [this.t('Verified by the LGU', 'Beripikado ng LGU'), 'bg-emerald-50 text-emerald-700 ring-emerald-200'],
+                checked_by_didit: [this.t('Checked by Didit', 'Sinuri ng Didit'), 'bg-sky-50 text-sky-700 ring-sky-200'],
                 returned_by_lgu: [this.t('Returned by the LGU', 'Ibinalik ng LGU'), 'bg-rose-50 text-rose-700 ring-rose-200'],
             }[s] || [this.t('Uploaded — Not checked', 'Na-upload — Hindi nasuri'), 'bg-slate-100 text-slate-700 ring-slate-200'];
         },
@@ -174,6 +223,7 @@
             this.fillDetails(replacing);
             this.formError = '';
             this.tried = false;
+            this.uploadInstead = false;
             this.view = 'add';
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -315,7 +365,7 @@
                     <p class="text-sm font-semibold text-ink"><x-ui.t fil="Aking mga ID" en="My IDs" /></p>
                     <x-ui.button size="sm" variant="secondary" icon="plus" @click="startAdd()"><x-ui.t fil="Magdagdag ng ID" en="Add ID" /></x-ui.button>
                 </div>
-                <p class="text-[11px] text-ink-muted mt-1"><x-ui.t fil="Itago rito ang kopya ng iyong mga government ID para sa sanggunian. Hindi ito nabeberipika sa pagdagdag: hindi ito sinusuri ng LGU, ng pagsusuri ng pagkakakilanlan, o ng ahensyang nag-isyu nito. May tatak ng Esperanza ang mga ID na beripikado ng LGU." en="Keep copies of your government IDs here for reference. Adding an ID does not verify it: it is not checked by the LGU, by the identity check, or by the agency that issued it. IDs verified by the LGU have the Esperanza seal on them." /></p>
+                <p class="text-[11px] text-ink-muted mt-1"><x-ui.t fil="Itago rito ang kopya ng iyong mga government ID para sa sanggunian. Hindi ito nabeberipika sa pagdagdag. Nakasaad kung sinuri ng Didit ang isang ID; may tatak ng Esperanza ang mga ID na beripikado ng LGU." en="Keep copies of your government IDs here for reference. Adding an ID does not verify it. IDs Didit checked say so; IDs verified by the LGU have the Esperanza seal on them." /></p>
                 <p x-show="!wallet.documents.length" class="text-xs text-ink-muted mt-3 rounded-xl border border-dashed border-slate-200 p-4 text-center"><x-ui.t fil="Wala pang naidagdag na ID." en="No IDs added yet." /></p>
                 <div class="space-y-3 mt-3">
                     <template x-for="d in wallet.documents" :key="d.id">
@@ -338,7 +388,7 @@
                                     <p class="text-[10px] uppercase tracking-wide text-slate-600"><x-ui.t fil="Pangalan" en="Name" /></p>
                                     <p class="text-sm font-bold truncate" :class="d.holder_name ? 'text-ink' : 'text-ink-muted'" x-text="d.holder_name || t('Not entered', 'Wala pang nailagay')"></p>
                                     <p class="text-[10px] uppercase tracking-wide text-slate-600 mt-1" x-text="design(d.id_kind).number"></p>
-                                    <p class="text-sm font-bold tabular-nums tracking-wide truncate" :class="d.id_number ? 'text-navy-800' : 'text-ink-muted'" x-text="d.id_number || t('Not entered', 'Wala pang nailagay')"></p>
+                                    <p class="text-sm font-bold tabular-nums tracking-wide truncate" :class="d.id_number || d.number_last4 ? 'text-navy-800' : 'text-ink-muted'" x-text="numberText(d)"></p>
                                     <div class="flex flex-wrap gap-x-3 gap-y-1 mt-1">
                                         <template x-for="f in sideFields(d, 'front')" :key="f[0]">
                                             <div><p class="text-[10px] uppercase tracking-wide text-slate-600" x-text="f[0]"></p><p class="text-xs font-semibold text-ink" x-text="f[1]"></p></div>
@@ -349,7 +399,7 @@
                             <p class="h-6 px-3 flex items-center text-[10px] text-slate-600 bg-slate-50"><x-ui.t fil="Kopya sa wallet ng Esperanza · hindi opisyal na ID" en="Esperanza wallet copy · not an official ID" /></p>
                             {{-- Verified by the LGU: the Esperanza seal on it. --}}
                             <img x-show="d.document_status === 'verified_by_lgu'" x-cloak src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" :alt="t('Esperanza seal: verified by the LGU', 'Tatak ng Esperanza: beripikado ng LGU')" class="absolute top-2 right-2 w-12 h-12 rounded-full ring-2 ring-white shadow-card opacity-90">
-                            <span x-show="d.document_status !== 'verified_by_lgu'" class="absolute top-3 right-3 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1" :class="docStatus(d.document_status)[1]" x-text="d.document_status === 'returned_by_lgu' ? t('Returned', 'Ibinalik') : t('Not checked', 'Hindi nasuri')"></span>
+                            <span x-show="d.document_status !== 'verified_by_lgu'" class="absolute top-3 right-3 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1" :class="docStatus(d.document_status)[1]" x-text="d.document_status === 'returned_by_lgu' ? t('Returned', 'Ibinalik') : (d.document_status === 'checked_by_didit' ? t('Checked', 'Nasuri') : t('Not checked', 'Hindi nasuri'))"></span>
                         </button>
                     </template>
                 </div>
@@ -375,7 +425,7 @@
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Nag-isyu" en="Issued by" /></dt><dd class="font-semibold text-ink text-right" x-text="doc.issuer || '—'"></dd></div>
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Pag-expire" en="Expires" /></dt><dd class="font-semibold text-ink text-right" x-text="doc.expires_on ? date(doc.expires_on) : t('No expiry date given', 'Walang petsa ng pag-expire')"></dd></div>
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Idinagdag" en="Added" /></dt><dd class="font-semibold text-ink text-right" x-text="date(doc.uploaded_at) || '—'"></dd></div>
-                <div class="flex justify-between gap-2"><dt class="text-ink-muted" x-text="design(doc.id_kind).number"></dt><dd class="font-semibold text-ink text-right tabular-nums" x-text="doc.id_number || t('Not entered', 'Wala pang nailagay')"></dd></div>
+                <div class="flex justify-between gap-2"><dt class="text-ink-muted" x-text="design(doc.id_kind).number"></dt><dd class="font-semibold text-ink text-right tabular-nums" x-text="numberText(doc)"></dd></div>
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted"><x-ui.t fil="Pangalan" en="Name" /></dt><dd class="font-semibold text-ink text-right" x-text="doc.holder_name || t('Not entered', 'Wala pang nailagay')"></dd></div>
                 <template x-for="f in [...sideFields(doc, 'front'), ...sideFields(doc, 'back')].filter((f, i, all) => all.findIndex((g) => g[0] === f[0]) === i)" :key="f[0]">
                     <div class="flex justify-between gap-2"><dt class="text-ink-muted" x-text="f[0]"></dt><dd class="font-semibold text-ink text-right" x-text="f[1]"></dd></div>
@@ -386,7 +436,8 @@
             </div>
             <div x-show="editing" x-cloak class="rounded-2xl border border-slate-200 p-4 space-y-4">
                 <p class="text-sm font-semibold text-ink"><x-ui.t fil="Ano ang nakasulat sa ID" en="What the ID says" /></p>
-                <p x-show="doc.document_status !== 'uploaded_not_checked'" class="text-[11px] text-amber-700"><x-ui.t fil="Ang pagbabago ay ibabalik ang ID na ito sa LGU para suriin." en="Saving a change sends this ID back to the LGU for review." /></p>
+                <p x-show="['verified_by_lgu', 'returned_by_lgu'].includes(doc.document_status)" class="text-[11px] text-amber-700"><x-ui.t fil="Ang pagbabago ay ibabalik ang ID na ito sa LGU para suriin." en="Saving a change sends this ID back to the LGU for review." /></p>
+                <p x-show="doc.checked_at" x-cloak class="text-[11px] text-amber-700"><x-ui.t fil="Ang pagbago ng numero, pangalan o mga petsa ay magtatapos sa pagsusuri ng Didit sa ID na ito." en="Changing the number, name or dates ends the Didit check of this ID." /></p>
                 <x-citizen.wallet-id-fields />
                 <p x-show="formError" x-cloak class="text-xs text-rose-700" x-text="formError"></p>
                 <div class="flex gap-2">
@@ -406,13 +457,19 @@
                         <p class="text-[11px] text-rose-700" x-text="t('Reason: ', 'Dahilan: ') + (doc.lgu_remarks || t('No reason given.', 'Walang ibinigay na dahilan.'))"></p>
                         <p class="text-[11px] text-ink-muted"><x-ui.t fil="Gamitin ang Palitan sa ibaba para magpadala ng mas malinaw na litrato." en="Use Replace below to send a clearer photo." /></p>
                     </div>
+                    <p x-show="doc.document_status === 'checked_by_didit'" x-cloak class="text-[11px] text-ink-muted mt-1"><x-ui.t fil="Ang kawani lang ng LGU ang makakapagberipika nito para sa tatak ng Esperanza." en="Only LGU staff can verify it for the Esperanza seal." /></p>
                 </div>
                 <div class="border-t border-slate-100 pt-3">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="font-semibold text-ink"><x-ui.t fil="Pagsusuri ng pagkakakilanlan" en="Identity check" /></span>
-                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 bg-slate-100 text-slate-600 ring-slate-200"><x-ui.t fil="Hindi nasuri" en="Not checked" /></span>
+                        <span class="font-semibold text-ink"><x-ui.t fil="Pagsusuri ng Didit" en="Didit check" /></span>
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1" :class="doc.checked_at ? 'bg-sky-50 text-sky-700 ring-sky-200' : 'bg-slate-100 text-slate-600 ring-slate-200'" x-text="doc.checked_at ? t('Checked', 'Nasuri') : t('Not checked', 'Hindi nasuri')"></span>
                     </div>
-                    <p class="text-[11px] text-ink-muted mt-1"><x-ui.t fil="Ang pagsusuri ng pagkakakilanlan ay ginawa sa ID na ipinadala mo para sa beripikasyon ng account, hindi sa upload na ito." en="The identity check ran on the ID you sent to verify your account, not on this upload." /></p>
+                    <p class="text-[11px] text-ink-muted mt-1" x-text="!doc.checked_at
+                        ? t('Didit did not check this ID.', 'Hindi sinuri ng Didit ang ID na ito.')
+                        : (doc.check_source === 'registration'
+                            ? t('Didit checked this ID when you verified your account', 'Sinuri ng Didit ang ID na ito noong beripikahin mo ang iyong account')
+                            : t('Didit checked this ID when you scanned it', 'Sinuri ng Didit ang ID na ito noong i-scan mo ito')) + t(' on ', ' noong ') + date(doc.checked_at) + '.'"></p>
+                    <p x-show="doc.check_source === 'registration' && !doc.id_number && doc.number_last4" x-cloak class="text-[11px] text-ink-muted"><x-ui.t fil="Ang huling apat na numero lang ang naitago. Gamitin ang I-edit ang mga detalye para idagdag ang buong numero." en="Only the last four digits were kept. Use Edit details to add the full number." /></p>
                 </div>
                 <div class="border-t border-slate-100 pt-3">
                     <div class="flex items-center justify-between gap-2">
@@ -437,7 +494,7 @@
 
             <label class="block">
                 <span class="text-xs font-medium text-slate-700"><x-ui.t fil="Uri ng ID" en="Type of ID" /> <span class="text-rose-600">*</span></span>
-                <select x-model="form.kind" :disabled="!!form.replaces" class="mt-1 w-full text-sm rounded-xl border border-slate-200 px-3 py-2 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none">
+                <select x-model="form.kind" @change="uploadInstead = false; formError = ''" :disabled="!!form.replaces" class="mt-1 w-full text-sm rounded-xl border border-slate-200 px-3 py-2 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 outline-none">
                     <option value="" x-text="t('Choose the type of ID', 'Piliin ang uri ng ID')"></option>
                     <template x-for="k in wallet.id_types" :key="k.key">
                         <option :value="k.key" x-text="k.key === 'other' ? t('Other', 'Iba pa') : k.name" :selected="k.key === form.kind"></option>
@@ -457,6 +514,20 @@
                 </label>
             </div>
 
+            {{-- A kind Didit reads: scanned on its page (2026-10-14). --}}
+            <div x-show="scan" x-cloak class="space-y-3">
+                <div class="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                    <p class="text-sm font-semibold text-ink inline-flex items-center gap-1.5"><i data-lucide="badge-check" class="w-4 h-4 text-sky-700"></i> <x-ui.t fil="I-scan ito sa Didit" en="Scan it with Didit" /></p>
+                    <p class="text-[11px] text-slate-700 mt-1" x-text="t('Didit reads and checks your ' + (kind?.name || 'ID') + ' on its own page, and its card in your wallet shows Checked by Didit. Only LGU staff can verify it for the Esperanza seal.', 'Babasahin at susuriin ng Didit ang iyong ' + (kind?.name || 'ID') + ' sa sarili nitong pahina, at ipapakita ng card nito sa iyong wallet na Sinuri ng Didit. Ang kawani lang ng LGU ang makakapagberipika nito para sa tatak ng Esperanza.')"></p>
+                </div>
+                <p x-show="formError" x-cloak class="text-xs text-rose-700" x-text="formError"></p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <x-ui.button size="sm" icon="scan-line" x-bind:disabled="scanning" @click="scanWithDidit()"><x-ui.t fil="I-scan sa Didit" en="Scan with Didit" /></x-ui.button>
+                    <button type="button" @click="uploadInstead = true; formError = ''" :disabled="scanning" class="text-xs font-medium text-brand-600 hover:underline disabled:opacity-50"><x-ui.t fil="Mag-upload na lang ng mga larawan" en="Upload photos instead" /></button>
+                </div>
+            </div>
+
+            <div x-show="!scan" class="space-y-4">
             <template x-for="side in [['front', t('Front (required)', 'Harap (kailangan)')], ['back', t('Back (optional)', 'Likod (opsyonal)')]]" :key="side[0]">
                 <div class="rounded-xl border p-3" :class="side[0] === 'front' && tried && !front ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200'">
                     <p class="text-xs font-semibold text-ink mb-2" x-text="side[1]"></p>
@@ -485,6 +556,7 @@
                     <span x-text="form.replaces ? t('Replace', 'Palitan') : t('Add to wallet', 'Idagdag sa wallet')"></span>
                 </span>
             </x-ui.button>
+            </div>
         </div>
     </template>
 </div>

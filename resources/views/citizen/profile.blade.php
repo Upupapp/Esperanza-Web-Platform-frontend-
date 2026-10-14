@@ -188,6 +188,9 @@
                 await this.loadResidentProfile();
                 this.loadDocuments();
                 const back = new URLSearchParams(window.location.search).has('verification');
+                // Back from scanning a wallet ID on Didit's page: the wallet
+                // reads the result when it opens.
+                if (new URLSearchParams(window.location.search).has('wallet_check')) this.showDigitalId = true;
                 await this.loadIdView();
                 if (back && this.idView.capture === 'hosted') this.resumeFromDidit();
                 this.loadPhoto();

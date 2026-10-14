@@ -55,7 +55,7 @@ class DigitalIdWalletTest extends TestCase
         $wallet = $this->source('resources/views/components/citizen/digital-id-wallet.blade.php');
 
         $this->assertStringContainsString("'Uploaded — Not checked'", $wallet);
-        $this->assertStringContainsString('en="Not checked"', $wallet);
+        $this->assertStringContainsString("t('Didit did not check this ID.'", $wallet);
         $this->assertStringContainsString('en="Not available"', $wallet);
         $this->assertStringContainsString('Esperanza is not connected to the agency that issued this ID.', $wallet);
         // A returned ID shows the officer's reason; one the LGU verified carries the seal.
@@ -63,6 +63,28 @@ class DigitalIdWalletTest extends TestCase
         $this->assertStringContainsString("verified_by_lgu: [this.t('Verified by the LGU', 'Beripikado ng LGU')", $wallet);
         $this->assertStringContainsString("x-show=\"d.document_status === 'verified_by_lgu'\"", $wallet);
         $this->assertStringContainsString('IDs verified by the LGU have the Esperanza seal on them.', $wallet);
+    }
+
+    public function test_didit_checks_the_kinds_it_reads_and_its_check_is_never_the_seal(): void
+    {
+        $wallet = $this->source('resources/views/components/citizen/digital-id-wallet.blade.php');
+        $profile = $this->source('resources/views/citizen/profile.blade.php');
+        $papeles = $this->source('resources/views/admin/papeles.blade.php');
+
+        // Only the kinds the server names are scanned, and the resident can upload instead.
+        $this->assertStringContainsString('(this.wallet?.didit_check?.kinds || []).includes(this.form.kind)', $wallet);
+        $this->assertStringContainsString("\$api.post('/citizen/wallet/ids/check', { id_kind: this.form.kind, platform: 'web'", $wallet);
+        $this->assertStringContainsString('en="Upload photos instead"', $wallet);
+        // Back from Didit, the server reads the result; the page never decides it.
+        $this->assertStringContainsString("'/citizen/wallet/ids/check/' + encodeURIComponent(sessionId) + '/sync'", $wallet);
+        $this->assertStringContainsString("has('wallet_check')) this.showDigitalId = true", $profile);
+        // Its own mark, apart from the LGU's seal.
+        $this->assertStringContainsString("checked_by_didit: [this.t('Checked by Didit', 'Sinuri ng Didit')", $wallet);
+        $this->assertStringContainsString('en="Only LGU staff can verify it for the Esperanza seal."', $wallet);
+        $this->assertStringNotContainsString("x-show=\"d.document_status === 'checked_by_didit'\" x-cloak src=", $wallet);
+        // A card from a check that kept the last four shows those.
+        $this->assertStringContainsString("'•••• ' + d.number_last4", $wallet);
+        $this->assertStringContainsString('previewDoc.checked_by_didit_at', $papeles);
     }
 
     public function test_an_officer_sees_the_whole_wallet_id_and_can_return_it(): void
