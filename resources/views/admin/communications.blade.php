@@ -2,22 +2,43 @@
     $tab = $tab ?? 'balita';
 @endphp
 
-{{-- One sidebar entry, Balita, for all seven tabs: the Directory (Offices,
-     Barangays) and the Blotter are tabs here (owner, 2026-10-07: as few
-     sidebar entries as possible). /admin/communications/offices and /blotter
+{{-- One sidebar entry, Balita, for all eight tabs: the Directory (Offices,
+     Barangays), the Blotter and residents' Feedback are tabs here (owner,
+     2026-10-07: as few sidebar entries as possible). /admin/communications/offices,
+     /blotter, /banners and /feedback (and the old /admin/settings/support)
      still open this page on that tab. --}}
-<x-layouts.admin title="Balita" subtitle="Announcements, events, the directory and the barangay blotter." active="communications">
+<x-layouts.admin title="Balita" subtitle="Announcements, events, the directory, the barangay blotter and residents' feedback." active="communications">
     <div
         x-data="{
             tab: '{{ $tab }}',
             // One submodule per tab. The Barangay Secretary holds only their
             // directory entry and opened Balita to 'Something went wrong' and a
             // 'Walang pahintulot' pop-up per tab (QA run 2026-10-05).
-            tabSubs: { balita: 'comm_news', banners: 'comm_banners', community: 'comm_community', events: 'comm_events', offices: 'comm_directory', barangays: 'comm_barangay_directory', blotter: 'comm_directory' },
+            tabSubs: { balita: 'comm_news', banners: 'comm_banners', community: 'comm_community', events: 'comm_events', offices: 'comm_directory', barangays: 'comm_barangay_directory', blotter: 'comm_directory', feedback: 'comm_feedback' },
             tabAllowed(t) { return $store.session.canPerm(this.tabSubs[t], 'view'); },
+            // Each tab's own address, so a reload stays on it; a tab without
+            // a route of its own is ?tab= (scope round 2026-10-15).
+            tabPaths: { balita: '/admin/communications', banners: '/admin/communications/banners', offices: '/admin/communications/offices', blotter: '/admin/communications/blotter', feedback: '/admin/communications/feedback' },
+            go(t) {
+                this.tab = t;
+                try { history.replaceState(history.state, '', this.tabPaths[t] || '/admin/communications?tab=' + t); } catch (e) { /* the tab still changes */ }
+            },
+            // Open feedback tickets, for the Feedback tab (set by feedbackDesk).
+            feedbackOpen: null,
             async landOnAllowedTab() {
+                // ?tab= opens a tab with no route of its own; a reply notification
+                // links to ?tab=feedback&ref= (FeedbackDesk).
+                const asked = new URLSearchParams(window.location.search).get('tab');
+                if (asked && this.tabSubs[asked]) this.tab = asked;
                 await $store.session.whenReady();
-                if (!this.tabAllowed(this.tab)) this.tab = Object.keys(this.tabSubs).find((t) => this.tabAllowed(t)) || this.tab;
+                // An account that may not use the tab asked for opens on Feedback
+                // when it answers tickets (offices, the front desk, barangay
+                // secretaries hold that and little else here), otherwise on
+                // the first tab it may use.
+                if (!this.tabAllowed(this.tab)) {
+                    const allowed = this.tabAllowed('feedback') ? 'feedback' : Object.keys(this.tabSubs).find((t) => this.tabAllowed(t));
+                    if (allowed) this.go(allowed);
+                }
             },
             barangayNames: @js(config('esperanza.barangays')),
             initials(name) { return (name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); },
@@ -26,20 +47,26 @@
         class="animate-fade-up"
     >
 
-        <div x-show="!$store.session.can('communications')" x-cloak>
+        {{-- An officer who only answers feedback (comm_feedback) holds the
+             module through it; checked by name as well, so such an account
+             never meets this panel (scope round 2026-10-15). --}}
+        <div x-show="!($store.session.can('communications') || $store.session.canPerm('comm_feedback', 'view'))" x-cloak>
             <x-admin.access-restricted module="Balita" icon="megaphone" />
         </div>
 
-        <div x-show="$store.session.can('communications')" x-cloak>
+        <div x-show="$store.session.can('communications') || $store.session.canPerm('comm_feedback', 'view')" x-cloak>
 
-        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-4 overflow-x-auto">
-            <button x-show="tabAllowed('balita')" @click="tab = 'balita'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
-            <button x-show="tabAllowed('banners')" @click="tab = 'banners'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
-            <button x-show="tabAllowed('community')" @click="tab = 'community'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
-            <button x-show="tabAllowed('events')" @click="tab = 'events'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
-            <button x-show="tabAllowed('offices')" @click="tab = 'offices'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
-            <button x-show="tabAllowed('barangays')" @click="tab = 'barangays'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
-            <button x-show="tabAllowed('blotter')" @click="tab = 'blotter'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
+        {{-- max-w-full: the eight tabs scroll inside the bar on a phone instead of
+             widening the page (scope round 2026-10-15). --}}
+        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full mb-4 overflow-x-auto">
+            <button x-show="tabAllowed('balita')" @click="go('balita')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
+            <button x-show="tabAllowed('banners')" @click="go('banners')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
+            <button x-show="tabAllowed('community')" @click="go('community')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
+            <button x-show="tabAllowed('events')" @click="go('events')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
+            <button x-show="tabAllowed('offices')" @click="go('offices')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
+            <button x-show="tabAllowed('barangays')" @click="go('barangays')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
+            <button x-show="tabAllowed('blotter')" @click="go('blotter')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
+            <button x-show="tabAllowed('feedback')" @click="go('feedback')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'feedback' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="message-square-reply" class="w-3.5 h-3.5"></i>Feedback<span x-show="feedbackOpen" x-cloak class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700" :title="feedbackOpen + ' open'"><span x-text="feedbackOpen"></span><span class="sr-only"> open</span></span></button>
         </div>
 
         {{-- ============================= BALITA (announcements) ============================= --}}
@@ -125,6 +152,71 @@
                 async archive(post) {
                     if (await this.transition(post, 'Archived')) { this.$dispatch('toast', { message: 'Archived.', variant: 'success' }); await this.load(); }
                 },
+                // Editing a post still in the editorial flow, in the create form
+                // (scope round 2026-10-15). PUT /admin/announcements/{id} takes a
+                // Draft, Pending Review or Rejected post (published content is a
+                // new draft), and only the fields that changed are sent.
+                editing: null, editForm: {}, editImage: null,
+                get form() { return this.editing ? this.editForm : this.newForm; },
+                canEdit(a) { return ['Draft', 'Pending Review', 'Rejected'].includes(a.status) && $store.session.canPerm('comm_news', 'edit'); },
+                openNew() { this.editing = null; this.open = true; },
+                openEdit(a) {
+                    this.editForm = { title: a.title || '', category: a.category || 'Community', body: a.body || '', audience: a.barangay ? 'Barangay' : 'Municipal', barangay: a.barangay || this.barangayNames?.[0] || '' };
+                    this.editImage = null;
+                    this.editing = a;
+                    this.open = true;
+                },
+                pickImage(e) {
+                    const file = e.target.files?.[0] || null;
+                    if (file && file.size > 5 * 1024 * 1024) {
+                        e.target.value = '';
+                        this.editImage = null;
+                        this.$dispatch('toast', { message: 'The picture is larger than 5 MB. Choose a smaller one.', variant: 'error' });
+                        return;
+                    }
+                    this.editImage = file;
+                },
+                savePost(submit) { return this.editing ? this.saveEdit(submit) : this.createPost(submit); },
+                async saveEdit(submit) {
+                    const a = this.editing, f = this.editForm;
+                    if (this.processing || !a || !f.title.trim() || !f.body.trim()) return;
+                    const barangay = f.audience === 'Barangay' ? f.barangay : null;
+                    const changes = {};
+                    if (f.title.trim() !== a.title) changes.title = f.title.trim();
+                    if (f.body.trim() !== a.body) changes.body = f.body.trim();
+                    if (f.category !== a.category) changes.category = f.category;
+                    if (barangay !== (a.barangay || null)) changes.barangay = barangay;
+                    if (!submit && !this.editImage && !Object.keys(changes).length) {
+                        this.open = false; this.editing = null;
+                        this.$dispatch('toast', { message: 'Nothing was changed.', variant: 'info' });
+                        return;
+                    }
+                    this.processing = true;
+                    try {
+                        // Each step that succeeds is kept on the post, so trying
+                        // again after a failure repeats only what is left.
+                        if (this.editImage) {
+                            // PHP reads a multipart body only on POST: Laravel's
+                            // _method override, as the banner form does.
+                            const body = new FormData();
+                            Object.entries(changes).forEach(([k, v]) => body.append(k, v === null ? '' : v));
+                            body.append('image', this.editImage);
+                            body.append('_method', 'PUT');
+                            await $api.post('/admin/announcements/' + a.id, body);
+                            this.editImage = null;
+                        } else if (Object.keys(changes).length) {
+                            await $api.put('/admin/announcements/' + a.id, changes);
+                        }
+                        Object.assign(a, changes);
+                        if (submit && a.status === 'Rejected') { await $api.post('/admin/announcements/' + a.id + '/transition', { to: 'Draft' }); a.status = 'Draft'; }
+                        if (submit) { await $api.post('/admin/announcements/' + a.id + '/transition', { to: 'Pending Review' }); a.status = 'Pending Review'; }
+                        this.open = false; this.editing = null;
+                        this.$dispatch('toast', { message: submit ? 'Saved and submitted for review.' : 'Changes saved.', variant: 'success' });
+                        await this.load();
+                    } catch (err) {
+                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save the changes.', variant: 'error' });
+                    } finally { this.processing = false; }
+                },
             }"
             x-init="$store.session.whenReady().then(() => tabAllowed('balita') && load())"
         >
@@ -155,7 +247,7 @@
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-                    <x-ui.button @click="open = true" icon="plus" size="sm" class="shrink-0">New Balita</x-ui.button>
+                    <x-ui.button @click="openNew()" icon="plus" size="sm" class="shrink-0">New Balita</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
@@ -197,6 +289,7 @@
                                 @click="selected = a; reviewOpen = true; rejectReason = ''"
                                 class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"
                             ><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
+                            <button x-show="canEdit(a)" @click="openEdit(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                             <button x-show="a.status === 'Draft'" @click="transition(a, 'Pending Review').then(ok => ok && load())" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
                             <button x-show="a.status === 'Approved'" @click="release(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
                             <button x-show="['Released', 'Rejected', 'Draft'].includes(a.status)" @click="archive(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
@@ -210,37 +303,54 @@
             </div>
             </div>
 
-            <x-ui.modal title="New Balita" maxWidth="lg" :fullscreen="true">
+            {{-- New and Edit share this form (scope round 2026-10-15). Bare, for
+                 a title that says which; the header and footer are the ones
+                 the titled modal draws. --}}
+            <x-ui.modal maxWidth="lg" :fullscreen="true" :bare="true">
+                <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-brand-600/10 shrink-0">
+                    <h3 class="text-base font-extrabold text-ink" x-text="editing ? 'Edit Balita' : 'New Balita'">New Balita</h3>
+                    <div class="flex items-center gap-1">
+                        <button type="button" @click="compact = !compact" :aria-label="compact ? 'Expand to full screen' : 'Shrink to popup'" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
+                            <span x-show="compact"><i data-lucide="maximize-2" class="w-4 h-4"></i></span>
+                            <span x-show="!compact"><i data-lucide="minimize-2" class="w-4 h-4"></i></span>
+                        </button>
+                        <button type="button" @click="open = false" aria-label="Close dialog" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 sm:px-10 sm:py-8">
                 <div class="space-y-4">
-                    <x-ui.input name="title" label="Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="newForm.title" />
+                    <p x-show="editing" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing a post in ' + (editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
+                    <x-ui.input name="title" label="Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="form.title" />
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="category">Category</label>
-                        <select id="category" x-model="newForm.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <select id="category" x-model="form.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             <option>Community</option>
                             <option>Health</option>
                             <option>Public Service</option>
                             <option>Advisory</option>
                             <option>Livelihood</option>
                             <option>Governance</option>
+                            {{-- A post filed under another category keeps it (selected here: it appears after the value is set, and x-model selects only when the value changes). --}}
+                            <template x-if="form.category && !['Community', 'Health', 'Public Service', 'Advisory', 'Livelihood', 'Governance'].includes(form.category)"><option :value="form.category" :selected="true" x-text="form.category"></option></template>
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Audience</label>
                         <div class="grid grid-cols-2 gap-2.5">
-                            <button type="button" @click="newForm.audience = 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="form.audience = 'Municipal'" :aria-pressed="form.audience === 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Municipal-wide</p>
                                 <p class="text-[10.5px] text-ink-muted mt-0.5">Visible to every barangay</p>
                             </button>
-                            <button type="button" @click="newForm.audience = 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="form.audience = 'Barangay'" :aria-pressed="form.audience === 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Specific Barangay</p>
                                 <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it</p>
                             </button>
                         </div>
-                        <div x-show="newForm.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
-                            <select aria-label="New balita barangay" x-model="newForm.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <div x-show="form.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
+                            <select aria-label="New balita barangay" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                             </select>
                         </div>
@@ -248,15 +358,22 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="content">Content</label>
-                        <textarea id="content" rows="4" placeholder="Write the announcement content..." x-model="newForm.body" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <textarea id="content" rows="4" placeholder="Write the announcement content..." x-model="form.body" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
                     </div>
-                    <p class="text-[11px] text-ink-muted">Attachments aren't part of this pass — the create endpoint doesn't accept an image yet (only an edit, after the post exists, does).</p>
+                    {{-- A picture goes on a post that exists: the edit takes one, the create does not. --}}
+                    <div x-show="editing" x-cloak>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="balita-image">Picture <span class="font-normal text-ink-muted">(optional, up to 5 MB)</span></label>
+                        <input id="balita-image" type="file" accept="image/jpeg,image/png,image/webp" @change="pickImage($event)" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-700 file:text-xs">
+                        <p class="text-[10.5px] text-ink-muted mt-1">Leave empty to keep the post's picture as it is.</p>
+                    </div>
+                    <p x-show="!editing" class="text-[11px] text-ink-muted">A picture can be added once the post is saved: open it again with Edit.</p>
+                </div>
                 </div>
 
-                <x-slot:footer>
-                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="createPost(false)">Save as Draft</x-ui.button>
-                    <x-ui.button size="sm" icon="send" x-bind:disabled="processing" @click="createPost(true)">Submit for Review</x-ui.button>
-                </x-slot:footer>
+                <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
+                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="savePost(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
+                    <x-ui.button size="sm" icon="send" x-show="!editing || editing.status !== 'Pending Review'" x-bind:disabled="processing" @click="savePost(true)"><span x-text="!editing ? 'Submit for Review' : (editing.status === 'Rejected' ? 'Save and Resubmit' : 'Save and Submit for Review')">Submit for Review</span></x-ui.button>
+                </div>
             </x-ui.modal>
 
             <div x-data="{ get open() { return reviewOpen; }, set open(v) { reviewOpen = v; } }">
@@ -373,6 +490,60 @@
                 },
                 async release(e) { if (await this.transition(e, 'Released')) { this.$dispatch('toast', { message: 'Published.', variant: 'success' }); await this.load(); } },
                 async archive(e) { if (await this.transition(e, 'Archived')) { this.$dispatch('toast', { message: 'Archived.', variant: 'success' }); await this.load(); } },
+                // Editing an event still in the editorial flow, in the create
+                // form (scope round 2026-10-15): PUT /admin/events/{key} takes a
+                // Draft, Pending Review or Rejected event; only changed fields go.
+                editing: null, editForm: {},
+                get form() { return this.editing ? this.editForm : this.newForm; },
+                canEdit(e) { return ['Draft', 'Pending Review', 'Rejected'].includes(e.status) && $store.session.canPerm('comm_events', 'edit'); },
+                openNew() { this.editing = null; this.open = true; },
+                // A time typed as text before (8:00 AM) for the time field; one
+                // it cannot read leaves the field empty and is kept as it was.
+                toTime(t) {
+                    const m = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?$/.exec(String(t || '').trim());
+                    if (!m) return '';
+                    let h = Number(m[1]);
+                    const ap = (m[3] || '').toLowerCase();
+                    if (ap === 'pm' && h < 12) h += 12;
+                    if (ap === 'am' && h === 12) h = 0;
+                    return h > 23 ? '' : String(h).padStart(2, '0') + ':' + m[2];
+                },
+                openEdit(e) {
+                    this.editForm = { name: e.title || e.name || '', category: e.category || 'Community', date: e.date || '', time: this.toTime(e.time), venue: e.venue || '', audience: e.barangay ? 'Barangay' : 'Municipal', barangay: e.barangay || this.barangayNames?.[0] || '' };
+                    this.editing = e;
+                    this.open = true;
+                },
+                saveEvent(submit) { return this.editing ? this.saveEdit(submit) : this.createEvent(submit); },
+                async saveEdit(submit) {
+                    const e = this.editing, f = this.editForm;
+                    if (this.processing || !e || !f.name.trim() || !f.date) return;
+                    const barangay = f.audience === 'Barangay' ? f.barangay : null;
+                    const changes = {};
+                    if (f.name.trim() !== (e.title || e.name)) { changes.name = f.name.trim(); changes.title = f.name.trim(); }
+                    if (f.date !== e.date) changes.date = f.date;
+                    if (f.time !== this.toTime(e.time)) changes.time = f.time || null;
+                    if (f.venue.trim() !== (e.venue || '')) changes.venue = f.venue.trim() || null;
+                    if (f.category !== (e.category || 'Community')) changes.category = f.category;
+                    if (barangay !== (e.barangay || null)) changes.barangay = barangay;
+                    if (!submit && !Object.keys(changes).length) {
+                        this.open = false; this.editing = null;
+                        this.$dispatch('toast', { message: 'Nothing was changed.', variant: 'info' });
+                        return;
+                    }
+                    this.processing = true;
+                    try {
+                        // Each step that succeeds is kept on the event, so trying
+                        // again after a failure repeats only what is left.
+                        if (Object.keys(changes).length) { await $api.put('/admin/events/' + encodeURIComponent(e.key), changes); Object.assign(e, changes); }
+                        if (submit && e.status === 'Rejected') { await $api.post('/admin/events/' + encodeURIComponent(e.key) + '/transition', { to: 'Draft' }); e.status = 'Draft'; }
+                        if (submit) { await $api.post('/admin/events/' + encodeURIComponent(e.key) + '/transition', { to: 'Pending Review' }); e.status = 'Pending Review'; }
+                        this.open = false; this.editing = null;
+                        this.$dispatch('toast', { message: submit ? 'Saved and submitted for review.' : 'Changes saved.', variant: 'success' });
+                        await this.load();
+                    } catch (err) {
+                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save the changes.', variant: 'error' });
+                    } finally { this.processing = false; }
+                },
             }"
             x-init="$store.session.whenReady().then(() => tabAllowed('events') && load())"
         >
@@ -403,7 +574,7 @@
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-                    <x-ui.button @click="open = true" icon="plus" size="sm" class="shrink-0">New Event</x-ui.button>
+                    <x-ui.button @click="openNew()" icon="plus" size="sm" class="shrink-0">New Event</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
@@ -441,6 +612,7 @@
                         </div>
                         <div class="flex border-t border-brand-600/10">
                             <button x-show="e.status === 'Pending Review'" @click="selected = e; reviewOpen = true; rejectReason = ''" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
+                            <button x-show="canEdit(e)" @click="openEdit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                             <button x-show="e.status === 'Draft'" @click="transition(e, 'Pending Review').then(ok => ok && load())" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
                             <button x-show="e.status === 'Approved'" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
                             <button x-show="['Released', 'Rejected', 'Draft'].includes(e.status)" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
@@ -454,48 +626,65 @@
             </div>
             </div>
 
-            <x-ui.modal title="New Event" maxWidth="lg" :fullscreen="true">
-                <div class="space-y-4">
-                    <x-ui.input name="event_title" label="Event Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="newForm.name" />
-                    <div class="grid grid-cols-2 gap-3">
-                        <x-ui.input name="event_date" type="date" label="Date" x-model="newForm.date" />
-                        <x-ui.input name="event_time" type="time" label="Time" x-model="newForm.time" />
+            {{-- New and Edit share this form (scope round 2026-10-15), drawn bare
+                 for a title that says which, as Balita's is. --}}
+            <x-ui.modal maxWidth="lg" :fullscreen="true" :bare="true">
+                <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-brand-600/10 shrink-0">
+                    <h3 class="text-base font-extrabold text-ink" x-text="editing ? 'Edit Event' : 'New Event'">New Event</h3>
+                    <div class="flex items-center gap-1">
+                        <button type="button" @click="compact = !compact" :aria-label="compact ? 'Expand to full screen' : 'Shrink to popup'" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
+                            <span x-show="compact"><i data-lucide="maximize-2" class="w-4 h-4"></i></span>
+                            <span x-show="!compact"><i data-lucide="minimize-2" class="w-4 h-4"></i></span>
+                        </button>
+                        <button type="button" @click="open = false" aria-label="Close dialog" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
-                    <x-ui.input name="event_venue" label="Venue" placeholder="e.g. Municipal Plaza" x-model="newForm.venue" />
+                </div>
+                <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 sm:px-10 sm:py-8">
+                <div class="space-y-4">
+                    <p x-show="editing" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing an event in ' + (editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
+                    <x-ui.input name="event_title" label="Event Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="form.name" />
+                    <div class="grid grid-cols-2 gap-3">
+                        <x-ui.input name="event_date" type="date" label="Date" x-model="form.date" />
+                        <x-ui.input name="event_time" type="time" label="Time" x-model="form.time" />
+                    </div>
+                    <x-ui.input name="event_venue" label="Venue" placeholder="e.g. Municipal Plaza" x-model="form.venue" />
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="category-2">Category</label>
-                        <select id="category-2" x-model="newForm.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <select id="category-2" x-model="form.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                             <template x-for="c in Object.keys(categoryColor)" :key="c"><option x-text="c" :value="c"></option></template>
+                            {{-- An event filed under another category keeps it (selected here, as Balita's). --}}
+                            <template x-if="form.category && !Object.keys(categoryColor).includes(form.category)"><option :value="form.category" :selected="true" x-text="form.category"></option></template>
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Audience</label>
                         <div class="grid grid-cols-2 gap-2.5">
-                            <button type="button" @click="newForm.audience = 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="form.audience = 'Municipal'" :aria-pressed="form.audience === 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Municipal-wide</p>
                                 <p class="text-[10.5px] text-ink-muted mt-0.5">Visible to every barangay</p>
                             </button>
-                            <button type="button" @click="newForm.audience = 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="newForm.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                            <button type="button" @click="form.audience = 'Barangay'" :aria-pressed="form.audience === 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Specific Barangay</p>
                                 <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it</p>
                             </button>
                         </div>
-                        <div x-show="newForm.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
-                            <select aria-label="New event barangay" x-model="newForm.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                        <div x-show="form.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
+                            <select aria-label="New event barangay" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                 <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                             </select>
                         </div>
                     </div>
                     <p class="text-[11px] text-ink-muted">Posters aren't part of this pass — event creation has no image field on the backend yet.</p>
                 </div>
+                </div>
 
-                <x-slot:footer>
-                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="createEvent(false)">Save as Draft</x-ui.button>
-                    <x-ui.button size="sm" icon="send" x-bind:disabled="processing" @click="createEvent(true)">Submit for Review</x-ui.button>
-                </x-slot:footer>
+                <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
+                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="saveEvent(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
+                    <x-ui.button size="sm" icon="send" x-show="!editing || editing.status !== 'Pending Review'" x-bind:disabled="processing" @click="saveEvent(true)"><span x-text="!editing ? 'Submit for Review' : (editing.status === 'Rejected' ? 'Save and Resubmit' : 'Save and Submit for Review')">Submit for Review</span></x-ui.button>
+                </div>
             </x-ui.modal>
 
             <div x-data="{ get open() { return reviewOpen; }, set open(v) { reviewOpen = v; } }">
@@ -1188,6 +1377,9 @@
                 </div>
             </div>
         </div>
+
+        {{-- ============================= FEEDBACK ============================= --}}
+        @include('admin.communications.feedback')
 
         </div>
     </div>

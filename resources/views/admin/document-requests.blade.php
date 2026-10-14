@@ -106,6 +106,10 @@
             openOnly: false,
             // One import's records (Show the imported records), or empty.
             importFilter: '',
+            // Asked of the server, with the filters above (scope round 2026-10-15).
+            mineOnly: false,
+            overdueOnly: false,
+            loadSeq: 0,
             showAdvancedFilters: false,
             open: false,
             selected: null,
@@ -405,7 +409,12 @@
                 if (!this.selected.customDocumentHtml) {
                     const contentEl = document.querySelector('#dp-print-area .doc-content');
                     if (contentEl) {
-                        this.selected.customDocumentHtml = window.DokyuEditor.captureContent(contentEl);
+                        // Without the verification strip: the edited copy draws a live
+                        // one below it, so a later reprint or revoke still shows
+                        // (scope round 2026-10-15).
+                        const copy = contentEl.cloneNode(true);
+                        copy.querySelectorAll('[x-data^=verifyStrip]').forEach((el) => el.remove());
+                        this.selected.customDocumentHtml = window.DokyuEditor.captureContent(copy);
                     }
                 }
                 this.ensureBackground();
@@ -1662,6 +1671,8 @@
                 // From the dashboard's Open Requests by Barangay card.
                 if (params.get('barangay')) { this.barangayFilter = params.get('barangay'); this.tab = 'all'; }
                 if (params.get('open') === '1') { this.openOnly = true; this.tab = 'all'; }
+                this.mineOnly = params.get('assigned') === 'me';
+                this.overdueOnly = params.get('overdue') === '1';
                 if (ref || citizen) {
                     this.search = ref || citizen;
                     this.view = 'requests';
@@ -1720,9 +1731,11 @@
                     const url = this.apiBase(this.selected.ref) + '/assign';
                     const res = assign ? await $api.post(url) : await $api.delete(url);
                     const who = res.data?.assigned ?? null;
+                    const id = res.data?.assigned_employee_id ?? null;
                     this.selected.assigned = who;
+                    this.selected.assigned_employee_id = id;
                     const row = this.requests.find((x) => x.ref === this.selected.ref);
-                    if (row) row.assigned = who;
+                    if (row) { row.assigned = who; row.assigned_employee_id = id; }
                     this.$dispatch('toast', { message: assign ? 'Assigned to you.' : 'No longer assigned to you.', variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: this.apiMessage(err, 'Could not change who is assigned.'), variant: 'error' });
@@ -1738,17 +1751,25 @@
                 const d = new Date(iso);
                 return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
+            // Assigned to me and Overdue go to the server (scope round
+            // 2026-10-15); only the latest of loads overlapping is kept.
             async loadRequests() {
+                const seq = ++this.loadSeq;
                 this.requestsLoading = true;
                 this.requestsFailed = false;
                 try {
-                    const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params: { sort: '-submitted_at' } });
-                    this.requests = (res.data || []).map((row) => this.fromApi(row));
+                    const params = { sort: '-submitted_at' };
+                    if (this.mineOnly) params.assigned = 'me';
+                    if (this.overdueOnly) params.overdue = 1;
+                    const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params });
+                    if (seq === this.loadSeq) this.requests = (res.data || []).map((row) => this.fromApi(row));
                 } catch (err) {
-                    this.requestsFailed = true;
+                    if (seq === this.loadSeq) this.requestsFailed = true;
                 } finally {
-                    this.requestsLoading = false;
-                    this.$nextTick(() => window.renderIcons?.());
+                    if (seq === this.loadSeq) {
+                        this.requestsLoading = false;
+                        this.$nextTick(() => window.renderIcons?.());
+                    }
                 }
             },
             // Real officials per barangay (GET /barangays), over the config
@@ -1790,6 +1811,10 @@
                     reference_pdf: this.referencePdfByType[name] || this.referencePdfByType[type] || null,
                     service_guide_key: this.typeToServiceGuideKey[name] || this.typeToServiceGuideKey[type] || null,
                     assigned: row.assigned || null,
+                    assigned_employee_id: row.assigned_employee_id || null,
+                    due: row.due || null,
+                    overdue: !!row.overdue,
+                    issued_documents: [],
                     purpose: '',
                     requirements: null,
                     remarks: null,
@@ -1900,6 +1925,11 @@
                 r.form_steps = this.formStepsFor(r.type, d.form_data, r.service_key);
                 r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
                 r.assigned = 'assigned' in d ? d.assigned : r.assigned;
+                r.assigned_employee_id = 'assigned_employee_id' in d ? d.assigned_employee_id : r.assigned_employee_id;
+                r.due = d.due || r.due || null;
+                r.overdue = 'overdue' in d ? !!d.overdue : r.overdue;
+                // Control numbers, codes and QR for the printed copy (scope round 2026-10-15).
+                r.issued_documents = d.issued_documents || [];
                 r.payment = d.payment || null;
                 // The officer's edited copy, stored on the request (owner
                 // decision 2026-10-06, option B), or the template when there
@@ -2254,6 +2284,8 @@
                         try {
                             const issued = await $api.post('/admin/requests/' + encodeURIComponent(r.ref) + '/issue');
                             r.issued = issued.data;
+                            // The detail again, now with the issued document (its QR goes on the paper).
+                            res = await $api.get(this.apiBase(r.ref)).catch(() => res);
                         } catch (err) {
                             this.$dispatch('toast', { message: 'Marked to release, but the document could not be issued: ' + this.apiMessage(err, 'unknown error') + '.', variant: 'warning' });
                         }
@@ -2284,7 +2316,7 @@
 
         <div x-show="$store.session.can('dokyu')" x-cloak
              x-on:requests-imported.window="if ($event.detail?.type === 'dokyu') loadRequests()"
-             x-effect="!requestsLoading && !requestsFailed && ($store.queueCounts.dokyu = requests.filter((r) => actionStatuses.includes(r.status)).length)"
+             x-effect="!requestsLoading && !requestsFailed && !mineOnly && !overdueOnly && ($store.queueCounts.dokyu = requests.filter((r) => actionStatuses.includes(r.status)).length)"
              x-on:requests-show-import.window="if ($event.detail?.type === 'dokyu') { importFilter = $event.detail.ref; tab = 'all'; openOnly = false; search = ''; loadRequests(); }">
 
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
@@ -2361,6 +2393,7 @@
                         >{{ $label }}</button>
                     @endforeach
                 </div>
+                <x-admin.scope.queue-chips />
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' requests'"></p>
                 <p x-show="importFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
                     <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
@@ -2458,6 +2491,7 @@
                                 <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[r.status] || statusStyles['Draft'])[1]"></span>
                                 <span x-text="r.status"></span>
                             </span>
+                            <x-admin.scope.queue-due :assignee="true" />
                         </td>
                         <td class="px-4 py-3 text-right" @click.stop>
                             <button @click="openRequest(r)" class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap">Process</button>
@@ -2471,7 +2505,7 @@
         <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="'Could not load document requests.'" retryExpr="loadRequests()" :retryable="true" /></div>
         <div class="flex flex-col items-center text-center py-10 bg-white border border-brand-600/10 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
             <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
-            <p class="text-sm font-medium text-slate-600" x-text="requests.length ? 'No requests match these filters.' : 'No document requests yet.'"></p>
+            <p class="text-sm font-medium text-slate-600" x-text="requests.length || mineOnly || overdueOnly ? 'No requests match these filters.' : 'No document requests yet.'"></p>
         </div>
 
         <x-ui.modal title="Process Document Request" maxWidth="4xl">
@@ -2570,30 +2604,13 @@
                                 <div class="min-w-0">
                                     <p class="text-[10px] text-ink-muted uppercase tracking-wide">Submitted</p>
                                     <p class="text-sm font-medium text-ink truncate" x-text="selected.submitted"></p>
+                                    <x-admin.scope.queue-due row="selected" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div
-                        class="flex items-center justify-between gap-2 mt-3"
-                        x-show="!selected.assigned && !terminalStatuses.includes(selected.status) && (!$store.session.account || ['department_head', 'municipal_admin', 'super_admin'].includes($store.session.account?.roleKey))"
-                    >
-                        <p class="text-xs text-ink-muted">This request hasn't been routed to a processor yet.</p>
-                        <x-ui.button
-                            variant="secondary" size="sm" icon="user-plus"
-                            x-bind:disabled="processing"
-                            @click="setAssignment(true)"
-                        >Assign to me</x-ui.button>
-                    </div>
-                    <div
-                        class="flex items-center justify-between gap-2 mt-3"
-                        x-show="selected.assigned && selected.assigned === $store.session.account?.name"
-                        x-cloak
-                    >
-                        <p class="text-xs text-ink-muted">You are handling this request.</p>
-                        <x-ui.button variant="secondary" size="sm" icon="user-minus" x-bind:disabled="processing" @click="setAssignment(false)">Unassign me</x-ui.button>
-                    </div>
+                    <x-admin.scope.request-assign />
 
                     {{-- Payment method + Official Payment Receipt — same source of
                          truth and same visual design as the dedicated Payments
@@ -2641,6 +2658,8 @@
                         </div>
                         <x-admin.payment-receipt recordExpr="selectedPayment" />
                     </div>
+
+                    <x-admin.scope.issued-documents can="may('release')" issuable="selected.status === 'Mark to Release'" />
 
                     <x-admin.request-form-review />
 
@@ -3094,6 +3113,7 @@
                                                         punongBarangay="resolvedDocument.barangayOfficials?.punong_barangay"
                                                         barangaySecretary="resolvedDocument.barangayOfficials?.barangay_secretary"
                                                         background="documentBackground"
+                                                        verify="selected.issued_documents"
                                                     />
                                                 </template>
                                                 <template x-if="resolvedDocument?.previewType === 'municipal_request'">
@@ -3110,6 +3130,7 @@
                                                         verifier="selected.verifier"
                                                         verifierTitle="selected.verifierTitle"
                                                         background="documentBackground"
+                                                        verify="selected.issued_documents"
                                                     />
                                                 </template>
                                             </div>
@@ -3139,6 +3160,8 @@
                                                     @keydown="handleContentKeydown($event)"
                                                     @input="reconcileSectionMarkers(); reconcileEmptyBlocks(); refreshOverflowWarning(); recomputeZoomSizer()"
                                                 ></div>
+                                                {{-- Control number, code and QR of the issued copy, outside the editable text (scope round 2026-10-15). --}}
+                                                <x-documents.verify-strip doc="selected.issued_documents" doc-key="resolvedDocument?.docKey" />
                                             </div>
                                         </template>
                                     </div>

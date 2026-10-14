@@ -76,6 +76,10 @@
             openOnly: false,
             // One import's records (Show the imported records), or empty.
             importFilter: '',
+            // Asked of the server, with the filters above (scope round 2026-10-15).
+            mineOnly: false,
+            overdueOnly: false,
+            loadSeq: 0,
             showAdvancedFilters: false,
             open: false,
             selected: null,
@@ -214,6 +218,8 @@
                 // From the dashboard's Open Requests by Barangay card.
                 if (params.get('barangay')) { this.barangayFilter = params.get('barangay'); this.tab = 'all'; }
                 if (params.get('open') === '1') { this.openOnly = true; this.tab = 'all'; }
+                this.mineOnly = params.get('assigned') === 'me';
+                this.overdueOnly = params.get('overdue') === '1';
                 if (ref || citizen) {
                     this.search = ref || citizen;
                     this.tab = 'all';
@@ -247,9 +253,11 @@
                     const url = this.apiBase(this.selected.ref) + '/assign';
                     const res = assign ? await $api.post(url) : await $api.delete(url);
                     const who = res.data?.assigned ?? null;
+                    const id = res.data?.assigned_employee_id ?? null;
                     this.selected.assigned = who;
+                    this.selected.assigned_employee_id = id;
                     const row = this.requests.find((x) => x.ref === this.selected.ref);
-                    if (row) row.assigned = who;
+                    if (row) { row.assigned = who; row.assigned_employee_id = id; }
                     this.$dispatch('toast', { message: assign ? 'Assigned to you.' : 'No longer assigned to you.', variant: 'success' });
                 } catch (err) {
                     this.$dispatch('toast', { message: this.apiMessage(err, 'Could not change who is assigned.'), variant: 'error' });
@@ -265,17 +273,25 @@
                 const d = new Date(iso);
                 return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             },
+            // Assigned to me and Overdue go to the server (scope round
+            // 2026-10-15); only the latest of loads overlapping is kept.
             async loadRequests() {
+                const seq = ++this.loadSeq;
                 this.requestsLoading = true;
                 this.requestsFailed = false;
                 try {
-                    const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params: { sort: '-submitted_at' } });
-                    this.requests = (res.data || []).map((row) => this.fromApi(row));
+                    const params = { sort: '-submitted_at' };
+                    if (this.mineOnly) params.assigned = 'me';
+                    if (this.overdueOnly) params.overdue = 1;
+                    const res = await $api.getAll('/admin/' + this.requestType + '/requests', { params });
+                    if (seq === this.loadSeq) this.requests = (res.data || []).map((row) => this.fromApi(row));
                 } catch (err) {
-                    this.requestsFailed = true;
+                    if (seq === this.loadSeq) this.requestsFailed = true;
                 } finally {
-                    this.requestsLoading = false;
-                    this.$nextTick(() => window.renderIcons?.());
+                    if (seq === this.loadSeq) {
+                        this.requestsLoading = false;
+                        this.$nextTick(() => window.renderIcons?.());
+                    }
                 }
             },
             fromApi(row) {
@@ -305,6 +321,10 @@
                     reference_pdf: this.referencePdfByType[name] || this.referencePdfByType[type] || null,
                     service_guide_key: this.typeToServiceGuideKey[name] || this.typeToServiceGuideKey[type] || null,
                     assigned: row.assigned || null,
+                    assigned_employee_id: row.assigned_employee_id || null,
+                    due: row.due || null,
+                    overdue: !!row.overdue,
+                    issued_documents: [],
                     purpose: '',
                     requirements: null,
                     remarks: null,
@@ -419,6 +439,10 @@
                 r.form_steps = this.formStepsFor(r.type, d.form_data, r.service_key);
                 r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
                 r.assigned = 'assigned' in d ? d.assigned : r.assigned;
+                r.assigned_employee_id = 'assigned_employee_id' in d ? d.assigned_employee_id : r.assigned_employee_id;
+                r.due = d.due || r.due || null;
+                r.overdue = 'overdue' in d ? !!d.overdue : r.overdue;
+                r.issued_documents = d.issued_documents || [];
                 r.payment = d.payment || null;
                 r.history = (d.history || []).map((h) => ({ stage: h.to, from: h.from, date: this.formatDay(h.at), by: h.actor_name || '—', note: window.historyNote(h.trigger) }));
                 const proof = d.proof_of_release || {};
@@ -817,7 +841,7 @@
 
         <div x-show="$store.session.can('tulong')" x-cloak
              x-on:requests-imported.window="if ($event.detail?.type === 'tulong') loadRequests()"
-             x-effect="!requestsLoading && !requestsFailed && ($store.queueCounts.tulong = requests.filter((r) => actionStatuses.includes(r.status)).length)"
+             x-effect="!requestsLoading && !requestsFailed && !mineOnly && !overdueOnly && ($store.queueCounts.tulong = requests.filter((r) => actionStatuses.includes(r.status)).length)"
              x-on:requests-show-import.window="if ($event.detail?.type === 'tulong') { importFilter = $event.detail.ref; tab = 'all'; openOnly = false; search = ''; loadRequests(); }">
 
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
@@ -888,6 +912,7 @@
                         >{{ $label }}</button>
                     @endforeach
                 </div>
+                <x-admin.scope.queue-chips />
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredRequests.length + ' of ' + requests.length + ' cases'"></p>
                 <p x-show="importFilter" x-cloak class="w-full text-[11px] text-brand-700 bg-brand-50 rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-x-2">
                     <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
@@ -991,6 +1016,7 @@
                                 <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[r.status] || statusStyles['Draft'])[1]"></span>
                                 <span x-text="r.status"></span>
                             </span>
+                            <x-admin.scope.queue-due :assignee="true" />
                         </td>
                         <td class="px-4 py-3 text-right" @click.stop>
                             <button @click="openRequest(r)" class="text-xs font-medium text-brand-600 hover:underline whitespace-nowrap">Review</button>
@@ -1004,7 +1030,7 @@
         <div x-show="requestsFailed" x-cloak class="mt-3"><x-ui.error-state messageExpr="'Could not load assistance requests.'" retryExpr="loadRequests()" :retryable="true" /></div>
         <div class="flex flex-col items-center text-center py-10 bg-white border border-brand-600/10 rounded-2xl mt-3" x-show="!requestsLoading && !requestsFailed && filteredRequests.length === 0">
             <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
-            <p class="text-sm font-medium text-slate-600" x-text="requests.length ? 'No cases match these filters.' : 'No assistance requests yet.'"></p>
+            <p class="text-sm font-medium text-slate-600" x-text="requests.length || mineOnly || overdueOnly ? 'No cases match these filters.' : 'No assistance requests yet.'"></p>
         </div>
 
         <x-ui.modal title="Tulong Case" maxWidth="4xl">
@@ -1122,30 +1148,16 @@
                                 <div class="min-w-0">
                                     <p class="text-[10px] text-ink-muted uppercase tracking-wide">Submitted</p>
                                     <p class="text-sm font-medium text-ink truncate" x-text="selected.submitted"></p>
+                                    <x-admin.scope.queue-due row="selected" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div
-                        class="flex items-center justify-between gap-2 mt-3"
-                        x-show="!selected.assigned && !terminalStatuses.includes(selected.status) && (!$store.session.account || ['department_head', 'municipal_admin', 'super_admin'].includes($store.session.account?.roleKey))"
-                    >
-                        <p class="text-xs text-ink-muted">This case hasn't been routed to a processor yet.</p>
-                        <x-ui.button
-                            variant="secondary" size="sm" icon="user-plus"
-                            x-bind:disabled="processing"
-                            @click="setAssignment(true)"
-                        >Assign to me</x-ui.button>
-                    </div>
-                    <div
-                        class="flex items-center justify-between gap-2 mt-3"
-                        x-show="selected.assigned && selected.assigned === $store.session.account?.name"
-                        x-cloak
-                    >
-                        <p class="text-xs text-ink-muted">You are handling this case.</p>
-                        <x-ui.button variant="secondary" size="sm" icon="user-minus" x-bind:disabled="processing" @click="setAssignment(false)">Unassign me</x-ui.button>
-                    </div>
+                    <x-admin.scope.request-assign noun="case" />
+
+                    {{-- Shown only once a document was issued for this case. --}}
+                    <x-admin.scope.issued-documents can="may('release')" />
 
                     <x-admin.request-form-review />
 

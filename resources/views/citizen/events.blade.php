@@ -1,7 +1,6 @@
 <x-layouts.citizen title="Events" subtitle="Upcoming municipal and barangay events." active="events">
     <div
         x-data="{
-            reminders: {},
             events: [],
             loading: false,
             failed: false,
@@ -155,10 +154,14 @@
             </div>
 
             <template x-if="!loading && !failed">
-                <div class="space-y-3.5">
+                {{-- Remind me (scope round 2026-10-15): a calendar file with a
+                     reminder the day before, or Google Calendar - the button
+                     used to only say a reminder was set (eventCalendar in
+                     resources/js/scope-citizen.js). --}}
+                <div class="space-y-3.5" x-data="eventCalendar()" @keydown.escape.window="menu = null">
                     <template x-for="(event, i) in selectedEvents" :key="event.key + event.title">
-                        <x-ui.card>
-                            <div class="flex items-center gap-4">
+                        <x-ui.card ::class="menu === event.key + event.title ? 'relative z-20' : ''">
+                            <div class="flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-3">
                                 <div class="w-14 h-14 rounded-xl bg-brand-50 text-brand-700 flex flex-col items-center justify-center shrink-0">
                                     <span class="text-lg font-bold leading-none" x-text="event.day"></span>
                                     <span class="text-[10px] font-semibold uppercase tracking-wide" x-text="event.monthShort"></span>
@@ -177,19 +180,43 @@
                                         <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="event.venue"></span></span>
                                     </p>
                                 </div>
-                                <button
-                                    type="button"
-                                    class="shrink-0 hidden sm:inline-flex items-center justify-center gap-2 rounded-2xl px-3.5 py-2 text-xs font-medium transition-all duration-[160ms] ease-standard active:scale-[0.97]"
-                                    :class="reminders[event.key + event.title] ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-white text-slate-700 border border-slate-200 shadow-card hover:bg-white/60 hover:border-slate-300'"
-                                    @click="
-                                        reminders[event.key + event.title] = !reminders[event.key + event.title];
-                                        $dispatch('toast', { message: reminders[event.key + event.title] ? ($store.lang.current === 'en' ? 'We will remind you before this event starts.' : 'Paalalahanan ka namin bago magsimula ang kaganapang ito.') : ($store.lang.current === 'en' ? 'Reminder cancelled.' : 'Nakansela ang paalala.'), variant: reminders[event.key + event.title] ? 'success' : 'info' });
-                                    "
-                                >
-                                    <i data-lucide="bell-check" class="w-3.5 h-3.5" x-show="reminders[event.key + event.title]"></i>
-                                    <i data-lucide="bell" class="w-3.5 h-3.5" x-show="!reminders[event.key + event.title]"></i>
-                                    <span x-text="reminders[event.key + event.title] ? ($store.lang.current === 'en' ? 'Reminder Set' : 'Naka-set na') : ($store.lang.current === 'en' ? 'Remind Me' : 'Paalalahanan Ako')"></span>
-                                </button>
+                                <div class="relative w-full sm:w-auto shrink-0" @click.outside="if (menu === event.key + event.title) menu = null">
+                                    <button
+                                        type="button"
+                                        @click="toggle(event.key + event.title)"
+                                        aria-haspopup="true"
+                                        :aria-expanded="menu === event.key + event.title"
+                                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-3.5 py-2 text-xs font-medium bg-white text-slate-700 border border-slate-200 shadow-card hover:bg-white/60 hover:border-slate-300 transition-all duration-[160ms] ease-standard active:scale-[0.97]"
+                                    >
+                                        <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+                                        <span x-text="$store.lang.current === 'en' ? 'Remind Me' : 'Paalalahanan Ako'"></span>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <div
+                                        x-show="menu === event.key + event.title"
+                                        x-cloak
+                                        x-transition:enter="transition duration-[160ms] ease-emphasized"
+                                        x-transition:enter-start="opacity-0 -translate-y-1"
+                                        x-transition:enter-end="opacity-100 translate-y-0"
+                                        role="menu"
+                                        class="absolute right-0 mt-2 w-72 max-w-[calc(100vw-4rem)] surface-glass rounded-2xl shadow-float border border-white/90 p-1.5"
+                                    >
+                                        <button type="button" role="menuitem" @click="save(event)" class="w-full flex items-start gap-2.5 rounded-xl px-3 py-2 text-left hover:bg-white/70 transition-colors">
+                                            <i data-lucide="calendar-days" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i>
+                                            <span class="min-w-0">
+                                                <span class="block text-xs font-semibold text-ink"><x-ui.t fil="I-save sa aking kalendaryo" en="Save to my calendar" /></span>
+                                                <span class="block text-[11px] text-ink-muted"><x-ui.t fil="File na .ics, may paalala isang araw bago" en="An .ics file, with a reminder a day before" /></span>
+                                            </span>
+                                        </button>
+                                        <a role="menuitem" :href="google(event)" target="_blank" rel="noopener" @click="menu = null" class="w-full flex items-start gap-2.5 rounded-xl px-3 py-2 text-left hover:bg-white/70 transition-colors">
+                                            <i data-lucide="external-link" class="w-4 h-4 text-brand-600 shrink-0 mt-0.5"></i>
+                                            <span class="min-w-0">
+                                                <span class="block text-xs font-semibold text-ink"><x-ui.t fil="Idagdag sa Google Calendar" en="Add to Google Calendar" /></span>
+                                                <span class="block text-[11px] text-ink-muted"><x-ui.t fil="Bubukas sa bagong tab" en="Opens in a new tab" /></span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </x-ui.card>
                     </template>

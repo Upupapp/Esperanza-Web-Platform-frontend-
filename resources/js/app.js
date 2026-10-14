@@ -6,6 +6,7 @@ import { residentProfileForm } from './resident-profile-form';
 import { residentImport, reasonText } from './resident-import-ui';
 import { requestImport } from './request-import-ui';
 import { citizenRecords } from './citizen-records';
+import { docTemplatesStore, verifyStrip, qrSvg } from './shared-docs';
 import { dashboardHost, deptDashboard, brgyDashboard, printableReports, reportSheet } from './dashboards';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
@@ -260,6 +261,55 @@ window.DokyuEditor = DokyuEditor;
 window.addEventListener('afterprint', () => document.body.classList.remove('dp-printing'));
 
 /**
+ * End the session on this device now, and tell the server with a request
+ * that survives the page being left (keepalive), so signing out cannot be
+ * undone by the navigation that follows it (scope round 2026-10-15).
+ */
+function endSession() {
+    const token = api.getToken();
+    api.setToken(null);
+    if (!token) return;
+    try {
+        fetch(api.baseUrl.replace(/\/$/, '') + '/auth/logout', {
+            method: 'POST',
+            keepalive: true,
+            headers: { Accept: 'application/json', Authorization: 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' },
+        }).catch(() => {});
+    } catch {
+        // The token is gone from this device either way.
+    }
+}
+
+// Offline notice (scope round 2026-10-15): residents on slow or patchy
+// connections are told when the connection drops instead of seeing requests
+// fail one by one, and when it is back.
+(function offlineNotice() {
+    let bar = null;
+    const show = (online) => {
+        if (online) {
+            if (bar) { bar.textContent = document.documentElement.lang === 'fil' ? 'May koneksyon na muli.' : 'You are back online.'; bar.dataset.state = 'online'; setTimeout(() => { if (bar && navigator.onLine) { bar.remove(); bar = null; } }, 2500); }
+            return;
+        }
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.setAttribute('role', 'status');
+            bar.setAttribute('aria-live', 'polite');
+            bar.className = 'offline-bar';
+            document.body.appendChild(bar);
+        }
+        bar.dataset.state = 'offline';
+        bar.textContent = document.documentElement.lang === 'fil'
+            ? 'Walang koneksyon sa internet. Hindi masi-save ang mga pagbabago hangga’t walang koneksyon.'
+            : 'No internet connection. Nothing can be saved until you are back online.';
+    };
+    window.addEventListener('offline', () => show(false));
+    window.addEventListener('online', () => show(true));
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        document.addEventListener('DOMContentLoaded', () => show(false));
+    }
+})();
+
+/**
  * 'super_admin' -> 'Super Admin'. The exact display name (with icon/color)
  * lives in the roles table and comes back from GET /admin/roles, but that
  * route is itself gated by perm:um_roles,view -- not every signed-in role can
@@ -461,6 +511,10 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('residentImport', residentImport);
     Alpine.data('requestImport', requestImport);
     Alpine.data('citizenRecords', citizenRecords);
+    // Document wording staff edit, and the verification strip (2026-10-15).
+    Alpine.store('docTemplates', docTemplatesStore);
+    Alpine.data('verifyStrip', verifyStrip);
+    window.qrSvg = qrSvg;
     // Office and barangay dashboards and the printed reports (2026-10-14).
     Alpine.data('dashboardHost', dashboardHost);
     Alpine.data('deptDashboard', deptDashboard);
@@ -584,13 +638,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         async logout() {
-            try {
-                await api.post('/auth/logout');
-            } catch {
-                // Token already invalid or the request never landed -- the
-                // session is cleared locally either way.
-            }
-            api.setToken(null);
+            // Cleared here first: the Sign Out link navigates away at once,
+            // and leaving a page cancels its requests, so a token cleared
+            // only after the server answered stayed saved (scope round
+            // 2026-10-15). The server is told with a request that outlives
+            // the page.
+            endSession();
             this.clear();
         },
 
@@ -706,12 +759,8 @@ document.addEventListener('alpine:init', () => {
         },
 
         async logout() {
-            try {
-                await api.post('/auth/logout');
-            } catch {
-                // Same reasoning as $store.session.logout() above.
-            }
-            api.setToken(null);
+            // Same reasoning as $store.session.logout() above.
+            endSession();
             this.clear();
         },
 
@@ -1517,7 +1566,19 @@ new MutationObserver((mutations) => {
     if (placeholders) iconFrame = requestAnimationFrame(() => { iconFrame = null; renderIcons(); });
 }).observe(document.documentElement, { childList: true, subtree: true });
 
-Alpine.start();
+// The scope round's screens (2026-10-15) live in one chunk per area, loaded
+// only where they are used, so neither the shared bundle nor the heaviest
+// pages grow: Alpine starts once the page's chunk has registered its
+// components (a few KB, cached after the first visit). A chunk that fails to
+// load leaves the rest of the page working.
+const areaPath = window.location.pathname;
+const areaChunks = [];
+const area = (used, load) => { if (used) areaChunks.push(load().then((m) => m.register(Alpine))); };
+area(/^\/(citizen|verify)(\/|$)/.test(areaPath), () => import('./scope-citizen'));
+area(/^\/admin\/(settings|users)(\/|$)/.test(areaPath), () => import('./scope-admin-settings'));
+area(/^\/admin\/(constituents|communications)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
+area(/^\/admin\/(dashboard|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
+Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 
 // -- API failure handling, in one place -------------------------------------

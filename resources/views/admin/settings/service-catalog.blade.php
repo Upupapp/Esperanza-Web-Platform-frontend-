@@ -1,0 +1,283 @@
+{{-- ============================= SERVICE CATALOG =============================
+     Every service, offered or not (GET /admin/settings/catalog: the tab read
+     the public list, which hides switched-off services), and one editor per
+     service: its details (name, office, category, offered), its rules
+     published as a new version (fee, time, required documents, processing
+     steps), its request form, read only - the form residents fill in is part
+     of the portals' build and no endpoint edits it -, and its history
+     (scope round 2026-10-15). Logic: catalogEditor in
+     resources/js/scope-admin-settings.js. --}}
+<div x-data="catalogEditor" x-show="tab === 'service-catalog'" x-cloak x-effect="tab === 'service-catalog' && start()">
+    <x-ui.card x-show="denied" x-cloak>
+        <p class="text-sm text-slate-600">Your role cannot view the Service Catalog.</p>
+    </x-ui.card>
+
+    <div x-show="!denied" class="space-y-3">
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="relative flex-1 min-w-[12rem]">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input type="search" x-model="search" aria-label="Search services" placeholder="Search by name, office or category" class="{{ $ui['search'] }}">
+            </div>
+            <select x-model="kind" aria-label="Kind of service" class="{{ $ui['select'] }}">
+                <option value="">Dokyu and Tulong</option>
+                <option value="dokyu">Dokyu (documents)</option>
+                <option value="tulong">Tulong (assistance)</option>
+            </select>
+            <select x-model="office" aria-label="Office" class="{{ $ui['select'] }} max-w-full sm:max-w-[15rem]">
+                <option value="">All offices</option>
+                <template x-for="o in officeFilterChoices" :key="o"><option :value="o" x-text="o"></option></template>
+            </select>
+            <select x-model="offered" aria-label="Offered or switched off" class="{{ $ui['select'] }}">
+                <option value="">Offered or not</option>
+                <option value="on">Offered</option>
+                <option value="off">Switched off</option>
+            </select>
+        </div>
+
+        {{-- New services are seeded from the contract, not created here: no
+             endpoint creates one at runtime. --}}
+        <div x-show="!canEdit" class="{{ $ui['lock'] }}">
+            <i data-lucide="lock" class="w-4 h-4 shrink-0 mt-0.5"></i>
+            <p><span class="font-semibold text-slate-600">View only.</span> The Service Catalog sets what every resident pays and submits, so only roles with Service Catalog editing can change it.</p>
+        </div>
+
+        <div x-show="loading" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /><x-ui.skeleton class="h-12 opacity-60" /></div>
+        <div x-show="failed && !loading" x-cloak><x-ui.error-state messageExpr="'Could not load the service catalog.'" retryExpr="load()" :retryable="true" /></div>
+
+        <div x-show="loaded && !loading && !failed" x-cloak>
+            <p class="text-xs text-ink-muted mb-2" x-text="summary"></p>
+            <x-ui.table>
+                <thead>
+                    <tr class="bg-well/70">
+                        <th class="{{ $ui['th'] }}">Service</th>
+                        <th class="{{ $ui['th'] }} hidden md:table-cell">Office</th>
+                        <th class="{{ $ui['th'] }} hidden sm:table-cell">Fee and time</th>
+                        <th class="{{ $ui['th'] }} hidden lg:table-cell">Version</th>
+                        <th class="{{ $ui['th'] }}">Status</th>
+                        <th class="px-4 py-2.5"><span class="sr-only">Open</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-brand-600/[.08]">
+                    <template x-for="s in shown" :key="s.key">
+                        <tr class="hover:bg-white/60 transition-colors cursor-pointer group" @click="edit(s)">
+                            <td class="px-4 py-3 min-w-[11rem]">
+                                <p class="text-slate-700 font-medium group-hover:text-brand-600 transition-colors" x-text="s.name"></p>
+                                <p class="text-[11px] text-ink-muted" x-text="kindLabel(s.type) + (s.category ? ' · ' + s.category : '')"></p>
+                                <p class="text-[11px] text-ink-muted md:hidden" x-text="s.office"></p>
+                                <p class="text-[11px] text-ink-muted sm:hidden" x-text="(s.fee || 'No fee set') + (s.days ? ' · ' + s.days : '')"></p>
+                            </td>
+                            <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-text="s.office"></td>
+                            <td class="px-4 py-3 hidden sm:table-cell">
+                                <p class="text-slate-700" x-text="s.fee || '—'"></p>
+                                <p class="text-[11px] text-ink-muted" x-text="s.days || ''"></p>
+                            </td>
+                            <td class="px-4 py-3 text-[11px] text-ink-muted hidden lg:table-cell" x-text="'v' + (s.version || 1) + ' · ' + plural(s.requirements, 'document', 'documents') + ' · ' + plural(s.steps, 'step', 'steps')"></td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2 py-0.5 ring-1 ring-inset whitespace-nowrap" :class="s.active ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-slate-100 text-slate-600 ring-slate-200'">
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="s.active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                                    <span x-text="s.active ? 'Offered' : 'Switched off'"></span>
+                                </span>
+                                <span x-show="s.policy_blocked" class="block mt-1 text-[10.5px] font-medium text-amber-700">Awaiting LGU ruling</span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <button type="button" @click.stop="edit(s)" :aria-label="(canEdit ? 'Edit ' : 'View ') + s.name" class="p-1.5 rounded-lg text-ink-muted hover:text-brand-600 hover:bg-white/70 transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </x-ui.table>
+            <div x-show="!shown.length" class="surface-glass rounded-[26px] mt-3">
+                <x-ui.empty-state icon="search-x" title="No services match" description="Change the search or the filters." />
+            </div>
+        </div>
+    </div>
+
+    {{-- ---------------- One service ---------------- --}}
+    <x-ui.modal title="Service Details" maxWidth="xl">
+        <div x-show="detailLoading" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-40 opacity-80" /></div>
+        <div x-show="detailFailed && !detailLoading" x-cloak><x-ui.error-state messageExpr="'Could not load this service.'" retryExpr="loadDetail()" :retryable="true" /></div>
+        <template x-if="svc && !detailLoading">
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-base font-bold text-ink break-words" x-text="svc.name"></p>
+                        <p class="text-[11px] text-ink-muted font-mono break-all" x-text="svc.key"></p>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-brand-50 text-brand-700" x-text="kindLabel(svc.type)"></span>
+                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-slate-100 text-slate-600" x-text="'Version ' + (svc.current?.version || 1)"></span>
+                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5" :class="svc.active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'" x-text="svc.active ? 'Offered' : 'Switched off'"></span>
+                    </div>
+                </div>
+
+                <div x-show="svc.policy_blocked" class="{{ $ui['warn'] }}">
+                    <i data-lucide="triangle-alert" class="w-4 h-4 shrink-0 mt-px"></i>
+                    <p><span class="font-semibold">Awaiting an LGU ruling.</span> <span x-text="svc.policy_gap_note"></span> Its fee, documents and steps cannot change until then; its details can.</p>
+                </div>
+                <div x-show="!rulesShapeOk" class="{{ $ui['note'] }}">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
+                    <p>This service's documents or steps are stored in a shape this screen does not edit, so they are shown read only.</p>
+                </div>
+
+                <nav aria-label="Service sections" class="flex gap-1 overflow-x-auto scrollbar-thin surface-pressed-sm rounded-2xl p-1">
+                    @foreach([['details', 'info', 'Details'], ['fee', 'banknote', 'Fee & time'], ['documents', 'file-check', 'Required documents'], ['steps', 'list-ordered', 'Processing steps'], ['form', 'text-cursor-input', 'Request form'], ['history', 'history', 'History']] as [$sectionKey, $sectionIcon, $sectionLabel])
+                        <button type="button" @click="showSection('{{ $sectionKey }}')" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap transition-colors" :class="section === '{{ $sectionKey }}' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" :aria-current="section === '{{ $sectionKey }}' ? 'true' : null"><i data-lucide="{{ $sectionIcon }}" class="w-3.5 h-3.5"></i>{{ $sectionLabel }}</button>
+                    @endforeach
+                </nav>
+
+                {{-- Details: not versioned; a request keeps the office it was filed with. --}}
+                <section x-show="section === 'details'" class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <label for="svc-name" class="{{ $ui['label'] }}">Service name</label>
+                            <input id="svc-name" type="text" x-model="details.name" maxlength="160" :disabled="!canEdit" class="{{ $ui['input'] }}">
+                        </div>
+                        <div>
+                            <label for="svc-office" class="{{ $ui['label'] }}">Responsible office</label>
+                            <template x-if="!isBarangayService">
+                                <select id="svc-office" x-model="details.office" :disabled="!canEdit" class="{{ $ui['input'] }}">
+                                    <template x-for="o in officeOptions" :key="o"><option :value="o" x-text="o" :selected="o === details.office"></option></template>
+                                </select>
+                            </template>
+                            <template x-if="isBarangayService">
+                                <p class="text-sm text-slate-700 py-2.5 px-4 rounded-2xl bg-slate-50">Barangay Office (each barangay's own hall)</p>
+                            </template>
+                            <p class="text-[11px] text-ink-muted mt-1" x-text="isBarangayService ? 'A barangay service stays with the barangays: it cannot move to a municipal office.' : 'From the Departments list under User Management.'"></p>
+                        </div>
+                        <div>
+                            <label for="svc-category" class="{{ $ui['label'] }}">Category</label>
+                            <input id="svc-category" type="text" list="svc-categories" x-model="details.category" maxlength="80" :disabled="!canEdit" class="{{ $ui['input'] }}">
+                            <datalist id="svc-categories"><template x-for="c in categoryChoices" :key="c"><option :value="c"></option></template></datalist>
+                        </div>
+                    </div>
+                    <label class="flex items-start gap-3 rounded-2xl border border-brand-600/10 bg-white/60 p-3.5" :class="canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-80'">
+                        <input type="checkbox" x-model="details.active" :disabled="!canEdit" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
+                        <span>
+                            <span class="block text-sm font-medium text-slate-700">Offered to residents</span>
+                            <span class="block text-xs text-ink-muted mt-0.5">A switched-off service takes no new requests and leaves the portals' service lists. Requests already filed carry on.</span>
+                        </span>
+                    </label>
+                    <div x-show="svc.active && !details.active" class="{{ $ui['warn'] }}">
+                        <i data-lucide="triangle-alert" class="w-4 h-4 shrink-0 mt-px"></i>
+                        <p>Saving switches this service off for residents.</p>
+                    </div>
+                    <p x-show="detailsError" x-text="detailsError" role="alert" class="{{ $ui['error'] }}"></p>
+                </section>
+
+                {{-- Fee and time: part of the version. --}}
+                <section x-show="section === 'fee'" class="space-y-3">
+                    <p class="text-xs text-ink-muted">The fee, time, documents and steps are published together as version <span x-text="nextVersion"></span>. Requests already filed keep the version they were filed under.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="svc-fee" class="{{ $ui['label'] }}">Fee</label>
+                            <input id="svc-fee" type="text" x-model="rules.fee" maxlength="120" :disabled="rulesLocked" :aria-invalid="feeChanged && feeError ? 'true' : 'false'" aria-describedby="svc-fee-hint" class="{{ $ui['input'] }}">
+                            <p id="svc-fee-hint" class="text-[11px] text-ink-muted mt-1">Free, an amount such as ₱155.00, or a rule such as “₱5.00 base + ₱1.00 per ₱1,000 income”.</p>
+                            <p x-show="feeChanged && feeError" x-text="feeError" class="{{ $ui['error'] }}"></p>
+                        </div>
+                        <div>
+                            <label for="svc-days" class="{{ $ui['label'] }}">Processing time</label>
+                            <input id="svc-days" type="text" x-model="rules.days" maxlength="120" placeholder="e.g. 1-2 working days" :disabled="rulesLocked" class="{{ $ui['input'] }}">
+                        </div>
+                    </div>
+                </section>
+
+                {{-- Required documents and processing steps: the same list editor. --}}
+                @foreach([['documents', 'requirements', 'document', 'newReq', 'addRequirement', 'What a resident attaches or brings, in the order the portals list them.', 'No documents required.', 'Add a required document'], ['steps', 'process', 'step', 'newStep', 'addStep', 'How a request moves through the office, first to last, as residents see it.', 'No steps listed.', 'Add a processing step']] as [$listSection, $listKey, $listNoun, $listInput, $listAdd, $listHelp, $listEmpty, $listPlaceholder])
+                    <section x-show="section === '{{ $listSection }}'" class="space-y-2">
+                        <p class="text-xs text-ink-muted">{{ $listHelp }}</p>
+                        <ol class="space-y-1.5">
+                            <template x-for="(entry, i) in rules.{{ $listKey }}" :key="'{{ $listKey }}-' + i">
+                                <li class="flex items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-1.5 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
+                                    <span class="w-5 shrink-0 text-right text-[11px] font-semibold text-ink-muted" x-text="(i + 1) + '.'"></span>
+                                    <input type="text" x-model="rules.{{ $listKey }}[i]" :disabled="rulesLocked" :aria-label="'{{ ucfirst($listNoun) }} ' + (i + 1)" class="flex-1 min-w-0 bg-transparent border-0 p-0 py-1 text-sm text-slate-700 focus:outline-none focus:ring-0 disabled:opacity-70">
+                                    <span class="flex items-center shrink-0" x-show="!rulesLocked">
+                                        <button type="button" @click="move('{{ $listKey }}', i, -1)" :disabled="i === 0" :aria-label="'Move {{ $listNoun }} ' + (i + 1) + ' up'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="move('{{ $listKey }}', i, 1)" :disabled="i === rules.{{ $listKey }}.length - 1" :aria-label="'Move {{ $listNoun }} ' + (i + 1) + ' down'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="remove('{{ $listKey }}', i)" :aria-label="'Remove {{ $listNoun }} ' + (i + 1)" class="{{ $ui['iconBtnDanger'] }}"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                    </span>
+                                </li>
+                            </template>
+                        </ol>
+                        <p x-show="!rules.{{ $listKey }}.length" class="text-xs text-ink-muted px-1">{{ $listEmpty }}</p>
+                        <div class="flex items-center gap-2 pt-1" x-show="!rulesLocked">
+                            <label for="svc-new-{{ $listSection }}" class="sr-only">{{ $listPlaceholder }}</label>
+                            <input id="svc-new-{{ $listSection }}" type="text" x-model="{{ $listInput }}" @keydown.enter.prevent="{{ $listAdd }}()" placeholder="{{ $listPlaceholder }}…" class="{{ $ui['inputSm'] }} flex-1 min-w-0">
+                            <x-ui.button variant="secondary" size="sm" icon="plus" @click="{{ $listAdd }}()">Add</x-ui.button>
+                        </div>
+                    </section>
+                @endforeach
+
+                <p x-show="rulesError && ['fee', 'documents', 'steps'].includes(section)" x-text="rulesError" role="alert" class="{{ $ui['error'] }}"></p>
+
+                {{-- The request form, read only. --}}
+                <section x-show="section === 'form'" class="space-y-3">
+                    <div class="{{ $ui['note'] }}">
+                        <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
+                        <p>Shown for reference. The form residents fill in is built into the portals, so its fields cannot be changed here.</p>
+                    </div>
+                    <div x-show="!spec && !specFailed" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-10 opacity-80" /></div>
+                    <p x-show="specFailed" class="text-xs text-rose-600">The form could not be loaded. <button type="button" class="underline" @click="loadSpec()">Try again</button></p>
+                    <template x-for="(step, si) in formSteps" :key="'step-' + si">
+                        <div class="rounded-2xl border border-brand-600/10 bg-white/60 p-3.5">
+                            <p class="text-xs font-semibold text-ink" x-text="formSteps.length > 1 || step.label ? 'Step ' + (si + 1) + (step.label ? ': ' + step.label : '') : 'Fields'"></p>
+                            <ul class="mt-1.5 divide-y divide-brand-600/[.06]">
+                                <template x-for="(f, fi) in step.fields" :key="'f-' + si + '-' + fi">
+                                    <li class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-1.5">
+                                        <span class="text-sm text-slate-700" x-text="f.label || f.key"></span>
+                                        <span class="text-[11px] text-ink-muted" x-text="fieldKind(f)"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+                    <p x-show="spec && !formSteps.length" class="text-xs text-ink-muted">This service uses the standard request form: the purpose and the attachments.</p>
+                    <p x-show="entitlement" class="text-xs text-slate-600"><span class="font-semibold">Entitlement:</span> <span x-text="entitlement"></span></p>
+                </section>
+
+                {{-- History: the published versions, and detail changes from the audit log. --}}
+                <section x-show="section === 'history'" class="space-y-3">
+                    <p class="text-xs text-ink-muted">Each published version, newest first. A version is in force from the moment it is published, for requests filed from then on.</p>
+                    <ol class="space-y-2">
+                        <template x-for="v in history" :key="'v-' + v.version">
+                            <li class="rounded-2xl border border-brand-600/10 bg-white/60 p-3.5">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <p class="text-sm font-semibold text-ink" x-text="'Version ' + v.version"></p>
+                                    <span x-show="v.current" class="text-[10.5px] font-semibold rounded-full px-2 py-0.5 bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200">Current</span>
+                                </div>
+                                <p class="text-[11px] text-ink-muted mt-0.5" x-text="'In force from ' + (when(v.published_at) || 'the start') + ' · ' + v.by"></p>
+                                <ul class="mt-1.5 space-y-0.5 text-xs text-slate-600 list-disc pl-4">
+                                    <template x-for="(c, ci) in v.changes" :key="ci"><li x-text="c"></li></template>
+                                </ul>
+                            </li>
+                        </template>
+                    </ol>
+                    <p x-show="!history.length" class="text-xs text-ink-muted">No versions recorded.</p>
+
+                    <div x-show="canSeeLog" class="pt-1">
+                        <p class="text-xs font-semibold text-ink mb-1.5">Changes to the name, office, category and availability</p>
+                        <p x-show="logLoading" class="text-xs text-ink-muted">Loading…</p>
+                        <p x-show="logFailed && !logLoading" class="text-xs text-rose-600">These changes could not be loaded. <button type="button" class="underline" @click="loadLog()">Try again</button></p>
+                        <p x-show="logLoaded && !log.length" class="text-xs text-ink-muted">None recorded.</p>
+                        <ul class="space-y-1.5">
+                            <template x-for="entry in log" :key="entry.id">
+                                <li class="rounded-xl bg-slate-50 px-3 py-2">
+                                    <p class="text-[11px] text-ink-muted" x-text="when(entry.time) + ' · ' + entry.user"></p>
+                                    <template x-for="fd in entry.fields" :key="fd.field">
+                                        <p class="text-xs text-slate-700 break-words"><span class="font-medium" x-text="fd.label + ':'"></span> <span x-text="fd.from"></span> → <span x-text="fd.to"></span></p>
+                                    </template>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </template>
+
+        <x-slot:footer>
+            <p class="mr-auto hidden sm:block text-[11px] font-medium text-amber-700" x-show="detailsDirty || rulesDirty" x-cloak>Unsaved changes</p>
+            <x-ui.button variant="secondary" size="sm" @click="open = false">Close</x-ui.button>
+            <x-ui.button size="sm" icon="check" x-show="canEdit && svc && section === 'details'" x-bind:disabled="savingDetails || !detailsDirty" @click="saveDetails()"><span x-text="savingDetails ? 'Saving…' : 'Save details'"></span></x-ui.button>
+            <x-ui.button size="sm" icon="upload" x-show="svc && !rulesLocked && ['fee', 'documents', 'steps'].includes(section)" x-bind:disabled="publishing || !rulesDirty" @click="publish()"><span x-text="publishing ? 'Publishing…' : 'Publish version ' + nextVersion"></span></x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
+</div>

@@ -12,9 +12,13 @@
     // on every build, so each deploy rewrote every page that contains one -- and
     // it made "does this refactor change the rendered output?" unanswerable.
     // A per-request counter is unique within a page and identical across builds,
-    // because the render order is deterministic.
-    static $modalSeq = 0;
-    $titleId = 'modal-title-' . (++$modalSeq);
+    // because the render order is deterministic. Kept on the request: a
+    // `static` here restarted with every include, so every titled dialog on a
+    // page was modal-title-1 and announced with the first one's title
+    // (scope round 2026-10-15).
+    $modalSeq = (int) request()->attributes->get('esperanza_modal_seq', 0) + 1;
+    request()->attributes->set('esperanza_modal_seq', $modalSeq);
+    $titleId = 'modal-title-' . $modalSeq;
 @endphp
 
 <template x-teleport="body">

@@ -388,6 +388,47 @@
             </div>
             </template>
 
+            {{-- Record history (scope round 2026-10-15): every change to this
+                 record from the audit log, who made it and each field before
+                 and after. GET /admin/residents/{ref}/history, read only when
+                 opened; component residentHistory. --}}
+            <div x-show="!editing" x-data="residentHistory" class="surface-glass rounded-[26px] p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5"></i>Record History</h3>
+                    <div class="flex items-center gap-1">
+                        <button type="button" x-show="rhOpen" x-cloak @click="rhLoad()" :disabled="rhLoading" aria-label="Refresh the history" class="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-white/60 disabled:opacity-50"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+                        <button type="button" @click="rhToggle()" :aria-expanded="rhOpen" class="text-xs font-semibold text-brand-700 hover:underline px-1.5 py-1" x-text="rhOpen ? 'Hide' : 'Show changes'"></button>
+                    </div>
+                </div>
+                <div x-show="rhOpen" x-cloak class="mt-3 space-y-2">
+                    <div x-show="rhLoading && !rhRows.length" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-14" /><x-ui.skeleton class="h-14 opacity-80" /></div>
+                    <p x-show="rhFailed" class="text-xs text-rose-700" role="alert">Could not load the history. <button type="button" class="underline" @click="rhLoad()">Try again</button></p>
+                    <p x-show="!rhLoading && !rhFailed && !rhRows.length" class="text-xs text-ink-muted">No changes recorded for this record yet.</p>
+                    <p x-show="!rhSensitive && rhRows.length" class="text-[11px] text-ink-muted">Sensitive details (birth date, contact, sitio, income) show as (hidden) for your role.</p>
+                    <ol x-show="rhRows.length" class="space-y-2">
+                        <template x-for="(h, k) in rhRows" :key="k">
+                            <li class="rounded-xl border border-brand-600/10 bg-white/70 px-3 py-2.5">
+                                <p class="flex flex-wrap items-baseline gap-x-2">
+                                    <span class="text-sm font-semibold text-ink" x-text="rhAction(h.action)"></span>
+                                    <span class="text-[11px] text-ink-muted" x-text="[when(h.at), h.actor || 'System'].filter(Boolean).join(' · ')"></span>
+                                </p>
+                                <p x-show="h.note" class="text-xs text-slate-600 mt-0.5 break-words" x-text="'Reason: ' + h.note"></p>
+                                <ul x-show="(h.changes || []).length" class="mt-1.5 space-y-1">
+                                    <template x-for="c in (h.changes || [])" :key="c.field">
+                                        <li class="text-xs text-slate-700 break-words">
+                                            <span class="font-semibold" x-text="rhField(c.field) + ':'"></span>
+                                            <span class="text-ink-muted" x-text="rhValue(c.from)"></span>
+                                            <span aria-hidden="true">→</span><span class="sr-only">changed to</span>
+                                            <span class="font-medium text-ink" x-text="rhValue(c.to)"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </li>
+                        </template>
+                    </ol>
+                </div>
+            </div>
+
             {{-- ── EDIT FORM ── --}}
             <template x-if="editing">
                 <div class="max-w-2xl space-y-4">

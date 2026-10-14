@@ -29,6 +29,14 @@ Route::view('/citizen/directory', 'citizen.directory')->name('citizen.directory'
 Route::view('/citizen/announcements', 'citizen.announcements')->name('citizen.announcements');
 Route::view('/citizen/events', 'citizen.events')->name('citizen.events');
 Route::view('/citizen/settings', 'citizen.settings')->name('citizen.settings');
+// Scope round 2026-10-15: every service in one list (fees, requirements, steps,
+// office) with a start-request link, and appointments at an office.
+Route::view('/citizen/services', 'citizen.services')->name('citizen.services');
+Route::view('/citizen/appointments', 'citizen.appointments')->name('citizen.appointments');
+
+// Public document verification: the QR on an issued document opens this page
+// with ?code=, and anyone can type a code or control number (2026-10-15).
+Route::view('/verify', 'verify')->name('verify');
 
 // Help & Support — FAQs, Tutorials, and Support merged into one page with tabs.
 // The three route names are kept so existing links deep-link into the right tab.
@@ -43,6 +51,9 @@ Route::view('/citizen/legal/terms', 'citizen.legal', ['tab' => 'terms'])->name('
 
 // Administrative Portal
 Route::view('/admin/dashboard', 'admin.dashboard')->name('admin.dashboard');
+// Appointments: schedules, closed days and bookings, as a Dashboard tab rather
+// than another sidebar entry (2026-10-15).
+Route::view('/admin/dashboard/appointments', 'admin.dashboard', ['view' => 'appointments'])->name('admin.appointments');
 Route::view('/admin/document-requests', 'admin.document-requests')->name('admin.document-requests');
 Route::view('/admin/assistance-requests', 'admin.assistance-requests')->name('admin.assistance-requests');
 Route::view('/admin/payments', 'admin.payments')->name('admin.payments');
@@ -62,6 +73,8 @@ Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita']
 Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');
 Route::view('/admin/communications/blotter', 'admin.communications', ['tab' => 'blotter'])->name('admin.communications.blotter');
 Route::view('/admin/communications/banners', 'admin.communications', ['tab' => 'banners'])->name('admin.communications.banners');
+// Feedback and support tickets, routed to the office that owns them (2026-10-15).
+Route::view('/admin/communications/feedback', 'admin.communications', ['tab' => 'feedback'])->name('admin.communications.feedback');
 Route::view('/admin/announcements', 'admin.communications', ['tab' => 'balita'])->name('admin.announcements');
 
 // Reports & Analytics — merged into one page with tabs.
@@ -72,6 +85,7 @@ Route::view('/admin/reports/analytics', 'admin.reports', ['tab' => 'analytics'])
 Route::view('/admin/users', 'admin.users', ['tab' => 'personnel'])->name('admin.users');
 Route::view('/admin/users/roles', 'admin.users', ['tab' => 'roles'])->name('admin.roles');
 Route::view('/admin/users/permissions', 'admin.users', ['tab' => 'permissions'])->name('admin.permissions');
+Route::view('/admin/users/departments', 'admin.users', ['tab' => 'departments'])->name('admin.departments');
 
 // Internal Forms — staff self-service forms (HR, GSO, Agriculture, MSWD), separate from citizen-facing Dokyu/Tulong.
 Route::view('/admin/internal-forms', 'admin.internal-forms', ['office' => 'hr'])->name('admin.internal-forms');
@@ -80,7 +94,12 @@ Route::view('/admin/internal-forms', 'admin.internal-forms', ['office' => 'hr'])
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');
 Route::view('/admin/settings/branding', 'admin.settings', ['tab' => 'branding'])->name('admin.branding');
 Route::view('/admin/settings/audit-logs', 'admin.settings', ['tab' => 'audit-logs'])->name('admin.audit-logs');
-Route::view('/admin/settings/support', 'admin.settings', ['tab' => 'support'])->name('admin.support');
+// Support tickets moved to Communications > Feedback (2026-10-15); the old
+// address still lands there.
+Route::view('/admin/settings/support', 'admin.communications', ['tab' => 'feedback'])->name('admin.support');
+Route::view('/admin/settings/service-catalog', 'admin.settings', ['tab' => 'service-catalog'])->name('admin.settings.catalog');
+Route::view('/admin/settings/templates', 'admin.settings', ['tab' => 'templates'])->name('admin.settings.templates');
+Route::view('/admin/settings/system', 'admin.settings', ['tab' => 'system'])->name('admin.settings.system');
 Route::view('/admin/settings/site-content', 'admin.settings', ['tab' => 'site-content'])->name('admin.settings.site-content');
 
 // Sakuna — Disaster Risk Reduction, Emergency Operations, Evacuation, Relief, and Recovery Management.

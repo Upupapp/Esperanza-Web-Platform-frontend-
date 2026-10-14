@@ -1,0 +1,11 @@
+{
+    "name": "esperanza-e2e",
+    "private": true,
+    "description": "Browser end-to-end checks of the Esperanza website (see README.md). Not part of the site build.",
+    "scripts": {
+        "test": "node run.cjs"
+    },
+    "dependencies": {
+        "playwright": "1.62.1"
+    }
+}

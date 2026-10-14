@@ -216,6 +216,9 @@
                 // resident's own request detail.
                 r.releaseProof = d.proof_of_release?.file || null;
                 r.history = d.history || [];
+                // The documents issued for it (control number, code, QR), for
+                // Track Request and the printed copy (scope round 2026-10-15).
+                r.issuedDocuments = d.issued_documents || [];
                 r.requirements = (d.requirements || []).map((q) => ({
                     key: q.key,
                     name: q.label,
@@ -1703,6 +1706,9 @@
 
                         <x-citizen.request-fee />
 
+                        {{-- Slip, appointment, issued documents and the survey (scope round 2026-10-15). --}}
+                        <x-citizen.scope.request-extras kind="dokyu" />
+
                         <div class="grid grid-cols-2 gap-3 mt-5">
                             <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5">
                                 <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-1"><x-ui.t fil="Inaasahang Petsa ng Release" en="Expected Release" /></p>
@@ -1720,6 +1726,8 @@
                             <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.address"></span></p>
                             <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="phone" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
                         </div>
+
+                        <x-citizen.scope.request-timeline />
                     </div>
                 </template>
 
@@ -1757,6 +1765,7 @@
                                     seal="selectedRequestBarangayInfo?.seal"
                                     punongBarangay="selectedRequestBarangayInfo?.officials?.punong_barangay"
                                     barangaySecretary="selectedRequestBarangayInfo?.officials?.barangay_secretary"
+                                    verify="selectedRequest.issuedDocuments"
                                 />
                             </template>
                             <template x-if="resolvedDocument?.previewType === 'municipal_request'">
@@ -1764,6 +1773,7 @@
                                     docKey="resolvedDocument.docKey"
                                     bind="resolvedDocument.snapshot"
                                     title="resolvedDocument.certTitle"
+                                    verify="selectedRequest.issuedDocuments"
                                     office="selectedRequest.office"
                                     formNo="selectedRequest.formNo"
                                     officiant="selectedRequest.officiant"

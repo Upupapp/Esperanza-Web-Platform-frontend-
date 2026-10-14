@@ -36,6 +36,11 @@
         </a>
     </div>
 
+    {{-- Anyone holding a document can check it, without an account (scope round 2026-10-15). --}}
+    <a href="{{ route('verify') }}" class="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 px-4 py-3 text-sm font-medium text-ink-body hover:border-brand-300 hover:text-brand-600 transition-colors animate-fade-up" style="animation-delay: 160ms">
+        <i data-lucide="shield-check" class="w-4 h-4 text-brand-600"></i><x-ui.t fil="Suriin ang dokumento" en="Verify a document" />
+    </a>
+
     <p class="text-center text-sm text-ink-muted mt-7">
         <x-ui.t fil="Bago sa Esperanza LGU?" en="New to Esperanza LGU?" /> <a href="{{ route('citizen.register') }}" class="text-brand-600 font-medium hover:underline"><x-ui.t fil="Gumawa ng account ng mamamayan" en="Create a citizen account" /></a>
     </p>

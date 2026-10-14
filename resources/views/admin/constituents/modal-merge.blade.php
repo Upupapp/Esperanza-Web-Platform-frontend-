@@ -47,6 +47,8 @@
             this.merging = false;
             this.open = false;
             $dispatch('toast', { message: 'Merged ' + result.merged + ' into ' + result.kept + '. The secondary record has been archived.', variant: 'success' });
+            // The Merge history on the Data Quality tab lists it, with its undo (scope round 2026-10-15).
+            window.dispatchEvent(new CustomEvent('merges-changed'));
         } catch (err) {
             this.merging = false;
             $dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not complete the merge.', variant: 'error' });
@@ -69,7 +71,7 @@
                 <p class="text-xs text-ink-muted mt-0.5 max-w-2xl">
                     Review both records side-by-side, choose which one to keep, and confirm.
                     The other record is archived (soft-deleted) and its linked rows repointed to the kept record.
-                    A System Administrator can revert this merge if needed — it is not permanent.
+                    It is not permanent: Merge history on the Data Quality tab can undo it.
                 </p>
             </div>
 
@@ -213,7 +215,7 @@
                     <p class="text-xs font-bold text-amber-800">This is a significant change.</p>
                     <p class="text-xs text-amber-700 mt-0.5 leading-relaxed">
                         The archived record's household/family links move to the kept record. This is logged and can be
-                        reverted by a System Administrator, but should not be done casually.
+                        undone from Merge history, but should not be done casually.
                     </p>
                 </div>
             </div>

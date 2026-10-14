@@ -9,7 +9,7 @@
         'dashboard' => 'Home', 'document-requests' => 'Dokyu', 'assistance-requests' => 'Tulong',
         'announcements' => 'Balita', 'events' => 'Mga Kaganapan', 'directory' => 'Direktoryo ng Pamahalaan',
         'help' => 'Suporta', 'profile' => 'Aking Profile', 'notifications' => 'Mga Abiso', 'settings' => 'Mga Setting',
-        'legal' => 'Privacy at mga Tuntunin',
+        'legal' => 'Privacy at mga Tuntunin', 'services' => 'Serbisyo', 'appointments' => 'Appointment',
     ];
     $filSubtitles = [
         'dashboard' => 'Narito ang buod ng iyong account.',
@@ -23,6 +23,8 @@
         'notifications' => 'Lahat ng update sa iyong account, nasa isang lugar.',
         'settings' => 'Pamahalaan ang iyong mga kagustuhan sa account.',
         'legal' => 'Ang Patakaran sa Privacy at ang mga Tuntunin at Kundisyon.',
+        'services' => 'Lahat ng dokumento at programang tulong na iniaalok ng munisipyo.',
+        'appointments' => 'Mag-book ng oras sa opisina at tingnan ang iyong mga appointment.',
     ];
     $filTitle = $filTitles[$active] ?? $title;
     $filSubtitle = $filSubtitles[$active] ?? $subtitle;
@@ -35,8 +37,10 @@
         'portal' => 'citizen',
         'pages' => [
             ['en' => 'Dashboard', 'fil' => 'Home', 'icon' => 'layout-dashboard', 'href' => route('citizen.dashboard')],
+            ['en' => 'Services', 'fil' => 'Serbisyo', 'icon' => 'layout-grid', 'href' => route('citizen.services')],
             ['en' => 'Dokyu — Document Requests', 'fil' => 'Dokyu — Kahilingan sa Dokumento', 'icon' => 'file-text', 'href' => route('citizen.document-requests')],
             ['en' => 'Tulong — Assistance Requests', 'fil' => 'Tulong — Kahilingan sa Tulong', 'icon' => 'hand-heart', 'href' => route('citizen.assistance-requests')],
+            ['en' => 'Appointments', 'fil' => 'Appointment', 'icon' => 'calendar-clock', 'href' => route('citizen.appointments')],
             ['en' => 'Balita — Announcements', 'fil' => 'Balita', 'icon' => 'megaphone', 'href' => route('citizen.announcements')],
             ['en' => 'Events', 'fil' => 'Mga Kaganapan', 'icon' => 'calendar', 'href' => route('citizen.events')],
             ['en' => 'Government Directory', 'fil' => 'Direktoryo ng Pamahalaan', 'icon' => 'building-2', 'href' => route('citizen.directory')],
@@ -181,7 +185,8 @@
             </div>
         </div>
 
-        <x-ui.global-search :config="$searchConfig" placeholder-en="Search dokyu, tulong, balita..." placeholder-fil="Maghanap ng dokyu, tulong, balita..." width="w-56 2xl:w-[360px]" />
+        {{-- mobile: a search button at phone width opens it full width (scope round 2026-10-15). --}}
+        <x-ui.global-search :config="$searchConfig" placeholder-en="Search dokyu, tulong, balita..." placeholder-fil="Maghanap ng dokyu, tulong, balita..." width="w-56 2xl:w-[360px]" mobile />
 
         {{-- Real, request- and account-driven notifications from
              $store.citizenNotifications (production-readiness programme,

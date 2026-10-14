@@ -25,6 +25,9 @@
      same object (the request list, citizen info panel, etc). --}}
 @props([
     'docKey', 'bind', 'title', 'subtitle', 'barangay', 'seal', 'punongBarangay', 'barangaySecretary', 'editing' => 'false',
+    // The request's issued documents (control number, code, QR) and the
+    // template's note, printed at the foot (scope round 2026-10-15).
+    'verify' => 'null',
     // Alpine expression evaluating to a {src, opacity, size, position,
     // paperColor, decorative} object — see document-watermark.blade.php's
     // header comment for why this exists. Same object gets forwarded to
@@ -107,8 +110,8 @@
     </div>
 
     <div class="relative border-t border-slate-300 pt-4 text-center mb-5">
-        <h3 class="text-lg font-bold text-navy-900 uppercase tracking-wide underline decoration-2 underline-offset-4" x-text="{{ $title }}"></h3>
-        <p class="text-xs font-medium text-slate-500 mt-1" x-show="{{ $subtitle }}" x-text="{{ $subtitle }}"></p>
+        <h3 class="text-lg font-bold text-navy-900 uppercase tracking-wide underline decoration-2 underline-offset-4" x-text="$store.docTemplates.title({{ $docKey }}, {{ $title }})"></h3>
+        <p class="text-xs font-medium text-slate-500 mt-1" x-show="$store.docTemplates.subtitle({{ $docKey }}, {{ $subtitle }})" x-text="$store.docTemplates.subtitle({{ $docKey }}, {{ $subtitle }})"></p>
     </div>
 
     <div class="relative text-[13px] leading-relaxed text-slate-800 space-y-3">
@@ -361,6 +364,8 @@
     <div class="relative mt-4 text-[11px] text-slate-500" x-show="{{ $barangaySecretary }}">
         Released by: <span class="font-semibold text-slate-700" x-text="{{ $barangaySecretary }}"></span> — Barangay Secretary
     </div>
+
+    <x-documents.verify-strip :doc="$verify" :doc-key="$docKey" />
 
     <p class="relative text-center text-[10px] italic text-slate-500 mt-5">Not Valid without Barangay Seal</p>
     </div>

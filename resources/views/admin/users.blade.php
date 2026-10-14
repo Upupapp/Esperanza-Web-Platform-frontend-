@@ -10,10 +10,36 @@
     // baked in ("46 personnel") that could never match reality.
     $permissionModules = config('esperanza_rbac.permission_modules');
     $tab = $tab ?? 'personnel';
+    // Classes the Departments tab partial shares with Settings' (scope round 2026-10-15).
+    $ui = [
+        'label' => 'block text-xs font-semibold text-slate-700 mb-1',
+        'input' => 'w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed',
+        'search' => 'w-full rounded-2xl border-0 surface-pressed-sm py-2 pl-9 pr-3 text-xs text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard',
+        'select' => 'text-xs rounded-2xl py-2 pl-3 pr-8 border-0 surface-pressed-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none',
+        'th' => 'px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted',
+        'note' => 'flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-xs text-slate-600',
+        'warn' => 'flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-800',
+        'error' => 'text-xs text-rose-600 mt-1',
+    ];
 @endphp
 
 <x-layouts.admin title="User Management" subtitle="Manage LGU personnel accounts, roles, and access." active="users">
-    <div x-data="{ tab: '{{ $tab }}' }" class="animate-fade-up">
+    <div
+        x-data="{
+            tab: @js($tab),
+            // Each tab's own address, so a reload stays on it (scope round 2026-10-15).
+            tabRoutes: { personnel: '/admin/users', roles: '/admin/users/roles', permissions: '/admin/users/permissions', departments: '/admin/users/departments' },
+            go(t) {
+                this.tab = t;
+                const url = this.tabRoutes[t] || ('/admin/users?tab=' + t);
+                if (window.location.pathname.replace(/\/+$/, '') + window.location.search !== url) history.replaceState(null, '', url);
+            },
+            init() {
+                if (this.tab === 'personnel' && new URLSearchParams(window.location.search).get('tab') === 'matrix') this.tab = 'matrix';
+            },
+        }"
+        class="animate-fade-up"
+    >
     {{--
         Note on structure: each tab below (and the Add Personnel wizard
         inside the Personnel tab) owns a fully independent x-data scope and
@@ -34,12 +60,19 @@
 
         <div x-show="$store.session.can('user_management')" x-cloak>
 
-        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-4">
-            <button @click="tab = 'personnel'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'personnel' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="user-cog" class="w-3.5 h-3.5"></i>Personnel</button>
-            <button @click="tab = 'roles'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'roles' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>Roles</button>
-            <button @click="tab = 'permissions'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'permissions' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="key-round" class="w-3.5 h-3.5"></i>Permissions</button>
-            <button @click="tab = 'matrix'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'matrix' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="table-properties" class="w-3.5 h-3.5"></i>Dokyu &amp; Tulong Matrix</button>
-        </div>
+        {{-- Scrolls sideways at phone width instead of the page (scope round 2026-10-15). --}}
+        <nav aria-label="User Management sections" class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full overflow-x-auto scrollbar-thin mb-4">
+            @foreach(['personnel' => ['user-cog', 'Personnel'], 'roles' => ['shield-check', 'Roles'], 'permissions' => ['key-round', 'Permissions'], 'departments' => ['building-2', 'Departments'], 'matrix' => ['table-properties', 'Dokyu & Tulong Matrix']] as $tabKey => [$tabIcon, $tabLabel])
+                <button
+                    type="button"
+                    @click="go('{{ $tabKey }}')"
+                    @if($tabKey === 'departments') x-show="$store.session.canPerm('um_personnel', 'view')" x-cloak @endif
+                    class="shrink-0 whitespace-nowrap px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
+                    :class="tab === '{{ $tabKey }}' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"
+                    :aria-current="tab === '{{ $tabKey }}' ? 'page' : null"
+                ><i data-lucide="{{ $tabIcon }}" class="w-3.5 h-3.5"></i>{{ $tabLabel }}</button>
+            @endforeach
+        </nav>
 
         {{-- ============================= PERSONNEL ============================= --}}
         <div
@@ -73,14 +106,23 @@
                     this.edit = { id: u.id, name: u.name, email: u.email || '', roleKey: u.roleKey, dept: u.dept, scope: u.scope, status: u.status, original: { ...u } };
                     this.editError = ''; this.tempPassword = ''; this.resetMessage = '';
                     this.editOpen = true;
+                    // The active offices of the Departments tab (GET /admin/offices); the
+                    // directory's office names only when that list cannot be read (scope
+                    // round 2026-10-15). Read every time: an office may have been added.
+                    this.officeNames().then((names) => { if (names.length) this.editDepartments = names; });
                     if (!this.editRoles.length) {
                         try {
-                            const [rolesResult, barangaysResult, directoryResult] = await Promise.all([$api.get('/admin/roles'), $api.get('/barangays'), $api.get('/directory')]);
+                            const [rolesResult, barangaysResult] = await Promise.all([$api.get('/admin/roles'), $api.get('/barangays')]);
                             this.editRoles = (rolesResult.data || []).filter((r) => r.key !== 'citizen');
                             this.editBarangays = (barangaysResult.data || []).map((b) => b.name);
-                            this.editDepartments = [...new Set((directoryResult.data || []).map((o) => o.office))].sort();
                         } catch { /* the current values stay selectable below */ }
                     }
+                },
+                async officeNames() {
+                    const names = await Promise.resolve(this.$store.offices ? this.$store.offices.activeNames() : null).catch(() => null);
+                    if (names && names.length) return names;
+                    const directory = await $api.get('/directory').catch(() => ({ data: [] }));
+                    return [...new Set((directory.data || []).map((o) => o.office).filter(Boolean))].sort();
                 },
                 get editDeptOptions() { return [...new Set([this.edit?.dept, ...this.editDepartments].filter(Boolean))]; },
                 async saveEdit() {
@@ -314,17 +356,28 @@
                     reset() { this.step = 1; this.createError = null; this.form = { firstName: '', lastName: '', email: '', password: '', dept: this.departments[0] || '', roleKey: 'department_staff', scope: 'municipal', barangay: this.barangays[0] || '' }; },
                     async loadOptions() {
                         try {
-                            const [rolesResult, barangaysResult, directoryResult] = await Promise.all([
+                            const [rolesResult, barangaysResult] = await Promise.all([
                                 $api.get('/admin/roles'),
                                 $api.get('/barangays'),
-                                $api.get('/directory'),
                             ]);
                             this.roles = (rolesResult.data || []).filter((r) => r.key !== 'citizen');
                             this.barangays = (barangaysResult.data || []).map((b) => b.name);
-                            this.departments = [...new Set((directoryResult.data || []).map((o) => o.office))].sort();
                         } catch { /* the modal's own fields just stay empty; nothing to submit without them anyway */ }
-                        if (!this.form.dept) this.form.dept = this.departments[0] || '';
+                        await this.loadDepartments();
                         if (!this.form.barangay) this.form.barangay = this.barangays[0] || '';
+                    },
+                    // The active offices of the Departments tab (GET /admin/offices); the
+                    // directory's office names only when that list cannot be read. Read
+                    // again on each opening: an office may have been added meanwhile
+                    // (scope round 2026-10-15).
+                    async loadDepartments() {
+                        let names = await Promise.resolve(this.$store.offices ? this.$store.offices.activeNames() : null).catch(() => null);
+                        if (!names || !names.length) {
+                            const directory = await $api.get('/directory').catch(() => ({ data: [] }));
+                            names = [...new Set((directory.data || []).map((o) => o.office).filter(Boolean))].sort();
+                        }
+                        this.departments = names;
+                        if (!this.departments.includes(this.form.dept)) this.form.dept = this.departments[0] || '';
                     },
                     async createPersonnel() {
                         if (this.submitting) return;
@@ -348,7 +401,7 @@
                         }
                     },
                 }"
-                x-init="loadOptions(); $watch('open', v => { if (!v) reset(); })"
+                x-init="loadOptions(); $watch('open', v => { if (!v) reset(); else loadDepartments(); })"
             >
                 <x-ui.modal title="Add Personnel Account" maxWidth="3xl" :fullscreen="true">
                     <div class="space-y-4">
@@ -607,7 +660,7 @@
                                     x-text="confirmDelete === role.key ? 'Confirm delete' : 'Delete'"
                                 ></button>
                                 <button
-                                    @click="tab = 'permissions'; window.dispatchEvent(new CustomEvent('select-role', { detail: role.key }))"
+                                    @click="go('permissions'); window.dispatchEvent(new CustomEvent('select-role', { detail: role.key }))"
                                     class="text-xs font-medium text-brand-600 hover:underline flex items-center gap-1"
                                 >View <i data-lucide="eye" class="w-3 h-3"></i></button>
                             </div>
@@ -878,6 +931,8 @@
                 </p>
             </div>
         </div>
+
+        @include('admin.users.departments')
 
         </div>
     </div>

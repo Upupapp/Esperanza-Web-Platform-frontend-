@@ -1,7 +1,28 @@
 {{-- tab-citizen-verification.blade.php — Citizen, Family & Household Verification Queue --}}
 {{-- Rendered inside constituents.blade.php's outer Alpine x-data scope. --}}
+{{-- Residents' data requests are this tab's second view, not a tab of their
+     own (scope round 2026-10-15: as few tabs as possible). dataRequests
+     (resources/js/scope-admin-records.js) wraps the tab for the switch. The
+     accounts markup inside still reads the page's state: the component's own
+     names all start with dr, so none of them hides a page name. --}}
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="dataRequests" x-on:data-requests-changed.window="drRefresh()">
+
+    <div x-show="drMay" x-cloak class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full overflow-x-auto" role="group" aria-label="Accounts or data requests">
+        <button type="button" @click="drShow('accounts')" :aria-pressed="drView === 'accounts'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="drView === 'accounts' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
+            <i data-lucide="user-check" class="w-3.5 h-3.5"></i>Accounts
+        </button>
+        <button type="button" @click="drShow('requests')" :aria-pressed="drView === 'requests'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="drView === 'requests' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
+            <i data-lucide="file-lock" class="w-3.5 h-3.5"></i>Data requests
+            <span x-show="drOpenCount !== null" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" :class="drOpenCount ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-ink-muted'" x-text="'(' + drOpenCount + ' open)'"></span>
+        </button>
+    </div>
+
+    <div x-show="drView === 'requests'" x-cloak>
+        @include('admin.constituents.view-data-requests')
+    </div>
+
+    <div x-show="drView === 'accounts'" class="space-y-6">
 
     {{-- ── ENTITY TYPE SWITCHER — its own bordered/shadowed toolbar card so
          it's anchored the same way the Registry tab's view switcher is,
@@ -443,4 +464,5 @@
             </table>
     </x-ui.table>
     <x-admin.pager list="filteredCvHouseholds" key="cvHh" />
+    </div>
 </div>

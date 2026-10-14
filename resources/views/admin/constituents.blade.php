@@ -861,20 +861,21 @@
             <x-ui.stat-card layout="compact" @click="tab='data-quality';clearFilters()" class="cursor-pointer" label="Data Quality Issues"  valueBind="activeStats.issues"     icon="triangle-alert" color="red"    :delay="200" sublabel="Needs attention" />
         </div>
 
-        {{-- Primary tab bar --}}
-        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit mb-5">
+        {{-- Primary tab bar. max-w-full + overflow-x-auto: on a phone the tabs
+             scroll inside the bar instead of the whole page (scope round 2026-10-15). --}}
+        <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full overflow-x-auto mb-5">
             <button @click="tab='registry';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                     :class="tab==='registry'     ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="users" class="w-3.5 h-3.5"></i>Registry
             </button>
             <button @click="tab='profiling';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                     :class="tab==='profiling'    ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="user-round-search" class="w-3.5 h-3.5"></i>Profiling Coverage
             </button>
             <button @click="tab='data-quality';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative whitespace-nowrap"
                     :class="tab==='data-quality' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i>Data Quality
                 {{-- The same colours on the active tab: it is white now, and white
@@ -882,7 +883,7 @@
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600" x-text="qualityIssues.length"></span>
             </button>
             <button @click="tab='citizen-verification';clearFilters()"
-                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative whitespace-nowrap"
                     :class="tab==='citizen-verification' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                 <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>To Verify
                 <span
@@ -911,7 +912,7 @@
         <div x-show="tab === 'registry'">
             {{-- Unified toolbar: view switcher on top, search/filters/actions below --}}
             <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto">
                     <button @click="view='individuals';clearFilters()"
                             class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                             :class="view==='individuals' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">

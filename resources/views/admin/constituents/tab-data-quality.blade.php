@@ -307,6 +307,58 @@
         </div>
     </x-ui.card>
 
+    {{-- ── MERGE HISTORY (scope round 2026-10-15) — every merge of two
+         resident records, and undoing one: GET /admin/merges and
+         POST /admin/merges/{id}/revert. Component mergeHistory in
+         resources/js/scope-admin-records.js. ── --}}
+    <div x-data="mergeHistory" x-show="mhMay" x-cloak x-on:merges-changed.window="mhLoad()" class="surface-glass rounded-[26px] overflow-hidden">
+        <div class="flex flex-wrap items-start justify-between gap-2 px-5 py-4 border-b border-brand-600/10">
+            <div class="min-w-0">
+                <h3 class="text-sm font-semibold text-ink flex items-center gap-1.5"><i data-lucide="git-merge" class="w-4 h-4 text-ink-muted"></i>Merge history</h3>
+                <p class="text-xs text-ink-muted mt-0.5">Every merge of two resident records. Undoing one brings the merged-away record back with the links that were moved off it.</p>
+            </div>
+            <button type="button" @click="mhLoad()" :disabled="mhLoading" aria-label="Refresh the merge history" class="p-2 rounded-xl text-ink-muted hover:text-ink hover:bg-white/60 disabled:opacity-50 transition"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+        </div>
+        <div x-show="mhLoading && !mhRows.length" class="p-4 space-y-2" aria-busy="true"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /></div>
+        <div x-show="mhFailed" x-cloak><x-ui.error-state messageExpr="'Could not load the merge history.'" retryExpr="mhLoad()" /></div>
+        <p x-show="mhLoaded && !mhLoading && !mhFailed && !mhRows.length" x-cloak class="px-5 py-8 text-sm text-ink-muted text-center">No records have been merged yet.</p>
+        <ul x-show="mhRows.length && !mhFailed" class="divide-y divide-brand-600/[.08]">
+            <template x-for="m in mhRows" :key="m.id">
+                <li class="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <div class="min-w-0 flex-1 text-sm text-ink break-words">
+                        <p><span class="text-ink-muted">Kept</span> <span class="font-semibold" x-text="mhName(m.kept)"></span> <span class="font-mono text-xs" x-text="m.kept || 'a record no longer on file'"></span></p>
+                        <p><span class="text-ink-muted">Merged away</span> <span class="font-semibold" x-text="mhName(m.merged)"></span> <span class="font-mono text-xs" x-text="m.merged || 'a record no longer on file'"></span></p>
+                        <p class="text-xs text-ink-muted mt-0.5" x-text="'#' + m.id + ' · ' + (m.performed_by || 'Officer not on file') + ' · ' + when(m.at)"></p>
+                    </div>
+                    <div class="shrink-0 flex flex-wrap items-center gap-2">
+                        <span x-show="m.reverted_at" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset bg-slate-100 text-slate-600 ring-slate-200" x-text="'Undone ' + when(m.reverted_at)"></span>
+                        <span x-show="!m.reverted_at" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-200">In effect</span>
+                        <button type="button" x-show="!m.reverted_at && mhMayUndo" @click="mhAsk(m)" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 ring-1 ring-rose-200 transition"><i data-lucide="undo-2" class="w-3.5 h-3.5"></i>Undo merge</button>
+                    </div>
+                </li>
+            </template>
+        </ul>
+        <div x-show="mhPage < mhLastPage && !mhFailed" x-cloak class="px-5 py-3 border-t border-brand-600/10 flex justify-center">
+            <x-ui.button variant="secondary" size="sm" x-bind:disabled="mhMore" @click="mhLoadMore()"><span x-text="mhMore ? 'Loading…' : 'Older merges'"></span></x-ui.button>
+        </div>
+
+        <div x-data="{ get open() { return mhConfirm !== null; }, set open(v) { if (!v && !mhBusy) mhConfirm = null; } }">
+            <x-ui.modal title="Undo this merge?" maxWidth="sm">
+                <template x-if="mhConfirm">
+                    <div class="space-y-3 text-sm text-slate-700">
+                        <p><span class="font-mono font-semibold" x-text="mhConfirm.merged || 'The merged-away record'"></span> becomes its own record again, and the household, family and other links that were moved to <span class="font-mono font-semibold" x-text="mhConfirm.kept || 'the kept record'"></span> go back to it.</p>
+                        <p class="text-xs text-ink-muted">Anything added to the kept record since the merge stays on it. The undo is logged.</p>
+                        <p x-show="mhError" class="text-xs text-rose-600" role="alert" x-text="mhError"></p>
+                    </div>
+                </template>
+                <x-slot:footer>
+                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="mhBusy" @click="mhConfirm = null">Cancel</x-ui.button>
+                    <x-ui.button variant="danger" size="sm" icon="undo-2" x-bind:disabled="mhBusy" @click="mhUndo()"><span x-text="mhBusy ? 'Undoing…' : 'Undo merge'"></span></x-ui.button>
+                </x-slot:footer>
+            </x-ui.modal>
+        </div>
+    </div>
+
     {{-- ── INFO BANNER ──────────────────────────────────────────────────────── --}}
     <div class="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-800">
         <i data-lucide="info" class="w-4 h-4 mt-0.5 shrink-0 text-blue-500"></i>

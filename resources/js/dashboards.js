@@ -143,13 +143,18 @@ function remember(params) {
  * The Dashboard page's tabs: the overview every account has, the office
  * dashboards and the barangay dashboards. A department account lands on its
  * office, a barangay account on its barangay (GET /admin/dashboard/subjects).
+ *
+ * Appointments (scope round 2026-10-15) is a tab too, with its own address,
+ * /admin/dashboard/appointments, which renders this page with $view set:
+ * initialView. It shows for an officer who may see bookings or schedules.
  */
-export function dashboardHost() {
+export function dashboardHost(initialView = null) {
     return {
-        view: 'overview',
+        view: initialView === 'appointments' ? 'appointments' : 'overview',
         subjects: { home: 'overview', offices: [], barangays: [] },
         catalog: { reports: [], offices: [], barangays: [] },
         subjectsReady: false,
+        apptAllowed: false,
         async init() {
             try {
                 const [subjects, catalog] = await Promise.all([
@@ -161,9 +166,14 @@ export function dashboardHost() {
             } catch {
                 // The overview still works; the other tabs simply do not show.
             }
-            const asked = query().get('view');
-            const allowed = ['overview', this.subjects.offices.length ? 'department' : null, this.subjects.barangays.length ? 'barangay' : null].filter(Boolean);
+            const session = this.$store.session;
+            await session.whenReady?.();
+            this.apptAllowed = session.canPerm('appt_bookings', 'view') || session.canPerm('appt_schedules', 'view');
+            const asked = initialView === 'appointments' ? 'appointments' : query().get('view');
+            const allowed = ['overview', this.subjects.offices.length ? 'department' : null, this.subjects.barangays.length ? 'barangay' : null, this.apptAllowed ? 'appointments' : null].filter(Boolean);
             this.view = allowed.includes(asked) ? asked : (allowed.includes(this.subjects.home) ? this.subjects.home : 'overview');
+            // The appointments address without the permission: the address follows the tab shown.
+            if (initialView === 'appointments' && this.view !== 'appointments') this.address(this.view);
             this.subjectsReady = true;
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -175,8 +185,18 @@ export function dashboardHost() {
         },
         show(view) {
             this.view = view;
-            remember({ view: view === 'overview' ? null : view, office: null, barangay: null });
+            this.address(view);
             this.$nextTick(() => window.renderIcons?.());
+        },
+        /** The tab in the address: Appointments at its own, the others as ?view= on the dashboard's. */
+        address(view) {
+            const base = window.location.pathname.replace(/\/+$/, '').replace(/\/appointments$/, '');
+            if (view === 'appointments') {
+                window.history.replaceState(null, '', base + '/appointments');
+                return;
+            }
+            if (base !== window.location.pathname.replace(/\/+$/, '')) window.history.replaceState(null, '', base);
+            remember({ view: view === 'overview' ? null : view, office: null, barangay: null });
         },
         /** The printable reports of one kind this account may open. */
         reportsOf(kind) {

@@ -27,6 +27,9 @@
      editing them in place would leak into other parts of the admin UI that
      read the same object. --}}
 @props([
+    // The request's issued documents and the template's note, printed at the
+    // foot (scope round 2026-10-15).
+    'verify' => 'null',
     'docKey', 'bind', 'title', 'office', 'formNo' => null, 'officiant' => null, 'officiantTitle' => null, 'technician' => null, 'technicianTitle' => null, 'verifier' => null, 'verifierTitle' => null, 'editing' => 'false',
     // See barangay-certificate-preview.blade.php's own header comment on
     // this exact prop — same {src, opacity, size, position, paperColor,
@@ -82,7 +85,7 @@
     </div>
 
     <div class="relative text-center mb-5">
-        <h3 class="text-base font-bold text-navy-900 uppercase tracking-wide underline decoration-2 underline-offset-4" x-text="{{ $title }}"></h3>
+        <h3 class="text-base font-bold text-navy-900 uppercase tracking-wide underline decoration-2 underline-offset-4" x-text="$store.docTemplates.title({{ $docKey }}, {{ $title }})"></h3>
     </div>
 
     <div class="relative text-[13px] text-slate-800 space-y-4">
@@ -790,6 +793,8 @@
                 </template>
             </div>
         </div>
+
+        <x-documents.verify-strip :doc="$verify" :doc-key="$docKey" />
 
         <div class="flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5 mt-5">
             <i data-lucide="info" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>

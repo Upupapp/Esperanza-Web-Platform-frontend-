@@ -37,6 +37,88 @@
                 <div class="flex justify-between gap-2"><dt class="text-ink-muted">Address</dt><dd class="font-semibold text-ink text-right" x-text="accountDetail?.address || '—'"></dd></div>
             </dl>
 
+            {{-- Locked details (scope round 2026-10-15): once approved, the
+                 resident cannot change their name, birth date, sex or
+                 barangay; an officer corrects them here with a reason, and can
+                 close the resident's correction request with it.
+                 PUT /admin/citizens/{accountNo}/identity; component
+                 identityCorrection. --}}
+            <section x-data="identityCorrection" x-show="icLocked && icMay" x-cloak class="rounded-2xl border border-slate-200 p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="user-pen" class="w-3.5 h-3.5"></i> Locked details</p>
+                    <button type="button" x-show="!icOpen" @click="icStart()" class="text-xs font-semibold rounded-xl px-3 py-2 bg-brand-50 text-brand-700 hover:bg-brand-100">Correct details</button>
+                </div>
+                <p x-show="!icOpen" class="text-xs text-ink-muted">The account is verified, so the resident cannot change their name, birth date, sex or barangay. Correct them here when the ID shows they are wrong.</p>
+                <div x-show="icDone" x-cloak role="status" class="rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs text-emerald-800">
+                    <p class="font-semibold">Corrected. The resident was told why.</p>
+                    <ul class="mt-1 space-y-0.5">
+                        <template x-for="c in (icDone || [])" :key="c.label"><li class="break-words" x-text="c.label + ': ' + c.from + ' → ' + c.to"></li></template>
+                    </ul>
+                </div>
+                <form x-show="icOpen" x-cloak @submit.prevent="icSave()" class="space-y-3" novalidate>
+                    <p class="text-[11px] text-ink-muted break-words" x-text="'On the account now: ' + [accountDetail?.name, accountDetail?.birthdate ? 'born ' + accountDetail.birthdate : null, accountDetail?.barangay ? 'Brgy. ' + accountDetail.barangay : null].filter(Boolean).join(' · ')"></p>
+                    <p x-show="!icNameKnown" class="text-[11px] text-amber-700">The middle name and suffix could not be read from the account's name. Fill them in from the ID, or they are saved empty.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="ic-first" class="block text-xs font-medium text-slate-700 mb-1">First name</label>
+                            <input id="ic-first" type="text" x-model="icForm.first_name" maxlength="80" autocomplete="off" class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        </div>
+                        <div>
+                            <label for="ic-middle" class="block text-xs font-medium text-slate-700 mb-1">Middle name</label>
+                            <input id="ic-middle" type="text" x-model="icForm.middle_name" maxlength="80" autocomplete="off" class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        </div>
+                        <div>
+                            <label for="ic-last" class="block text-xs font-medium text-slate-700 mb-1">Last name</label>
+                            <input id="ic-last" type="text" x-model="icForm.last_name" maxlength="80" autocomplete="off" class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        </div>
+                        <div>
+                            <label for="ic-suffix" class="block text-xs font-medium text-slate-700 mb-1">Suffix</label>
+                            <input id="ic-suffix" type="text" x-model="icForm.suffix" maxlength="20" autocomplete="off" placeholder="e.g. Jr." class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        </div>
+                        <div>
+                            <label for="ic-birthdate" class="block text-xs font-medium text-slate-700 mb-1">Birth date</label>
+                            <input id="ic-birthdate" type="date" x-model="icForm.birthdate" :max="icToday" class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        </div>
+                        <div>
+                            <label for="ic-sex" class="block text-xs font-medium text-slate-700 mb-1">Sex</label>
+                            <select id="ic-sex" x-model="icForm.sex" class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                <option value="">Choose…</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                            <p x-show="icSexHint" class="text-[11px] text-ink-muted mt-1" x-text="icSexHint"></p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="ic-barangay" class="block text-xs font-medium text-slate-700 mb-1">Barangay</label>
+                            <select id="ic-barangay" x-model="icForm.barangay" :disabled="!isMunicipalScope" class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none disabled:opacity-70">
+                                @foreach($barangayOptions as $b)
+                                    <option value="{{ $b }}">{{ $b }}</option>
+                                @endforeach
+                            </select>
+                            <p x-show="!isMunicipalScope" class="text-[11px] text-ink-muted mt-1">Only the municipal office can move an account to another barangay.</p>
+                        </div>
+                    </div>
+                    <div x-show="icRequests.length">
+                        <label for="ic-request" class="block text-xs font-medium text-slate-700 mb-1">Close the resident's correction request too</label>
+                        <select id="ic-request" x-model="icForm.data_request_ref" class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                            <option value="">No, leave it open</option>
+                            {{-- :selected as well: these options arrive after the value is set, and x-model selects only when the value changes. --}}
+                            <template x-for="r in icRequests" :key="r.ref"><option :value="r.ref" :selected="r.ref === icForm.data_request_ref" x-text="r.ref + (r.detail ? ': ' + (r.detail.length > 70 ? r.detail.slice(0, 69) + '…' : r.detail) : '')"></option></template>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="ic-reason" class="block text-xs font-medium text-slate-700 mb-1">Reason <span class="font-normal text-ink-muted">(kept on the record; the resident reads it)</span></label>
+                        <textarea id="ic-reason" x-model="icForm.reason" rows="2" maxlength="500" placeholder="e.g. Birth date was typed wrong at registration; checked against the PSA birth certificate." class="w-full text-sm rounded-xl px-3 py-2 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                        <p x-show="icForm.reason.trim().length < 10" class="text-[11px] text-ink-muted mt-0.5">At least 10 characters.</p>
+                    </div>
+                    <p x-show="icError" class="text-xs text-rose-600" role="alert" x-text="icError"></p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <x-ui.button type="submit" size="sm" icon="check" x-bind:disabled="icBusy || icForm.reason.trim().length < 10"><span x-text="icBusy ? 'Saving…' : 'Save correction'"></span></x-ui.button>
+                        <button type="button" @click="icOpen = false; icError = ''" :disabled="icBusy" class="text-xs font-semibold rounded-xl px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+                    </div>
+                </form>
+            </section>
+
             {{-- Registry record (owner, 2026-10-09): the record the LGU
                  already had that registration recognised this resident as, or
                  records they may be. --}}
@@ -291,6 +373,47 @@
                     </template>
                 </ul>
             </details>
+
+            {{-- What the resident was sent (scope round 2026-10-15): every
+                 notification, newest first, and how each email or SMS went.
+                 GET /admin/citizens/{accountNo}/messages, read only when
+                 opened; component citizenMessages. --}}
+            <section x-data="citizenMessages" class="rounded-2xl border border-slate-200 p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="mails" class="w-3.5 h-3.5"></i> Messages sent</p>
+                    <button type="button" @click="cmToggle()" :aria-expanded="cmOpen" class="text-xs font-semibold text-brand-700 hover:underline px-1.5 py-1" x-text="cmOpen ? 'Hide' : 'Show'"></button>
+                </div>
+                <p x-show="!cmOpen" class="text-xs text-ink-muted">Notifications on the portal and the app, and the emails and text messages that carried them.</p>
+                <div x-show="cmOpen" x-cloak class="space-y-2">
+                    <div x-show="cmLoading" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-14" /><x-ui.skeleton class="h-14 opacity-80" /></div>
+                    <p x-show="cmFailed" class="text-xs text-rose-700" role="alert">Could not load the messages. <button type="button" class="underline" @click="cmLoad(1)">Try again</button></p>
+                    <p x-show="!cmLoading && !cmFailed && !cmRows.length" class="text-xs text-ink-muted">Nothing has been sent to this resident yet.</p>
+                    <p x-show="cmRows.length" class="text-[11px] text-ink-muted" x-text="cmTotal + (cmTotal === 1 ? ' message' : ' messages') + ', newest first'"></p>
+                    <ul x-show="cmRows.length" class="divide-y divide-brand-600/[.08]">
+                        <template x-for="m in cmRows" :key="m.id">
+                            <li class="py-2.5">
+                                <div class="flex flex-wrap items-start gap-2">
+                                    <p class="text-sm font-semibold text-ink flex-1 min-w-0 break-words" x-text="m.title"></p>
+                                    <span class="text-[11px] font-semibold rounded-full px-2 py-0.5 ring-1 ring-inset whitespace-nowrap" :class="m.read ? 'bg-slate-50 text-slate-600 ring-slate-200' : 'bg-sky-50 text-sky-700 ring-sky-200'" x-text="m.read ? 'Read' : 'Not read yet'"></span>
+                                </div>
+                                <p x-show="m.body" class="text-xs text-slate-700 whitespace-pre-line break-words mt-0.5" x-text="m.body"></p>
+                                <p class="text-[11px] text-ink-muted mt-1" x-text="[when(m.sent_at), m.category ? m.category.charAt(0).toUpperCase() + m.category.slice(1) : null, m.ref].filter(Boolean).join(' · ')"></p>
+                                <div x-show="(m.deliveries || []).length" class="flex flex-wrap gap-1.5 mt-1.5">
+                                    <template x-for="(d, k) in (m.deliveries || [])" :key="k">
+                                        <span class="inline-flex items-center text-[11px] font-medium rounded-full px-2 py-0.5 ring-1 ring-inset break-all" :class="cmTone(d)" x-text="cmLabel(d)"></span>
+                                    </template>
+                                </div>
+                                <template x-for="(d, k) in cmProblems(m)" :key="'p' + k">
+                                    <p class="text-[11px] text-rose-700 mt-1 break-words" x-text="cmChannel(d) + ': ' + d.error"></p>
+                                </template>
+                            </li>
+                        </template>
+                    </ul>
+                    <div x-show="cmPage < cmLastPage" class="flex justify-center pt-1">
+                        <x-ui.button variant="secondary" size="sm" x-bind:disabled="cmMore" @click="cmLoad(cmPage + 1)"><span x-text="cmMore ? 'Loading…' : 'Older messages'"></span></x-ui.button>
+                    </div>
+                </div>
+            </section>
         </div>
     </x-ui.modal>
 </div>

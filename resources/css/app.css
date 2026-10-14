@@ -959,6 +959,30 @@ body.dp-printing #dp-print-area:has(.rep-paper) {
     }
 }
 
+/* The connection notice (scope round 2026-10-15): fixed at the top of every
+   page while the browser is offline, green for a moment when it is back. */
+.offline-bar {
+    position: fixed;
+    left: 50%;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    transform: translateX(-50%);
+    z-index: 200;
+    max-width: calc(100vw - 24px);
+    padding: 9px 16px;
+    border-radius: 12px;
+    background: #b42318;
+    color: #fff;
+    font: 600 13px/1.35 system-ui, sans-serif;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+    text-align: center;
+}
+.offline-bar[data-state="online"] {
+    background: #157f3d;
+}
+body.dp-printing .offline-bar {
+    display: none !important;
+}
+
 /* Editable blanks on a generated Dokyu paper while Edit Document is active
    (see doc-field.blade.php) — sized to their own typed content rather than
    a fixed input width (a wide empty box would look nothing like a filled-in

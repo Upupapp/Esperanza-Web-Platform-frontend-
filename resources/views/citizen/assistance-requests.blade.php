@@ -135,6 +135,12 @@
                 r.releaseProof = d.proof_of_release?.file || null;
                 // What was approved and what was received (Tulong only).
                 r.assistance = d.assistance || null;
+                // Track Request's history, the documents issued for it and what
+                // was filed, for the printed notice (scope round 2026-10-15).
+                r.history = d.history || [];
+                r.issuedDocuments = d.issued_documents || [];
+                r.formSnapshot = d.form_data || {};
+                r.barangay = d.barangay || r.barangay || null;
                 r.requirements = (d.requirements || []).map((q) => ({
                     key: q.key,
                     name: q.label,
@@ -1271,6 +1277,9 @@
 
                         <x-citizen.request-fee />
 
+                        {{-- Slip, approval notice, appointment, issued documents and the survey (scope round 2026-10-15). --}}
+                        <x-citizen.scope.request-extras kind="tulong" />
+
                         {{-- Withdraw: until the office recommends it (end-to-end test 2026-10-07). --}}
                         <div class="mt-5" x-show="selectedRequest.canWithdraw" x-cloak>
                             <button type="button" x-show="!withdrawOpen" @click="withdrawOpen = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:underline">
@@ -1305,6 +1314,8 @@
                             <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.address"></span></p>
                             <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="phone" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.contact"></span></p>
                         </div>
+
+                        <x-citizen.scope.request-timeline />
                     </div>
                 </template>
 
