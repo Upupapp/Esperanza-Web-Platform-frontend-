@@ -754,7 +754,7 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     font-size: 9pt;
 }
 .rep-title {
-    margin: 6mm 0 1mm;
+    margin: 5mm 0 1mm;
     text-align: center;
     font-size: 13pt;
     font-weight: 700;
@@ -762,7 +762,7 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     text-transform: uppercase;
 }
 .rep-period {
-    margin: 0 0 5mm;
+    margin: 0 0 4mm;
     text-align: center;
 }
 .rep-ident {
@@ -784,7 +784,7 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     border-bottom: 1px solid #111;
 }
 .rep-section {
-    margin-bottom: 5mm;
+    margin-bottom: 4mm;
 }
 .rep-section h2 {
     margin: 0 0 1.5mm;
@@ -847,7 +847,7 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8mm;
-    margin-top: 10mm;
+    margin-top: 7mm;
     break-inside: avoid;
     page-break-inside: avoid;
 }
@@ -861,7 +861,7 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     grid-template-rows: auto 1fr auto;
 }
 .rep-sign-role {
-    margin: 0 0 9mm;
+    margin: 0 0 7mm;
 }
 .rep-sign .rep-sign-name {
     align-self: end;
@@ -901,7 +901,7 @@ body.dp-printing .rep-sign-position::placeholder {
     background: rgb(59 130 246 / 0.08);
 }
 .rep-generated {
-    margin: 8mm 0 0;
+    margin: 5mm 0 0;
     font-size: 7.5pt;
     color: #555;
 }
