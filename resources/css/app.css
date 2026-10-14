@@ -687,6 +687,261 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     -webkit-print-color-adjust: exact;
 }
 
+/* The standard printed reports of an office or a barangay (owner,
+   2026-10-14; components/admin/report-sheet.blade.php). Unlike a
+   certificate's .doc-paper - one fixed sheet - a report runs as long as its
+   tables, so it flows onto as many A4 pages as it needs: the browser repeats
+   each table's header row on every page and the page margins are the named
+   pages' own (rep-portrait, rep-landscape below), so page two starts with a
+   margin too. Black on white in Arial, like the LGU's own Word reports. */
+.rep-scroll {
+    overflow-x: auto;
+}
+.rep-paper {
+    box-sizing: border-box;
+    width: min(210mm, 100%);
+    min-width: 170mm;
+    margin: 0 auto;
+    padding: 14mm 14mm 12mm;
+    background: #fff;
+    color: #111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    line-height: 1.35;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgb(11 23 48 / 0.12), 0 8px 24px rgb(11 23 48 / 0.08);
+    page: rep-portrait;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}
+.rep-paper.rep-landscape {
+    width: min(297mm, 100%);
+    min-width: 240mm;
+    page: rep-landscape;
+}
+.rep-letterhead {
+    display: grid;
+    grid-template-columns: 22mm 1fr 22mm;
+    align-items: center;
+    gap: 4mm;
+    padding-bottom: 3mm;
+    border-bottom: 2px solid #111;
+}
+.rep-seal {
+    width: 22mm;
+    height: 22mm;
+    object-fit: contain;
+}
+.rep-lgu {
+    text-align: center;
+    line-height: 1.25;
+}
+.rep-lgu p {
+    margin: 0;
+}
+.rep-muni {
+    font-weight: 700;
+}
+.rep-office {
+    margin-top: 1.5mm !important;
+    font-weight: 700;
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.rep-suboffice {
+    font-style: italic;
+    font-size: 9pt;
+}
+.rep-title {
+    margin: 6mm 0 1mm;
+    text-align: center;
+    font-size: 13pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.rep-period {
+    margin: 0 0 5mm;
+    text-align: center;
+}
+.rep-ident {
+    margin: 0 0 4mm;
+    display: grid;
+    gap: 1mm;
+}
+.rep-ident div {
+    display: flex;
+    gap: 2mm;
+}
+.rep-ident dt {
+    min-width: 26mm;
+    font-weight: 700;
+}
+.rep-ident dd {
+    margin: 0;
+    flex: 1;
+    border-bottom: 1px solid #111;
+}
+.rep-section {
+    margin-bottom: 5mm;
+}
+.rep-section h2 {
+    margin: 0 0 1.5mm;
+    font-size: 10.5pt;
+    font-weight: 700;
+}
+.rep-paper table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+}
+.rep-paper th,
+.rep-paper td {
+    border: 1px solid #111;
+    padding: 1.2mm 1.6mm;
+    vertical-align: top;
+    text-align: left;
+}
+.rep-paper th {
+    background: #e8ecf3;
+    font-weight: 700;
+    vertical-align: middle;
+}
+.rep-paper .rep-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.rep-paper .rep-nowrap {
+    white-space: nowrap;
+}
+.rep-paper .rep-total td {
+    font-weight: 700;
+    background: #f4f6fa;
+}
+.rep-paper thead {
+    display: table-header-group;
+}
+.rep-paper tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.rep-empty {
+    text-align: center !important;
+    font-style: italic;
+    color: #555;
+}
+.rep-note {
+    margin: 1.2mm 0 0;
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #333;
+}
+/* The signatures and the generated line stay together, and never start a page alone. */
+.rep-end {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.rep-signatures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8mm;
+    margin-top: 10mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.rep-signatures-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+.rep-sign-role {
+    margin: 0 0 9mm;
+}
+.rep-sign-name,
+.rep-sign-position {
+    display: block;
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    field-sizing: content;
+    min-height: 1.4em;
+    line-height: 1.3;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: #111;
+    text-align: center;
+    padding: 0;
+    outline: none;
+}
+.rep-sign-name {
+    font-weight: 700;
+    text-transform: uppercase;
+    border-bottom: 1px solid #111;
+}
+.rep-sign-position {
+    font-size: 9pt;
+}
+/* An empty signature line prints as a line, never as the word "Name". */
+body.dp-printing .rep-sign-name::placeholder,
+body.dp-printing .rep-sign-position::placeholder {
+    color: transparent;
+}
+.rep-sign-name:focus,
+.rep-sign-position:focus {
+    background: rgb(59 130 246 / 0.08);
+}
+.rep-generated {
+    margin: 8mm 0 0;
+    font-size: 7.5pt;
+    color: #555;
+}
+
+/* Printing: the paper is the page. Its width and margins come from the named
+   page; it starts at the top of page one and flows on. */
+body.dp-printing .rep-paper {
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+body.dp-printing #dp-print-area:has(.rep-paper) {
+    width: auto !important;
+}
+
+@media print {
+    @page rep-portrait {
+        size: A4 portrait;
+        margin: 12mm 12mm 14mm;
+        @bottom-right {
+            content: 'Page ' counter(page) ' of ' counter(pages);
+            font: 8pt Arial, Helvetica, sans-serif;
+        }
+    }
+    @page rep-landscape {
+        size: A4 landscape;
+        margin: 10mm 12mm 12mm;
+        @bottom-right {
+            content: 'Page ' counter(page) ' of ' counter(pages);
+            font: 8pt Arial, Helvetica, sans-serif;
+        }
+    }
+    html:has(.rep-paper),
+    html:has(.rep-paper) body {
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    body.dp-printing #dp-print-area:has(.rep-paper) {
+        position: static !important;
+        width: auto !important;
+    }
+    body.dp-printing .rep-sign-name {
+        border-bottom: 1px solid #111 !important;
+    }
+}
+
 /* Editable blanks on a generated Dokyu paper while Edit Document is active
    (see doc-field.blade.php) — sized to their own typed content rather than
    a fixed input width (a wide empty box would look nothing like a filled-in

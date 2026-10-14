@@ -6,6 +6,7 @@ import { residentProfileForm } from './resident-profile-form';
 import { residentImport, reasonText } from './resident-import-ui';
 import { requestImport } from './request-import-ui';
 import { citizenRecords } from './citizen-records';
+import { dashboardHost, deptDashboard, brgyDashboard, printableReports, reportSheet } from './dashboards';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons } from 'lucide';
@@ -460,6 +461,12 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('residentImport', residentImport);
     Alpine.data('requestImport', requestImport);
     Alpine.data('citizenRecords', citizenRecords);
+    // Office and barangay dashboards and the printed reports (2026-10-14).
+    Alpine.data('dashboardHost', dashboardHost);
+    Alpine.data('deptDashboard', deptDashboard);
+    Alpine.data('brgyDashboard', brgyDashboard);
+    Alpine.data('printableReports', printableReports);
+    Alpine.data('reportSheet', reportSheet);
     // Why a record matched, for the account review's Registry record panel.
     window.registryReasonText = reasonText;
 
@@ -1355,10 +1362,11 @@ document.addEventListener('alpine:init', () => {
                     label.textContent = String(v);
                     svg.append(label);
                 }
-                // Fourteen days in a half-width card overlapped: every k-th label.
+                // Fourteen days in a half-width card overlapped: every k-th label,
+                // counted back from the latest so the current month is always named.
                 const every = Math.max(1, Math.ceil((n * 46) / (W - left - right)));
                 data.labels.forEach((m, i) => {
-                    if (i % every) return;
+                    if ((n - 1 - i) % every) return;
                     const label = svgEl('text', { x: x(i), y: H - 10, 'text-anchor': 'middle', 'font-size': 11, fill: '#7d89a8', 'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' });
                     label.textContent = trendMonth(m);
                     svg.append(label);
