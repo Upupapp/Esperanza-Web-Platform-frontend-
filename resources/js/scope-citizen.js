@@ -1105,6 +1105,12 @@ function eventCalendar() {
             }
         },
         google(e) { return googleCalendarUrl(details(e)); },
+        // A reminder is for what is still to come: an event whose day has
+        // passed (Esperanza's day) offers none (2026-10-15).
+        isPast(e) {
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+            return !!e.date && String(e.date).slice(0, 10) < today;
+        },
     };
 }
 

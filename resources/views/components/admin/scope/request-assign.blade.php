@@ -23,7 +23,8 @@
         </div>
         <p x-show="!loadingOfficers && !officersFailed && !officers.length" x-cloak class="text-xs text-ink-muted">No officer who works this service can see this {{ $noun }}.</p>
         <div x-show="!loadingOfficers && !officersFailed && officers.length" x-cloak class="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <div class="min-w-0 flex-1">
+            {{-- One x-id scope, so the label and the list get the same id. --}}
+            <div class="min-w-0 flex-1" x-id="['assignee']">
                 <label :for="$id('assignee')" class="mb-1 block text-[11px] font-medium text-ink-muted">Officer</label>
                 <select :id="$id('assignee')" x-model="choice" class="w-full rounded-xl border-0 px-3 py-2 text-xs surface-pressed-sm outline-none focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                     <option value="">Choose an officer…</option>

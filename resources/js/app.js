@@ -1046,10 +1046,19 @@ document.addEventListener('alpine:init', () => {
     // take effect on the very next request, not only after a manual
     // logout/login.
     if (api.getToken()) {
-        const bootStore = window.location.pathname.startsWith('/admin')
-            ? Alpine.store('session')
-            : Alpine.store('citizenSession');
-        bootStore.refresh().catch(() => {
+        // The token is either an officer's or a resident's: refresh the store
+        // that holds it. Every page outside /admin used to refresh the
+        // resident's, so an officer opening the public Verify page sent the
+        // staff token to /citizen/profile and got a red "Walang pahintulot"
+        // (2026-10-15). With nothing cached, only a resident page tries.
+        const staff = Alpine.store('session');
+        const citizen = Alpine.store('citizenSession');
+        const onAdmin = window.location.pathname.startsWith('/admin');
+        const bootStore = onAdmin ? staff
+            : citizen.account ? citizen
+            : staff.account ? null
+            : window.location.pathname.startsWith('/citizen') ? citizen : null;
+        bootStore?.refresh().catch(() => {
             // A 401 already dispatches api:unauthorized and redirects; any
             // other failure (offline, 5xx) just leaves the cached account in
             // place for this page load.

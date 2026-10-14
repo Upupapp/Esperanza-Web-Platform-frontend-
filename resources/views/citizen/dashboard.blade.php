@@ -177,8 +177,9 @@
                                 x-text="new Date().toLocaleDateString($store.lang.current === 'en' ? 'en-US' : 'fil-PH', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' })"
                             ></p>
 
+                            {{-- Wraps rather than cuts: "Magandang araw, …" was cut to "Magandan…" at laptop width (2026-10-15). --}}
                             <h2
-                                class="mt-1 text-[22px] sm:text-[28px] font-extrabold leading-tight tracking-[-.01em] text-white text-balance sm:truncate"
+                                class="mt-1 text-[22px] sm:text-[28px] font-extrabold leading-tight tracking-[-.01em] text-white text-balance break-words"
                                 x-text="($store.lang.current === 'en' ? 'Good day, ' : 'Magandang araw, ') + ($store.citizenSession.account?.firstName ?? 'Guest') + ' 👋'"
                             ></h2>
 

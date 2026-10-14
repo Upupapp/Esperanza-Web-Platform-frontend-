@@ -180,7 +180,8 @@
                                         <span class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="event.venue"></span></span>
                                     </p>
                                 </div>
-                                <div class="relative w-full sm:w-auto shrink-0" @click.outside="if (menu === event.key + event.title) menu = null">
+                                <span x-show="isPast(event)" class="text-[11px] font-medium text-ink-muted bg-slate-100 border border-slate-200 rounded-full px-2.5 py-1 shrink-0"><x-ui.t fil="Tapos na" en="Ended" /></span>
+                                <div x-show="!isPast(event)" class="relative w-full sm:w-auto shrink-0" @click.outside="if (menu === event.key + event.title) menu = null">
                                     <button
                                         type="button"
                                         @click="toggle(event.key + event.title)"
