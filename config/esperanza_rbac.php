@@ -238,9 +238,14 @@ $roles = [
         'key' => 'department_staff', 'name' => 'Department Staff', 'icon' => 'keyboard',
         'color' => 'text-emerald-700 bg-emerald-50', 'users' => 24, 'editable' => true,
         'desc' => 'Handles day-to-day encoding and processing of document and assistance requests within their department.',
-        'permissions' => $buildPermissions([
-            'dokyu' => 'process', 'tulong' => 'process', 'constituents' => 'view', 'payments' => 'view',
-        ]),
+        // Prints their office's reports; Excel and the masterlist with names
+        // stay with the Department Head (dashboards, 2026-10-14).
+        'permissions' => array_merge(
+            $buildPermissions([
+                'dokyu' => 'process', 'tulong' => 'process', 'constituents' => 'view', 'payments' => 'view',
+            ]),
+            ['rep_assistance' => ['view', 'print'], 'rep_document' => ['view', 'print']]
+        ),
     ],
     [
         'key' => 'front_desk', 'name' => 'Front Desk Officer', 'icon' => 'concierge-bell',
@@ -277,6 +282,11 @@ $roles = [
             $buildPermissions(['constituents' => 'view']),
             [
                 'comm_barangay_directory' => ['view', 'edit'],
+                // Their barangay's dashboard and printed reports (2026-10-14).
+                'rep_population' => ['view', 'print'],
+                'rep_assistance' => ['view', 'print'],
+                'rep_document' => ['view', 'print'],
+                'rep_financial' => ['view', 'print'],
                 'papeles_documents' => ['view', 'verify'],
                 'const_citizen_verification' => ['view', 'verify', 'reject'],
                 'brgy_cert_death_registration' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'release', 'archive'],
