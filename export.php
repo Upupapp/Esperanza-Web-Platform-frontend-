@@ -80,6 +80,14 @@ $isHttps = ($parsed['scheme'] ?? 'http') === 'https';
 $port = (string) ($parsed['port'] ?? ($isHttps ? 443 : 80));
 
 $distDir = __DIR__.'/dist';
+// Start from an empty dist/ (2026-10-15). Netlify keeps dist/ between builds,
+// and this exporter only ever adds, so the page of a removed route stayed
+// published: the citizen Services page, removed in d2f5d7f, was still served.
+if (is_dir($distDir)) {
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($distDir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $item) {
+        $item->isDir() && ! $item->isLink() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+    }
+}
 @mkdir($distDir, 0777, true);
 
 echo "\n── Esperanza Static Exporter ──────────────────────────────\n";
