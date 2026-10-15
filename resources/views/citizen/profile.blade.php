@@ -206,8 +206,18 @@
             mobileCode: '',
             mobileSentTo: '',
             originalMobile: '',
+            // A verified account's name is locked (the server refuses it): the
+            // window shows it locked and sends a correction request instead of
+            // dropping the typed name and saying it was updated (owner,
+            // 2026-10-15). Staff correct it from Constituents > To Verify >
+            // Data requests.
+            correcting: false,
+            sendingCorrection: false,
+            correction: { firstName: '', lastName: '', note: '' },
             openEditProfile() {
                 const a = this.$store.citizenSession.account || {};
+                this.correcting = false;
+                this.correction = { firstName: a.firstName || '', lastName: a.lastName || '', note: '' };
                 this.originalMobile = window.phMobile.clean(a.mobile || '');
                 this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: this.originalMobile, occupation: a.occupation || '', address: a.address || '' };
                 this.mobileStep = null;
@@ -231,12 +241,20 @@
                     // them; occupation and address are always editable.
                     // Mobile is not part of PUT /citizen/profile: a changed number
                     // goes through the code step below instead.
-                    const payload = { occupation: this.editForm.occupation, address: this.editForm.address };
-                    if (!this.$store.citizenSession.account?.identityLocked) {
-                        payload.first_name = this.editForm.firstName;
-                        payload.last_name = this.editForm.lastName;
+                    const a = this.$store.citizenSession.account || {};
+                    const payload = {};
+                    if ((this.editForm.occupation || '') !== (a.occupation || '')) payload.occupation = this.editForm.occupation;
+                    if ((this.editForm.address || '') !== (a.address || '')) payload.address = this.editForm.address;
+                    if (!a.identityLocked) {
+                        if (this.editForm.firstName !== (a.firstName || '')) payload.first_name = this.editForm.firstName;
+                        if (this.editForm.lastName !== (a.lastName || '')) payload.last_name = this.editForm.lastName;
                     }
-                    await $api.put('/citizen/profile', payload);
+                    if (!Object.keys(payload).length && !this.mobileChanged) {
+                        this.showEditProfile = false;
+                        this.$dispatch('toast', { message: lang === 'en' ? 'Nothing was changed.' : 'Walang binago.', variant: 'warning' });
+                        return;
+                    }
+                    if (Object.keys(payload).length) await $api.put('/citizen/profile', payload);
                     await this.$store.citizenSession.refresh();
                     if (this.mobileChanged) {
                         const res = await $api.post('/citizen/profile/contact', { channel: 'mobile', value: this.editForm.mobile });
@@ -251,6 +269,33 @@
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not update profile.', variant: 'error' });
                 } finally {
                     this.savingProfile = false;
+                }
+            },
+            async sendCorrection() {
+                if (this.sendingCorrection) return;
+                const lang = this.$store.lang.current;
+                const a = this.$store.citizenSession.account || {};
+                const first = this.correction.firstName.trim();
+                const last = this.correction.lastName.trim();
+                if (!first || !last) {
+                    this.$dispatch('toast', { message: lang === 'en' ? 'Enter your correct first and last name.' : 'Ilagay ang tamang pangalan at apelyido.', variant: 'error' });
+                    return;
+                }
+                if (first === (a.firstName || '') && last === (a.lastName || '')) {
+                    this.$dispatch('toast', { message: lang === 'en' ? 'That is the name already on record.' : 'Iyan na ang pangalang nasa record.', variant: 'warning' });
+                    return;
+                }
+                this.sendingCorrection = true;
+                try {
+                    const detail = 'Pakiwasto po ang aking pangalan / Please correct my name: ' + [a.firstName, a.lastName].filter(Boolean).join(' ') + ' \u2192 ' + first + ' ' + last + (this.correction.note.trim() ? '. ' + this.correction.note.trim() : '');
+                    const res = await $api.post('/citizen/data-requests', { kind: 'correction', detail });
+                    this.correcting = false;
+                    this.showEditProfile = false;
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: lang === 'en' ? 'Correction request ' + res.data.ref + ' sent. Your barangay office will correct your name and let you know.' : 'Naipadala ang kahilingan sa pagwawasto ' + res.data.ref + '. Iaayos ito ng iyong barangay at ipapaalam sa iyo.', variant: 'success' } }));
+                } catch (err) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: err.localised ? err.localised(lang) : 'Could not send the request.', variant: 'error' } }));
+                } finally {
+                    this.sendingCorrection = false;
                 }
             },
             async verifyMobile() {
@@ -658,9 +703,31 @@
         <div x-data="{ get open() { return showEditProfile }, set open(v) { showEditProfile = v } }">
             <x-ui.modal title="I-edit ang Profile" titleEn="Edit Profile" maxWidth="md" :fullscreen="true">
                 <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-3" x-show="!$store.citizenSession.account?.identityLocked">
                         <x-ui.input name="edit_first_name" label="First Name" x-model="editForm.firstName" />
                         <x-ui.input name="edit_last_name" label="Last Name" x-model="editForm.lastName" />
+                    </div>
+                    {{-- Verified: the name is locked here; a correction goes to the barangay office. --}}
+                    <div x-show="$store.citizenSession.account?.identityLocked" x-cloak class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <x-ui.input name="locked_first_name" label="First Name" icon="lock" x-model="editForm.firstName" readonly aria-readonly="true" class="cursor-not-allowed opacity-80" />
+                            <x-ui.input name="locked_last_name" label="Last Name" icon="lock" x-model="editForm.lastName" readonly aria-readonly="true" class="cursor-not-allowed opacity-80" />
+                        </div>
+                        <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2.5">
+                            <p class="text-xs text-amber-900"><x-ui.t fil="Beripikado na ang iyong account, kaya hindi na mababago rito ang iyong pangalan. Kung may mali, humiling ng pagwawasto: ang iyong barangay ang mag-aayos nito at ipapaalam sa iyo." en="Your account is verified, so your name can't be changed here. If it's wrong, request a correction: your barangay office will fix it and let you know." /></p>
+                            <button type="button" x-show="!correcting" @click="correcting = true" class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"><i data-lucide="pencil-line" class="w-3.5 h-3.5"></i><x-ui.t fil="Humiling ng pagwawasto" en="Request a correction" /></button>
+                            <div x-show="correcting" x-cloak class="space-y-2.5">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <x-ui.input name="correct_first_name" label="Correct first name" labelFil="Tamang pangalan" x-model="correction.firstName" />
+                                    <x-ui.input name="correct_last_name" label="Correct last name" labelFil="Tamang apelyido" x-model="correction.lastName" />
+                                </div>
+                                <x-ui.input name="correct_note" label="Note (optional)" labelFil="Paliwanag (opsyonal)" x-model="correction.note" maxlength="300" />
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <x-ui.button size="sm" x-bind:disabled="sendingCorrection" @click="sendCorrection()"><span x-text="sendingCorrection ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : ($store.lang.current === 'en' ? 'Send correction request' : 'Ipadala ang kahilingan')"></span></x-ui.button>
+                                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="sendingCorrection" @click="correcting = false"><x-ui.t fil="Huwag na" en="Never mind" /></x-ui.button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <x-ui.input name="edit_mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="editForm.mobile" x-bind:disabled="mobileStep === 'code'" @input="editForm.mobile = window.phMobile.clean($event.target.value)" />
                     <div x-show="mobileStep === 'code'" x-cloak class="rounded-xl border border-brand-100 bg-brand-50/50 p-3 space-y-2">
