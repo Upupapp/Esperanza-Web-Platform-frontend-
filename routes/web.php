@@ -29,9 +29,9 @@ Route::view('/citizen/directory', 'citizen.directory')->name('citizen.directory'
 Route::view('/citizen/announcements', 'citizen.announcements')->name('citizen.announcements');
 Route::view('/citizen/events', 'citizen.events')->name('citizen.events');
 Route::view('/citizen/settings', 'citizen.settings')->name('citizen.settings');
-// Scope round 2026-10-15: every service in one list (fees, requirements, steps,
-// office) with a start-request link, and appointments at an office.
-Route::view('/citizen/services', 'citizen.services')->name('citizen.services');
+// Scope round 2026-10-15: appointments at an office. (A separate Services page
+// was removed the same day by the owner: each service list lives in its own
+// tab, Dokyu or Tulong.)
 Route::view('/citizen/appointments', 'citizen.appointments')->name('citizen.appointments');
 
 // Public document verification: the QR on an issued document opens this page
@@ -51,9 +51,10 @@ Route::view('/citizen/legal/terms', 'citizen.legal', ['tab' => 'terms'])->name('
 
 // Administrative Portal
 Route::view('/admin/dashboard', 'admin.dashboard')->name('admin.dashboard');
-// Appointments: schedules, closed days and bookings, as a Dashboard tab rather
-// than another sidebar entry (2026-10-15).
-Route::view('/admin/dashboard/appointments', 'admin.dashboard', ['view' => 'appointments'])->name('admin.appointments');
+// Appointments: bookings, schedules and closed days, with their own sidebar
+// entry (owner, 2026-10-15; first a Dashboard tab, whose address still opens it).
+Route::view('/admin/appointments', 'admin.appointments')->name('admin.appointments');
+Route::view('/admin/dashboard/appointments', 'admin.appointments');
 Route::view('/admin/document-requests', 'admin.document-requests')->name('admin.document-requests');
 Route::view('/admin/assistance-requests', 'admin.assistance-requests')->name('admin.assistance-requests');
 Route::view('/admin/payments', 'admin.payments')->name('admin.payments');

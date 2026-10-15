@@ -304,7 +304,7 @@ function blankForm(choices = {}) {
 }
 
 /**
- * Dashboard > Appointments: the bookings of the schedules this officer runs,
+ * The Appointments page: the bookings of the schedules this officer runs,
  * one day at a time (GET /admin/appointments), with Confirm, Complete,
  * No-show and Cancel; and the schedules themselves with their closed days
  * (GET /admin/appointment-schedules, meta.choices for the form).

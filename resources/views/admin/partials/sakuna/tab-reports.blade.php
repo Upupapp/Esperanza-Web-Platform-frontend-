@@ -121,7 +121,15 @@
             class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="flame" class="w-4 h-4"></i></span>
             <span>
-                <span class="block text-sm font-medium text-slate-700">Incidents</span>
+                <span class="block text-sm font-medium text-slate-700">Incidents (CSV)</span>
+                <span class="block text-xs text-ink-muted" x-text="reportScopedIncidents.length + ' records'"></span>
+            </span>
+        </button>
+        <button @click="exportPDF(reportScopedIncidents, 'incidents-report.csv')"
+            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
+            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="flame" class="w-4 h-4"></i></span>
+            <span>
+                <span class="block text-sm font-medium text-slate-700">Incidents (PDF)</span>
                 <span class="block text-xs text-ink-muted" x-text="reportScopedIncidents.length + ' records'"></span>
             </span>
         </button>
@@ -129,7 +137,15 @@
             class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="house" class="w-4 h-4"></i></span>
             <span>
-                <span class="block text-sm font-medium text-slate-700">Evacuation Centers</span>
+                <span class="block text-sm font-medium text-slate-700">Evacuation Centers (CSV)</span>
+                <span class="block text-xs text-ink-muted" x-text="reportScopedCenters.length + ' records'"></span>
+            </span>
+        </button>
+        <button @click="exportPDF(reportScopedCenters, 'centers-report.csv')"
+            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
+            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="house" class="w-4 h-4"></i></span>
+            <span>
+                <span class="block text-sm font-medium text-slate-700">Evacuation Centers (PDF)</span>
                 <span class="block text-xs text-ink-muted" x-text="reportScopedCenters.length + ' records'"></span>
             </span>
         </button>
@@ -137,7 +153,15 @@
             class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
             <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="shield-alert" class="w-4 h-4"></i></span>
             <span>
-                <span class="block text-sm font-medium text-slate-700">Vulnerability Assessments</span>
+                <span class="block text-sm font-medium text-slate-700">Vulnerability Assessments (CSV)</span>
+                <span class="block text-xs text-ink-muted" x-text="reportScopedVulnerability.length + ' records'"></span>
+            </span>
+        </button>
+        <button @click="exportPDF(reportScopedVulnerability, 'vulnerability-report.csv')"
+            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
+            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="shield-alert" class="w-4 h-4"></i></span>
+            <span>
+                <span class="block text-sm font-medium text-slate-700">Vulnerability Assessments (PDF)</span>
                 <span class="block text-xs text-ink-muted" x-text="reportScopedVulnerability.length + ' records'"></span>
             </span>
         </button>

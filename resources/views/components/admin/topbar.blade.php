@@ -42,9 +42,10 @@
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
         <div class="min-w-0">
-            <h1 class="text-[22px] lg:text-[26px] font-extrabold tracking-[-.02em] leading-tight text-ink truncate">{{ $title }}</h1>
+            {{-- data-page-*: a page with tabs may retitle itself (Balita's Feedback tab, 2026-10-15). --}}
+            <h1 data-page-title class="text-[22px] lg:text-[26px] font-extrabold tracking-[-.02em] leading-tight text-ink truncate">{{ $title }}</h1>
             @if($subtitle)
-                <p class="text-[13.5px] text-ink-muted truncate">{{ $subtitle }}</p>
+                <p data-page-subtitle class="text-[13.5px] text-ink-muted truncate">{{ $subtitle }}</p>
             @endif
         </div>
     </div>

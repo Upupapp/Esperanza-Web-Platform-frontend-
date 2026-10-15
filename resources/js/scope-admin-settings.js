@@ -1198,6 +1198,25 @@ function auditLogTab() {
                 toast(errText(err, 'Could not export the audit log.'), 'error');
             } finally { this.exporting = false; }
         },
+        // The same export as a PDF (owner, 2026-10-15): the server's CSV, so
+        // the rows and the record of the export are the same, drawn as a table.
+        async exportPdf() {
+            if (this.exporting || !this.canExport || this.dateProblem) return;
+            this.exporting = true;
+            try {
+                const blob = await api.get('/admin/audit-logs/export', { params: this.params(), responseType: 'blob' });
+                const rows = await window.rowsFromCsv(await (blob instanceof Blob ? blob : new Blob([blob])).text());
+                const cap = 2000;
+                await window.tablePdf(rows.slice(0, cap), {
+                    filename: 'audit-log-' + today() + '.pdf',
+                    title: 'Audit log',
+                    subtitle: rows.length > cap ? 'The newest ' + cap.toLocaleString('en-PH') + ' of ' + rows.length.toLocaleString('en-PH') + ' entries: narrow the filters, or use the CSV, for the rest' : '',
+                });
+                toast('Audit log exported as a PDF. The export itself is recorded in the log.');
+            } catch (err) {
+                toast(errText(err, 'Could not export the audit log.'), 'error');
+            } finally { this.exporting = false; }
+        },
     };
 }
 

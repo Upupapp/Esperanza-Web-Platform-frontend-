@@ -22,7 +22,7 @@ module.exports = [
         name: 'Dashboard > Appointments shows the day\'s bookings and the schedules',
         async run({ browser }) {
             const page = await signInStaff(browser);
-            await open(page, '/admin/dashboard/appointments/');
+            await open(page, '/admin/appointments/');
             loaded(page, /\/admin\/appointments(\?|$)/, 'the bookings');
             check(/Bookings/.test(await text(page)), 'no Bookings section');
             await page.locator('button[role=tab]:has-text("Schedules")').first().click().catch(() => {});

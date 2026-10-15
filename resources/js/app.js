@@ -45,6 +45,13 @@ window.loadHtml2Pdf = () => {
     return pdfModulePromise;
 };
 
+// A list as a PDF, next to every CSV/Excel download (owner, 2026-10-15). The
+// table renderer and jsPDF load on the first click only (resources/js/table-pdf.js).
+let tablePdfModule = null;
+const tablePdfLoad = () => (tablePdfModule ??= import('./table-pdf'));
+window.tablePdf = (rows, options) => tablePdfLoad().then((m) => m.tablePdf(rows, options));
+window.rowsFromCsv = (csv) => tablePdfLoad().then((m) => m.rowsFromCsv(csv));
+
 // Reading an uploaded PDF inside the portal (Esperanza bugs QA, 2026-10-06:
 // staff had to download every document to read it). The backend serves
 // uploads as downloads only ("never serve an uploaded file inline from the
@@ -1586,7 +1593,7 @@ const area = (used, load) => { if (used) areaChunks.push(load().then((m) => m.re
 area(/^\/(citizen|verify)(\/|$)/.test(areaPath), () => import('./scope-citizen'));
 area(/^\/admin\/(settings|users)(\/|$)/.test(areaPath), () => import('./scope-admin-settings'));
 area(/^\/admin\/(constituents|communications)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
-area(/^\/admin\/(dashboard|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
+area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 

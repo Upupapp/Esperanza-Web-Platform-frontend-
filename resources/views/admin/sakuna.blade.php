@@ -288,6 +288,15 @@
             a.click();
             this.toast('Exported successfully.', 'success');
         },
+        // The same rows as a PDF (owner, 2026-10-15: PDF as well as the spreadsheet).
+        async exportPDF(rows, filename) {
+            if (!rows.length) { this.toast('No records to export.', 'warning'); return; }
+            const name = filename.replace(/(-export|-report)?\.csv$/, '').replace(/-/g, ' ');
+            try {
+                await window.tablePdf(rows, { filename, title: 'Sakuna \u00b7 ' + name.charAt(0).toUpperCase() + name.slice(1) });
+                this.toast('PDF downloaded.', 'success');
+            } catch { this.toast('Could not make the PDF.', 'error'); }
+        },
 
         // Centers tab state
         centerSearch: '',

@@ -143,18 +143,13 @@ function remember(params) {
  * The Dashboard page's tabs: the overview every account has, the office
  * dashboards and the barangay dashboards. A department account lands on its
  * office, a barangay account on its barangay (GET /admin/dashboard/subjects).
- *
- * Appointments (scope round 2026-10-15) is a tab too, with its own address,
- * /admin/dashboard/appointments, which renders this page with $view set:
- * initialView. It shows for an officer who may see bookings or schedules.
  */
-export function dashboardHost(initialView = null) {
+export function dashboardHost() {
     return {
-        view: initialView === 'appointments' ? 'appointments' : 'overview',
+        view: 'overview',
         subjects: { home: 'overview', offices: [], barangays: [] },
         catalog: { reports: [], offices: [], barangays: [] },
         subjectsReady: false,
-        apptAllowed: false,
         async init() {
             try {
                 const [subjects, catalog] = await Promise.all([
@@ -166,14 +161,9 @@ export function dashboardHost(initialView = null) {
             } catch {
                 // The overview still works; the other tabs simply do not show.
             }
-            const session = this.$store.session;
-            await session.whenReady?.();
-            this.apptAllowed = session.canPerm('appt_bookings', 'view') || session.canPerm('appt_schedules', 'view');
-            const asked = initialView === 'appointments' ? 'appointments' : query().get('view');
-            const allowed = ['overview', this.subjects.offices.length ? 'department' : null, this.subjects.barangays.length ? 'barangay' : null, this.apptAllowed ? 'appointments' : null].filter(Boolean);
+            const asked = query().get('view');
+            const allowed = ['overview', this.subjects.offices.length ? 'department' : null, this.subjects.barangays.length ? 'barangay' : null].filter(Boolean);
             this.view = allowed.includes(asked) ? asked : (allowed.includes(this.subjects.home) ? this.subjects.home : 'overview');
-            // The appointments address without the permission: the address follows the tab shown.
-            if (initialView === 'appointments' && this.view !== 'appointments') this.address(this.view);
             this.subjectsReady = true;
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -185,18 +175,8 @@ export function dashboardHost(initialView = null) {
         },
         show(view) {
             this.view = view;
-            this.address(view);
-            this.$nextTick(() => window.renderIcons?.());
-        },
-        /** The tab in the address: Appointments at its own, the others as ?view= on the dashboard's. */
-        address(view) {
-            const base = window.location.pathname.replace(/\/+$/, '').replace(/\/appointments$/, '');
-            if (view === 'appointments') {
-                window.history.replaceState(null, '', base + '/appointments');
-                return;
-            }
-            if (base !== window.location.pathname.replace(/\/+$/, '')) window.history.replaceState(null, '', base);
             remember({ view: view === 'overview' ? null : view, office: null, barangay: null });
+            this.$nextTick(() => window.renderIcons?.());
         },
         /** The printable reports of one kind this account may open. */
         reportsOf(kind) {
@@ -512,6 +492,38 @@ export function reportSheet() {
             } catch (e) {
                 this.$dispatch('toast', { message: e?.localised ? e.localised('en') : 'Could not print the report.', variant: 'error' });
             } finally {
+                this.busy = null;
+            }
+        },
+        /**
+         * The printed copy as a PDF file (owner, 2026-10-15: PDF as well as
+         * Excel). Recorded like a print; drawn as the Dokyu document download
+         * draws its paper (html2pdf on a copy, oklch() colours made rgb()).
+         */
+        async pdf() {
+            if (this.busy || !this.report?.can_print) return;
+            this.busy = 'pdf';
+            const editor = window.DokyuEditor || {};
+            let restoreColors = () => {};
+            try {
+                await api.post('/admin/reports/' + this.report.key + '/print', this.query());
+                const html2pdf = await window.loadHtml2Pdf();
+                const paper = document.querySelector('#dp-print-area .rep-paper') || document.querySelector('.rep-paper');
+                if (!paper) throw new Error('no report on screen');
+                if (editor.waitForImages) await editor.waitForImages(paper);
+                if (editor.sanitizeExportColors) restoreColors = editor.sanitizeExportColors(document.body);
+                await html2pdf().set({
+                    margin: 0,
+                    filename: (this.report.key || 'report') + '-' + new Date().toISOString().slice(0, 10) + '.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: this.landscape ? 'landscape' : 'portrait', compress: true },
+                    pagebreak: { mode: ['css', 'legacy'] },
+                }).from(editor.exportClone ? editor.exportClone(paper) : paper).save();
+            } catch (e) {
+                this.$dispatch('toast', { message: e?.localised ? e.localised('en') : 'Could not make the PDF. Use Print and choose Save as PDF.', variant: 'error' });
+            } finally {
+                restoreColors();
                 this.busy = null;
             }
         },

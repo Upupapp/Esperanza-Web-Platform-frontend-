@@ -735,7 +735,8 @@
                 // The role's saved permission set as a CSV: every module,
                 // submodule and permission in the matrix, and whether the role
                 // holds it. This button used to toast 'frontend preview only'.
-                downloadReport() {
+                // As a PDF too (owner, 2026-10-15): the same rows.
+                downloadReport(format = 'csv') {
                     const role = this.selectedRole;
                     if (!role) return;
                     const held = role.permissions || {};
@@ -743,6 +744,13 @@
                     this.modules.forEach((m) => m.submodules.forEach((sub) => sub.perms.forEach((p) => {
                         rows.push([role.name, m.name, sub.name, p, (held[sub.key] || []).includes(p) ? 'Yes' : 'No']);
                     })));
+                    if (format === 'pdf') {
+                        const [head, ...body] = rows;
+                        const say = (message, variant) => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
+                        window.tablePdf(body.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i]]))), { filename: 'permissions-' + role.key + '.pdf', title: 'Permissions of ' + role.name })
+                            .then(() => say('PDF downloaded.', 'success'), () => say('Could not make the PDF.', 'error'));
+                        return;
+                    }
                     const csv = rows.map((r) => r.map((v) => JSON.stringify(String(v ?? ''))).join(',')).join('\n');
                     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })), download: 'permissions-' + role.key + '.csv' });
                     a.click();
@@ -812,7 +820,12 @@
                                 variant="secondary" size="sm" icon="download"
                                 x-show="$store.session.canExportReports()"
                                 @click="downloadReport()"
-                            >Download Report</x-ui.button>
+                            >Download Report (CSV)</x-ui.button>
+                            <x-ui.button
+                                variant="secondary" size="sm" icon="file-down"
+                                x-show="$store.session.canExportReports()"
+                                @click="downloadReport('pdf')"
+                            >PDF</x-ui.button>
                             <x-ui.button size="sm" icon="save" x-show="selectedRole?.editable" x-bind:disabled="!dirty || saving" @click="savePerms()">
                                 <span x-text="saving ? 'Saving…' : 'Save Changes'"></span>
                             </x-ui.button>

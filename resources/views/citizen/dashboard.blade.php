@@ -193,17 +193,7 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-                        {{-- The service directory and appointments (scope round 2026-10-15). --}}
-                        <x-ui.button
-                            :href="route('citizen.services')"
-                            variant="ghost"
-                            size="sm"
-                            icon="layout-grid"
-                            class="!text-white !bg-white/14 hover:!bg-white/24 !border !border-white/28 backdrop-blur-[10px]"
-                        >
-                            <x-ui.t fil="Serbisyo" en="Services" />
-                        </x-ui.button>
-
+                        {{-- Appointments (scope round 2026-10-15). --}}
                         <x-ui.button
                             :href="route('citizen.appointments')"
                             variant="ghost"

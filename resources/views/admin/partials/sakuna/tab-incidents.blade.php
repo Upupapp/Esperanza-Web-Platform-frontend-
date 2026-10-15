@@ -57,7 +57,11 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredIncidents, 'incidents-export.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+        </button>
+        <button @click="exportPDF(filteredIncidents, 'incidents-export.csv')"
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
+            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
         </button>
         <button x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">

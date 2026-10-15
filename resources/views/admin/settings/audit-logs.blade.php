@@ -67,6 +67,7 @@
                     <button type="button" x-show="filtered" x-cloak @click="clear()" class="text-xs font-medium text-ink-muted hover:text-ink hover:underline">Clear filters</button>
                 </div>
                 <x-ui.button variant="secondary" size="sm" icon="download" x-show="canExport" x-bind:disabled="exporting || !!dateProblem" @click="exportCsv()"><span x-text="exporting ? 'Exporting…' : 'Export CSV'"></span></x-ui.button>
+                <x-ui.button variant="secondary" size="sm" icon="file-down" x-show="canExport" x-bind:disabled="exporting || !!dateProblem" @click="exportPdf()">Export PDF</x-ui.button>
             </div>
             <p x-show="dateProblem" x-cloak x-text="dateProblem" role="alert" class="{{ $ui['error'] }} mt-2"></p>
             <p x-show="canExport && total > 10000" x-cloak class="text-[11px] text-ink-muted mt-2">An export holds the newest 10,000 matching entries; narrow the filters for older ones.</p>

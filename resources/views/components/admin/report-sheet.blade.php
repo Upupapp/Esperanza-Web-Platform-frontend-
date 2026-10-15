@@ -107,6 +107,7 @@
             <span class="mr-auto text-[12px] text-ink-muted hidden sm:inline" x-show="report" x-text="report ? (report.row_count + (report.row_count === 1 ? ' row' : ' rows') + ' · ' + (report.can_print ? 'Each print is recorded under your name.' : 'View only: your role cannot print this report.')) : ''"></span>
             <x-ui.button variant="secondary" @click="open = false">Close</x-ui.button>
             <x-ui.button variant="secondary" icon="file-spreadsheet" x-show="report && report.can_export" loading="busy === 'excel'" @click="excel()">Excel</x-ui.button>
+            <x-ui.button variant="secondary" icon="file-down" x-show="report && report.can_print" loading="busy === 'pdf'" @click="pdf()">PDF</x-ui.button>
             <x-ui.button icon="printer" x-show="report && report.can_print" loading="busy === 'print'" @click="print()">Print</x-ui.button>
         </x-slot:footer>
     </x-ui.modal>

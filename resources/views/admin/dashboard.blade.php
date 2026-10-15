@@ -11,10 +11,8 @@
     {{-- Tabs (owner, 2026-10-14): the overview, the office dashboards and the
          barangay dashboards, on this one page rather than new sidebar entries.
          A department account lands on its office, a barangay account on its
-         barangay (dashboardHost, resources/js/dashboards.js). Appointments is
-         a tab too (scope round 2026-10-15): /admin/dashboard/appointments
-         renders this page with $view = 'appointments'. --}}
-    <div x-data="dashboardHost(@js($view ?? null))">
+         barangay (dashboardHost, resources/js/dashboards.js). --}}
+    <div x-data="dashboardHost()">
     <div
         x-data="{
             ready: false,
@@ -161,12 +159,11 @@
             </div>
         </div>
 
-        <div x-show="subjectsReady && (subjects.offices.length || subjects.barangays.length || apptAllowed)" x-cloak class="flex flex-wrap items-center gap-3">
+        <div x-show="subjectsReady && (subjects.offices.length || subjects.barangays.length)" x-cloak class="flex flex-wrap items-center gap-3">
             <div class="inline-flex flex-wrap p-1 rounded-2xl surface-pressed-sm" role="tablist" aria-label="Dashboard">
                 <button type="button" role="tab" :aria-selected="view === 'overview'" @click="show('overview')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'overview' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview</button>
                 <button type="button" role="tab" x-show="subjects.offices.length" :aria-selected="view === 'department'" @click="show('department')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'department' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-4 h-4"></i><span x-text="officeTabLabel"></span></button>
                 <button type="button" role="tab" x-show="subjects.barangays.length" :aria-selected="view === 'barangay'" @click="show('barangay')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'barangay' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="map-pinned" class="w-4 h-4"></i><span x-text="barangayTabLabel"></span></button>
-                <button type="button" role="tab" x-show="apptAllowed" :aria-selected="view === 'appointments'" @click="show('appointments')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13.5px] transition-all duration-200" :class="view === 'appointments' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'"><i data-lucide="calendar-clock" class="w-4 h-4"></i>Appointments</button>
             </div>
         </div>
 
@@ -205,9 +202,6 @@
         </template>
         <template x-if="view === 'barangay'">
             <x-admin.dashboards.barangay />
-        </template>
-        <template x-if="view === 'appointments'">
-            <x-admin.scope.appointments />
         </template>
 
         <!-- Real content -->

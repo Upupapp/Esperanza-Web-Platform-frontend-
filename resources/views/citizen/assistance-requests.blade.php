@@ -329,7 +329,18 @@
                         'Employment & Livelihood': 'briefcase',
                     },
                     formData: {},
-                    get filteredTypes() { return this.types.map((t, i) => ({ ...t, i })).filter(t => t.name.toLowerCase().includes(this.search.toLowerCase())); },
+                    // The programs the backend offers now (GET /services?type=tulong), as
+                    // Dokyu does: one switched off in the Service Catalog is not listed,
+                    // since this tab is the resident's list of programs (owner, 2026-10-15).
+                    offered: null,
+                    async loadOffered() {
+                        try {
+                            const res = await $api.get('/services', { params: { type: 'tulong' } });
+                            const keys = (res.data || []).map((sv) => sv.key);
+                            this.offered = keys.length ? keys : null;
+                        } catch { this.offered = null; }
+                    },
+                    get filteredTypes() { return this.types.map((t, i) => ({ ...t, i })).filter(t => (!this.offered || !t.key || this.offered.includes(t.key)) && t.name.toLowerCase().includes(this.search.toLowerCase())); },
                     get assistanceCategories() {
                         const counts = {};
                         this.types.forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
@@ -488,7 +499,7 @@
                         return { ref: created.ref, failed };
                     },
                 }"
-                x-init="seedApplicant(); $watch('$store.citizenSession.account', () => seedApplicant()); $nextTick(() => { const want = new URLSearchParams(window.location.search).get('new'); if (!want) return; const i = types.findIndex(t => t.key === want); if (i >= 0) { search = types[i].name; selectType(i); } open = true; })"
+                x-init="seedApplicant(); loadOffered(); $watch('$store.citizenSession.account', () => seedApplicant()); $nextTick(() => { const want = new URLSearchParams(window.location.search).get('new'); if (!want) return; const i = types.findIndex(t => t.key === want); if (i >= 0) { search = types[i].name; selectType(i); } open = true; })"
                 x-effect="!open && reset()"
                 class="contents"
             >

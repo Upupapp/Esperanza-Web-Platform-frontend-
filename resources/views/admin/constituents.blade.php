@@ -167,11 +167,12 @@
         },
         turnRemotePage(step) { this.searchRegistry(Math.min(Math.max(1, this.remote.page + step), this.remote.lastPage)); },
         // Exporting what the server found: every page of it, not the one shown.
-        async exportIndividuals() {
-            if (!this.remoteActive) return this.exportCSV(this.filteredIndividuals, 'individuals-export.csv');
+        async exportIndividuals(format = 'csv') {
+            const out = (rows) => (format === 'pdf' ? this.exportPDF(rows, 'individuals-export.csv') : this.exportCSV(rows, 'individuals-export.csv'));
+            if (!this.remoteActive) return out(this.filteredIndividuals);
             try {
                 const res = await $api.getAll('/admin/residents', { params: this.remote.params, maxPages: 200 });
-                this.exportCSV(res.data || [], 'individuals-export.csv');
+                out(res.data || []);
             } catch { this.$dispatch('toast', { message: 'Could not export these residents.', variant: 'error' }); }
         },
         get remoteActive() { return !!this.remoteKey && this.remote.key === this.remoteKey && !!this.remote.rows; },
@@ -786,6 +787,16 @@
             const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:filename});
             a.click(); this.$dispatch('toast',{message:'Exported successfully.',variant:'success'});
         },
+        // The same rows as a PDF (owner, 2026-10-15: PDF as well as the spreadsheet).
+        async exportPDF(rows, filename) {
+            const say = (message, variant) => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
+            if (!rows.length) { say('No records to export.', 'warning'); return; }
+            const titles = { 'individuals-export.csv': 'Residents', 'families-export.csv': 'Families', 'households-export.csv': 'Households', 'profiling-coverage-export.csv': 'Profiling coverage by barangay', 'data-quality-export.csv': 'Data quality issues' };
+            try {
+                await window.tablePdf(rows, { filename, title: titles[filename] || 'Constituents', subtitle: this.barangayFilter ? 'Brgy. ' + this.barangayFilter : '', skip: ['services','emergency','member_ids','family_ids','citizen_account','household','family','tags','photo','photo_url'] });
+                say('PDF downloaded.', 'success');
+            } catch { say('Could not make the PDF.', 'error'); }
+        },
         can(sub,perm) { return this.$store.session.canPerm?this.$store.session.canPerm(sub,perm):true; },
         clearFilters() { this.search='';this.barangayFilter='';this.verificationFilter='';this.statusFilter='';this.tagFilter='';this.dqTypeFilter='';this.dqStatusFilter='';this.cvSearch='';this.cvStatusFilter='';this.cvBarangayFilter='';this.cvTagFilter=''; },
     }"
@@ -986,6 +997,10 @@
                     <button @click="view==='individuals'?exportIndividuals():exportCSV(view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV
+                    </button>
+                    <button @click="view==='individuals'?exportIndividuals('pdf'):exportPDF(view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
+                        <i data-lucide="file-down" class="w-3.5 h-3.5"></i>Export PDF
                     </button>
                     <button @click="window.print()"
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">

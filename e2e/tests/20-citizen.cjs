@@ -14,23 +14,15 @@ module.exports = [
     },
     {
         id: 'C2',
-        name: 'Services lists the services, filters by a search and shows a service\'s details',
+        name: 'Dokyu and Tulong each list their own services in the new-request window',
         async run({ browser }) {
+            // The service lists live in their own tabs (owner, 2026-10-15): no separate Services page.
             const page = await signInResident(browser);
-            await open(page, '/citizen/services/');
-            // Each service card's heading is its name.
-            const cards = page.locator('h2[x-text="s.name"]');
-            await cards.first().waitFor({ timeout: 20000 });
-            const all = await cards.count();
-            check(all > 1, `only ${all} service shown`);
-            const first = (await cards.first().innerText()).trim();
-            const word = first.split(/\s+/).find((w) => w.length > 4) || first;
-            await page.locator('input[type=search], input[aria-label*="erbisyo"], input[aria-label*="ervices"]').first().fill(word);
-            await page.waitForTimeout(600);
-            const some = await cards.count();
-            check(some >= 1 && some <= all, `searching "${word}" left ${some} of ${all}`);
-            const start = page.locator('a[href*="?new="]').first();
-            check(await start.count(), 'no "Start request" link to a new request');
+            await open(page, '/citizen/document-requests/');
+            await page.locator('button:has-text("Bagong Kahilingan"), button:has-text("New Request")').first().click();
+            await settle(page, 1200);
+            const body = await text(page);
+            check(/Barangay Clearance|Cedula|Certificate/i.test(body), 'the new-request window lists no document services');
         },
     },
     {

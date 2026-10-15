@@ -65,6 +65,9 @@
         <x-ui.nav-item dense :href="route('admin.papeles')" icon="folder-open" label="Papeles" :active="$active === 'papeles'" moduleKey="papeles" />
         <x-ui.nav-item dense :href="route('admin.document-requests')" icon="file-text" label="Dokyu" badgeBind="$store.queueCounts.dokyu" badgeTitle="$store.queueCounts.needsAction($store.queueCounts.dokyu)" :active="$active === 'document-requests'" moduleKey="dokyu" />
         <x-ui.nav-item dense :href="route('admin.assistance-requests')" icon="hand-heart" label="Tulong" badgeBind="$store.queueCounts.tulong" badgeTitle="$store.queueCounts.needsAction($store.queueCounts.tulong)" :active="$active === 'assistance-requests'" moduleKey="tulong" />
+        {{-- Its own entry at the owner's request (2026-10-15), for whoever runs bookings or schedules. --}}
+        <x-ui.nav-item dense :href="route('admin.appointments')" icon="calendar-clock" label="Appointments" :active="$active === 'appointments'"
+            showIf="$store.session.canPerm('appt_bookings', 'view') || $store.session.canPerm('appt_schedules', 'view')" />
         <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />
         <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
         {{-- One entry: the Directory and the Blotter are tabs of Balita. The

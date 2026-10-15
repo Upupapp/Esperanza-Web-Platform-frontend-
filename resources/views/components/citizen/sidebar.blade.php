@@ -54,7 +54,6 @@
     <nav class="flex-1 overflow-y-auto scrollbar-dark -mx-1 px-1 pt-1 pb-2 space-y-[2px]">
         <x-ui.nav-item dense :href="route('citizen.dashboard')" icon="layout-dashboard" label="Home" labelEn="Dashboard" :active="$active === 'dashboard'" />
         {{-- Scope round 2026-10-15: the service directory, and appointments. --}}
-        <x-ui.nav-item dense :href="route('citizen.services')" icon="layout-grid" label="Serbisyo" labelEn="Services" :active="$active === 'services'" />
         <x-ui.nav-item dense :href="route('citizen.document-requests')" icon="file-text" label="Dokyu" badgeBind="$store.queueCounts.dokyu" :active="$active === 'document-requests'" />
         <x-ui.nav-item dense :href="route('citizen.assistance-requests')" icon="hand-heart" label="Tulong" badgeBind="$store.queueCounts.tulong" :active="$active === 'assistance-requests'" />
         <x-ui.nav-item dense :href="route('citizen.appointments')" icon="calendar-clock" label="Appointment" labelEn="Appointments" :active="$active === 'appointments'" />

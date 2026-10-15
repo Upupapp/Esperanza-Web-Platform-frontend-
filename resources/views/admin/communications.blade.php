@@ -7,9 +7,14 @@
      2026-10-07: as few sidebar entries as possible). /admin/communications/offices,
      /blotter, /banners and /feedback (and the old /admin/settings/support)
      still open this page on that tab. --}}
-{{-- Opened on Feedback (the sidebar entry of officers who only answer
-     tickets), the page is titled Feedback, not Balita (2026-10-15). --}}
-<x-layouts.admin :title="$tab === 'feedback' ? 'Feedback' : 'Balita'" subtitle="Announcements, events, the directory, the barangay blotter and residents' feedback." active="communications">
+{{-- On its Feedback tab the page is titled Feedback, not Balita: when opened
+     there (the sidebar entry of officers who only answer tickets) and when the
+     tab is chosen (syncHeader) (2026-10-15). --}}
+@php
+    $feedbackSubtitle = 'Tickets from residents, routed to the office that owns them.';
+    $balitaSubtitle = "Announcements, events, the directory, the barangay blotter and residents' feedback.";
+@endphp
+<x-layouts.admin :title="$tab === 'feedback' ? 'Feedback' : 'Balita'" :subtitle="$tab === 'feedback' ? $feedbackSubtitle : $balitaSubtitle" active="communications">
     <div
         x-data="{
             tab: '{{ $tab }}',
@@ -21,6 +26,14 @@
             // Each tab's own address, so a reload stays on it; a tab without
             // a route of its own is ?tab= (scope round 2026-10-15).
             tabPaths: { balita: '/admin/communications', banners: '/admin/communications/banners', offices: '/admin/communications/offices', blotter: '/admin/communications/blotter', feedback: '/admin/communications/feedback' },
+            syncHeader(t) {
+                const fb = t === 'feedback';
+                const h = document.querySelector('[data-page-title]');
+                const p = document.querySelector('[data-page-subtitle]');
+                if (h) h.textContent = fb ? 'Feedback' : 'Balita';
+                if (p) p.textContent = fb ? @js($feedbackSubtitle) : @js($balitaSubtitle);
+                document.title = (fb ? 'Feedback' : 'Balita') + ' — Esperanza LGU Administrative Portal';
+            },
             go(t) {
                 this.tab = t;
                 try { history.replaceState(history.state, '', this.tabPaths[t] || '/admin/communications?tab=' + t); } catch (e) { /* the tab still changes */ }
@@ -46,6 +59,7 @@
             initials(name) { return (name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); },
         }"
         x-init="landOnAllowedTab()"
+        x-effect="syncHeader(tab)"
         class="animate-fade-up"
     >
 

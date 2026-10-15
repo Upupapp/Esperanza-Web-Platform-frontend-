@@ -1,4 +1,4 @@
-{{-- Dashboard > Appointments (scope round 2026-10-15): the bookings of the
+{{-- The Appointments page (scope round 2026-10-15): the bookings of the
      schedules this officer runs, one day at a time, with Confirm, Complete,
      No-show and Cancel; and the schedules themselves (days, hours, slot
      length, residents per slot) with their closed days. Which schedules an

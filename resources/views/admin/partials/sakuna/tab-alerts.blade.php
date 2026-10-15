@@ -52,7 +52,11 @@
     <div class="flex items-center gap-2 flex-wrap">
         <button @click="exportCSV(filteredAlerts.map(a => ({ ref: a.ref, type: a.type, level: a.level, title_en: a.title?.en, status: a.status, recipients: a.recipients })), 'alerts-export.csv')"
             class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export
+            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+        </button>
+        <button @click="exportPDF(filteredAlerts.map(a => ({ ref: a.ref, type: a.type, level: a.level, title_en: a.title?.en, status: a.status, recipients: a.recipients })), 'alerts-export.csv')"
+            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
+            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
         </button>
         <button x-show="can('sakuna_alerts', 'create')" @click="openCreateAlert()"
             class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">

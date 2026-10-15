@@ -9,7 +9,7 @@
         'dashboard' => 'Home', 'document-requests' => 'Dokyu', 'assistance-requests' => 'Tulong',
         'announcements' => 'Balita', 'events' => 'Mga Kaganapan', 'directory' => 'Direktoryo ng Pamahalaan',
         'help' => 'Suporta', 'profile' => 'Aking Profile', 'notifications' => 'Mga Abiso', 'settings' => 'Mga Setting',
-        'legal' => 'Privacy at mga Tuntunin', 'services' => 'Serbisyo', 'appointments' => 'Appointment',
+        'legal' => 'Privacy at mga Tuntunin', 'appointments' => 'Appointment',
     ];
     $filSubtitles = [
         'dashboard' => 'Narito ang buod ng iyong account.',
@@ -37,7 +37,6 @@
         'portal' => 'citizen',
         'pages' => [
             ['en' => 'Dashboard', 'fil' => 'Home', 'icon' => 'layout-dashboard', 'href' => route('citizen.dashboard')],
-            ['en' => 'Services', 'fil' => 'Serbisyo', 'icon' => 'layout-grid', 'href' => route('citizen.services')],
             ['en' => 'Dokyu — Document Requests', 'fil' => 'Dokyu — Kahilingan sa Dokumento', 'icon' => 'file-text', 'href' => route('citizen.document-requests')],
             ['en' => 'Tulong — Assistance Requests', 'fil' => 'Tulong — Kahilingan sa Tulong', 'icon' => 'hand-heart', 'href' => route('citizen.assistance-requests')],
             ['en' => 'Appointments', 'fil' => 'Appointment', 'icon' => 'calendar-clock', 'href' => route('citizen.appointments')],

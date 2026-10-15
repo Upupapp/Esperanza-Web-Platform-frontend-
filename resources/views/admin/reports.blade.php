@@ -57,15 +57,16 @@
                 this.dash = dash; this.docSummary = doc; this.assistSummary = assist; this.satisfaction = sat;
                 this.internalForms = forms; this.sakunaIncidents = sakuna; this.barangayActivity = brgy; this.revenue = rev;
             },
-            async generate(key) {
+            async generate(key, format = 'CSV') {
                 if (this.generating) return;
                 this.generating = key;
                 try {
                     // The run used to be recorded and nothing handed over: no file,
                     // nothing to click (live test 2026-10-07, BUG-8). The rows it
                     // returns are saved as a CSV the officer can open in Excel.
-                    const res = await $api.post('/admin/reports/' + key + '/export', { format: 'CSV' });
-                    this.saveCsv(res.data);
+                    // Or as a PDF (owner, 2026-10-15), recorded as a PDF run.
+                    const res = await $api.post('/admin/reports/' + key + '/export', { format });
+                    if (format === 'PDF') await this.savePdf(res.data); else this.saveCsv(res.data);
                     this.runs.unshift({
                         id: res.data.run_id, key: res.data.key, title: res.data.title,
                         by: this.$store.session.account?.name || 'You', scope: res.data.scope?.geographic,
@@ -76,6 +77,17 @@
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not generate the report.', variant: 'error' });
                 } finally { this.generating = null; }
+            },
+            savePdf(data) {
+                const rows = Array.isArray(data?.rows) ? data.rows : [];
+                const totals = data?.totals && typeof data.totals === 'object'
+                    ? 'Totals: ' + Object.entries(data.totals).map(([k, v]) => k.replace(/_/g, ' ') + ' ' + v).join(', ')
+                    : '';
+                return window.tablePdf(rows.length ? rows : [{ note: 'No rows for this period.' }], {
+                    filename: (data?.key || 'report') + '-' + new Date().toISOString().slice(0, 10) + '.pdf',
+                    title: data?.title || 'Report',
+                    subtitle: totals,
+                });
             },
             saveCsv(data) {
                 const rows = Array.isArray(data?.rows) ? data.rows : [];
@@ -229,7 +241,8 @@
                         <div class="mt-3.5 pt-3.5 border-t border-brand-600/10 flex items-center gap-1.5 text-xs font-medium" :class="report.can_export ? 'text-brand-600' : 'text-ink-faint'">
                             <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="generating === report.key"></i>
                             <i data-lucide="download" class="w-3.5 h-3.5" x-show="generating !== report.key"></i>
-                            <span x-text="generating === report.key ? 'Generating…' : (report.can_export ? 'Generate Report' : 'View only — no export permission')"></span>
+                            <span x-text="generating === report.key ? 'Generating…' : (report.can_export ? 'Generate Report (CSV)' : 'View only — no export permission')"></span>
+                            <button type="button" x-show="report.can_export && generating !== report.key" @click.stop="generate(report.key, 'PDF')" class="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-brand-600 hover:bg-brand-50" :aria-label="'Generate ' + report.title + ' as a PDF'"><i data-lucide="file-down" class="w-3.5 h-3.5"></i>PDF</button>
                         </div>
                     </x-ui.card>
                 </template>
@@ -257,7 +270,7 @@
                             <td class="px-4 py-3 text-ink-muted hidden md:table-cell" x-text="r.row_count"></td>
                             <td class="px-4 py-3 text-right">
                                 {{-- A fresh copy of the same report, as of now: each download is its own audited run. --}}
-                                <button type="button" @click="generate(r.key)" x-show="r.key && (reports.find((x) => x.key === r.key) || {}).can_export" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline" :disabled="!!generating">
+                                <button type="button" @click="generate(r.key, r.format === 'PDF' ? 'PDF' : 'CSV')" x-show="r.key && (reports.find((x) => x.key === r.key) || {}).can_export" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline" :disabled="!!generating">
                                     <i data-lucide="download" class="w-3.5 h-3.5"></i>Download again
                                 </button>
                             </td>
