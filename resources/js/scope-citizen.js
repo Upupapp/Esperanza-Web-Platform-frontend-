@@ -84,6 +84,47 @@ function peso(value) {
 /** The text of a catalog list item, which staff may have saved as a string or an object. */
 const itemText = (v) => (typeof v === 'string' ? v : (v && (v.label || v.name || v.title || v.text || v.step)) || '');
 
+/**
+ * A tel: link for a contact as staff type it - '(056) 123-4567',
+ * '0917 123 4567 / 0998 765 4321', 'Globe: 0917-123-4567', '911'. Only the
+ * first number is dialled, as digits and a leading +; null when the text holds
+ * no number, so the page hides the call button rather than show a dead one
+ * (the app's phone_dial.dart).
+ */
+function dialHref(contact) {
+    if (!contact) return null;
+    const first = String(contact).split(/[/,;]|\bor\b/).map((s) => s.trim()).find((s) => /\d/.test(s)) || '';
+    const digits = first.replace(/[^\d+]/g, '');
+    const number = digits.startsWith('+') ? '+' + digits.slice(1).replace(/\+/g, '') : digits.replace(/\+/g, '');
+    return number.replace('+', '').length < 3 ? null : 'tel:' + number;
+}
+
+/**
+ * The fee, processing time, requirements and steps the server publishes
+ * (GET /services, CatalogController::serialize) laid over the page's own
+ * catalogue entries, matched by service key. The page keeps what the server
+ * does not send (form fields, certificate wording). Requirements follow the
+ * server's list because that list is what files the request: the server
+ * makes one row per entry, keyed req_1, req_2... in that order.
+ */
+function applyServiceCatalog(entries, services) {
+    const byKey = {};
+    (services || []).forEach((sv) => { if (sv && sv.key) byKey[sv.key] = sv; });
+    (entries || []).forEach((entry) => {
+        const sv = entry && entry.key ? byKey[entry.key] : null;
+        if (!sv) return;
+        if (sv.fee && sv.fee.display) entry.fee = sv.fee.display;
+        if (sv.days) entry.days = sv.days;
+        if (Array.isArray(sv.requirements) && sv.version !== null && sv.version !== undefined) {
+            entry.requirements = sv.requirements.map(itemText).filter(Boolean);
+        }
+        const steps = (sv.process || []).map(itemText).filter(Boolean);
+        if (steps.length) entry.process = steps;
+        if (sv.form_spec && sv.form_spec.entitlement && 'amount' in entry) entry.amount = sv.form_spec.entitlement;
+    });
+    return byKey;
+}
+
 // Status chips, by name, for both request lifecycles, tickets and
 // appointments. Never colour alone: every chip also prints the name.
 const TONES = {
@@ -1087,8 +1128,46 @@ function requestExtras(kind, links = {}) {
                 : this.t('This is to inform you that your application for ' + r.type + ' under reference ' + r.ref + ' has been approved by the ' + office + '.', 'Ipinababatid sa iyo na naaprubahan ng ' + office + ' ang iyong aplikasyon para sa ' + r.type + ' sa reference ' + r.ref + '.');
         },
         get pickup() {
+            const s = this.claim;
+            if (s) return [s.office, s.office_contact].filter(Boolean).join(' · ');
             const p = this.pickupInfo;
             return p ? [p.address, p.contact].filter(Boolean).join(' · ') : '';
+        },
+
+        // -- Ready to claim: the server's own pickup details (GET
+        //    /citizen/requests/{ref} -> pickup, CitizenRequestController::pickup),
+        //    present only while the request waits to be claimed (Mark to
+        //    Release, or Tulong's Ready for Release). The app's PickupCard.
+        get claim() { return this.r?.pickup || null; },
+        get claimHours() {
+            const s = this.claim;
+            if (!s) return '';
+            return this.$store.lang.current === 'en' ? (s.office_hours || s.office_hours_fil || '') : (s.office_hours_fil || s.office_hours || '');
+        },
+        get claimTel() { return dialHref(this.claim?.office_contact); },
+        get claimSince() { return this.claim?.ready_since ? fmtDate(this.claim.ready_since) : ''; },
+        get claimBring() {
+            const s = this.claim;
+            if (!s) return [];
+            const ref = this.r?.ref || '';
+            return (s.bring || []).map((key) => {
+                if (key === 'valid_id') return this.t('A valid ID', 'Isang valid ID');
+                if (key === 'reference_number') return this.t('Your reference number, ' + ref, 'Ang iyong reference number, ' + ref);
+                if (key === 'fee') {
+                    return s.fee_due !== null && s.fee_due !== undefined
+                        ? this.t('The fee of ' + peso(s.fee_due) + ', paid at the office before release', 'Ang bayaring ' + peso(s.fee_due) + ', babayaran sa opisina bago i-release')
+                        : this.t('The fee, paid at the office before release', 'Ang bayarin, babayaran sa opisina bago i-release');
+                }
+                return String(key);
+            });
+        },
+
+        // -- The signed copy of an issued document (issued_documents[]:
+        //    has_scan, scan_uploaded_at, scan_url). A revoked one has none.
+        scanState(d) {
+            if (d.revoked) return 'revoked';
+            if (d.scan_url) return 'ready';
+            return d.has_scan ? 'checking' : 'none';
         },
         openSheet(which) {
             const r = this.r;
@@ -1183,7 +1262,530 @@ function requestTimeline() {
     };
 }
 
+// ============================================================== Emergency
+
+// What a resident can report (the app's MockCatalog.incidentTypes). The
+// server takes `type` as free text, not a key into a catalogue, so the name
+// is what is sent.
+const INCIDENT_TYPES = [
+    { key: 'incident_flood', name: 'Flooding', fil: 'Baha', icon: 'waves', office: 'MDRRMO' },
+    { key: 'incident_fire', name: 'Fire', fil: 'Sunog', icon: 'flame', office: 'BFP / MDRRMO' },
+    { key: 'incident_landslide', name: 'Landslide', fil: 'Pagguho ng lupa', icon: 'mountain', office: 'MDRRMO' },
+    { key: 'incident_medical', name: 'Medical Emergency', fil: 'Medikal na emergency', icon: 'siren', office: 'Municipal Health Office / MDRRMO' },
+    { key: 'incident_road', name: 'Road Accident', fil: 'Aksidente sa daan', icon: 'car-front', office: 'MDRRMO / PNP' },
+    { key: 'incident_other', name: 'Other Concern', fil: 'Iba pang alalahanin', icon: 'flag', office: 'MDRRMO' },
+];
+// The server's severity values, sent as they are; the label follows the language.
+const SEVERITIES = [['Low', 'Mababa'], ['Moderate', 'Katamtaman'], ['High', 'Mataas'], ['Critical', 'Kritikal']];
+// What happened to a report, in words: the verbs of the staff side
+// (IncidentLifecycle), never the responder's own note.
+const INCIDENT_STEPS = {
+    report: ['You reported it', 'Iniulat mo'],
+    validate: ['Report confirmed by the office', 'Nakumpirma ng opisina ang ulat'],
+    assign: ['Responders assigned', 'May naitalagang tutugon'],
+    dispatch: ['Responders on the way', 'Papunta na ang mga tutugon'],
+    escalate: ['Marked more serious', 'Itinaas ang antas ng panganib'],
+    resolve: ['Resolved', 'Naresolba na'],
+    close: ['Closed', 'Isinara na'],
+};
+const MAX_INCIDENT_PHOTOS = 3;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+function newUuid() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    const b = new Uint8Array(16);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(b);
+    else for (let i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+}
+
+/**
+ * Emergency (Sakuna, the citizen slice): the published alerts, the hotlines
+ * and evacuation centres (public GET /alerts, /hotlines, /sakuna/centers),
+ * and reporting an incident and following it (GET/POST /citizen/incidents,
+ * GET /citizen/incidents/{ref}). Reporting is open to an unverified account
+ * on purpose (CitizenCapabilities::SAKUNA_INCIDENT). Mirrors the app's
+ * sakuna_screen.dart, evacuation_center_detail_screen.dart and
+ * report_incident_screen.dart. Each part loads on its own, so a failing one
+ * never hides the hotlines.
+ */
+function citizenEmergency() {
+    return {
+        types: INCIDENT_TYPES,
+        severities: SEVERITIES,
+        maxPhotos: MAX_INCIDENT_PHOTOS,
+
+        alerts: [],
+        alertsState: 'loading',
+        hotlines: [],
+        hotlinesState: 'loading',
+        centres: [],
+        centresState: 'loading',
+        incidents: [],
+        incidentsState: 'loading',
+
+        centre: null,
+        centreOpen: false,
+
+        detail: null,
+        detailOpen: false,
+        detailLoading: false,
+        detailFailure: null,
+
+        reportOpen: false,
+        form: { type: '', severity: '', barangay: '', sitio: '', description: '' },
+        photos: [],
+        photoError: '',
+        // One per report, kept across retries: the server answers a repeated
+        // client_uuid with the report it already has, so a retry after a lost
+        // answer never files the same emergency twice.
+        clientUuid: '',
+        submitting: false,
+        reportFailure: null,
+        reported: null,
+
+        init() {
+            this.loadAlerts();
+            this.loadDirectory();
+            this.loadIncidents();
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('incident');
+            if (ref) this.openIncident({ ref });
+            if (params.get('report')) this.openReport();
+        },
+
+        t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+        fmtDate,
+        fmtDateTime,
+        dialHref,
+        get en() { return this.$store.lang.current === 'en'; },
+
+        // -- Alerts: the resident's barangay and the municipality-wide ones.
+        async loadAlerts() {
+            this.alertsState = 'loading';
+            try {
+                const barangay = this.$store.citizenSession.account?.barangay;
+                const res = await api.get('/alerts', { params: barangay ? { barangay } : {} });
+                this.alerts = res.data || [];
+                this.alertsState = 'loaded';
+            } catch {
+                this.alertsState = 'error';
+            }
+            icons();
+        },
+        alertText(field) {
+            if (!field) return '';
+            if (typeof field === 'string') return field;
+            return this.en ? (field.en || field.fil || '') : (field.fil || field.en || '');
+        },
+        alertWhere(a) {
+            return a.barangays && a.barangays.length ? a.barangays.map((b) => 'Brgy. ' + b).join(', ') : this.t('All barangays', 'Lahat ng barangay');
+        },
+
+        // -- Hotlines and evacuation centres
+        loadDirectory() {
+            this.hotlinesState = 'loading';
+            this.centresState = 'loading';
+            api.get('/hotlines')
+                .then((res) => {
+                    this.hotlines = (res.data || []).map((h) => ({
+                        office: String(h.office || h.name || '').trim() || 'Hotline',
+                        position: h.position || '',
+                        contact: String(h.contact || h.number || '').trim(),
+                    })).filter((h) => h.contact);
+                    this.hotlinesState = 'loaded';
+                })
+                .catch(() => { this.hotlinesState = 'error'; })
+                .finally(icons);
+            api.getAll('/sakuna/centers')
+                .then((res) => {
+                    const mine = this.$store.citizenSession.account?.barangay || null;
+                    this.centres = (res.data || []).filter((c) => c && c.name).map((c) => ({
+                        ref: c.ref || c.name,
+                        name: c.name,
+                        barangay: c.barangay || '',
+                        address: c.address || '',
+                        // A centre is taking evacuees while it is open (Processing).
+                        open: c.status === 'Processing',
+                        services: (c.services || []).map(itemText).filter(Boolean),
+                        capacity: Number(c.capacity) || 0,
+                        individuals: Number.isFinite(Number(c.individuals)) && c.individuals !== null ? Number(c.individuals) : null,
+                        families: Number.isFinite(Number(c.families)) && c.families !== null ? Number(c.families) : null,
+                        pct: Number(c.pct) || 0,
+                        lat: c.lat ?? null,
+                        lng: c.lng ?? null,
+                        mine: !!mine && c.barangay === mine,
+                    })).sort((a, b) => (b.mine - a.mine) || (b.open - a.open) || a.barangay.localeCompare(b.barangay) || a.name.localeCompare(b.name));
+                    this.centresState = 'loaded';
+                })
+                .catch(() => { this.centresState = 'error'; })
+                .finally(icons);
+        },
+        occupancyText(c) {
+            if (c.individuals !== null && c.capacity > 0) return this.t(c.individuals + ' of ' + c.capacity + ' people', c.individuals + ' sa ' + c.capacity + ' katao');
+            return c.capacity > 0 ? this.t('Capacity: ' + c.capacity + ' people', 'Kapasidad: ' + c.capacity + ' katao') : this.t('Capacity not listed', 'Walang nakalistang kapasidad');
+        },
+        occupancyTone(c) {
+            if (c.pct >= 90) return 'bg-rose-500';
+            if (c.pct >= 70) return 'bg-amber-500';
+            return 'bg-emerald-500';
+        },
+        // Directions: to the point when the centre has coordinates, otherwise a
+        // Google Maps search for its name and address (the API carries none
+        // today, as the app notes).
+        directionsUrl(c) {
+            if (c && c.lat !== null && c.lng !== null && c.lat !== undefined && c.lng !== undefined) {
+                return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(c.lat + ',' + c.lng);
+            }
+            const query = [c?.name, c?.address, c?.barangay ? 'Brgy. ' + c.barangay : null, 'Esperanza, Masbate'].filter(Boolean).join(', ');
+            return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+        },
+        openCentre(c) {
+            this.centre = c;
+            this.centreOpen = true;
+            icons();
+        },
+
+        // -- My reports
+        async loadIncidents() {
+            this.incidentsState = 'loading';
+            try {
+                const res = await api.getAll('/citizen/incidents', { params: { sort: '-created_at' } });
+                this.incidents = res.data || [];
+                this.incidentsState = 'loaded';
+            } catch {
+                this.incidentsState = 'error';
+            }
+            icons();
+        },
+        typeOf(name) { return INCIDENT_TYPES.find((x) => x.name === name) || null; },
+        typeLabel(name) {
+            const hit = this.typeOf(name);
+            return hit ? this.t(hit.name, hit.fil) : (name || '');
+        },
+        typeIcon(name) { return this.typeOf(name)?.icon || 'triangle-alert'; },
+        severityLabel(value) {
+            const hit = SEVERITIES.find(([v]) => v === value);
+            return hit ? this.t(hit[0], hit[1]) : (value || '');
+        },
+        severityClass(value) {
+            return { Critical: 'bg-rose-50 text-rose-700 ring-rose-200', High: 'bg-orange-50 text-orange-700 ring-orange-200', Moderate: 'bg-amber-50 text-amber-700 ring-amber-200' }[value] || 'bg-slate-100 text-slate-600 ring-slate-200';
+        },
+        async openIncident(row) {
+            this.detail = { ...row, photos: [], timeline: [] };
+            this.detailOpen = true;
+            this.detailLoading = true;
+            this.detailFailure = null;
+            try {
+                const res = await api.get('/citizen/incidents/' + encodeURIComponent(row.ref));
+                const d = res.data || {};
+                this.detail = {
+                    ...d,
+                    photos: (d.photos || []).filter(Boolean).map((p) => ({ name: p.name || '', url: p.url || null, mime: p.mime || '', scan: p.scan_status || '', src: '', failed: false })),
+                    timeline: d.timeline || [],
+                };
+                this.showPhotos(this.detail);
+            } catch (err) {
+                this.detailFailure = err;
+            } finally {
+                this.detailLoading = false;
+                icons();
+            }
+        },
+        // The API sends each photo as a download, so it is read and shown as
+        // the image type it is (window.viewableImage), never run.
+        showPhotos(detail) {
+            detail.photos.forEach((p) => {
+                if (!p.url || !window.viewableImage) return;
+                window.viewableImage(p.url, p.mime || p.name)
+                    .then((src) => { if (this.detail === detail) p.src = src; })
+                    .catch(() => { p.failed = true; });
+            });
+        },
+        photoNote(p) {
+            if (p.url) return p.failed ? this.t('Could not show it. Open it instead.', 'Hindi maipakita. Buksan na lang.') : '';
+            if (p.scan === 'infected' || p.scan === 'error') return this.t('This photo could not be accepted.', 'Hindi matanggap ang larawang ito.');
+            return this.t('Being checked', 'Sinusuri pa');
+        },
+        get steps() {
+            const d = this.detail;
+            if (!d) return [];
+            const list = [];
+            if (d.reported) list.push({ key: 'reported', label: this.t(...INCIDENT_STEPS.report), status: 'Submitted', at: d.reported });
+            (d.timeline || []).forEach((e, i) => {
+                const words = INCIDENT_STEPS[e.verb];
+                list.push({ key: 't' + i, label: words ? this.t(words[0], words[1]) : (e.status || e.verb || ''), status: e.status || '', at: e.at });
+            });
+            return list.reverse();
+        },
+        get detailError() { return this.detailFailure ? errorText(this.detailFailure, 'Could not load this report.', 'Hindi ma-load ang ulat na ito.') : ''; },
+
+        // -- Report an incident
+        get barangays() {
+            return Object.keys(this.$store.barangay.catalog || {}).sort((a, b) => a.localeCompare(b));
+        },
+        openReport(type = null) {
+            if (!this.clientUuid) this.clientUuid = newUuid();
+            if (type) this.form.type = type;
+            if (!this.form.barangay) this.form.barangay = this.$store.citizenSession.account?.barangay || '';
+            this.reported = null;
+            this.reportFailure = null;
+            this.reportOpen = true;
+            icons();
+        },
+        addPhotos(fileList) {
+            this.photoError = '';
+            for (const file of [...(fileList || [])]) {
+                if (this.photos.length >= MAX_INCIDENT_PHOTOS) {
+                    this.photoError = this.t('Up to 3 photos.', 'Hanggang 3 larawan lang.');
+                    break;
+                }
+                if (!PHOTO_TYPES.includes(file.type)) {
+                    this.photoError = this.t('Choose a JPG, PNG or WebP photo.', 'Pumili ng larawang JPG, PNG o WebP.');
+                    continue;
+                }
+                if (file.size > MAX_PHOTO_BYTES) {
+                    this.photoError = this.t('Each photo must be 10 MB or smaller.', 'Dapat 10 MB o mas maliit ang bawat larawan.');
+                    continue;
+                }
+                this.photos.push({ file, preview: URL.createObjectURL(file) });
+            }
+            icons();
+        },
+        removePhoto(i) {
+            const [gone] = this.photos.splice(i, 1);
+            if (gone) URL.revokeObjectURL(gone.preview);
+        },
+        get formProblem() {
+            if (!this.form.type) return this.t('Choose what is happening.', 'Piliin kung ano ang nangyayari.');
+            if (!this.form.severity || !this.form.barangay) return this.t('Please choose how serious it is and the barangay where it is happening.', 'Piliin kung gaano kalala at ang barangay kung saan ito nangyayari.');
+            return '';
+        },
+        get reportError() {
+            const err = this.reportFailure;
+            if (!err) return '';
+            if (typeof err === 'string') return err;
+            const lang = this.en ? 'en' : 'fil';
+            return typeof err.explain === 'function' ? err.explain(lang) : errorText(err, 'Your report could not be sent. Please try again.', 'Hindi naipadala ang iyong ulat. Pakisubukang muli.');
+        },
+        async submitReport() {
+            if (this.submitting) return;
+            const problem = this.formProblem;
+            if (problem) { this.reportFailure = problem; return; }
+            if (!this.clientUuid) this.clientUuid = newUuid();
+            const f = this.form;
+            const sitio = f.sitio.trim();
+            const fields = {
+                title: f.type + ' — ' + (sitio ? sitio + ', ' : '') + f.barangay,
+                type: f.type,
+                severity: f.severity,
+                barangay: f.barangay,
+                sitio: sitio || null,
+                description: f.description.trim() || null,
+                client_uuid: this.clientUuid,
+            };
+            let body = fields;
+            if (this.photos.length) {
+                body = new FormData();
+                Object.entries(fields).forEach(([k, v]) => { if (v !== null) body.append(k, v); });
+                this.photos.forEach((p, i) => body.append('photos[' + i + ']', p.file));
+            }
+            this.submitting = true;
+            this.reportFailure = null;
+            try {
+                const res = await api.post('/citizen/incidents', body);
+                const created = res.data || {};
+                this.reported = created;
+                this.incidents = [created, ...this.incidents.filter((x) => x.ref !== created.ref)];
+                this.incidentsState = 'loaded';
+                this.resetForm();
+                toast(this.t('Report sent: ' + (created.ref || ''), 'Naipadala ang ulat: ' + (created.ref || '')));
+            } catch (err) {
+                // The form and its client_uuid stay as they were, for a retry.
+                this.reportFailure = err;
+            } finally {
+                this.submitting = false;
+                icons();
+            }
+        },
+        resetForm() {
+            this.photos.forEach((p) => URL.revokeObjectURL(p.preview));
+            this.photos = [];
+            this.photoError = '';
+            this.form = { type: '', severity: '', barangay: this.$store.citizenSession.account?.barangay || '', sitio: '', description: '' };
+            this.clientUuid = '';
+        },
+        closeReport() {
+            this.reportOpen = false;
+            this.reportFailure = null;
+        },
+    };
+}
+
+// ================================================== Documents Uploaded
+
+/**
+ * Every file the resident attached to their Dokyu and Tulong requests, from
+ * the app or the website (GET /citizen/uploads), with the ones a later file
+ * replaced marked. A file opens by its signed link once the virus check has
+ * cleared it; until then the row says why it cannot open yet. The app's
+ * documents_uploaded_screen.dart.
+ */
+function citizenUploads() {
+    return {
+        rows: [],
+        state: 'loading',
+        failure: null,
+        filter: 'all',
+
+        init() { this.load(); },
+
+        t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+        fmtDate,
+
+        async load() {
+            this.state = 'loading';
+            this.failure = null;
+            try {
+                const res = await api.get('/citizen/uploads');
+                this.rows = (res.data || []).filter((row) => row && row.file).map((row, i) => ({
+                    id: row.ref + '-' + i,
+                    ref: row.ref,
+                    type: row.type === 'tulong' ? 'tulong' : 'dokyu',
+                    service: row.service || '',
+                    requirement: row.requirement || '',
+                    current: row.current !== false,
+                    name: row.file.name || '',
+                    url: row.file.url || null,
+                    scan: row.file.scan_status || '',
+                    uploadedAt: row.file.uploaded_at || null,
+                }));
+                this.state = 'loaded';
+            } catch (err) {
+                this.failure = err;
+                this.state = 'error';
+            }
+            icons();
+        },
+        get list() { return this.filter === 'all' ? this.rows : this.rows.filter((r) => r.type === this.filter); },
+        count(type) { return type === 'all' ? this.rows.length : this.rows.filter((r) => r.type === type).length; },
+        get errorMessage() { return errorText(this.failure, 'Could not load your uploaded documents.', 'Hindi ma-load ang iyong mga in-upload na dokumento.'); },
+        // Why a file cannot be opened yet, in the resident's words.
+        why(row) {
+            if (row.url) return '';
+            switch (row.scan) {
+                case 'pending': return this.t('Being checked for viruses. Try again in a minute.', 'Sinusuri pa para sa virus. Subukan ulit pagkalipas ng isang minuto.');
+                case 'infected': return this.t('Blocked: this file failed the virus check. Upload a new copy.', 'Hinarang: hindi pumasa sa virus check ang file na ito. Mag-upload ng bagong kopya.');
+                case 'error': return this.t('The virus check could not run yet, so it cannot open for now.', 'Hindi pa natapos ang virus check, kaya hindi pa ito mabubuksan.');
+                default: return this.t('This file cannot be opened right now. Try again later.', 'Hindi mabuksan ang file na ito sa ngayon. Subukan ulit mamaya.');
+            }
+        },
+    };
+}
+
+// =============================================== Balita: write a post
+
+// The six categories the app offers (compose_post_screen.dart).
+const POST_CATEGORIES = [
+    ['Community', 'Komunidad'], ['Health', 'Kalusugan'], ['Public Service', 'Serbisyo Publiko'],
+    ['Advisory', 'Abiso'], ['Livelihood', 'Kabuhayan'], ['Governance', 'Pamamahala'],
+];
+
+/**
+ * Write a community post (POST /citizen/community-posts, JSON or multipart
+ * with `image`). Posts are held for moderation: the server answers with the
+ * post as its author sees it (mine, not yet visible), and the page puts it at
+ * the top of the feed with its "Pending review" label. Open to an unverified
+ * account (CitizenCapabilities::COMMUNITY_POST).
+ */
+function balitaComposer() {
+    return {
+        categories: POST_CATEGORIES,
+        composeOpen: false,
+        category: 'Community',
+        body: '',
+        image: null,
+        imagePreview: '',
+        posting: false,
+        failure: null,
+
+        t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+
+        openComposer() {
+            this.failure = null;
+            this.composeOpen = true;
+            icons();
+        },
+        pickImage(file) {
+            this.failure = null;
+            if (!file) return;
+            if (!PHOTO_TYPES.includes(file.type)) {
+                this.failure = this.t('Choose a JPG, PNG or WebP photo.', 'Pumili ng larawang JPG, PNG o WebP.');
+                return;
+            }
+            if (file.size > MAX_PHOTO_BYTES) {
+                this.failure = this.t('The photo must be 10 MB or smaller.', 'Dapat 10 MB o mas maliit ang larawan.');
+                return;
+            }
+            this.clearImage();
+            this.image = file;
+            this.imagePreview = URL.createObjectURL(file);
+        },
+        clearImage() {
+            if (this.imagePreview) URL.revokeObjectURL(this.imagePreview);
+            this.image = null;
+            this.imagePreview = '';
+        },
+        get error() {
+            const err = this.failure;
+            if (!err) return '';
+            if (typeof err === 'string') return err;
+            const lang = this.$store.lang.current === 'en' ? 'en' : 'fil';
+            return typeof err.explain === 'function' ? err.explain(lang) : errorText(err, 'Your post could not be sent.', 'Hindi naipadala ang iyong post.');
+        },
+        async sendPost(onPosted) {
+            if (this.posting) return;
+            const text = this.body.trim();
+            if (!text) {
+                this.failure = this.t('Please write something to post.', 'Pakisulat ang nais mong i-post.');
+                return;
+            }
+            let payload = { body: text, category: this.category };
+            if (this.image) {
+                payload = new FormData();
+                payload.append('body', text);
+                payload.append('category', this.category);
+                payload.append('image', this.image);
+            }
+            this.posting = true;
+            this.failure = null;
+            try {
+                const res = await api.post('/citizen/community-posts', payload);
+                if (typeof onPosted === 'function') onPosted(res.data || null);
+                this.body = '';
+                this.category = 'Community';
+                this.clearImage();
+                this.composeOpen = false;
+                toast(this.t('Posted. It shows to others once Esperanza LGU reviews it.', 'Na-post. Makikita ito ng iba kapag nasuri na ng Esperanza LGU.'));
+            } catch (err) {
+                this.failure = err;
+            } finally {
+                this.posting = false;
+            }
+        },
+    };
+}
+
 export function register(Alpine) {
+    window.applyServiceCatalog = applyServiceCatalog;
+    window.dialHref = dialHref;
+    Alpine.data('citizenEmergency', citizenEmergency);
+    Alpine.data('citizenUploads', citizenUploads);
+    Alpine.data('balitaComposer', balitaComposer);
     Alpine.data('citizenAppointments', citizenAppointments);
     Alpine.data('verifyPage', verifyPage);
     Alpine.data('supportDesk', supportDesk);

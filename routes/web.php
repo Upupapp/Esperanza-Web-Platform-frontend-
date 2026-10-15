@@ -33,6 +33,9 @@ Route::view('/citizen/settings', 'citizen.settings')->name('citizen.settings');
 // was removed the same day by the owner: each service list lives in its own
 // tab, Dokyu or Tulong.)
 Route::view('/citizen/appointments', 'citizen.appointments')->name('citizen.appointments');
+// Emergency (Sakuna, the citizen slice): hotlines, evacuation centres, alerts,
+// and reporting an incident and following it - the app's Sakuna tab.
+Route::view('/citizen/emergency', 'citizen.emergency')->name('citizen.emergency');
 
 // Public document verification: the QR on an issued document opens this page
 // with ?code=, and anyone can type a code or control number (2026-10-15).

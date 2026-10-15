@@ -8,7 +8,11 @@
     $tab = $tab ?? 'privacy';
 @endphp
 
-<x-layouts.citizen title="Privacy &amp; Terms" subtitle="Privacy Policy and Terms &amp; Conditions." active="legal">
+{{-- Public: anyone may read these signed out - sign-up links here in a new
+     tab, before there is an account (the layout then skips the calls only a
+     signed-in resident can make). The text is GET /site-content/privacy and
+     /terms, both public, with the build's copy until they answer. --}}
+<x-layouts.citizen title="Privacy &amp; Terms" subtitle="Privacy Policy and Terms &amp; Conditions." active="legal" :public="true">
     {{-- The Privacy Policy and Terms staff publish in Settings, Site Content.
          This page printed the build's copy, so a published change never
          reached residents on the website (the app already read it). --}}
@@ -38,7 +42,7 @@
 
         {{-- Back to wherever the link was (sign-up, Settings, the footer):
              the page used to be titled Settings (live test 2026-10-07, NAV-5). --}}
-        <button type="button" @click="history.length > 1 ? history.back() : (window.location.href = '{{ route('citizen.dashboard') }}')"
+        <button type="button" @click="history.length > 1 ? history.back() : (window.location.href = window.EsperanzaApi.getToken() ? '{{ route('citizen.dashboard') }}' : '{{ route('citizen.login') }}')"
             class="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-slate-700">
             <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><x-ui.t fil="Bumalik" en="Back" />
         </button>

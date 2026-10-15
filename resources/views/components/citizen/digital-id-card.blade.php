@@ -14,10 +14,24 @@
 <div
     x-data="{
         flipped: false,
+        // The card's signed QR (resident_id.card.qr, DigitalId::card()) as a
+        // real, scannable code - the one a barangay desk checks with
+        // GET /verify-id/{payload}. Drawn by the same helper as an issued
+        // document's QR (window.qrSvg, resources/js/shared-docs.js).
+        qrMarkup: '',
+        qrFor: null,
+        drawQr(payload) {
+            if (payload === this.qrFor) return;
+            this.qrFor = payload;
+            this.qrMarkup = '';
+            if (!payload || !window.qrSvg) return;
+            window.qrSvg(payload, 3).then((svg) => { if (this.qrFor === payload) this.qrMarkup = svg; }).catch(() => { this.qrMarkup = ''; });
+        },
         get initials() {
             return (card?.name || '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('');
         },
     }"
+    x-effect="drawQr(card?.qr || null)"
     class="w-full max-w-[360px] mx-auto select-none"
 >
     <template x-if="card">
@@ -97,38 +111,40 @@
                                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-300"></i>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-1.5">
-                                <div>
-                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Purok / Sitio</p>
-                                    <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.purok || '—'"></p>
+                            <div class="flex items-start gap-3 mt-1.5 min-h-0 flex-1">
+                                <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 min-w-0 flex-1">
+                                    <div class="min-w-0">
+                                        <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Purok / Sitio</p>
+                                        <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.purok || '—'"></p>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Account Status</p>
+                                        <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.status || '—'"></p>
+                                    </div>
+                                    <div class="col-span-2 min-w-0">
+                                        <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Full Address</p>
+                                        <p class="text-[10px] font-semibold text-slate-700 line-clamp-2 leading-snug" x-text="card.address || '—'"></p>
+                                    </div>
+                                    <div class="col-span-2 min-w-0">
+                                        <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Issued</p>
+                                        <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.issued_at || '—'"></p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Account Status</p>
-                                    <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.status || '—'"></p>
-                                </div>
-                                <div class="col-span-2">
-                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Full Address</p>
-                                    <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.address || '—'"></p>
-                                </div>
-                                <div class="col-span-2">
-                                    <p class="text-[7.5px] text-slate-500 uppercase tracking-wide">Issued</p>
-                                    <p class="text-[10px] font-semibold text-slate-700 truncate" x-text="card.issued_at || '—'"></p>
-                                </div>
-                            </div>
 
-                            {{-- Barcode-style decoration — purely visual, common on real ID backs --}}
-                            <div class="flex items-end gap-[1.5px] h-5 mt-2 opacity-70" aria-hidden="true">
-                                @foreach([2,1,3,1,1,2,3,1,2,1,1,3,2,1,3,1,2,1,1,3,2,3,1,1,2,1,3,2,1,1,3,1,2,1,3,2,1,1,2,3] as $bar)
-                                    <div class="bg-slate-800 w-[1.5px]" style="height: {{ $bar * 25 }}%"></div>
-                                @endforeach
+                                {{-- The scannable QR of the card's signed payload. --}}
+                                <div class="w-[104px] h-[104px] shrink-0 rounded-lg bg-white border border-slate-200 p-1 [&>svg]:w-full [&>svg]:h-full"
+                                    x-show="card.qr"
+                                    x-html="qrMarkup"
+                                    role="img"
+                                    :aria-label="($store.lang.current === 'en' ? 'QR code for Resident ID ' : 'QR code ng Resident ID ') + (card.account_no || '')"></div>
                             </div>
 
                             <div class="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                                 <div class="min-w-0">
                                     <p class="text-[9.5px] font-semibold text-navy-900 truncate" x-text="card.valid ? ($store.lang.current === 'en' ? 'Valid credential' : 'Balidong kredensyal') : ($store.lang.current === 'en' ? 'Not yet a valid credential' : 'Hindi pa balidong kredensyal')"></p>
-                                    <p class="text-[7.5px] text-slate-500" x-text="card.qr"></p>
+                                    <p class="text-[7.5px] text-slate-500 font-mono truncate" x-text="card.account_no"></p>
                                 </div>
-                                <p class="text-[7px] text-slate-300 text-right max-w-[110px] leading-tight"><x-ui.t fil="Mula sa talaan ng Munisipyo. I-scan ang QR para i-verify." en="From the Municipality's records. Scan the QR to verify." /></p>
+                                <p class="text-[7px] text-slate-500 text-right max-w-[120px] leading-tight"><x-ui.t fil="Mula sa talaan ng Munisipyo. I-scan ang QR para i-verify." en="From the Municipality's records. Scan the QR to verify." /></p>
                             </div>
                         </div>
                     </div>

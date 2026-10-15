@@ -1,4 +1,4 @@
-@props(['title' => 'Dashboard', 'subtitle' => null, 'active' => null])
+@props(['title' => 'Dashboard', 'subtitle' => null, 'active' => null, 'public' => false])
 
 @php
     // The Filipino translation of each page's title/subtitle is real
@@ -10,6 +10,7 @@
         'announcements' => 'Balita', 'events' => 'Mga Kaganapan', 'directory' => 'Direktoryo ng Pamahalaan',
         'help' => 'Suporta', 'profile' => 'Aking Profile', 'notifications' => 'Mga Abiso', 'settings' => 'Mga Setting',
         'legal' => 'Privacy at mga Tuntunin', 'appointments' => 'Appointment',
+        'emergency' => 'Sakuna at Emergency',
     ];
     $filSubtitles = [
         'dashboard' => 'Narito ang buod ng iyong account.',
@@ -25,6 +26,7 @@
         'legal' => 'Ang Patakaran sa Privacy at ang mga Tuntunin at Kundisyon.',
         'services' => 'Lahat ng dokumento at programang tulong na iniaalok ng munisipyo.',
         'appointments' => 'Mag-book ng oras sa opisina at tingnan ang iyong mga appointment.',
+        'emergency' => 'Mga hotline, evacuation center, babala, at ulat ng insidente.',
     ];
     $filTitle = $filTitles[$active] ?? $title;
     $filSubtitle = $filSubtitles[$active] ?? $subtitle;
@@ -42,6 +44,7 @@
             ['en' => 'Appointments', 'fil' => 'Appointment', 'icon' => 'calendar-clock', 'href' => route('citizen.appointments')],
             ['en' => 'Balita — Announcements', 'fil' => 'Balita', 'icon' => 'megaphone', 'href' => route('citizen.announcements')],
             ['en' => 'Events', 'fil' => 'Mga Kaganapan', 'icon' => 'calendar', 'href' => route('citizen.events')],
+            ['en' => 'Emergency — Hotlines & Incident Reports', 'fil' => 'Sakuna — Hotline at Ulat ng Insidente', 'icon' => 'siren', 'href' => route('citizen.emergency')],
             ['en' => 'Government Directory', 'fil' => 'Direktoryo ng Pamahalaan', 'icon' => 'building-2', 'href' => route('citizen.directory')],
             ['en' => 'Help & Support', 'fil' => 'Suporta', 'icon' => 'life-buoy', 'href' => route('citizen.faqs')],
             ['en' => 'My Profile', 'fil' => 'Aking Profile', 'icon' => 'user-round', 'href' => route('citizen.profile')],
@@ -64,8 +67,12 @@
     class="relative z-20 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{
         time: '',
+        // A public page read without a session (the legal pages): no bell,
+        // no My IDs, no search of the resident's requests - each of those
+        // calls answers 401 for a visitor - and a Sign In link instead.
+        guest: {{ $public ? '!window.EsperanzaApi.getToken()' : 'false' }},
     }"
-    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.citizenNotifications.load(); $store.citizenNotifications.poll()"
+    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll() }"
 >
     <div class="flex-1 basis-44 flex items-center gap-3 min-w-0">
         <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body shrink-0">
@@ -80,6 +87,11 @@
 
     </div>
 
+    <a x-show="guest" x-cloak href="{{ route('citizen.login') }}" class="ml-auto inline-flex items-center gap-2 min-h-[44px] px-4 py-2.5 rounded-2xl text-sm font-semibold clay-blue btn-shine hover:brightness-95">
+        <i data-lucide="log-in" class="w-4 h-4"></i><x-ui.t fil="Mag-sign In" en="Sign In" />
+    </a>
+
+    <template x-if="!guest">
     <div class="ml-auto flex items-center gap-2.5">
         <div class="hidden xl:flex items-center gap-2.5 h-11 px-4 rounded-2xl surface-pressed font-mono text-[13px] text-ink-body tabular-nums whitespace-nowrap">
             <span class="w-2 h-2 rounded-full bg-gold-400 shadow-[0_0_0_3px_rgb(255_225_26/.3)]" aria-hidden="true"></span>
@@ -284,4 +296,5 @@
             </div>
         </div>
     </div>
+    </template>
 </header>

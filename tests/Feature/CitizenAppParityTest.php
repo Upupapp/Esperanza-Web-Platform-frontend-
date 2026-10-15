@@ -1,0 +1,222 @@
+<?php
+
+namespace Tests\Feature;
+
+use Tests\TestCase;
+
+/**
+ * The citizen website brought up to the phone app (2026-10-15): emergency
+ * hotlines, evacuation centres and alerts; reporting an incident and
+ * following it; writing a community post; a scannable QR on the Resident ID;
+ * the server's ready-to-claim details; the signed copy of an issued document;
+ * the server's fees, times and requirements; Documents Uploaded; and the
+ * legal pages opening signed out. These pin what each part calls and the
+ * markup that carries it. No resident data: the pages read the API at run time.
+ */
+class CitizenAppParityTest extends TestCase
+{
+    private function source(string $path): string
+    {
+        return file_get_contents(base_path($path));
+    }
+
+    public function test_a1_the_emergency_page_lists_hotlines_centres_and_alerts(): void
+    {
+        $page = $this->source('resources/views/citizen/emergency.blade.php');
+        $js = $this->source('resources/js/scope-citizen.js');
+
+        // Its own page, in the resident's sidebar.
+        $this->assertStringContainsString("Route::view('/citizen/emergency', 'citizen.emergency')", $this->source('routes/web.php'));
+        $this->assertStringContainsString(":href=\"route('citizen.emergency')\" icon=\"siren\" label=\"Sakuna\" labelEn=\"Emergency\"", $this->source('resources/views/components/citizen/sidebar.blade.php'));
+
+        // Call 911 first, and every hotline is a tap to call.
+        $this->assertStringContainsString('href="tel:911"', $page);
+        $this->assertStringContainsString('en="In a life-threatening emergency, call 911."', $page);
+        $this->assertStringContainsString(':href="dialHref(h.contact) || null"', $page);
+        $this->assertStringContainsString("return number.replace('+', '').length < 3 ? null : 'tel:' + number;", $js);
+
+        // The public reads, each on its own so one failing hides nothing else.
+        $this->assertStringContainsString("api.get('/hotlines')", $js);
+        $this->assertStringContainsString("api.getAll('/sakuna/centers')", $js);
+        $this->assertStringContainsString("api.get('/alerts', { params: barangay ? { barangay } : {} })", $js);
+
+        // A centre: open or not in words, capacity and occupancy, services, directions.
+        $this->assertStringContainsString("open: c.status === 'Processing',", $js);
+        $this->assertStringContainsString("'https://www.google.com/maps/dir/?api=1&destination='", $js);
+        $this->assertStringContainsString("'https://www.google.com/maps/search/?api=1&query='", $js);
+        $this->assertStringContainsString('x-text="occupancyText(c)"', $page);
+        $this->assertStringContainsString('x-for="(s, i) in centre.services"', $page);
+
+        $response = $this->get('/citizen/emergency');
+        $response->assertOk();
+        $response->assertSee('x-data="citizenEmergency"', false);
+    }
+
+    public function test_a2_an_incident_is_reported_once_and_followed(): void
+    {
+        $page = $this->source('resources/views/citizen/emergency.blade.php');
+        $js = $this->source('resources/js/scope-citizen.js');
+
+        // The app's six incident types and the server's four severities.
+        foreach (["'Flooding'", "'Fire'", "'Landslide'", "'Medical Emergency'", "'Road Accident'", "'Other Concern'"] as $type) {
+            $this->assertStringContainsString("name: {$type}", $js, $type);
+        }
+        $this->assertStringContainsString("[['Low', 'Mababa'], ['Moderate', 'Katamtaman'], ['High', 'Mataas'], ['Critical', 'Kritikal']]", $js);
+
+        // Barangay names come from GET /barangays (the store), as the server requires.
+        $this->assertStringContainsString('Object.keys(this.$store.barangay.catalog || {})', $js);
+
+        // JSON, or multipart with up to three photos; one client_uuid per report,
+        // kept for a retry and cleared only once it is filed.
+        $this->assertStringContainsString("api.post('/citizen/incidents', body)", $js);
+        $this->assertStringContainsString("body.append('photos[' + i + ']', p.file)", $js);
+        $this->assertStringContainsString('client_uuid: this.clientUuid,', $js);
+        $this->assertStringContainsString('if (!this.clientUuid) this.clientUuid = newUuid();', $js);
+        $this->assertStringContainsString('// The form and its client_uuid stay as they were, for a retry.', $js);
+        $this->assertStringContainsString("const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];", $js);
+        $this->assertStringContainsString('const MAX_PHOTO_BYTES = 10 * 1024 * 1024;', $js);
+        $this->assertStringContainsString('en="For life-threatening emergencies, call a hotline first."', $page);
+
+        // The list and the detail, with its timeline and photos (a null url is still being checked).
+        $this->assertStringContainsString("api.getAll('/citizen/incidents', { params: { sort: '-created_at' } })", $js);
+        $this->assertStringContainsString("api.get('/citizen/incidents/' + encodeURIComponent(row.ref))", $js);
+        $this->assertStringContainsString("return this.t('Being checked', 'Sinusuri pa');", $js);
+        $this->assertStringContainsString('x-for="s in steps"', $page);
+        $this->assertStringContainsString('<x-ui.badge status-bind="detail.status"', $page);
+    }
+
+    public function test_a3_a_community_post_is_written_and_shown_pending_review(): void
+    {
+        $page = $this->source('resources/views/citizen/announcements.blade.php');
+        $js = $this->source('resources/js/scope-citizen.js');
+
+        // The app's six categories, sent as they are.
+        $this->assertStringContainsString("['Community', 'Komunidad'], ['Health', 'Kalusugan'], ['Public Service', 'Serbisyo Publiko'],", $js);
+        $this->assertStringContainsString("['Advisory', 'Abiso'], ['Livelihood', 'Kabuhayan'], ['Governance', 'Pamamahala'],", $js);
+
+        // JSON, or multipart with `image`.
+        $this->assertStringContainsString("api.post('/citizen/community-posts', payload)", $js);
+        $this->assertStringContainsString("payload.append('image', this.image);", $js);
+
+        // Shown at once as the author's own, not visible to others, under the feed's existing label.
+        $this->assertStringContainsString('x-data="balitaComposer"', $page);
+        $this->assertStringContainsString('@submit.prevent="sendPost((p) => addMyPost(p))"', $page);
+        $this->assertStringContainsString('const post = this.fromCommunity({ ...p, mine: true, visible: p.visible === true });', $page);
+        $this->assertStringContainsString("post.mine && !post.visible ? ' · ' + (\$store.lang.current === 'en' ? 'Pending review", $page);
+        // Unverified accounts may post (CitizenCapabilities::COMMUNITY_POST); only a refused capability hides it.
+        $this->assertStringContainsString('x-show="$store.citizenSession.account?.capabilities?.community_post !== false"', $page);
+    }
+
+    public function test_a4_the_resident_id_carries_a_real_qr_code(): void
+    {
+        $card = $this->source('resources/views/components/citizen/digital-id-card.blade.php');
+
+        $this->assertStringContainsString('x-effect="drawQr(card?.qr || null)"', $card);
+        $this->assertStringContainsString('window.qrSvg(payload, 3)', $card);
+        $this->assertStringContainsString('x-html="qrMarkup"', $card);
+        // The decorative barcode and the payload printed as text are gone.
+        $this->assertStringNotContainsString('Barcode-style decoration', $card);
+        $this->assertStringNotContainsString('x-text="card.qr"', $card);
+        // The same QR helper the issued documents use.
+        $this->assertStringContainsString("import('qrcode-generator')", $this->source('resources/js/shared-docs.js'));
+    }
+
+    public function test_a5_ready_to_claim_details_come_from_the_server(): void
+    {
+        $extras = $this->source('resources/views/components/citizen/scope/request-extras.blade.php');
+        $js = $this->source('resources/js/scope-citizen.js');
+
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $source = $this->source("resources/views/citizen/{$page}.blade.php");
+            $this->assertStringContainsString('r.pickup = d.pickup || null;', $source, $page);
+            // The page's own directory only when the server sent no pickup.
+            $this->assertStringContainsString('<div class="rounded-xl border border-slate-200 p-3.5 mt-3" x-show="!selectedRequest.pickup">', $source, $page);
+        }
+
+        $this->assertStringContainsString('get claim() { return this.r?.pickup || null; },', $js);
+        $this->assertStringContainsString("if (key === 'valid_id')", $js);
+        $this->assertStringContainsString("if (key === 'reference_number')", $js);
+        $this->assertStringContainsString("'The fee of ' + peso(s.fee_due) + ', paid at the office before release'", $js);
+        $this->assertStringContainsString('s.office_hours_fil', $js);
+        $this->assertStringContainsString('x-show="claim" x-cloak', $extras);
+        $this->assertStringContainsString(':href="claimTel"', $extras);
+        $this->assertStringContainsString('en="Book a time to claim it"', $extras);
+        $this->assertStringContainsString("get bookHref() { return this.links.appointments + '?request=' + encodeURIComponent(this.r?.ref || ''); },", $js);
+    }
+
+    public function test_a6_an_issued_document_offers_its_signed_copy(): void
+    {
+        $extras = $this->source('resources/views/components/citizen/scope/request-extras.blade.php');
+        $js = $this->source('resources/js/scope-citizen.js');
+
+        $this->assertStringContainsString(':href="d.scan_url" target="_blank" rel="noopener"', $extras);
+        $this->assertStringContainsString('en="View signed copy"', $extras);
+        $this->assertStringContainsString('The paper copy you claim is the official document.', $extras);
+        // Revoked: no copy at all.
+        $this->assertStringContainsString("if (d.revoked) return 'revoked';", $js);
+        $this->assertStringContainsString("return d.has_scan ? 'checking' : 'none';", $js);
+    }
+
+    public function test_a7_fees_times_and_requirements_come_from_the_service_catalog(): void
+    {
+        $js = $this->source('resources/js/scope-citizen.js');
+        $dokyu = $this->source('resources/views/citizen/document-requests.blade.php');
+        $tulong = $this->source('resources/views/citizen/assistance-requests.blade.php');
+
+        $this->assertStringContainsString('if (sv.fee && sv.fee.display) entry.fee = sv.fee.display;', $js);
+        $this->assertStringContainsString('if (sv.days) entry.days = sv.days;', $js);
+        $this->assertStringContainsString('entry.requirements = sv.requirements.map(itemText).filter(Boolean);', $js);
+        $this->assertStringContainsString('if (steps.length) entry.process = steps;', $js);
+        $this->assertStringContainsString('window.applyServiceCatalog = applyServiceCatalog;', $js);
+
+        $this->assertStringContainsString('this.serviceMeta = window.applyServiceCatalog(this.docs, res.data || []);', $dokyu);
+        $this->assertStringContainsString('const meta = window.applyServiceCatalog(this.types, res.data || []);', $tulong);
+
+        // Filing still sends the same service key, and attaches each file to the
+        // requirement the server made for that line (by label, then position).
+        $this->assertStringContainsString("\$api.post('/citizen/requests', { service_key: doc.key, form_data: formData", $dokyu);
+        $this->assertStringContainsString('const target = serverReqs.find((q) => q.label === label) || serverReqs[Number(i)];', $dokyu);
+    }
+
+    public function test_a8_documents_uploaded_lists_every_attached_file(): void
+    {
+        $view = $this->source('resources/views/components/citizen/uploads.blade.php');
+        $js = $this->source('resources/js/scope-citizen.js');
+
+        $this->assertStringContainsString('<x-citizen.uploads />', $this->source('resources/views/citizen/profile.blade.php'));
+        $this->assertStringContainsString("api.get('/citizen/uploads')", $js);
+        $this->assertStringContainsString("x-for=\"f in ['all', 'dokyu', 'tulong']\"", $view);
+        $this->assertStringContainsString('x-show="!row.current"', $view);
+        $this->assertStringContainsString('en="Replaced"', $view);
+        $this->assertStringContainsString(':href="row.url" target="_blank" rel="noopener"', $view);
+        $this->assertStringContainsString('x-text="why(row)"', $view);
+        $this->assertStringContainsString("case 'pending': return this.t('Being checked for viruses.", $js);
+    }
+
+    public function test_the_legal_pages_open_signed_out_and_nothing_else_does(): void
+    {
+        $legal = $this->source('resources/views/citizen/legal.blade.php');
+        $topbar = $this->source('resources/views/components/citizen/topbar.blade.php');
+
+        $this->assertStringContainsString('active="legal" :public="true">', $legal);
+        $this->assertStringContainsString("\$api.get('/site-content/' + key)", $legal);
+        // Without a token, the bell, My IDs and the request counts are not asked for.
+        $this->assertStringContainsString("guest: {{ \$public ? '!window.EsperanzaApi.getToken()' : 'false' }},", $topbar);
+        $this->assertStringContainsString('if (!guest) { $store.citizenNotifications.load(); $store.citizenNotifications.poll() }', $topbar);
+        $this->assertStringContainsString('<template x-if="!guest">', $topbar);
+        $this->assertStringContainsString("{{ \$public ? 'if (window.EsperanzaApi.getToken()) ' : '' }}\$store.queueCounts.load('citizen')", $this->source('resources/views/components/citizen/sidebar.blade.php'));
+
+        // Only the legal page is public.
+        foreach (glob(base_path('resources/views/citizen/*.blade.php')) as $file) {
+            if (basename($file) === 'legal.blade.php') {
+                continue;
+            }
+            $this->assertStringNotContainsString(':public="true"', file_get_contents($file), basename($file));
+        }
+
+        foreach (['/citizen/legal/privacy-policy', '/citizen/legal/terms'] as $url) {
+            $this->get($url)->assertOk()->assertSee('guest: !window.EsperanzaApi.getToken(),', false);
+        }
+        $this->get('/citizen/dashboard')->assertOk()->assertSee('guest: false,', false);
+    }
+}

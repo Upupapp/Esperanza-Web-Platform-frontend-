@@ -1,4 +1,9 @@
-@props(['title' => 'Dashboard', 'subtitle' => null, 'active' => 'dashboard'])
+@props(['title' => 'Dashboard', 'subtitle' => null, 'active' => 'dashboard', 'public' => false])
+{{-- public: a page anyone may read signed out (the Privacy Policy and the
+     Terms, opened from sign-up in a new tab). Without a session it skips the
+     calls only a signed-in resident can make - the bell, My IDs, the request
+     counts - which used to answer 401 and send the visitor to sign-in. Every
+     other citizen page stays sign-in only. --}}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -20,10 +25,10 @@
          back over the shell's padding so the cards' shadows have a gutter
          inside the scroll area instead of being cut at its edges. --}}
     <div class="flex h-screen overflow-hidden canvas-washed gap-5 p-4 lg:p-5" x-data="{ collapsed: false, mobileOpen: false }">
-        <x-citizen.sidebar :active="$active" />
+        <x-citizen.sidebar :active="$active" :public="$public" />
 
         <div class="flex-1 flex flex-col gap-5 min-w-0">
-            <x-citizen.topbar :title="$title" :subtitle="$subtitle" :active="$active" />
+            <x-citizen.topbar :title="$title" :subtitle="$subtitle" :active="$active" :public="$public" />
 
             <main class="flex-1 overflow-y-auto scrollbar-thin -mx-4 px-5 pt-4 pb-6 lg:-mx-5 lg:px-8 lg:pb-10">
                 {{ $slot }}

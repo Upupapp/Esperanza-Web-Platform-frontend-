@@ -219,6 +219,9 @@
                 // The documents issued for it (control number, code, QR), for
                 // Track Request and the printed copy (scope round 2026-10-15).
                 r.issuedDocuments = d.issued_documents || [];
+                // Where and how to claim it, from the server, while it waits
+                // to be claimed (Mark to Release); null at any other status.
+                r.pickup = d.pickup || null;
                 r.requirements = (d.requirements || []).map((q) => ({
                     key: q.key,
                     name: q.label,
@@ -666,14 +669,21 @@
                         // The backend's own catalog (GET /services?type=dokyu): a
                         // document it does not list cannot be filed, and a
                         // policy-blocked one has a fee the LGU has not ruled on.
+                        // Its fee, processing time, requirements and steps are
+                        // what the page shows (window.applyServiceCatalog); the
+                        // built-in catalogue keeps only what the server does not
+                        // send, the form fields and the certificate wording.
                         serviceMeta: {},
                         catalogLoaded: false,
                         async loadCatalog() {
                             try {
                                 const res = await $api.get('/services', { params: { type: 'dokyu' } });
-                                const meta = {};
-                                (res.data || []).forEach((sv) => { meta[sv.key] = sv; });
-                                this.serviceMeta = meta;
+                                const before = JSON.stringify(this.docs[this.selectedDoc]?.requirements || null);
+                                this.serviceMeta = window.applyServiceCatalog(this.docs, res.data || []);
+                                // Attachments follow the requirement list by position.
+                                if (this.selectedDoc !== null && before !== JSON.stringify(this.docs[this.selectedDoc]?.requirements || null)) this.attachments = {};
+                                Object.values(this.serviceMeta).forEach((sv) => { if (sv.days) this.daysByKey[sv.key] = sv.days; });
+                                this.requests.forEach((r) => { if (r.serviceKey && this.serviceMeta[r.serviceKey]?.days) r.days = this.serviceMeta[r.serviceKey].days; });
                             } catch { this.serviceMeta = {}; } finally { this.catalogLoaded = true; }
                         },
                         canFile(doc) { return !this.catalogLoaded || !Object.keys(this.serviceMeta).length || !!this.serviceMeta[doc?.key]; },
@@ -1720,7 +1730,9 @@
                             </div>
                         </div>
 
-                        <div class="rounded-xl border border-slate-200 p-3.5 mt-3">
+                        {{-- The page's own directory, only when the server sent no pickup
+                             details (the Ready to claim card above shows those). --}}
+                        <div class="rounded-xl border border-slate-200 p-3.5 mt-3" x-show="!selectedRequest.pickup">
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
                             <p class="text-sm font-medium text-ink" x-text="selectedRequest.office"></p>
                             <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.address"></span></p>

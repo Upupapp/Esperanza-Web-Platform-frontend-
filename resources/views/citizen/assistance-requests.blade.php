@@ -139,6 +139,9 @@
                 // was filed, for the printed notice (scope round 2026-10-15).
                 r.history = d.history || [];
                 r.issuedDocuments = d.issued_documents || [];
+                // Where and how to claim it, from the server, while it waits
+                // to be claimed (Ready for Release); null at any other status.
+                r.pickup = d.pickup || null;
                 r.formSnapshot = d.form_data || {};
                 r.barangay = d.barangay || r.barangay || null;
                 r.requirements = (d.requirements || []).map((q) => ({
@@ -332,10 +335,19 @@
                     // The programs the backend offers now (GET /services?type=tulong), as
                     // Dokyu does: one switched off in the Service Catalog is not listed,
                     // since this tab is the resident's list of programs (owner, 2026-10-15).
+                    // Each program's fee, processing time, requirements, steps and
+                    // amount come from that same answer (window.applyServiceCatalog);
+                    // the built-in list keeps only the form fields.
                     offered: null,
                     async loadOffered() {
                         try {
                             const res = await $api.get('/services', { params: { type: 'tulong' } });
+                            const before = JSON.stringify(this.types[this.selectedType]?.requirements || null);
+                            const meta = window.applyServiceCatalog(this.types, res.data || []);
+                            // Attachments follow the requirement list by position.
+                            if (this.selectedType !== null && before !== JSON.stringify(this.types[this.selectedType]?.requirements || null)) this.attachments = {};
+                            Object.values(meta).forEach((sv) => { if (sv.days) this.daysByKey[sv.key] = sv.days; });
+                            this.requests.forEach((r) => { if (r.serviceKey && meta[r.serviceKey]?.days) r.days = meta[r.serviceKey].days; });
                             const keys = (res.data || []).map((sv) => sv.key);
                             this.offered = keys.length ? keys : null;
                         } catch { this.offered = null; }
@@ -1319,7 +1331,9 @@
                             </div>
                         </div>
 
-                        <div class="rounded-xl border border-slate-200 p-3.5 mt-3">
+                        {{-- The page's own directory, only when the server sent no pickup
+                             details (the Ready to claim card above shows those). --}}
+                        <div class="rounded-xl border border-slate-200 p-3.5 mt-3" x-show="!selectedRequest.pickup">
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-ink-muted mb-2"><x-ui.t fil="Saan Kukunin / Sino ang Tatawagan" en="Where to Claim / Who to Contact" /></p>
                             <p class="text-sm font-medium text-ink" x-text="selectedRequest.office"></p>
                             <p class="text-xs text-ink-muted mt-1.5 flex items-center gap-1.5" x-show="pickupInfo"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-ink-faint shrink-0"></i><span x-text="pickupInfo?.address"></span></p>

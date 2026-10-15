@@ -486,6 +486,9 @@
 
                 {{-- The Dokyu and Tulong on their record, the offices' included (2026-10-13). --}}
                 <x-citizen.records />
+
+                {{-- Every file attached to their requests, from the app or the website. --}}
+                <x-citizen.uploads />
             </div>
 
             <div class="space-y-5">

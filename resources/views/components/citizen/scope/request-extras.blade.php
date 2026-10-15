@@ -20,6 +20,36 @@
         </a>
     </div>
 
+    {{-- Ready to claim (owner, 2026-10-15): where, the office hours, who to
+         call and what to bring, from the server's own `pickup` on the
+         request detail (CitizenRequestController::pickup), present only while
+         the request waits to be claimed - Mark to Release, or Tulong's Ready
+         for Release. The page's own Where to Claim box is the fallback when
+         it is absent. The app's PickupCard. --}}
+    <div x-show="claim" x-cloak class="rounded-xl border border-teal-200 bg-teal-50/60 p-3.5" data-pickup-card>
+        <p class="text-sm font-bold text-ink flex items-center gap-2"><i data-lucide="store" class="w-4 h-4 text-teal-700"></i><x-ui.t fil="Handa nang kunin" en="Ready to claim" /></p>
+        <p x-show="claimSince" class="text-[11px] text-ink-muted mt-0.5" x-text="t('Ready since ', 'Handa mula ') + claimSince"></p>
+        <dl class="mt-3 space-y-2 text-xs">
+            <div class="flex gap-3"><dt class="w-16 shrink-0 text-ink-muted"><x-ui.t fil="Saan" en="Where" /></dt><dd class="font-semibold text-ink" x-text="claim?.office || t('The office handling your request', 'Ang opisinang humahawak ng iyong kahilingan')"></dd></div>
+            <div class="flex gap-3" x-show="claimHours"><dt class="w-16 shrink-0 text-ink-muted"><x-ui.t fil="Oras" en="Hours" /></dt><dd class="font-semibold text-ink whitespace-pre-line" x-text="claimHours"></dd></div>
+            <div class="flex gap-3" x-show="claim?.office_contact"><dt class="w-16 shrink-0 text-ink-muted"><x-ui.t fil="Contact" en="Contact" /></dt>
+                <dd class="font-semibold">
+                    <a x-show="claimTel" :href="claimTel" class="text-brand-700 underline underline-offset-2" :aria-label="t('Call ', 'Tawagan ang ') + (claim?.office_contact || '')" x-text="claim?.office_contact"></a>
+                    <span x-show="!claimTel" class="text-ink" x-text="claim?.office_contact"></span>
+                </dd>
+            </div>
+        </dl>
+        <div x-show="claimBring.length" class="mt-3">
+            <p class="text-[11px] font-semibold text-ink"><x-ui.t fil="Dalhin" en="Bring" /></p>
+            <ul class="mt-1 space-y-1">
+                <template x-for="(item, i) in claimBring" :key="i">
+                    <li class="flex items-start gap-2 text-xs text-ink-body"><i data-lucide="circle-check" class="w-3.5 h-3.5 text-teal-700 shrink-0 mt-0.5"></i><span x-text="item"></span></li>
+                </template>
+            </ul>
+        </div>
+        <a :href="bookHref" class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:underline"><i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i><x-ui.t fil="Mag-book ng oras para kunin ito" en="Book a time to claim it" /></a>
+    </div>
+
     {{-- The documents issued for this request: each one's control number,
          verification code, dates and QR, and the public Verify page. --}}
     <div x-show="issued.length" x-cloak class="rounded-xl border border-slate-200 p-3.5">
@@ -39,7 +69,13 @@
                         <p><x-ui.t fil="Verification code:" en="Verification code:" /> <span class="font-mono text-ink-body" x-text="d.serial"></span></p>
                         <p x-text="t('Issued ', 'Inilabas ') + fmtDate(d.issued_on) + (d.valid_until ? ' · ' + t('valid until ', 'may bisa hanggang ') + fmtDate(d.valid_until) : '')"></p>
                         <p x-show="d.revoked" class="text-rose-700" x-text="t('Revoked', 'Binawi') + (d.revoked_reason ? ': ' + d.revoked_reason : '')"></p>
-                        <a :href="verifyHref(d)" target="_blank" rel="noopener" class="inline-flex items-center gap-1 pt-0.5 font-semibold text-brand-600 hover:underline"><i data-lucide="shield-check" class="w-3 h-3"></i><x-ui.t fil="Suriin online" en="Verify online" /></a>
+                        <span class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+                            <a :href="verifyHref(d)" target="_blank" rel="noopener" class="inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline"><i data-lucide="shield-check" class="w-3 h-3"></i><x-ui.t fil="Suriin online" en="Verify online" /></a>
+                            {{-- The scan of the signed, sealed paper: the resident's digital copy (scan_url, a signed link). --}}
+                            <a x-show="scanState(d) === 'ready'" :href="d.scan_url" target="_blank" rel="noopener" class="inline-flex items-center gap-1 font-semibold text-brand-600 hover:underline"><i data-lucide="file-text" class="w-3 h-3"></i><x-ui.t fil="Tingnan ang pirmadong kopya" en="View signed copy" /></a>
+                        </span>
+                        <p x-show="scanState(d) === 'none'" class="text-ink-muted"><x-ui.t fil="Wala pang inilakip na pirmadong kopya ang opisina. Ang papel na kopyang kukunin mo ang opisyal na dokumento." en="The office has not attached a signed copy yet. The paper copy you claim is the official document." /></p>
+                        <p x-show="scanState(d) === 'checking'" class="text-ink-muted"><x-ui.t fil="Sinusuri pa ang pirmadong kopya. Buksan muli ang kahilingan pagkalipas ng isang minuto." en="The signed copy is still being checked. Reopen the request in a minute." /></p>
                     </div>
                 </li>
             </template>

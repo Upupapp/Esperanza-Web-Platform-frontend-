@@ -1,4 +1,4 @@
-@props(['active' => 'dashboard'])
+@props(['active' => 'dashboard', 'public' => false])
 
 <div
     x-show="mobileOpen"
@@ -15,7 +15,7 @@
 {{-- Clay design (STYLE_GUIDE §2): a dark glass panel, rounded and inset from
      the page on large screens; the mobile drawer stays full height and square. --}}
 <aside
-    x-init="$store.queueCounts.load('citizen')"
+    x-init="{{ $public ? 'if (window.EsperanzaApi.getToken()) ' : '' }}$store.queueCounts.load('citizen')"
     class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col sidebar-glass lg:rounded-[30px] lg:my-0 lg:h-[calc(100vh-2.5rem)] text-white shrink-0 w-64 px-3 py-3 transition-transform duration-[260ms] ease-standard -translate-x-full lg:translate-x-0"
     :class="[collapsed ? 'lg:w-[76px]' : 'lg:w-64', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
 >
@@ -59,6 +59,7 @@
         <x-ui.nav-item dense :href="route('citizen.appointments')" icon="calendar-clock" label="Appointment" labelEn="Appointments" :active="$active === 'appointments'" />
         <x-ui.nav-item dense :href="route('citizen.announcements')" icon="megaphone" label="Balita" :active="$active === 'announcements'" />
         <x-ui.nav-item dense :href="route('citizen.events')" icon="calendar-days" label="Kaganapan" labelEn="Events" :active="$active === 'events'" />
+        <x-ui.nav-item dense :href="route('citizen.emergency')" icon="siren" label="Sakuna" labelEn="Emergency" :active="$active === 'emergency'" />
         <x-ui.nav-item dense :href="route('citizen.directory')" icon="building-2" label="Direktoryo" labelEn="Directory" :active="$active === 'directory'" />
         <x-ui.nav-item dense :href="route('citizen.faqs')" icon="life-buoy" label="Suporta" labelEn="Help" :active="$active === 'help'" />
     </nav>

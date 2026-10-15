@@ -22,6 +22,24 @@
                     at: a.published_at, comments: null, showComments: false,
                 };
             },
+            fromCommunity(p) {
+                return {
+                    kind: 'community', id: p.id, author: p.author, barangay: p.barangay, category: p.category,
+                    title: null, body: p.body, image_url: p.image_url, official: false, likes: p.likes,
+                    comments_count: p.comments_count, liked_by_me: p.liked_by_me, mine: p.mine, visible: p.visible,
+                    at: p.created_at, comments: null, showComments: false,
+                };
+            },
+            // The resident's own new post (POST /citizen/community-posts): held
+            // for review, so it leads the feed as theirs with its Pending
+            // review label, seen by no one else until an officer approves it.
+            addMyPost(p) {
+                if (!p || p.id === undefined) return;
+                const post = this.fromCommunity({ ...p, mine: true, visible: p.visible === true });
+                this.posts = [post, ...this.posts.filter((x) => !(x.kind === 'community' && x.id === p.id))];
+                if (!['All', 'Community', 'MyBarangay'].includes(this.cat)) this.cat = 'All';
+                this.$nextTick(() => window.renderIcons?.());
+            },
             // A New in Balita notification opens /citizen/announcements?post=ID
             // (Esperanza QA, 2026-10-07): that post is shown even when it is
             // older than the first page, and the page scrolls to it.
@@ -52,12 +70,7 @@
                         $api.get('/events', { params: { per_page: 4, from: new Date().toISOString().slice(0, 10) } }).catch(() => ({ data: [] })),
                     ]);
                     const annPosts = (ann.data || []).map(a => this.fromAnnouncement(a));
-                    const commPosts = (comm.data || []).map(p => ({
-                        kind: 'community', id: p.id, author: p.author, barangay: p.barangay, category: p.category,
-                        title: null, body: p.body, image_url: p.image_url, official: false, likes: p.likes,
-                        comments_count: p.comments_count, liked_by_me: p.liked_by_me, mine: p.mine, visible: p.visible,
-                        at: p.created_at, comments: null, showComments: false,
-                    }));
+                    const commPosts = (comm.data || []).map(p => this.fromCommunity(p));
                     this.posts = [...annPosts, ...commPosts].sort((a, b) => new Date(b.at) - new Date(a.at));
                     this.events = ev.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }
@@ -176,6 +189,62 @@
                     ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></button>
                 </div>
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredPostCount + ' ' + ($store.lang.current === 'en' ? 'of ' + posts.length + ' posts' : 'sa ' + posts.length + ' post')"></p>
+                </div>
+
+                <!-- Write a post: held for review before others see it (the app's New Post). -->
+                <div x-data="balitaComposer" x-show="$store.citizenSession.account?.capabilities?.community_post !== false" class="surface-glass rounded-[26px] p-3.5 mb-3">
+                    <div class="flex items-center gap-3">
+                        <x-citizen.avatar class="w-10 h-10 text-sm shrink-0" />
+                        <button type="button" @click="openComposer()" class="flex-1 min-h-[44px] text-left rounded-2xl surface-pressed px-4 text-sm text-ink-muted hover:text-ink transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
+                            <x-ui.t fil="May nais ka bang ibahagi sa komunidad?" en="Something to share with the community?" />
+                        </button>
+                        <x-ui.button size="sm" icon="square-pen" @click="openComposer()" class="shrink-0"><x-ui.t fil="Mag-post" en="Post" /></x-ui.button>
+                    </div>
+
+                    <div x-data="{ get open() { return composeOpen }, set open(v) { composeOpen = v } }">
+                        <x-ui.modal title="Bagong Post" titleEn="New Post" maxWidth="sm">
+                            <form @submit.prevent="sendPost((p) => addMyPost(p))" class="space-y-4" novalidate>
+                                <p class="flex items-start gap-2 rounded-2xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 text-xs text-brand-800">
+                                    <i data-lucide="shield-check" class="w-4 h-4 shrink-0"></i>
+                                    <x-ui.t fil="Sinusuri ng Esperanza LGU ang iyong post bago ito makita ng ibang residente. Makikita mo agad ito na may markang Hinihintay ang pag-apruba, at ikaw lang ang nakakakita nito hanggang doon." en="Your post is reviewed by Esperanza LGU before it appears to other residents. You will see it right away marked Pending review, and only you can see it until then." />
+                                </p>
+                                <label class="block">
+                                    <span class="block text-xs font-semibold text-ink mb-1.5"><x-ui.t fil="Kategorya" en="Category" /></span>
+                                    <select x-model="category" class="w-full min-h-[44px] rounded-2xl border-0 surface-pressed px-3.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                        <template x-for="[value, fil] in categories" :key="value"><option :value="value" x-text="$store.lang.current === 'en' ? value : fil" :selected="value === category"></option></template>
+                                    </select>
+                                </label>
+                                <label class="block">
+                                    <span class="block text-xs font-semibold text-ink mb-1.5"><x-ui.t fil="Ano ang nais mong ibahagi?" en="What do you want to share?" /></span>
+                                    <textarea x-model="body" rows="5" maxlength="2000"
+                                        :placeholder="$store.lang.current === 'en' ? 'News, an update, or something happening in your barangay...' : 'Balita, update, o nangyayari sa iyong barangay...'"
+                                        class="w-full rounded-2xl border-0 surface-pressed px-3.5 py-2.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                                    <span class="block text-right text-[11px] text-ink-muted" x-text="body.length + ' / 2000'"></span>
+                                </label>
+                                <div>
+                                    <p class="text-xs font-semibold text-ink mb-1.5"><x-ui.t fil="Larawan (opsyonal)" en="Photo (optional)" /></p>
+                                    <div x-show="imagePreview" x-cloak class="relative w-full max-w-[220px] rounded-xl overflow-hidden border border-slate-200">
+                                        <img :src="imagePreview" alt="" class="w-full h-auto">
+                                        <button type="button" @click="clearImage()" :aria-label="$store.lang.current === 'en' ? 'Remove photo' : 'Alisin ang larawan'" class="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-navy-950/70 text-white grid place-items-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    </div>
+                                    <label x-show="!imagePreview" class="inline-flex items-center gap-2 min-h-[40px] px-3.5 rounded-2xl surface-glass-sm text-xs font-semibold text-ink-body hover:bg-white/90 cursor-pointer">
+                                        <i data-lucide="image-plus" class="w-4 h-4"></i><x-ui.t fil="Maglakip ng larawan" en="Attach a photo" />
+                                        <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp" @change="pickImage($event.target.files[0]); $event.target.value = ''">
+                                    </label>
+                                </div>
+                                <p x-show="error" x-cloak role="alert" class="rounded-2xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs text-rose-800" x-text="error"></p>
+                                <button type="submit" :disabled="posting" :aria-busy="posting"
+                                    class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-2xl text-sm font-semibold clay-blue btn-shine hover:brightness-95 disabled:opacity-60">
+                                    <span x-show="posting" x-cloak><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i></span>
+                                    <span x-show="!posting"><i data-lucide="send" class="w-4 h-4"></i></span>
+                                    <span x-text="posting ? ($store.lang.current === 'en' ? 'Posting…' : 'Ipino-post…') : ($store.lang.current === 'en' ? 'Post' : 'I-post')"></span>
+                                </button>
+                            </form>
+                            <x-slot:footer>
+                                <x-ui.button size="sm" variant="secondary" @click="composeOpen = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
+                            </x-slot:footer>
+                        </x-ui.modal>
+                    </div>
                 </div>
 
                 <!-- Feed -->
