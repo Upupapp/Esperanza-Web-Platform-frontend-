@@ -1491,7 +1491,7 @@
                                         <img alt="Proof of release" class="w-full h-full object-cover" x-data="{ src: '' }" x-effect="window.viewableImage(selected.release_evidence, selected.release_evidence_mime).then((b) => { src = b; }).catch(() => { src = ''; })" :src="src" x-show="src">
                                     </div>
                                     <div class="flex items-center justify-between mt-1.5">
-                                        <span class="text-[11px] text-emerald-600 font-medium inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3 h-3"></i> Captured <span x-text="selected.release_evidence_at"></span></span>
+                                        <span class="text-[11px] text-emerald-600 font-medium flex items-start gap-1 min-w-0"><i data-lucide="circle-check" class="w-3 h-3 mt-0.5 shrink-0"></i><span class="min-w-0">Captured<span x-show="selected.release_evidence_at" class="block font-normal text-ink-muted break-words" x-text="selected.release_evidence_at"></span></span></span>
                                         <button type="button" @click="clearReleaseEvidence()" class="text-[11px] text-ink-muted hover:text-rose-500" x-show="selected.status === 'Ready for Release'">Retake</button>
                                     </div>
                                 </div>

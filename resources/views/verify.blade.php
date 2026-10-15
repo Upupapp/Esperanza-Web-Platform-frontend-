@@ -82,9 +82,14 @@
                         <dt class="text-ink-muted shrink-0"><x-ui.t fil="Inilabas noong" en="Issued on" /></dt>
                         <dd class="text-ink text-right" x-text="fmtDate(result?.issued_on) || '—'"></dd>
                     </div>
-                    <div class="flex items-start justify-between gap-3 px-4 py-2.5">
+                    {{-- A revoked document is valid until nothing: it says when it was revoked instead (2026-10-15). --}}
+                    <div class="flex items-start justify-between gap-3 px-4 py-2.5" x-show="state !== 'revoked'">
                         <dt class="text-ink-muted shrink-0"><x-ui.t fil="May bisa hanggang" en="Valid until" /></dt>
                         <dd class="text-right" :class="state === 'expired' ? 'font-semibold text-amber-700' : 'text-ink'" x-text="fmtDate(result?.valid_until) || '—'"></dd>
+                    </div>
+                    <div class="flex items-start justify-between gap-3 px-4 py-2.5" x-show="state === 'revoked'">
+                        <dt class="text-ink-muted shrink-0"><x-ui.t fil="Binawi noong" en="Revoked on" /></dt>
+                        <dd class="text-right font-semibold text-rose-700" x-text="fmtDate(result?.revoked_on) || '—'"></dd>
                     </div>
                     <div class="flex items-start justify-between gap-3 px-4 py-2.5" x-show="result?.is_reprint">
                         <dt class="text-ink-muted shrink-0"><x-ui.t fil="Kopya" en="Copy" /></dt>

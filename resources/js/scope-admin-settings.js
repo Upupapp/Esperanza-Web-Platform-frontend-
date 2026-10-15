@@ -1092,6 +1092,7 @@ function auditLogTab() {
         actions: [], types: [],
         open: false, sel: null,
         exporting: false,
+        exportingPdf: false,
 
         when: fmtWhen,
         actionLabel,
@@ -1198,24 +1199,34 @@ function auditLogTab() {
                 toast(errText(err, 'Could not export the audit log.'), 'error');
             } finally { this.exporting = false; }
         },
-        // The same export as a PDF (owner, 2026-10-15): the server's CSV, so
-        // the rows and the record of the export are the same, drawn as a table.
+        // The same export as a PDF (owner, 2026-10-15), readable as the screen
+        // is: Manila time, people, modules and actions in words, and only the
+        // fields that changed. The export is recorded as the CSV one is (the
+        // same request, the same filters); the rows come from the list itself.
         async exportPdf() {
-            if (this.exporting || !this.canExport || this.dateProblem) return;
-            this.exporting = true;
+            if (this.exportingPdf || !this.canExport || this.dateProblem) return;
+            this.exportingPdf = true;
             try {
-                const blob = await api.get('/admin/audit-logs/export', { params: this.params(), responseType: 'blob' });
-                const rows = await window.rowsFromCsv(await (blob instanceof Blob ? blob : new Blob([blob])).text());
-                const cap = 2000;
-                await window.tablePdf(rows.slice(0, cap), {
+                await api.get('/admin/audit-logs/export', { params: this.params(), responseType: 'blob' });
+                const res = await api.getAll('/admin/audit-logs', { params: this.params(), maxPages: 20 });
+                const rows = (res.data || []).map((r) => ({
+                    When: fmtWhen(r.time),
+                    Person: this.actorLine(r),
+                    Module: this.moduleLabel(r.module),
+                    Action: actionLabel(r.action),
+                    Record: this.targetLine(r),
+                    Changes: diffFields(r.before, r.after).filter((c) => c.changed).map((c) => c.label + ': ' + c.from + ' -> ' + c.to).join('; '),
+                }));
+                const total = res.meta?.total ?? rows.length;
+                await window.tablePdf(rows, {
                     filename: 'audit-log-' + today() + '.pdf',
                     title: 'Audit log',
-                    subtitle: rows.length > cap ? 'The newest ' + cap.toLocaleString('en-PH') + ' of ' + rows.length.toLocaleString('en-PH') + ' entries: narrow the filters, or use the CSV, for the rest' : '',
+                    subtitle: total > rows.length ? 'The newest ' + rows.length.toLocaleString('en-PH') + ' of ' + total.toLocaleString('en-PH') + ' entries: narrow the filters, or use the CSV, for the rest' : '',
                 });
                 toast('Audit log exported as a PDF. The export itself is recorded in the log.');
             } catch (err) {
                 toast(errText(err, 'Could not export the audit log.'), 'error');
-            } finally { this.exporting = false; }
+            } finally { this.exportingPdf = false; }
         },
     };
 }
