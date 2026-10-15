@@ -52,6 +52,8 @@
                 }
             },
             kindLabel(key) {
+                // Filed from Edit Profile, with its proof (2026-10-16).
+                if (key === 'name_change') return this.$store.lang.current === 'en' ? 'Change my name' : 'Palitan ang aking pangalan';
                 const kind = this.dataKinds.find((k) => k.key === key);
                 if (!kind) return key;
                 return this.$store.lang.current === 'en' ? kind.en : kind.fil;

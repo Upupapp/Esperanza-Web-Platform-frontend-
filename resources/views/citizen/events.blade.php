@@ -141,7 +141,7 @@
                     type="button" @click="myBarangayOnly = !myBarangayOnly"
                     class="inline-flex items-center gap-1.5 text-[11px] font-medium rounded-xl px-2.5 py-1.5 transition-colors"
                     :class="myBarangayOnly ? 'clay-blue' : 'bg-slate-100 text-ink-muted hover:bg-slate-200'"
-                ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Aking Barangay Lang" en="My Barangay Only" /></button>
+                ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Barangay Lang" en="Barangay Only" /></button>
             </div>
 
             <div x-show="loading" class="space-y-3">
@@ -173,7 +173,7 @@
                                         <span
                                             class="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5 inline-flex items-center gap-1"
                                             x-show="event.barangay && event.barangay === $store.citizenSession.account?.barangay"
-                                        ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Sa Aking Barangay" en="In My Barangay" /></span>
+                                        ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Sa Barangay" en="In the Barangay" /></span>
                                     </div>
                                     <p class="text-xs text-ink-muted mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
                                         <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i><span x-text="event.time"></span></span>

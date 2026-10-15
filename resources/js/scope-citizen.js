@@ -730,6 +730,11 @@ function verifyPage() {
             return r.title || this.typeName || String(r.document_type || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
         },
         get failureText() { return errorText(this.failure, 'Could not check the document right now.', 'Hindi masuri ang dokumento ngayon.'); },
+        // The office and its barangay: "Barangay Hall · Brgy. Poblacion".
+        get issuedBy() {
+            const r = this.result || {};
+            return [r.office, r.barangay ? 'Brgy. ' + r.barangay : null].filter(Boolean).join(' · ');
+        },
 
         async check() {
             const value = this.code.trim().replace(/\s+/g, '');
@@ -771,6 +776,115 @@ function verifyPage() {
             this.state = 'idle';
             this.result = null;
             this.$nextTick(() => document.getElementById('verify-code')?.focus());
+        },
+    };
+}
+
+// =================================================== A change of name
+
+// Why a verified resident's name changes, and the proof the barangay checks
+// (the PSA's own list for updating a PhilSys record). Owner, 2026-10-16.
+const NAME_REASONS = [
+    { key: 'marriage', en: 'Marriage (taking my spouse\u2019s surname)', fil: 'Ikinasal (gagamitin ang apelyido ng asawa)', proofEn: 'PSA marriage certificate', proofFil: 'PSA marriage certificate' },
+    { key: 'annulment', en: 'Annulment or nullity of marriage (back to my former surname)', fil: 'Annulment o pagpapawalang-bisa ng kasal (babalik sa dating apelyido)', proofEn: 'PSA marriage certificate with the annotation, or the court decision', proofFil: 'PSA marriage certificate na may annotation, o ang desisyon ng korte' },
+    { key: 'court_order', en: 'Court order (a legal change of name)', fil: 'Utos ng korte (legal na pagpapalit ng pangalan)', proofEn: 'Certified copy of the court order or decision', proofFil: 'Sertipikadong kopya ng utos o desisyon ng korte' },
+    { key: 'clerical', en: 'My name is misspelled (typo)', fil: 'Mali ang pagkakasulat ng pangalan ko (typo)', proofEn: 'PSA birth certificate, or a valid ID showing the right spelling', proofFil: 'PSA birth certificate, o valid ID na may tamang spelling' },
+];
+const OPEN_REQUEST = ['Submitted', 'Under Review'];
+
+/**
+ * A verified resident asks to change their name, with the reason and proof;
+ * the barangay checks it and applies it (Constituents > To Verify > Data
+ * requests). One request open at a time, no waiting period between changes,
+ * and the old name stays in the history. POST /citizen/data-requests
+ * (kind name_change, multipart).
+ */
+function nameChangeRequest() {
+    return {
+        ncOpen: false,
+        ncReasons: NAME_REASONS,
+        ncForm: { reason: '', firstName: '', middleName: '', lastName: '', note: '' },
+        ncFile: null,
+        ncSending: false,
+        ncError: '',
+        ncPending: null,
+
+        t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
+        fmtDate,
+        get ncReason() { return NAME_REASONS.find((r) => r.key === this.ncForm.reason) || null; },
+        get ncProofHint() { return this.ncReason ? this.t(this.ncReason.proofEn, this.ncReason.proofFil) : this.t('Choose the reason first.', 'Piliin muna ang dahilan.'); },
+
+        init() { this.ncLoad(); },
+
+        // The request still waiting, if there is one: then no second.
+        async ncLoad() {
+            try {
+                const res = await api.get('/citizen/data-requests');
+                this.ncPending = (res.data || []).find((r) => r.kind === 'name_change' && OPEN_REQUEST.includes(r.status)) || null;
+            } catch {
+                // The form still works; the server refuses a second request.
+            }
+            icons();
+        },
+
+        ncStart() {
+            const a = this.$store.citizenSession.account || {};
+            this.ncForm = { reason: '', firstName: a.firstName || '', middleName: a.middleName || '', lastName: a.lastName || '', note: '' };
+            this.ncFile = null;
+            this.ncError = '';
+            this.ncOpen = true;
+            icons();
+        },
+
+        ncPick(file) {
+            this.ncError = '';
+            if (!file) return;
+            if (!/^image\/|^application\/pdf$/.test(file.type || '')) {
+                this.ncError = this.t('Attach a photo or a PDF of the document.', 'Mag-attach ng litrato o PDF ng dokumento.');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                this.ncError = this.t('The file is larger than 10 MB. Take a smaller photo or scan.', 'Mas malaki sa 10 MB ang file. Kumuha ng mas maliit na litrato o scan.');
+                return;
+            }
+            this.ncFile = file;
+        },
+
+        async ncSend() {
+            if (this.ncSending) return;
+            const f = this.ncForm;
+            const a = this.$store.citizenSession.account || {};
+            const first = f.firstName.trim();
+            const middle = f.middleName.trim();
+            const last = f.lastName.trim();
+            if (!f.reason) { this.ncError = this.t('Choose why your name is changing.', 'Piliin kung bakit magbabago ang iyong pangalan.'); return; }
+            if (!first || !last) { this.ncError = this.t('Enter your new first and last name.', 'Ilagay ang bagong pangalan at apelyido.'); return; }
+            const now = [a.firstName, a.middleName, a.lastName].filter(Boolean).join(' ').toLowerCase();
+            if ([first, middle, last].filter(Boolean).join(' ').toLowerCase() === now) { this.ncError = this.t('That is the name already on record.', 'Iyan na ang pangalang nasa record.'); return; }
+            if (!this.ncFile) { this.ncError = this.t('Attach your proof: ', 'Mag-attach ng patunay: ') + this.ncProofHint; return; }
+            this.ncSending = true;
+            this.ncError = '';
+            try {
+                const body = new FormData();
+                body.append('kind', 'name_change');
+                body.append('reason', f.reason);
+                body.append('first_name', first);
+                if (middle) body.append('middle_name', middle);
+                body.append('last_name', last);
+                if (f.note.trim()) body.append('detail', f.note.trim());
+                body.append('proof', this.ncFile);
+                const res = await api.post('/citizen/data-requests', body);
+                this.ncPending = res.data;
+                this.ncOpen = false;
+                toast(this.t('Name change request ' + res.data.ref + ' sent. Your barangay office will check your proof and let you know.', 'Naipadala ang kahilingan ' + res.data.ref + '. Susuriin ng iyong barangay ang iyong patunay at ipapaalam sa iyo.'));
+            } catch (err) {
+                // The form keeps what was typed.
+                if (err?.code === 'NAME_CHANGE_PENDING') this.ncLoad();
+                this.ncError = errorText(err, 'Could not send the request.', 'Hindi maipadala ang kahilingan.');
+            } finally {
+                this.ncSending = false;
+                icons();
+            }
         },
     };
 }
@@ -1788,6 +1902,7 @@ export function register(Alpine) {
     Alpine.data('balitaComposer', balitaComposer);
     Alpine.data('citizenAppointments', citizenAppointments);
     Alpine.data('verifyPage', verifyPage);
+    Alpine.data('nameChangeRequest', nameChangeRequest);
     Alpine.data('supportDesk', supportDesk);
     Alpine.data('helpFeedback', helpFeedback);
     Alpine.data('eventCalendar', eventCalendar);

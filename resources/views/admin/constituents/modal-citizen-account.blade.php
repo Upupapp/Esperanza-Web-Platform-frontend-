@@ -43,12 +43,22 @@
                  close the resident's correction request with it.
                  PUT /admin/citizens/{accountNo}/identity; component
                  identityCorrection. --}}
-            <section x-data="identityCorrection" x-show="icLocked && icMay" x-cloak class="rounded-2xl border border-slate-200 p-4 space-y-3">
+            <section x-data="identityCorrection" x-show="(icLocked || icMismatch.length || icDone) && icMay" x-cloak x-on:ic-match-id.window="icMatchId()" class="rounded-2xl border border-slate-200 p-4 space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="user-pen" class="w-3.5 h-3.5"></i> Locked details</p>
+                    <p class="text-xs font-semibold text-ink uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="user-pen" class="w-3.5 h-3.5"></i> <span x-text="icLocked ? 'Locked details' : 'Account details'"></span></p>
                     <button type="button" x-show="!icOpen" @click="icStart()" class="text-xs font-semibold rounded-xl px-3 py-2 bg-brand-50 text-brand-700 hover:bg-brand-100">Correct details</button>
                 </div>
-                <p x-show="!icOpen" class="text-xs text-ink-muted">The account is verified, so the resident cannot change their name, birth date, sex or barangay. Correct them here when the ID shows they are wrong.</p>
+                <p x-show="!icOpen && icLocked" class="text-xs text-ink-muted">The account is verified, so the resident cannot change their name, birth date, sex or barangay. Correct them here when the ID shows they are wrong, or when the resident asks for a change of name with proof.</p>
+                <p x-show="!icOpen && !icLocked && icMismatch.length" class="text-xs text-ink-muted">The ID differs from the account (see Identity verification below). Correct the account here to match the ID, with the reason.</p>
+                {{-- The names the account has had (2026-10-16). --}}
+                <div x-show="icHistory.length" class="text-xs" data-testid="name-history">
+                    <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide">Previous names</p>
+                    <ul class="mt-1 space-y-1">
+                        <template x-for="(h, k) in icHistory" :key="k">
+                            <li class="break-words"><span class="text-ink-muted line-through" x-text="h.from"></span> → <span class="font-semibold text-ink" x-text="h.to"></span> <span class="text-ink-muted" x-text="'· ' + when(h.at) + (h.by ? ' by ' + h.by : '') + (h.reason ? ': ' + h.reason : '')"></span></li>
+                        </template>
+                    </ul>
+                </div>
                 <div x-show="icDone" x-cloak role="status" class="rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs text-emerald-800">
                     <p class="font-semibold">Corrected. The resident was told why.</p>
                     <ul class="mt-1 space-y-0.5">
@@ -228,10 +238,31 @@
                         <p x-show="(c.reasons || []).length" class="text-xs text-slate-700" x-text="'Reasons: ' + (c.reasons || []).join(', ')"></p>
                         <p x-show="[...(c.document?.warnings || []), ...(c.face_match?.warnings || []), ...(c.liveness?.warnings || [])].length" class="text-[11px] text-ink-muted" x-text="'Provider warnings: ' + [...(c.document?.warnings || []), ...(c.face_match?.warnings || []), ...(c.liveness?.warnings || [])].join(', ')"></p>
                         <p x-show="c.error" class="text-xs text-amber-700" x-text="'Could not run yet (' + c.error + '), attempt ' + c.attempts + '. It is retried automatically.'"></p>
-                        {{-- What the ID says, beside what the account says. --}}
+                        {{-- What the ID says, beside what the account says (2026-10-16):
+                             the ID never overwrites the account; a difference
+                             stops the check here, for the officer. --}}
+                        <div x-show="(c.comparison || []).length" class="pt-1 border-t border-brand-600/10" data-testid="id-vs-account">
+                            <table class="w-full text-xs">
+                                <thead><tr class="text-left text-ink-muted"><th class="font-medium py-1 pr-2"></th><th class="font-medium py-1 pr-2">On the account</th><th class="font-medium py-1 pr-2">On the ID</th><th class="font-medium py-1"></th></tr></thead>
+                                <tbody>
+                                    <template x-for="row in (c.comparison || [])" :key="row.field">
+                                        <tr class="border-t border-brand-600/10 align-top">
+                                            <td class="py-1 pr-2 text-ink-muted" x-text="{ name: 'Name', birthdate: 'Birth date', sex: 'Sex' }[row.field]"></td>
+                                            <td class="py-1 pr-2 font-semibold text-ink break-words" x-text="row.account || '—'"></td>
+                                            <td class="py-1 pr-2 font-semibold break-words" :class="row.matches === false ? 'text-rose-700' : 'text-ink'" x-text="row.id || '—'"></td>
+                                            <td class="py-1 whitespace-nowrap font-semibold" :class="row.matches === false ? 'text-rose-700' : (row.matches ? 'text-emerald-700' : 'text-ink-muted')" x-text="row.matches === false ? 'Differs' : (row.matches ? 'Same' : 'Not compared')"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                            <div x-show="(c.comparison || []).some((r) => r.matches === false)" class="mt-2 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-900 space-y-1.5">
+                                <p>The ID does not say what the account says, so this check was not accepted as it is. Nothing on the account was changed from the ID. Compare the ID photo with the account, then either make the account match the ID (the identity is then verified), or decide by hand below with a reason.</p>
+                                <button type="button" x-show="can('const_citizen_verification','verify') && c.account_from_id" @click="$dispatch('ic-match-id')" class="inline-flex items-center gap-1.5 rounded-lg bg-white border border-rose-300 px-2.5 py-1.5 font-semibold text-rose-800 hover:bg-rose-100"><i data-lucide="user-check" class="w-3.5 h-3.5"></i> Make the account match the ID</button>
+                            </div>
+                        </div>
                         <dl x-show="c.extracted && Object.keys(c.extracted).length" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs pt-1 border-t border-brand-600/10">
-                            <div class="flex justify-between gap-2"><dt class="text-ink-muted">Name on ID</dt><dd class="font-semibold text-ink text-right" x-text="c.extracted?.full_name || [c.extracted?.first_name, c.extracted?.last_name].filter(Boolean).join(' ') || '—'"></dd></div>
-                            <div class="flex justify-between gap-2"><dt class="text-ink-muted">Birthdate on ID</dt><dd class="font-semibold text-right" :class="c.extracted?.date_of_birth && accountDetail?.birthdate && c.extracted.date_of_birth !== accountDetail.birthdate ? 'text-rose-700' : 'text-ink'" x-text="(c.extracted?.date_of_birth || '—') + (c.extracted?.date_of_birth && accountDetail?.birthdate && c.extracted.date_of_birth !== accountDetail.birthdate ? ' (differs from account)' : '')"></dd></div>
+                            <div x-show="!(c.comparison || []).length" class="flex justify-between gap-2"><dt class="text-ink-muted">Name on ID</dt><dd class="font-semibold text-ink text-right" x-text="c.extracted?.full_name || [c.extracted?.first_name, c.extracted?.last_name].filter(Boolean).join(' ') || '—'"></dd></div>
+                            <div x-show="!(c.comparison || []).length" class="flex justify-between gap-2"><dt class="text-ink-muted">Birthdate on ID</dt><dd class="font-semibold text-ink text-right" x-text="c.extracted?.date_of_birth || '—'"></dd></div>
                             <div class="flex justify-between gap-2"><dt class="text-ink-muted">Document</dt><dd class="font-semibold text-ink text-right" x-text="[c.extracted?.document_type, c.extracted?.issuing_state].filter(Boolean).join(' · ') || '—'"></dd></div>
                             <div class="flex justify-between gap-2"><dt class="text-ink-muted">Number (last 4)</dt><dd class="font-semibold text-ink font-mono" x-text="c.extracted?.document_number_last4 || '—'"></dd></div>
                             <div class="flex justify-between gap-2"><dt class="text-ink-muted">Expires</dt><dd class="font-semibold text-ink" x-text="c.extracted?.expiration_date || '—'"></dd></div>

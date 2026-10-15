@@ -186,7 +186,7 @@
                         @click="cat = 'MyBarangay'"
                         class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap flex items-center gap-1"
                         :class="cat === 'MyBarangay' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
-                    ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></button>
+                    ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Barangay" en="Barangay" /></button>
                 </div>
                 <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredPostCount + ' ' + ($store.lang.current === 'en' ? 'of ' + posts.length + ' posts' : 'sa ' + posts.length + ' post')"></p>
                 </div>

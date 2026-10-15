@@ -983,7 +983,7 @@
                             <div class="flex flex-col lg:flex-row lg:items-center gap-3">
                                 <div class="flex items-center gap-1 surface-pressed rounded-2xl p-1 w-fit shrink-0" role="tablist">
                                     <button type="button" role="tab" :aria-selected="catalogTab === 'barangay'" @click="catalogTab = 'barangay'" class="px-4 py-2 text-[13px] rounded-xl transition-all duration-200 flex items-center gap-1.5" :class="catalogTab === 'barangay' ? 'bg-white/90 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'">
-                                        <i data-lucide="map-pinned" class="w-4 h-4"></i><x-ui.t fil="Aking Barangay" en="My Barangay" />
+                                        <i data-lucide="map-pinned" class="w-4 h-4"></i><x-ui.t fil="Barangay" en="Barangay" />
                                     </button>
                                     <button type="button" role="tab" :aria-selected="catalogTab === 'municipal'" @click="catalogTab = 'municipal'" class="px-4 py-2 text-[13px] rounded-xl transition-all duration-200 flex items-center gap-1.5" :class="catalogTab === 'municipal' ? 'bg-white/90 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'font-semibold text-ink-muted hover:text-ink'">
                                         <i data-lucide="landmark" class="w-4 h-4"></i><x-ui.t fil="Munisipyo" en="Municipal" />

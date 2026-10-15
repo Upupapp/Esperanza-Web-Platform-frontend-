@@ -134,7 +134,7 @@
         <div x-show="!loading && !failed && tab === 'barangays'" x-cloak>
             <!-- My Barangay -->
             <div x-show="$store.barangay.mine" x-cloak class="rounded-2xl bg-gradient-to-br from-brand-50 via-white to-purple-50/60 border border-brand-100 shadow-card p-4 sm:p-5 mb-4">
-                <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="star" class="w-3.5 h-3.5"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></p>
+                <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="star" class="w-3.5 h-3.5"></i><x-ui.t fil="Barangay" en="Barangay" /></p>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-center gap-3.5 flex-1 min-w-0">
                         <div class="relative w-14 h-14 shrink-0">

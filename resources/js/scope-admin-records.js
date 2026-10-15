@@ -135,7 +135,16 @@ const HISTORY_FIELDS = {
 
 // ------------------------------------------------------------- Data requests
 
-const DR_KINDS = { access: 'See their data', correction: 'Correct their data', erasure: 'Erase their data', portability: 'A copy of their data' };
+const DR_KINDS = { access: 'See their data', correction: 'Correct their data', erasure: 'Erase their data', portability: 'A copy of their data', name_change: 'Change their name' };
+
+// Why a verified resident's name changes, and the proof each needs (2026-10-16).
+const NAME_REASONS = {
+    marriage: ['Marriage', 'PSA marriage certificate'],
+    annulment: ['Annulment or nullity of marriage', 'Annotated PSA marriage certificate, or the court decision'],
+    court_order: ['Court order', 'Certified copy of the court order or decision'],
+    clerical: ['Misspelling', 'PSA birth certificate, or a valid ID with the right spelling'],
+};
+const fullName = (n) => [n?.first_name, n?.middle_name, n?.last_name, n?.suffix].filter(Boolean).join(' ');
 
 // --------------------------------------------------------------- Feedback
 
@@ -202,6 +211,9 @@ export function register(Alpine) {
         drTone: tone,
         drDot: dot,
         drKindLabel(kind) { return DR_KINDS[kind] || humanize(kind); },
+        drReasonLabel(r) { return (NAME_REASONS[r] || [humanize(r)])[0]; },
+        drProofHint(r) { return (NAME_REASONS[r] || [])[1] || ''; },
+        drNewName(r) { return fullName(r?.requested); },
         drIsOpen(r) { return OPEN.includes(r?.status); },
 
         drShow(view) {
@@ -318,13 +330,24 @@ export function register(Alpine) {
         },
 
         // The account the request is about, in the account review. An open
-        // correction request opens the account's "Correct details" with it.
+        // correction request opens the account's "Correct details" with it; an
+        // open change of name, with the new name and its reason filled in.
         drOpenAccount(r) {
             const no = r?.citizen?.account_no;
             if (!no) return;
             const row = (this.citizenAccountList || []).find((i) => i.citizen_account?.account_no === no)
                 || { ref: no, name: r.citizen.name, barangay: r.citizen.barangay, tags: [], citizen_account: { account_no: no }, accountOnly: true };
-            this.$store.recordsDesk.pendingCorrection = r.kind === 'correction' && this.drIsOpen(r) ? { account: no, ref: r.ref } : null;
+            let hint = null;
+            if (this.drIsOpen(r) && r.kind === 'correction') hint = { account: no, ref: r.ref };
+            if (this.drIsOpen(r) && r.kind === 'name_change' && r.requested) {
+                hint = {
+                    account: no,
+                    ref: r.ref,
+                    prefill: { first_name: r.requested.first_name || '', middle_name: r.requested.middle_name || '', last_name: r.requested.last_name || '', suffix: r.requested.suffix || '' },
+                    reason: 'Name change (' + this.drReasonLabel(r.reason).toLowerCase() + '): ' + (r.current_name || r.citizen?.name || '') + ' to ' + this.drNewName(r) + '. Proof checked.',
+                };
+            }
+            this.$store.recordsDesk.pendingCorrection = hint;
             this.drSel = null;
             this.openAccount(row);
         },
@@ -344,9 +367,17 @@ export function register(Alpine) {
         icError: '',
         icDone: null,
         icRequests: [],
+        when,
 
         get icMay() { return this.$store.session.canPerm('const_citizen_verification', 'verify'); },
         get icLocked() { return this.accountDetail?.status === 'Approved'; },
+        // The latest identity check found the ID saying something else than
+        // the account (2026-10-16): the account can be corrected to match it,
+        // approved or not.
+        get icCheck() { return this.accountDetail?.identity?.checks?.[0] || null; },
+        // Read against the account as it is now: a corrected account no longer differs.
+        get icMismatch() { return (this.icCheck?.comparison || []).filter((r) => r.matches === false).map((r) => r.field); },
+        get icHistory() { return this.accountDetail?.name_history || []; },
         get icToday() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }); },
         get icSexHint() {
             if (this.icSexFrom === 'record') return 'The account does not show its sex here: this is the registry record’s. Check it against the ID.';
@@ -371,8 +402,19 @@ export function register(Alpine) {
             const hint = this.$store.recordsDesk.pendingCorrection;
             if (no && hint) {
                 this.$store.recordsDesk.pendingCorrection = null;
-                if (hint.account === no && this.icLocked && this.icMay) this.icStart(hint.ref);
+                if (hint.account === no && (this.icLocked || this.icMismatch.length) && this.icMay) this.icStart(hint.ref, hint.prefill, hint.reason);
             }
+        },
+
+        // "Make the account match the ID": the correction form, filled in
+        // from what the ID says; the officer checks it and saves.
+        icMatchId() {
+            const id = this.icCheck?.account_from_id;
+            if (!id) return;
+            const prefill = {};
+            ['first_name', 'middle_name', 'last_name', 'birthdate', 'sex'].forEach((k) => { if (id[k]) prefill[k] = id[k]; });
+            this.icStart(null, prefill, 'Matched to the verified ID (' + (this.icCheck.extracted?.document_type || 'ID') + (this.icCheck.extracted?.document_number_last4 ? ' ending ' + this.icCheck.extracted.document_number_last4 : '') + '), checked by the officer.');
+            this.$nextTick(() => this.$root?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }));
         },
 
         // Where the account's own sex can be read: the registry comparison
@@ -387,20 +429,21 @@ export function register(Alpine) {
             return { value: '', from: '' };
         },
 
-        icStart(ref = null) {
+        icStart(ref = null, prefill = null, reason = '') {
             const d = this.accountDetail || {};
             const parts = splitName(d.name, d.first_name, d.last_name);
             const sex = this.icAccountSex();
             this.icForm = {
                 first_name: d.first_name || '',
-                middle_name: parts.middle,
+                middle_name: d.middle_name ?? parts.middle,
                 last_name: d.last_name || '',
-                suffix: parts.suffix,
+                suffix: d.suffix ?? parts.suffix,
                 birthdate: d.birthdate || '',
                 sex: sex.value,
                 barangay: d.barangay || '',
-                reason: '',
+                reason: reason || '',
                 data_request_ref: ref || '',
+                ...(prefill || {}),
             };
             this.icNameKnown = parts.known;
             this.icSexFrom = sex.from;
@@ -415,7 +458,7 @@ export function register(Alpine) {
             const no = this.icFor;
             if (!no || !this.$store.session.canPerm('const_citizen_verification', 'view')) return;
             try {
-                const res = await api.get('/admin/data-requests', { params: { open: 1, kind: 'correction', q: no, per_page: 20 } });
+                const res = await api.get('/admin/data-requests', { params: { open: 1, kind: 'correction,name_change', q: no, per_page: 20 } });
                 if (this.icFor !== no) return;
                 const list = (res.data || []).filter((r) => r.citizen?.account_no === no);
                 if (ref && !list.some((r) => r.ref === ref)) list.unshift({ ref, detail: '' });
@@ -458,7 +501,8 @@ export function register(Alpine) {
                     .filter((k) => String(before[k] ?? '') !== String(after[k] ?? ''))
                     .map((k) => ({ label: IDENTITY_FIELDS[k], from: shown(before[k]), to: shown(after[k]) }));
                 this.icOpen = false;
-                toast(payload.data_request_ref ? 'Details corrected and ' + payload.data_request_ref + ' closed. The resident was told why.' : 'Details corrected. The resident was told why.');
+                toast((payload.data_request_ref ? 'Details corrected and ' + payload.data_request_ref + ' closed. The resident was told why.' : 'Details corrected. The resident was told why.')
+                    + (res.data?.identity_verified_now ? ' The account now matches the ID, so the identity is verified.' : ''));
                 // Both refreshed: the account here, and the data requests list.
                 window.dispatchEvent(new CustomEvent('data-requests-changed'));
                 await this.icRefresh(no);

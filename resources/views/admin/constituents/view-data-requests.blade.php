@@ -39,7 +39,7 @@
                         <span class="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ring-inset whitespace-nowrap" :class="drTone(r.status)"><span class="w-1.5 h-1.5 rounded-full" :class="drDot(r.status)"></span><span x-text="r.status"></span></span>
                     </span>
                     <span class="block text-sm font-medium text-ink mt-1 break-words" x-text="[r.citizen?.name || 'Resident', r.citizen?.account_no, r.citizen?.barangay ? 'Brgy. ' + r.citizen.barangay : null].filter(Boolean).join(' · ')"></span>
-                    <span class="block text-xs text-ink-muted mt-0.5 line-clamp-2 break-words" x-text="r.detail"></span>
+                    <span class="block text-xs text-ink-muted mt-0.5 line-clamp-2 break-words" x-text="r.kind === 'name_change' && r.requested ? drReasonLabel(r.reason) + ': ' + (r.current_name || '') + ' → ' + drNewName(r) : r.detail"></span>
                     <span class="block text-[11px] text-ink-muted mt-1" x-text="'Filed ' + when(r.submitted_at) + (r.resolved_at ? ' · closed ' + when(r.resolved_at) : '')"></span>
                 </button>
             </li>
@@ -65,6 +65,21 @@
                         <div class="flex justify-between gap-2"><dt class="text-ink-muted">Barangay</dt><dd class="font-semibold text-ink" x-text="drSel.citizen?.barangay ? 'Brgy. ' + drSel.citizen.barangay : '—'"></dd></div>
                         <div class="flex justify-between gap-2"><dt class="text-ink-muted">Filed</dt><dd class="font-semibold text-ink text-right" x-text="when(drSel.submitted_at) || '—'"></dd></div>
                     </dl>
+                    {{-- A change of name (2026-10-16): the name now, the name asked for, why, and the proof. --}}
+                    <div x-show="drSel.kind === 'name_change' && drSel.requested" class="rounded-xl border border-brand-200 bg-brand-50/40 p-3 space-y-2" data-testid="dr-name-change">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div><p class="text-ink-muted">Name now</p><p class="font-semibold text-ink break-words" x-text="drSel.current_name || drSel.citizen?.name || '—'"></p></div>
+                            <div><p class="text-ink-muted">Asked for</p><p class="font-bold text-brand-800 break-words" x-text="drNewName(drSel) || '—'"></p></div>
+                            <div><p class="text-ink-muted">Reason</p><p class="font-semibold text-ink" x-text="drReasonLabel(drSel.reason)"></p></div>
+                            <div><p class="text-ink-muted">Proof expected</p><p class="text-ink" x-text="drProofHint(drSel.reason)"></p></div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-brand-600/10">
+                            <a x-show="drSel.proof?.url" :href="drSel.proof?.url" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-brand-200 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50"><i data-lucide="file-search" class="w-3.5 h-3.5"></i><span x-text="'Open the proof: ' + (drSel.proof?.name || 'file')"></span></a>
+                            <span x-show="drSel.proof && !drSel.proof.url" class="text-xs text-amber-700">The proof is still being scanned; reopen the request in a minute.</span>
+                            <span x-show="!drSel.proof" class="text-xs text-rose-700">No proof was attached.</span>
+                        </div>
+                        <p x-show="drIsOpen(drSel)" class="text-[11px] text-ink-muted">Check the proof against the name asked for. To apply it, use Apply the new name: the account's Correct details opens with it filled in, and saving there changes the name, keeps the old one in the history, and closes this request. To decline, choose Rejected below and say why.</p>
+                    </div>
                     <div>
                         <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">What they asked</p>
                         <p class="text-sm text-slate-700 whitespace-pre-line break-words rounded-xl bg-slate-50 border border-brand-600/10 p-3" x-text="drSel.detail"></p>
@@ -96,7 +111,8 @@
                 </div>
             </template>
             <x-slot:footer>
-                <x-ui.button variant="secondary" size="sm" icon="user-round-search" x-show="drSel?.citizen?.account_no" @click="drOpenAccount(drSel)">Open account</x-ui.button>
+                <x-ui.button variant="secondary" size="sm" icon="user-round-search" x-show="drSel?.citizen?.account_no && !(drSel?.kind === 'name_change' && drIsOpen(drSel) && drMayResolve)" @click="drOpenAccount(drSel)">Open account</x-ui.button>
+                <x-ui.button variant="secondary" size="sm" icon="user-pen" x-show="drSel?.kind === 'name_change' && drSel?.requested && drIsOpen(drSel) && drMayResolve" @click="drOpenAccount(drSel)">Apply the new name</x-ui.button>
                 <x-ui.button size="sm" icon="check" x-show="drSel && drIsOpen(drSel) && drMayResolve" x-bind:disabled="drBusy || drNote.trim().length < 5" @click="drResolve()"><span x-text="drBusy ? 'Saving…' : 'Save'"></span></x-ui.button>
             </x-slot:footer>
         </x-ui.modal>

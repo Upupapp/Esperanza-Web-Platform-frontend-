@@ -60,6 +60,10 @@
                     SELFIE_UNUSABLE: en ? 'We could not see your face clearly in the selfie.' : 'Hindi malinaw ang iyong mukha sa selfie.',
                     DOCUMENT_NOT_GENUINE: en ? 'Photograph the ID card itself, not a screen, a photocopy or a printout.' : 'Kunan ng litrato ang mismong ID, hindi ang screen, photocopy o printout.',
                     DOCUMENT_EXPIRED: en ? 'The ID has expired. Please use a valid, unexpired ID.' : 'Expired na ang ID. Gumamit ng valid at hindi pa expired na ID.',
+                    // The ID never overwrites the account: a difference goes to an officer (2026-10-16).
+                    NAME_MISMATCH: en ? 'The name on your ID is different from the name on your account. Your barangay office will compare them.' : 'Iba ang pangalan sa iyong ID kaysa sa pangalan sa iyong account. Ihahambing ito ng iyong barangay.',
+                    BIRTHDATE_MISMATCH: en ? 'The birth date on your ID is different from the one on your account. Your barangay office will compare them.' : 'Iba ang kaarawan sa iyong ID kaysa sa nasa iyong account. Ihahambing ito ng iyong barangay.',
+                    SEX_MISMATCH: en ? 'The sex on your ID is different from the one on your account. Your barangay office will compare them.' : 'Iba ang kasarian sa iyong ID kaysa sa nasa iyong account. Ihahambing ito ng iyong barangay.',
                 }[code] || null;
             },
             // The check runs right after the upload is answered: poll until
@@ -207,17 +211,12 @@
             mobileSentTo: '',
             originalMobile: '',
             // A verified account's name is locked (the server refuses it): the
-            // window shows it locked and sends a correction request instead of
-            // dropping the typed name and saying it was updated (owner,
-            // 2026-10-15). Staff correct it from Constituents > To Verify >
-            // Data requests.
-            correcting: false,
-            sendingCorrection: false,
-            correction: { firstName: '', lastName: '', note: '' },
+            // window shows it locked, with a name change request - reason and
+            // proof - in its place (owner, 2026-10-15 and 2026-10-16; the
+            // nameChangeRequest component in scope-citizen.js). Staff apply it
+            // from Constituents > To Verify > Data requests.
             openEditProfile() {
                 const a = this.$store.citizenSession.account || {};
-                this.correcting = false;
-                this.correction = { firstName: a.firstName || '', lastName: a.lastName || '', note: '' };
                 this.originalMobile = window.phMobile.clean(a.mobile || '');
                 this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: this.originalMobile, occupation: a.occupation || '', address: a.address || '' };
                 this.mobileStep = null;
@@ -269,33 +268,6 @@
                     this.$dispatch('toast', { message: err.localised ? err.localised(this.$store.lang.current) : 'Could not update profile.', variant: 'error' });
                 } finally {
                     this.savingProfile = false;
-                }
-            },
-            async sendCorrection() {
-                if (this.sendingCorrection) return;
-                const lang = this.$store.lang.current;
-                const a = this.$store.citizenSession.account || {};
-                const first = this.correction.firstName.trim();
-                const last = this.correction.lastName.trim();
-                if (!first || !last) {
-                    this.$dispatch('toast', { message: lang === 'en' ? 'Enter your correct first and last name.' : 'Ilagay ang tamang pangalan at apelyido.', variant: 'error' });
-                    return;
-                }
-                if (first === (a.firstName || '') && last === (a.lastName || '')) {
-                    this.$dispatch('toast', { message: lang === 'en' ? 'That is the name already on record.' : 'Iyan na ang pangalang nasa record.', variant: 'warning' });
-                    return;
-                }
-                this.sendingCorrection = true;
-                try {
-                    const detail = 'Pakiwasto po ang aking pangalan / Please correct my name: ' + [a.firstName, a.lastName].filter(Boolean).join(' ') + ' \u2192 ' + first + ' ' + last + (this.correction.note.trim() ? '. ' + this.correction.note.trim() : '');
-                    const res = await $api.post('/citizen/data-requests', { kind: 'correction', detail });
-                    this.correcting = false;
-                    this.showEditProfile = false;
-                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: lang === 'en' ? 'Correction request ' + res.data.ref + ' sent. Your barangay office will correct your name and let you know.' : 'Naipadala ang kahilingan sa pagwawasto ' + res.data.ref + '. Iaayos ito ng iyong barangay at ipapaalam sa iyo.', variant: 'success' } }));
-                } catch (err) {
-                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: err.localised ? err.localised(lang) : 'Could not send the request.', variant: 'error' } }));
-                } finally {
-                    this.sendingCorrection = false;
                 }
             },
             async verifyMobile() {
@@ -515,7 +487,7 @@
 
                 <!-- My Barangay -->
                 <div x-show="$store.barangay.mine" x-cloak class="rounded-2xl bg-gradient-to-br from-brand-50 via-white to-purple-50/60 border border-brand-100 shadow-card p-4">
-                    <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="landmark" class="w-3.5 h-3.5"></i><x-ui.t fil="Aking Barangay" en="My Barangay" /></p>
+                    <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wide mb-3 flex items-center gap-1.5"><i data-lucide="landmark" class="w-3.5 h-3.5"></i><x-ui.t fil="Barangay" en="Barangay" /></p>
                     <div class="flex items-center gap-3 mb-3">
                         <div class="relative w-11 h-11 shrink-0">
                             <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-ink-faint"><i data-lucide="landmark" class="w-5 h-5"></i></div>
@@ -716,21 +688,46 @@
                             <x-ui.input name="locked_first_name" label="First Name" icon="lock" x-model="editForm.firstName" readonly aria-readonly="true" class="cursor-not-allowed opacity-80" />
                             <x-ui.input name="locked_last_name" label="Last Name" icon="lock" x-model="editForm.lastName" readonly aria-readonly="true" class="cursor-not-allowed opacity-80" />
                         </div>
-                        <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2.5">
-                            <p class="text-xs text-amber-900"><x-ui.t fil="Beripikado na ang iyong account, kaya hindi na mababago rito ang iyong pangalan. Kung may mali, humiling ng pagwawasto: ang iyong barangay ang mag-aayos nito at ipapaalam sa iyo." en="Your account is verified, so your name can't be changed here. If it's wrong, request a correction: your barangay office will fix it and let you know." /></p>
-                            <button type="button" x-show="!correcting" @click="correcting = true" class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"><i data-lucide="pencil-line" class="w-3.5 h-3.5"></i><x-ui.t fil="Humiling ng pagwawasto" en="Request a correction" /></button>
-                            <div x-show="correcting" x-cloak class="space-y-2.5">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <x-ui.input name="correct_first_name" label="Correct first name" labelFil="Tamang pangalan" x-model="correction.firstName" />
-                                    <x-ui.input name="correct_last_name" label="Correct last name" labelFil="Tamang apelyido" x-model="correction.lastName" />
+                        <template x-if="showEditProfile">
+                        <div x-data="nameChangeRequest" class="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2.5" data-testid="name-change">
+                            <p class="text-xs text-amber-900"><x-ui.t fil="Beripikado na ang iyong account, kaya hindi na mababago rito ang iyong pangalan. Kung nagbago ito (hal. ikinasal ka) o mali ang pagkakasulat, humiling ng pagpapalit at ilakip ang patunay: susuriin ito ng iyong barangay at ipapaalam sa iyo." en="Your account is verified, so your name can't be changed here. If it has changed (for example, you got married) or it is misspelled, request a change with your proof: your barangay office will check it and let you know." /></p>
+                            {{-- One at a time: the request still waiting. --}}
+                            <div x-show="ncPending" x-cloak class="rounded-lg bg-white/70 border border-amber-200 px-3 py-2 text-xs text-amber-900 flex items-start gap-2">
+                                <i data-lucide="hourglass" class="w-3.5 h-3.5 shrink-0 mt-px"></i>
+                                <p><span class="font-semibold" x-text="t('Waiting for your barangay: ', 'Hinihintay ang iyong barangay: ') + (ncPending?.ref || '')"></span> <span x-text="ncPending?.requested ? '→ ' + [ncPending.requested.first_name, ncPending.requested.middle_name, ncPending.requested.last_name].filter(Boolean).join(' ') : ''"></span><span class="block text-amber-800/80 mt-0.5" x-text="t('Sent ', 'Ipinadala noong ') + fmtDate(ncPending?.submitted_at) + t('. You can send another once it is answered.', '. Maaari kang magpadala ng bago kapag nasagot na ito.')"></span></p>
+                            </div>
+                            <button type="button" x-show="!ncOpen && !ncPending" @click="ncStart()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:underline"><i data-lucide="pencil-line" class="w-3.5 h-3.5"></i><x-ui.t fil="Humiling ng pagpapalit ng pangalan" en="Request a name change" /></button>
+                            <div x-show="ncOpen" x-cloak class="space-y-2.5">
+                                <div>
+                                    <label for="nc_reason" class="block text-xs font-semibold text-ink-body mb-1"><x-ui.t fil="Dahilan" en="Reason" /></label>
+                                    <select id="nc_reason" x-model="ncForm.reason" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                        <option value="" x-text="t('Choose…', 'Pumili…')"></option>
+                                        <template x-for="r in ncReasons" :key="r.key"><option :value="r.key" x-text="t(r.en, r.fil)"></option></template>
+                                    </select>
                                 </div>
-                                <x-ui.input name="correct_note" label="Note (optional)" labelFil="Paliwanag (opsyonal)" x-model="correction.note" maxlength="300" />
+                                <div class="grid grid-cols-2 gap-3">
+                                    <x-ui.input name="nc_first_name" label="New first name" labelFil="Bagong pangalan" x-model="ncForm.firstName" maxlength="80" />
+                                    <x-ui.input name="nc_last_name" label="New last name" labelFil="Bagong apelyido" x-model="ncForm.lastName" maxlength="80" />
+                                </div>
+                                <x-ui.input name="nc_middle_name" label="Middle name (optional)" labelFil="Gitnang pangalan (opsyonal)" x-model="ncForm.middleName" maxlength="80" />
+                                <div>
+                                    <p class="text-xs font-semibold text-ink-body"><x-ui.t fil="Patunay" en="Proof" /></p>
+                                    <p class="text-[11px] text-ink-muted" x-text="ncProofHint"></p>
+                                    <label class="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-white/80 border border-brand-200 px-3 py-1.5 text-xs font-semibold text-brand-700 cursor-pointer hover:bg-white">
+                                        <i data-lucide="paperclip" class="w-3.5 h-3.5"></i><span x-text="ncFile ? ncFile.name : t('Attach a photo or PDF', 'Mag-attach ng litrato o PDF')"></span>
+                                        <input id="nc_proof" type="file" class="sr-only" accept="image/*,application/pdf" @change="ncPick($event.target.files[0]); $event.target.value = ''">
+                                    </label>
+                                </div>
+                                <x-ui.input name="nc_note" label="Note (optional)" labelFil="Paliwanag (opsyonal)" x-model="ncForm.note" maxlength="300" />
+                                <p x-show="ncError" x-cloak role="alert" class="text-xs font-medium text-rose-700" x-text="ncError"></p>
+                                <p class="text-[11px] text-amber-800/90"><x-ui.t fil="Walang bayad at walang hintayang panahon, pero isa lang ang maaaring nakabinbin. Mananatili sa record ang dati mong pangalan." en="Free, and no waiting period, but only one request can be waiting at a time. Your former name stays on record." /></p>
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <x-ui.button size="sm" x-bind:disabled="sendingCorrection" @click="sendCorrection()"><span x-text="sendingCorrection ? ($store.lang.current === 'en' ? 'Sending…' : 'Ipinapadala…') : ($store.lang.current === 'en' ? 'Send correction request' : 'Ipadala ang kahilingan')"></span></x-ui.button>
-                                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="sendingCorrection" @click="correcting = false"><x-ui.t fil="Huwag na" en="Never mind" /></x-ui.button>
+                                    <x-ui.button size="sm" x-bind:disabled="ncSending" @click="ncSend()"><span x-text="ncSending ? t('Sending…', 'Ipinapadala…') : t('Send request', 'Ipadala ang kahilingan')"></span></x-ui.button>
+                                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="ncSending" @click="ncOpen = false"><x-ui.t fil="Huwag na" en="Never mind" /></x-ui.button>
                                 </div>
                             </div>
                         </div>
+                        </template>
                     </div>
                     <x-ui.input name="edit_mobile" type="tel" inputmode="numeric" maxlength="11" label="Mobile Number" icon="phone" placeholder="09XXXXXXXXX" x-model="editForm.mobile" x-bind:disabled="mobileStep === 'code'" @input="editForm.mobile = window.phMobile.clean($event.target.value)" />
                     <div x-show="mobileStep === 'code'" x-cloak class="rounded-xl border border-brand-100 bg-brand-50/50 p-3 space-y-2">

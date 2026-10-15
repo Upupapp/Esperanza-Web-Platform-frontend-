@@ -2,8 +2,12 @@
      types the verification code or control number printed on a document, or
      arrives from its QR code with ?code=..., and sees whether it is genuine
      (GET /verify/{token}: valid, revoked with the reason, or not found) and,
-     from the date on it, whether it has expired. The endpoint never names the
-     holder, by design. Logic in resources/js/scope-citizen.js (verifyPage). --}}
+     from the date on it, whether it has expired.
+     Checked by its QR or verification code, it also names who it was issued
+     to, for what, and by which office (owner, 2026-10-16): a real code copied
+     onto a forged paper is caught by the name not matching the paper. The
+     control number alone (sequential, guessable) shows no name.
+     Logic in resources/js/scope-citizen.js (verifyPage). --}}
 <x-layouts.guest title="Verify a Document" image="esperanza-aerial.jpg">
     <div x-data="verifyPage()">
         <div class="lg:hidden flex items-center gap-3 mb-6">
@@ -61,6 +65,27 @@
                     </div>
                 </div>
 
+                {{-- Issued to: the name to compare with the paper (2026-10-16). --}}
+                <div x-show="result?.holder" class="mt-3 rounded-2xl border-2 border-brand-200 bg-white/80 p-4" data-testid="verify-holder">
+                    <p class="text-[11px] font-extrabold uppercase tracking-[.08em] text-brand-700"><x-ui.t fil="Inisyu kay" en="Issued to" /></p>
+                    <p class="text-xl font-bold text-ink leading-snug break-words mt-0.5" x-text="result?.holder"></p>
+                    <p class="text-sm text-ink-body mt-1" x-show="result?.purpose"><span class="text-ink-muted"><x-ui.t fil="Layunin:" en="Purpose:" /></span> <span class="font-semibold" x-text="result?.purpose"></span></p>
+                    <p class="text-sm text-ink-body mt-0.5" x-show="issuedBy"><span class="text-ink-muted"><x-ui.t fil="Inilabas ng:" en="Issued by:" /></span> <span class="font-semibold" x-text="issuedBy"></span></p>
+                    <div class="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                        <p class="font-bold flex items-center gap-1.5"><i data-lucide="scan-eye" class="w-4 h-4 shrink-0"></i><x-ui.t fil="Ihambing sa papel na hawak mo" en="Compare with the paper in your hands" /></p>
+                        <ul class="mt-1.5 space-y-1 text-[13px]">
+                            <li class="flex items-start gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-[3px]"></i><x-ui.t fil="Pareho ba ang pangalan sa papel at dito?" en="Is the name on the paper the same as here?" /></li>
+                            <li class="flex items-start gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 shrink-0 mt-[3px]"></i><x-ui.t fil="Pareho ba ang uri ng dokumento, control number at petsa?" en="Are the document type, control number and dates the same?" /></li>
+                        </ul>
+                        <p class="mt-2 text-[13px]"><span class="font-bold"><x-ui.t fil="Kung may hindi tugma, huwag tanggapin ang papel." en="If anything differs, do not accept the paper." /></span> <x-ui.t fil="Maaaring kinopya ang QR o code mula sa dokumento ng ibang tao. Iulat ito sa opisinang naglabas." en="The QR or code may have been copied from someone else's document. Report it to the issuing office." /></p>
+                    </div>
+                </div>
+                {{-- Checked by the control number only: no name, and how to see it. --}}
+                <div x-show="result?.checked_by === 'control_number'" class="mt-3 rounded-2xl border border-sky-200 bg-sky-50 p-3.5 text-sm text-sky-900 flex items-start gap-2.5" data-testid="verify-no-holder">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                    <p><x-ui.t fil="Para sa privacy, hindi ipinapakita ang pangalan kapag control number lang ang inilagay. Para makita kung kanino ito inisyu, i-scan ang QR code o ilagay ang 12-character na verification code sa tabi nito." en="For privacy, the name is not shown when only the control number is entered. To see who it was issued to, scan the QR code or enter the 12-character verification code beside it." /></p>
+                </div>
+
                 <dl class="mt-3 rounded-2xl surface-pressed-sm divide-y divide-brand-600/[.08] text-sm">
                     <div class="flex items-start justify-between gap-3 px-4 py-2.5">
                         <dt class="text-ink-muted shrink-0"><x-ui.t fil="Dokumento" en="Document" /></dt>
@@ -71,7 +96,7 @@
                         <dd class="font-mono font-semibold text-ink text-right break-all" x-text="result?.control_number"></dd>
                     </div>
                     <div class="flex items-start justify-between gap-3 px-4 py-2.5" x-show="result?.office">
-                        <dt class="text-ink-muted shrink-0"><x-ui.t fil="Opisina" en="Office" /></dt>
+                        <dt class="text-ink-muted shrink-0"><x-ui.t fil="Opisinang naglabas" en="Issuing office" /></dt>
                         <dd class="text-ink text-right break-words min-w-0" x-text="result?.office"></dd>
                     </div>
                     <div class="flex items-start justify-between gap-3 px-4 py-2.5" x-show="result?.barangay">
@@ -96,7 +121,7 @@
                         <dd class="text-ink text-right"><x-ui.t fil="Muling inilimbag (reprint)" en="Reprint" /></dd>
                     </div>
                 </dl>
-                <p class="text-xs text-ink-muted mt-3 flex items-start gap-1.5"><i data-lucide="lock" class="w-3.5 h-3.5 shrink-0 mt-px"></i><x-ui.t fil="Para sa privacy, hindi ipinapakita ang pangalan ng may-ari. Ihambing ang mga detalyeng ito sa papel na hawak mo." en="For privacy, the holder's name is not shown. Compare these details with the paper in front of you." /></p>
+                <p class="text-xs text-ink-muted mt-3 flex items-start gap-1.5"><i data-lucide="lock" class="w-3.5 h-3.5 shrink-0 mt-px"></i><x-ui.t fil="Walang ibang personal na detalye (address, kaarawan) ang ipinapakita rito. Ang QR at verification code ay nakalimbag lamang sa papel." en="No other personal details (address, birth date) are shown here. The QR and verification code are printed on the paper only." /></p>
                 <details x-show="result?.content_sha256" class="mt-2 text-xs text-ink-muted">
                     <summary class="cursor-pointer select-none font-medium"><x-ui.t fil="Teknikal na detalye" en="Technical details" /></summary>
                     <p class="mt-1.5"><x-ui.t fil="SHA-256 ng nilalaman ng dokumento:" en="SHA-256 of the document's content:" /></p>
@@ -139,6 +164,16 @@
                 <i data-lucide="scan-line" class="w-4 h-4"></i><x-ui.t fil="Sumuri ng iba" en="Check another" />
             </button>
         </div>
+
+        <details class="mt-6 rounded-2xl border border-slate-200 bg-white/60 p-3.5 text-sm text-ink-body" data-testid="verify-safety">
+            <summary class="cursor-pointer select-none font-semibold text-ink flex items-center gap-2"><i data-lucide="shield-alert" class="w-4 h-4 text-brand-600"></i><x-ui.t fil="Paano makaiwas sa pekeng dokumento" en="How to avoid a fake document" /></summary>
+            <ul class="mt-2 space-y-1.5 text-[13px] list-disc pl-5">
+                <li><x-ui.t fil="Laging ihambing ang pangalan, layunin at petsa rito sa nakasulat sa papel. Ang isang code ay para sa iisang tao at iisang dokumento lang." en="Always compare the name, purpose and dates here with what is on the paper. One code belongs to one person and one document only." /></li>
+                <li><x-ui.t fil="Tingnan ang address sa itaas ng browser: dapat ito ang opisyal na website ng LGU Esperanza, hindi kahawig lang." en="Check the address at the top of the browser: it must be LGU Esperanza's official website, not a look-alike." /></li>
+                <li><x-ui.t fil="Kung ang may-ari mismo ang nagbigay ng link, i-type mo na lang ang code dito sa halip na buksan ang link." en="If the holder sent you a link, type the code here yourself instead of opening the link." /></li>
+                <li><x-ui.t fil="May-ari ka ba at nawala o nakopya ang iyong dokumento? Pumunta sa opisinang naglabas: babawiin nila ang luma at bibigyan ka ng bagong kopya na may bagong code." en="Are you the holder and your document was lost or copied? Go to the issuing office: they will revoke the old one and give you a new copy with a new code." /></li>
+            </ul>
+        </details>
 
         <p class="text-center text-sm text-ink-muted mt-8">
             <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-brand-600 font-medium hover:underline"><i data-lucide="arrow-left" class="w-4 h-4"></i><x-ui.t fil="Bumalik sa Esperanza Web Platform" en="Back to the Esperanza Web Platform" /></a>
