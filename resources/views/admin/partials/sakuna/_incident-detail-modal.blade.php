@@ -56,6 +56,26 @@
                 <p class="text-sm text-slate-700 leading-relaxed" x-text="selectedIncident?.description || '—'"></p>
             </div>
 
+            {{-- The photos the resident sent with the report (citizen app). A photo
+                 still being scanned has no link yet. --}}
+            <div x-show="(selectedIncident?.photos || []).length" x-cloak>
+                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5 mb-2">
+                    <i data-lucide="image" class="w-3.5 h-3.5"></i> Photos from the resident
+                </h4>
+                <div class="grid grid-cols-3 gap-2">
+                    <template x-for="(photo, idx) in (selectedIncident?.photos || [])" :key="idx">
+                        <div>
+                            <a x-show="photo.url" :href="photo.url" target="_blank" rel="noopener" class="block aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-50 hover:border-brand-600/40 transition-colors" :aria-label="'Open photo ' + (idx + 1) + ' of ' + selectedIncident.photos.length">
+                                <img :src="photo.url" :alt="'Photo ' + (idx + 1) + ' sent with the report'" class="w-full h-full object-cover" loading="lazy">
+                            </a>
+                            <div x-show="!photo.url" class="aspect-square rounded-xl border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-center px-2">
+                                <span class="text-[11px] text-ink-muted">Being checked — available shortly</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 <div class="space-y-3">
