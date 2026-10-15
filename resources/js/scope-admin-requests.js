@@ -229,6 +229,33 @@ export function issuedDocuments() {
                 this.docBusy = false;
             }
         },
+        // The scan of the signed, sealed paper - the resident's digital copy,
+        // shown in the app beside the control number and QR (2026-10-15).
+        scanBusy: null,
+        async uploadScan(d, file) {
+            const r = this.selected;
+            if (!r || !file || this.scanBusy) return;
+            if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                toast('Choose a PDF, JPG, PNG or WebP file.', 'error');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                toast('That file is larger than 10 MB.', 'error');
+                return;
+            }
+            this.scanBusy = d.control_number;
+            try {
+                const body = new FormData();
+                body.append('scan', file);
+                const res = await api.post('/admin/documents/' + encodeURIComponent(d.control_number) + '/scan', body);
+                r.issued_documents = res.data?.documents || r.issued_documents;
+                toast('Signed copy attached to ' + d.control_number + '. The resident can now see it in the app.');
+            } catch (err) {
+                toast(says(err, 'Could not attach the signed copy to ' + d.control_number + '.'), 'error');
+            } finally {
+                this.scanBusy = null;
+            }
+        },
         // When issuing at Mark to Release failed, the officer can issue from here.
         async issueNow() {
             const r = this.selected;

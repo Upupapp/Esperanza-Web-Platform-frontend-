@@ -2,7 +2,8 @@
      (scope round 2026-10-15): each copy's control number, verification code,
      dates, and whether it was revoked. Reprint the original (a new, numbered
      copy), revoke a copy with the reason the public Verify page then shows,
-     open the Verify page. can: the page's release gate, as issuing is
+     open the Verify page, attach the scan of the signed paper the resident
+     sees in the app (2026-10-15). can: the page's release gate, as issuing is
      releasing; issuable: when a request with no document yet may be issued
      one from here. Logic: issuedDocuments() in resources/js/scope-admin-requests.js. --}}
 @props(['can' => 'false', 'issuable' => 'false'])
@@ -29,6 +30,15 @@
                         <p class="mt-0.5 text-[11px] text-ink-muted">Code <span class="font-mono font-semibold text-slate-700" x-text="d.serial"></span></p>
                         <p class="text-[11px] text-ink-muted" x-text="'Issued ' + day(d.issued_on) + (d.valid_until ? ' · Valid until ' + day(d.valid_until) : '')"></p>
                         <p x-show="d.revoked" class="mt-0.5 break-words text-[11px] text-rose-700" x-text="'Revoked' + (d.revoked_at ? ' ' + day(d.revoked_at) : '') + (d.revoked_reason ? ': ' + d.revoked_reason : '')"></p>
+                        {{-- The scan of the signed, sealed paper: the resident's digital copy (2026-10-15). --}}
+                        <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                            <span class="inline-flex items-center gap-1" :class="d.has_scan ? 'text-emerald-700' : 'text-ink-muted'"><i :data-lucide="d.has_scan ? 'file-check' : 'file-x'" class="w-3 h-3"></i><span x-text="d.has_scan ? 'Signed copy attached' + (d.scan_uploaded_at ? ' ' + day(d.scan_uploaded_at) : '') : 'No signed copy for the resident yet'"></span></span>
+                            <a x-show="d.scan_url" :href="d.scan_url" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:underline">View</a>
+                            <label x-show="({{ $can }}) && !d.revoked" class="cursor-pointer font-medium text-brand-600 hover:underline" :class="scanBusy ? 'pointer-events-none opacity-50' : ''">
+                                <span x-text="scanBusy === d.control_number ? 'Uploading…' : (d.has_scan ? 'Replace' : 'Upload signed copy')"></span>
+                                <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" class="sr-only" :aria-label="'Signed copy of ' + d.control_number" @change="uploadScan(d, $event.target.files[0] || null); $event.target.value = ''">
+                            </label>
+                        </p>
                     </div>
                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium">
                         <a x-show="d.verify_url" :href="d.verify_url" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-brand-600 hover:underline">Open verification page<i data-lucide="external-link" class="w-3 h-3"></i></a>
