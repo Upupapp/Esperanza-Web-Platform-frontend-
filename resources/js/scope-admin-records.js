@@ -420,6 +420,9 @@ export function register(Alpine) {
         // Where the account's own sex can be read: the registry comparison
         // carries the account's value; otherwise the linked registry record's.
         icAccountSex() {
+            // The account's own, which its detail carries; an account with no
+            // registry record had none to fall back on (2026-10-16).
+            if (normSex(this.accountDetail?.sex)) return { value: normSex(this.accountDetail.sex), from: 'account' };
             const m = this.registryMatch;
             const fields = [m?.record?.comparison, ...(m?.candidates || []).map((c) => c.comparison)].filter(Array.isArray).flat();
             const own = fields.find((f) => f?.field === 'sex' && f.account);
