@@ -127,7 +127,8 @@
                     <div class="min-w-0">
                         {{-- Today's date in the browser: now() here was the day the site was built. --}}
                         <p class="text-xs font-bold uppercase tracking-[.1em] text-gold-400" x-text="new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Asia/Manila' })"></p>
-                        <h2 class="mt-1 text-[22px] sm:text-[28px] font-extrabold leading-tight tracking-[-.01em] text-white text-balance sm:truncate">
+                        {{-- Wraps rather than cuts ("Good day, Test Dep…", 2026-10-15). --}}
+                        <h2 class="mt-1 text-[22px] sm:text-[28px] font-extrabold leading-tight tracking-[-.01em] text-white text-balance break-words">
                             <span x-text="'Good day, ' + $store.session.account?.name"></span>
                         </h2>
                         <p class="mt-1 text-[15px] text-[#dce5ff] flex flex-wrap items-center gap-x-2 gap-y-1">

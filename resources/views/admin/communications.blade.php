@@ -7,7 +7,9 @@
      2026-10-07: as few sidebar entries as possible). /admin/communications/offices,
      /blotter, /banners and /feedback (and the old /admin/settings/support)
      still open this page on that tab. --}}
-<x-layouts.admin title="Balita" subtitle="Announcements, events, the directory, the barangay blotter and residents' feedback." active="communications">
+{{-- Opened on Feedback (the sidebar entry of officers who only answer
+     tickets), the page is titled Feedback, not Balita (2026-10-15). --}}
+<x-layouts.admin :title="$tab === 'feedback' ? 'Feedback' : 'Balita'" subtitle="Announcements, events, the directory, the barangay blotter and residents' feedback." active="communications">
     <div
         x-data="{
             tab: '{{ $tab }}',

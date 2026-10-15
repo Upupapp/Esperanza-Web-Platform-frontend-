@@ -167,7 +167,7 @@ class LiveTestFixesTest extends TestCase
         $this->assertSame(1, substr_count($sidebar, ":href=\"route('admin.communications.feedback')\""), 'one Feedback entry, for desk-only staff');
 
         $balita = $this->source('resources/views/admin/communications.blade.php');
-        $this->assertStringContainsString('<x-layouts.admin title="Balita"', $balita);
+        $this->assertStringContainsString("<x-layouts.admin :title=\"\$tab === 'feedback' ? 'Feedback' : 'Balita'\"", $balita);
         $this->assertStringNotContainsString('inGroup(', $balita);
         foreach (['balita', 'banners', 'community', 'events', 'offices', 'barangays', 'blotter', 'feedback'] as $tab) {
             $this->assertStringContainsString("<button x-show=\"tabAllowed('{$tab}')\" @click=\"go('{$tab}')\"", $balita, $tab);
