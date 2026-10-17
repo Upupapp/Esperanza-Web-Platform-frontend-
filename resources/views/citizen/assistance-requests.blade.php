@@ -44,6 +44,19 @@
             // Tulong runs its own case lifecycle on the server (the eleven
             // statuses of config/esperanza_tulong_lifecycle.php); these are
             // its terminal ones.
+            // A status the page does not know (a new one on the server, before
+            // this page learns it) is flagged, never passed off as Draft
+            // (2026-10-17): a dashed amber chip that says so.
+            chip(status) {
+                const known = this.statusStyles[status];
+                if (known) return known;
+                if (status && !this._unknownSeen?.[status]) {
+                    this._unknownSeen = { ...(this._unknownSeen || {}), [status]: true };
+                    console.warn('Unknown request status from the server:', status);
+                }
+                return ['bg-amber-50 text-amber-800 ring-amber-400 border border-dashed border-amber-400', 'bg-amber-500'];
+            },
+            isUnknownStatus(status) { return !!status && !this.statusStyles[status]; },
             doneStatuses: ['Completed', 'Rejected', 'Cancelled'],
             statusStyles: {
                 'Draft': ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
@@ -139,6 +152,8 @@
                 // was filed, for the printed notice (scope round 2026-10-15).
                 r.history = d.history || [];
                 r.issuedDocuments = d.issued_documents || [];
+                // The service's steps, who is responsible, and which are done (2026-10-17).
+                r.workflow = d.workflow || null;
                 // Where and how to claim it, from the server, while it waits
                 // to be claimed (Ready for Release); null at any other status.
                 r.pickup = d.pickup || null;
@@ -221,7 +236,8 @@
             stepOrder: ['Submitted', 'Initial Screening', 'Assessment', 'For Approval', 'Assistance Processing', 'Ready for Release', 'Completed'],
             stepIndex(status) {
                 const side = { 'Needs Requirements': 'Initial Screening', 'Returned for Reassessment': 'For Approval' };
-                return Math.max(0, this.stepOrder.indexOf(side[status] || status));
+                // An unknown status sits on no step (it is flagged below the steps).
+                return this.stepOrder.indexOf(side[status] || status);
             },
             peso(v) {
                 if (v === null || v === undefined || v === '') return '';
@@ -343,7 +359,13 @@
                         try {
                             const res = await $api.get('/services', { params: { type: 'tulong' } });
                             const before = JSON.stringify(this.types[this.selectedType]?.requirements || null);
-                            const meta = window.applyServiceCatalog(this.types, res.data || []);
+                            // A program added in the Service Catalog after this site was
+                            // built (2026-10-17) is listed too.
+                            const meta = window.applyServiceCatalog(this.types, res.data || [], (sv) => ({
+                                key: sv.key, name: sv.name, category: sv.category || 'Social Protection', level: sv.level,
+                                office: sv.office, office_short: sv.office_short || sv.office, amount: sv.form_spec?.entitlement || '',
+                                fee: sv.fee?.display || 'Free', days: sv.days || '', icon: 'hand-heart', desc: '',
+                            }));
                             // Attachments follow the requirement list by position.
                             if (this.selectedType !== null && before !== JSON.stringify(this.types[this.selectedType]?.requirements || null)) this.attachments = {};
                             Object.values(meta).forEach((sv) => { if (sv.days) this.daysByKey[sv.key] = sv.days; });
@@ -1044,9 +1066,9 @@
                         </div>
                         <span
                             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
-                            :class="(statusStyles[req.status] || statusStyles['Draft'])[0]"
+                            :class="chip(req.status)[0]"
                         >
-                            <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[req.status] || statusStyles['Draft'])[1]"></span>
+                            <span class="w-1.5 h-1.5 rounded-full" :class="chip(req.status)[1]"></span>
                             <span x-text="req.status"></span>
                         </span>
                     </div>
@@ -1084,11 +1106,11 @@
                         <td class="px-4 py-3">
                             <span
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"
-                                :class="(statusStyles[req.status] || statusStyles['Draft'])[0]"
+                                :class="chip(req.status)[0]"
                             >
                                 <span
                                     class="w-1.5 h-1.5 rounded-full"
-                                    :class="(statusStyles[req.status] || statusStyles['Draft'])[1]"
+                                    :class="chip(req.status)[1]"
                                 ></span>
                                 <span x-text="req.status"></span>
                             </span>
@@ -1120,8 +1142,12 @@
                         <p class="text-sm font-semibold text-ink" x-text="selectedRequest.type"></p>
                         <p class="text-xs text-ink-muted mt-0.5" x-text="selectedRequest.purpose"></p>
 
+                        <!-- A status this page does not know: said so, with what to do (2026-10-17). -->
+                        <div x-show="isUnknownStatus(selectedRequest.status)" x-cloak role="status" class="mt-4 rounded-xl border border-dashed border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-900" data-testid="unknown-status">
+                            <p><span class="font-semibold" x-text="lang('Status: ', 'Katayuan: ') + selectedRequest.status"></span> <span x-text="lang('This page does not recognise this status yet, so it cannot show the step. Your request is not lost: reload the page, or ask the office handling it.', 'Hindi pa kilala ng page na ito ang katayuang ito, kaya hindi maipakita ang hakbang. Hindi nawala ang iyong kahilingan: i-reload ang page, o magtanong sa opisinang humahawak nito.')"></span></p>
+                        </div>
                         <!-- Progress stepper -->
-                        <div class="flex items-center mt-6 mb-2" x-show="selectedRequest.status !== 'Rejected' && selectedRequest.status !== 'Cancelled'">
+                        <div class="flex items-center mt-6 mb-2" x-show="selectedRequest.status !== 'Rejected' && selectedRequest.status !== 'Cancelled' && !isUnknownStatus(selectedRequest.status)">
                             <template x-for="(label, i) in stepOrder" :key="i">
                                 <div class="flex-1 flex items-center">
                                     <div class="flex flex-col items-center gap-1.5 text-center">

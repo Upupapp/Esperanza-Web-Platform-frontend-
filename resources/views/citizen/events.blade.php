@@ -113,6 +113,10 @@
                             type="button"
                             @click="selectDay(cell)"
                             :disabled="!cell"
+                            :aria-hidden="!cell ? 'true' : null"
+                            :tabindex="!cell ? -1 : null"
+                            :aria-label="cell ? cell.day + ' ' + monthLabel + (eventsOn(cell.key).length ? ($store.lang.current === 'en' ? ', ' + eventsOn(cell.key).length + ' event(s)' : ', ' + eventsOn(cell.key).length + ' kaganapan') : '') : null"
+                            :aria-pressed="cell ? (selectedDate === cell.key ? 'true' : 'false') : null"
                             class="aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs transition-all duration-[160ms] ease-standard relative"
                             :class="!cell ? 'pointer-events-none' : (selectedDate === cell.key ? 'clay-blue font-semibold' : (eventsOn(cell.key).length ? 'text-ink font-medium hover:bg-brand-50' : 'text-ink-muted hover:bg-white/60'))"
                         >

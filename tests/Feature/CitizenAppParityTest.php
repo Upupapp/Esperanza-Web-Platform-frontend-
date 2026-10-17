@@ -169,8 +169,15 @@ class CitizenAppParityTest extends TestCase
         $this->assertStringContainsString('if (steps.length) entry.process = steps;', $js);
         $this->assertStringContainsString('window.applyServiceCatalog = applyServiceCatalog;', $js);
 
-        $this->assertStringContainsString('this.serviceMeta = window.applyServiceCatalog(this.docs, res.data || []);', $dokyu);
-        $this->assertStringContainsString('const meta = window.applyServiceCatalog(this.types, res.data || []);', $tulong);
+        $this->assertStringContainsString('this.serviceMeta = window.applyServiceCatalog(this.docs, res.data || [], (sv) => {', $dokyu);
+        $this->assertStringContainsString('const meta = window.applyServiceCatalog(this.types, res.data || [], (sv) => ({', $tulong);
+
+        // Since 2026-10-17 the form's questions, the name and the category are
+        // the server's too (staff edit them in the Service Catalog), and a
+        // service added there after the site was built is listed from it.
+        $this->assertStringContainsString('entry.fields = JSON.parse(JSON.stringify(sv.fields));', $js);
+        $this->assertStringContainsString('if (sv.name) entry.name = sv.name;', $js);
+        $this->assertStringContainsString("if (typeof addEntry === 'function') {", $js);
 
         // Filing still sends the same service key, and attaches each file to the
         // requirement the server made for that line (by label, then position).

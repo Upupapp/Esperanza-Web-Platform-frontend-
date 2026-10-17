@@ -134,6 +134,19 @@
                 'Cancelled': ['bg-slate-100 text-ink-muted ring-slate-200', 'bg-slate-400'],
                 'Archived': ['bg-slate-100 text-ink-muted ring-slate-200', 'bg-slate-300'],
             },
+            // A status the page does not know (a new one on the server, before
+            // this page learns it) is flagged, never passed off as Draft
+            // (2026-10-17): a dashed amber chip that says so.
+            chip(status) {
+                const known = this.statusStyles[status];
+                if (known) return known;
+                if (status && !this._unknownSeen?.[status]) {
+                    this._unknownSeen = { ...(this._unknownSeen || {}), [status]: true };
+                    console.warn('Unknown request status from the server:', status);
+                }
+                return ['bg-amber-50 text-amber-800 ring-amber-400 border border-dashed border-amber-400', 'bg-amber-500'];
+            },
+            isUnknownStatus(status) { return !!status && !this.statusStyles[status]; },
             // Rejected and cancelled requests have their own tab and tile, so the
             // tiles add up to the total (live test 2026-10-07, UX-7).
             stoppedStatuses: ['Rejected', 'Cancelled'],
@@ -219,6 +232,8 @@
                 // The documents issued for it (control number, code, QR), for
                 // Track Request and the printed copy (scope round 2026-10-15).
                 r.issuedDocuments = d.issued_documents || [];
+                // The service's steps, who is responsible, and which are done (2026-10-17).
+                r.workflow = d.workflow || null;
                 // Where and how to claim it, from the server, while it waits
                 // to be claimed (Mark to Release); null at any other status.
                 r.pickup = d.pickup || null;
@@ -286,7 +301,8 @@
             stepOrder: ['Submitted', 'Under Verification', 'Approved', 'Mark to Release', 'Released'],
             stepIndex(status) {
                 const map = { 'Submitted': 0, 'Under Verification': 1, 'Under Review': 1, 'Resubmitted': 1, 'Approved': 2, 'Mark to Release': 3, 'Released': 4, 'Completed': 4, 'Rejected': 0, 'Cancelled': 0 };
-                return map[status] ?? 0;
+                // An unknown status sits on no step (it is flagged below the steps).
+                return map[status] ?? -1;
             },
             // The resident's barangay, for a barangay document's letterhead and
             // where to claim it (the wizard below has its own copy).
@@ -679,7 +695,23 @@
                             try {
                                 const res = await $api.get('/services', { params: { type: 'dokyu' } });
                                 const before = JSON.stringify(this.docs[this.selectedDoc]?.requirements || null);
-                                this.serviceMeta = window.applyServiceCatalog(this.docs, res.data || []);
+                                // A document added in the Service Catalog after this site was
+                                // built (2026-10-17) is listed too: a barangay one for the
+                                // resident's own barangay.
+                                const mine = this.myBarangay;
+                                this.serviceMeta = window.applyServiceCatalog(this.docs, res.data || [], (sv) => {
+                                    const barangay = sv.level === 'Barangay';
+                                    if (barangay && !mine) return null;
+                                    return {
+                                        key: sv.key, name: sv.name, category: sv.category || 'Other', level: sv.level,
+                                        office: barangay ? 'Barangay Hall (Brgy. ' + mine + ')' : sv.office,
+                                        office_short: barangay ? 'Barangay' : (sv.office_short || sv.office),
+                                        barangay: barangay ? mine : undefined,
+                                        fee: sv.fee?.display || 'Free', days: sv.days || '',
+                                        certTitle: String(sv.name || '').toUpperCase(), formNo: sv.form_no || null,
+                                        previewType: 'municipal_request',
+                                    };
+                                });
                                 // Attachments follow the requirement list by position.
                                 if (this.selectedDoc !== null && before !== JSON.stringify(this.docs[this.selectedDoc]?.requirements || null)) this.attachments = {};
                                 Object.values(this.serviceMeta).forEach((sv) => { if (sv.days) this.daysByKey[sv.key] = sv.days; });
@@ -1488,9 +1520,9 @@
                         </div>
                         <span
                             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap shrink-0"
-                            :class="(statusStyles[req.status] || statusStyles['Draft'])[0]"
+                            :class="chip(req.status)[0]"
                         >
-                            <span class="w-1.5 h-1.5 rounded-full" :class="(statusStyles[req.status] || statusStyles['Draft'])[1]"></span>
+                            <span class="w-1.5 h-1.5 rounded-full" :class="chip(req.status)[1]"></span>
                             <span x-text="req.status"></span>
                         </span>
                     </div>
@@ -1528,11 +1560,11 @@
                         <td class="px-4 py-3">
                             <span
                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset whitespace-nowrap"
-                                :class="(statusStyles[req.status] || statusStyles['Draft'])[0]"
+                                :class="chip(req.status)[0]"
                             >
                                 <span
                                     class="w-1.5 h-1.5 rounded-full"
-                                    :class="(statusStyles[req.status] || statusStyles['Draft'])[1]"
+                                    :class="chip(req.status)[1]"
                                 ></span>
                                 <span x-text="req.status"></span>
                             </span>
@@ -1564,8 +1596,12 @@
                         <p class="text-sm font-semibold text-ink" x-text="selectedRequest.type"></p>
                         <p class="text-xs text-ink-muted mt-0.5" x-text="selectedRequest.purpose"></p>
 
+                        <!-- A status this page does not know: said so, with what to do (2026-10-17). -->
+                        <div x-show="isUnknownStatus(selectedRequest.status)" x-cloak role="status" class="mt-4 rounded-xl border border-dashed border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-900" data-testid="unknown-status">
+                            <p><span class="font-semibold" x-text="lang('Status: ', 'Katayuan: ') + selectedRequest.status"></span> <span x-text="lang('This page does not recognise this status yet, so it cannot show the step. Your request is not lost: reload the page, or ask the office handling it.', 'Hindi pa kilala ng page na ito ang katayuang ito, kaya hindi maipakita ang hakbang. Hindi nawala ang iyong kahilingan: i-reload ang page, o magtanong sa opisinang humahawak nito.')"></span></p>
+                        </div>
                         <!-- Progress stepper -->
-                        <div class="flex items-center mt-6 mb-2" x-show="!['Rejected', 'Cancelled'].includes(selectedRequest.status)">
+                        <div class="flex items-center mt-6 mb-2" x-show="!['Rejected', 'Cancelled'].includes(selectedRequest.status) && !isUnknownStatus(selectedRequest.status)">
                             <template x-for="(label, i) in stepOrder" :key="i">
                                 <div class="flex-1 flex items-center">
                                     <div class="flex flex-col items-center gap-1.5 text-center">

@@ -51,7 +51,7 @@
                         x-model="password"
                         class="w-full rounded-2xl border-0 surface-pressed py-2.5 pl-10 pr-11 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
                     >
-                    <button type="button" @click="toggle" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-slate-600 transition-colors">
+                    <button type="button" @click="toggle" :aria-pressed="visible ? 'true' : 'false'" :aria-label="$store.lang.current === 'en' ? (visible ? 'Hide password' : 'Show password') : (visible ? 'Itago ang password' : 'Ipakita ang password')" class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 grid place-items-center rounded-xl text-ink-muted hover:text-slate-600 focus-visible:ring-4 focus-visible:ring-brand-100 outline-none transition-colors">
                         <i data-lucide="eye" class="w-[18px] h-[18px]" x-show="!visible"></i>
                         <i data-lucide="eye-off" class="w-[18px] h-[18px]" x-show="visible" x-cloak></i>
                     </button>

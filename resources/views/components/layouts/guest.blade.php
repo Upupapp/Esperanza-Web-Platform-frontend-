@@ -9,6 +9,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans antialiased {{ $fullscreen ? 'overflow-hidden' : '' }}">
+    {{-- First on the page: a keyboard or screen-reader user jumps past the navigation (WCAG 2.4.1, 2026-10-17). --}}
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[200] focus:rounded-xl focus:bg-white focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-brand-700 focus:shadow-lg focus:outline-none focus:ring-4 focus:ring-brand-200"><span x-text="$store.lang.current === 'en' ? 'Skip to content' : 'Lumaktaw sa nilalaman'">Lumaktaw sa nilalaman</span></a>
     <div class="{{ $fullscreen ? 'h-screen overflow-hidden' : 'min-h-screen' }} flex" x-data="{ time: '' }" x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000)">
         <div class="hidden lg:flex lg:w-[46%] relative overflow-hidden shrink-0">
             <img
@@ -62,7 +64,7 @@
                         :class="$store.lang.current === 'en' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" class="px-3.5 py-2 rounded-xl transition-all duration-200">English</button>
                 </div>
             @endif
-            <main class="w-full max-w-md animate-fade-up surface-glass rounded-[32px] p-7 sm:p-9 {{ $fullscreen ? 'max-h-full overflow-y-auto scrollbar-thin' : '' }}">
+            <main id="main-content" tabindex="-1" class="focus:outline-none w-full max-w-md animate-fade-up surface-glass rounded-[32px] p-7 sm:p-9 {{ $fullscreen ? 'max-h-full overflow-y-auto scrollbar-thin' : '' }}">
                 {{ $slot }}
             </main>
         </div>

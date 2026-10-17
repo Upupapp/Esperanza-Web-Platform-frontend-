@@ -325,6 +325,7 @@
                     due: row.due || null,
                     overdue: !!row.overdue,
                     issued_documents: [],
+                    workflow: null,
                     purpose: '',
                     requirements: null,
                     remarks: null,
@@ -443,6 +444,8 @@
                 r.due = d.due || r.due || null;
                 r.overdue = 'overdue' in d ? !!d.overdue : r.overdue;
                 r.issued_documents = d.issued_documents || [];
+                // The program's steps and which are done (2026-10-17).
+                r.workflow = d.workflow || null;
                 r.payment = d.payment || null;
                 r.history = (d.history || []).map((h) => ({ stage: h.to, from: h.from, date: this.formatDay(h.at), by: h.actor_name || '—', note: window.historyNote(h.trigger) }));
                 const proof = d.proof_of_release || {};
@@ -1155,6 +1158,7 @@
                     </div>
 
                     <x-admin.scope.request-assign noun="case" />
+                    <x-admin.scope.request-workflow />
 
                     {{-- Shown only once a document was issued for this case. --}}
                     <x-admin.scope.issued-documents can="may('release')" />

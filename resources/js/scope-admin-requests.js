@@ -726,7 +726,73 @@ export function appointmentsDesk() {
     };
 }
 
+// The service's workflow on one request (2026-10-17): its steps, and the
+// office steps an officer marks done. Reads `selected.workflow`, which the
+// page copies from the request detail.
+const STEP_KIND_LABEL = { submit: 'Filing', office: 'Office step', payment: 'Payment', approval: 'Approval', release: 'Release' };
+
+export function requestWorkflow() {
+    return {
+        busy: null,
+        noteFor: null,
+        note: '',
+
+        get wf() { return (this.selected && this.selected.workflow) || null; },
+        get wfMay() {
+            const r = this.selected;
+            return !!(r && r.permitted && r.permitted.review && !this.terminalStatuses.includes(r.status));
+        },
+        get wfSummary() {
+            const steps = this.wf?.steps || [];
+            const done = steps.filter((st) => st.done).length;
+            if (this.wf?.stopped) return 'Stopped: the request was ' + String(this.selected?.status || '').toLowerCase() + '.';
+            return done + ' of ' + steps.length + ' done';
+        },
+        // What Approve or Release is waiting for, said before the officer tries.
+        get pendingForAction() {
+            const steps = this.wf?.steps || [];
+            const firstOf = (kind) => steps.findIndex((st) => st.kind === kind);
+            const before = (kind) => {
+                const at = firstOf(kind);
+                const until = at < 0 ? (kind === 'approval' ? 0 : steps.length) : at;
+                return steps.slice(0, until).filter((st) => st.kind === 'office' && !st.done).map((st) => st.name);
+            };
+            const approved = (steps.find((st) => st.kind === 'approval') || {}).done;
+            const waiting = approved ? before('release') : before('approval');
+            if (!waiting.length) return '';
+            return (approved ? 'Release' : 'Approve') + ' waits for: ' + waiting.join(', ') + '.';
+        },
+        stepMeta(st) {
+            const bits = [STEP_KIND_LABEL[st.kind] || st.kind];
+            if (st.responsible) bits.push(st.responsible);
+            if (st.days !== null && st.days !== undefined && st.days !== '') bits.push(st.days + (Number(st.days) === 1 ? ' working day' : ' working days'));
+            return bits.join(' · ');
+        },
+        doneLine(st) {
+            const when = st.done_at ? day(st.done_at) : '';
+            return 'Done' + (st.done_by ? ' by ' + st.done_by : '') + (when ? ', ' + when : '') + (st.note ? ': ' + st.note : '');
+        },
+        async mark(st, done) {
+            const r = this.selected;
+            if (!r || this.busy !== null) return;
+            this.busy = st.index;
+            try {
+                const res = await api.post(this.apiBase(r.ref) + '/steps/' + (st.index + 1), { done, note: done ? (this.note.trim() || null) : null });
+                r.workflow = (res.data && res.data.workflow) || r.workflow;
+                this.noteFor = null;
+                this.note = '';
+                toast(done ? '“' + st.name + '” is done. The resident was told.' : '“' + st.name + '” is marked not done again.');
+            } catch (err) {
+                toast(says(err, 'Could not save the step.'), 'error');
+            } finally {
+                this.busy = null;
+            }
+        },
+    };
+}
+
 export function register(Alpine) {
+    Alpine.data('requestWorkflow', requestWorkflow);
     Alpine.data('requestAssign', requestAssign);
     Alpine.data('issuedDocuments', issuedDocuments);
     Alpine.data('appointmentsDesk', appointmentsDesk);

@@ -2,11 +2,11 @@
      Every service, offered or not (GET /admin/settings/catalog: the tab read
      the public list, which hides switched-off services), and one editor per
      service: its details (name, office, category, offered), its rules
-     published as a new version (fee, time, required documents, processing
-     steps), its request form, read only - the form residents fill in is part
-     of the portals' build and no endpoint edits it -, and its history
-     (scope round 2026-10-15). Logic: catalogEditor in
-     resources/js/scope-admin-settings.js. --}}
+     published as a new version (fee, time, required documents, its workflow
+     - each step with who is responsible and how long it takes - and the
+     request form's questions), and its history (scope round 2026-10-15;
+     workflow, questions and new services 2026-10-17). Logic: catalogEditor
+     in resources/js/scope-admin-settings.js. --}}
 <div x-data="catalogEditor" x-show="tab === 'service-catalog'" x-cloak x-effect="tab === 'service-catalog' && start()">
     <x-ui.card x-show="denied" x-cloak>
         <p class="text-sm text-slate-600">Your role cannot view the Service Catalog.</p>
@@ -34,8 +34,10 @@
             </select>
         </div>
 
-        {{-- New services are seeded from the contract, not created here: no
-             endpoint creates one at runtime. --}}
+        {{-- A new service starts switched off, to be finished first (2026-10-17). --}}
+        <div x-show="canEdit && loaded" x-cloak class="flex justify-end">
+            <x-ui.button size="sm" icon="plus" @click="startAdding()">Add a service</x-ui.button>
+        </div>
         <div x-show="!canEdit" class="{{ $ui['lock'] }}">
             <i data-lucide="lock" class="w-4 h-4 shrink-0 mt-0.5"></i>
             <p><span class="font-semibold text-slate-600">View only.</span> The Service Catalog sets what every resident pays and submits, so only roles with Service Catalog editing can change it.</p>
@@ -120,7 +122,7 @@
                 </div>
 
                 <nav aria-label="Service sections" class="flex gap-1 overflow-x-auto scrollbar-thin surface-pressed-sm rounded-2xl p-1">
-                    @foreach([['details', 'info', 'Details'], ['fee', 'banknote', 'Fee & time'], ['documents', 'file-check', 'Required documents'], ['steps', 'list-ordered', 'Processing steps'], ['form', 'text-cursor-input', 'Request form'], ['history', 'history', 'History']] as [$sectionKey, $sectionIcon, $sectionLabel])
+                    @foreach([['details', 'info', 'Details'], ['fee', 'banknote', 'Fee & time'], ['documents', 'file-check', 'Required documents'], ['steps', 'workflow', 'Workflow'], ['form', 'text-cursor-input', 'Request form'], ['history', 'history', 'History']] as [$sectionKey, $sectionIcon, $sectionLabel])
                         <button type="button" @click="showSection('{{ $sectionKey }}')" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap transition-colors" :class="section === '{{ $sectionKey }}' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" :aria-current="section === '{{ $sectionKey }}' ? 'true' : null"><i data-lucide="{{ $sectionIcon }}" class="w-3.5 h-3.5"></i>{{ $sectionLabel }}</button>
                     @endforeach
                 </nav>
@@ -182,7 +184,7 @@
                 </section>
 
                 {{-- Required documents and processing steps: the same list editor. --}}
-                @foreach([['documents', 'requirements', 'document', 'newReq', 'addRequirement', 'What a resident attaches or brings, in the order the portals list them.', 'No documents required.', 'Add a required document'], ['steps', 'process', 'step', 'newStep', 'addStep', 'How a request moves through the office, first to last, as residents see it.', 'No steps listed.', 'Add a processing step']] as [$listSection, $listKey, $listNoun, $listInput, $listAdd, $listHelp, $listEmpty, $listPlaceholder])
+                @foreach([['documents', 'requirements', 'document', 'newReq', 'addRequirement', 'What a resident attaches or brings, in the order the portals list them.', 'No documents required.', 'Add a required document']] as [$listSection, $listKey, $listNoun, $listInput, $listAdd, $listHelp, $listEmpty, $listPlaceholder])
                     <section x-show="section === '{{ $listSection }}'" class="space-y-2">
                         <p class="text-xs text-ink-muted">{{ $listHelp }}</p>
                         <ol class="space-y-1.5">
@@ -207,32 +209,99 @@
                     </section>
                 @endforeach
 
-                <p x-show="rulesError && ['fee', 'documents', 'steps'].includes(section)" x-text="rulesError" role="alert" class="{{ $ui['error'] }}"></p>
-
-                {{-- The request form, read only. --}}
-                <section x-show="section === 'form'" class="space-y-3">
-                    <div class="{{ $ui['note'] }}">
+                {{-- The workflow (2026-10-17): the Citizen's Charter steps, who is
+                     responsible, how long each takes. A request filed under it
+                     shows these steps; officers mark the office steps done, and
+                     Approve and Release wait for the office steps before them. --}}
+                <section x-show="section === 'steps'" class="space-y-2" data-testid="workflow-editor">
+                    <p class="text-xs text-ink-muted">Each step of the service, first to last, as residents see it: who is responsible and how many working days it takes (the Citizen's Charter). Officers mark <span class="font-semibold">office steps</span> done on each request; Approve and Release wait for the office steps before them.</p>
+                    <div x-show="svc && !tracked" class="{{ $ui['note'] }}">
                         <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-                        <p>Shown for reference. The form residents fill in is built into the portals, so its fields cannot be changed here.</p>
+                        <p>Requests of the current version show these steps as a plain list. From the version you publish here, each request tracks them.</p>
                     </div>
-                    <div x-show="!spec && !specFailed" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-10 opacity-80" /></div>
-                    <p x-show="specFailed" class="text-xs text-rose-600">The form could not be loaded. <button type="button" class="underline" @click="loadSpec()">Try again</button></p>
-                    <template x-for="(step, si) in formSteps" :key="'step-' + si">
-                        <div class="rounded-2xl border border-brand-600/10 bg-white/60 p-3.5">
-                            <p class="text-xs font-semibold text-ink" x-text="formSteps.length > 1 || step.label ? 'Step ' + (si + 1) + (step.label ? ': ' + step.label : '') : 'Fields'"></p>
-                            <ul class="mt-1.5 divide-y divide-brand-600/[.06]">
-                                <template x-for="(f, fi) in step.fields" :key="'f-' + si + '-' + fi">
-                                    <li class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-1.5">
-                                        <span class="text-sm text-slate-700" x-text="f.label || f.key"></span>
-                                        <span class="text-[11px] text-ink-muted" x-text="fieldKind(f)"></span>
-                                    </li>
-                                </template>
-                            </ul>
-                        </div>
-                    </template>
-                    <p x-show="spec && !formSteps.length" class="text-xs text-ink-muted">This service uses the standard request form: the purpose and the attachments.</p>
+                    <ol class="space-y-2">
+                        <template x-for="(st, i) in rules.workflow" :key="'wf-' + i">
+                            <li class="rounded-2xl border border-brand-600/10 bg-white/70 p-3 space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 shrink-0 text-right text-xs font-bold text-ink-muted" x-text="(i + 1) + '.'"></span>
+                                    <input type="text" x-model="st.name" maxlength="120" :disabled="rulesLocked" :aria-label="'Step ' + (i + 1) + ' name'" class="{{ $ui['inputSm'] }} flex-1 min-w-0">
+                                    <span class="flex items-center shrink-0" x-show="!rulesLocked">
+                                        <button type="button" @click="move('workflow', i, -1)" :disabled="i === 0" :aria-label="'Move step ' + (i + 1) + ' up'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="move('workflow', i, 1)" :disabled="i === rules.workflow.length - 1" :aria-label="'Move step ' + (i + 1) + ' down'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="remove('workflow', i)" :aria-label="'Remove step ' + (i + 1)" class="{{ $ui['iconBtnDanger'] }}"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pl-8">
+                                    <div>
+                                        <label :for="'wf-kind-' + i" class="{{ $ui['label'] }}">Kind</label>
+                                        <select :id="'wf-kind-' + i" x-model="st.kind" :disabled="rulesLocked" class="{{ $ui['inputSm'] }} w-full">
+                                            <template x-for="k in stepKinds" :key="k[0]"><option :value="k[0]" x-text="k[1]" :selected="k[0] === st.kind"></option></template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label :for="'wf-who-' + i" class="{{ $ui['label'] }}">Responsible</label>
+                                        <input :id="'wf-who-' + i" type="text" list="wf-responsible" x-model="st.responsible" maxlength="120" :disabled="rulesLocked" placeholder="e.g. Barangay Secretary" class="{{ $ui['inputSm'] }} w-full">
+                                    </div>
+                                    <div>
+                                        <label :for="'wf-days-' + i" class="{{ $ui['label'] }}">Working days</label>
+                                        <input :id="'wf-days-' + i" type="number" min="0" max="365" inputmode="numeric" x-model="st.days" :disabled="rulesLocked" placeholder="—" class="{{ $ui['inputSm'] }} w-full">
+                                    </div>
+                                </div>
+                                <p class="pl-8 text-[11px] text-ink-muted" x-text="stepKindHelp(st.kind)"></p>
+                            </li>
+                        </template>
+                    </ol>
+                    <datalist id="wf-responsible"><template x-for="r in responsibleChoices" :key="r"><option :value="r"></option></template></datalist>
+                    <div class="flex items-center gap-2 pt-1" x-show="!rulesLocked">
+                        <label for="svc-new-step" class="sr-only">Add an office step</label>
+                        <input id="svc-new-step" type="text" x-model="newStep" @keydown.enter.prevent="addStep()" placeholder="Add an office step, e.g. Site inspection…" class="{{ $ui['inputSm'] }} flex-1 min-w-0">
+                        <x-ui.button variant="secondary" size="sm" icon="plus" @click="addStep()">Add</x-ui.button>
+                    </div>
+                </section>
+
+                {{-- The request form's questions (2026-10-17): published with the
+                     version; the website and the app draw the form from them. --}}
+                <section x-show="section === 'form'" class="space-y-2" data-testid="form-editor">
+                    <p class="text-xs text-ink-muted">The questions residents answer when they file. Published with the version: the website and the app draw the form from them. Ask only what the office needs.</p>
+                    <ol class="space-y-2">
+                        <template x-for="(f, i) in rules.fields" :key="'q-' + i">
+                            <li class="rounded-2xl border border-brand-600/10 bg-white/70 p-3 space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 shrink-0 text-right text-xs font-bold text-ink-muted" x-text="(i + 1) + '.'"></span>
+                                    <input type="text" x-model="f.label" maxlength="160" :disabled="rulesLocked" :aria-label="'Question ' + (i + 1) + ' wording'" placeholder="The question, e.g. Date of birth" class="{{ $ui['inputSm'] }} flex-1 min-w-0">
+                                    <span class="flex items-center shrink-0" x-show="!rulesLocked">
+                                        <button type="button" @click="moveQuestion(i, -1)" :disabled="i === 0" :aria-label="'Move question ' + (i + 1) + ' up'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="moveQuestion(i, 1)" :disabled="i === rules.fields.length - 1" :aria-label="'Move question ' + (i + 1) + ' down'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                                        <button type="button" @click="remove('fields', i)" :aria-label="'Remove question ' + (i + 1)" class="{{ $ui['iconBtnDanger'] }}"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                    </span>
+                                </div>
+                                <div class="pl-8 grid grid-cols-1 sm:grid-cols-2 gap-2" x-show="!isKept(f)">
+                                    <div>
+                                        <label :for="'q-kind-' + i" class="{{ $ui['label'] }}">Answer</label>
+                                        <select :id="'q-kind-' + i" x-model="f.type" :disabled="rulesLocked" class="{{ $ui['inputSm'] }} w-full">
+                                            <template x-for="k in questionKinds" :key="k[0]"><option :value="k[0]" x-text="k[1]" :selected="k[0] === f.type"></option></template>
+                                        </select>
+                                    </div>
+                                    <label class="flex items-center gap-2 text-xs text-slate-700 sm:pt-5">
+                                        <input type="checkbox" x-model="f.required" :disabled="rulesLocked" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-200"> Required
+                                    </label>
+                                    <div class="sm:col-span-2" x-show="hasOptions(f)">
+                                        <label :for="'q-opts-' + i" class="{{ $ui['label'] }}">Choices, one per line</label>
+                                        <textarea :id="'q-opts-' + i" x-model="f.optionsText" rows="3" :disabled="rulesLocked" class="{{ $ui['inputSm'] }} w-full"></textarea>
+                                    </div>
+                                </div>
+                                <p class="pl-8 text-[11px] text-ink-muted" x-show="isKept(f)" x-text="'Kept as it is: ' + keptLabel(f) + '. Its wording can change.'"></p>
+                            </li>
+                        </template>
+                    </ol>
+                    <p x-show="!rules.fields.length" class="text-xs text-ink-muted px-1">No questions: residents write the purpose and attach the documents.</p>
+                    <div class="pt-1" x-show="!rulesLocked">
+                        <x-ui.button variant="secondary" size="sm" icon="plus" @click="addQuestion()">Add a question</x-ui.button>
+                    </div>
                     <p x-show="entitlement" class="text-xs text-slate-600"><span class="font-semibold">Entitlement:</span> <span x-text="entitlement"></span></p>
                 </section>
+
+                <p x-show="rulesError && ['fee', 'documents', 'steps', 'form'].includes(section)" x-text="rulesError" role="alert" class="{{ $ui['error'] }}"></p>
 
                 {{-- History: the published versions, and detail changes from the audit log. --}}
                 <section x-show="section === 'history'" class="space-y-3">
@@ -277,7 +346,61 @@
             <p class="mr-auto hidden sm:block text-[11px] font-medium text-amber-700" x-show="detailsDirty || rulesDirty" x-cloak>Unsaved changes</p>
             <x-ui.button variant="secondary" size="sm" @click="open = false">Close</x-ui.button>
             <x-ui.button size="sm" icon="check" x-show="canEdit && svc && section === 'details'" x-bind:disabled="savingDetails || !detailsDirty" @click="saveDetails()"><span x-text="savingDetails ? 'Saving…' : 'Save details'"></span></x-ui.button>
-            <x-ui.button size="sm" icon="upload" x-show="svc && !rulesLocked && ['fee', 'documents', 'steps'].includes(section)" x-bind:disabled="publishing || !rulesDirty" @click="publish()"><span x-text="publishing ? 'Publishing…' : 'Publish version ' + nextVersion"></span></x-ui.button>
+            <x-ui.button size="sm" icon="upload" x-show="svc && !rulesLocked && ['fee', 'documents', 'steps', 'form'].includes(section)" x-bind:disabled="publishing || !rulesDirty" @click="publish()"><span x-text="publishing ? 'Publishing…' : 'Publish version ' + nextVersion"></span></x-ui.button>
         </x-slot:footer>
     </x-ui.modal>
+
+    {{-- ---------------- Adding a service (2026-10-17) ---------------- --}}
+    <div x-data="{ get open() { return adding; }, set open(v) { if (!creating) adding = v; } }">
+        <x-ui.modal title="Add a service" maxWidth="lg">
+            <form @submit.prevent="createService()" class="space-y-3" novalidate data-testid="add-service">
+                <p class="text-xs text-ink-muted">It starts <span class="font-semibold">switched off</span>, with a simple form and workflow. Finish its questions, documents and steps, then switch it on under Details.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="new-svc-type" class="{{ $ui['label'] }}">Kind</label>
+                        <select id="new-svc-type" x-model="draft.type" @change="draft.permissions_like = ''; suggestLike()" class="{{ $ui['input'] }}">
+                            <option value="dokyu">Dokyu (a document)</option>
+                            <option value="tulong">Tulong (assistance)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="new-svc-office" class="{{ $ui['label'] }}">Responsible office</label>
+                        <select id="new-svc-office" x-model="draft.office" @change="suggestLike()" class="{{ $ui['input'] }}">
+                            <option value="">Choose…</option>
+                            <template x-for="o in draftOffices" :key="o"><option :value="o" x-text="o === 'Barangay Office' ? 'Barangay Office (each barangay’s hall)' : o"></option></template>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="new-svc-name" class="{{ $ui['label'] }}">Service name</label>
+                        <input id="new-svc-name" type="text" x-model="draft.name" maxlength="160" placeholder="e.g. Certificate of Good Moral Character" class="{{ $ui['input'] }}">
+                    </div>
+                    <div>
+                        <label for="new-svc-category" class="{{ $ui['label'] }}">Category</label>
+                        <input id="new-svc-category" type="text" list="svc-categories" x-model="draft.category" maxlength="80" class="{{ $ui['input'] }}">
+                    </div>
+                    <div>
+                        <label for="new-svc-fee" class="{{ $ui['label'] }}">Fee</label>
+                        <input id="new-svc-fee" type="text" x-model="draft.fee" maxlength="120" class="{{ $ui['input'] }}">
+                    </div>
+                    <div>
+                        <label for="new-svc-days" class="{{ $ui['label'] }}">Processing time</label>
+                        <input id="new-svc-days" type="text" x-model="draft.days" maxlength="120" class="{{ $ui['input'] }}">
+                    </div>
+                    <div>
+                        <label for="new-svc-like" class="{{ $ui['label'] }}">Handled by the officers of</label>
+                        <select id="new-svc-like" x-model="draft.permissions_like" aria-describedby="new-svc-like-hint" class="{{ $ui['input'] }}">
+                            <option value="">Choose a service…</option>
+                            <template x-for="r in likeChoices" :key="r.key"><option :value="r.key" x-text="r.name + ' (' + r.office + ')'" :selected="r.key === draft.permissions_like"></option></template>
+                        </select>
+                        <p id="new-svc-like-hint" class="text-[11px] text-ink-muted mt-1">Whoever may process that service may process this one (Roles and permissions).</p>
+                    </div>
+                </div>
+                <p x-show="createError" x-text="createError" role="alert" class="{{ $ui['error'] }}"></p>
+            </form>
+            <x-slot:footer>
+                <x-ui.button variant="secondary" size="sm" x-bind:disabled="creating" @click="adding = false">Cancel</x-ui.button>
+                <x-ui.button size="sm" icon="plus" x-bind:disabled="creating" @click="createService()"><span x-text="creating ? 'Adding…' : 'Add service'"></span></x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
+    </div>
 </div>

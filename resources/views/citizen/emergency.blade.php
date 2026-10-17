@@ -15,7 +15,7 @@
             <i data-lucide="triangle-alert" class="w-6 h-6 shrink-0"></i>
             <span class="flex-1 min-w-0">
                 <span class="block text-[15px] font-extrabold leading-tight"><x-ui.t fil="Sa emergency na banta sa buhay, tumawag sa 911." en="In a life-threatening emergency, call 911." /></span>
-                <span class="block text-xs text-white/85 mt-0.5"><x-ui.t fil="O tumawag direkta sa MDRRMO o sa isa sa mga hotline sa ibaba." en="Or call the MDRRMO directly, or one of the hotlines below." /></span>
+                <span class="block text-xs text-white mt-0.5"><x-ui.t fil="O tumawag direkta sa MDRRMO o sa isa sa mga hotline sa ibaba." en="Or call the MDRRMO directly, or one of the hotlines below." /></span>
             </span>
             <span class="w-11 h-11 rounded-full bg-white/15 grid place-items-center shrink-0"><i data-lucide="phone-call" class="w-5 h-5"></i></span>
         </a>

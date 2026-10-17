@@ -93,7 +93,7 @@
     --color-track: #dce4f5;      /* progress and meter tracks */
     --color-ink: #0b1730;        /* headings (= navy-900) */
     --color-ink-body: #3a4664;
-    --color-ink-muted: #5f6b8a;
+    --color-ink-muted: #545f7d; /* 5.2:1 on the page surfaces (WCAG AA), was #5f6b8a at 4.35:1 (2026-10-17) */
     --color-ink-faint: #7d89a8;
     --color-sidebar-text: #c3cfea;
     --color-sidebar-muted: #a9b8dd;
@@ -1517,7 +1517,7 @@ body.dp-printing .doc-zoom-scale {
 select:not([multiple]):not([size]):not(.appearance-none):not(.doc-toolbar-select) {
     -webkit-appearance: none;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6b8a' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23545f7d' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right .875rem center;
     background-size: .95rem .95rem;

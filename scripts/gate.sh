@@ -288,6 +288,20 @@ fi
 PDFS=$(find dist/documents -name '*.pdf' 2>/dev/null | wc -l | tr -d ' ')
 [ "$PDFS" -ge 16 ] && pass "$PDFS reference PDFs in dist/documents" || fail "only $PDFS reference PDFs reached dist/"
 
+# -- Accessibility (2026-10-17) ---------------------------------------------------
+# Every page of dist/ in headless Chrome: axe-core's WCAG 2.2 A/AA rules (a
+# serious or critical violation fails) and the keyboard (skip link first,
+# focus always visible and on screen, never trapped, Shift+Tab back, Escape
+# closes a dialog). Offline: the site from dist/, the API from sample data.
+# Needs Chrome or Edge (CHROME=/path to point at one) and `npm install`.
+say "accessibility: axe WCAG 2.2 AA + keyboard"
+if MSYS_NO_PATHCONV=1 PHP="$PHP_BIN" node scripts/a11y.mjs </dev/null >/tmp/esperanza-gate-a11y.log 2>&1; then
+  pass "$(grep -o 'pages checked: [0-9]*' /tmp/esperanza-gate-a11y.log), none failing"
+else
+  fail "accessibility: $(grep -o 'failing: [0-9]*' /tmp/esperanza-gate-a11y.log || echo 'did not run') page(s) -- see /tmp/esperanza-gate-a11y.log"
+  grep -E '^FAIL|axe (serious|critical)|keyboard:|FAILED TO RUN' /tmp/esperanza-gate-a11y.log | head -25
+fi
+
 echo ""
 echo "    steps run: $STEPS_RUN"
 if [ "$FAILED" -eq 0 ]; then

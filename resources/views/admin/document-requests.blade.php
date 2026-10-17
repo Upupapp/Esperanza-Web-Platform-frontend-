@@ -1815,6 +1815,7 @@
                     due: row.due || null,
                     overdue: !!row.overdue,
                     issued_documents: [],
+                    workflow: null,
                     purpose: '',
                     requirements: null,
                     remarks: null,
@@ -1930,6 +1931,8 @@
                 r.overdue = 'overdue' in d ? !!d.overdue : r.overdue;
                 // Control numbers, codes and QR for the printed copy (scope round 2026-10-15).
                 r.issued_documents = d.issued_documents || [];
+                // The service's steps and which are done (2026-10-17).
+                r.workflow = d.workflow || null;
                 r.payment = d.payment || null;
                 // The officer's edited copy, stored on the request (owner
                 // decision 2026-10-06, option B), or the template when there
@@ -2611,6 +2614,7 @@
                     </div>
 
                     <x-admin.scope.request-assign />
+                    <x-admin.scope.request-workflow />
 
                     {{-- Payment method + Official Payment Receipt — same source of
                          truth and same visual design as the dedicated Payments

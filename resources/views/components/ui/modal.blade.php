@@ -60,6 +60,10 @@
                     role="dialog"
                     aria-modal="true"
                     x-trap="open"
+                    {{-- Focus goes into the window when it opens, if the trap has not put it
+                         there (the full-screen window opened with focus left behind it,
+                         keyboard pass 2026-10-17). --}}
+                    x-effect="if (open) setTimeout(() => { if (open && !$el.contains(document.activeElement)) ($el.querySelector('[autofocus], button:not([disabled]), [href], input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])'))?.focus({ preventScroll: true }) }, 260)"
                     @if($bare) aria-label="Dialog" @else aria-labelledby="{{ $titleId }}" @endif
                     class="absolute inset-0 modal-panel border border-white rounded-[28px] shadow-float flex flex-col overflow-hidden"
                 >
@@ -114,6 +118,10 @@
                     role="dialog"
                     aria-modal="true"
                     x-trap="open"
+                    {{-- Focus goes into the window when it opens, if the trap has not put it
+                         there (the full-screen window opened with focus left behind it,
+                         keyboard pass 2026-10-17). --}}
+                    x-effect="if (open) setTimeout(() => { if (open && !$el.contains(document.activeElement)) ($el.querySelector('[autofocus], button:not([disabled]), [href], input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])'))?.focus({ preventScroll: true }) }, 260)"
                     @if($bare) aria-label="Dialog" @else aria-labelledby="{{ $titleId }}" @endif
                     style="max-height: 88vh; width: calc(100vw - 2rem);"
                     class="relative modal-panel border border-white rounded-[28px] shadow-float {{ $w }} flex flex-col overflow-hidden"

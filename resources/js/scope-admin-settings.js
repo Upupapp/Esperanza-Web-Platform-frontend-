@@ -150,10 +150,33 @@ function feeProblem(fee) {
     return 'The system cannot charge this fee as written. Use Free, an amount (₱155.00), “₱5.00 base + ₱1.00 per ₱1,000 income”, “₱500.00 and up (based on capital)” or “Based on prior year gross receipts”.';
 }
 
+// A service's workflow steps (2026-10-17): what each kind means in the editor.
+const STEP_KINDS = [
+    ['submit', 'Filing', 'The resident files the request. Done by itself.'],
+    ['office', 'Office step', 'Work the office does: an officer marks it done.'],
+    ['payment', 'Payment', 'Done once the fee is paid (or there is none).'],
+    ['approval', 'Approval', 'Done by Approve. Waits for the office steps before it.'],
+    ['release', 'Release', 'Done by Release / Complete. Waits for the office steps before it.'],
+];
+// The questions staff can add; special kinds the forms came with are kept as they are.
+const QUESTION_KINDS = [
+    ['text', 'Short answer'], ['textarea', 'Long answer'], ['number', 'Number'], ['date', 'Date'],
+    ['tel', 'Mobile number'], ['select', 'Choose one'], ['checkbox-group', 'Tick all that apply'],
+];
+const KEPT_KINDS = { derived_age: 'Age, worked out from the birth date', table: 'Table (rows of family members or items)', checkbox: 'Single tick box', multiselect: 'Choose several' };
+
 function catalogEditor() {
     return {
         started: false, loading: false, loaded: false, failed: false, denied: false,
         rows: [], offices: [],
+        stepKinds: STEP_KINDS, questionKinds: QUESTION_KINDS,
+        // Adding a service (2026-10-17).
+        adding: false, creating: false, createError: '',
+        // The service just added, opened by the editor itself: called from
+        // inside the "Add a service" window, `this.open` would be that
+        // window's own (2026-10-17).
+        pendingEdit: null,
+        draft: { type: 'dokyu', name: '', office: '', category: '', fee: 'Free', days: '1-3 working days', permissions_like: '' },
         search: '', kind: '', office: '', offered: '',
 
         open: false, section: 'details', key: null,
@@ -161,7 +184,7 @@ function catalogEditor() {
         detailLoading: false, detailFailed: false,
         details: { name: '', office: '', category: '', active: true },
         savingDetails: false, detailsError: '',
-        rules: { fee: '', days: '', requirements: [], process: [] },
+        rules: { fee: '', days: '', requirements: [], workflow: [], fields: [] },
         rulesBase: '', rulesError: '', publishing: false,
         newReq: '', newStep: '',
         log: [], logLoaded: false, logLoading: false, logFailed: false,
@@ -172,6 +195,12 @@ function catalogEditor() {
         get canEdit() { return may('set_service_catalog', 'edit'); },
 
         init() {
+            this.$watch('pendingEdit', (key) => {
+                if (!key) return;
+                this.pendingEdit = null;
+                const row = this.rows.find((r) => r.key === key);
+                if (row) this.edit(row);
+            });
             // A message about what was typed goes once it is changed.
             this.$watch('details', () => { this.detailsError = ''; });
             this.$watch('rules', () => { this.rulesError = ''; });
@@ -262,7 +291,10 @@ function catalogEditor() {
                     fee: c.fee ?? '',
                     days: c.days ?? '',
                     requirements: Array.isArray(c.requirements) ? [...c.requirements] : [],
-                    process: Array.isArray(c.process) ? [...c.process] : [],
+                    // The workflow and the form's questions (2026-10-17): copies,
+                    // so editing them leaves the loaded record alone.
+                    workflow: (Array.isArray(c.workflow) ? c.workflow : []).map((st) => ({ name: st.name || '', kind: st.kind || 'office', responsible: st.responsible || '', days: st.days ?? '' })),
+                    fields: (Array.isArray(c.fields) ? c.fields : []).map((f) => ({ ...f, optionsText: Array.isArray(f.options) ? f.options.join('\n') : '' })),
                 };
                 this.rulesBase = JSON.stringify(this.rules);
             }
@@ -338,8 +370,10 @@ function catalogEditor() {
         // rules: fee, time, required documents, steps - published as a version
         get rulesShapeOk() {
             const c = this.svc?.current || {};
-            return [c.requirements, c.process].every((list) => list == null || (Array.isArray(list) && list.every((x) => typeof x === 'string')));
+            return c.requirements == null || (Array.isArray(c.requirements) && c.requirements.every((x) => typeof x === 'string'));
         },
+        // Whether the published version already tracks its steps on requests.
+        get tracked() { return !!this.svc?.current?.tracked; },
         get rulesLocked() { return !this.canEdit || !!this.svc?.policy_blocked || !this.rulesShapeOk; },
         get rulesDirty() { return !!this.svc && JSON.stringify(this.rules) !== this.rulesBase; },
         get nextVersion() { return (Number(this.svc?.current?.version) || 0) + 1; },
@@ -354,9 +388,23 @@ function catalogEditor() {
         addStep() {
             const v = this.newStep.trim();
             if (!v) return;
-            this.rules.process.push(v);
+            // A new step goes before the release step, if there is one.
+            const at = this.rules.workflow.findIndex((st) => st.kind === 'release');
+            const step = { name: v, kind: 'office', responsible: '', days: '' };
+            if (at >= 0) this.rules.workflow.splice(at, 0, step); else this.rules.workflow.push(step);
             this.newStep = '';
         },
+        stepKindHelp(kind) { return (STEP_KINDS.find((k) => k[0] === kind) || [])[2] || ''; },
+        get responsibleChoices() {
+            return [...new Set(['Resident', 'Barangay Secretary', 'Punong Barangay', 'Department Head', 'Department Staff', 'Front Desk', 'Records Officer', 'Municipal Treasurer',
+                ...this.offices.map((o) => o.short || o.name).filter(Boolean)])];
+        },
+        // ---- the request form's questions
+        isKept(f) { return !!KEPT_KINDS[f?.type]; },
+        keptLabel(f) { return KEPT_KINDS[f?.type] || f?.type; },
+        hasOptions(f) { return ['select', 'checkbox-group'].includes(f?.type); },
+        addQuestion() { this.rules.fields.push({ key: '', label: '', type: 'text', required: false, optionsText: '' }); },
+        moveQuestion(i, dir) { this.move('fields', i, dir); },
         move(list, i, dir) {
             const a = this.rules[list];
             const j = i + dir;
@@ -373,9 +421,22 @@ function catalogEditor() {
             if (!days) return 'Write the processing time, for example “1-2 working days”.';
             if (days.length > 120) return 'The processing time is at most 120 characters.';
             if (this.rules.requirements.some((r) => !String(r).trim())) return 'A required document is empty: write it or remove it.';
-            if (this.rules.process.some((r) => !String(r).trim())) return 'A processing step is empty: write it or remove it.';
+            const wf = this.rules.workflow;
+            if (!wf.length) return 'Add at least one processing step.';
+            if (wf.some((st) => !String(st.name).trim())) return 'A processing step has no name: write it or remove it.';
+            const kinds = wf.map((st) => st.kind);
+            for (const k of ['submit', 'approval', 'release']) if (kinds.filter((x) => x === k).length > 1) return 'Only one step can be the ' + (STEP_KINDS.find((x) => x[0] === k) || [k, k])[1].toLowerCase() + ' step.';
+            if (kinds.includes('submit') && kinds[0] !== 'submit') return 'The filing step comes first.';
+            if (kinds.includes('release') && kinds[kinds.length - 1] !== 'release') return 'The release step comes last.';
+            if (kinds.includes('approval') && kinds.includes('release') && kinds.indexOf('approval') > kinds.indexOf('release')) return 'The approval step comes before the release step.';
+            if (wf.some((st) => st.days !== '' && st.days !== null && (!/^\d+$/.test(String(st.days)) || Number(st.days) > 365))) return 'Days are a whole number from 0 to 365.';
+            for (const [i, f] of this.rules.fields.entries()) {
+                if (!String(f.label || '').trim()) return 'Question ' + (i + 1) + ' has no wording: write it or remove it.';
+                if (this.hasOptions(f) && this.optionsOf(f).length < 2) return 'Question ' + (i + 1) + ' (' + f.label.trim() + ') needs at least 2 choices, one per line.';
+            }
             return '';
         },
+        optionsOf(f) { return String(f.optionsText || '').split('\n').map((o) => o.trim()).filter(Boolean); },
         async publish() {
             if (this.publishing || !this.svc || this.rulesLocked || !this.rulesDirty) return;
             const problem = this.rulesProblem();
@@ -385,7 +446,16 @@ function catalogEditor() {
                 fee: String(this.rules.fee).trim(),
                 days: String(this.rules.days).trim(),
                 requirements: this.rules.requirements.map((r) => String(r).trim()),
-                process: this.rules.process.map((r) => String(r).trim()),
+                workflow: this.rules.workflow.map((st) => ({
+                    name: String(st.name).trim(), kind: st.kind, responsible: String(st.responsible || '').trim() || null,
+                    days: st.days === '' || st.days === null ? null : Number(st.days),
+                })),
+                fields: this.rules.fields.map((f) => {
+                    const { optionsText, ...rest } = f;
+                    const out = { ...rest, label: String(f.label).trim() };
+                    if (this.hasOptions(f)) out.options = this.optionsOf(f); else if (!this.isKept(f)) delete out.options;
+                    return out;
+                }),
             };
             this.publishing = true; this.rulesError = '';
             try {
@@ -403,7 +473,43 @@ function catalogEditor() {
             } finally { this.publishing = false; }
         },
 
-        // the request form, read only
+        // ---- a new service (2026-10-17)
+        get likeChoices() { return this.rows.filter((r) => r.type === this.draft.type).sort((a, b) => a.name.localeCompare(b.name)); },
+        get draftOffices() { return [BARANGAY_OFFICE, ...this.offices.filter((o) => o.active !== false).map((o) => o.name)]; },
+        startAdding() {
+            this.draft = { type: 'dokyu', name: '', office: '', category: '', fee: 'Free', days: '1-3 working days', permissions_like: '' };
+            this.createError = '';
+            this.adding = true;
+        },
+        // The officers who handle a service of the same office, by default.
+        suggestLike() {
+            const same = this.likeChoices.find((r) => r.office === this.draft.office);
+            if (same) this.draft.permissions_like = same.key;
+        },
+        async createService() {
+            if (this.creating || !this.canEdit) return;
+            const d = this.draft;
+            if (d.name.trim().length < 3) { this.createError = 'The service name needs at least 3 characters.'; return; }
+            if (!d.office) { this.createError = 'Choose the office that handles it.'; return; }
+            if (!d.permissions_like) { this.createError = 'Choose which service’s officers will handle it.'; return; }
+            const fee = feeProblem(d.fee);
+            if (fee) { this.createError = fee; return; }
+            this.creating = true; this.createError = '';
+            try {
+                const res = await api.post('/admin/settings/catalog', {
+                    type: d.type, name: d.name.trim(), office: d.office, category: d.category.trim() || null,
+                    fee: String(d.fee).trim() || 'Free', days: String(d.days).trim() || null, permissions_like: d.permissions_like,
+                });
+                this.adding = false;
+                await this.load();
+                toast('Service added, switched off. Finish its form, documents and steps, then switch it on under Details.');
+                this.pendingEdit = res.data?.key || null;
+            } catch (err) {
+                this.createError = errExplain(err, 'Could not add the service.');
+            } finally { this.creating = false; }
+        },
+
+        // the request form as the public record shows it
         get formSteps() {
             const spec = this.spec;
             if (!spec) return [];

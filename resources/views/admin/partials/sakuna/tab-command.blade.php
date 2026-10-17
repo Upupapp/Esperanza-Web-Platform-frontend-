@@ -165,7 +165,7 @@
                     View all <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 rounded-xl" tabindex="0" role="region" aria-label="Priority incident queue (scrolls sideways)">
                 <table class="w-full text-sm min-w-[640px]">
                     <thead>
                         <tr class="bg-slate-50 border-b border-brand-600/10">

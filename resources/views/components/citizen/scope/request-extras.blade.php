@@ -20,6 +20,33 @@
         </a>
     </div>
 
+    {{-- The service's steps (2026-10-17): the Citizen's Charter of the
+         service - what happens, who is responsible, how many working days -
+         and which are done; the current one highlighted. Shown when the
+         request's service publishes a workflow. --}}
+    <div x-show="steps.length" x-cloak class="rounded-xl border border-brand-600/10 bg-white/70 p-3.5" data-testid="citizen-workflow">
+        <p class="text-sm font-bold text-ink flex items-center gap-2"><i data-lucide="workflow" class="w-4 h-4 text-brand-600"></i><x-ui.t fil="Mga hakbang ng iyong kahilingan" en="Steps of your request" /></p>
+        <p class="text-[11px] text-ink-muted mt-0.5" x-text="stepsSummary"></p>
+        <ol class="mt-2.5 space-y-2">
+            <template x-for="st in steps" :key="'cwf-' + st.index">
+                <li class="flex items-start gap-2.5">
+                    <span class="mt-0.5 w-5 h-5 shrink-0 rounded-full grid place-items-center text-[10px] font-bold"
+                          :class="st.done ? 'bg-emerald-500 text-white' : (selectedRequest?.workflow?.current === st.index ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500')">
+                        <span x-show="st.done" aria-hidden="true"><i data-lucide="check" class="w-3 h-3"></i></span>
+                        <span x-show="!st.done" x-text="st.index + 1" aria-hidden="true"></span>
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold" :class="selectedRequest?.workflow?.current === st.index ? 'text-brand-700' : 'text-ink'">
+                            <span x-text="st.name"></span>
+                            <span class="sr-only" x-text="st.done ? t(' (done)', ' (tapos na)') : (selectedRequest?.workflow?.current === st.index ? t(' (current step)', ' (kasalukuyang hakbang)') : t(' (not yet)', ' (hindi pa)'))"></span>
+                        </p>
+                        <p class="text-[11px] text-ink-muted" x-text="stepMeta(st)"></p>
+                    </div>
+                </li>
+            </template>
+        </ol>
+    </div>
+
     {{-- Ready to claim (owner, 2026-10-15): where, the office hours, who to
          call and what to bring, from the server's own `pickup` on the
          request detail (CitizenRequestController::pickup), present only while

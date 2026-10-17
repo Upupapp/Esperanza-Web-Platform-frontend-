@@ -107,7 +107,7 @@ function dialHref(contact) {
  * server's list because that list is what files the request: the server
  * makes one row per entry, keyed req_1, req_2... in that order.
  */
-function applyServiceCatalog(entries, services) {
+function applyServiceCatalog(entries, services, addEntry = null) {
     const byKey = {};
     (services || []).forEach((sv) => { if (sv && sv.key) byKey[sv.key] = sv; });
     (entries || []).forEach((entry) => {
@@ -121,7 +121,28 @@ function applyServiceCatalog(entries, services) {
         const steps = (sv.process || []).map(itemText).filter(Boolean);
         if (steps.length) entry.process = steps;
         if (sv.form_spec && sv.form_spec.entitlement && 'amount' in entry) entry.amount = sv.form_spec.entitlement;
+        // Since 2026-10-17 staff edit the form's questions, the name and the
+        // category in the Service Catalog: the server's are the ones asked.
+        if (Array.isArray(sv.fields) && sv.version !== null && sv.version !== undefined) entry.fields = JSON.parse(JSON.stringify(sv.fields));
+        if (sv.name) entry.name = sv.name;
+        if (sv.category) entry.category = sv.category;
+        if (Array.isArray(sv.workflow)) entry.workflow = sv.workflow;
     });
+    // A service added in the catalog after this site was built: listed from
+    // the server alone (addEntry shapes it for the page; null skips it).
+    if (typeof addEntry === 'function') {
+        const known = new Set((entries || []).map((e) => e && e.key));
+        Object.values(byKey).forEach((sv) => {
+            if (known.has(sv.key)) return;
+            const entry = addEntry(sv);
+            if (!entry) return;
+            entry.fields = JSON.parse(JSON.stringify(sv.fields || []));
+            entry.requirements = (sv.requirements || []).map(itemText).filter(Boolean);
+            entry.process = (sv.process || []).map(itemText).filter(Boolean);
+            entry.workflow = Array.isArray(sv.workflow) ? sv.workflow : null;
+            entries.push(entry);
+        });
+    }
     return byKey;
 }
 
@@ -139,11 +160,14 @@ const TONES = {
     cyan: [['Released'], 'bg-cyan-50 text-cyan-700 ring-cyan-200', 'bg-cyan-500'],
     green: [['Completed'], 'bg-green-50 text-green-700 ring-green-200', 'bg-green-500'],
     rose: [['Rejected', 'No Show'], 'bg-rose-50 text-rose-700 ring-rose-200', 'bg-rose-500'],
+    slate: [['Draft', 'Cancelled', 'Archived', 'Closed', 'Withdrawn'], 'bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'],
 };
-const SLATE = ['bg-slate-100 text-slate-600 ring-slate-200', 'bg-slate-400'];
+// A status no list here knows is flagged, not greyed as if it were Draft
+// (2026-10-17): a dashed amber chip.
+const UNKNOWN_TONE = ['bg-amber-50 text-amber-800 ring-amber-400 border border-dashed border-amber-400', 'bg-amber-500'];
 function tone(status) {
     const hit = Object.values(TONES).find(([names]) => names.includes(status));
-    return hit ? [hit[1], hit[2]] : SLATE;
+    return hit ? [hit[1], hit[2]] : (status ? UNKNOWN_TONE : TONES.slate.slice(1));
 }
 
 // The resident's own requests, read once per page for the pickers.
@@ -1170,6 +1194,24 @@ function requestExtras(kind, links = {}) {
         fmtDateTime,
         peso,
         tone,
+
+        // The service's steps on this request (2026-10-17).
+        get steps() { return this.selectedRequest?.workflow?.steps || []; },
+        get stepsSummary() {
+            const wf = this.selectedRequest?.workflow;
+            if (!wf) return '';
+            const done = this.steps.filter((st) => st.done).length;
+            if (wf.stopped) return this.t('This request was stopped; the steps after it will not happen.', 'Nahinto ang kahilingang ito; hindi na matutuloy ang mga susunod na hakbang.');
+            const cur = this.steps.find((st) => st.index === wf.current);
+            return done + this.t(' of ', ' sa ') + this.steps.length + this.t(' done', ' ang tapos na') + (cur ? this.t('. Now: ', '. Ngayon: ') + cur.name : '');
+        },
+        stepMeta(st) {
+            const bits = [];
+            if (st.responsible) bits.push(st.responsible);
+            if (st.days !== null && st.days !== undefined && st.days !== '') bits.push(st.days + this.t(Number(st.days) === 1 ? ' working day' : ' working days', ' araw ng trabaho'));
+            if (st.done && st.done_at) bits.push(this.t('done ', 'natapos ') + fmtDate(st.done_at));
+            return bits.join(' · ');
+        },
 
         // Another request opened in the same window starts clean.
         sync() {
