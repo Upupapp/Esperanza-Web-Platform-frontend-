@@ -355,7 +355,7 @@ function catalogEditor() {
                 this.logLoaded = false;
                 toast(body.active === false
                     ? 'Saved. The service is switched off: residents can no longer file it.'
-                    : (body.active === true ? 'Saved. The service is offered again.' : 'Service details saved.'));
+                    : (body.active === true ? 'Saved. The service is offered to residents now.' : 'Service details saved.'));
             } catch (err) {
                 this.detailsError = errExplain(err, 'Could not save the details.');
                 // Renamed or added meanwhile under Departments: offer the current list.
