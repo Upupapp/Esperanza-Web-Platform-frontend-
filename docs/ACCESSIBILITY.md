@@ -38,8 +38,21 @@ older structural counts.
 ## Keyboard-only and screen-reader passes
 
 The gate covers each page as it first appears. The flows people use were also walked
-with the keyboard alone, on the live site against staging, on 2026-10-17. See the
-release notes of that date for the flows and the results.
+with the keyboard alone (Tab, Shift+Tab, Enter, Escape, typing; no mouse) on the website
+build against staging, on 2026-10-17, reading at each stop the role and name a screen
+reader announces (the accessibility tree):
+
+| Flow | Result |
+|---|---|
+| Resident sign-in | First Tab: "Lumaktaw sa nilalaman" (skip link). Fields announce "Resident ID, Email, o Mobile" and "Password". The eye button announces "Ipakita ang password", then "Itago ang password" (pressed). Enter signs in. |
+| Dashboard to Dokyu, the new-request window | Dokyu reached in 3 Tabs. The skip link moves focus to the content. The window announces "Bagong Kahilingan sa Dokyu" and takes focus. 25 Tabs stay inside it. Escape closes it and focus returns to the button that opened it. |
+| Emergency, incident report | "Mag-ulat" opens the report with focus inside. Escape closes it and focus returns. |
+| Directory, Emergency tab | The hotlines are reached, each announced as "Tawagan ang MDRRMO Esperanza, (056) 333-1090". |
+| Staff sign-in and a request | Enter signs in. Tab reaches "Process" in the queue. Enter opens the request with focus inside, and Escape returns focus to "Process". |
+
+One problem was found and fixed: the full-screen Dokyu window did not take focus when it
+opened. Windows now move focus inside when they open. The script is in the release
+working notes (kb-pass.js); its checks also run on every page in the gate.
 
 A pass with a real screen reader is still recommended before go-live: NVDA on Windows
 with Chrome, and TalkBack on an Android phone. Use this checklist:
