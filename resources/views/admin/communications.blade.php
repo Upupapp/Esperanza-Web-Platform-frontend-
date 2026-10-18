@@ -136,7 +136,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
                 <template x-for="a in filtered" :key="a.id">
                     <article class="surface-glass rounded-[26px] overflow-hidden flex flex-col hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
                         {{-- The first photo or video, and how many it carries --}}
@@ -148,7 +148,7 @@
                         <div class="p-3.5 flex-1">
                             <div class="flex items-center justify-between gap-2 mb-2">
                                 <span class="text-[10px] font-semibold text-ink-muted bg-slate-100 rounded-full px-2 py-0.5" x-text="a.category"></span>
-                                <x-ui.badge statusBind="a.status" />
+                                <span class="inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="statusTone(a.status)" x-text="statusLabel(a.status)"></span>
                             </div>
                             <span class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 mb-2" :class="!a.barangay ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'">
                                 <i :data-lucide="!a.barangay ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
@@ -257,7 +257,7 @@
                             <div class="flex items-center gap-2.5 p-3.5 pb-2">
                                 <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-9 h-9 rounded-full object-cover">
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-semibold text-ink">Esperanza LGU</p>
+                                    <p class="text-sm font-semibold text-ink flex items-center gap-1"><span x-text="selected.author"></span><i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500"></i></p>
                                     <p class="text-[11px] text-ink-muted" x-text="(!selected.barangay ? 'All barangays' : 'Brgy. ' + selected.barangay + ' only') + ' · ' + selected.category"></p>
                                 </div>
                                 <span class="text-[10px] font-semibold text-ink-muted bg-slate-100 rounded-full px-2 py-0.5">Preview</span>
@@ -266,7 +266,7 @@
                             <p class="px-3.5 pb-3 text-[13px] text-slate-700 leading-relaxed whitespace-pre-line" x-text="selected.body"></p>
                             <x-balita.gallery media="selected.media" label="selected.title" :english="true" />
                         </div>
-                        <p class="text-xs text-ink-muted">Written by <span class="font-semibold text-ink-body" x-text="selected.author"></span>. Approving publishes it at once and notifies <span x-text="selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident'"></span> in the app and on the website.</p>
+                        <p class="text-xs text-ink-muted">Residents see it under the writer's name with the official seal. Approving publishes it at once and notifies <span x-text="selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident'"></span> in the app and on the website.</p>
                         <div x-show="canMove(selected, 'Rejected')">
                             <label for="balita-remarks" class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Remarks (required to send it back)</label>
                             <textarea id="balita-remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
@@ -865,7 +865,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
                 <template x-for="p in filtered" :key="p.id">
                     <article class="surface-glass rounded-[26px] overflow-hidden flex flex-col hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
                         <div class="flex items-center gap-2.5 p-3.5 pb-2.5">
@@ -922,8 +922,9 @@
                         <button type="button" x-show="selected.comments_count > 0" @click="openComments(selected)" class="text-xs font-semibold text-brand-700 hover:underline inline-flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i><span x-text="'Comments (' + selected.comments_count + ')'"></span></button>
 
                         <div x-show="decisions(selected).some((d) => d !== 'approve')">
-                            <label for="community-reason" class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Reason (required to hide or take down; the resident is shown it)</label>
-                            <textarea id="community-reason" x-model="reason" rows="2" placeholder="e.g. Selling items is not allowed on Balita." class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                            <label for="community-reason" class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Reason for hiding or taking it down</label>
+                            <textarea id="community-reason" x-model="reason" rows="2" placeholder="e.g. Selling items is not allowed on Balita." aria-describedby="community-reason-help" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                            <p id="community-reason-help" class="text-[11px] mt-1" :class="reason.trim().length < 5 ? 'text-amber-800' : 'text-ink-muted'" x-text="reason.trim().length < 5 ? 'Hide and Take down need a reason (5 characters or more). The resident will see it.' : 'The resident will see this reason.'"></p>
                         </div>
                     </div>
                 </template>
@@ -931,8 +932,9 @@
                 <x-slot:footer>
                     <template x-for="d in decisions(selected)" :key="d">
                         <button type="button" @click="decide(d)" :disabled="processing || (d !== 'approve' && reason.trim().length < 5)"
-                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold transition-colors disabled:opacity-50"
-                            :class="d === 'approve' ? 'clay-blue' : (d === 'hide' ? 'bg-white border border-slate-200 text-ink hover:bg-slate-50' : 'bg-rose-600 text-white hover:bg-rose-700')"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:!bg-slate-100 disabled:!text-slate-600 disabled:!border disabled:!border-dashed disabled:!border-slate-400"
+                            :title="d !== 'approve' && reason.trim().length < 5 ? 'Write a reason first' : ''"
+                            :class="d === 'approve' ? 'clay-blue' : (d === 'hide' ? 'bg-white border border-slate-300 text-ink hover:bg-slate-50' : 'bg-rose-700 text-white hover:bg-rose-800')"
                             x-text="decisionLabel(selected, d)"></button>
                     </template>
                 </x-slot:footer>

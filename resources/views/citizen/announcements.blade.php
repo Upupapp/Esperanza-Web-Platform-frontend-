@@ -20,7 +20,7 @@
             <div class="min-w-0">
                 {{-- What to show --}}
                 <div class="surface-glass rounded-[26px] p-3 mb-3 space-y-2.5">
-                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 overflow-x-auto scrollbar-thin" role="tablist" :aria-label="t('Show posts', 'Ipakita ang mga post')">
+                    <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1" role="tablist" :aria-label="t('Show posts', 'Ipakita ang mga post')">
                         <template x-for="[key, en, fil, icon] in tabs" :key="key">
                             <button type="button" role="tab" :aria-selected="tab === key" @click="tab = key"
                                 x-show="key !== 'barangay' || $store.citizenSession.account?.barangay"
@@ -47,14 +47,14 @@
                     <div class="flex items-center gap-3">
                         <x-citizen.avatar class="w-10 h-10 text-sm shrink-0" />
                         <button type="button" @click="openComposer()" class="flex-1 min-h-[44px] text-left rounded-2xl surface-pressed px-4 text-sm text-ink-muted hover:text-ink transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
-                            <x-ui.t fil="May nais ka bang ibahagi sa komunidad?" en="Something to share with the community?" />
+                            <x-ui.t fil="Ibahagi sa komunidad…" en="Share with your community…" />
                         </button>
                         <x-ui.button size="sm" icon="image-plus" @click="openComposer()" class="shrink-0"><x-ui.t fil="Mag-post" en="Post" /></x-ui.button>
                     </div>
 
                     <div x-data="{ get open() { return composeOpen }, set open(v) { composeOpen = v } }">
                         <x-ui.modal title="Bagong Post" titleEn="New Post" maxWidth="lg">
-                            <form @submit.prevent="sendPost((p) => addMyPost(p))" class="space-y-4" novalidate>
+                            <form id="balita-compose" @submit.prevent="sendPost((p) => addMyPost(p))" class="space-y-4" novalidate>
                                 <p class="flex items-start gap-2 rounded-2xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 text-xs text-brand-800">
                                     <i data-lucide="shield-check" class="w-4 h-4 shrink-0"></i>
                                     <x-ui.t fil="Sinusuri ng Esperanza LGU ang iyong post bago ito makita ng ibang residente. Makikita mo agad ito, at sasabihan ka kapag na-publish na." en="Esperanza LGU reviews your post before other residents see it. You will see it right away, and you will be told once it is published." />
@@ -76,15 +76,16 @@
                                     <x-balita.media-field base="/citizen/balita" model="media" />
                                 </template>
                                 <p x-show="error" x-cloak role="alert" class="rounded-2xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs text-rose-800" x-text="error"></p>
-                                <button type="submit" :disabled="!canPost" :aria-busy="posting"
-                                    class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-2xl text-sm font-semibold clay-blue btn-shine hover:brightness-95 disabled:opacity-60">
-                                    <span x-show="posting || media.busy" x-cloak><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i></span>
-                                    <span x-show="!posting && !media.busy"><i data-lucide="send" class="w-4 h-4"></i></span>
-                                    <span x-text="posting ? t('Posting…', 'Ipino-post…') : (media.busy ? t('Uploading…', 'Ina-upload…') : t('Post', 'I-post'))"></span>
-                                </button>
                             </form>
                             <x-slot:footer>
                                 <x-ui.button size="sm" variant="secondary" @click="composeOpen = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
+                                {{-- In the footer, so it is always in view however many files are attached. --}}
+                                <button type="submit" form="balita-compose" :disabled="!canPost" :aria-busy="posting"
+                                    class="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 rounded-2xl text-sm font-semibold clay-blue btn-shine hover:brightness-95 disabled:opacity-60">
+                                    <span x-show="posting || media.busy" x-cloak><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i></span>
+                                    <span x-show="!posting && !media.busy"><i data-lucide="send" class="w-4 h-4"></i></span>
+                                    <span x-text="posting ? t('Posting…', 'Ipino-post…') : (media.busy ? t('Waiting for uploads…', 'Hinihintay ang upload…') : t('Post', 'I-post'))"></span>
+                                </button>
                             </x-slot:footer>
                         </x-ui.modal>
                     </div>
@@ -214,11 +215,11 @@
                                 <form @submit.prevent="addComment(post)" class="flex items-center gap-2.5">
                                     <x-citizen.avatar class="w-7 h-7 text-[10px]" />
                                     <div class="flex-1 relative">
-                                        <input type="text" :id="'comment-' + post.key" x-model="commentDraft[post.key]" maxlength="1000"
+                                        <input type="text" :id="'comment-' + post.key" x-model="post.draft" maxlength="1000"
                                             :aria-label="t('Write a comment', 'Sumulat ng komento')"
                                             :placeholder="t('Write a comment…', 'Sumulat ng komento…')"
                                             class="w-full rounded-full py-2 pl-4 pr-10 text-xs text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
-                                        <button type="submit" :disabled="!(commentDraft[post.key] || '').trim() || post.sending" :aria-label="t('Send comment', 'Ipadala ang komento')"
+                                        <button type="submit" :disabled="!post.draft.trim() || post.sending" :aria-label="t('Send comment', 'Ipadala ang komento')"
                                             class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-brand-600 hover:bg-brand-50 disabled:opacity-40"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
                                     </div>
                                 </form>

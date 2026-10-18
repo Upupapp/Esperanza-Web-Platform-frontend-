@@ -225,7 +225,18 @@ function adminBalita(barangays = []) {
                 && (!q || (a.title || '').toLowerCase().includes(q) || (a.body || '').toLowerCase().includes(q)));
         },
         count(status) { return this.posts.filter((a) => a.status === status).length; },
-        statusLabel(status) { return status === 'Released' ? 'Published' : status; },
+        // One set of words for a status, in the tabs, the cards and the editor.
+        statusLabel(status) { return { Released: 'Published', Rejected: 'Sent back', 'Pending Review': 'Waiting for review' }[status] || status; },
+        statusTone(status) {
+            return {
+                Draft: 'bg-slate-100 text-slate-700 ring-slate-200',
+                'Pending Review': 'bg-amber-50 text-amber-800 ring-amber-200',
+                Approved: 'bg-sky-50 text-sky-800 ring-sky-200',
+                Released: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+                Rejected: 'bg-rose-50 text-rose-800 ring-rose-200',
+                Archived: 'bg-slate-50 text-slate-500 ring-slate-200',
+            }[status] || 'bg-slate-100 text-slate-700 ring-slate-200';
+        },
 
         // What the officer may do to a post: the move must be one the server
         // lists for it, and the officer must hold the permission it names.
@@ -286,7 +297,7 @@ function adminBalita(barangays = []) {
                 if (submit && post.status === 'Rejected') await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Draft' });
                 if (submit) await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Pending Review' });
                 this.open = false;
-                balitaToast(submit ? 'Sent for review. The officers who approve Balita were told.' : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
+                balitaToast(submit ? 'Sent for review. The officers who approve Balita are notified.' : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
                 await this.load();
             } catch (err) {
                 balitaToast(errText(err, 'Could not save this post.'), 'error');

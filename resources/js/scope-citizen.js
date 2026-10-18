@@ -1941,7 +1941,6 @@ function balitaFeed() {
         events: [],
         more: { announcement: { page: 0, last: 1 }, community: { page: 0, last: 1 } },
         focusKey: null,
-        commentDraft: {},
         reportFor: null,
         reportReason: '',
         reportBusy: false,
@@ -1971,6 +1970,9 @@ function balitaFeed() {
                 likes: a.likes || 0, comments_count: a.comments_count || 0, liked_by_me: a.liked_by_me === true,
                 mine: false, state: 'published', reason: null, at: a.published_at,
                 expanded: false, showComments: false, comments: null, commentsPage: 0, commentsMore: false, liking: false,
+                // The comment being written, on the post itself: a map keyed by
+                // post did not re-run the Send button's binding when it changed.
+                draft: '', sending: false,
             };
         },
         fromCommunity(p) {
@@ -1981,6 +1983,9 @@ function balitaFeed() {
                 mine: p.mine === true, state: p.review_state || (p.visible ? 'published' : 'pending'), reason: p.moderation_reason || null,
                 at: p.created_at,
                 expanded: false, showComments: false, comments: null, commentsPage: 0, commentsMore: false, liking: false,
+                // The comment being written, on the post itself: a map keyed by
+                // post did not re-run the Send button's binding when it changed.
+                draft: '', sending: false,
             };
         },
 
@@ -2111,14 +2116,14 @@ function balitaFeed() {
             }
         },
         async addComment(post) {
-            const text = (this.commentDraft[post.key] || '').trim();
+            const text = (post.draft || '').trim();
             if (!text || post.sending) return;
             post.sending = true;
             try {
                 const res = await api.post(this.engagementPath(post, 'comments'), { body: text });
                 post.comments = [...(post.comments || []), res.data];
                 post.comments_count += 1;
-                this.commentDraft[post.key] = '';
+                post.draft = '';
             } catch (err) {
                 toast(errorText(err, 'Could not post your comment.', 'Hindi naipadala ang iyong komento.'), 'error');
             } finally {
