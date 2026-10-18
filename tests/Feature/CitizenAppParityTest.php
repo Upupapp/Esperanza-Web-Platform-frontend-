@@ -57,11 +57,17 @@ class CitizenAppParityTest extends TestCase
         $page = $this->source('resources/views/citizen/emergency.blade.php');
         $js = $this->source('resources/js/scope-citizen.js');
 
-        // The app's six incident types and the server's four severities.
-        foreach (["'Flooding'", "'Fire'", "'Landslide'", "'Medical Emergency'", "'Road Accident'", "'Other Concern'"] as $type) {
+        // The incident types and severities the staff Incidents tab files and
+        // filters by (SakunaVocabulary, 2026-10-17): six quick picks, the rest
+        // under More kinds; the older names are read under the shared ones.
+        foreach (["'Flood'", "'Fire'", "'Landslide'", "'Medical Emergency'", "'Vehicular Accident'", "'Other'", "'Rescue Request'", "'Public Health Emergency'"] as $type) {
             $this->assertStringContainsString("name: {$type}", $js, $type);
         }
-        $this->assertStringContainsString("[['Low', 'Mababa'], ['Moderate', 'Katamtaman'], ['High', 'Mataas'], ['Critical', 'Kritikal']]", $js);
+        $this->assertStringContainsString("{ Flooding: 'Flood', 'Road Accident': 'Vehicular Accident', 'Other Concern': 'Other' }", $js);
+        $this->assertStringContainsString("[['Low', 'Mababa'], ['Medium', 'Katamtaman'], ['High', 'Mataas'], ['Critical', 'Kritikal']]", $js);
+        // The status in the staff side's words.
+        $this->assertStringContainsString("Processing: ['Dispatched',", $js);
+        $this->assertStringContainsString('x-text="statusLabel(row.status)"', $page);
 
         // Barangay names come from GET /barangays (the store), as the server requires.
         $this->assertStringContainsString('Object.keys(this.$store.barangay.catalog || {})', $js);
@@ -82,7 +88,7 @@ class CitizenAppParityTest extends TestCase
         $this->assertStringContainsString("api.get('/citizen/incidents/' + encodeURIComponent(row.ref))", $js);
         $this->assertStringContainsString("return this.t('Being checked', 'Sinusuri pa');", $js);
         $this->assertStringContainsString('x-for="s in steps"', $page);
-        $this->assertStringContainsString('<x-ui.badge status-bind="detail.status"', $page);
+        $this->assertStringContainsString('x-text="statusLabel(detail.status)"', $page);
     }
 
     public function test_a3_a_community_post_is_written_and_shown_pending_review(): void

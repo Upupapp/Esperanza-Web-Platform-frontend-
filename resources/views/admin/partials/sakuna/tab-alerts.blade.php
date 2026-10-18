@@ -122,6 +122,7 @@
                         <span class="text-xs font-mono text-ink-muted" x-text="a.ref"></span>
                         <span :class="alertLevelBadge(a.level)" x-text="a.level"></span>
                         <span :class="statusBadge(a.status)" x-text="a.status"></span>
+                        <span x-show="a.expired && a.status === 'Released'" class="text-[10.5px] font-semibold text-slate-700 bg-slate-100 ring-1 ring-inset ring-slate-200 px-2 py-0.5 rounded-full">Expired: residents no longer see it</span>
                         <span class="text-xs text-ink-muted bg-slate-100 px-2 py-0.5 rounded-full" x-text="a.type"></span>
                     </div>
                     <p class="text-sm font-semibold text-ink-body mb-1 truncate" x-text="a.title?.en"></p>
@@ -155,6 +156,113 @@
 </div>
 
 </div>{{-- /loaded content --}}
+
+{{-- ── Emergency hotlines ──────────────────────────────────────────────────────────────────
+     The numbers residents see on their Sakuna page (GET /hotlines), kept here
+     by the people who run Sakuna (owner, 2026-10-17: emergencies belong in
+     Sakuna, not the Directory). /admin/sakuna/hotlines only ever touches
+     hotline rows. --}}
+<section class="surface-glass rounded-[26px] p-5" aria-labelledby="hotlines-admin-heading"
+    x-data="{
+        hotlines: [], hotlinesLoading: true, hotlinesFailed: false,
+        hotlineForm: { id: null, office: '', position: '', contact: '' }, hotlineEditing: false, hotlineSaving: false, hotlineError: '',
+        removingHotline: null,
+        async loadHotlines() {
+            this.hotlinesLoading = true; this.hotlinesFailed = false;
+            try { this.hotlines = (await $api.get('/admin/sakuna/hotlines')).data || []; }
+            catch { this.hotlinesFailed = true; }
+            finally { this.hotlinesLoading = false; this.$nextTick(() => window.renderIcons?.()); }
+        },
+        startHotline(h = null) {
+            this.hotlineForm = h ? { id: h.id, office: h.office || '', position: h.position || '', contact: h.contact || '' } : { id: null, office: '', position: '', contact: '' };
+            this.hotlineError = '';
+            this.hotlineEditing = true;
+            this.$nextTick(() => document.getElementById('hotline-office')?.focus());
+        },
+        async saveHotline() {
+            if (this.hotlineSaving || !this.hotlineForm.office.trim() || !this.hotlineForm.contact.trim()) return;
+            this.hotlineSaving = true; this.hotlineError = '';
+            const body = { office: this.hotlineForm.office.trim(), position: this.hotlineForm.position.trim() || null, contact: this.hotlineForm.contact.trim() };
+            try {
+                if (this.hotlineForm.id) await $api.put('/admin/sakuna/hotlines/' + this.hotlineForm.id, body);
+                else await $api.post('/admin/sakuna/hotlines', body);
+                this.toast(this.hotlineForm.id ? 'Hotline updated. Residents see the new number now.' : 'Hotline added. Residents see it on their Sakuna page now.', 'success');
+                this.hotlineEditing = false;
+                await this.loadHotlines();
+            } catch (err) {
+                this.hotlineError = err.localised ? err.localised('en') : 'Could not save this hotline.';
+            } finally { this.hotlineSaving = false; }
+        },
+        async removeHotline(h) {
+            try {
+                await $api.delete('/admin/sakuna/hotlines/' + h.id);
+                this.removingHotline = null;
+                this.toast('Hotline removed.', 'success');
+                await this.loadHotlines();
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not remove this hotline.', 'error');
+            }
+        },
+    }" x-init="loadHotlines()">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+            <h3 id="hotlines-admin-heading" class="text-base font-semibold text-ink-body flex items-center gap-2"><i data-lucide="phone-call" class="w-4 h-4 text-rose-600"></i> Emergency Hotlines</h3>
+            <p class="text-sm text-ink-muted mt-0.5">The numbers residents see on their Sakuna / Emergency page, below 911.</p>
+        </div>
+        <button x-show="can('sakuna_alerts', 'create') && !hotlineEditing" @click="startHotline()"
+            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add Hotline
+        </button>
+    </div>
+
+    <form x-show="hotlineEditing" x-cloak @submit.prevent="saveHotline()" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-2xl bg-slate-50 p-4">
+        <label class="block">
+            <span class="text-xs font-medium text-ink-muted mb-1 block">Office <span class="text-rose-600">*</span></span>
+            <input id="hotline-office" type="text" x-model="hotlineForm.office" maxlength="160" required placeholder="e.g. MDRRMO Rescue"
+                class="w-full px-3 py-2 text-sm rounded-2xl border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 focus:outline-none">
+        </label>
+        <label class="block">
+            <span class="text-xs font-medium text-ink-muted mb-1 block">What it is for</span>
+            <input type="text" x-model="hotlineForm.position" maxlength="120" placeholder="e.g. 24/7 rescue"
+                class="w-full px-3 py-2 text-sm rounded-2xl border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 focus:outline-none">
+        </label>
+        <label class="block">
+            <span class="text-xs font-medium text-ink-muted mb-1 block">Number <span class="text-rose-600">*</span></span>
+            <input type="tel" x-model="hotlineForm.contact" maxlength="80" required placeholder="e.g. 0917 123 4567"
+                class="w-full px-3 py-2 text-sm rounded-2xl border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 focus:outline-none">
+        </label>
+        <p x-show="hotlineError" x-cloak role="alert" class="sm:col-span-3 text-xs text-rose-700" x-text="hotlineError"></p>
+        <div class="sm:col-span-3 flex flex-wrap gap-2 justify-end">
+            <button type="button" @click="hotlineEditing = false" class="px-3.5 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60">Cancel</button>
+            <button type="submit" :disabled="hotlineSaving || !hotlineForm.office.trim() || !hotlineForm.contact.trim()"
+                class="px-3.5 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl disabled:opacity-50"
+                x-text="hotlineSaving ? 'Saving…' : (hotlineForm.id ? 'Save Hotline' : 'Add Hotline')"></button>
+        </div>
+    </form>
+
+    <div x-show="hotlinesLoading" class="mt-4 space-y-2"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-10 opacity-70" /></div>
+    <div x-show="hotlinesFailed" x-cloak class="mt-4"><x-ui.error-state messageExpr="'Could not load the hotlines.'" retryExpr="loadHotlines()" :retryable="true" class="!py-6" /></div>
+    <p x-show="!hotlinesLoading && !hotlinesFailed && !hotlines.length" x-cloak class="mt-4 text-sm text-ink-muted">No hotlines yet. Residents see only 911 until one is added.</p>
+    <ul x-show="!hotlinesLoading && hotlines.length" x-cloak class="mt-4 divide-y divide-brand-600/[.08]">
+        <template x-for="h in hotlines" :key="h.id">
+            <li class="flex flex-wrap items-center justify-between gap-3 py-2.5">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-ink-body" x-text="h.office"></p>
+                    <p class="text-xs text-ink-muted" x-text="[h.position, h.contact].filter(Boolean).join(' · ')"></p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="startHotline(h)" class="text-xs text-slate-600 hover:text-ink-body" :aria-label="'Edit ' + h.office">Edit</button>
+                    <button x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="removingHotline = h.id" class="text-xs text-rose-600 hover:text-rose-700" :aria-label="'Remove ' + h.office">Remove</button>
+                    <span x-show="removingHotline === h.id" x-cloak class="flex items-center gap-2 text-xs">
+                        <span class="text-ink-body">Remove from residents' page?</span>
+                        <button @click="removeHotline(h)" class="font-semibold text-rose-700 hover:underline">Remove</button>
+                        <button @click="removingHotline = null" class="text-slate-600 hover:underline">Keep</button>
+                    </span>
+                </div>
+            </li>
+        </template>
+    </ul>
+</section>
 
 {{-- ── Alert Detail Modal ──────────────────────────────────────────────────────────────── --}}
 <div x-show="showAlertDetail" x-cloak
@@ -196,6 +304,7 @@
                 <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Channels</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="(selectedAlert?.channels || []).join(', ')"></p></div>
                 <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Residents Reached</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="(selectedAlert?.recipients ?? 0) + (selectedAlert?.reach ? ' · ' + Object.entries(selectedAlert.reach).map(([c, n]) => ({ in_app: 'in-app', sms: 'SMS', email: 'email' }[c] || c) + ' ' + n).join(', ') : '')"></p></div>
                 <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Published</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAlert?.published_at ? new Date(selectedAlert.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></p></div>
+                <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Shown to residents until</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedAlert?.expires_at ? alertEnds(selectedAlert) : 'Until it is cancelled'"></p></div>
             </div>
         </div>
 
@@ -319,6 +428,13 @@
                         </button>
                     @endforeach
                 </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="alert-expires">Ends by itself (optional)</label>
+                <input id="alert-expires" type="datetime-local" x-model="alertForm.expires_at" :min="nowInput()" aria-describedby="alert-expires-help"
+                    class="w-full sm:w-72 px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                <p id="alert-expires-help" class="text-xs text-ink-muted mt-1">After this, residents no longer see it on their Sakuna page. Leave empty to keep it up until you cancel it.</p>
             </div>
 
             <div>

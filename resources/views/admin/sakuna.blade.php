@@ -155,6 +155,7 @@
         incidentSeverityFilter: '',
         incidentStatusFilter: '',
         incidentBarangayFilter: '',
+        incidentSourceFilter: '',
         selectedIncident: null,
         showIncidentDetail: false,
         showCreateIncident: false,
@@ -776,7 +777,7 @@
         alertsFailed: false,
         alertFormMode: 'create',
         alertSaving: false,
-        alertForm: { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'] },
+        alertForm: { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'], expires_at: '' },
         cancelReason: '',
         cancelSaving: false,
         // GET /sakuna/alerts -- the real channel vocabulary is exactly
@@ -801,7 +802,22 @@
             return [...new Set(this.alertsList.map(a => a.type).filter(Boolean))].sort();
         },
         resetAlertForm() {
-            this.alertForm = { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'] };
+            this.alertForm = { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'], expires_at: '' };
+        },
+        // An alert can end by itself (2026-10-17): the form holds local time
+        // for the datetime-local input; the server gets an ISO instant.
+        localInput(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d)) return '';
+            const p = (n) => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+        },
+        nowInput() { return this.localInput(new Date().toISOString()); },
+        alertEnds(a) {
+            if (!a?.expires_at) return '';
+            const when = new Date(a.expires_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+            return (a.expired ? 'Ended ' : 'Ends ') + when;
         },
         openCreateAlert() {
             this.resetAlertForm();
@@ -810,7 +826,7 @@
             this.$nextTick(() => window.renderIcons?.());
         },
         openEditAlert(a) {
-            this.alertForm = { ref: a.ref, type: a.type, level: a.level, title_fil: a.title?.fil || '', title_en: a.title?.en || '', body_fil: a.body?.fil || '', body_en: a.body?.en || '', target_barangays: [...(a.barangays || [])], channels: [...(a.channels || ['in_app'])] };
+            this.alertForm = { ref: a.ref, type: a.type, level: a.level, title_fil: a.title?.fil || '', title_en: a.title?.en || '', body_fil: a.body?.fil || '', body_en: a.body?.en || '', target_barangays: [...(a.barangays || [])], channels: [...(a.channels || ['in_app'])], expires_at: this.localInput(a.expires_at) };
             this.alertFormMode = 'edit';
             this.showCreateAlert = true;
             this.$nextTick(() => window.renderIcons?.());
@@ -828,7 +844,7 @@
         async saveAlert() {
             if (this.alertSaving || !this.alertForm.type || !this.alertForm.level || !this.alertForm.title_fil || !this.alertForm.title_en || !this.alertForm.body_fil || !this.alertForm.body_en) return;
             this.alertSaving = true;
-            const payload = { type: this.alertForm.type, level: this.alertForm.level, title_fil: this.alertForm.title_fil, title_en: this.alertForm.title_en, body_fil: this.alertForm.body_fil, body_en: this.alertForm.body_en, target_barangays: this.alertForm.target_barangays, channels: this.alertForm.channels };
+            const payload = { type: this.alertForm.type, level: this.alertForm.level, title_fil: this.alertForm.title_fil, title_en: this.alertForm.title_en, body_fil: this.alertForm.body_fil, body_en: this.alertForm.body_en, target_barangays: this.alertForm.target_barangays, channels: this.alertForm.channels, expires_at: this.alertForm.expires_at ? new Date(this.alertForm.expires_at).toISOString() : null };
             try {
                 const res = this.alertFormMode === 'create'
                     ? await $api.post('/admin/sakuna/alerts', payload)

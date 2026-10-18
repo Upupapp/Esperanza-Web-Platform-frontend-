@@ -1420,19 +1420,50 @@ function requestTimeline() {
 
 // ============================================================== Emergency
 
-// What a resident can report (the app's MockCatalog.incidentTypes). The
-// server takes `type` as free text, not a key into a catalogue, so the name
-// is what is sent.
+// What a resident can report: the same names the staff Incidents tab files
+// and filters by (SakunaVocabulary on the server, 2026-10-17), so a resident's
+// flood is found under Flood. Six quick picks, the rest in "More kinds".
 const INCIDENT_TYPES = [
-    { key: 'incident_flood', name: 'Flooding', fil: 'Baha', icon: 'waves', office: 'MDRRMO' },
+    { key: 'incident_flood', name: 'Flood', fil: 'Baha', icon: 'waves', office: 'MDRRMO' },
     { key: 'incident_fire', name: 'Fire', fil: 'Sunog', icon: 'flame', office: 'BFP / MDRRMO' },
     { key: 'incident_landslide', name: 'Landslide', fil: 'Pagguho ng lupa', icon: 'mountain', office: 'MDRRMO' },
     { key: 'incident_medical', name: 'Medical Emergency', fil: 'Medikal na emergency', icon: 'siren', office: 'Municipal Health Office / MDRRMO' },
-    { key: 'incident_road', name: 'Road Accident', fil: 'Aksidente sa daan', icon: 'car-front', office: 'MDRRMO / PNP' },
-    { key: 'incident_other', name: 'Other Concern', fil: 'Iba pang alalahanin', icon: 'flag', office: 'MDRRMO' },
+    { key: 'incident_road', name: 'Vehicular Accident', fil: 'Aksidente sa sasakyan', icon: 'car-front', office: 'MDRRMO / PNP' },
+    { key: 'incident_other', name: 'Other', fil: 'Iba pa', icon: 'flag', office: 'MDRRMO' },
 ];
-// The server's severity values, sent as they are; the label follows the language.
-const SEVERITIES = [['Low', 'Mababa'], ['Moderate', 'Katamtaman'], ['High', 'Mataas'], ['Critical', 'Kritikal']];
+const MORE_INCIDENT_TYPES = [
+    { key: 'incident_rescue', name: 'Rescue Request', fil: 'Humihingi ng saklolo', icon: 'life-buoy' },
+    { key: 'incident_quake', name: 'Earthquake', fil: 'Lindol', icon: 'activity' },
+    { key: 'incident_missing', name: 'Missing Person', fil: 'Nawawalang tao', icon: 'search' },
+    { key: 'incident_stranded', name: 'Stranded Resident', fil: 'Residenteng na-stranded', icon: 'anchor' },
+    { key: 'incident_drowning', name: 'Drowning or Water Rescue', fil: 'Nalulunod o saklolo sa tubig', icon: 'anchor' },
+    { key: 'incident_tree', name: 'Fallen Tree', fil: 'Natumbang puno', icon: 'tree-pine' },
+    { key: 'incident_powerline', name: 'Downed Power Line', fil: 'Bumagsak na kawad ng kuryente', icon: 'zap' },
+    { key: 'incident_obstruction', name: 'Road Obstruction', fil: 'Harang sa daan', icon: 'construction' },
+    { key: 'incident_bridge', name: 'Damaged Bridge', fil: 'Sirang tulay', icon: 'construction' },
+    { key: 'incident_structure', name: 'Structural Damage', fil: 'Pinsala sa gusali o bahay', icon: 'building-2' },
+    { key: 'incident_farm', name: 'Agricultural Damage', fil: 'Pinsala sa pananim o hayop', icon: 'wheat' },
+    { key: 'incident_water', name: 'Water Interruption', fil: 'Walang tubig', icon: 'droplets' },
+    { key: 'incident_power', name: 'Power Interruption', fil: 'Walang kuryente', icon: 'zap-off' },
+    { key: 'incident_health', name: 'Public Health Emergency', fil: 'Emergency sa kalusugan ng publiko', icon: 'shield-alert' },
+];
+const ALL_INCIDENT_TYPES = [...INCIDENT_TYPES, ...MORE_INCIDENT_TYPES];
+// Reports filed before the names were shared, read under the shared name.
+const OLD_INCIDENT_TYPES = { Flooding: 'Flood', 'Road Accident': 'Vehicular Accident', 'Other Concern': 'Other' };
+// The shared severities, sent as they are; the label follows the language.
+const SEVERITIES = [['Low', 'Mababa'], ['Medium', 'Katamtaman'], ['High', 'Mataas'], ['Critical', 'Kritikal']];
+// A report's status in the words the staff Incidents tab shows for it
+// (incidentStatusLabel there), so both sides name the same moment the same way.
+const INCIDENT_STATUS = {
+    Submitted: ['Reported', 'Naiulat', 'bg-slate-100 text-slate-700 ring-slate-200'],
+    'Under Verification': ['Validated', 'Nakumpirma', 'bg-sky-50 text-sky-800 ring-sky-200'],
+    Assigned: ['Assigned', 'May naitalagang tutugon', 'bg-indigo-50 text-indigo-800 ring-indigo-200'],
+    Processing: ['Dispatched', 'Papunta na ang tutugon', 'bg-violet-50 text-violet-800 ring-violet-200'],
+    Completed: ['Resolved', 'Naresolba', 'bg-emerald-50 text-emerald-800 ring-emerald-200'],
+    Archived: ['Closed', 'Isinara', 'bg-slate-100 text-slate-700 ring-slate-200'],
+};
+// The staff alert levels (Alerts tab), in the resident's language.
+const ALERT_LEVELS = { Information: 'Impormasyon', Advisory: 'Abiso', Watch: 'Pagbabantay', Warning: 'Babala', Critical: 'Kritikal' };
 // What happened to a report, in words: the verbs of the staff side
 // (IncidentLifecycle), never the responder's own note.
 const INCIDENT_STEPS = {
@@ -1472,6 +1503,7 @@ function newUuid() {
 function citizenEmergency() {
     return {
         types: INCIDENT_TYPES,
+        moreTypes: MORE_INCIDENT_TYPES,
         severities: SEVERITIES,
         maxPhotos: MAX_INCIDENT_PHOTOS,
 
@@ -1541,6 +1573,14 @@ function citizenEmergency() {
         alertWhere(a) {
             return a.barangays && a.barangays.length ? a.barangays.map((b) => 'Brgy. ' + b).join(', ') : this.t('All barangays', 'Lahat ng barangay');
         },
+        alertKind(a) {
+            const level = a.level ? (this.en ? a.level : (ALERT_LEVELS[a.level] || a.level)) : '';
+            return [a.type, level].filter(Boolean).join(' · ');
+        },
+        // When the office set it to end by itself (2026-10-17).
+        alertUntil(a) {
+            return a.expires_at ? this.t('Until ', 'Hanggang ') + fmtDateTime(a.expires_at) : '';
+        },
 
         // -- Hotlines and evacuation centres
         loadDirectory() {
@@ -1585,10 +1625,17 @@ function citizenEmergency() {
             if (c.individuals !== null && c.capacity > 0) return this.t(c.individuals + ' of ' + c.capacity + ' people', c.individuals + ' sa ' + c.capacity + ' katao');
             return c.capacity > 0 ? this.t('Capacity: ' + c.capacity + ' people', 'Kapasidad: ' + c.capacity + ' katao') : this.t('Capacity not listed', 'Walang nakalistang kapasidad');
         },
+        // The staff Centres tab's thresholds: near capacity from 75%.
         occupancyTone(c) {
             if (c.pct >= 90) return 'bg-rose-500';
-            if (c.pct >= 70) return 'bg-amber-500';
+            if (c.pct >= 75) return 'bg-amber-500';
             return 'bg-emerald-500';
+        },
+        occupancyWarning(c) {
+            if (!c.open || c.individuals === null || c.capacity <= 0) return '';
+            if (c.pct >= 100) return this.t('Full: ask the MDRRMO for another centre', 'Puno na: magtanong sa MDRRMO ng ibang center');
+            if (c.pct >= 75) return this.t('Almost full', 'Halos puno na');
+            return '';
         },
         // Directions: to the point when the centre has coordinates, otherwise a
         // Google Maps search for its name and address (the API carries none
@@ -1618,18 +1665,28 @@ function citizenEmergency() {
             }
             icons();
         },
-        typeOf(name) { return INCIDENT_TYPES.find((x) => x.name === name) || null; },
+        typeOf(name) {
+            const kept = OLD_INCIDENT_TYPES[name] || name;
+            return ALL_INCIDENT_TYPES.find((x) => x.name === kept) || null;
+        },
+        isMoreType(name) { return MORE_INCIDENT_TYPES.some((x) => x.name === name); },
+        statusLabel(st) {
+            const hit = INCIDENT_STATUS[st];
+            return hit ? this.t(hit[0], hit[1]) : (st || '');
+        },
+        statusTone(st) { return INCIDENT_STATUS[st]?.[2] || 'bg-slate-100 text-slate-700 ring-slate-200'; },
         typeLabel(name) {
             const hit = this.typeOf(name);
             return hit ? this.t(hit.name, hit.fil) : (name || '');
         },
         typeIcon(name) { return this.typeOf(name)?.icon || 'triangle-alert'; },
         severityLabel(value) {
-            const hit = SEVERITIES.find(([v]) => v === value);
+            const hit = SEVERITIES.find(([v]) => v === (value === 'Moderate' ? 'Medium' : value));
             return hit ? this.t(hit[0], hit[1]) : (value || '');
         },
         severityClass(value) {
-            return { Critical: 'bg-rose-50 text-rose-700 ring-rose-200', High: 'bg-orange-50 text-orange-700 ring-orange-200', Moderate: 'bg-amber-50 text-amber-700 ring-amber-200' }[value] || 'bg-slate-100 text-slate-600 ring-slate-200';
+            const kept = value === 'Moderate' ? 'Medium' : value;
+            return { Critical: 'bg-rose-50 text-rose-700 ring-rose-200', High: 'bg-orange-50 text-orange-700 ring-orange-200', Medium: 'bg-amber-50 text-amber-700 ring-amber-200' }[kept] || 'bg-slate-100 text-slate-600 ring-slate-200';
         },
         async openIncident(row) {
             this.detail = { ...row, photos: [], timeline: [] };
@@ -1671,10 +1728,10 @@ function citizenEmergency() {
             const d = this.detail;
             if (!d) return [];
             const list = [];
-            if (d.reported) list.push({ key: 'reported', label: this.t(...INCIDENT_STEPS.report), status: 'Submitted', at: d.reported });
+            if (d.reported) list.push({ key: 'reported', label: this.t(...INCIDENT_STEPS.report), status: this.statusLabel('Submitted'), at: d.reported });
             (d.timeline || []).forEach((e, i) => {
                 const words = INCIDENT_STEPS[e.verb];
-                list.push({ key: 't' + i, label: words ? this.t(words[0], words[1]) : (e.status || e.verb || ''), status: e.status || '', at: e.at });
+                list.push({ key: 't' + i, label: words ? this.t(words[0], words[1]) : this.statusLabel(e.status || e.verb || ''), status: this.statusLabel(e.status || ''), at: e.at });
             });
             return list.reverse();
         },

@@ -34,10 +34,10 @@
                     <div role="alert" class="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 shadow-card">
                         <i data-lucide="siren" class="w-5 h-5 text-rose-700 shrink-0 mt-0.5"></i>
                         <div class="min-w-0">
-                            <p class="text-[11px] font-semibold uppercase tracking-wide text-rose-700" x-show="alert.type || alert.level" x-text="[alert.type, alert.level].filter(Boolean).join(' · ')"></p>
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-rose-700" x-show="alert.type || alert.level" x-text="alertKind(alert)"></p>
                             <p class="text-sm font-semibold text-rose-900" x-text="alertText(alert.title)"></p>
                             <p class="text-sm text-rose-900/90 mt-0.5 whitespace-pre-line" x-show="alertText(alert.body)" x-text="alertText(alert.body)"></p>
-                            <p class="text-xs text-rose-800 mt-1" x-text="alertWhere(alert) + (alert.published_at ? ' · ' + fmtDateTime(alert.published_at) : '')"></p>
+                            <p class="text-xs text-rose-800 mt-1" x-text="[alertWhere(alert), alert.published_at ? fmtDateTime(alert.published_at) : '', alertUntil(alert)].filter(Boolean).join(' · ')"></p>
                         </div>
                     </div>
                 </template>
@@ -52,7 +52,7 @@
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div class="min-w-0">
                             <h2 id="reports-heading" class="text-base font-extrabold text-ink flex items-center gap-2"><i data-lucide="flag" class="w-5 h-5 text-rose-600"></i><x-ui.t fil="Mag-ulat ng Insidente" en="Report an Incident" /></h2>
-                            <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Baha, sunog, pagguho, aksidente, o iba pa sa iyong lugar. Tumatanggap ng ulat kahit hindi pa beripikado ang account." en="Flooding, fire, a landslide, an accident, or another concern near you. You can report even before your account is verified." /></p>
+                            <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Baha, sunog, pagguho, aksidente, o iba pa sa iyong lugar. Diretso ito sa MDRRMO, at makikita mo rito ang bawat hakbang nila. Tumatanggap ng ulat kahit hindi pa beripikado ang account." en="A flood, fire, landslide, accident or other emergency near you. It goes straight to the MDRRMO, and you follow each step they take here. You can report even before your account is verified." /></p>
                         </div>
                         <x-ui.button variant="danger" icon="flag" @click="openReport()"><x-ui.t fil="Mag-ulat" en="Report" /></x-ui.button>
                     </div>
@@ -82,7 +82,7 @@
                                         <span class="block text-sm font-semibold text-ink truncate" x-text="row.title || typeLabel(row.type)"></span>
                                         <span class="block text-[11px] text-ink-muted truncate" x-text="[row.ref, fmtDateTime(row.reported)].filter(Boolean).join(' · ')"></span>
                                     </span>
-                                    <x-ui.badge status-bind="row.status" class="shrink-0" />
+                                    <span class="shrink-0 inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="statusTone(row.status)" x-text="statusLabel(row.status)"></span>
                                     <i data-lucide="chevron-right" class="w-4 h-4 text-ink-faint shrink-0"></i>
                                 </button>
                             </li>
@@ -110,6 +110,7 @@
                                     <span class="block text-[11px] text-ink-muted mt-0.5" x-text="[c.address, 'Brgy. ' + c.barangay].filter(Boolean).join(' · ')"></span>
                                     <span x-show="c.mine" class="inline-flex items-center gap-1 mt-1 text-[10.5px] font-semibold text-brand-700"><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Nasa iyong barangay" en="In your barangay" /></span>
                                     <span class="block text-[11px] font-medium text-ink-body mt-1.5" x-text="occupancyText(c)"></span>
+                                    <span x-show="occupancyWarning(c)" x-cloak class="block text-[11px] font-semibold mt-0.5" :class="c.pct >= 100 ? 'text-rose-700' : 'text-amber-800'" x-text="occupancyWarning(c)"></span>
                                     <span x-show="c.individuals !== null && c.capacity > 0" class="block h-1.5 rounded-full bg-slate-100 mt-1 overflow-hidden" aria-hidden="true"><span class="block h-full rounded-full" :class="occupancyTone(c)" :style="'width:' + Math.min(100, c.pct) + '%'"></span></span>
                                 </button>
                             </li>
@@ -194,7 +195,7 @@
                                 <p class="text-xs font-mono text-ink-muted" x-text="detail.ref"></p>
                                 <p class="text-sm font-semibold text-ink" x-text="detail.title || typeLabel(detail.type)"></p>
                             </div>
-                            <x-ui.badge status-bind="detail.status" class="shrink-0" />
+                            <span class="shrink-0 inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="statusTone(detail.status)" x-text="statusLabel(detail.status)"></span>
                         </div>
                         <p x-show="detailLoading" class="text-xs text-ink-muted mt-4 flex items-center gap-1.5"><span><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i></span><x-ui.t fil="Naglo-load…" en="Loading…" /></p>
                         <p x-show="detailError" x-cloak role="alert" class="text-xs text-rose-700 mt-4" x-text="detailError"></p>
@@ -275,6 +276,16 @@
                                     </button>
                                 </template>
                             </div>
+                            {{-- The rest of the names the MDRRMO files by (2026-10-17). --}}
+                            <label class="block mt-2">
+                                <span class="block text-[11px] font-semibold text-ink-muted mb-1"><x-ui.t fil="Iba pang uri" en="More kinds" /></span>
+                                <select @change="if ($event.target.value) form.type = $event.target.value"
+                                    class="w-full min-h-[44px] rounded-2xl border-0 surface-pressed px-3.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"
+                                    :class="isMoreType(form.type) ? 'ring-2 ring-rose-200' : ''">
+                                    <option value="" :selected="!isMoreType(form.type)" x-text="$store.lang.current === 'en' ? 'Choose if it is not above' : 'Piliin kung wala sa itaas'"></option>
+                                    <template x-for="type in moreTypes" :key="type.key"><option :value="type.name" :selected="form.type === type.name" x-text="$store.lang.current === 'en' ? type.name : type.fil"></option></template>
+                                </select>
+                            </label>
                         </fieldset>
 
                         <fieldset>

@@ -265,7 +265,20 @@ async function main() {
     const res = { uri, axe: [], keyboard: [] };
     try {
       await S('Page.navigate', { url: ORIGIN + uri });
-      await sleep(1600);
+      // Settled, not a fixed pause: under load a page still building its
+      // list read as broken (2026-10-17). Loaded, then the same markup for
+      // half a second, up to 12 s; never shorter than the old 1.6 s.
+      await sleep(800);
+      let last = -1;
+      let same = 0;
+      for (const until = Date.now() + 12000; Date.now() < until;) {
+        const size = await evalIn(`document.readyState === 'complete' ? document.body.innerHTML.length : -1`).catch(() => -1);
+        same = size > 0 && size === last ? same + 1 : 0;
+        last = size;
+        if (same >= 5) break;
+        await sleep(100);
+      }
+      await sleep(300);
       // A pop-up that opens by itself on arrival (an alert, a welcome) is closed first.
       await evalIn(`document.querySelectorAll('[role=dialog]').length`);
       await key('Escape');

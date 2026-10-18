@@ -43,7 +43,8 @@
             (!incidentTypeFilter || inc.type === incidentTypeFilter) &&
             (!incidentSeverityFilter || inc.severity === incidentSeverityFilter) &&
             (!incidentStatusFilter || inc.status === incidentStatusFilter) &&
-            (!incidentBarangayFilter || inc.barangay === incidentBarangayFilter)
+            (!incidentBarangayFilter || inc.barangay === incidentBarangayFilter) &&
+            (!incidentSourceFilter || (incidentSourceFilter === 'resident') === (inc.source === 'Citizen Portal'))
         );
     },
 }" x-init="loadIncidentsList()" class="space-y-5">
@@ -124,7 +125,14 @@
             <option>{{ $brgy }}</option>
         @endforeach
     </select>
-    <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter='';"
+    {{-- Reports residents sent from their Sakuna page, apart from the ones staff entered (2026-10-17). --}}
+    <select aria-label="Incident source filter" x-model="incidentSourceFilter"
+        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+        <option value="">All Sources</option>
+        <option value="resident">Reported by residents</option>
+        <option value="staff">Entered by staff</option>
+    </select>
+    <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
         class="inline-flex items-center gap-1.5 text-sm text-ink-muted surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
         <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
     </button>
@@ -157,6 +165,7 @@
                                     <i :data-lucide="incidentTypeIcon(inc.type)" class="w-3.5 h-3.5 text-brand-600"></i>
                                 </span>
                                 <span class="text-sm font-medium text-slate-700" x-text="inc.type"></span>
+                                <span x-show="inc.source === 'Citizen Portal'" class="text-[10.5px] font-semibold text-sky-800 bg-sky-50 ring-1 ring-inset ring-sky-200 px-1.5 py-0.5 rounded-full">Resident</span>
                             </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -195,7 +204,7 @@
                                 <i data-lucide="search-x" class="w-5 h-5 text-ink-muted"></i>
                             </span>
                             <p class="text-sm text-ink-muted font-medium">No incidents match your filters.</p>
-                            <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter='';"
+                            <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
                                 class="text-sm text-brand-600 hover:underline mt-1">Clear filters</button>
                         </div>
                     </td>

@@ -119,6 +119,23 @@
                             <dt class="text-xs text-ink-muted flex-shrink-0">Reporter</dt>
                             <dd class="text-xs font-medium text-ink-body text-right" x-text="selectedIncident?.reporter_name || '—'"></dd>
                         </div>
+                        {{-- How to reach the resident who reported it (2026-10-17): the read is audited. --}}
+                        <template x-if="selectedIncident?.reporter">
+                            <div class="space-y-2.5">
+                                <div class="flex items-start justify-between gap-2">
+                                    <dt class="text-xs text-ink-muted flex-shrink-0">Account</dt>
+                                    <dd class="text-xs font-mono text-ink-body text-right" x-text="selectedIncident.reporter.account_no"></dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-2" x-show="selectedIncident.reporter.mobile">
+                                    <dt class="text-xs text-ink-muted flex-shrink-0">Mobile</dt>
+                                    <dd class="text-xs font-medium text-right"><a :href="'tel:' + selectedIncident.reporter.mobile" class="text-brand-700 hover:underline" x-text="selectedIncident.reporter.mobile"></a></dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-2" x-show="selectedIncident.reporter.email">
+                                    <dt class="text-xs text-ink-muted flex-shrink-0">Email</dt>
+                                    <dd class="text-xs font-medium text-ink-body text-right break-all" x-text="selectedIncident.reporter.email"></dd>
+                                </div>
+                            </div>
+                        </template>
                         <div class="flex items-start justify-between gap-2">
                             <dt class="text-xs text-ink-muted flex-shrink-0">Assigned To</dt>
                             <dd class="text-xs font-medium text-ink-body text-right" x-text="selectedIncident?.assigned_name || 'Unassigned'"></dd>
