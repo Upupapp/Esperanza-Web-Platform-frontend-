@@ -79,7 +79,7 @@
                                 <button type="button" @click="openIncident(row)" class="w-full flex items-center gap-3 rounded-2xl border border-brand-600/10 bg-white/70 hover:bg-white px-3.5 py-3 text-left transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
                                     <span class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 grid place-items-center shrink-0"><i :data-lucide="typeIcon(row.type)" class="w-4 h-4"></i></span>
                                     <span class="min-w-0 flex-1">
-                                        <span class="block text-sm font-semibold text-ink truncate" x-text="row.title || typeLabel(row.type)"></span>
+                                        <span class="block text-sm font-semibold text-ink truncate" x-text="typeLabel(row.type) + (row.barangay ? ' · Brgy. ' + row.barangay : '')"></span>
                                         <span class="block text-[11px] text-ink-muted truncate" x-text="[row.ref, fmtDateTime(row.reported)].filter(Boolean).join(' · ')"></span>
                                     </span>
                                     <span class="shrink-0 inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="statusTone(row.status)" x-text="statusLabel(row.status)"></span>
@@ -193,7 +193,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="text-xs font-mono text-ink-muted" x-text="detail.ref"></p>
-                                <p class="text-sm font-semibold text-ink" x-text="detail.title || typeLabel(detail.type)"></p>
+                                <p class="text-sm font-semibold text-ink" x-text="typeLabel(detail.type)"></p>
                             </div>
                             <span class="shrink-0 inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="statusTone(detail.status)" x-text="statusLabel(detail.status)"></span>
                         </div>

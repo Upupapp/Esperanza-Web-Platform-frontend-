@@ -194,7 +194,7 @@
                         serviceKey: r.service_key || null,
                         barangay: r.barangay || null,
                         office: r.office || this.officeByType[r.service] || '',
-                        purpose: '',
+                        purpose: r.purpose || '',
                         days: this.daysByKey[r.service_key] || this.daysByType[r.service] || '3-5 working days',
                         submitted: this.formatDay(r.submitted),
                         submitted_at: r.submitted,
