@@ -18,51 +18,7 @@
                 { icon: 'briefcase', color: 'from-purple-500 to-purple-700' },
                 { icon: 'users', color: 'from-amber-500 to-amber-700' },
             ],
-            // Emergency (2026-10-17): the hotlines and the evacuation centres,
-            // read when the tab is first opened (GET /hotlines, /sakuna/centers).
-            hotlines: [],
-            centres: [],
-            emergencyLoaded: false,
-            emergencyLoading: false,
-            emergencyFailed: false,
-            async loadEmergency() {
-                if (this.emergencyLoaded || this.emergencyLoading) return;
-                this.emergencyLoading = true;
-                this.emergencyFailed = false;
-                try {
-                    const [hotlines, centres] = await Promise.all([
-                        $api.get('/hotlines'),
-                        $api.get('/sakuna/centers', { params: { per_page: 100 } }),
-                    ]);
-                    this.hotlines = hotlines.data || [];
-                    this.centres = centres.data || [];
-                    this.emergencyLoaded = true;
-                } catch {
-                    this.emergencyFailed = true;
-                } finally {
-                    this.emergencyLoading = false;
-                    this.$nextTick(() => window.renderIcons?.());
-                }
-            },
-            telOf(n) { return 'tel:' + String(n || '').replace(/[^0-9+]/g, ''); },
-            // A centre takes evacuees while it is open (Processing); otherwise it stands by.
-            centreOpen(c) { return c.status === 'Processing' || c.status === 'Open'; },
-            centreLabel(c) {
-                const en = this.$store.lang.current === 'en';
-                return this.centreOpen(c) ? (en ? 'Open' : 'Bukas') : (en ? 'On standby' : 'Nakahanda');
-            },
-            get filteredHotlines() {
-                const q = this.search.trim().toLowerCase();
-                return this.hotlines.filter(h => q === '' || [h.office, h.position, h.contact].some(v => String(v || '').toLowerCase().includes(q)));
-            },
-            get filteredCentres() {
-                const q = this.search.trim().toLowerCase();
-                const mine = this.$store.barangay.mine?.label;
-                return this.centres.filter(c => q === '' || [c.name, c.barangay, c.address].some(v => String(v || '').toLowerCase().includes(q)))
-                    .sort((a, b) => (b.barangay === mine) - (a.barangay === mine));
-            },
             async init() {
-                if (new URLSearchParams(window.location.search).get('tab') === 'emergency') { this.tab = 'emergency'; this.loadEmergency(); }
                 this.loading = true;
                 this.failed = false;
                 try {
@@ -127,12 +83,9 @@
                     <button type="button" @click="tab = 'barangays'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <i data-lucide="map-pin" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Barangay" en="Barangays" />
                     </button>
-                    <button type="button" @click="tab = 'emergency'; loadEmergency()" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'emergency' ? 'bg-white text-rose-700 shadow-sm' : 'text-ink-muted hover:text-slate-700'" data-testid="directory-emergency-tab">
-                        <i data-lucide="siren" class="w-3.5 h-3.5"></i><x-ui.t fil="Emergency" en="Emergency" />
-                    </button>
                 </div>
             </div>
-            <p class="text-[11px] text-ink-muted" x-show="!loading && !failed && tab !== 'emergency'" x-text="(tab === 'offices' ? filteredOffices.length + ' ' + ($store.lang.current === 'en' ? 'of ' + offices.length + ' offices' : 'sa ' + offices.length + ' opisina') : filteredBarangays.length + ' ' + ($store.lang.current === 'en' ? 'of ' + barangays.length + ' barangays' : 'sa ' + barangays.length + ' barangay'))"></p>
+            <p class="text-[11px] text-ink-muted" x-show="!loading && !failed" x-text="(tab === 'offices' ? filteredOffices.length + ' ' + ($store.lang.current === 'en' ? 'of ' + offices.length + ' offices' : 'sa ' + offices.length + ' opisina') : filteredBarangays.length + ' ' + ($store.lang.current === 'en' ? 'of ' + barangays.length + ' barangays' : 'sa ' + barangays.length + ' barangay'))"></p>
         </div>
 
         <div x-show="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -175,62 +128,6 @@
                 <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
                 <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Walang natagpuang opisina." en="No offices match your search." /></p>
             </div>
-        </div>
-
-        <!-- Emergency (2026-10-17): hotlines and evacuation centres, with the
-             way to the Emergency page (alerts and incident reports). -->
-        <div x-show="tab === 'emergency'" x-cloak class="space-y-4" data-testid="directory-emergency">
-            <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <div class="min-w-0 flex-1">
-                    <p class="text-sm font-bold text-rose-800"><x-ui.t fil="Sa panganib ngayon? Tumawag sa 911." en="In danger now? Call 911." /></p>
-                    <p class="text-xs text-rose-900/80 mt-0.5"><x-ui.t fil="Para sa baha, sunog, pagguho o aksidente sa inyong lugar, mag-ulat ng insidente para makita ito ng MDRRMO." en="For flooding, fire, a landslide or an accident near you, report an incident so the MDRRMO sees it." /></p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <a href="tel:911" class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 text-white px-3.5 py-2 text-xs font-semibold hover:bg-rose-700"><i data-lucide="phone-call" class="w-3.5 h-3.5"></i>911</a>
-                    <a href="{{ route('citizen.emergency') }}?report=1" class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-rose-300 text-rose-800 px-3.5 py-2 text-xs font-semibold hover:bg-rose-100"><i data-lucide="flag" class="w-3.5 h-3.5"></i><x-ui.t fil="Mag-ulat ng insidente" en="Report an incident" /></a>
-                    <a href="{{ route('citizen.emergency') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 px-3.5 py-2 text-xs font-semibold hover:bg-slate-50"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga babala" en="Alerts" /></a>
-                </div>
-            </div>
-
-            <div x-show="emergencyLoading" class="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-busy="true"><x-ui.skeleton class="h-20 rounded-2xl" /><x-ui.skeleton class="h-20 rounded-2xl opacity-80" /></div>
-            <div x-show="emergencyFailed" x-cloak>
-                <x-ui.error-state messageExpr="($store.lang.current === 'en' ? 'Could not load the hotlines and evacuation centres.' : 'Hindi ma-load ang mga hotline at evacuation center.')" retryExpr="loadEmergency()" :retryable="true" />
-            </div>
-
-            <section x-show="emergencyLoaded" aria-labelledby="dir-hotlines">
-                <h2 id="dir-hotlines" class="text-sm font-bold text-ink flex items-center gap-2 mb-2"><i data-lucide="phone" class="w-4 h-4 text-rose-600"></i><x-ui.t fil="Mga Emergency Hotline" en="Emergency Hotlines" /></h2>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <template x-for="h in filteredHotlines" :key="h.office + h.contact">
-                        <li class="surface-glass rounded-2xl p-3.5 flex items-center gap-3">
-                            <span class="w-10 h-10 shrink-0 rounded-xl bg-rose-50 text-rose-600 grid place-items-center" aria-hidden="true"><i data-lucide="siren" class="w-5 h-5"></i></span>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-semibold text-ink leading-snug" x-text="h.office"></p>
-                                <p class="text-[11px] text-ink-muted" x-text="h.position"></p>
-                            </div>
-                            <a :href="telOf(h.contact)" class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 text-white px-3 py-2 text-xs font-semibold hover:bg-rose-700" :aria-label="($store.lang.current === 'en' ? 'Call ' : 'Tawagan ang ') + h.office + ', ' + h.contact"><i data-lucide="phone" class="w-3.5 h-3.5"></i><span x-text="h.contact"></span></a>
-                        </li>
-                    </template>
-                </ul>
-                <p x-show="!filteredHotlines.length" class="text-xs text-ink-muted"><x-ui.t fil="Walang hotline na tumutugma." en="No hotlines match." /></p>
-            </section>
-
-            <section x-show="emergencyLoaded" aria-labelledby="dir-centres">
-                <h2 id="dir-centres" class="text-sm font-bold text-ink flex items-center gap-2 mb-2"><i data-lucide="house" class="w-4 h-4 text-brand-600"></i><x-ui.t fil="Mga Evacuation Center" en="Evacuation Centres" /></h2>
-                <p class="text-xs text-ink-muted mb-2"><x-ui.t fil="Alamin na ngayon kung saan ang pinakamalapit sa iyo. Ang nasa iyong barangay ang nauuna." en="Know now where your nearest one is. Those in your barangay come first." /></p>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <template x-for="c in filteredCentres" :key="c.ref">
-                        <li class="surface-glass rounded-2xl p-3.5">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="text-sm font-semibold text-ink leading-snug" x-text="c.name"></p>
-                                <span class="shrink-0 text-[10.5px] font-semibold rounded-full px-2 py-0.5 ring-1 ring-inset" :class="centreOpen(c) ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-slate-100 text-slate-600 ring-slate-200'" x-text="centreLabel(c)"></span>
-                            </div>
-                            <p class="text-xs text-ink-muted mt-0.5" x-text="'Brgy. ' + c.barangay + (c.address ? ' · ' + c.address : '')"></p>
-                            <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(c.name + ', ' + (c.address || ('Brgy. ' + c.barangay)) + ', Esperanza, Masbate')" target="_blank" rel="noopener" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"><i data-lucide="navigation" class="w-3.5 h-3.5"></i><x-ui.t fil="Direksyon" en="Directions" /></a>
-                        </li>
-                    </template>
-                </ul>
-                <p x-show="!filteredCentres.length" class="text-xs text-ink-muted"><x-ui.t fil="Walang nakalistang evacuation center sa ngayon. Itanong sa iyong barangay o sa MDRRMO." en="No evacuation centres are listed right now. Ask your barangay or the MDRRMO." /></p>
-            </section>
         </div>
 
         <!-- Barangays -->
