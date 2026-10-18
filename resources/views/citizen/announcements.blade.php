@@ -1,212 +1,63 @@
+{{-- Balita, the resident's side (owner, 2026-10-18: polished, with photos and
+     videos). Logic in resources/js/scope-citizen.js: balitaFeed (the feed,
+     likes, comments, reports, sharing, the author's own posts) and
+     balitaComposer (writing a post); the photo/video picker, the media grid
+     and the viewer are x-balita.* (resources/js/balita-media.js).
+     ?post=ID opens an announcement, ?community=ID a resident's post. --}}
 <x-layouts.citizen title="Balita" subtitle="Latest news from the municipality — and your neighbors." active="announcements">
-    <div
-        x-data="{
-            cat: 'All',
-            loading: true,
-            failed: false,
-            posts: [],
-            events: [],
-            commentDraft: {},
-            reportReason: {},
-            reportOpenFor: null,
-            reportSubmitting: {},
-            // The post a notification opened (?post=ID), highlighted and scrolled to.
-            focusPost: null,
-            fromAnnouncement(a) {
-                return {
-                    kind: 'announcement', id: a.id, author: a.author, barangay: a.barangay, category: a.category,
-                    title: a.title, body: a.body, image_url: a.image_url, official: true, likes: a.likes,
-                    // Sent with the resident's token, the public feed says which
-                    // announcements they liked (null only for an anonymous read).
-                    comments_count: a.comments_count, liked_by_me: a.liked_by_me === true, mine: false, visible: true,
-                    at: a.published_at, comments: null, showComments: false,
-                };
-            },
-            fromCommunity(p) {
-                return {
-                    kind: 'community', id: p.id, author: p.author, barangay: p.barangay, category: p.category,
-                    title: null, body: p.body, image_url: p.image_url, official: false, likes: p.likes,
-                    comments_count: p.comments_count, liked_by_me: p.liked_by_me, mine: p.mine, visible: p.visible,
-                    at: p.created_at, comments: null, showComments: false,
-                };
-            },
-            // The resident's own new post (POST /citizen/community-posts): held
-            // for review, so it leads the feed as theirs with its Pending
-            // review label, seen by no one else until an officer approves it.
-            addMyPost(p) {
-                if (!p || p.id === undefined) return;
-                const post = this.fromCommunity({ ...p, mine: true, visible: p.visible === true });
-                this.posts = [post, ...this.posts.filter((x) => !(x.kind === 'community' && x.id === p.id))];
-                if (!['All', 'Community', 'MyBarangay'].includes(this.cat)) this.cat = 'All';
-                this.$nextTick(() => window.renderIcons?.());
-            },
-            // A New in Balita notification opens /citizen/announcements?post=ID
-            // (Esperanza QA, 2026-10-07): that post is shown even when it is
-            // older than the first page, and the page scrolls to it.
-            async openLinkedPost() {
-                const want = Number(new URLSearchParams(window.location.search).get('post'));
-                if (!want) return;
-                if (!this.posts.some((p) => p.kind === 'announcement' && p.id === want)) {
-                    try {
-                        const one = await $api.get('/announcements/' + want);
-                        if (one.data) this.posts.unshift(this.fromAnnouncement(one.data));
-                    } catch { return; }
-                }
-                this.cat = 'All';
-                this.focusPost = 'announcement-' + want;
-                this.$nextTick(() => document.getElementById('post-announcement-' + want)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-            },
-            async init() {
-                this.loading = true;
-                this.failed = false;
-                try {
-                    // The resident's own engagement lives under /citizen (likes,
-                    // comments, the community feed); only the announcement and
-                    // event reads are public. The community feed failing must not
-                    // blank the official announcements, so it fails on its own.
-                    const [ann, comm, ev] = await Promise.all([
-                        $api.get('/announcements', { params: { per_page: 30 } }),
-                        $api.get('/citizen/community-posts', { params: { per_page: 30 } }).catch(() => ({ data: [] })),
-                        $api.get('/events', { params: { per_page: 4, from: new Date().toISOString().slice(0, 10) } }).catch(() => ({ data: [] })),
-                    ]);
-                    const annPosts = (ann.data || []).map(a => this.fromAnnouncement(a));
-                    const commPosts = (comm.data || []).map(p => this.fromCommunity(p));
-                    this.posts = [...annPosts, ...commPosts].sort((a, b) => new Date(b.at) - new Date(a.at));
-                    this.events = ev.data || [];
-                } catch { this.failed = true; } finally { this.loading = false; }
-                await this.openLinkedPost();
-            },
-            get categories() { return [...new Set(this.posts.map(p => p.category).filter(Boolean))].sort(); },
-            matchesCat(post) {
-                if (this.cat === 'MyBarangay') return post.barangay === this.$store.citizenSession.account?.barangay;
-                return this.cat === 'All' || (this.cat === 'Official' && post.official) || (this.cat === 'Community' && !post.official) || this.cat === post.category;
-            },
-            get filteredPostCount() { return this.posts.filter(p => this.matchesCat(p)).length; },
-            get recentPosts() { return this.posts.slice(0, 4); },
-            get trendingPosts() { return [...this.posts].sort((a, b) => b.likes - a.likes).slice(0, 3); },
-            initials(name) { return (name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); },
-            fmtTime(iso) {
-                if (!iso) return '';
-                const d = new Date(iso);
-                const mins = Math.round((Date.now() - d.getTime()) / 60000);
-                if (mins < 1) return $store.lang.current === 'en' ? 'Just now' : 'Ngayon lang';
-                if (mins < 60) return mins + (mins === 1 ? (this.$store.lang.current === 'en' ? ' min ago' : ' minuto ang nakalipas') : (this.$store.lang.current === 'en' ? ' mins ago' : ' minuto ang nakalipas'));
-                const hrs = Math.round(mins / 60);
-                if (hrs < 24) return hrs + (this.$store.lang.current === 'en' ? ' hrs ago' : ' oras ang nakalipas');
-                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            },
-            engagementPath(post, action) {
-                return (post.kind === 'announcement' ? '/citizen/announcements/' : '/citizen/community-posts/') + post.id + '/' + action;
-            },
-            async toggleLike(post) {
-                const endpoint = this.engagementPath(post, 'like');
-                try {
-                    const res = await $api.post(endpoint);
-                    post.liked_by_me = res.data.liked;
-                    post.likes = res.data.likes;
-                } catch (err) {
-                    this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not like this.', variant: 'error' });
-                }
-            },
-            async toggleComments(post) {
-                post.showComments = !post.showComments;
-                if (post.showComments && post.comments === null) {
-                    await this.loadComments(post);
-                }
-            },
-            async loadComments(post) {
-                const endpoint = this.engagementPath(post, 'comments');
-                try {
-                    const res = await $api.get(endpoint, { params: { per_page: 50 } });
-                    post.comments = res.data || [];
-                } catch { post.comments = []; }
-            },
-            async addComment(post) {
-                const text = (this.commentDraft[post.id] || '').trim();
-                if (!text) return;
-                const endpoint = this.engagementPath(post, 'comments');
-                try {
-                    const res = await $api.post(endpoint, { body: text });
-                    if (post.comments === null) post.comments = [];
-                    post.comments.push(res.data);
-                    post.comments_count++;
-                    this.commentDraft[post.id] = '';
-                    this.$nextTick(() => window.renderIcons?.());
-                } catch (err) {
-                    this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not post your comment.', variant: 'error' });
-                }
-            },
-            async submitReport(post) {
-                const reason = (this.reportReason[post.id] || '').trim();
-                if (!reason || this.reportSubmitting[post.id]) return;
-                this.reportSubmitting[post.id] = true;
-                try {
-                    await $api.post(this.engagementPath(post, 'report'), { reason });
-                    this.reportOpenFor = null;
-                    this.reportReason[post.id] = '';
-                    this.$dispatch('toast', { message: 'Naiulat ang post na ito sa LGU.', variant: 'success' });
-                } catch (err) {
-                    this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not report this post.', variant: 'error' });
-                } finally { this.reportSubmitting[post.id] = false; }
-            },
-            postsToday(author) {
-                const today = new Date().toDateString();
-                return this.posts.filter(p => p.author === author && p.at && new Date(p.at).toDateString() === today).length;
-            },
-        }"
-        {{-- No x-init="init()": Alpine runs init() by itself (every list loaded twice). --}}
-        class="animate-fade-up max-w-6xl mx-auto"
-    >
+    <div x-data="balitaFeed" class="animate-fade-up max-w-6xl mx-auto">
         <x-ui.page-intro id="balita-feed" icon="users-round" title="Manatiling Updated sa Balita" titleEn="Stay Updated with Balita">
             <x-ui.t
-                fil="Tingnan ang mga balita, larawan, o video mula sa munisipyo at kapwa residente. I-like o i-comment ang mga post."
-                en="See news, photos, and videos from the municipality and fellow residents. Like or comment on posts."
+                fil="Mga balita, larawan, at video mula sa munisipyo at kapwa residente. I-like, i-comment, o ibahagi ang mga post."
+                en="News, photos, and videos from the municipality and fellow residents. Like, comment on, or share posts."
             />
         </x-ui.page-intro>
 
-        <div x-show="loading" class="space-y-3"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-40 opacity-80" /></div>
-        <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load Balita.'" retryExpr="init()" :retryable="true" /></div>
+        <div x-show="loading" class="space-y-3"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-56 opacity-80" /></div>
+        <div x-show="failed" x-cloak><x-ui.error-state messageExpr="$store.lang.current === 'en' ? 'Could not load Balita.' : 'Hindi ma-load ang Balita.'" retryExpr="loadFirst()" :retryable="true" /></div>
 
-        <div x-show="!loading && !failed" class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-5 items-start">
-            <!-- Main column -->
+        <div x-show="!loading && !failed" x-cloak class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-5 items-start">
             <div class="min-w-0">
-                <!-- Category filter -->
-                <div class="surface-glass rounded-[26px] p-3 mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
-                    <template x-for="c in ['All', 'Official', 'Community', ...categories]" :key="c">
-                        <button
-                            @click="cat = c"
-                            class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap"
-                            :class="cat === c ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
-                            x-text="c === 'All' ? ($store.lang.current === 'en' ? 'All' : 'Lahat') : (c === 'Official' ? ($store.lang.current === 'en' ? 'Official' : 'Opisyal') : (c === 'Community' ? ($store.lang.current === 'en' ? 'Community' : 'Komunidad') : c))"
-                        ></button>
-                    </template>
-                    <button
-                        x-show="$store.barangay.mine" x-cloak
-                        @click="cat = 'MyBarangay'"
-                        class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap flex items-center gap-1"
-                        :class="cat === 'MyBarangay' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
-                    ><i data-lucide="map-pinned" class="w-3 h-3"></i><x-ui.t fil="Barangay" en="Barangay" /></button>
-                </div>
-                <p class="text-[11px] text-ink-muted shrink-0" x-text="filteredPostCount + ' ' + ($store.lang.current === 'en' ? 'of ' + posts.length + ' posts' : 'sa ' + posts.length + ' post')"></p>
+                {{-- What to show --}}
+                <div class="surface-glass rounded-[26px] p-3 mb-3 space-y-2.5">
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 overflow-x-auto scrollbar-thin" role="tablist" :aria-label="t('Show posts', 'Ipakita ang mga post')">
+                        <template x-for="[key, en, fil, icon] in tabs" :key="key">
+                            <button type="button" role="tab" :aria-selected="tab === key" @click="tab = key"
+                                x-show="key !== 'barangay' || $store.citizenSession.account?.barangay"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11.5px] font-medium rounded-xl transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
+                                :class="tab === key ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-ink'">
+                                <i :data-lucide="icon" class="w-3.5 h-3.5"></i><span x-text="t(en, fil)"></span>
+                            </button>
+                        </template>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <label class="flex items-center gap-2 text-[11.5px] text-ink-muted">
+                            <span x-text="t('Category', 'Kategorya')"></span>
+                            <select x-model="category" class="min-h-[36px] rounded-xl border-0 surface-pressed-sm px-3 text-xs text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                <option value="" x-text="t('All categories', 'Lahat ng kategorya')"></option>
+                                <template x-for="[value, fil] in categories" :key="value"><option :value="value" x-text="t(value, fil)" :selected="value === category"></option></template>
+                            </select>
+                        </label>
+                        <p class="text-[11px] text-ink-muted" x-text="shown.length + ' ' + t(shown.length === 1 ? 'post' : 'posts', 'post')" aria-live="polite"></p>
+                    </div>
                 </div>
 
-                <!-- Write a post: held for review before others see it (the app's New Post). -->
+                {{-- Write a post: held for review before others see it. --}}
                 <div x-data="balitaComposer" x-show="$store.citizenSession.account?.capabilities?.community_post !== false" class="surface-glass rounded-[26px] p-3.5 mb-3">
                     <div class="flex items-center gap-3">
                         <x-citizen.avatar class="w-10 h-10 text-sm shrink-0" />
                         <button type="button" @click="openComposer()" class="flex-1 min-h-[44px] text-left rounded-2xl surface-pressed px-4 text-sm text-ink-muted hover:text-ink transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
                             <x-ui.t fil="May nais ka bang ibahagi sa komunidad?" en="Something to share with the community?" />
                         </button>
-                        <x-ui.button size="sm" icon="square-pen" @click="openComposer()" class="shrink-0"><x-ui.t fil="Mag-post" en="Post" /></x-ui.button>
+                        <x-ui.button size="sm" icon="image-plus" @click="openComposer()" class="shrink-0"><x-ui.t fil="Mag-post" en="Post" /></x-ui.button>
                     </div>
 
                     <div x-data="{ get open() { return composeOpen }, set open(v) { composeOpen = v } }">
-                        <x-ui.modal title="Bagong Post" titleEn="New Post" maxWidth="sm">
+                        <x-ui.modal title="Bagong Post" titleEn="New Post" maxWidth="lg">
                             <form @submit.prevent="sendPost((p) => addMyPost(p))" class="space-y-4" novalidate>
                                 <p class="flex items-start gap-2 rounded-2xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 text-xs text-brand-800">
                                     <i data-lucide="shield-check" class="w-4 h-4 shrink-0"></i>
-                                    <x-ui.t fil="Sinusuri ng Esperanza LGU ang iyong post bago ito makita ng ibang residente. Makikita mo agad ito na may markang Hinihintay ang pag-apruba, at ikaw lang ang nakakakita nito hanggang doon." en="Your post is reviewed by Esperanza LGU before it appears to other residents. You will see it right away marked Pending review, and only you can see it until then." />
+                                    <x-ui.t fil="Sinusuri ng Esperanza LGU ang iyong post bago ito makita ng ibang residente. Makikita mo agad ito, at sasabihan ka kapag na-publish na." en="Esperanza LGU reviews your post before other residents see it. You will see it right away, and you will be told once it is published." />
                                 </p>
                                 <label class="block">
                                     <span class="block text-xs font-semibold text-ink mb-1.5"><x-ui.t fil="Kategorya" en="Category" /></span>
@@ -219,25 +70,17 @@
                                     <textarea x-model="body" rows="5" maxlength="2000"
                                         :placeholder="$store.lang.current === 'en' ? 'News, an update, or something happening in your barangay...' : 'Balita, update, o nangyayari sa iyong barangay...'"
                                         class="w-full rounded-2xl border-0 surface-pressed px-3.5 py-2.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
-                                    <span class="block text-right text-[11px] text-ink-muted" x-text="body.length + ' / 2000'"></span>
+                                    <span class="block text-right text-[11px] text-ink-muted tabular-nums" x-text="body.length + ' / 2000'"></span>
                                 </label>
-                                <div>
-                                    <p class="text-xs font-semibold text-ink mb-1.5"><x-ui.t fil="Larawan (opsyonal)" en="Photo (optional)" /></p>
-                                    <div x-show="imagePreview" x-cloak class="relative w-full max-w-[220px] rounded-xl overflow-hidden border border-slate-200">
-                                        <img :src="imagePreview" alt="" class="w-full h-auto">
-                                        <button type="button" @click="clearImage()" :aria-label="$store.lang.current === 'en' ? 'Remove photo' : 'Alisin ang larawan'" class="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-navy-950/70 text-white grid place-items-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-                                    </div>
-                                    <label x-show="!imagePreview" class="inline-flex items-center gap-2 min-h-[40px] px-3.5 rounded-2xl surface-glass-sm text-xs font-semibold text-ink-body hover:bg-white/90 cursor-pointer">
-                                        <i data-lucide="image-plus" class="w-4 h-4"></i><x-ui.t fil="Maglakip ng larawan" en="Attach a photo" />
-                                        <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp" @change="pickImage($event.target.files[0]); $event.target.value = ''">
-                                    </label>
-                                </div>
+                                <template x-for="d in [draft]" :key="d">
+                                    <x-balita.media-field base="/citizen/balita" model="media" />
+                                </template>
                                 <p x-show="error" x-cloak role="alert" class="rounded-2xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs text-rose-800" x-text="error"></p>
-                                <button type="submit" :disabled="posting" :aria-busy="posting"
+                                <button type="submit" :disabled="!canPost" :aria-busy="posting"
                                     class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-2xl text-sm font-semibold clay-blue btn-shine hover:brightness-95 disabled:opacity-60">
-                                    <span x-show="posting" x-cloak><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i></span>
-                                    <span x-show="!posting"><i data-lucide="send" class="w-4 h-4"></i></span>
-                                    <span x-text="posting ? ($store.lang.current === 'en' ? 'Posting…' : 'Ipino-post…') : ($store.lang.current === 'en' ? 'Post' : 'I-post')"></span>
+                                    <span x-show="posting || media.busy" x-cloak><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i></span>
+                                    <span x-show="!posting && !media.busy"><i data-lucide="send" class="w-4 h-4"></i></span>
+                                    <span x-text="posting ? t('Posting…', 'Ipino-post…') : (media.busy ? t('Uploading…', 'Ina-upload…') : t('Post', 'I-post'))"></span>
                                 </button>
                             </form>
                             <x-slot:footer>
@@ -247,220 +90,184 @@
                     </div>
                 </div>
 
-                <!-- Feed -->
+                <p x-show="communityFailed" x-cloak role="status" class="mb-3 rounded-2xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-900 flex items-center gap-2">
+                    <i data-lucide="wifi-off" class="w-4 h-4 shrink-0"></i>
+                    <span x-text="t('Residents’ posts could not be loaded right now. The municipality’s posts are shown.', 'Hindi ma-load ang mga post ng residente ngayon. Ipinapakita ang mga post ng munisipyo.')"></span>
+                    <button type="button" @click="loadFirst()" class="ml-auto font-semibold underline underline-offset-2" x-text="t('Try again', 'Subukang muli')"></button>
+                </p>
+
+                {{-- The feed --}}
                 <div class="space-y-3">
-                    <template x-for="post in posts" :key="post.kind + post.id">
-                        <div
-                            x-show="matchesCat(post)"
-                            :id="'post-' + post.kind + '-' + post.id"
-                            class="surface-glass rounded-[26px] scroll-mt-24"
-                            :class="focusPost === post.kind + '-' + post.id && 'ring-2 ring-brand-400'"
-                        >
-                            <!-- Header -->
-                            <div class="flex items-center gap-2.5 p-3.5 pb-2.5">
-                                <div class="relative shrink-0" x-data="{ showCard: false }" @mouseenter="showCard = true" @mouseleave="showCard = false">
-                                    <img :src="'{{ asset('images/esperanza/esperanza-seal-128.png') }}'" x-show="post.official" alt="Official Municipality of Esperanza post" class="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm cursor-pointer">
-                                    <div x-show="!post.official" class="w-9 h-9 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold text-xs cursor-pointer">
-                                        <span x-text="initials(post.author)"></span>
-                                    </div>
-
-                                    <!-- Hover profile card -->
-                                    <div
-                                        x-show="showCard"
-                                        x-transition:enter="transition duration-[160ms] ease-standard"
-                                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                        x-cloak
-                                        class="absolute left-0 top-full mt-2 z-20 w-64 surface-glass rounded-[22px] shadow-float border-white/90 p-4"
-                                    >
-                                        <div class="flex items-center gap-3 mb-3">
-                                            <img :src="'{{ asset('images/esperanza/esperanza-seal-128.png') }}'" x-show="post.official" alt="Official Municipality of Esperanza post" class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0">
-                                            <div x-show="!post.official" class="w-12 h-12 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-sm">
-                                                <span x-text="initials(post.author)"></span>
-                                            </div>
-                                            <div class="min-w-0">
-                                                <p class="text-sm font-semibold text-ink flex items-center gap-1 truncate">
-                                                    <span x-text="post.author"></span>
-                                                    <i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500 shrink-0" x-show="post.official"></i>
-                                                </p>
-                                                <p class="text-xs text-ink-muted truncate" x-text="post.official ? 'Opisyal na Account ng LGU' : ('Residente — Brgy. ' + post.barangay)"></p>
-                                            </div>
-                                        </div>
-                                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 px-3 py-2.5 flex items-center gap-2.5">
-                                            <span class="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="calendar-check" class="w-3.5 h-3.5"></i></span>
-                                            <p class="text-xs text-slate-600 leading-snug">
-                                                <template x-if="postsToday(post.author) > 0">
-                                                    <span><span class="font-semibold text-ink" x-text="postsToday(post.author)"></span> <x-ui.t fil="post ngayong araw" en="post(s) today" /></span>
-                                                </template>
-                                                <template x-if="postsToday(post.author) === 0">
-                                                    <x-ui.t fil="Walang bagong post ngayong araw" en="No new posts today" />
-                                                </template>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                    <template x-for="post in shown" :key="post.key">
+                        <article :id="'post-' + post.key" class="surface-glass rounded-[26px] overflow-hidden scroll-mt-24"
+                            :class="focusKey === post.key && 'ring-2 ring-brand-400'"
+                            :aria-label="(post.title || post.author) + ', ' + fmtTime(post.at)">
+                            {{-- Who and when --}}
+                            <header class="flex items-center gap-2.5 p-3.5 pb-2.5">
+                                <img x-show="post.official" src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0">
+                                <div x-show="!post.official" class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center text-xs shrink-0" aria-hidden="true"><span x-text="initials(post.author)"></span></div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-semibold text-ink flex items-center gap-1.5 truncate">
-                                        <span x-text="post.author"></span>
-                                        <i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500 shrink-0" x-show="post.official"></i>
+                                    <p class="text-sm font-semibold text-ink flex items-center gap-1.5 min-w-0">
+                                        <span class="truncate" x-text="post.author"></span>
+                                        <i x-show="post.official" data-lucide="badge-check" class="w-4 h-4 text-brand-500 shrink-0" :aria-label="t('Official Esperanza LGU account', 'Opisyal na account ng Esperanza LGU')"></i>
                                     </p>
-                                    <p class="text-[11px] text-ink-muted" x-text="(post.barangay ? 'Brgy. ' + post.barangay + ' · ' : '') + fmtTime(post.at) + (post.mine && !post.visible ? ' · ' + ($store.lang.current === 'en' ? 'Pending review — only visible to you' : 'Hinihintay ang pag-apruba — ikaw lang ang nakakakita nito') : '')"></p>
+                                    <p class="text-[11px] text-ink-muted flex flex-wrap items-center gap-x-1.5">
+                                        <span x-text="whereLine(post)"></span>
+                                        <span x-show="post.category" class="inline-flex px-1.5 py-px rounded-full bg-slate-100 text-ink-body text-[10px] font-semibold" x-text="categoryLabel(post.category)"></span>
+                                    </p>
                                 </div>
 
-                                <!-- Post options -->
-                                <div class="relative shrink-0" x-show="post.kind === 'community' && !post.mine" x-data="{ menuOpen: false }" @click.outside="menuOpen = false; reportOpenFor === post.id && (reportOpenFor = null)">
-                                    <button aria-label="More options"
-                                        type="button" @click="menuOpen = !menuOpen"
-                                        class="w-8 h-8 rounded-full flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                                    ><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
-                                    <div
-                                        x-show="menuOpen"
-                                        x-transition:enter="transition duration-[160ms] ease-standard"
-                                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                        x-cloak
-                                        class="absolute right-0 top-full mt-1 z-20 w-56 surface-glass rounded-[22px] shadow-float border-white/90 p-1.5"
-                                    >
-                                        <template x-if="reportOpenFor !== post.id">
-                                            <button
-                                                type="button"
-                                                @click="reportOpenFor = post.id"
-                                                class="w-full flex items-center gap-2.5 px-2 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 rounded-2xl transition-colors"
-                                            ><i data-lucide="flag" class="w-4 h-4"></i><x-ui.t fil="I-ulat" en="Report" /></button>
-                                        </template>
-                                        <template x-if="reportOpenFor === post.id">
-                                            <div class="p-1">
-                                                <label class="block text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Reason</label>
-                                                <textarea aria-label="Reason for report" x-model="reportReason[post.id]" rows="2" placeholder="Bakit mo ini-report ang post na ito?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
-                                                <div class="flex items-center justify-end gap-2 mt-1.5">
-                                                    <button type="button" @click="reportOpenFor = null; menuOpen = false" class="text-[11px] text-ink-muted hover:text-slate-600">Cancel</button>
-                                                    <button type="button" :disabled="!((reportReason[post.id]||'').trim()) || reportSubmitting[post.id]" @click="submitReport(post); menuOpen = false" class="text-[11px] font-medium text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl px-2.5 py-1">Submit</button>
-                                                </div>
-                                            </div>
-                                        </template>
+                                {{-- Report someone else's post; delete one's own --}}
+                                <div class="relative shrink-0" x-show="post.kind === 'community'" x-data="{ menu: false }" @click.outside="menu = false" @keydown.escape="menu = false">
+                                    <button type="button" @click="menu = !menu" :aria-expanded="menu" :aria-label="t('More options', 'Iba pang opsyon')"
+                                        class="w-9 h-9 rounded-full flex items-center justify-center text-ink-muted hover:bg-slate-100 hover:text-ink transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"><i data-lucide="ellipsis" class="w-4 h-4"></i></button>
+                                    <div x-show="menu" x-cloak x-transition.opacity class="absolute right-0 top-full mt-1 z-20 w-52 surface-glass rounded-[18px] shadow-float border-white/90 p-1.5">
+                                        <button x-show="!post.mine && canEngage(post)" type="button" @click="menu = false; openReport(post)" class="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-sm text-rose-700 hover:bg-rose-50 rounded-xl"><i data-lucide="flag" class="w-4 h-4"></i><span x-text="t('Report', 'I-report')"></span></button>
+                                        <button x-show="post.mine" type="button" @click="menu = false; deleteFor = post.key" class="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-sm text-rose-700 hover:bg-rose-50 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i><span x-text="t('Delete post', 'Burahin ang post')"></span></button>
                                     </div>
                                 </div>
+                            </header>
+
+                            {{-- The author's own post: where it stands, and why --}}
+                            <template x-if="stateNote(post)">
+                                <p class="mx-3.5 mb-2.5 flex items-start gap-2 rounded-2xl border px-3 py-2 text-xs" :class="stateNote(post).tone" role="status">
+                                    <i :data-lucide="stateNote(post).icon" class="w-4 h-4 shrink-0 mt-px"></i><span x-text="stateNote(post).text"></span>
+                                </p>
+                            </template>
+
+                            {{-- Confirm deleting one's own post --}}
+                            <div x-show="deleteFor === post.key" x-cloak class="mx-3.5 mb-2.5 rounded-2xl border border-rose-200 bg-rose-50 px-3.5 py-3" role="alertdialog" :aria-label="t('Delete this post?', 'Burahin ang post na ito?')">
+                                <p class="text-xs font-semibold text-rose-900" x-text="t('Delete this post? It is removed for everyone, with its photos and videos.', 'Burahin ang post na ito? Mawawala ito sa lahat, kasama ang mga larawan at video nito.')"></p>
+                                <div class="flex justify-end gap-2 mt-2">
+                                    <button type="button" @click="deleteFor = null" class="px-3 py-1.5 rounded-xl text-xs font-medium text-ink-body hover:bg-white" x-text="t('Keep it', 'Huwag burahin')"></button>
+                                    <button type="button" @click="deletePost(post)" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700" x-text="t('Delete', 'Burahin')"></button>
+                                </div>
                             </div>
 
-                            <!-- Title (an LGU announcement has one) and body -->
-                            <p x-show="post.title" class="px-3.5 pb-1 text-sm font-semibold text-ink leading-snug" x-text="post.title"></p>
-                            <p class="px-3.5 pb-2.5 text-[13px] text-slate-700 leading-relaxed whitespace-pre-line" x-text="post.body"></p>
+                            {{-- Report someone else's post --}}
+                            <form x-show="reportFor === post.key" x-cloak @submit.prevent="submitReport(post)" class="mx-3.5 mb-2.5 rounded-2xl border border-rose-200 bg-rose-50/70 px-3.5 py-3 space-y-2">
+                                <label :for="'report-' + post.key" class="block text-xs font-semibold text-rose-900" x-text="t('Why are you reporting this post?', 'Bakit mo ito iniuulat?')"></label>
+                                <textarea :id="'report-' + post.key" x-model="reportReason" rows="2" maxlength="255" class="w-full text-xs rounded-xl border border-rose-200 bg-white px-2.5 py-2 focus:ring-4 focus:ring-rose-100 outline-none"></textarea>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-[10.5px] text-rose-800/80 tabular-nums" x-text="reportReason.length + ' / 255'"></span>
+                                    <div class="flex gap-2">
+                                        <button type="button" @click="reportFor = null" class="px-3 py-1.5 rounded-xl text-xs font-medium text-ink-body hover:bg-white" x-text="t('Cancel', 'Kanselahin')"></button>
+                                        <button type="submit" :disabled="!reportReason.trim() || reportBusy" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50" x-text="t('Send report', 'Ipadala ang ulat')"></button>
+                                    </div>
+                                </div>
+                            </form>
 
-                            <!-- Media: at most one attached image, per the real post schema -->
-                            <div class="bg-slate-100" x-show="post.image_url">
-                                <img :src="post.image_url" alt="" class="w-full max-h-72 object-cover">
+                            {{-- Title, text, photos and videos --}}
+                            <h2 x-show="post.title" class="px-3.5 pb-1 text-[15px] font-bold text-ink leading-snug" x-text="post.title"></h2>
+                            <div x-show="post.body" class="px-3.5 pb-2.5">
+                                <p class="text-[13.5px] text-slate-700 leading-relaxed whitespace-pre-line break-words" :class="!post.expanded && isLong(post) && 'line-clamp-6'" x-text="post.body"></p>
+                                <button x-show="isLong(post)" type="button" @click="post.expanded = !post.expanded" class="mt-1 text-xs font-semibold text-brand-700 hover:underline" x-text="post.expanded ? t('See less', 'Mas kaunti') : t('See more', 'Tingnan pa')"></button>
                             </div>
+                            <x-balita.gallery media="post.media" label="mediaLabel(post)" />
 
-                            <!-- Stats -->
-                            <div class="flex items-center justify-between px-3.5 pt-2.5 text-[11px] text-ink-muted" x-show="post.likes > 0 || post.comments_count > 0">
+                            {{-- Counts --}}
+                            <div x-show="canEngage(post) && (post.likes > 0 || post.comments_count > 0)" class="flex items-center justify-between px-3.5 pt-2.5 text-[11px] text-ink-muted">
                                 <span class="flex items-center gap-1" x-show="post.likes > 0">
-                                    <span class="w-3.5 h-3.5 rounded-full bg-rose-500 flex items-center justify-center"><i data-lucide="heart" class="w-2 h-2 text-white" style="fill: white;"></i></span>
+                                    <span class="w-4 h-4 rounded-full bg-rose-500 flex items-center justify-center"><i data-lucide="heart" class="w-2.5 h-2.5 text-white" style="fill: white;"></i></span>
                                     <span x-text="post.likes"></span>
                                 </span>
-                                <button @click="toggleComments(post)" class="hover:underline" x-show="post.comments_count > 0">
-                                    <span x-text="post.comments_count"></span> <x-ui.t fil="komento" en="comments" />
+                                <button type="button" @click="toggleComments(post)" class="hover:underline ml-auto" x-show="post.comments_count > 0" x-text="post.comments_count + ' ' + t(post.comments_count === 1 ? 'comment' : 'comments', 'komento')"></button>
+                            </div>
+
+                            {{-- Like, comment, share: only once it is live --}}
+                            <div x-show="canEngage(post)" class="grid grid-cols-3 gap-1 px-2.5 py-1.5 mt-1.5 border-t border-brand-600/10">
+                                <button type="button" @click="toggleLike(post)" :aria-pressed="post.liked_by_me" :disabled="post.liking"
+                                    class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
+                                    :class="post.liked_by_me ? 'text-rose-600' : 'text-ink-muted'">
+                                    <i data-lucide="heart" class="w-4 h-4 transition-transform" :class="post.liked_by_me && 'scale-110'" :style="post.liked_by_me ? 'fill: currentColor' : ''"></i>
+                                    <span x-text="t('Like', 'Gusto')"></span>
+                                </button>
+                                <button type="button" @click="toggleComments(post)" :aria-expanded="post.showComments" class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors text-ink-muted focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i><span x-text="t('Comment', 'Komento')"></span>
+                                </button>
+                                <button type="button" @click="share(post)" class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors text-ink-muted focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
+                                    <i data-lucide="share-2" class="w-4 h-4"></i><span x-text="t('Share', 'Ibahagi')"></span>
                                 </button>
                             </div>
 
-                            <!-- Actions -->
-                            <div class="grid grid-cols-2 gap-1 px-2.5 py-1.5 mt-1.5 border-t border-brand-600/10">
-                                <button
-                                    @click="toggleLike(post)"
-                                    class="flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-xl hover:bg-white/60 transition-colors"
-                                    :class="post.liked_by_me ? 'text-rose-600' : 'text-ink-muted'"
-                                >
-                                    <i data-lucide="heart" class="w-4 h-4 transition-transform" :class="post.liked_by_me && 'scale-125'" :style="post.liked_by_me ? 'fill: currentColor' : ''"></i>
-                                    <x-ui.t fil="Gusto" en="Like" />
-                                </button>
-                                <button @click="toggleComments(post)" class="flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 rounded-xl hover:bg-white/60 transition-colors text-ink-muted">
-                                    <i data-lucide="message-circle" class="w-4 h-4"></i><x-ui.t fil="Komento" en="Comment" />
-                                </button>
-                            </div>
-
-                            <!-- Comments -->
-                            <div x-show="post.showComments" x-cloak x-transition class="bg-slate-50/70 border-t border-brand-600/10 px-3.5 py-3 space-y-3">
-                                <template x-if="post.comments === null">
-                                    <p class="text-[11px] text-ink-muted text-center py-2">Loading…</p>
-                                </template>
+                            {{-- Comments --}}
+                            <div x-show="post.showComments" x-cloak class="bg-slate-50/70 border-t border-brand-600/10 px-3.5 py-3 space-y-3">
+                                <p x-show="post.comments === null" class="text-[11px] text-ink-muted text-center py-2" x-text="t('Loading…', 'Naglo-load…')"></p>
                                 <template x-for="c in (post.comments || [])" :key="c.id">
                                     <div class="flex items-start gap-2.5">
-                                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 text-white flex items-center justify-center font-semibold shrink-0 text-[10px] mt-0.5">
-                                            <span x-text="initials(c.author)"></span>
-                                        </div>
+                                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 text-white flex items-center justify-center font-semibold shrink-0 text-[10px] mt-0.5" aria-hidden="true"><span x-text="initials(c.author)"></span></div>
                                         <div class="min-w-0 flex-1">
-                                            <div class="bg-white hover:shadow-card rounded-2xl px-3.5 py-2 inline-block max-w-full border border-brand-600/10 transition-shadow duration-[220ms] ease-standard">
+                                            <div class="bg-white rounded-2xl px-3.5 py-2 inline-block max-w-full border border-brand-600/10">
                                                 <p class="text-[11px] font-semibold text-ink" x-text="c.author"></p>
-                                                <p class="text-xs text-slate-600 mt-0.5 leading-snug" x-text="c.body"></p>
+                                                <p class="text-xs text-slate-700 mt-0.5 leading-snug whitespace-pre-line break-words" x-text="c.body"></p>
                                             </div>
                                             <div class="flex items-center gap-3 mt-1 ml-1">
-                                                <span class="text-[10.5px] text-ink-faint" x-text="fmtTime(c.created_at)"></span>
+                                                <span class="text-[10.5px] text-ink-muted" x-text="fmtTime(c.created_at)"></span>
+                                                <button x-show="c.mine" type="button" @click="deleteComment(post, c)" class="text-[10.5px] font-semibold text-rose-700 hover:underline" x-text="t('Delete', 'Burahin')"></button>
                                             </div>
                                         </div>
                                     </div>
                                 </template>
-                                <template x-if="post.comments !== null && post.comments.length === 0">
-                                    <p class="text-[11px] text-ink-muted text-center py-2"><x-ui.t fil="Wala pang komento." en="No comments yet." /></p>
-                                </template>
+                                <button x-show="post.commentsMore" type="button" @click="loadComments(post, true)" class="text-[11px] font-semibold text-brand-700 hover:underline" x-text="t('Show more comments', 'Ipakita ang iba pang komento')"></button>
+                                <p x-show="post.comments !== null && post.comments.length === 0" class="text-[11px] text-ink-muted text-center py-2" x-text="t('No comments yet. Be the first.', 'Wala pang komento. Ikaw ang mauna.')"></p>
 
-                                <div class="flex items-center gap-2.5">
+                                <form @submit.prevent="addComment(post)" class="flex items-center gap-2.5">
                                     <x-citizen.avatar class="w-7 h-7 text-[10px]" />
                                     <div class="flex-1 relative">
-                                        <input aria-label="Comment draft"
-                                            type="text"
-                                            x-model="commentDraft[post.id]"
-                                            @keydown.enter="addComment(post)"
-                                            x-bind:placeholder="$store.lang.current === 'en' ? 'Write a comment...' : 'Sumulat ng komento...'"
-                                            class="w-full rounded-full py-2 pl-4 pr-10 text-xs text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm"
-                                        >
-                                        <button aria-label="Send"
-                                            type="button" @click="addComment(post)"
-                                            class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-brand-500 hover:bg-brand-50 hover:text-brand-700 transition-colors"
-                                        ><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
+                                        <input type="text" :id="'comment-' + post.key" x-model="commentDraft[post.key]" maxlength="1000"
+                                            :aria-label="t('Write a comment', 'Sumulat ng komento')"
+                                            :placeholder="t('Write a comment…', 'Sumulat ng komento…')"
+                                            class="w-full rounded-full py-2 pl-4 pr-10 text-xs text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
+                                        <button type="submit" :disabled="!(commentDraft[post.key] || '').trim() || post.sending" :aria-label="t('Send comment', 'Ipadala ang komento')"
+                                            class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-brand-600 hover:bg-brand-50 disabled:opacity-40"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
                                     </div>
-                                </div>
+                                </form>
                             </div>
-                        </div>
+                        </article>
                     </template>
-                    <div class="flex flex-col items-center text-center py-12 bg-white rounded-2xl border border-brand-600/10" x-show="filteredPostCount === 0">
+
+                    <div x-show="shown.length === 0" class="flex flex-col items-center text-center py-12 px-4 surface-glass rounded-[26px]">
                         <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="megaphone-off" class="w-7 h-7"></i></span>
-                        <p class="text-sm font-medium text-slate-600"><x-ui.t fil="Wala pang balita sa kategoryang ito." en="No Balita posts in this category yet." /></p>
+                        <p class="text-sm font-medium text-slate-600" x-text="emptyText()"></p>
+                    </div>
+
+                    <div x-show="hasMore" class="flex justify-center pt-1">
+                        <x-ui.button variant="secondary" icon="chevrons-down" x-bind:disabled="loadingMore" @click="loadMore()">
+                            <span x-text="loadingMore ? t('Loading…', 'Naglo-load…') : t('Load more posts', 'Ipakita ang iba pang post')"></span>
+                        </x-ui.button>
                     </div>
                 </div>
             </div>
 
-            <!-- Sidebar: sticks in place and scrolls independently of the feed -->
-            <div class="hidden lg:block sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin space-y-4 pr-1">
+            {{-- Sidebar --}}
+            <aside class="hidden lg:block sticky top-4 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin space-y-4 pr-1" :aria-label="t('More from Balita', 'Iba pa sa Balita')">
                 <x-ui.card padded="false" class="p-3.5">
-                    <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
-                        <i data-lucide="clock" class="w-3.5 h-3.5 text-ink-muted"></i><x-ui.t fil="Kamakailang Post" en="Recent Posts" />
-                    </p>
+                    <h2 class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-ink-muted"></i><x-ui.t fil="Kamakailang Post" en="Recent Posts" /></h2>
                     <div class="space-y-2.5">
-                        <template x-for="rp in recentPosts" :key="'recent-' + rp.kind + rp.id">
-                            <div class="flex items-start gap-2">
-                                <img :src="'{{ asset('images/esperanza/esperanza-seal-128.png') }}'" x-show="rp.official" alt="" class="w-7 h-7 rounded-full object-cover shrink-0">
-                                <div x-show="!rp.official" class="w-7 h-7 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(rp.author)"></div>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-medium text-ink truncate" x-text="rp.author"></p>
-                                    <p class="text-[11px] text-ink-muted leading-snug" x-text="rp.title || (rp.body.length > 62 ? rp.body.slice(0, 62) + '…' : rp.body)"></p>
-                                </div>
-                            </div>
+                        <template x-for="rp in recentPosts" :key="'recent-' + rp.key">
+                            <button type="button" @click="tab = 'all'; category = ''; focusKey = rp.key; $nextTick(() => document.getElementById('post-' + rp.key)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))" class="w-full flex items-start gap-2 text-left rounded-xl hover:bg-white/60 p-1 -m-1">
+                                <img x-show="rp.official" src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-7 h-7 rounded-full object-cover shrink-0">
+                                <span x-show="!rp.official" class="w-7 h-7 rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0 text-[9px]" x-text="initials(rp.author)"></span>
+                                <span class="min-w-0">
+                                    <span class="block text-xs font-medium text-ink truncate" x-text="rp.author"></span>
+                                    <span class="block text-[11px] text-ink-muted leading-snug" x-text="rp.title || (rp.body.length > 62 ? rp.body.slice(0, 62) + '…' : (rp.body || (rp.media.length ? t('Photos and videos', 'Mga larawan at video') : '')))"></span>
+                                </span>
+                            </button>
                         </template>
                     </div>
                 </x-ui.card>
 
-                <x-ui.card padded="false" class="p-3.5">
-                    <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
-                        <i data-lucide="flame" class="w-3.5 h-3.5 text-orange-500"></i><x-ui.t fil="Trending sa Balita" en="Trending in Balita" />
-                    </p>
+                <x-ui.card padded="false" class="p-3.5" x-show="trendingPosts.length">
+                    <h2 class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5"><i data-lucide="flame" class="w-3.5 h-3.5 text-orange-500"></i><x-ui.t fil="Trending sa Balita" en="Trending in Balita" /></h2>
                     <div class="space-y-2.5">
-                        <template x-for="tp in trendingPosts" :key="'trending-' + tp.kind + tp.id">
+                        <template x-for="tp in trendingPosts" :key="'trending-' + tp.key">
                             <div class="flex items-start gap-2">
-                                <img :src="'{{ asset('images/esperanza/esperanza-seal-128.png') }}'" x-show="tp.official" alt="" class="w-7 h-7 rounded-full object-cover shrink-0">
-                                <div x-show="!tp.official" class="w-7 h-7 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(tp.author)"></div>
+                                <img x-show="tp.official" src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-7 h-7 rounded-full object-cover shrink-0">
+                                <span x-show="!tp.official" class="w-7 h-7 rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0 text-[9px]" x-text="initials(tp.author)"></span>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-medium text-ink truncate" x-text="tp.author"></p>
                                     <p class="text-[11px] text-ink-muted leading-snug" x-text="tp.title || (tp.body.length > 50 ? tp.body.slice(0, 50) + '…' : tp.body)"></p>
-                                    <p class="text-[10px] text-rose-500 font-medium mt-0.5 flex items-center gap-1"><i data-lucide="heart" class="w-2.5 h-2.5" style="fill: currentColor"></i><span x-text="tp.likes + ' likes'"></span></p>
+                                    <p class="text-[10.5px] text-rose-700 font-medium mt-0.5 flex items-center gap-1"><i data-lucide="heart" class="w-2.5 h-2.5" style="fill: currentColor"></i><span x-text="tp.likes + ' ' + t(tp.likes === 1 ? 'like' : 'likes', 'gusto')"></span></p>
                                 </div>
                             </div>
                         </template>
@@ -468,15 +275,13 @@
                 </x-ui.card>
 
                 <x-ui.card padded="false" class="p-3.5">
-                    <p class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
-                        <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-ink-muted"></i><x-ui.t fil="Paparating na Kaganapan" en="Upcoming Events" />
-                    </p>
+                    <h2 class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5"><i data-lucide="calendar-days" class="w-3.5 h-3.5 text-ink-muted"></i><x-ui.t fil="Paparating na Kaganapan" en="Upcoming Events" /></h2>
                     <div class="space-y-2.5">
                         <template x-for="ev in events" :key="ev.key">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex flex-col items-center justify-center shrink-0 leading-none">
+                                <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-700 flex flex-col items-center justify-center shrink-0 leading-none">
                                     <span class="text-xs font-bold" x-text="ev.date ? new Date(ev.date + 'T00:00:00').getDate() : ''"></span>
-                                    <span class="text-[8px] font-semibold uppercase" x-text="ev.date ? new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' }) : ''"></span>
+                                    <span class="text-[8px] font-semibold uppercase" x-text="ev.date ? fmtDate(ev.date + 'T00:00:00', { month: 'short', day: undefined, year: undefined }) : ''"></span>
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-ink truncate" x-text="ev.title || ev.name"></p>
@@ -486,11 +291,11 @@
                         </template>
                         <p class="text-[11px] text-ink-muted" x-show="!events.length"><x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." /></p>
                     </div>
-                    <a href="{{ route('citizen.events') }}" class="block text-center text-[11px] font-medium text-brand-600 hover:underline mt-2.5 pt-2.5 border-t border-brand-600/10">
-                        <x-ui.t fil="Tingnan Lahat" en="View All" />
-                    </a>
+                    <a href="{{ route('citizen.events') }}" class="block text-center text-[11px] font-medium text-brand-700 hover:underline mt-2.5 pt-2.5 border-t border-brand-600/10"><x-ui.t fil="Tingnan Lahat" en="View All" /></a>
                 </x-ui.card>
-            </div>
+            </aside>
         </div>
+
+        <x-balita.viewer />
     </div>
 </x-layouts.citizen>

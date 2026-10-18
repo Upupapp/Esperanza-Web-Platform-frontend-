@@ -45,12 +45,14 @@ class QaFollowUpTest extends TestCase
     public function test_a_balita_notification_opens_the_post(): void
     {
         $view = $this->source('resources/views/citizen/announcements.blade.php');
+        $js = $this->source('resources/js/scope-citizen.js');
 
-        $this->assertStringContainsString("const want = Number(new URLSearchParams(window.location.search).get('post'));", $view);
-        $this->assertStringContainsString("const one = await \$api.get('/announcements/' + want);", $view, 'an older post is fetched, not missed');
-        $this->assertStringContainsString(":id=\"'post-' + post.kind + '-' + post.id\"", $view);
-        $this->assertStringContainsString("document.getElementById('post-announcement-' + want)?.scrollIntoView(", $view);
-        $this->assertStringContainsString('await this.openLinkedPost();', $view);
+        // ?post=ID (an announcement) or ?community=ID (a resident's own post, 2026-10-18).
+        $this->assertStringContainsString("const annId = Number(params.get('post'));", $js);
+        $this->assertStringContainsString("const one = await api.get('/announcements/' + annId);", $js, 'an older post is fetched, not missed');
+        $this->assertStringContainsString(":id=\"'post-' + post.key\"", $view);
+        $this->assertStringContainsString("document.getElementById('post-' + key)?.scrollIntoView(", $js);
+        $this->assertStringContainsString('await this.openLinked();', $js);
         $this->assertStringContainsString("community: ['megaphone', 'teal']", $this->source('resources/js/app.js'), 'the notification has its own icon');
     }
 }

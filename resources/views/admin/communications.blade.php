@@ -86,154 +86,13 @@
         </div>
 
         {{-- ============================= BALITA (announcements) ============================= --}}
+        {{-- Logic in resources/js/scope-admin-records.js (adminBalita). Photos and
+             videos are attached while writing (x-balita.media-field); every button
+             is a move the server lists for the post (available_transitions) and
+             the officer may make (2026-10-18). --}}
         <div
             x-show="tab === 'balita'"
-            x-data="{
-                loading: true, failed: false,
-                posts: [],
-                open: false, reviewOpen: false, selected: null, rejectReason: '',
-                search: '', status: 'All', scope: 'All', category: 'All',
-                processing: false,
-                newForm: { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: '{{ config('esperanza.barangays')[0] ?? '' }}' },
-                statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],
-                async load() {
-                    this.loading = true; this.failed = false;
-                    try {
-                        const res = await $api.getAll('/admin/announcements');
-                        this.posts = res.data || [];
-                    } catch { this.failed = true; } finally { this.loading = false; }
-                },
-                get categories() { return [...new Set(this.posts.map(p => p.category).filter(Boolean))].sort(); },
-                get filtered() {
-                    return this.posts.filter(a =>
-                        (a.barangay === null || this.$store.session.inScope(a.barangay)) &&
-                        (this.status === 'All' || a.status === this.status) &&
-                        (this.scope === 'All' || (this.scope === 'Municipal' ? !a.barangay : a.barangay === this.scope)) &&
-                        (this.category === 'All' || a.category === this.category) &&
-                        (this.search === '' || a.title.toLowerCase().includes(this.search.toLowerCase()))
-                    );
-                },
-                async createPost(submit) {
-                    if (this.processing || !this.newForm.title.trim() || !this.newForm.body.trim()) return;
-                    this.processing = true;
-                    try {
-                        const res = await $api.post('/admin/announcements', {
-                            title: this.newForm.title.trim(), body: this.newForm.body.trim(), category: this.newForm.category,
-                            barangay: this.newForm.audience === 'Barangay' ? this.newForm.barangay : null, official: true,
-                        });
-                        if (submit) {
-                            await $api.post('/admin/announcements/' + res.data.id + '/transition', { to: 'Pending Review' });
-                        }
-                        this.open = false;
-                        this.newForm = { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: this.barangayNames?.[0] || '' };
-                        this.$dispatch('toast', { message: submit ? 'Submitted for review.' : 'Saved as draft.', variant: 'success' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not create the post.', variant: 'error' });
-                    } finally { this.processing = false; }
-                },
-                async transition(post, to, remarks) {
-                    try {
-                        await $api.post('/admin/announcements/' + post.id + '/transition', { to, remarks: remarks || undefined });
-                        return true;
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not update this post.', variant: 'error' });
-                        return false;
-                    }
-                },
-                async approveAndPublish() {
-                    if (this.processing) return;
-                    this.processing = true;
-                    if (await this.transition(this.selected, 'Approved')) {
-                        await this.transition(this.selected, 'Released');
-                        this.reviewOpen = false;
-                        this.$dispatch('toast', { message: 'Balita post approved and published.', variant: 'success' });
-                        await this.load();
-                    }
-                    this.processing = false;
-                },
-                async requestChanges() {
-                    if (this.processing || this.rejectReason.trim().length < 5) return;
-                    this.processing = true;
-                    if (await this.transition(this.selected, 'Rejected', this.rejectReason.trim())) {
-                        this.reviewOpen = false; this.rejectReason = '';
-                        this.$dispatch('toast', { message: 'Sent back with remarks.', variant: 'error' });
-                        await this.load();
-                    }
-                    this.processing = false;
-                },
-                async release(post) {
-                    if (await this.transition(post, 'Released')) { this.$dispatch('toast', { message: 'Published.', variant: 'success' }); await this.load(); }
-                },
-                async archive(post) {
-                    if (await this.transition(post, 'Archived')) { this.$dispatch('toast', { message: 'Archived.', variant: 'success' }); await this.load(); }
-                },
-                // Editing a post still in the editorial flow, in the create form
-                // (scope round 2026-10-15). PUT /admin/announcements/{id} takes a
-                // Draft, Pending Review or Rejected post (published content is a
-                // new draft), and only the fields that changed are sent.
-                editing: null, editForm: {}, editImage: null,
-                get form() { return this.editing ? this.editForm : this.newForm; },
-                canEdit(a) { return ['Draft', 'Pending Review', 'Rejected'].includes(a.status) && $store.session.canPerm('comm_news', 'edit'); },
-                openNew() { this.editing = null; this.open = true; },
-                openEdit(a) {
-                    this.editForm = { title: a.title || '', category: a.category || 'Community', body: a.body || '', audience: a.barangay ? 'Barangay' : 'Municipal', barangay: a.barangay || this.barangayNames?.[0] || '' };
-                    this.editImage = null;
-                    this.editing = a;
-                    this.open = true;
-                },
-                pickImage(e) {
-                    const file = e.target.files?.[0] || null;
-                    if (file && file.size > 5 * 1024 * 1024) {
-                        e.target.value = '';
-                        this.editImage = null;
-                        this.$dispatch('toast', { message: 'The picture is larger than 5 MB. Choose a smaller one.', variant: 'error' });
-                        return;
-                    }
-                    this.editImage = file;
-                },
-                savePost(submit) { return this.editing ? this.saveEdit(submit) : this.createPost(submit); },
-                async saveEdit(submit) {
-                    const a = this.editing, f = this.editForm;
-                    if (this.processing || !a || !f.title.trim() || !f.body.trim()) return;
-                    const barangay = f.audience === 'Barangay' ? f.barangay : null;
-                    const changes = {};
-                    if (f.title.trim() !== a.title) changes.title = f.title.trim();
-                    if (f.body.trim() !== a.body) changes.body = f.body.trim();
-                    if (f.category !== a.category) changes.category = f.category;
-                    if (barangay !== (a.barangay || null)) changes.barangay = barangay;
-                    if (!submit && !this.editImage && !Object.keys(changes).length) {
-                        this.open = false; this.editing = null;
-                        this.$dispatch('toast', { message: 'Nothing was changed.', variant: 'info' });
-                        return;
-                    }
-                    this.processing = true;
-                    try {
-                        // Each step that succeeds is kept on the post, so trying
-                        // again after a failure repeats only what is left.
-                        if (this.editImage) {
-                            // PHP reads a multipart body only on POST: Laravel's
-                            // _method override, as the banner form does.
-                            const body = new FormData();
-                            Object.entries(changes).forEach(([k, v]) => body.append(k, v === null ? '' : v));
-                            body.append('image', this.editImage);
-                            body.append('_method', 'PUT');
-                            await $api.post('/admin/announcements/' + a.id, body);
-                            this.editImage = null;
-                        } else if (Object.keys(changes).length) {
-                            await $api.put('/admin/announcements/' + a.id, changes);
-                        }
-                        Object.assign(a, changes);
-                        if (submit && a.status === 'Rejected') { await $api.post('/admin/announcements/' + a.id + '/transition', { to: 'Draft' }); a.status = 'Draft'; }
-                        if (submit) { await $api.post('/admin/announcements/' + a.id + '/transition', { to: 'Pending Review' }); a.status = 'Pending Review'; }
-                        this.open = false; this.editing = null;
-                        this.$dispatch('toast', { message: submit ? 'Saved and submitted for review.' : 'Changes saved.', variant: 'success' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save the changes.', variant: 'error' });
-                    } finally { this.processing = false; }
-                },
-            }"
+            x-data="adminBalita(@js(config('esperanza.barangays')))"
             x-init="$store.session.whenReady().then(() => tabAllowed('balita') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /></div>
@@ -241,34 +100,36 @@
 
             <div x-show="!loading && !failed">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card layout="compact" label="Published" valueBind="posts.filter(a => a.status === 'Released').length" icon="megaphone" color="brand" :delay="0" />
-                <x-ui.stat-card layout="compact" label="Pending Review" valueBind="posts.filter(a => a.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="40" />
-                <x-ui.stat-card layout="compact" label="Drafts" valueBind="posts.filter(a => a.status === 'Draft').length" icon="pencil-line" color="purple" :delay="80" />
-                <x-ui.stat-card layout="compact" label="Total Likes" valueBind="posts.reduce((n, a) => n + (a.likes || 0), 0)" icon="heart" color="green" :delay="120" />
+                <x-ui.stat-card layout="compact" label="Published" valueBind="count('Released')" icon="megaphone" color="brand" :delay="0" />
+                <x-ui.stat-card layout="compact" label="Waiting for review" valueBind="count('Pending Review')" icon="file-clock" color="orange" :delay="40" />
+                <x-ui.stat-card layout="compact" label="Drafts and sent back" valueBind="count('Draft') + count('Rejected')" icon="pencil-line" color="purple" :delay="80" />
+                <x-ui.stat-card layout="compact" label="Likes on published posts" valueBind="posts.filter(a => a.status === 'Released').reduce((n, a) => n + (a.likes || 0), 0)" icon="heart" color="green" :delay="120" />
             </div>
 
             <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search Balita titles" type="text" x-model="search" placeholder="Search Balita titles..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
+                        <input aria-label="Search Balita" type="text" x-model="search" placeholder="Search titles and text..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                     </div>
-                    <select aria-label="Balita category" x-model="category" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
+                    <select aria-label="Balita category" x-model="category" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
                         <option value="All">All Categories</option>
                         <template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
-                    <select aria-label="Balita scope" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
+                    <select aria-label="Balita audience" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
                         <option value="All">All Audiences</option>
                         <option value="Municipal">Municipal-wide</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-                    <x-ui.button @click="openNew()" icon="plus" size="sm" class="shrink-0">New Balita</x-ui.button>
+                    <x-ui.button x-show="can('create')" @click="openNew()" icon="plus" size="sm" class="shrink-0">New Balita</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto">
                         <template x-for="s in ['All', ...statuses]" :key="s">
-                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s"></button>
+                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                                <span x-text="s === 'All' ? 'All' : statusLabel(s)"></span><span x-show="s !== 'All' && count(s)" class="ml-1 text-ink-muted tabular-nums" x-text="count(s)"></span>
+                            </button>
                         </template>
                     </div>
                     <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
@@ -277,40 +138,45 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="a in filtered" :key="a.id">
-                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
-                        <div class="p-3.5">
+                    <article class="surface-glass rounded-[26px] overflow-hidden flex flex-col hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
+                        {{-- The first photo or video, and how many it carries --}}
+                        <button type="button" x-show="cover(a)" @click="$store.balitaViewer.show(a.media, 0, a.title, true)" class="relative block aspect-[16/9] bg-slate-100 overflow-hidden focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-300" :aria-label="'View the ' + (a.media || []).length + ' photo(s) and video(s) of ' + a.title">
+                            <img x-show="cover(a) && (cover(a).kind === 'image' ? cover(a).url : cover(a).poster_url)" :src="cover(a) ? (cover(a).kind === 'image' ? cover(a).url : cover(a).poster_url) : ''" alt="" loading="lazy" class="w-full h-full object-cover">
+                            <span x-show="cover(a) && cover(a).kind === 'video'" class="absolute inset-0 grid place-items-center"><span class="w-10 h-10 rounded-full bg-navy-950/60 text-white grid place-items-center"><i data-lucide="play" class="w-4 h-4"></i></span></span>
+                            <span x-show="(a.media || []).length > 1" class="absolute right-2 bottom-2 rounded-full bg-navy-950/70 text-white text-[10.5px] font-semibold px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="images" class="w-3 h-3"></i><span x-text="(a.media || []).length"></span></span>
+                        </button>
+                        <div class="p-3.5 flex-1">
                             <div class="flex items-center justify-between gap-2 mb-2">
                                 <span class="text-[10px] font-semibold text-ink-muted bg-slate-100 rounded-full px-2 py-0.5" x-text="a.category"></span>
                                 <x-ui.badge statusBind="a.status" />
                             </div>
-                            <span
-                                class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 mb-2"
-                                :class="!a.barangay ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'"
-                            >
+                            <span class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 mb-2" :class="!a.barangay ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'">
                                 <i :data-lucide="!a.barangay ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
-                                <span x-text="!a.barangay ? 'Municipality-wide' : 'Brgy. ' + a.barangay"></span>
+                                <span x-text="!a.barangay ? 'Municipality-wide' : 'Brgy. ' + a.barangay + ' only'"></span>
                             </span>
-                            <p class="text-sm font-semibold text-ink leading-snug line-clamp-2 mb-2" x-text="a.title"></p>
-                            <div class="flex items-center justify-between">
-                                <span class="inline-flex items-center gap-1.5 text-xs text-ink-muted min-w-0">
-                                    <div class="w-6 h-6 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-[9px]" x-text="initials(a.author)"></div>
+                            <h3 class="text-sm font-semibold text-ink leading-snug line-clamp-2 mb-1" x-text="a.title"></h3>
+                            <p class="text-xs text-ink-muted line-clamp-2 mb-2" x-text="a.body"></p>
+                            <p x-show="a.status === 'Rejected' && a.review_remarks" x-cloak class="mb-2 rounded-xl bg-rose-50 border border-rose-100 px-2.5 py-1.5 text-[11px] text-rose-800"><span class="font-semibold">Sent back:</span> <span x-text="a.review_remarks"></span></p>
+                            <div class="flex items-center justify-between gap-2 text-[11px] text-ink-muted">
+                                <span class="inline-flex items-center gap-1.5 min-w-0">
+                                    <span class="w-6 h-6 rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0 text-[9px]" x-text="initials(a.author)"></span>
                                     <span class="truncate" x-text="a.author"></span>
                                 </span>
-                                <span class="text-[11px] text-ink-muted shrink-0" x-text="a.published_at ? new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not yet published'"></span>
+                                <span class="shrink-0" x-text="a.published_at ? 'Published ' + when(a.published_at).split(',').slice(0, 2).join(',') : 'Not yet published'"></span>
+                            </div>
+                            <div x-show="a.status === 'Released'" class="flex items-center gap-3 mt-2 text-[11px] text-ink-muted">
+                                <span class="inline-flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3"></i><span x-text="a.likes || 0"></span></span>
+                                <button type="button" @click="openComments(a)" class="inline-flex items-center gap-1 hover:text-brand-700 hover:underline"><i data-lucide="message-circle" class="w-3 h-3"></i><span x-text="(a.comments_count || 0) + ' comment' + ((a.comments_count || 0) === 1 ? '' : 's')"></span></button>
                             </div>
                         </div>
-                        <div class="flex border-t border-brand-600/10">
-                            <button
-                                x-show="a.status === 'Pending Review'"
-                                @click="selected = a; reviewOpen = true; rejectReason = ''"
-                                class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"
-                            ><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
-                            <button x-show="canEdit(a)" @click="openEdit(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
-                            <button x-show="a.status === 'Draft'" @click="transition(a, 'Pending Review').then(ok => ok && load())" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
-                            <button x-show="a.status === 'Approved'" @click="release(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
-                            <button x-show="['Released', 'Rejected', 'Draft'].includes(a.status)" @click="archive(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                        <div class="flex flex-wrap border-t border-brand-600/10">
+                            <button type="button" x-show="a.status === 'Pending Review' && (canMove(a, 'Approved') || canMove(a, 'Rejected'))" @click="openReview(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 text-orange-700 hover:bg-orange-50/60"><i data-lucide="file-search" class="w-3.5 h-3.5"></i>Review</button>
+                            <button type="button" x-show="canEdit(a)" @click="openEdit(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-700 hover:bg-brand-50/60"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
+                            <button type="button" x-show="a.status === 'Draft' && canMove(a, 'Pending Review')" @click="quick(a, 'Pending Review', 'Sent for review.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-700 hover:bg-brand-50/60"><i data-lucide="send" class="w-3.5 h-3.5"></i>Send for review</button>
+                            <button type="button" x-show="a.status === 'Approved' && canMove(a, 'Released')" @click="quick(a, 'Released', 'Published. Residents are notified.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 text-emerald-700 hover:bg-emerald-50/60"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
+                            <button type="button" x-show="canMove(a, 'Archived')" @click="quick(a, 'Archived', 'Archived. Residents no longer see it.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
                         </div>
-                    </div>
+                    </article>
                 </template>
                 <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filtered.length === 0">
                     <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
@@ -319,9 +185,7 @@
             </div>
             </div>
 
-            {{-- New and Edit share this form (scope round 2026-10-15). Bare, for
-                 a title that says which; the header and footer are the ones
-                 the titled modal draws. --}}
+            {{-- New and Edit share this form. --}}
             <x-ui.modal maxWidth="lg" :fullscreen="true" :bare="true">
                 <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-brand-600/10 shrink-0">
                     <h3 class="text-base font-extrabold text-ink" x-text="editing ? 'Edit Balita' : 'New Balita'">New Balita</h3>
@@ -334,91 +198,85 @@
                     </div>
                 </div>
                 <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 sm:px-10 sm:py-8">
-                <div class="space-y-4">
-                    <p x-show="editing" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing a post in ' + (editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
-                    <x-ui.input name="title" label="Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="form.title" />
+                <div class="space-y-4 max-w-3xl mx-auto">
+                    <p x-show="editing" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing a post in ' + statusLabel(editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
+                    <p x-show="editing && editing.status === 'Rejected' && editing.review_remarks" x-cloak class="rounded-2xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs text-rose-800"><span class="font-semibold">Sent back:</span> <span x-text="editing?.review_remarks"></span></p>
+                    <x-ui.input name="title" label="Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="form.title" maxlength="255" />
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="category">Category</label>
-                        <select id="category" x-model="form.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                            <option>Community</option>
-                            <option>Health</option>
-                            <option>Public Service</option>
-                            <option>Advisory</option>
-                            <option>Livelihood</option>
-                            <option>Governance</option>
-                            {{-- A post filed under another category keeps it (selected here: it appears after the value is set, and x-model selects only when the value changes). --}}
-                            <template x-if="form.category && !['Community', 'Health', 'Public Service', 'Advisory', 'Livelihood', 'Governance'].includes(form.category)"><option :value="form.category" :selected="true" x-text="form.category"></option></template>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="balita-category">Category</label>
+                        <select id="balita-category" x-model="form.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                            <template x-for="c in categories" :key="c"><option :value="c" x-text="c" :selected="c === form.category"></option></template>
                         </select>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Audience</label>
+                    <fieldset>
+                        <legend class="block text-sm font-medium text-slate-700 mb-1.5">Audience</legend>
                         <div class="grid grid-cols-2 gap-2.5">
                             <button type="button" @click="form.audience = 'Municipal'" :aria-pressed="form.audience === 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Municipal-wide</p>
-                                <p class="text-[10.5px] text-ink-muted mt-0.5">Visible to every barangay</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Every barangay sees it and is notified</p>
                             </button>
                             <button type="button" @click="form.audience = 'Barangay'" :aria-pressed="form.audience === 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Specific Barangay</p>
-                                <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it and is notified</p>
                             </button>
                         </div>
-                        <div x-show="form.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
-                            <select aria-label="New balita barangay" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                        <div x-show="form.audience === 'Barangay'" x-cloak class="mt-2.5">
+                            <select aria-label="Barangay" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b" :selected="b === form.barangay"></option></template>
                             </select>
                         </div>
-                    </div>
+                    </fieldset>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="content">Content</label>
-                        <textarea id="content" rows="4" placeholder="Write the announcement content..." x-model="form.body" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="balita-content">Content</label>
+                        <textarea id="balita-content" rows="6" placeholder="What residents need to know: what, when, where, who to contact." x-model="form.body" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
                     </div>
-                    {{-- A picture goes on a post that exists: the edit takes one, the create does not. --}}
-                    <div x-show="editing" x-cloak>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="balita-image">Picture <span class="font-normal text-ink-muted">(optional, up to 5 MB)</span></label>
-                        <input id="balita-image" type="file" accept="image/jpeg,image/png,image/webp" @change="pickImage($event)" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-brand-50 file:text-brand-700 file:text-xs">
-                        <p class="text-[10.5px] text-ink-muted mt-1">Leave empty to keep the post's picture as it is.</p>
-                    </div>
-                    <p x-show="!editing" class="text-[11px] text-ink-muted">A picture can be added once the post is saved: open it again with Edit.</p>
+
+                    <template x-for="k in [formKey]" :key="k">
+                        <x-balita.media-field base="/admin/balita" model="media" existing="(editing ? (editing.media || []) : [])" :english="true" />
+                    </template>
                 </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
-                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="savePost(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
-                    <x-ui.button size="sm" icon="send" x-show="!editing || editing.status !== 'Pending Review'" x-bind:disabled="processing" @click="savePost(true)"><span x-text="!editing ? 'Submit for Review' : (editing.status === 'Rejected' ? 'Save and Resubmit' : 'Save and Submit for Review')">Submit for Review</span></x-ui.button>
+                    <p x-show="media.busy" x-cloak class="mr-auto text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i>Uploading photos and videos…</p>
+                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing || !formReady" @click="save(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
+                    <x-ui.button size="sm" icon="send" x-show="!editing || editing.status !== 'Pending Review'" x-bind:disabled="processing || !formReady" @click="save(true)"><span x-text="!editing ? 'Send for review' : (editing.status === 'Rejected' ? 'Save and resend for review' : 'Save and send for review')">Send for review</span></x-ui.button>
                 </div>
             </x-ui.modal>
 
+            {{-- Review: the post as residents will see it --}}
             <div x-data="{ get open() { return reviewOpen; }, set open(v) { reviewOpen = v; } }">
             <x-ui.modal title="Review Balita Post" maxWidth="lg">
                 <template x-if="selected">
-                    <div>
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-sm" x-text="initials(selected.author)"></div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-semibold text-ink" x-text="selected.author"></p>
-                                <p class="text-xs text-ink-muted" x-text="(!selected.barangay ? 'Municipality-wide' : 'Brgy. ' + selected.barangay)"></p>
+                    <div class="space-y-3">
+                        <div class="rounded-2xl border border-brand-600/10 bg-white overflow-hidden">
+                            <div class="flex items-center gap-2.5 p-3.5 pb-2">
+                                <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-9 h-9 rounded-full object-cover">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-ink">Esperanza LGU</p>
+                                    <p class="text-[11px] text-ink-muted" x-text="(!selected.barangay ? 'All barangays' : 'Brgy. ' + selected.barangay + ' only') + ' · ' + selected.category"></p>
+                                </div>
+                                <span class="text-[10px] font-semibold text-ink-muted bg-slate-100 rounded-full px-2 py-0.5">Preview</span>
                             </div>
-                            <span class="text-[10px] font-medium text-ink-muted bg-slate-100 rounded-full px-2 py-0.5 shrink-0" x-text="selected.category"></span>
+                            <p class="px-3.5 pb-1 text-[15px] font-bold text-ink" x-text="selected.title"></p>
+                            <p class="px-3.5 pb-3 text-[13px] text-slate-700 leading-relaxed whitespace-pre-line" x-text="selected.body"></p>
+                            <x-balita.gallery media="selected.media" label="selected.title" :english="true" />
                         </div>
-                        <p class="text-sm font-semibold text-ink mb-2" x-text="selected.title"></p>
-                        <p class="text-sm text-slate-600 leading-relaxed mb-3 whitespace-pre-line" x-text="selected.body"></p>
-                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5 text-xs text-ink-muted mb-3">
-                            This post is awaiting review before it goes live on the citizen Balita feed. Approving will publish it immediately to its selected audience.
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Remarks (required to send back)</label>
-                            <textarea aria-label="Remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <p class="text-xs text-ink-muted">Written by <span class="font-semibold text-ink-body" x-text="selected.author"></span>. Approving publishes it at once and notifies <span x-text="selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident'"></span> in the app and on the website.</p>
+                        <div x-show="canMove(selected, 'Rejected')">
+                            <label for="balita-remarks" class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Remarks (required to send it back)</label>
+                            <textarea id="balita-remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
                         </div>
                     </div>
                 </template>
-
                 <x-slot:footer>
-                    <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Request Changes</x-ui.button>
-                    <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="approveAndPublish()">Approve &amp; Publish</x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" icon="pencil" x-show="selected && canEdit(selected)" @click="openEdit(selected)">Edit</x-ui.button>
+                    <x-ui.button variant="danger" size="sm" x-show="selected && canMove(selected, 'Rejected')" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Send back</x-ui.button>
+                    <x-ui.button size="sm" icon="check" x-show="selected && canMove(selected, 'Approved')" x-bind:disabled="processing" @click="approveAndPublish()">Approve &amp; Publish</x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
             </div>
@@ -965,42 +823,12 @@
         </div>
 
         {{-- ============================= COMMUNITY POSTS ============================= --}}
+        {{-- Residents' posts: pre-moderated, with their photos and videos, the
+             reasons residents gave when they reported one, and the comments.
+             Logic in resources/js/scope-admin-records.js (adminCommunity). --}}
         <div
             x-show="tab === 'community'" x-cloak
-            x-data="{
-                loading: true, failed: false,
-                posts: [],
-                selected: null, open: false, modReason: '', processing: false,
-                search: '', status: 'All', scope: 'All',
-                async load() {
-                    this.loading = true; this.failed = false;
-                    try {
-                        const res = await $api.getAll('/admin/community-posts');
-                        this.posts = res.data || [];
-                    } catch { this.failed = true; } finally { this.loading = false; }
-                },
-                get filtered() {
-                    return this.posts.filter(p =>
-                        this.$store.session.inScope(p.barangay) &&
-                        (this.status === 'All' || p.status === this.status) &&
-                        (this.scope === 'All' || p.barangay === this.scope) &&
-                        (this.search === '' || p.author.toLowerCase().includes(this.search.toLowerCase()) || p.body.toLowerCase().includes(this.search.toLowerCase()))
-                    );
-                },
-                async moderate(decision) {
-                    if (this.processing) return;
-                    if (decision !== 'approve' && this.modReason.trim().length < 5) return;
-                    this.processing = true;
-                    try {
-                        await $api.post('/admin/community-posts/' + this.selected.id + '/moderate', { decision, reason: decision === 'approve' ? undefined : this.modReason.trim() });
-                        this.open = false; this.modReason = '';
-                        this.$dispatch('toast', { message: 'Post ' + (decision === 'approve' ? 'approved' : decision === 'hide' ? 'hidden' : 'taken down') + '.', variant: decision === 'approve' ? 'success' : 'error' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not moderate this post.', variant: 'error' });
-                    } finally { this.processing = false; }
-                },
-            }"
+            x-data="adminCommunity"
             x-init="$store.session.whenReady().then(() => tabAllowed('community') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
@@ -1008,27 +836,29 @@
 
             <div x-show="!loading && !failed">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card layout="compact" label="Total Posts" valueBind="posts.length" icon="users-round" color="brand" :delay="0" />
-                <x-ui.stat-card layout="compact" label="Awaiting Moderation" valueBind="posts.filter(p => p.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="40" />
-                <x-ui.stat-card layout="compact" label="Reported" valueBind="posts.filter(p => p.report_count > 0).length" icon="flag" color="red" sublabel="At least one citizen report" :delay="80" />
-                <x-ui.stat-card layout="compact" label="Hidden / Taken Down" valueBind="posts.filter(p => p.hidden).length" icon="eye-off" color="purple" :delay="120" />
+                <x-ui.stat-card layout="compact" label="Awaiting review" valueBind="countOf('pending')" icon="file-clock" color="orange" :delay="0" />
+                <x-ui.stat-card layout="compact" label="Reported" valueBind="countOf('reported')" icon="flag" color="red" sublabel="Live or waiting, with a report" :delay="40" />
+                <x-ui.stat-card layout="compact" label="Live" valueBind="countOf('published')" icon="users-round" color="brand" :delay="80" />
+                <x-ui.stat-card layout="compact" label="Hidden / Taken down" valueBind="countOf('hidden') + countOf('removed')" icon="eye-off" color="purple" :delay="120" />
             </div>
 
             <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search author or post content" type="text" x-model="search" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
+                        <input aria-label="Search author or post content" type="text" x-model="search" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
                     </div>
-                    <select aria-label="Community scope" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
+                    <select aria-label="Community barangay" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
                         <option value="All">All Barangays</option>
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
-                        <template x-for="s in ['All', 'Pending Review', 'Released', 'Archived']" :key="s">
-                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="s"></button>
+                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto">
+                        <template x-for="[key, label] in views" :key="key">
+                            <button type="button" @click="view = key" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="view === key ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                                <span x-text="label"></span><span x-show="key !== 'all' && countOf(key)" class="ml-1 text-ink-muted tabular-nums" x-text="countOf(key)"></span>
+                            </button>
                         </template>
                     </div>
                     <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
@@ -1037,61 +867,119 @@
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <template x-for="p in filtered" :key="p.id">
-                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
+                    <article class="surface-glass rounded-[26px] overflow-hidden flex flex-col hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
                         <div class="flex items-center gap-2.5 p-3.5 pb-2.5">
-                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-sm" x-text="initials(p.author)"></div>
+                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0 text-sm" x-text="initials(p.author)"></div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-semibold text-ink truncate" x-text="p.author"></p>
-                                <p class="text-[11px] text-ink-muted" x-text="'Brgy. ' + p.barangay + ' · ' + (p.time ? new Date(p.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')"></p>
+                                <p class="text-[11px] text-ink-muted" x-text="['Brgy. ' + p.barangay, p.category, when(p.time)].filter(Boolean).join(' · ')"></p>
                             </div>
-                            <span class="shrink-0"><x-ui.badge statusBind="p.status" /></span>
+                            <span class="shrink-0 inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="stateTones[p.review_state]" x-text="stateLabels[p.review_state] || p.review_state"></span>
                         </div>
-                        <p class="px-3.5 pb-2.5 text-[13px] text-slate-700 leading-relaxed line-clamp-3" x-text="p.body"></p>
-                        <div class="flex items-center justify-between px-3.5 py-2.5 border-t border-slate-50">
+                        <p class="px-3.5 pb-2.5 text-[13px] text-slate-700 leading-relaxed line-clamp-3 whitespace-pre-line" x-show="p.body" x-text="p.body"></p>
+                        <x-balita.gallery media="p.media" label="'Post by ' + p.author" :english="true" class="mx-3.5 mb-2.5 rounded-xl" />
+                        <div class="mt-auto flex items-center justify-between px-3.5 py-2.5 border-t border-brand-600/10">
                             <div class="flex items-center gap-3 text-xs text-ink-muted">
-                                <span class="inline-flex items-center gap-1" x-show="p.hidden"><i data-lucide="eye-off" class="w-3.5 h-3.5 text-ink-muted"></i>Hidden</span>
-                                <span class="inline-flex items-center gap-1 text-rose-600 font-medium" x-show="p.report_count > 0"><i data-lucide="flag" class="w-3.5 h-3.5"></i><span x-text="p.report_count + ' report' + (p.report_count > 1 ? 's' : '')"></span></span>
+                                <span class="inline-flex items-center gap-1 text-rose-700 font-medium" x-show="p.report_count > 0"><i data-lucide="flag" class="w-3.5 h-3.5"></i><span x-text="p.report_count + ' report' + (p.report_count > 1 ? 's' : '')"></span></span>
+                                <span class="inline-flex items-center gap-1" x-show="p.review_state === 'published'"><i data-lucide="heart" class="w-3.5 h-3.5"></i><span x-text="p.likes || 0"></span></span>
+                                <button type="button" x-show="p.comments_count > 0" @click="openComments(p)" class="inline-flex items-center gap-1 hover:text-brand-700 hover:underline"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i><span x-text="p.comments_count"></span></button>
                             </div>
-                            <button @click="selected = p; open = true; modReason = ''" class="text-xs font-semibold text-brand-600 hover:underline whitespace-nowrap shrink-0">Moderate</button>
+                            <button type="button" @click="moderate(p)" class="text-xs font-semibold text-brand-700 hover:underline whitespace-nowrap shrink-0" x-text="decisions(p).length ? (p.review_state === 'pending' ? 'Review' : 'Moderate') : 'View'"></button>
                         </div>
-                    </div>
+                    </article>
                 </template>
                 <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filtered.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
-                    <p class="text-sm font-medium text-slate-600">No community posts match these filters.</p>
+                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="inbox" class="w-7 h-7"></i></span>
+                    <p class="text-sm font-medium text-slate-600" x-text="view === 'pending' ? 'Nothing is waiting for review.' : 'No community posts here.'"></p>
                 </div>
             </div>
             </div>
 
-            <x-ui.modal title="Moderate Community Post" maxWidth="lg">
+            <x-ui.modal title="Community Post" maxWidth="lg">
                 <template x-if="selected">
-                    <div>
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0 text-sm" x-text="initials(selected.author)"></div>
-                            <div>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0 text-sm" x-text="initials(selected.author)"></div>
+                            <div class="min-w-0 flex-1">
                                 <p class="text-sm font-semibold text-ink" x-text="selected.author"></p>
-                                <p class="text-xs text-ink-muted" x-text="'Brgy. ' + selected.barangay"></p>
+                                <p class="text-xs text-ink-muted" x-text="['Brgy. ' + selected.barangay, selected.category, when(selected.time)].filter(Boolean).join(' · ')"></p>
                             </div>
+                            <span class="shrink-0 inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="stateTones[selected.review_state]" x-text="stateLabels[selected.review_state] || selected.review_state"></span>
                         </div>
-                        <p class="text-sm text-slate-700 leading-relaxed mb-3" x-text="selected.body"></p>
-                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-4 text-sm text-slate-600 space-y-1.5 mb-3">
-                            <p x-show="selected.report_count > 0"><span class="text-ink-muted">Reports:</span> <span class="text-rose-600 font-medium" x-text="selected.report_count + ' citizen report(s) — review for possible spam or policy violation'"></span></p>
-                            <p x-show="selected.moderation_reason"><span class="text-ink-muted">Last moderation note:</span> <span x-text="selected.moderation_reason"></span></p>
+                        <p x-show="selected.body" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line" x-text="selected.body"></p>
+                        <x-balita.gallery media="selected.media" label="'Post by ' + selected.author" :english="true" class="rounded-xl" />
+
+                        <div x-show="selected.report_count > 0" class="rounded-xl bg-rose-50/70 border border-rose-100 p-3">
+                            <p class="text-xs font-semibold text-rose-800 mb-1.5" x-text="selected.report_count + ' resident report' + (selected.report_count > 1 ? 's' : '')"></p>
+                            <ul class="space-y-1">
+                                <template x-for="(r, i) in (selected.reports || [])" :key="i">
+                                    <li class="text-xs text-rose-900"><span x-text="'“' + r.reason + '”'"></span> <span class="text-rose-700/80" x-text="'· ' + when(r.at)"></span></li>
+                                </template>
+                            </ul>
                         </div>
-                        <div x-show="selected.status !== 'Pending Review' || selected.report_count > 0 || true">
-                            <label class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Reason (required to hide or take down)</label>
-                            <textarea aria-label="Moderation reason" x-model="modReason" rows="2" placeholder="Why is this being hidden or taken down?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <p x-show="selected.moderation_reason" class="rounded-xl bg-slate-50 border border-brand-600/10 p-3 text-xs text-slate-700"><span class="text-ink-muted">Last decision's reason:</span> <span x-text="selected.moderation_reason"></span></p>
+                        <p x-show="selected.review_state === 'withdrawn'" class="rounded-xl bg-slate-50 border border-brand-600/10 p-3 text-xs text-slate-700">Its author deleted this post. It is kept here for the record and cannot be moderated.</p>
+                        <button type="button" x-show="selected.comments_count > 0" @click="openComments(selected)" class="text-xs font-semibold text-brand-700 hover:underline inline-flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i><span x-text="'Comments (' + selected.comments_count + ')'"></span></button>
+
+                        <div x-show="decisions(selected).some((d) => d !== 'approve')">
+                            <label for="community-reason" class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Reason (required to hide or take down; the resident is shown it)</label>
+                            <textarea id="community-reason" x-model="reason" rows="2" placeholder="e.g. Selling items is not allowed on Balita." class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
                         </div>
                     </div>
                 </template>
 
                 <x-slot:footer>
-                    <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || modReason.trim().length < 5" @click="moderate('takedown')">Take Down</x-ui.button>
-                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing || modReason.trim().length < 5" @click="moderate('hide')">Hide</x-ui.button>
-                    <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="moderate('approve')">Approve &amp; Keep Live</x-ui.button>
+                    <template x-for="d in decisions(selected)" :key="d">
+                        <button type="button" @click="decide(d)" :disabled="processing || (d !== 'approve' && reason.trim().length < 5)"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold transition-colors disabled:opacity-50"
+                            :class="d === 'approve' ? 'clay-blue' : (d === 'hide' ? 'bg-white border border-slate-200 text-ink hover:bg-slate-50' : 'bg-rose-600 text-white hover:bg-rose-700')"
+                            x-text="decisionLabel(selected, d)"></button>
+                    </template>
                 </x-slot:footer>
             </x-ui.modal>
         </div>
+
+        {{-- The comments of an announcement or a community post, for officers:
+             hide one (with a reason) or show it again. --}}
+        <div x-data="balitaComments" @balita-comments.window="bcShow($event.detail)">
+            <div x-data="{ get open() { return bcOpen; }, set open(v) { bcOpen = v; } }">
+                <x-ui.modal title="Comments" maxWidth="lg">
+                    <div class="space-y-3">
+                        <p class="text-xs text-ink-muted"><span class="font-semibold text-ink-body" x-text="bcTitle"></span><span x-show="bcHiddenCount" x-text="' · ' + bcHiddenCount + ' hidden from residents'"></span></p>
+                        <p x-show="bcLoading" class="text-xs text-ink-muted">Loading…</p>
+                        <p x-show="bcFailed" x-cloak class="text-xs text-rose-700">Could not load the comments. <button type="button" class="underline" @click="bcLoad()">Try again</button></p>
+                        <p x-show="!bcLoading && !bcFailed && !bcItems.length" class="text-xs text-ink-muted">No comments.</p>
+                        <ul class="space-y-2.5">
+                            <template x-for="c in bcItems" :key="c.id">
+                                <li class="rounded-xl border px-3 py-2.5" :class="c.hidden ? 'border-slate-200 bg-slate-50' : 'border-brand-600/10 bg-white'">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-semibold text-ink"><span x-text="c.author"></span> <span class="font-normal text-ink-muted" x-text="'· ' + when(c.created_at)"></span></p>
+                                            <p class="text-sm mt-0.5 whitespace-pre-line break-words" :class="c.hidden ? 'text-ink-muted line-through' : 'text-slate-700'" x-text="c.body"></p>
+                                            <p x-show="c.hidden" class="text-[11px] text-ink-muted mt-1" x-text="'Hidden' + (c.hidden_by ? ' by ' + c.hidden_by : '') + (c.hidden_reason ? ': ' + c.hidden_reason : '')"></p>
+                                        </div>
+                                        <div x-show="bcModerate" class="shrink-0">
+                                            <button type="button" x-show="!c.hidden && bcHiding !== c.id" @click="bcHiding = c.id; bcReason = ''" class="text-[11px] font-semibold text-rose-700 hover:underline">Hide</button>
+                                            <button type="button" x-show="c.hidden" :disabled="bcBusy" @click="bcRestore(c)" class="text-[11px] font-semibold text-brand-700 hover:underline">Show again</button>
+                                        </div>
+                                    </div>
+                                    <form x-show="bcHiding === c.id" x-cloak @submit.prevent="bcHide(c)" class="mt-2 flex flex-wrap items-center gap-2">
+                                        <input type="text" x-model="bcReason" maxlength="255" placeholder="Why hide it? (e.g. Abusive language)" aria-label="Reason for hiding the comment" class="flex-1 min-w-[180px] text-xs rounded-xl border border-slate-200 px-2.5 py-1.5 focus:ring-4 focus:ring-brand-100 outline-none">
+                                        <button type="button" @click="bcHiding = null" class="text-[11px] text-ink-muted hover:underline">Cancel</button>
+                                        <button type="submit" :disabled="bcBusy || bcReason.trim().length < 3" class="px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50">Hide comment</button>
+                                    </form>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                    <x-slot:footer>
+                        <x-ui.button size="sm" variant="secondary" @click="bcOpen = false">Close</x-ui.button>
+                    </x-slot:footer>
+                </x-ui.modal>
+            </div>
+        </div>
+
+        <x-balita.viewer />
 
         {{-- ============================= OFFICES (government directory) ============================= --}}
         <div

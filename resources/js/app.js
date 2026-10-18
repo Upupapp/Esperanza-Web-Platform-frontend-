@@ -1592,7 +1592,9 @@ const areaChunks = [];
 const area = (used, load) => { if (used) areaChunks.push(load().then((m) => m.register(Alpine))); };
 area(/^\/(citizen|verify)(\/|$)/.test(areaPath), () => import('./scope-citizen'));
 area(/^\/admin\/(settings|users)(\/|$)/.test(areaPath), () => import('./scope-admin-settings'));
-area(/^\/admin\/(constituents|communications)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
+// /admin/announcements and /admin/settings/support open the Communications page
+// too (its Balita and Feedback tabs), so they need its components (2026-10-18).
+area(/^\/admin\/(constituents|communications|announcements|settings\/support)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
 area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 

@@ -100,15 +100,17 @@ class CitizenAppParityTest extends TestCase
         $this->assertStringContainsString("['Community', 'Komunidad'], ['Health', 'Kalusugan'], ['Public Service', 'Serbisyo Publiko'],", $js);
         $this->assertStringContainsString("['Advisory', 'Abiso'], ['Livelihood', 'Kabuhayan'], ['Governance', 'Pamamahala'],", $js);
 
-        // JSON, or multipart with `image`.
-        $this->assertStringContainsString("api.post('/citizen/community-posts', payload)", $js);
-        $this->assertStringContainsString("payload.append('image', this.image);", $js);
+        // Photos and videos are uploaded first (x-balita.media-field, in
+        // pieces) and the post names them (owner, 2026-10-18).
+        $this->assertStringContainsString("api.post('/citizen/community-posts', { body: text, category: this.category, media_ids: this.media.ids })", $js);
+        $this->assertStringContainsString('<x-balita.media-field base="/citizen/balita" model="media" />', $page);
 
-        // Shown at once as the author's own, not visible to others, under the feed's existing label.
+        // Shown at once as the author's own, with where it stands and why.
         $this->assertStringContainsString('x-data="balitaComposer"', $page);
         $this->assertStringContainsString('@submit.prevent="sendPost((p) => addMyPost(p))"', $page);
-        $this->assertStringContainsString('const post = this.fromCommunity({ ...p, mine: true, visible: p.visible === true });', $page);
-        $this->assertStringContainsString("post.mine && !post.visible ? ' · ' + (\$store.lang.current === 'en' ? 'Pending review", $page);
+        $this->assertStringContainsString('const post = this.fromCommunity({ ...p, mine: true });', $js);
+        $this->assertStringContainsString("pending: { icon: 'hourglass'", $js);
+        $this->assertStringContainsString("canEngage(post) { return post.state === 'published'; }", $js, 'no likes or comments on a post still waiting');
         // Unverified accounts may post (CitizenCapabilities::COMMUNITY_POST); only a refused capability hides it.
         $this->assertStringContainsString('x-show="$store.citizenSession.account?.capabilities?.community_post !== false"', $page);
     }

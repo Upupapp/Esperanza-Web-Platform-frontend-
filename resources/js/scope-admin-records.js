@@ -12,6 +12,7 @@
 // name the page's markup around them uses.
 
 import api from './api/client';
+import { registerBalitaMedia } from './balita-media';
 
 const OPEN = ['Submitted', 'Under Review'];
 
@@ -157,7 +158,379 @@ const FB_CHIPS = [
     { key: 'all', label: 'All', params: {} },
 ];
 
+// --------------------------------------------------------------- Balita
+
+// Owner, 2026-10-18: "polish the balita flow in both admin and user type" -
+// photos and videos are attached while writing, every move a post can make
+// comes from the server (available_transitions) and the officer's own
+// permission, and comments and residents' reports are in reach.
+
+const BALITA_CATEGORIES = ['Community', 'Health', 'Public Service', 'Advisory', 'Livelihood', 'Governance'];
+const emptyMedia = () => ({ ids: [], busy: false, failed: false });
+const balitaToast = (message, variant = 'success') => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
+const sameIds = (a, b) => a.length === b.length && a.every((id, i) => id === b[i]);
+
+/** The Balita tab: announcements on Draft -> Review -> Publish -> Archive. */
+function adminBalita(barangays = []) {
+    return {
+        loading: true,
+        failed: false,
+        posts: [],
+        search: '',
+        status: 'All',
+        scope: 'All',
+        category: 'All',
+        processing: false,
+        statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],
+        categoryList: BALITA_CATEGORIES,
+        open: false,
+        editing: null,
+        form: { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: barangays[0] || '' },
+        media: emptyMedia(),
+        formKey: 1,
+        reviewOpen: false,
+        selected: null,
+        rejectReason: '',
+
+        async load() {
+            this.loading = true;
+            this.failed = false;
+            try {
+                const res = await api.getAll('/admin/announcements');
+                this.posts = res.data || [];
+            } catch {
+                this.failed = true;
+            } finally {
+                this.loading = false;
+            }
+            this.openLinked();
+        },
+        // A reviewer's notification opens /admin/communications/?tab=balita&post=ID.
+        openLinked() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') !== 'balita' || !params.get('post')) return;
+            const post = this.posts.find((p) => String(p.id) === params.get('post'));
+            if (!post) return;
+            if (post.status === 'Pending Review' && this.canMove(post, 'Approved')) this.openReview(post);
+            else this.search = post.title;
+        },
+        get categories() { return [...new Set([...BALITA_CATEGORIES, ...this.posts.map((p) => p.category).filter(Boolean)])]; },
+        get filtered() {
+            const q = this.search.trim().toLowerCase();
+            return this.posts.filter((a) =>
+                (a.barangay === null || this.$store.session.inScope(a.barangay))
+                && (this.status === 'All' || a.status === this.status)
+                && (this.scope === 'All' || (this.scope === 'Municipal' ? !a.barangay : a.barangay === this.scope))
+                && (this.category === 'All' || a.category === this.category)
+                && (!q || (a.title || '').toLowerCase().includes(q) || (a.body || '').toLowerCase().includes(q)));
+        },
+        count(status) { return this.posts.filter((a) => a.status === status).length; },
+        statusLabel(status) { return status === 'Released' ? 'Published' : status; },
+
+        // What the officer may do to a post: the move must be one the server
+        // lists for it, and the officer must hold the permission it names.
+        can(action) { return this.$store.session.canPerm('comm_news', action); },
+        canMove(post, to) {
+            const action = post.available_transitions?.[to];
+            return !!action && this.can(action);
+        },
+        canEdit(post) { return ['Draft', 'Pending Review', 'Rejected'].includes(post.status) && this.can('edit'); },
+
+        // -- Writing
+        openNew() {
+            this.editing = null;
+            this.form = { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: barangays[0] || '' };
+            this.media = emptyMedia();
+            this.formKey += 1;
+            this.open = true;
+        },
+        openEdit(post) {
+            this.editing = post;
+            this.form = { title: post.title || '', category: post.category || 'Community', body: post.body || '', audience: post.barangay ? 'Barangay' : 'Municipal', barangay: post.barangay || barangays[0] || '' };
+            this.media = { ids: (post.media || []).map((m) => m.id), busy: false, failed: false };
+            this.formKey += 1;
+            this.reviewOpen = false;
+            this.open = true;
+        },
+        get formReady() { return this.form.title.trim() !== '' && this.form.body.trim() !== '' && !this.media.busy; },
+        async save(submit) {
+            if (this.processing || !this.formReady) return;
+            if (this.media.failed) {
+                balitaToast('Some photos or videos did not upload. Try them again or remove them first.', 'error');
+                return;
+            }
+            const barangay = this.form.audience === 'Barangay' ? this.form.barangay : null;
+            this.processing = true;
+            try {
+                let post = this.editing;
+                if (!post) {
+                    const res = await api.post('/admin/announcements', {
+                        title: this.form.title.trim(), body: this.form.body.trim(), category: this.form.category,
+                        barangay, official: true, media_ids: this.media.ids,
+                    });
+                    post = res.data;
+                } else {
+                    const changes = {};
+                    if (this.form.title.trim() !== post.title) changes.title = this.form.title.trim();
+                    if (this.form.body.trim() !== post.body) changes.body = this.form.body.trim();
+                    if (this.form.category !== post.category) changes.category = this.form.category;
+                    if (barangay !== (post.barangay || null)) changes.barangay = barangay;
+                    if (!sameIds(this.media.ids, (post.media || []).map((m) => m.id))) changes.media_ids = this.media.ids;
+                    if (Object.keys(changes).length) await api.put('/admin/announcements/' + post.id, changes);
+                    else if (!submit) {
+                        this.open = false;
+                        balitaToast('Nothing was changed.', 'info');
+                        return;
+                    }
+                }
+                if (submit && post.status === 'Rejected') await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Draft' });
+                if (submit) await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Pending Review' });
+                this.open = false;
+                balitaToast(submit ? 'Sent for review. The officers who approve Balita were told.' : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
+                await this.load();
+            } catch (err) {
+                balitaToast(errText(err, 'Could not save this post.'), 'error');
+                await this.load();
+            } finally {
+                this.processing = false;
+            }
+        },
+
+        // -- Moving it along
+        async move(post, to, remarks) {
+            try {
+                await api.post('/admin/announcements/' + post.id + '/transition', { to, remarks: remarks || undefined });
+                return true;
+            } catch (err) {
+                balitaToast(errText(err, 'Could not update this post.'), 'error');
+                return false;
+            }
+        },
+        openReview(post) {
+            this.selected = post;
+            this.rejectReason = '';
+            this.reviewOpen = true;
+        },
+        async approveAndPublish() {
+            if (this.processing || !this.selected) return;
+            this.processing = true;
+            try {
+                if (!(await this.move(this.selected, 'Approved'))) return;
+                if (await this.move(this.selected, 'Released')) {
+                    balitaToast('Published. Residents ' + (this.selected.barangay ? 'of Brgy. ' + this.selected.barangay + ' ' : '') + 'are notified.');
+                } else {
+                    balitaToast('Approved, but not published yet. Publish it from its card.', 'error');
+                }
+                this.reviewOpen = false;
+                await this.load();
+            } finally {
+                this.processing = false;
+            }
+        },
+        async requestChanges() {
+            if (this.processing || this.rejectReason.trim().length < 5) return;
+            this.processing = true;
+            try {
+                if (await this.move(this.selected, 'Rejected', this.rejectReason.trim())) {
+                    this.reviewOpen = false;
+                    balitaToast('Sent back with your remarks.', 'info');
+                    await this.load();
+                }
+            } finally {
+                this.processing = false;
+            }
+        },
+        async quick(post, to, done) {
+            if (this.processing) return;
+            this.processing = true;
+            try {
+                if (await this.move(post, to)) {
+                    balitaToast(done);
+                    await this.load();
+                }
+            } finally {
+                this.processing = false;
+            }
+        },
+        openComments(post) {
+            window.dispatchEvent(new CustomEvent('balita-comments', { detail: { kind: 'announcements', id: post.id, title: post.title, moderate: this.can('review') } }));
+        },
+        cover(post) { return (post.media || [])[0] || null; },
+        when,
+    };
+}
+
+/** The Community Posts tab: what residents posted, waiting or reported. */
+function adminCommunity() {
+    return {
+        loading: true,
+        failed: false,
+        posts: [],
+        search: '',
+        view: 'pending',
+        scope: 'All',
+        selected: null,
+        open: false,
+        reason: '',
+        processing: false,
+        views: [
+            ['pending', 'Awaiting review'], ['reported', 'Reported'], ['published', 'Live'],
+            ['hidden', 'Hidden'], ['removed', 'Taken down'], ['withdrawn', 'Deleted by author'], ['all', 'All'],
+        ],
+        stateLabels: { pending: 'Awaiting review', published: 'Live', hidden: 'Hidden', removed: 'Taken down', withdrawn: 'Deleted by author' },
+        stateTones: {
+            pending: 'bg-amber-50 text-amber-800 ring-amber-200',
+            published: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+            hidden: 'bg-slate-100 text-slate-700 ring-slate-300',
+            removed: 'bg-rose-50 text-rose-800 ring-rose-200',
+            withdrawn: 'bg-slate-50 text-slate-500 ring-slate-200',
+        },
+
+        async load() {
+            this.loading = true;
+            this.failed = false;
+            try {
+                const res = await api.getAll('/admin/community-posts');
+                this.posts = res.data || [];
+            } catch {
+                this.failed = true;
+            } finally {
+                this.loading = false;
+            }
+            this.openLinked();
+        },
+        // A moderator's notification opens /admin/communications/?tab=community&post=ID.
+        openLinked() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') !== 'community' || !params.get('post')) return;
+            const post = this.posts.find((p) => String(p.id) === params.get('post'));
+            if (post) this.moderate(post);
+        },
+        inView(p, view) {
+            if (view === 'all') return true;
+            if (view === 'reported') return p.report_count > 0 && !['removed', 'withdrawn'].includes(p.review_state);
+            return p.review_state === view;
+        },
+        countOf(view) { return this.posts.filter((p) => this.$store.session.inScope(p.barangay) && this.inView(p, view)).length; },
+        get filtered() {
+            const q = this.search.trim().toLowerCase();
+            return this.posts.filter((p) => this.$store.session.inScope(p.barangay)
+                && this.inView(p, this.view)
+                && (this.scope === 'All' || p.barangay === this.scope)
+                && (!q || (p.author || '').toLowerCase().includes(q) || (p.body || '').toLowerCase().includes(q)));
+        },
+        canModerate() { return this.$store.session.canPerm('comm_community', 'review'); },
+        moderate(post) {
+            this.selected = post;
+            this.reason = '';
+            this.open = true;
+        },
+        // What can be decided from where the post stands.
+        decisions(post) {
+            if (!post || !this.canModerate()) return [];
+            return {
+                pending: ['approve', 'hide', 'takedown'],
+                published: ['hide', 'takedown'],
+                hidden: ['approve', 'takedown'],
+                removed: ['approve'],
+            }[post.review_state] || [];
+        },
+        decisionLabel(post, decision) {
+            if (decision === 'approve') return post.review_state === 'pending' ? 'Approve & Publish' : 'Show again';
+            return decision === 'hide' ? 'Hide' : 'Take down';
+        },
+        async decide(decision) {
+            if (this.processing || !this.selected) return;
+            if (decision !== 'approve' && this.reason.trim().length < 5) return;
+            this.processing = true;
+            try {
+                await api.post('/admin/community-posts/' + this.selected.id + '/moderate', { decision, reason: decision === 'approve' ? undefined : this.reason.trim() });
+                this.open = false;
+                balitaToast({ approve: 'Published. The resident is told.', hide: 'Hidden. The resident is told why.', takedown: 'Taken down. The resident is told why.' }[decision], decision === 'approve' ? 'success' : 'info');
+                await this.load();
+            } catch (err) {
+                balitaToast(errText(err, 'Could not moderate this post.'), 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+        openComments(post) {
+            window.dispatchEvent(new CustomEvent('balita-comments', { detail: { kind: 'community-posts', id: post.id, title: 'Post by ' + post.author, moderate: this.canModerate() } }));
+        },
+        cover(post) { return (post.media || [])[0] || null; },
+        when,
+    };
+}
+
+/** The comments of one announcement or community post, for the officers who moderate them. */
+function balitaComments() {
+    return {
+        bcOpen: false,
+        bcKind: 'announcements',
+        bcId: null,
+        bcTitle: '',
+        bcModerate: false,
+        bcLoading: false,
+        bcFailed: false,
+        bcItems: [],
+        bcHiding: null,
+        bcReason: '',
+        bcBusy: false,
+        async bcShow(detail) {
+            Object.assign(this, { bcKind: detail.kind, bcId: detail.id, bcTitle: detail.title || '', bcModerate: !!detail.moderate, bcHiding: null, bcReason: '' });
+            this.bcOpen = true;
+            await this.bcLoad();
+        },
+        async bcLoad() {
+            this.bcLoading = true;
+            this.bcFailed = false;
+            try {
+                const res = await api.getAll('/admin/balita/' + this.bcKind + '/' + this.bcId + '/comments');
+                this.bcItems = res.data || [];
+            } catch {
+                this.bcFailed = true;
+            } finally {
+                this.bcLoading = false;
+            }
+        },
+        get bcHiddenCount() { return this.bcItems.filter((c) => c.hidden).length; },
+        async bcHide(comment) {
+            if (this.bcBusy || this.bcReason.trim().length < 3) return;
+            this.bcBusy = true;
+            try {
+                await api.post('/admin/balita/' + this.bcKind + '/' + this.bcId + '/comments/' + comment.id + '/hide', { reason: this.bcReason.trim() });
+                this.bcHiding = null;
+                this.bcReason = '';
+                balitaToast('Comment hidden from residents.', 'info');
+                await this.bcLoad();
+            } catch (err) {
+                balitaToast(errText(err, 'Could not hide this comment.'), 'error');
+            } finally {
+                this.bcBusy = false;
+            }
+        },
+        async bcRestore(comment) {
+            if (this.bcBusy) return;
+            this.bcBusy = true;
+            try {
+                await api.post('/admin/balita/' + this.bcKind + '/' + this.bcId + '/comments/' + comment.id + '/restore');
+                balitaToast('Comment shown again.');
+                await this.bcLoad();
+            } catch (err) {
+                balitaToast(errText(err, 'Could not restore this comment.'), 'error');
+            } finally {
+                this.bcBusy = false;
+            }
+        },
+        when,
+    };
+}
+
 export function register(Alpine) {
+    registerBalitaMedia(Alpine);
+    Alpine.data('adminBalita', adminBalita);
+    Alpine.data('adminCommunity', adminCommunity);
+    Alpine.data('balitaComments', balitaComments);
     // A correction request opened from the Data requests list: the account's
     // "Correct details" opens by itself, with that request to close.
     Alpine.store('recordsDesk', { pendingCorrection: null });

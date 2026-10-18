@@ -112,7 +112,7 @@ class QaRunFixesTest extends TestCase
         $this->assertStringContainsString('<x-citizen.banner-carousel />', $this->source('resources/views/citizen/dashboard.blade.php'), 'the dashboard shows it');
 
         $feed = $this->source('resources/views/citizen/announcements.blade.php');
-        $this->assertStringContainsString('title: a.title', $feed);
+        $this->assertStringContainsString('title: a.title', $this->source('resources/js/scope-citizen.js'));
         $this->assertStringContainsString('x-text="post.title"', $feed);
         $this->assertStringContainsString('x-text="post.title"', $this->source('resources/views/citizen/dashboard.blade.php'), 'the dashboard preview too');
     }
