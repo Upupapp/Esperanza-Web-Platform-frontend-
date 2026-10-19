@@ -115,6 +115,7 @@
                                     <p class="text-[11px] text-ink-muted flex flex-wrap items-center gap-x-1.5">
                                         <span x-text="whereLine(post)"></span>
                                         <span x-show="post.category" class="inline-flex px-1.5 py-px rounded-full bg-slate-100 text-ink-body text-[10px] font-semibold" x-text="categoryLabel(post.category)"></span>
+                                        <span x-show="post.greeting" class="inline-flex items-center gap-1 px-1.5 py-px rounded-full bg-gold-100 text-gold-700 text-[10px] font-semibold"><i data-lucide="party-popper" class="w-2.5 h-2.5"></i><x-ui.t fil="Pagbati" en="Greeting" /><span x-show="occasionLabel(post.greeting)" x-text="'· ' + occasionLabel(post.greeting)"></span></span>
                                     </p>
                                 </div>
 

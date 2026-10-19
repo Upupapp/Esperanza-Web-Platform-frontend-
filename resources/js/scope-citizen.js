@@ -1957,6 +1957,11 @@ function balitaFeed() {
         t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
         get en() { return this.$store.lang.current === 'en'; },
         categoryLabel,
+        occasionLabel(g) {
+            if (!g) return '';
+            if (g.occasion === 'custom' && g.occasion_name) return g.occasion_name;
+            return this.t(g.occasion_label?.en || g.occasion_label?.fil || '', g.occasion_label?.fil || g.occasion_label?.en || '');
+        },
 
         async init() {
             await this.loadFirst();
@@ -1969,6 +1974,8 @@ function balitaFeed() {
                 category: a.category, title: a.title, body: a.body || '', media: a.media || [], official: true,
                 likes: a.likes || 0, comments_count: a.comments_count || 0, liked_by_me: a.liked_by_me === true,
                 mine: false, state: 'published', reason: null, at: a.published_at,
+                // An occasion greeting (2026-10-19): { occasion, occasion_label: { en, fil }, occasion_name }.
+                greeting: a.post_type === 'greeting' ? (a.greeting || {}) : null,
                 expanded: false, showComments: false, comments: null, commentsPage: 0, commentsMore: false, liking: false,
                 // The comment being written, on the post itself: a map keyed by
                 // post did not re-run the Send button's binding when it changed.

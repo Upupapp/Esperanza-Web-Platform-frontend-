@@ -8,6 +8,26 @@ return [
 
     'categories' => ['All', 'Official', 'Community', 'Health', 'Public Service', 'Advisory', 'Livelihood'],
 
+    // Occasion greetings (2026-10-19): an official Balita post that greets
+    // residents for a festival, a holiday, the town's foundation day and the
+    // like, shown in the feed, as a pop-up when the resident opens Esperanza,
+    // or both, each on its own schedule. These are the kinds an officer
+    // chooses from, and how often the pop-up may show to one resident. The
+    // backend reads both lists from here (FrontendContract::balita()).
+    'greeting_occasions' => [
+        ['key' => 'festival', 'en' => 'Festival', 'fil' => 'Pista'],
+        ['key' => 'holiday', 'en' => 'Holiday', 'fil' => 'Pista opisyal'],
+        ['key' => 'foundation_day', 'en' => 'Foundation Day', 'fil' => 'Araw ng Pagkakatatag'],
+        ['key' => 'anniversary', 'en' => 'Birthday/Anniversary', 'fil' => 'Kaarawan/Anibersaryo'],
+        ['key' => 'custom', 'en' => 'Custom Occasion', 'fil' => 'Ibang okasyon'],
+    ],
+
+    'greeting_popup_frequencies' => [
+        ['key' => 'once', 'en' => 'Once per resident', 'fil' => 'Isang beses bawat residente'],
+        ['key' => 'daily', 'en' => 'Once a day', 'fil' => 'Isang beses bawat araw'],
+        ['key' => 'every_launch', 'en' => 'Every time Esperanza is opened', 'fil' => 'Tuwing bubuksan ang Esperanza'],
+    ],
+
     'mediaLibrary' => [
         ['name' => 'Fiesta Rehearsal Photo.jpg', 'category' => 'IMG'],
         ['name' => 'Barangay Cleanup.jpg', 'category' => 'IMG'],

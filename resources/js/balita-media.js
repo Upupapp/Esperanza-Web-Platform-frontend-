@@ -198,10 +198,14 @@ export function balitaMediaField(base, existing = [], english = false) {
             );
         },
         sync() {
+            const done = this.items.filter((i) => i.status === 'done' && i.media);
             this.value = {
-                ids: this.items.filter((i) => i.status === 'done' && i.media).map((i) => i.media.id),
+                ids: done.map((i) => i.media.id),
                 busy: this.items.some((i) => i.status === 'preparing' || i.status === 'uploading'),
                 failed: this.items.some((i) => i.status === 'error'),
+                // The first photo, which an occasion greeting's pop-up shows
+                // as its poster (the staff form's preview, 2026-10-19).
+                cover: done.find((i) => i.kind === 'image')?.preview || null,
             };
         },
         pick(fileList) {

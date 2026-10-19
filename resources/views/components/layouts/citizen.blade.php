@@ -43,5 +43,7 @@
     <x-citizen.fiesta-popup />
     <x-citizen.alert-popup />
     <x-citizen.verified-popup />
+    {{-- Last: an occasion greeting waits for every pop-up above (2026-10-19). --}}
+    <x-citizen.greeting-popup />
 </body>
 </html>

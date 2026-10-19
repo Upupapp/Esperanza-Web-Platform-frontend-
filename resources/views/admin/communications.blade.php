@@ -92,7 +92,7 @@
              the officer may make (2026-10-18). --}}
         <div
             x-show="tab === 'balita'"
-            x-data="adminBalita(@js(config('esperanza.barangays')))"
+            x-data="adminBalita(@js(config('esperanza.barangays')), @js(config('esperanza_balita.greeting_occasions')), @js(config('esperanza_balita.greeting_popup_frequencies')))"
             x-init="$store.session.whenReady().then(() => tabAllowed('balita') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /></div>
@@ -127,10 +127,16 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto">
                         <template x-for="s in ['All', ...statuses]" :key="s">
-                            <button type="button" @click="status = s" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                            <button type="button" @click="showStatus(s)" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="status === s && !scheduledOnly ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                                 <span x-text="s === 'All' ? 'All' : statusLabel(s)"></span><span x-show="s !== 'All' && count(s)" class="ml-1 text-ink-muted tabular-nums" x-text="count(s)"></span>
                             </button>
                         </template>
+                        {{-- Not a status: occasion greetings whose time in Balita or
+                             as a pop-up is still to come, whatever their status (2026-10-19). --}}
+                        <span class="w-px h-4 bg-slate-300/70 shrink-0" aria-hidden="true"></span>
+                        <button type="button" @click="showScheduled()" :aria-pressed="scheduledOnly" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1" :class="scheduledOnly ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
+                            <i data-lucide="calendar-clock" class="w-3 h-3"></i>Scheduled<span x-show="scheduledCount" class="ml-0.5 text-ink-muted tabular-nums" x-text="scheduledCount"></span>
+                        </button>
                     </div>
                     <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
                 </div>
@@ -156,10 +162,31 @@
                                 <span class="text-[10px] font-semibold text-ink-muted bg-slate-100 rounded-full px-2 py-0.5" x-text="a.category"></span>
                                 <span class="inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="statusTone(a.status)" x-text="statusLabel(a.status)"></span>
                             </div>
-                            <span class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 mb-2" :class="!a.barangay ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'">
-                                <i :data-lucide="!a.barangay ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
-                                <span x-text="!a.barangay ? 'Municipality-wide' : 'Brgy. ' + a.barangay + ' only'"></span>
-                            </span>
+                            <div class="flex flex-wrap items-center gap-1.5 mb-2">
+                                <span class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5" :class="!a.barangay ? 'bg-brand-50 text-brand-700' : 'bg-purple-50 text-purple-700'">
+                                    <i :data-lucide="!a.barangay ? 'landmark' : 'map-pin'" class="w-2.5 h-2.5"></i>
+                                    <span x-text="!a.barangay ? 'Municipality-wide' : 'Brgy. ' + a.barangay + ' only'"></span>
+                                </span>
+                                <span x-show="isGreeting(a)" class="inline-flex items-center gap-1 text-[10px] font-semibold rounded-full px-2 py-0.5 bg-gold-100 text-gold-700">
+                                    <i data-lucide="party-popper" class="w-2.5 h-2.5"></i>
+                                    <span x-text="'Occasion greeting · ' + occasionLabel(a.greeting)"></span>
+                                </span>
+                            </div>
+                            {{-- A greeting's two schedules, each with what it is doing now (the server's feed_state and popup_state). --}}
+                            <template x-if="isGreeting(a)">
+                                <ul class="space-y-1 mb-2" aria-label="Schedule">
+                                    <li x-show="a.greeting.show_in_feed" class="flex flex-wrap items-center gap-1.5 text-[10.5px] text-ink-body">
+                                        <i data-lucide="megaphone" class="w-3 h-3 text-ink-muted shrink-0"></i>
+                                        <span x-text="feedSpan(a)"></span>
+                                        <span x-show="stateLabel(a.greeting.feed_state)" class="rounded-full px-1.5 py-px font-semibold" :class="stateTone(a.greeting.feed_state)" x-text="stateLabel(a.greeting.feed_state)"></span>
+                                    </li>
+                                    <li x-show="a.greeting.popup" class="flex flex-wrap items-center gap-1.5 text-[10.5px] text-ink-body">
+                                        <i data-lucide="message-square-heart" class="w-3 h-3 text-ink-muted shrink-0"></i>
+                                        <span x-text="a.greeting.popup ? popupSpan(a) : ''"></span>
+                                        <span x-show="stateLabel(a.greeting.popup_state)" class="rounded-full px-1.5 py-px font-semibold" :class="stateTone(a.greeting.popup_state)" x-text="stateLabel(a.greeting.popup_state)"></span>
+                                    </li>
+                                </ul>
+                            </template>
                             <h3 class="text-sm font-semibold text-ink leading-snug line-clamp-2 mb-1" x-text="a.title"></h3>
                             <p class="text-xs text-ink-muted line-clamp-2 mb-2" x-text="a.body"></p>
                             <p x-show="a.status === 'Rejected' && a.review_remarks" x-cloak class="mb-2 rounded-xl bg-rose-50 border border-rose-100 px-2.5 py-1.5 text-[11px] text-rose-800"><span class="font-semibold">Sent back:</span> <span x-text="a.review_remarks"></span></p>
@@ -179,8 +206,12 @@
                             <button type="button" x-show="a.status === 'Pending Review' && (canMove(a, 'Approved') || canMove(a, 'Rejected'))" @click="openReview(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 text-orange-700 hover:bg-orange-50/60"><i data-lucide="file-search" class="w-3.5 h-3.5"></i>Review</button>
                             <button type="button" x-show="canEdit(a)" @click="openEdit(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-700 hover:bg-brand-50/60"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
                             <button type="button" x-show="a.status === 'Draft' && canMove(a, 'Pending Review')" @click="quick(a, 'Pending Review', 'Sent for review.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-700 hover:bg-brand-50/60"><i data-lucide="send" class="w-3.5 h-3.5"></i>Send for review</button>
-                            <button type="button" x-show="a.status === 'Approved' && canMove(a, 'Released')" @click="quick(a, 'Released', 'Published. Residents are notified.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 text-emerald-700 hover:bg-emerald-50/60"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
-                            <button type="button" x-show="canMove(a, 'Archived')" @click="quick(a, 'Archived', 'Archived. Residents no longer see it.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                            <button type="button" x-show="a.status === 'Approved' && canMove(a, 'Released') && !waitsForFeed(a)" @click="quick(a, 'Released', 'Published. Residents are notified.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 text-emerald-700 hover:bg-emerald-50/60"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
+                            {{-- An approved greeting waits for its time; the server puts it into Balita then. --}}
+                            <p x-show="waitsForFeed(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 px-2 text-sky-800 text-center"><i data-lucide="calendar-clock" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Goes live ' + (a.greeting && a.greeting.publish_at ? when(a.greeting.publish_at) : 'at its time')"></span></p>
+                            <button type="button" x-show="canMove(a, 'Archived') && !cancellable(a)" @click="quick(a, 'Archived', 'Archived. Residents no longer see it.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                            <button type="button" x-show="canMove(a, 'Archived') && cancellable(a)" @click="cancelGreeting(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-rose-700 hover:bg-rose-50/60"><i data-lucide="calendar-x" class="w-3.5 h-3.5"></i>Cancel greeting</button>
+                            <button type="button" x-show="isGreeting(a) && can('create')" @click="useAsTemplate(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-700 hover:bg-brand-50/60"><i data-lucide="copy" class="w-3.5 h-3.5"></i>Use as template</button>
                         </div>
                     </article>
                 </template>
@@ -207,6 +238,39 @@
                 <div class="space-y-4 max-w-3xl mx-auto">
                     <p x-show="editing" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing a post in ' + statusLabel(editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
                     <p x-show="editing && editing.status === 'Rejected' && editing.review_remarks" x-cloak class="rounded-2xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs text-rose-800"><span class="font-semibold">Sent back:</span> <span x-text="editing?.review_remarks"></span></p>
+                    {{-- Occasion greetings (2026-10-19): the same post, with an occasion and
+                         its own times in Balita and as a pop-up. The occasions come from
+                         config/esperanza_balita.php, the list the server checks. --}}
+                    <fieldset>
+                        <legend class="block text-sm font-medium text-slate-700 mb-1.5">Post type</legend>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button type="button" @click="form.post_type = 'regular'" :aria-pressed="form.post_type === 'regular'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.post_type === 'regular' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                                <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="megaphone" class="w-4 h-4"></i></span>
+                                <p class="text-xs font-semibold text-ink">Regular Balita</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">News or a notice, in Balita once published</p>
+                            </button>
+                            <button type="button" @click="form.post_type = 'greeting'" :aria-pressed="form.post_type === 'greeting'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.post_type === 'greeting' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                                <span class="w-8 h-8 rounded-lg bg-gold-100 text-gold-700 flex items-center justify-center mb-1.5"><i data-lucide="party-popper" class="w-4 h-4"></i></span>
+                                <p class="text-xs font-semibold text-ink">Occasion Greeting</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">A greeting in Balita, as a pop-up, or both, on its own dates</p>
+                            </button>
+                        </div>
+                        <div x-show="form.post_type === 'greeting'" x-cloak class="mt-2.5 grid sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label for="balita-occasion" class="block text-xs font-medium text-slate-700 mb-1">Occasion</label>
+                                <select id="balita-occasion" x-model="form.occasion" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <template x-for="o in occasions" :key="o.key"><option :value="o.key" x-text="o.en" :selected="o.key === form.occasion"></option></template>
+                                </select>
+                                <p x-show="fieldError('occasion')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('occasion')"></p>
+                            </div>
+                            <div x-show="form.occasion === 'custom'" x-cloak>
+                                <label for="balita-occasion-name" class="block text-xs font-medium text-slate-700 mb-1">Occasion name</label>
+                                <input id="balita-occasion-name" type="text" x-model="form.occasion_name" maxlength="120" placeholder="e.g. Araw ng mga Guro" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <p x-show="fieldError('occasion_name')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('occasion_name')"></p>
+                            </div>
+                        </div>
+                    </fieldset>
+
                     <x-ui.input name="title" label="Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="form.title" maxlength="255" />
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="balita-category">Category</label>
@@ -245,15 +309,124 @@
                     <template x-for="k in [formKey]" :key="k">
                         <x-balita.media-field base="/admin/balita" model="media" existing="(editing ? (editing.media || []) : [])" :english="true" />
                     </template>
+
+                    {{-- When residents see a greeting: in Balita, as a pop-up, or both, each on its own schedule. --}}
+                    <fieldset x-show="form.post_type === 'greeting'" x-cloak class="rounded-2xl border border-brand-600/10 bg-white/60 p-4 space-y-4">
+                        <legend class="px-1 text-sm font-medium text-slate-700">Show it</legend>
+                        <p class="text-[11px] text-ink-muted leading-relaxed -mt-1">Times are Esperanza time (Asia/Manila), whatever this computer is set to. The Balita post and the pop-up keep separate schedules. The greeting's title, content, category, audience and photos are the post's own, above; the first photo is the pop-up's poster.</p>
+                        <div class="grid sm:grid-cols-2 gap-2.5">
+                            <label class="flex items-start gap-2.5 rounded-2xl border p-3 cursor-pointer transition-all duration-[160ms] ease-standard" :class="form.in_feed ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                                <input type="checkbox" x-model="form.in_feed" class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
+                                <span><span class="block text-xs font-semibold text-ink">In Balita</span><span class="block text-[10.5px] text-ink-muted mt-0.5">A post in the feed, with likes and comments</span></span>
+                            </label>
+                            <label class="flex items-start gap-2.5 rounded-2xl border p-3 cursor-pointer transition-all duration-[160ms] ease-standard" :class="form.as_popup ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
+                                <input type="checkbox" x-model="form.as_popup" class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
+                                <span><span class="block text-xs font-semibold text-ink">As a pop-up</span><span class="block text-[10.5px] text-ink-muted mt-0.5">Greets residents when they open Esperanza</span></span>
+                            </label>
+                        </div>
+                        <p x-show="fieldError('show_in_feed') || fieldError('popup_enabled')" x-cloak class="text-[11px] text-rose-700" x-text="fieldError('show_in_feed') || fieldError('popup_enabled')"></p>
+
+                        <div x-show="form.in_feed" class="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="balita-publish-date" class="block text-xs font-medium text-slate-700 mb-1">Goes into Balita</label>
+                                    <div class="flex gap-2">
+                                        <input id="balita-publish-date" type="date" x-model="form.publish_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <input type="time" x-model="form.publish_time" aria-label="Goes into Balita, time" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard max-w-[9rem]">
+                                    </div>
+                                    <p class="text-[10.5px] text-ink-muted mt-1">Empty: as soon as it is approved.</p>
+                                    <p x-show="fieldError('publish_at')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('publish_at')"></p>
+                                </div>
+                                <div>
+                                    <label for="balita-until-date" class="block text-xs font-medium text-slate-700 mb-1">Leaves Balita</label>
+                                    <div class="flex gap-2">
+                                        <input id="balita-until-date" type="date" x-model="form.until_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <input type="time" x-model="form.until_time" aria-label="Leaves Balita, time" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard max-w-[9rem]">
+                                    </div>
+                                    <p class="text-[10.5px] text-ink-muted mt-1">Empty: it stays. No time: the end of that day.</p>
+                                    <p x-show="fieldError('visible_until')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('visible_until')"></p>
+                                </div>
+                        </div>
+
+                        <div x-show="form.as_popup" class="space-y-3">
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="balita-popup-start-date" class="block text-xs font-medium text-slate-700 mb-1">Pop-up starts</label>
+                                    <div class="flex gap-2">
+                                        <input id="balita-popup-start-date" type="date" x-model="form.popup_start_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <input type="time" x-model="form.popup_start_time" aria-label="Pop-up starts, time" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard max-w-[9rem]">
+                                    </div>
+                                    <p class="text-[10.5px] text-ink-muted mt-1">No time: the start of that day.</p>
+                                    <p x-show="fieldError('popup_starts_at')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('popup_starts_at')"></p>
+                                </div>
+                                <div>
+                                    <label for="balita-popup-end-date" class="block text-xs font-medium text-slate-700 mb-1">Pop-up ends</label>
+                                    <div class="flex gap-2">
+                                        <input id="balita-popup-end-date" type="date" x-model="form.popup_end_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                        <input type="time" x-model="form.popup_end_time" aria-label="Pop-up ends, time" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard max-w-[9rem]">
+                                    </div>
+                                    <p class="text-[10.5px] text-ink-muted mt-1">No time: the end of that day.</p>
+                                    <p x-show="fieldError('popup_ends_at')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('popup_ends_at')"></p>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="balita-popup-frequency" class="block text-xs font-medium text-slate-700 mb-1">How often</label>
+                                <select id="balita-popup-frequency" x-model="form.popup_frequency" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <template x-for="f in frequencies" :key="f.key"><option :value="f.key" x-text="f.en" :selected="f.key === form.popup_frequency"></option></template>
+                                </select>
+                                <p x-show="fieldError('popup_frequency')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('popup_frequency')"></p>
+                            </div>
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="balita-popup-button-label" class="block text-xs font-medium text-slate-700 mb-1">Button label (optional)</label>
+                                    <input id="balita-popup-button-label" type="text" x-model="form.popup_button_label" maxlength="60" placeholder="e.g. See the program" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <p x-show="fieldError('popup_button_label')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('popup_button_label')"></p>
+                                </div>
+                                <div>
+                                    <label for="balita-popup-button-url" class="block text-xs font-medium text-slate-700 mb-1">Button link (https, optional)</label>
+                                    <input id="balita-popup-button-url" type="url" x-model="form.popup_button_url" inputmode="url" placeholder="https://" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                    <p class="text-[10.5px] text-ink-muted mt-1">Empty: the button opens the post in Balita, when it is shown there.</p>
+                                    <p x-show="fieldError('popup_button_url')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('popup_button_url')"></p>
+                                </div>
+                            </div>
+                            <x-ui.button variant="secondary" size="sm" icon="eye" @click="previewOpen = true">Preview pop-up</x-ui.button>
+                        </div>
+                    </fieldset>
                 </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
                     <p x-show="media.busy" x-cloak class="mr-auto text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i>Uploading photos and videos…</p>
+                    <p x-show="!media.busy && greetingProblem" x-cloak role="status" class="mr-auto text-xs text-rose-700 flex items-center gap-1.5"><i data-lucide="circle-alert" class="w-3.5 h-3.5 shrink-0"></i><span x-text="greetingProblem"></span></p>
                     <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing || !formReady" @click="save(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
                     <x-ui.button size="sm" icon="send" x-show="!editing || editing.status !== 'Pending Review'" x-bind:disabled="processing || !formReady" @click="save(true)"><span x-text="!editing ? 'Send for review' : (editing.status === 'Rejected' ? 'Save and resend for review' : 'Save and send for review')">Send for review</span></x-ui.button>
                 </div>
             </x-ui.modal>
+
+            {{-- The resident's greeting pop-up, drawn from the form as it stands
+                 (2026-10-19). Residents read it in their own language; the
+                 occasion's name is shown here in English. --}}
+            <div x-data="{ get open() { return previewOpen; }, set open(v) { previewOpen = v; } }">
+            <x-ui.modal title="Pop-up preview" maxWidth="sm">
+                <p class="text-xs text-ink-muted mb-3">What residents see when they open Esperanza<span x-show="form.as_popup" x-text="', ' + frequencyLabel(form.popup_frequency).toLowerCase()"></span>.</p>
+                <div class="rounded-[24px] border border-brand-600/10 bg-white overflow-hidden">
+                    <img x-show="preview.poster" :src="preview.poster || ''" :alt="preview.title" class="w-full aspect-[16/9] object-cover">
+                    <div class="px-5 pt-5 pb-4 text-center">
+                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2.5 py-0.5 bg-gold-100 text-gold-700"><i data-lucide="party-popper" class="w-3 h-3"></i><span x-text="preview.occasion"></span></span>
+                        <h4 class="mt-2.5 text-lg font-extrabold text-ink leading-snug" x-text="preview.title"></h4>
+                        <p class="mt-2 text-sm text-ink-body leading-relaxed whitespace-pre-line" x-text="preview.message"></p>
+                    </div>
+                    {{-- A picture of the buttons, not buttons: nothing here acts. --}}
+                    <div class="flex flex-wrap justify-center gap-2 px-5 pb-5" aria-hidden="true">
+                        <span class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-ink-body">Thank you!</span>
+                        <span x-show="preview.button" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 py-2 text-xs font-semibold text-white"><span x-text="preview.button"></span><i x-show="form.popup_button_url.trim()" data-lucide="external-link" class="w-3.5 h-3.5"></i></span>
+                    </div>
+                </div>
+                <p x-show="!preview.poster" class="text-[11px] text-ink-muted mt-3">No photo yet: the pop-up shows without a poster. The first photo of the post becomes its poster.</p>
+                <x-slot:footer>
+                    <x-ui.button variant="secondary" size="sm" @click="previewOpen = false">Back to the form</x-ui.button>
+                </x-slot:footer>
+            </x-ui.modal>
+            </div>
 
             {{-- Review: the post as residents will see it --}}
             <div x-data="{ get open() { return reviewOpen; }, set open(v) { reviewOpen = v; } }">
@@ -273,7 +446,15 @@
                             <p class="px-3.5 pb-3 text-[13px] text-slate-700 leading-relaxed whitespace-pre-line" x-text="selected.body"></p>
                             <x-balita.gallery media="selected.media" label="selected.title" :english="true" />
                         </div>
-                        <p class="text-xs text-ink-muted">Residents see it under the writer's name with the official seal. Approving publishes it at once and notifies <span x-text="selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident'"></span> in the app and on the website.</p>
+                        <template x-if="isGreeting(selected)">
+                            <div class="rounded-2xl border border-gold-200 bg-gold-50 px-3.5 py-2.5 text-xs text-ink-body space-y-1">
+                                <p class="font-semibold text-gold-700 flex items-center gap-1.5"><i data-lucide="party-popper" class="w-3.5 h-3.5"></i><span x-text="'Occasion greeting · ' + occasionLabel(selected.greeting)"></span></p>
+                                <p x-show="selected.greeting.show_in_feed" x-text="feedSpan(selected)"></p>
+                                <p x-show="selected.greeting.popup" x-text="selected.greeting.popup ? popupSpan(selected) : ''"></p>
+                            </div>
+                        </template>
+                        <p x-show="!waitsOnApproval(selected)" class="text-xs text-ink-muted">Residents see it under the writer's name with the official seal. Approving publishes it at once and notifies <span x-text="selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident'"></span> in the app and on the website.</p>
+                        <p x-show="waitsOnApproval(selected)" x-cloak class="text-xs text-ink-muted">Residents see it under the writer's name with the official seal. Approving keeps it until its time in Balita, <span x-text="selected.greeting && selected.greeting.publish_at ? when(selected.greeting.publish_at) : ''"></span>; it goes in then by itself.</p>
                         <div x-show="canMove(selected, 'Rejected')">
                             <label for="balita-remarks" class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Remarks (required to send it back)</label>
                             <textarea id="balita-remarks" x-model="rejectReason" rows="2" placeholder="What needs to change?" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
@@ -283,7 +464,7 @@
                 <x-slot:footer>
                     <x-ui.button variant="secondary" size="sm" icon="pencil" x-show="selected && canEdit(selected)" @click="openEdit(selected)">Edit</x-ui.button>
                     <x-ui.button variant="danger" size="sm" x-show="selected && canMove(selected, 'Rejected')" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Send back</x-ui.button>
-                    <x-ui.button size="sm" icon="check" x-show="selected && canMove(selected, 'Approved')" x-bind:disabled="processing" @click="approveAndPublish()">Approve &amp; Publish</x-ui.button>
+                    <x-ui.button size="sm" icon="check" x-show="selected && canMove(selected, 'Approved')" x-bind:disabled="processing" @click="approveAndPublish()"><span x-text="selected && waitsOnApproval(selected) ? 'Approve' : 'Approve & Publish'">Approve &amp; Publish</span></x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
             </div>

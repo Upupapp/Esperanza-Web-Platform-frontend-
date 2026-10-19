@@ -52,6 +52,8 @@
                         likes: post.likes || 0,
                         liked: post.liked_by_me === true,
                         commentCount: post.comments_count || 0,
+                        // An occasion greeting (2026-10-19): its occasion, a name or {en, fil}.
+                        occasion: post.post_type === 'greeting' && post.greeting ? ((post.greeting.occasion === 'custom' && post.greeting.occasion_name) || post.greeting.occasion_label || '') : null,
                     }));
                 } catch { this.balitaPreview = []; }
             },
@@ -83,17 +85,22 @@
                     }));
                 } catch { this.events = []; }
             },
+            // data-birthday-check says when this is settled, so an occasion
+            // greeting (x-citizen.greeting-popup) waits for the birthday
+            // greeting instead of opening under it (2026-10-19).
             checkBirthday() {
+                const settled = () => { const el = document.querySelector('[data-birthday-check]'); if (el) el.dataset.birthdayCheck = 'done'; };
                 const bd = this.$store.citizenSession.account?.birthdate;
-                if (!bd) return;
+                if (!bd) return settled();
                 const b = new Date(bd), t = new Date();
                 this.isBirthdayToday = b.getUTCMonth() === t.getMonth() && b.getUTCDate() === t.getDate();
                 if (this.isBirthdayToday && !sessionStorage.getItem('esperanza_birthday_seen')) {
                     setTimeout(() => {
                         this.$dispatch('show-birthday-popup');
                         sessionStorage.setItem('esperanza_birthday_seen', '1');
+                        settled();
                     }, 1400);
-                }
+                } else settled();
             },
             // A real like. This used to flip the heart on screen only, so the
             // like vanished on reload and never reached the Balita feed.
@@ -109,6 +116,7 @@
                 } finally { post.pending = false; }
             },
         }"
+        data-birthday-check="pending"
     >
 
         <!-- Skeleton state -->
@@ -441,6 +449,11 @@
                                             ></i>
 
                                         </p>
+
+                                        <span
+                                            x-show="post.occasion !== null"
+                                            class="inline-flex items-center gap-1 mt-0.5 rounded-full bg-gold-100 text-gold-700 text-[10px] font-semibold px-1.5 py-px"
+                                        ><x-ui.t fil="Pagbati" en="Greeting" /><span x-show="alertText(post.occasion)" x-text="'· ' + alertText(post.occasion)"></span></span>
 
                                         <p
                                             class="text-xs font-medium text-ink mt-0.5 line-clamp-1 leading-snug"
