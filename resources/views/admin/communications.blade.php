@@ -407,7 +407,7 @@
                  occasion's name is shown here in English. --}}
             <div x-data="{ get open() { return previewOpen; }, set open(v) { previewOpen = v; } }">
             <x-ui.modal title="Pop-up preview" maxWidth="sm">
-                <p class="text-xs text-ink-muted mb-3">What residents see when they open Esperanza<span x-show="form.as_popup" x-text="', ' + frequencyLabel(form.popup_frequency).toLowerCase()"></span>.</p>
+                <p class="text-xs text-ink-muted mb-3">What residents see when they open Esperanza<span x-show="form.as_popup" x-text="' · ' + frequencyLabel(form.popup_frequency)"></span>.</p>
                 <div class="rounded-[24px] border border-brand-600/10 bg-white overflow-hidden">
                     <img x-show="preview.poster" :src="preview.poster || ''" :alt="preview.title" class="w-full aspect-[16/9] object-cover">
                     <div class="px-5 pt-5 pb-4 text-center">
