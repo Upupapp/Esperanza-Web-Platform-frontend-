@@ -136,6 +136,12 @@
                 </div>
             </div>
 
+            {{-- Every officer writes Balita; a writer's post waits for a head (2026-10-19). --}}
+            <p x-show="can('create') && !approver" x-cloak class="mb-4 rounded-2xl bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
+                <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
+                <span>You can write Balita posts with photos and videos and send them for review. Your Department Head or the Information Office approves and publishes them. You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
+            </p>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
                 <template x-for="a in filtered" :key="a.id">
                     <article class="surface-glass rounded-[26px] overflow-hidden flex flex-col hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
@@ -211,7 +217,8 @@
 
                     <fieldset>
                         <legend class="block text-sm font-medium text-slate-700 mb-1.5">Audience</legend>
-                        <div class="grid grid-cols-2 gap-2.5">
+                        <p x-show="ownBarangay" x-cloak class="rounded-2xl border border-purple-200 bg-purple-50/60 p-3 text-xs text-ink flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-purple-600 shrink-0"></i><span x-text="'Brgy. ' + ownBarangay + ' residents see it and are notified.'"></span></p>
+                        <div x-show="!ownBarangay" class="grid grid-cols-2 gap-2.5">
                             <button type="button" @click="form.audience = 'Municipal'" :aria-pressed="form.audience === 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Municipal-wide</p>
@@ -223,7 +230,7 @@
                                 <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it and is notified</p>
                             </button>
                         </div>
-                        <div x-show="form.audience === 'Barangay'" x-cloak class="mt-2.5">
+                        <div x-show="form.audience === 'Barangay' && !ownBarangay" x-cloak class="mt-2.5">
                             <select aria-label="Barangay" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                                 <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b" :selected="b === form.barangay"></option></template>
                             </select>
@@ -864,6 +871,11 @@
                     <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
                 </div>
             </div>
+
+            <p x-show="!canModerate()" x-cloak class="mb-4 rounded-2xl bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
+                <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
+                <span>You can read what residents post. Department Heads and the Information Office approve, hide or take down residents' posts.</span>
+            </p>
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
                 <template x-for="p in filtered" :key="p.id">

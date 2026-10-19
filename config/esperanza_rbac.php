@@ -250,7 +250,7 @@ $roles = [
     [
         'key' => 'department_head', 'name' => 'Department Head', 'icon' => 'briefcase',
         'color' => 'text-purple-700 bg-purple-50', 'users' => 6, 'editable' => true,
-        'desc' => 'Reviews, approves, and releases requests handled by their assigned department (e.g. MSWDO, Treasurer\'s Office, Civil Registrar).',
+        'desc' => 'Reviews, approves, and releases requests handled by their assigned department (e.g. MSWDO, Treasurer\'s Office, Civil Registrar). Approves and publishes Balita posts, and moderates residents\' posts and comments.',
         'permissions' => $buildPermissions([
             'dokyu' => 'approve', 'tulong' => 'approve', 'constituents' => 'view', 'payments' => 'approve', 'reports' => 'view_export',
         ]),
@@ -258,7 +258,7 @@ $roles = [
     [
         'key' => 'department_staff', 'name' => 'Department Staff', 'icon' => 'keyboard',
         'color' => 'text-emerald-700 bg-emerald-50', 'users' => 24, 'editable' => true,
-        'desc' => 'Handles day-to-day encoding and processing of document and assistance requests within their department.',
+        'desc' => 'Handles day-to-day encoding and processing of document and assistance requests within their department. Writes Balita posts and sends them for review.',
         // Prints their office's reports; Excel and the masterlist with names
         // stay with the Department Head (dashboards, 2026-10-14).
         'permissions' => array_merge(
@@ -271,7 +271,7 @@ $roles = [
     [
         'key' => 'front_desk', 'name' => 'Front Desk Officer', 'icon' => 'concierge-bell',
         'color' => 'text-orange-700 bg-orange-50', 'users' => 8, 'editable' => true,
-        'desc' => 'First point of contact at the municipal hall — intakes new document and assistance requests and assists walk-in constituents.',
+        'desc' => 'First point of contact at the municipal hall — intakes new document and assistance requests and assists walk-in constituents. Writes Balita posts and sends them for review.',
         'permissions' => array_merge(
             $buildPermissions([
                 'dokyu' => 'process', 'tulong' => 'process', 'constituents' => 'process', 'payments' => 'view', 'papeles' => 'view',
@@ -282,7 +282,7 @@ $roles = [
     [
         'key' => 'records_officer', 'name' => 'Records Officer', 'icon' => 'archive',
         'color' => 'text-cyan-700 bg-cyan-50', 'users' => 3, 'editable' => true,
-        'desc' => 'Maintains resident, household, and barangay records, and prepares official copies of civil registry documents.',
+        'desc' => 'Maintains resident, household, and barangay records, and prepares official copies of civil registry documents. Writes Balita posts and sends them for review.',
         'permissions' => $buildPermissions([
             'constituents' => 'full', 'dokyu' => 'process', 'reports' => 'view_export', 'papeles' => 'full',
         ]),
@@ -298,7 +298,7 @@ $roles = [
     [
         'key' => 'barangay_secretary', 'name' => 'Barangay Secretary', 'icon' => 'map-pinned',
         'color' => 'text-teal-700 bg-teal-50', 'users' => 20, 'editable' => true,
-        'desc' => 'Processes and releases their barangay\'s own certifications and clearances (residency, indigency, business clearance, etc.), manages their barangay\'s directory profile, and views resident records for their barangay. Always Barangay-scoped, never Municipal-wide.',
+        'desc' => 'Processes and releases their barangay\'s own certifications and clearances (residency, indigency, business clearance, etc.), manages their barangay\'s directory profile, and views resident records for their barangay. Writes Balita posts for their barangay and sends them for review. Always Barangay-scoped, never Municipal-wide.',
         'permissions' => array_merge(
             $buildPermissions(['constituents' => 'view']),
             [
@@ -415,6 +415,35 @@ foreach ($roles as &$role) {
     }
     if (isset($scopeRoundGrants[$role['key']])) {
         $role['permissions'] = array_merge($role['permissions'], $scopeRoundGrants[$role['key']]);
+    }
+}
+unset($role);
+
+// ---------------------------------------------------------------
+// Balita for every officer (owner, 2026-10-19): "balita is something
+// similar to a facebook newsfeed/posting only even the residents can post
+// ... they should just differ in the level of things that they can do, for
+// example only heads can approve a post or delete or archive".
+//
+// Every officer reads Balita and the residents' posts, writes a post with
+// photos and videos, and sends it for review; the server lets them change
+// only their own posts, and a Barangay Secretary's go to their barangay.
+// A Department Head also approves and publishes, sends back, archives and
+// moderates the residents' posts and the comments. The Information Officer,
+// the Municipal Administrator and the Super Administrator keep everything,
+// events and banners too.
+// ---------------------------------------------------------------
+$balitaWriter = ['comm_news' => ['view', 'create', 'edit', 'review'], 'comm_community' => ['view']];
+$balitaGrants = [
+    'department_head' => ['comm_news' => $superAdminPermissions['comm_news'], 'comm_community' => $superAdminPermissions['comm_community']],
+    'department_staff' => $balitaWriter,
+    'front_desk' => $balitaWriter,
+    'records_officer' => $balitaWriter,
+    'barangay_secretary' => $balitaWriter,
+];
+foreach ($roles as &$role) {
+    if (isset($balitaGrants[$role['key']])) {
+        $role['permissions'] = array_merge($role['permissions'], $balitaGrants[$role['key']]);
     }
 }
 unset($role);

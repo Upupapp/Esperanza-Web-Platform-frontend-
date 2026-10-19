@@ -240,17 +240,28 @@ function adminBalita(barangays = []) {
 
         // What the officer may do to a post: the move must be one the server
         // lists for it, and the officer must hold the permission it names.
+        // Every officer writes Balita; one who cannot approve (a writer)
+        // changes only their own posts, as the server checks (2026-10-19).
         can(action) { return this.$store.session.canPerm('comm_news', action); },
+        get approver() { return this.can('approve'); },
         canMove(post, to) {
             const action = post.available_transitions?.[to];
-            return !!action && this.can(action);
+            return !!action && this.can(action) && (this.approver || !!post.mine);
         },
-        canEdit(post) { return ['Draft', 'Pending Review', 'Rejected'].includes(post.status) && this.can('edit'); },
+        canEdit(post) { return ['Draft', 'Pending Review', 'Rejected'].includes(post.status) && this.can('edit') && (this.approver || !!post.mine); },
+        // A barangay officer writes for their own barangay only.
+        get ownBarangay() {
+            const account = this.$store.session.account;
+            if (!account || account.roleKey === 'super_admin' || !account.scope || account.scope === 'Municipal') return null;
+            return account.scope;
+        },
 
         // -- Writing
         openNew() {
             this.editing = null;
-            this.form = { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: barangays[0] || '' };
+            this.form = this.ownBarangay
+                ? { title: '', category: 'Community', body: '', audience: 'Barangay', barangay: this.ownBarangay }
+                : { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: barangays[0] || '' };
             this.media = emptyMedia();
             this.formKey += 1;
             this.open = true;
@@ -270,7 +281,7 @@ function adminBalita(barangays = []) {
                 balitaToast('Some photos or videos did not upload. Try them again or remove them first.', 'error');
                 return;
             }
-            const barangay = this.form.audience === 'Barangay' ? this.form.barangay : null;
+            const barangay = this.ownBarangay || (this.form.audience === 'Barangay' ? this.form.barangay : null);
             this.processing = true;
             try {
                 let post = this.editing;
@@ -297,7 +308,7 @@ function adminBalita(barangays = []) {
                 if (submit && post.status === 'Rejected') await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Draft' });
                 if (submit) await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Pending Review' });
                 this.open = false;
-                balitaToast(submit ? 'Sent for review. The officers who approve Balita are notified.' : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
+                balitaToast(submit ? 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.' : 'Your Department Head or the Information Office approves it.') : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
                 await this.load();
             } catch (err) {
                 balitaToast(errText(err, 'Could not save this post.'), 'error');
@@ -364,7 +375,7 @@ function adminBalita(barangays = []) {
             }
         },
         openComments(post) {
-            window.dispatchEvent(new CustomEvent('balita-comments', { detail: { kind: 'announcements', id: post.id, title: post.title, moderate: this.can('review') } }));
+            window.dispatchEvent(new CustomEvent('balita-comments', { detail: { kind: 'announcements', id: post.id, title: post.title, moderate: this.approver } }));
         },
         cover(post) { return (post.media || [])[0] || null; },
         when,
@@ -431,6 +442,9 @@ function adminCommunity() {
                 && (!q || (p.author || '').toLowerCase().includes(q) || (p.body || '').toLowerCase().includes(q)));
         },
         canModerate() { return this.$store.session.canPerm('comm_community', 'review'); },
+        // Each decision needs its own permission: approve, hide (review),
+        // take down (archive). A writer only reads (2026-10-19).
+        mayDecide(decision) { return this.$store.session.canPerm('comm_community', { approve: 'approve', hide: 'review', takedown: 'archive' }[decision]); },
         moderate(post) {
             this.selected = post;
             this.reason = '';
@@ -439,12 +453,12 @@ function adminCommunity() {
         // What can be decided from where the post stands.
         decisions(post) {
             if (!post || !this.canModerate()) return [];
-            return {
+            return ({
                 pending: ['approve', 'hide', 'takedown'],
                 published: ['hide', 'takedown'],
                 hidden: ['approve', 'takedown'],
                 removed: ['approve'],
-            }[post.review_state] || [];
+            }[post.review_state] || []).filter((d) => this.mayDecide(d));
         },
         decisionLabel(post, decision) {
             if (decision === 'approve') return post.review_state === 'pending' ? 'Approve & Publish' : 'Show again';
