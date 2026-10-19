@@ -205,12 +205,16 @@ function adminBalita(barangays = []) {
             }
             this.openLinked();
         },
-        // A reviewer's notification opens /admin/communications/?tab=balita&post=ID.
+        // A reviewer's notification opens /admin/communications/?tab=balita&post=ID,
+        // once: the list reloads after every decision, and the link must not
+        // filter it to that post again (2026-10-19).
+        linkedDone: false,
         openLinked() {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('tab') !== 'balita' || !params.get('post')) return;
+            if (this.linkedDone || params.get('tab') !== 'balita' || !params.get('post')) return;
             const post = this.posts.find((p) => String(p.id) === params.get('post'));
             if (!post) return;
+            this.linkedDone = true;
             if (post.status === 'Pending Review' && this.canMove(post, 'Approved')) this.openReview(post);
             else this.search = post.title;
         },
@@ -421,12 +425,17 @@ function adminCommunity() {
             }
             this.openLinked();
         },
-        // A moderator's notification opens /admin/communications/?tab=community&post=ID.
+        // A moderator's notification opens /admin/communications/?tab=community&post=ID,
+        // once: the list reloads after every decision, and the window must not
+        // open again on its own (2026-10-19).
+        linkedDone: false,
         openLinked() {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('tab') !== 'community' || !params.get('post')) return;
+            if (this.linkedDone || params.get('tab') !== 'community' || !params.get('post')) return;
             const post = this.posts.find((p) => String(p.id) === params.get('post'));
-            if (post) this.moderate(post);
+            if (!post) return;
+            this.linkedDone = true;
+            this.moderate(post);
         },
         inView(p, view) {
             if (view === 'all') return true;
