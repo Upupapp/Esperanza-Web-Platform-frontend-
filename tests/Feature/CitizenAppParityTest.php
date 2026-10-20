@@ -100,10 +100,11 @@ class CitizenAppParityTest extends TestCase
         // like, comment on and share its posts, and write none of their own.
         $this->assertStringContainsString("const res = await api.get('/announcements', { params: { per_page: FEED_PAGE, page } });", $js);
         $this->assertStringContainsString("engagementPath(post, action) { return '/citizen/announcements/' + post.id + '/' + action; }", $js);
-        foreach (['/citizen/community-posts', 'balitaComposer', 'sendPost', 'submitReport'] as $gone) {
+        foreach (['/citizen/community-posts', 'balitaComposer', 'sendPost', 'fromCommunity'] as $gone) {
             $this->assertStringNotContainsString($gone, $js);
             $this->assertStringNotContainsString($gone, $page);
         }
+        $this->assertStringNotContainsString('reportFor', $page, 'no Report on a Balita post');
         $this->assertStringNotContainsString('x-balita.media-field', $page, 'no photo or video picker for residents');
         $this->assertStringContainsString("t('Like', 'Gusto')", $page);
         $this->assertStringContainsString("t('Share', 'Ibahagi')", $page);
