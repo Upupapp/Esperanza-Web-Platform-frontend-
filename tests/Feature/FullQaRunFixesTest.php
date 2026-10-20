@@ -46,8 +46,8 @@ class FullQaRunFixesTest extends TestCase
         $view = $this->source('resources/views/admin/communications.blade.php');
 
         $this->assertStringContainsString('x-init="landOnAllowedTab()"', $view);
-        $this->assertSame(7, substr_count($view, 'x-init="$store.session.whenReady().then(() => tabAllowed('), 'each of the 7 editorial tabs loads only when permitted');
-        $this->assertSame(8, substr_count($view, '<button x-show="tabAllowed('), 'each of the 8 tab buttons shows only when permitted');
+        $this->assertSame(6, substr_count($view, 'x-init="$store.session.whenReady().then(() => tabAllowed('), 'each of the 6 editorial tabs loads only when permitted (Community Posts went on 2026-10-20)');
+        $this->assertSame(7, substr_count($view, '<button x-show="tabAllowed('), 'each of the 7 tab buttons shows only when permitted');
         // The Feedback desk (scope round 2026-10-15) loads itself, and only
         // for an account holding comm_feedback view.
         $desk = $this->source('resources/js/scope-admin-records.js');

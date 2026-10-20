@@ -47,9 +47,9 @@ class QaFollowUpTest extends TestCase
         $view = $this->source('resources/views/citizen/announcements.blade.php');
         $js = $this->source('resources/js/scope-citizen.js');
 
-        // ?post=ID (an announcement) or ?community=ID (a resident's own post, 2026-10-18).
-        $this->assertStringContainsString("const annId = Number(params.get('post'));", $js);
-        $this->assertStringContainsString("const one = await api.get('/announcements/' + annId);", $js, 'an older post is fetched, not missed');
+        // ?post=ID; residents no longer post, so there is no ?community=ID (2026-10-20).
+        $this->assertStringContainsString("const id = Number(new URLSearchParams(window.location.search).get('post'));", $js);
+        $this->assertStringContainsString("const one = await api.get('/announcements/' + id);", $js, 'an older post is fetched, not missed');
         $this->assertStringContainsString(":id=\"'post-' + post.key\"", $view);
         $this->assertStringContainsString("document.getElementById('post-' + key)?.scrollIntoView(", $js);
         $this->assertStringContainsString('await this.openLinked();', $js);
