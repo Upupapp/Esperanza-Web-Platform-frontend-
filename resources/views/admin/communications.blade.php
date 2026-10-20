@@ -21,7 +21,7 @@
             // One submodule per tab. The Barangay Secretary holds only their
             // directory entry and opened Balita to 'Something went wrong' and a
             // 'Walang pahintulot' pop-up per tab (QA run 2026-10-05).
-            tabSubs: { balita: 'comm_news', banners: 'comm_banners', community: 'comm_community', events: 'comm_events', offices: 'comm_directory', barangays: 'comm_barangay_directory', blotter: 'comm_directory', feedback: 'comm_feedback' },
+            tabSubs: { balita: 'comm_news', banners: 'comm_banners', events: 'comm_events', offices: 'comm_directory', barangays: 'comm_barangay_directory', blotter: 'comm_directory', feedback: 'comm_feedback' },
             tabAllowed(t) { return $store.session.canPerm(this.tabSubs[t], 'view'); },
             // Each tab's own address, so a reload stays on it; a tab without
             // a route of its own is ?tab= (scope round 2026-10-15).
@@ -77,7 +77,6 @@
         <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full mb-4 overflow-x-auto">
             <button x-show="tabAllowed('balita')" @click="go('balita')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
             <button x-show="tabAllowed('banners')" @click="go('banners')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners</button>
-            <button x-show="tabAllowed('community')" @click="go('community')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'community' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i>Community Posts</button>
             <button x-show="tabAllowed('events')" @click="go('events')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
             <button x-show="tabAllowed('offices')" @click="go('offices')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
             <button x-show="tabAllowed('barangays')" @click="go('barangays')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
@@ -1010,131 +1009,7 @@
             </x-ui.modal>
         </div>
 
-        {{-- ============================= COMMUNITY POSTS ============================= --}}
-        {{-- Residents' posts: pre-moderated, with their photos and videos, the
-             reasons residents gave when they reported one, and the comments.
-             Logic in resources/js/scope-admin-records.js (adminCommunity). --}}
-        <div
-            x-show="tab === 'community'" x-cloak
-            x-data="adminCommunity"
-            x-init="$store.session.whenReady().then(() => tabAllowed('community') && load())"
-        >
-            <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
-            <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load community posts.'" retryExpr="load()" :retryable="true" /></div>
-
-            <div x-show="!loading && !failed">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card layout="compact" label="Awaiting review" valueBind="countOf('pending')" icon="file-clock" color="orange" :delay="0" />
-                <x-ui.stat-card layout="compact" label="Reported" valueBind="countOf('reported')" icon="flag" color="red" sublabel="Live or waiting, with a report" :delay="40" />
-                <x-ui.stat-card layout="compact" label="Live" valueBind="countOf('published')" icon="users-round" color="brand" :delay="80" />
-                <x-ui.stat-card layout="compact" label="Hidden / Taken down" valueBind="countOf('hidden') + countOf('removed')" icon="eye-off" color="purple" :delay="120" />
-            </div>
-
-            <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="relative flex-1 min-w-[200px]">
-                        <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                        <input aria-label="Search author or post content" type="text" x-model="search" placeholder="Search author or post content..." class="w-full pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
-                    </div>
-                    <select aria-label="Community barangay" x-model="scope" class="text-xs rounded-2xl py-2 px-3 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none border-0 surface-pressed-sm">
-                        <option value="All">All Barangays</option>
-                        <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
-                    </select>
-                </div>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 max-w-full overflow-x-auto">
-                        <template x-for="[key, label] in views" :key="key">
-                            <button type="button" @click="view = key" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="view === key ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
-                                <span x-text="label"></span><span x-show="key !== 'all' && countOf(key)" class="ml-1 text-ink-muted tabular-nums" x-text="countOf(key)"></span>
-                            </button>
-                        </template>
-                    </div>
-                    <p class="text-[11px] text-ink-muted shrink-0" x-text="filtered.length + ' of ' + posts.length + ' posts'"></p>
-                </div>
-            </div>
-
-            <p x-show="!canModerate()" x-cloak class="mb-4 rounded-2xl bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
-                <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-                <span>You can read what residents post. Department Heads and the Information Office approve, hide or take down residents' posts.</span>
-            </p>
-
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-                <template x-for="p in filtered" :key="p.id">
-                    <article class="surface-glass rounded-[26px] overflow-hidden flex flex-col hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
-                        <div class="flex items-center gap-2.5 p-3.5 pb-2.5">
-                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0 text-sm" x-text="initials(p.author)"></div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-semibold text-ink truncate" x-text="p.author"></p>
-                                <p class="text-[11px] text-ink-muted" x-text="['Brgy. ' + p.barangay, p.category, when(p.time)].filter(Boolean).join(' · ')"></p>
-                            </div>
-                            <span class="shrink-0 inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="stateTones[p.review_state]" x-text="stateLabels[p.review_state] || p.review_state"></span>
-                        </div>
-                        <p class="px-3.5 pb-2.5 text-[13px] text-slate-700 leading-relaxed line-clamp-3 whitespace-pre-line" x-show="p.body" x-text="p.body"></p>
-                        <x-balita.gallery media="p.media" label="'Post by ' + p.author" :english="true" class="mx-3.5 mb-2.5 rounded-xl" />
-                        <div class="mt-auto flex items-center justify-between px-3.5 py-2.5 border-t border-brand-600/10">
-                            <div class="flex items-center gap-3 text-xs text-ink-muted">
-                                <span class="inline-flex items-center gap-1 text-rose-700 font-medium" x-show="p.report_count > 0"><i data-lucide="flag" class="w-3.5 h-3.5"></i><span x-text="p.report_count + ' report' + (p.report_count > 1 ? 's' : '')"></span></span>
-                                <span class="inline-flex items-center gap-1" x-show="p.review_state === 'published'"><i data-lucide="heart" class="w-3.5 h-3.5"></i><span x-text="p.likes || 0"></span></span>
-                                <button type="button" x-show="p.comments_count > 0" @click="openComments(p)" class="inline-flex items-center gap-1 hover:text-brand-700 hover:underline"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i><span x-text="p.comments_count"></span></button>
-                            </div>
-                            <button type="button" @click="moderate(p)" class="text-xs font-semibold text-brand-700 hover:underline whitespace-nowrap shrink-0" x-text="decisions(p).length ? (p.review_state === 'pending' ? 'Review' : 'Moderate') : 'View'"></button>
-                        </div>
-                    </article>
-                </template>
-                <div class="col-span-full flex flex-col items-center text-center py-10" x-show="filtered.length === 0">
-                    <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="inbox" class="w-7 h-7"></i></span>
-                    <p class="text-sm font-medium text-slate-600" x-text="view === 'pending' ? 'Nothing is waiting for review.' : 'No community posts here.'"></p>
-                </div>
-            </div>
-            </div>
-
-            <x-ui.modal title="Community Post" maxWidth="lg">
-                <template x-if="selected">
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full clay-blue font-extrabold flex items-center justify-center shrink-0 text-sm" x-text="initials(selected.author)"></div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-semibold text-ink" x-text="selected.author"></p>
-                                <p class="text-xs text-ink-muted" x-text="['Brgy. ' + selected.barangay, selected.category, when(selected.time)].filter(Boolean).join(' · ')"></p>
-                            </div>
-                            <span class="shrink-0 inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1 ring-inset" :class="stateTones[selected.review_state]" x-text="stateLabels[selected.review_state] || selected.review_state"></span>
-                        </div>
-                        <p x-show="selected.body" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line" x-text="selected.body"></p>
-                        <x-balita.gallery media="selected.media" label="'Post by ' + selected.author" :english="true" class="rounded-xl" />
-
-                        <div x-show="selected.report_count > 0" class="rounded-xl bg-rose-50/70 border border-rose-100 p-3">
-                            <p class="text-xs font-semibold text-rose-800 mb-1.5" x-text="selected.report_count + ' resident report' + (selected.report_count > 1 ? 's' : '')"></p>
-                            <ul class="space-y-1">
-                                <template x-for="(r, i) in (selected.reports || [])" :key="i">
-                                    <li class="text-xs text-rose-900"><span x-text="'“' + r.reason + '”'"></span> <span class="text-rose-700/80" x-text="'· ' + when(r.at)"></span></li>
-                                </template>
-                            </ul>
-                        </div>
-                        <p x-show="selected.moderation_reason" class="rounded-xl bg-slate-50 border border-brand-600/10 p-3 text-xs text-slate-700"><span class="text-ink-muted">Last decision's reason:</span> <span x-text="selected.moderation_reason"></span></p>
-                        <p x-show="selected.review_state === 'withdrawn'" class="rounded-xl bg-slate-50 border border-brand-600/10 p-3 text-xs text-slate-700">Its author deleted this post. It is kept here for the record and cannot be moderated.</p>
-                        <button type="button" x-show="selected.comments_count > 0" @click="openComments(selected)" class="text-xs font-semibold text-brand-700 hover:underline inline-flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i><span x-text="'Comments (' + selected.comments_count + ')'"></span></button>
-
-                        <div x-show="decisions(selected).some((d) => d !== 'approve')">
-                            <label for="community-reason" class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Reason for hiding or taking it down</label>
-                            <textarea id="community-reason" x-model="reason" rows="2" placeholder="e.g. Selling items is not allowed on Balita." aria-describedby="community-reason-help" class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
-                            <p id="community-reason-help" class="text-[11px] mt-1" :class="reason.trim().length < 5 ? 'text-amber-800' : 'text-ink-muted'" x-text="reason.trim().length < 5 ? 'Hide and Take down need a reason (5 characters or more). The resident will see it.' : 'The resident will see this reason.'"></p>
-                        </div>
-                    </div>
-                </template>
-
-                <x-slot:footer>
-                    <template x-for="d in decisions(selected)" :key="d">
-                        <button type="button" @click="decide(d)" :disabled="processing || (d !== 'approve' && reason.trim().length < 5)"
-                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:!bg-slate-100 disabled:!text-slate-600 disabled:!border disabled:!border-dashed disabled:!border-slate-400"
-                            :title="d !== 'approve' && reason.trim().length < 5 ? 'Write a reason first' : ''"
-                            :class="d === 'approve' ? 'clay-blue' : (d === 'hide' ? 'bg-white border border-slate-300 text-ink hover:bg-slate-50' : 'bg-rose-700 text-white hover:bg-rose-800')"
-                            x-text="decisionLabel(selected, d)"></button>
-                    </template>
-                </x-slot:footer>
-            </x-ui.modal>
-        </div>
-
-        {{-- The comments of an announcement or a community post, for officers:
+        {{-- The comments of an announcement, for officers:
              hide one (with a reason) or show it again. --}}
         <div x-data="balitaComments" @balita-comments.window="bcShow($event.detail)">
             <div x-data="{ get open() { return bcOpen; }, set open(v) { bcOpen = v; } }">

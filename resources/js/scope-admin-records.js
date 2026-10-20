@@ -594,117 +594,7 @@ function adminBalita(barangays = [], occasions = [], frequencies = []) {
     };
 }
 
-/** The Community Posts tab: what residents posted, waiting or reported. */
-function adminCommunity() {
-    return {
-        loading: true,
-        failed: false,
-        posts: [],
-        search: '',
-        view: 'pending',
-        scope: 'All',
-        selected: null,
-        open: false,
-        reason: '',
-        processing: false,
-        views: [
-            ['pending', 'Awaiting review'], ['reported', 'Reported'], ['published', 'Live'],
-            ['hidden', 'Hidden'], ['removed', 'Taken down'], ['withdrawn', 'Deleted by author'], ['all', 'All'],
-        ],
-        stateLabels: { pending: 'Awaiting review', published: 'Live', hidden: 'Hidden', removed: 'Taken down', withdrawn: 'Deleted by author' },
-        stateTones: {
-            pending: 'bg-amber-50 text-amber-800 ring-amber-200',
-            published: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
-            hidden: 'bg-slate-100 text-slate-700 ring-slate-300',
-            removed: 'bg-rose-50 text-rose-800 ring-rose-200',
-            withdrawn: 'bg-slate-50 text-slate-500 ring-slate-200',
-        },
-
-        async load() {
-            this.loading = true;
-            this.failed = false;
-            try {
-                const res = await api.getAll('/admin/community-posts');
-                this.posts = res.data || [];
-            } catch {
-                this.failed = true;
-            } finally {
-                this.loading = false;
-            }
-            this.openLinked();
-        },
-        // A moderator's notification opens /admin/communications/?tab=community&post=ID,
-        // once: the list reloads after every decision, and the window must not
-        // open again on its own (2026-10-19).
-        linkedDone: false,
-        openLinked() {
-            const params = new URLSearchParams(window.location.search);
-            if (this.linkedDone || params.get('tab') !== 'community' || !params.get('post')) return;
-            const post = this.posts.find((p) => String(p.id) === params.get('post'));
-            if (!post) return;
-            this.linkedDone = true;
-            this.moderate(post);
-        },
-        inView(p, view) {
-            if (view === 'all') return true;
-            if (view === 'reported') return p.report_count > 0 && !['removed', 'withdrawn'].includes(p.review_state);
-            return p.review_state === view;
-        },
-        countOf(view) { return this.posts.filter((p) => this.$store.session.inScope(p.barangay) && this.inView(p, view)).length; },
-        get filtered() {
-            const q = this.search.trim().toLowerCase();
-            return this.posts.filter((p) => this.$store.session.inScope(p.barangay)
-                && this.inView(p, this.view)
-                && (this.scope === 'All' || p.barangay === this.scope)
-                && (!q || (p.author || '').toLowerCase().includes(q) || (p.body || '').toLowerCase().includes(q)));
-        },
-        canModerate() { return this.$store.session.canPerm('comm_community', 'review'); },
-        // Each decision needs its own permission: approve, hide (review),
-        // take down (archive). A writer only reads (2026-10-19).
-        mayDecide(decision) { return this.$store.session.canPerm('comm_community', { approve: 'approve', hide: 'review', takedown: 'archive' }[decision]); },
-        moderate(post) {
-            this.selected = post;
-            this.reason = '';
-            this.open = true;
-        },
-        // What can be decided from where the post stands.
-        decisions(post) {
-            if (!post || !this.canModerate()) return [];
-            return ({
-                pending: ['approve', 'hide', 'takedown'],
-                published: ['hide', 'takedown'],
-                hidden: ['approve', 'takedown'],
-                removed: ['approve'],
-            }[post.review_state] || []).filter((d) => this.mayDecide(d));
-        },
-        decisionLabel(post, decision) {
-            if (decision === 'approve') return post.review_state === 'pending' ? 'Approve & Publish' : 'Show again';
-            return decision === 'hide' ? 'Hide' : 'Take down';
-        },
-        async decide(decision) {
-            if (this.processing || !this.selected) return;
-            if (decision !== 'approve' && this.reason.trim().length < 5) return;
-            this.processing = true;
-            try {
-                await api.post('/admin/community-posts/' + this.selected.id + '/moderate', { decision, reason: decision === 'approve' ? undefined : this.reason.trim() });
-                this.open = false;
-                balitaToast({ approve: 'Published. The resident is told.', hide: 'Hidden. The resident is told why.', takedown: 'Taken down. The resident is told why.' }[decision], decision === 'approve' ? 'success' : 'info');
-                await this.load();
-            } catch (err) {
-                balitaToast(errText(err, 'Could not moderate this post.'), 'error');
-            } finally {
-                this.processing = false;
-            }
-        },
-        openComments(post) {
-            window.dispatchEvent(new CustomEvent('balita-comments', { detail: { kind: 'community-posts', id: post.id, title: 'Post by ' + post.author, moderate: this.canModerate() } }));
-        },
-        cover(post) { return (post.media || [])[0] || null; },
-        when,
-    };
-}
-
-/** The comments of one announcement or community post, for the officers who moderate them. */
+/** The comments of one announcement, for the officers who moderate them. */
 function balitaComments() {
     return {
         bcOpen: false,
@@ -771,7 +661,6 @@ function balitaComments() {
 export function register(Alpine) {
     registerBalitaMedia(Alpine);
     Alpine.data('adminBalita', adminBalita);
-    Alpine.data('adminCommunity', adminCommunity);
     Alpine.data('balitaComments', balitaComments);
     // A correction request opened from the Data requests list: the account's
     // "Correct details" opens by itself, with that request to close.

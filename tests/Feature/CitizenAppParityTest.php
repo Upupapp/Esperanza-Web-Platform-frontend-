@@ -7,7 +7,7 @@ use Tests\TestCase;
 /**
  * The citizen website brought up to the phone app (2026-10-15): emergency
  * hotlines, evacuation centres and alerts; reporting an incident and
- * following it; writing a community post; a scannable QR on the Resident ID;
+ * following it; Balita (read, like, comment, share); a scannable QR on the Resident ID;
  * the server's ready-to-claim details; the signed copy of an issued document;
  * the server's fees, times and requirements; Documents Uploaded; and the
  * legal pages opening signed out. These pin what each part calls and the
@@ -91,28 +91,22 @@ class CitizenAppParityTest extends TestCase
         $this->assertStringContainsString('x-text="statusLabel(detail.status)"', $page);
     }
 
-    public function test_a3_a_community_post_is_written_and_shown_pending_review(): void
+    public function test_a3_residents_read_balita_and_do_not_post(): void
     {
         $page = $this->source('resources/views/citizen/announcements.blade.php');
         $js = $this->source('resources/js/scope-citizen.js');
 
-        // The app's six categories, sent as they are.
-        $this->assertStringContainsString("['Community', 'Komunidad'], ['Health', 'Kalusugan'], ['Public Service', 'Serbisyo Publiko'],", $js);
-        $this->assertStringContainsString("['Advisory', 'Abiso'], ['Livelihood', 'Kabuhayan'], ['Governance', 'Pamamahala'],", $js);
-
-        // Photos and videos are uploaded first (x-balita.media-field, in
-        // pieces) and the post names them (owner, 2026-10-18).
-        $this->assertStringContainsString("api.post('/citizen/community-posts', { body: text, category: this.category, media_ids: this.media.ids })", $js);
-        $this->assertStringContainsString('<x-balita.media-field base="/citizen/balita" model="media" />', $page);
-
-        // Shown at once as the author's own, with where it stands and why.
-        $this->assertStringContainsString('x-data="balitaComposer"', $page);
-        $this->assertStringContainsString('@submit.prevent="sendPost((p) => addMyPost(p))"', $page);
-        $this->assertStringContainsString('const post = this.fromCommunity({ ...p, mine: true });', $js);
-        $this->assertStringContainsString("pending: { icon: 'hourglass'", $js);
-        $this->assertStringContainsString("canEngage(post) { return post.state === 'published'; }", $js, 'no likes or comments on a post still waiting');
-        // Unverified accounts may post (CitizenCapabilities::COMMUNITY_POST); only a refused capability hides it.
-        $this->assertStringContainsString('x-show="$store.citizenSession.account?.capabilities?.community_post !== false"', $page);
+        // Only the LGU posts to Balita (owner, 2026-10-20): residents read,
+        // like, comment on and share its posts, and write none of their own.
+        $this->assertStringContainsString("const res = await api.get('/announcements', { params: { per_page: FEED_PAGE, page } });", $js);
+        $this->assertStringContainsString("engagementPath(post, action) { return '/citizen/announcements/' + post.id + '/' + action; }", $js);
+        foreach (['/citizen/community-posts', 'balitaComposer', 'sendPost', 'submitReport'] as $gone) {
+            $this->assertStringNotContainsString($gone, $js);
+            $this->assertStringNotContainsString($gone, $page);
+        }
+        $this->assertStringNotContainsString('x-balita.media-field', $page, 'no photo or video picker for residents');
+        $this->assertStringContainsString("t('Like', 'Gusto')", $page);
+        $this->assertStringContainsString("t('Share', 'Ibahagi')", $page);
     }
 
     public function test_a4_the_resident_id_carries_a_real_qr_code(): void

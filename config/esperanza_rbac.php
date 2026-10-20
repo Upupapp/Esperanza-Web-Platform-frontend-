@@ -109,7 +109,6 @@ $permissionModules = [
             // declared an announcement under review could never be rejected —
             // under deny-by-default there was no triple to grant.
             ['key' => 'comm_news', 'name' => 'News & Announcements', 'perms' => ['view', 'create', 'edit', 'delete', 'review', 'approve', 'reject', 'archive']],
-            ['key' => 'comm_community', 'name' => 'Community Posts (Moderation)', 'perms' => ['view', 'review', 'approve', 'reject', 'archive']],
             // B-037: 'reject' added. LATENT at time of writing — nothing
             // transitions an event yet — so this closes the gap before an
             // events transition endpoint can expose it, rather than after.
@@ -250,7 +249,7 @@ $roles = [
     [
         'key' => 'department_head', 'name' => 'Department Head', 'icon' => 'briefcase',
         'color' => 'text-purple-700 bg-purple-50', 'users' => 6, 'editable' => true,
-        'desc' => 'Reviews, approves, and releases requests handled by their assigned department (e.g. MSWDO, Treasurer\'s Office, Civil Registrar). Approves and publishes Balita posts, and moderates residents\' posts and comments.',
+        'desc' => 'Reviews, approves, and releases requests handled by their assigned department (e.g. MSWDO, Treasurer\'s Office, Civil Registrar). Approves and publishes Balita posts, and moderates their comments.',
         'permissions' => $buildPermissions([
             'dokyu' => 'approve', 'tulong' => 'approve', 'constituents' => 'view', 'payments' => 'approve', 'reports' => 'view_export',
         ]),
@@ -290,7 +289,7 @@ $roles = [
     [
         'key' => 'info_officer', 'name' => 'Information Officer', 'icon' => 'megaphone',
         'color' => 'text-rose-700 bg-rose-50', 'users' => 2, 'editable' => true,
-        'desc' => 'Owns public-facing communications — drafts, reviews, and publishes announcements, events, and moderates community posts.',
+        'desc' => 'Owns public-facing communications — drafts, reviews, and publishes announcements, events.',
         'permissions' => $buildPermissions([
             'communications' => 'full', 'reports' => 'view',
         ]),
@@ -425,17 +424,19 @@ unset($role);
 // ... they should just differ in the level of things that they can do, for
 // example only heads can approve a post or delete or archive".
 //
-// Every officer reads Balita and the residents' posts, writes a post with
-// photos and videos, and sends it for review; the server lets them change
-// only their own posts, and a Barangay Secretary's go to their barangay.
-// A Department Head also approves and publishes, sends back, archives and
-// moderates the residents' posts and the comments. The Information Officer,
-// the Municipal Administrator and the Super Administrator keep everything,
-// events and banners too.
+// Every officer reads Balita, writes a post with photos and videos, and
+// sends it for review; the server lets them change only their own posts,
+// and a Barangay Secretary's go to their barangay. A Department Head also
+// approves and publishes, sends back, archives and moderates the comments.
+// The Information Officer, the Municipal Administrator and the Super
+// Administrator keep everything, events and banners too.
+//
+// Residents do not post (owner, 2026-10-20: they "can only see and browse"
+// Balita): comm_community, the moderation of residents' posts, is gone.
 // ---------------------------------------------------------------
-$balitaWriter = ['comm_news' => ['view', 'create', 'edit', 'review'], 'comm_community' => ['view']];
+$balitaWriter = ['comm_news' => ['view', 'create', 'edit', 'review']];
 $balitaGrants = [
-    'department_head' => ['comm_news' => $superAdminPermissions['comm_news'], 'comm_community' => $superAdminPermissions['comm_community']],
+    'department_head' => ['comm_news' => $superAdminPermissions['comm_news']],
     'department_staff' => $balitaWriter,
     'front_desk' => $balitaWriter,
     'records_officer' => $balitaWriter,

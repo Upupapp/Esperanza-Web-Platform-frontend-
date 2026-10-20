@@ -1901,10 +1901,9 @@ function citizenUploads() {
     };
 }
 
-// =============================================== Balita: the feed and posting
+// =============================================== Balita: the feed
 
-// The six categories the app offers (compose_post_screen.dart), and the staff
-// form's: the English value is what is stored.
+// The categories the staff form offers: the English value is what is stored.
 const POST_CATEGORIES = [
     ['Community', 'Komunidad'], ['Health', 'Kalusugan'], ['Public Service', 'Serbisyo Publiko'],
     ['Advisory', 'Abiso'], ['Livelihood', 'Kabuhayan'], ['Governance', 'Pamamahala'],
@@ -1918,16 +1917,12 @@ function categoryLabel(value) {
 }
 
 /**
- * Balita, the resident's side (owner, 2026-10-18: "polish the balita flow"):
- * the municipality's announcements and residents' posts in one feed, newest
- * first, with their photos and videos.
- *
- * Each source pages on its own (GET /announcements, already limited by the
- * server to the resident's barangay and municipal-wide posts, and GET
- * /citizen/community-posts); "Load more" asks each for its next page. A
- * resident's own post shows where it stands (waiting, hidden or removed by an
- * officer, with why) and offers no likes or comments until it is live. A
- * notification opens its post: ?post=ID (announcement) or ?community=ID.
+ * Balita, the resident's side: the municipality's posts, newest first, with
+ * their photos and videos, which residents like, comment on and share. Only
+ * the LGU posts to Balita (owner, 2026-10-20: residents "can only see and
+ * browse"). GET /announcements is already limited by the server to the
+ * resident's barangay and municipal-wide posts. A notification opens its
+ * post: ?post=ID.
  */
 function balitaFeed() {
     return {
@@ -1935,23 +1930,15 @@ function balitaFeed() {
         category: '',
         loading: true,
         failed: false,
-        communityFailed: false,
         loadingMore: false,
         posts: [],
         events: [],
-        more: { announcement: { page: 0, last: 1 }, community: { page: 0, last: 1 } },
+        more: { page: 0, last: 1 },
         focusKey: null,
-        reportFor: null,
-        reportReason: '',
-        reportBusy: false,
-        deleteFor: null,
         categories: POST_CATEGORIES,
         tabs: [
             ['all', 'All', 'Lahat', 'layout-list'],
-            ['official', 'Official', 'Opisyal', 'badge-check'],
-            ['community', 'Community', 'Komunidad', 'users-round'],
             ['barangay', 'My barangay', 'Aking barangay', 'map-pinned'],
-            ['mine', 'My posts', 'Aking mga post', 'user-round'],
         ],
 
         t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
@@ -1970,10 +1957,10 @@ function balitaFeed() {
 
         fromAnnouncement(a) {
             return {
-                kind: 'announcement', key: 'announcement-' + a.id, id: a.id, author: a.author || 'Esperanza LGU', barangay: a.barangay,
-                category: a.category, title: a.title, body: a.body || '', media: a.media || [], official: true,
+                key: 'announcement-' + a.id, id: a.id, author: a.author || 'Esperanza LGU', barangay: a.barangay,
+                category: a.category, title: a.title, body: a.body || '', media: a.media || [],
                 likes: a.likes || 0, comments_count: a.comments_count || 0, liked_by_me: a.liked_by_me === true,
-                mine: false, state: 'published', reason: null, at: a.published_at,
+                at: a.published_at,
                 // An occasion greeting (2026-10-19): { occasion, occasion_label: { en, fil }, occasion_name }.
                 greeting: a.post_type === 'greeting' ? (a.greeting || {}) : null,
                 expanded: false, showComments: false, comments: null, commentsPage: 0, commentsMore: false, liking: false,
@@ -1982,25 +1969,11 @@ function balitaFeed() {
                 draft: '', sending: false,
             };
         },
-        fromCommunity(p) {
-            return {
-                kind: 'community', key: 'community-' + p.id, id: p.id, author: p.author, barangay: p.barangay,
-                category: p.category, title: null, body: p.body || '', media: p.media || [], official: false,
-                likes: p.likes || 0, comments_count: p.comments_count || 0, liked_by_me: p.liked_by_me === true,
-                mine: p.mine === true, state: p.review_state || (p.visible ? 'published' : 'pending'), reason: p.moderation_reason || null,
-                at: p.created_at,
-                expanded: false, showComments: false, comments: null, commentsPage: 0, commentsMore: false, liking: false,
-                // The comment being written, on the post itself: a map keyed by
-                // post did not re-run the Send button's binding when it changed.
-                draft: '', sending: false,
-            };
-        },
 
-        async fetchPage(kind, page) {
-            const url = kind === 'announcement' ? '/announcements' : '/citizen/community-posts';
-            const res = await api.get(url, { params: { per_page: FEED_PAGE, page } });
-            this.more[kind] = { page, last: res.meta?.last_page || page };
-            return (res.data || []).map((row) => (kind === 'announcement' ? this.fromAnnouncement(row) : this.fromCommunity(row)));
+        async fetchPage(page) {
+            const res = await api.get('/announcements', { params: { per_page: FEED_PAGE, page } });
+            this.more = { page, last: res.meta?.last_page || page };
+            return (res.data || []).map((row) => this.fromAnnouncement(row));
         },
         merge(list) {
             const byKey = new Map(this.posts.map((p) => [p.key, p]));
@@ -2010,17 +1983,13 @@ function balitaFeed() {
         async loadFirst() {
             this.loading = true;
             this.failed = false;
-            this.communityFailed = false;
             this.posts = [];
             try {
-                // The community feed failing must not blank the official
-                // announcements: it fails on its own, and says so.
-                const [ann, comm, ev] = await Promise.all([
-                    this.fetchPage('announcement', 1),
-                    this.fetchPage('community', 1).catch(() => { this.communityFailed = true; return []; }),
+                const [ann, ev] = await Promise.all([
+                    this.fetchPage(1),
                     api.get('/events', { params: { per_page: 4, from: new Date().toISOString().slice(0, 10) } }).catch(() => ({ data: [] })),
                 ]);
-                this.merge([...ann, ...comm]);
+                this.merge(ann);
                 this.events = ev.data || [];
             } catch {
                 this.failed = true;
@@ -2029,17 +1998,12 @@ function balitaFeed() {
                 icons();
             }
         },
-        get hasMore() {
-            return this.more.announcement.page < this.more.announcement.last || (!this.communityFailed && this.more.community.page < this.more.community.last);
-        },
+        get hasMore() { return this.more.page < this.more.last; },
         async loadMore() {
             if (this.loadingMore || !this.hasMore) return;
             this.loadingMore = true;
             try {
-                const next = [];
-                if (this.more.announcement.page < this.more.announcement.last) next.push(this.fetchPage('announcement', this.more.announcement.page + 1));
-                if (!this.communityFailed && this.more.community.page < this.more.community.last) next.push(this.fetchPage('community', this.more.community.page + 1));
-                (await Promise.all(next)).forEach((list) => this.merge(list));
+                this.merge(await this.fetchPage(this.more.page + 1));
             } catch (err) {
                 toast(errorText(err, 'Could not load more posts.', 'Hindi ma-load ang iba pang post.'), 'error');
             } finally {
@@ -2051,46 +2015,25 @@ function balitaFeed() {
         // -- Filters
         matches(post) {
             const mine = this.$store.citizenSession.account?.barangay || null;
-            const byTab = {
-                all: true,
-                official: post.kind === 'announcement',
-                community: post.kind === 'community',
-                barangay: !!mine && post.barangay === mine,
-                mine: post.mine,
-            }[this.tab];
+            const byTab = { all: true, barangay: !!mine && post.barangay === mine }[this.tab];
             return byTab && (!this.category || post.category === this.category);
         },
         get shown() { return this.posts.filter((p) => this.matches(p)); },
-        get recentPosts() { return this.posts.filter((p) => p.state === 'published').slice(0, 4); },
-        get trendingPosts() { return this.posts.filter((p) => p.state === 'published' && p.likes > 0).sort((a, b) => b.likes - a.likes).slice(0, 3); },
-        emptyText() {
-            if (this.tab === 'mine') return this.t('You have not posted yet. Share something with your community.', 'Wala ka pang post. Magbahagi sa iyong komunidad.');
-            return this.t('No Balita posts here yet.', 'Wala pang balita rito.');
-        },
+        get recentPosts() { return this.posts.slice(0, 4); },
+        get trendingPosts() { return this.posts.filter((p) => p.likes > 0).sort((a, b) => b.likes - a.likes).slice(0, 3); },
+        emptyText() { return this.t('No Balita posts here yet.', 'Wala pang balita rito.'); },
 
         // -- A post
-        canEngage(post) { return post.state === 'published'; },
         isLong(post) { return post.body.length > 420 || post.body.split('\n').length > 7; },
-        stateNote(post) {
-            if (!post.mine || post.state === 'published') return null;
-            const why = post.reason ? ': ' + post.reason : '';
-            return {
-                pending: { icon: 'hourglass', tone: 'bg-amber-50 text-amber-900 border-amber-200', text: this.t('Waiting for Esperanza LGU to review it. Only you can see it until then.', 'Hinihintay ang pagsusuri ng Esperanza LGU. Ikaw lang ang nakakakita nito hanggang doon.') },
-                hidden: { icon: 'eye-off', tone: 'bg-rose-50 text-rose-900 border-rose-200', text: this.t('Hidden by Esperanza LGU', 'Itinago ng Esperanza LGU') + why },
-                removed: { icon: 'ban', tone: 'bg-rose-50 text-rose-900 border-rose-200', text: this.t('Removed by Esperanza LGU', 'Tinanggal ng Esperanza LGU') + why },
-            }[post.state] || null;
-        },
         whereLine(post) {
-            const where = post.barangay ? 'Brgy. ' + post.barangay : (post.kind === 'announcement' ? this.t('All barangays', 'Lahat ng barangay') : '');
+            const where = post.barangay ? 'Brgy. ' + post.barangay : this.t('All barangays', 'Lahat ng barangay');
             return [where, this.fmtTime(post.at)].filter(Boolean).join(' · ');
         },
         mediaLabel(post) { return post.title || post.author || ''; },
-        engagementPath(post, action) {
-            return (post.kind === 'announcement' ? '/citizen/announcements/' : '/citizen/community-posts/') + post.id + '/' + action;
-        },
+        engagementPath(post, action) { return '/citizen/announcements/' + post.id + '/' + action; },
 
         async toggleLike(post) {
-            if (!this.canEngage(post) || post.liking) return;
+            if (post.liking) return;
             post.liking = true;
             try {
                 const res = await api.post(this.engagementPath(post, 'like'));
@@ -2103,7 +2046,6 @@ function balitaFeed() {
             }
         },
         async toggleComments(post) {
-            if (!this.canEngage(post)) return;
             post.showComments = !post.showComments;
             if (post.showComments && post.comments === null) await this.loadComments(post);
             if (post.showComments) this.$nextTick(() => document.getElementById('comment-' + post.key)?.focus());
@@ -2148,40 +2090,8 @@ function balitaFeed() {
                 toast(errorText(err, 'Could not delete the comment.', 'Hindi mabura ang komento.'), 'error');
             }
         },
-
-        openReport(post) {
-            this.reportFor = post.key;
-            this.reportReason = '';
-            this.$nextTick(() => document.getElementById('report-' + post.key)?.focus());
-        },
-        async submitReport(post) {
-            const reason = this.reportReason.trim();
-            if (!reason || this.reportBusy) return;
-            this.reportBusy = true;
-            try {
-                const res = await api.post(this.engagementPath(post, 'report'), { reason });
-                this.reportFor = null;
-                toast(res.data?.already_reported
-                    ? this.t('You already reported this post. Thank you.', 'Naiulat mo na ang post na ito. Salamat.')
-                    : this.t('Reported to Esperanza LGU. Thank you.', 'Naiulat sa Esperanza LGU. Salamat.'));
-            } catch (err) {
-                toast(errorText(err, 'Could not report this post.', 'Hindi ma-report ang post na ito.'), 'error');
-            } finally {
-                this.reportBusy = false;
-            }
-        },
-        async deletePost(post) {
-            try {
-                await api.delete('/citizen/community-posts/' + post.id);
-                this.posts = this.posts.filter((p) => p.key !== post.key);
-                this.deleteFor = null;
-                toast(this.t('Your post was deleted.', 'Nabura ang iyong post.'));
-            } catch (err) {
-                toast(errorText(err, 'Could not delete the post.', 'Hindi mabura ang post.'), 'error');
-            }
-        },
         async share(post) {
-            const url = window.location.origin + window.location.pathname + '?' + (post.kind === 'announcement' ? 'post=' : 'community=') + post.id;
+            const url = window.location.origin + window.location.pathname + '?post=' + post.id;
             const text = (post.title ? post.title + '\n\n' : '') + post.body.slice(0, 200);
             try {
                 if (navigator.share) {
@@ -2195,36 +2105,18 @@ function balitaFeed() {
             }
         },
 
-        // The resident's own new post (POST /citizen/community-posts): held for
-        // review, so it leads the feed as theirs, seen by no one else until an
-        // officer approves it.
-        addMyPost(p) {
-            if (!p || p.id === undefined) return;
-            const post = this.fromCommunity({ ...p, mine: true });
-            this.posts = [post, ...this.posts.filter((x) => x.key !== post.key)];
-            if (!['all', 'community', 'mine'].includes(this.tab)) this.tab = 'all';
-            this.category = '';
-            icons();
-        },
-
-        // ?post=ID (announcement) or ?community=ID: that post is shown even
-        // when older than the first page, and the page scrolls to it.
+        // ?post=ID: that post is shown even when older than the first page,
+        // and the page scrolls to it.
         async openLinked() {
-            const params = new URLSearchParams(window.location.search);
-            const annId = Number(params.get('post'));
-            const commId = Number(params.get('community'));
-            let key = null;
-            if (annId) {
-                key = 'announcement-' + annId;
-                if (!this.posts.some((p) => p.key === key)) {
-                    try {
-                        const one = await api.get('/announcements/' + annId);
-                        if (one.data) this.posts.unshift(this.fromAnnouncement(one.data));
-                    } catch { key = null; }
-                }
-            } else if (commId) {
-                key = 'community-' + commId;
-                if (!this.posts.some((p) => p.key === key)) key = null;
+            const id = Number(new URLSearchParams(window.location.search).get('post'));
+            if (!id) return;
+            let key = 'announcement-' + id;
+            if (!this.posts.some((p) => p.key === key)) {
+                try {
+                    const one = await api.get('/announcements/' + id);
+                    if (one.data) this.posts.unshift(this.fromAnnouncement(one.data));
+                    else key = null;
+                } catch { key = null; }
             }
             if (!key) return;
             this.tab = 'all';
@@ -2248,82 +2140,11 @@ function balitaFeed() {
     };
 }
 
-/**
- * Write a community post (POST /citizen/community-posts) with its photos and
- * videos (x-balita.media-field uploads them first; the post names them).
- * Posts are held for review: the server answers with the post as its author
- * sees it, and the feed puts it at the top marked as waiting. Open to an
- * unverified account (CitizenCapabilities::COMMUNITY_POST). Closing the window
- * keeps the draft and the uploads; only a sent post clears it.
- */
-function balitaComposer() {
-    return {
-        categories: POST_CATEGORIES,
-        composeOpen: false,
-        category: 'Community',
-        body: '',
-        media: { ids: [], busy: false, failed: false },
-        // A new draft gets a fresh picker (x-for keyed on it).
-        draft: 1,
-        posting: false,
-        failure: null,
-
-        t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
-
-        openComposer() {
-            this.failure = null;
-            this.composeOpen = true;
-            icons();
-        },
-        get error() {
-            const err = this.failure;
-            if (!err) return '';
-            if (typeof err === 'string') return err;
-            const lang = this.$store.lang.current === 'en' ? 'en' : 'fil';
-            return typeof err.explain === 'function' ? err.explain(lang) : errorText(err, 'Your post could not be sent.', 'Hindi naipadala ang iyong post.');
-        },
-        get canPost() { return !this.posting && !this.media.busy && (this.body.trim() !== '' || this.media.ids.length > 0); },
-        async sendPost(onPosted) {
-            if (this.posting) return;
-            const text = this.body.trim();
-            if (this.media.busy) {
-                this.failure = this.t('Wait for your photos and videos to finish uploading.', 'Hintaying matapos ma-upload ang iyong mga larawan at video.');
-                return;
-            }
-            if (this.media.failed) {
-                this.failure = this.t('Some files could not be uploaded. Try them again or remove them.', 'May mga file na hindi na-upload. Subukang muli o alisin ang mga ito.');
-                return;
-            }
-            if (!text && !this.media.ids.length) {
-                this.failure = this.t('Write something or attach a photo or video.', 'Sumulat ng mensahe o maglakip ng larawan o video.');
-                return;
-            }
-            this.posting = true;
-            this.failure = null;
-            try {
-                const res = await api.post('/citizen/community-posts', { body: text, category: this.category, media_ids: this.media.ids });
-                if (typeof onPosted === 'function') onPosted(res.data || null);
-                this.body = '';
-                this.category = 'Community';
-                this.media = { ids: [], busy: false, failed: false };
-                this.draft += 1;
-                this.composeOpen = false;
-                toast(this.t('Posted. It shows to others once Esperanza LGU reviews it.', 'Na-post. Makikita ito ng iba kapag nasuri na ng Esperanza LGU.'));
-            } catch (err) {
-                this.failure = err;
-            } finally {
-                this.posting = false;
-            }
-        },
-    };
-}
-
 export function register(Alpine) {
     window.applyServiceCatalog = applyServiceCatalog;
     window.dialHref = dialHref;
     Alpine.data('citizenEmergency', citizenEmergency);
     Alpine.data('citizenUploads', citizenUploads);
-    Alpine.data('balitaComposer', balitaComposer);
     Alpine.data('balitaFeed', balitaFeed);
     registerBalitaMedia(Alpine);
     Alpine.data('citizenAppointments', citizenAppointments);
