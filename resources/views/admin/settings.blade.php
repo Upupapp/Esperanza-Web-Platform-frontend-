@@ -168,7 +168,7 @@
                         { key: 'new_incident_reports', label: 'New Incident Reports', desc: 'A Sakuna incident is reported, by staff or from a resident\'s phone: the officers who validate incidents in that barangay get it in their bell.' },
                         { key: 'overdue_requests', label: 'Overdue Requests', desc: 'Every day at 8:00 AM: requests past the expected release the resident was given, in one digest per officer, in the bell and by email. Each request is named once.' },
                         { key: 'weekly_summary', label: 'Weekly Summary', desc: 'Every Monday at 8:00 AM: the past seven days in each officer\'s scope (filed, released, open, overdue, payments), in the bell and by email.' },
-                        { key: 'balita_reviews', label: 'Balita to Review', desc: 'An officer sends a Balita post for review: the Municipal Information Office and administrators get it in their bell, and a Department Head gets their own office\'s posts.' },
+                        { key: 'balita_reviews', label: 'Balita and Events to Review', desc: 'An officer sends a Balita post or an event for review: the Municipal Information Office and administrators get it in their bell, and a Department Head gets their own office\'s posts.' },
                     ],
                     values: {},
                     async load() {

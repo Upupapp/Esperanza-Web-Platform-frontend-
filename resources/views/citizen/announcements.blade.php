@@ -69,6 +69,19 @@
                                 <button x-show="isLong(post)" type="button" @click="post.expanded = !post.expanded" class="mt-1 text-xs font-semibold text-brand-700 hover:underline" x-text="post.expanded ? t('See less', 'Mas kaunti') : t('See more', 'Tingnan pa')"></button>
                             </div>
                             <x-balita.gallery media="post.media" label="mediaLabel(post)" />
+                            {{-- A post made from an event (2026-10-21): when and where, and
+                                 the event itself, to set a reminder. --}}
+                            <a x-show="post.event" :href="post.event?.link" class="mx-3.5 mt-2.5 flex items-center gap-3 rounded-2xl border border-brand-100 bg-brand-50/60 px-3 py-2.5 hover:bg-brand-50 transition-colors">
+                                <span class="w-10 h-10 rounded-xl bg-white text-brand-700 flex flex-col items-center justify-center shrink-0 leading-none">
+                                    <span class="text-sm font-bold" x-text="post.event?.date ? new Date(post.event.date + 'T00:00:00').getDate() : ''"></span>
+                                    <span class="text-[9px] font-semibold uppercase" x-text="post.event?.date ? fmtDate(post.event.date + 'T00:00:00', { month: 'short', day: undefined, year: undefined }) : ''"></span>
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block text-xs font-semibold text-ink truncate" x-text="[post.event?.time, post.event?.venue].filter(Boolean).join(' · ') || t('Event', 'Kaganapan')"></span>
+                                    <span class="block text-[11px] text-brand-700" x-text="t('See the event and set a reminder', 'Tingnan ang kaganapan at magpaalala')"></span>
+                                </span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-brand-600 shrink-0"></i>
+                            </a>
 
                             {{-- Counts --}}
                             <div x-show="post.likes > 0 || post.comments_count > 0" class="flex items-center justify-between px-3.5 pt-2.5 text-[11px] text-ink-muted">
@@ -181,16 +194,16 @@
                     <h2 class="text-xs font-semibold text-ink uppercase tracking-wide mb-2.5 flex items-center gap-1.5"><i data-lucide="calendar-days" class="w-3.5 h-3.5 text-ink-muted"></i><x-ui.t fil="Paparating na Kaganapan" en="Upcoming Events" /></h2>
                     <div class="space-y-2.5">
                         <template x-for="ev in events" :key="ev.key">
-                            <div class="flex items-center gap-2.5">
+                            <a :href="ev.link" class="flex items-center gap-2.5 rounded-xl -mx-1.5 px-1.5 py-1 hover:bg-white/60 transition-colors">
                                 <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-700 flex flex-col items-center justify-center shrink-0 leading-none">
                                     <span class="text-xs font-bold" x-text="ev.date ? new Date(ev.date + 'T00:00:00').getDate() : ''"></span>
                                     <span class="text-[8px] font-semibold uppercase" x-text="ev.date ? fmtDate(ev.date + 'T00:00:00', { month: 'short', day: undefined, year: undefined }) : ''"></span>
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-ink truncate" x-text="ev.title || ev.name"></p>
-                                    <p class="text-[11px] text-ink-muted truncate" x-text="ev.venue"></p>
+                                    <p class="text-[11px] text-ink-muted truncate" x-text="[ev.time, ev.venue].filter(Boolean).join(' · ')"></p>
                                 </div>
-                            </div>
+                            </a>
                         </template>
                         <p class="text-[11px] text-ink-muted" x-show="!events.length"><x-ui.t fil="Walang paparating na kaganapan." en="No upcoming events." /></p>
                     </div>

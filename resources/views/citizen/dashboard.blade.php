@@ -71,13 +71,16 @@
             },
             async loadEvents() {
                 try {
-                    const month = new Date().toISOString().slice(0, 7);
-                    const result = await $api.get('/events', { params: { month } });
+                    // What is still to come, from today in Esperanza (the month's
+                    // first events showed even after they had passed, 2026-10-21).
+                    const from = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+                    const result = await $api.get('/events', { params: { from, per_page: 3 } });
                     this.events = (result.data || []).slice(0, 3).map((e) => ({
-                        date: e.date ? new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+                        date: e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
                         time: e.time || '',
                         title: e.title || e.name,
                         venue: e.venue || '',
+                        link: e.link || null,
                     }));
                 } catch { this.events = []; }
             },
@@ -514,12 +517,12 @@
 
                     <template x-for="(event, i) in events" :key="i">
                         <a
-                            href="{{ route('citizen.events') }}"
+                            :href="event.link || '{{ route('citizen.events') }}'"
                             class="block rounded-2xl border border-brand-600/10 p-3.5 hover:border-brand-200 hover:shadow-card hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard"
                         >
                             <div class="flex items-center gap-2 text-xs font-medium text-brand-600 mb-1.5">
                                 <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
-                                <span x-text="event.date + ' · ' + event.time"></span>
+                                <span x-text="[event.date, event.time].filter(Boolean).join(' · ')"></span>
                             </div>
                             <p class="text-sm font-medium text-slate-700 leading-snug" x-text="event.title"></p>
                             <p class="text-xs text-ink-muted mt-1 flex items-center gap-1.5">

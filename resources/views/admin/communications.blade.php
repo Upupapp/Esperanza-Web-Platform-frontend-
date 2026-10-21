@@ -87,142 +87,14 @@
         @include('admin.communications.balita')
 
         {{-- ============================= EVENTS ============================= --}}
+        {{-- Logic in resources/js/scope-admin-records.js (adminEvents). An event
+             reaches residents (2026-10-21): publishing it tells them in the bell
+             and on their phones and, unless "Post in Balita too" is unticked,
+             posts it in Balita with its photos. A published event can still be
+             put right, and withdrawing one before its day cancels it. --}}
         <div
             x-show="tab === 'events'" x-cloak
-            x-data="{
-                loading: true, failed: false,
-                events: [],
-                open: false, reviewOpen: false, selected: null, rejectReason: '',
-                search: '', status: 'All', scope: 'All', category: 'All',
-                processing: false,
-                newForm: { name: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: '{{ config('esperanza.barangays')[0] ?? '' }}' },
-                statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],
-                categoryColor: { Community: 'bg-brand-500', Health: 'bg-emerald-500', 'Public Service': 'bg-indigo-500', Advisory: 'bg-amber-500', Livelihood: 'bg-teal-500', Governance: 'bg-purple-500' },
-                async load() {
-                    this.loading = true; this.failed = false;
-                    try {
-                        const res = await $api.getAll('/admin/events');
-                        this.events = res.data || [];
-                    } catch { this.failed = true; } finally { this.loading = false; }
-                },
-                get categories() { return [...new Set(this.events.map(e => e.category).filter(Boolean))].sort(); },
-                get filtered() {
-                    return this.events.filter(e =>
-                        (!e.barangay || this.$store.session.inScope(e.barangay)) &&
-                        (this.status === 'All' || e.status === this.status) &&
-                        (this.scope === 'All' || (this.scope === 'Municipal' ? !e.barangay : e.barangay === this.scope)) &&
-                        (this.category === 'All' || e.category === this.category) &&
-                        (this.search === '' || (e.title || e.name).toLowerCase().includes(this.search.toLowerCase()))
-                    );
-                },
-                async createEvent(submit) {
-                    if (this.processing || !this.newForm.name.trim() || !this.newForm.date) return;
-                    this.processing = true;
-                    try {
-                        const key = this.newForm.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
-                        await $api.post('/admin/events', {
-                            key, name: this.newForm.name.trim(), title: this.newForm.name.trim(), date: this.newForm.date,
-                            time: this.newForm.time || null, venue: this.newForm.venue || null, category: this.newForm.category,
-                            barangay: this.newForm.audience === 'Barangay' ? this.newForm.barangay : null,
-                        });
-                        if (submit) {
-                            await $api.post('/admin/events/' + key + '/transition', { to: 'Pending Review' });
-                        }
-                        this.open = false;
-                        this.newForm = { name: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: this.barangayNames?.[0] || '' };
-                        this.$dispatch('toast', { message: submit ? 'Submitted for review.' : 'Saved as draft.', variant: 'success' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not create the event.', variant: 'error' });
-                    } finally { this.processing = false; }
-                },
-                async transition(event, to, remarks) {
-                    try {
-                        await $api.post('/admin/events/' + event.key + '/transition', { to, remarks: remarks || undefined });
-                        return true;
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not update this event.', variant: 'error' });
-                        return false;
-                    }
-                },
-                async approveAndPublish() {
-                    if (this.processing) return;
-                    this.processing = true;
-                    if (await this.transition(this.selected, 'Approved')) {
-                        await this.transition(this.selected, 'Released');
-                        this.reviewOpen = false;
-                        this.$dispatch('toast', { message: 'Event approved and published.', variant: 'success' });
-                        await this.load();
-                    }
-                    this.processing = false;
-                },
-                async requestChanges() {
-                    if (this.processing || this.rejectReason.trim().length < 5) return;
-                    this.processing = true;
-                    if (await this.transition(this.selected, 'Rejected', this.rejectReason.trim())) {
-                        this.reviewOpen = false; this.rejectReason = '';
-                        this.$dispatch('toast', { message: 'Sent back with remarks.', variant: 'error' });
-                        await this.load();
-                    }
-                    this.processing = false;
-                },
-                async release(e) { if (await this.transition(e, 'Released')) { this.$dispatch('toast', { message: 'Published.', variant: 'success' }); await this.load(); } },
-                async archive(e) { if (await this.transition(e, 'Archived')) { this.$dispatch('toast', { message: 'Archived.', variant: 'success' }); await this.load(); } },
-                // Editing an event still in the editorial flow, in the create
-                // form (scope round 2026-10-15): PUT /admin/events/{key} takes a
-                // Draft, Pending Review or Rejected event; only changed fields go.
-                editing: null, editForm: {},
-                get form() { return this.editing ? this.editForm : this.newForm; },
-                canEdit(e) { return ['Draft', 'Pending Review', 'Rejected'].includes(e.status) && $store.session.canPerm('comm_events', 'edit'); },
-                openNew() { this.editing = null; this.open = true; },
-                // A time typed as text before (8:00 AM) for the time field; one
-                // it cannot read leaves the field empty and is kept as it was.
-                toTime(t) {
-                    const m = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?$/.exec(String(t || '').trim());
-                    if (!m) return '';
-                    let h = Number(m[1]);
-                    const ap = (m[3] || '').toLowerCase();
-                    if (ap === 'pm' && h < 12) h += 12;
-                    if (ap === 'am' && h === 12) h = 0;
-                    return h > 23 ? '' : String(h).padStart(2, '0') + ':' + m[2];
-                },
-                openEdit(e) {
-                    this.editForm = { name: e.title || e.name || '', category: e.category || 'Community', date: e.date || '', time: this.toTime(e.time), venue: e.venue || '', audience: e.barangay ? 'Barangay' : 'Municipal', barangay: e.barangay || this.barangayNames?.[0] || '' };
-                    this.editing = e;
-                    this.open = true;
-                },
-                saveEvent(submit) { return this.editing ? this.saveEdit(submit) : this.createEvent(submit); },
-                async saveEdit(submit) {
-                    const e = this.editing, f = this.editForm;
-                    if (this.processing || !e || !f.name.trim() || !f.date) return;
-                    const barangay = f.audience === 'Barangay' ? f.barangay : null;
-                    const changes = {};
-                    if (f.name.trim() !== (e.title || e.name)) { changes.name = f.name.trim(); changes.title = f.name.trim(); }
-                    if (f.date !== e.date) changes.date = f.date;
-                    if (f.time !== this.toTime(e.time)) changes.time = f.time || null;
-                    if (f.venue.trim() !== (e.venue || '')) changes.venue = f.venue.trim() || null;
-                    if (f.category !== (e.category || 'Community')) changes.category = f.category;
-                    if (barangay !== (e.barangay || null)) changes.barangay = barangay;
-                    if (!submit && !Object.keys(changes).length) {
-                        this.open = false; this.editing = null;
-                        this.$dispatch('toast', { message: 'Nothing was changed.', variant: 'info' });
-                        return;
-                    }
-                    this.processing = true;
-                    try {
-                        // Each step that succeeds is kept on the event, so trying
-                        // again after a failure repeats only what is left.
-                        if (Object.keys(changes).length) { await $api.put('/admin/events/' + encodeURIComponent(e.key), changes); Object.assign(e, changes); }
-                        if (submit && e.status === 'Rejected') { await $api.post('/admin/events/' + encodeURIComponent(e.key) + '/transition', { to: 'Draft' }); e.status = 'Draft'; }
-                        if (submit) { await $api.post('/admin/events/' + encodeURIComponent(e.key) + '/transition', { to: 'Pending Review' }); e.status = 'Pending Review'; }
-                        this.open = false; this.editing = null;
-                        this.$dispatch('toast', { message: submit ? 'Saved and submitted for review.' : 'Changes saved.', variant: 'success' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save the changes.', variant: 'error' });
-                    } finally { this.processing = false; }
-                },
-            }"
+            x-data="adminEvents(@js(config('esperanza.barangays')))"
             x-init="$store.session.whenReady().then(() => tabAllowed('events') && load())"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /></div>
@@ -230,10 +102,10 @@
 
             <div x-show="!loading && !failed">
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <x-ui.stat-card layout="compact" label="Published" valueBind="events.filter(e => e.status === 'Released').length" icon="calendar-check" color="brand" :delay="0" />
-                <x-ui.stat-card layout="compact" label="Pending Review" valueBind="events.filter(e => e.status === 'Pending Review').length" icon="file-clock" color="orange" :delay="40" />
-                <x-ui.stat-card layout="compact" label="Drafts" valueBind="events.filter(e => e.status === 'Draft').length" icon="pencil-line" color="purple" :delay="80" />
-                <x-ui.stat-card layout="compact" label="Total on File" valueBind="events.length" icon="calendar-days" color="green" :delay="120" />
+                <x-ui.stat-card layout="compact" label="Published" valueBind="count('Released')" icon="calendar-check" color="brand" :delay="0" />
+                <x-ui.stat-card layout="compact" label="Pending Review" valueBind="count('Pending Review')" icon="file-clock" color="orange" :delay="40" />
+                <x-ui.stat-card layout="compact" label="Drafts and sent back" valueBind="count('Draft') + count('Rejected')" icon="pencil-line" color="purple" :delay="80" />
+                <x-ui.stat-card layout="compact" label="Reminders set by residents" valueBind="events.filter(e => e.status === 'Released' && e.upcoming).reduce((n, e) => n + (e.reminders_count || 0), 0)" icon="bell-ring" color="green" :delay="120" />
             </div>
 
             <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
@@ -252,7 +124,7 @@
                         <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
                     </select>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
-                    <x-ui.button @click="openNew()" icon="plus" size="sm" class="shrink-0">New Event</x-ui.button>
+                    <x-ui.button x-show="can('create')" @click="openNew()" icon="plus" size="sm" class="shrink-0">New Event</x-ui.button>
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
@@ -266,34 +138,44 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="e in filtered" :key="e.key">
-                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard">
+                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover transition-all duration-[220ms] ease-standard flex flex-col">
+                        <img x-show="e.image_url" :src="e.image_url" alt="" loading="lazy" class="w-full h-32 object-cover">
                         <div class="p-3.5 flex items-start gap-3">
                             <div class="shrink-0 w-12 h-12 rounded-xl bg-slate-50 border border-brand-600/10 flex flex-col items-center justify-center overflow-hidden">
                                 <span class="w-full text-center text-[9px] font-bold text-white py-0.5" :class="categoryColor[e.category] || 'bg-slate-400'" x-text="e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : ''"></span>
                                 <span class="text-sm font-bold text-ink leading-none mt-1" x-text="e.date ? new Date(e.date + 'T00:00:00').getDate() : ''"></span>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-1.5 mb-1">
+                                <div class="flex items-center gap-1.5 mb-1 flex-wrap">
                                     <span class="text-[10px] font-semibold text-white rounded-full px-2 py-0.5" :class="categoryColor[e.category] || 'bg-slate-400'" x-text="e.category"></span>
                                     <x-ui.badge statusBind="e.status" />
+                                    <span x-show="e.status === 'Released' && !e.upcoming" class="text-[10px] font-medium text-ink-muted bg-slate-100 rounded-full px-2 py-0.5">Ended</span>
                                 </div>
                                 <p class="text-sm font-semibold text-ink leading-snug line-clamp-2" x-text="e.title || e.name"></p>
                                 <p class="text-xs text-ink-muted mt-1 flex items-center gap-1" x-show="e.time"><i data-lucide="clock" class="w-3 h-3 shrink-0"></i><span x-text="e.time"></span></p>
                                 <p class="text-xs text-ink-muted mt-0.5 flex items-center gap-1 truncate" x-show="e.venue"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span x-text="e.venue"></span></p>
                             </div>
                         </div>
-                        <div class="px-3.5 pb-3">
-                            <span class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5" :class="e.barangay ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'">
-                                <i :data-lucide="e.barangay ? 'map-pin' : 'landmark'" class="w-2.5 h-2.5"></i>
-                                <span x-text="e.barangay ? 'Brgy. ' + e.barangay : 'Municipality-wide'"></span>
-                            </span>
+                        <div class="px-3.5 pb-3 space-y-2">
+                            <p x-show="e.description" class="text-xs text-slate-600 line-clamp-2" x-text="e.description"></p>
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5" :class="e.barangay ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'">
+                                    <i :data-lucide="e.barangay ? 'map-pin' : 'landmark'" class="w-2.5 h-2.5"></i>
+                                    <span x-text="e.barangay ? 'Brgy. ' + e.barangay : 'Municipality-wide'"></span>
+                                </span>
+                                <a x-show="e.balita_post_id" :href="'/admin/communications/?tab=balita&post=' + e.balita_post_id" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 bg-amber-50 text-amber-700 hover:underline"><i data-lucide="newspaper" class="w-2.5 h-2.5"></i>In Balita</a>
+                                <span x-show="!e.balita_post_id && e.post_to_balita && !['Released', 'Archived'].includes(e.status)" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 bg-slate-100 text-ink-muted"><i data-lucide="newspaper" class="w-2.5 h-2.5"></i>Goes into Balita when published</span>
+                                <span x-show="e.reminders_count" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 bg-emerald-50 text-emerald-700"><i data-lucide="bell-ring" class="w-2.5 h-2.5"></i><span x-text="e.reminders_count + (e.reminders_count === 1 ? ' resident' : ' residents') + ' want a reminder'"></span></span>
+                            </div>
+                            <p x-show="e.status === 'Rejected' && e.review_remarks" class="text-[11px] text-red-700 bg-red-50 rounded-xl px-2.5 py-1.5"><span class="font-semibold">Sent back:</span> <span x-text="e.review_remarks"></span></p>
                         </div>
-                        <div class="flex border-t border-brand-600/10">
-                            <button x-show="e.status === 'Pending Review'" @click="selected = e; reviewOpen = true; rejectReason = ''" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
+                        <div class="flex border-t border-brand-600/10 mt-auto">
+                            <button x-show="e.status === 'Pending Review' && canMove(e, 'Approved')" @click="openReview(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
                             <button x-show="canEdit(e)" @click="openEdit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
-                            <button x-show="e.status === 'Draft'" @click="transition(e, 'Pending Review').then(ok => ok && load())" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
-                            <button x-show="e.status === 'Approved'" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
-                            <button x-show="['Released', 'Rejected', 'Draft'].includes(e.status)" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                            <button x-show="e.status === 'Draft' && canMove(e, 'Pending Review')" @click="submit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
+                            <button x-show="e.status === 'Approved' && canMove(e, 'Released')" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
+                            <button x-show="isCancel(e) && canMove(e, 'Archived')" @click="openCancel(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-red-600 hover:bg-red-50/60 transition-colors"><i data-lucide="calendar-x" class="w-3.5 h-3.5"></i>Cancel Event</button>
+                            <button x-show="!isCancel(e) && ['Draft', 'Approved', 'Released', 'Rejected'].includes(e.status) && canMove(e, 'Archived')" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
                         </div>
                     </div>
                 </template>
@@ -304,8 +186,8 @@
             </div>
             </div>
 
-            {{-- New and Edit share this form (scope round 2026-10-15), drawn bare
-                 for a title that says which, as Balita's is. --}}
+            {{-- New and Edit share this form, drawn bare for a title that says
+                 which, as Balita's is. --}}
             <x-ui.modal maxWidth="lg" :fullscreen="true" :bare="true">
                 <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-brand-600/10 shrink-0">
                     <h3 class="text-base font-extrabold text-ink" x-text="editing ? 'Edit Event' : 'New Event'">New Event</h3>
@@ -319,13 +201,19 @@
                 </div>
                 <div class="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 sm:px-10 sm:py-8">
                 <div class="space-y-4">
-                    <p x-show="editing" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing an event in ' + (editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
+                    <p x-show="editing && editing.status !== 'Released'" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing an event in ' + (editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
+                    <p x-show="editing && editing.status === 'Released'" x-cloak class="text-xs text-amber-800 bg-amber-50 rounded-xl px-3 py-2 flex items-start gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i><span>This event is published. Residents who can see it are told of a new date, time or venue, and its Balita post is updated too.</span></p>
                     <x-ui.input name="event_title" label="Event Title" placeholder="e.g. Free Medical Mission — Brgy. Poblacion" x-model="form.name" />
                     <div class="grid grid-cols-2 gap-3">
                         <x-ui.input name="event_date" type="date" label="Date" x-model="form.date" />
                         <x-ui.input name="event_time" type="time" label="Time" x-model="form.time" />
                     </div>
                     <x-ui.input name="event_venue" label="Venue" placeholder="e.g. Municipal Plaza" x-model="form.venue" />
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="event-description">What it is about <span class="text-ink-muted font-normal">(optional)</span></label>
+                        <textarea id="event-description" x-model="form.description" rows="4" maxlength="2000" placeholder="Who it is for, what to bring, who to ask" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        <p class="text-[11px] text-ink-muted text-right tabular-nums" x-text="form.description.length + ' / 2000'"></p>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1.5" for="category-2">Category</label>
                         <select id="category-2" x-model="form.category" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
@@ -341,27 +229,40 @@
                             <button type="button" @click="form.audience = 'Municipal'" :aria-pressed="form.audience === 'Municipal'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Municipal' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-1.5"><i data-lucide="landmark" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Municipal-wide</p>
-                                <p class="text-[10.5px] text-ink-muted mt-0.5">Visible to every barangay</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Every resident sees it and is told</p>
                             </button>
                             <button type="button" @click="form.audience = 'Barangay'" :aria-pressed="form.audience === 'Barangay'" class="text-left rounded-2xl border p-3 transition-all duration-[160ms] ease-standard" :class="form.audience === 'Barangay' ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
                                 <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
                                 <p class="text-xs font-semibold text-ink">Specific Barangay</p>
-                                <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it</p>
+                                <p class="text-[10.5px] text-ink-muted mt-0.5">Only that barangay sees it and is told</p>
                             </button>
                         </div>
                         <div x-show="form.audience === 'Barangay'" x-cloak x-transition:enter="transition ease-out duration-[160ms]" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="mt-2.5">
-                            <select aria-label="New event barangay" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b"></option></template>
+                            <select aria-label="Event barangay" x-model="form.barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
+                                <template x-for="b in barangayNames" :key="b"><option :value="b" x-text="'Brgy. ' + b" :selected="b === form.barangay"></option></template>
                             </select>
                         </div>
                     </div>
-                    <p class="text-[11px] text-ink-muted">Posters aren't part of this pass — event creation has no image field on the backend yet.</p>
+
+                    {{-- Photos: the first is the event's poster on the calendar,
+                         and all of them go with its Balita post. --}}
+                    <template x-for="k in [formKey]" :key="k">
+                        <x-balita.media-field base="/admin/balita" model="media" existing="(editing ? (editing.media || []) : [])" :english="true" />
+                    </template>
+
+                    <label class="flex items-start gap-2.5 rounded-2xl border border-slate-200 p-3 cursor-pointer" :class="editing && editing.balita_post ? 'opacity-60 cursor-not-allowed' : ''">
+                        <input type="checkbox" x-model="form.post_to_balita" :disabled="!!(editing && editing.balita_post)" class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
+                        <span class="min-w-0">
+                            <span class="block text-xs font-semibold text-ink">Post in Balita too</span>
+                            <span class="block text-[11px] text-ink-muted" x-text="editing && editing.balita_post ? 'It is already in Balita. Its post follows the changes you make here.' : 'When it is published, it also goes into the Balita feed with its photos, where residents can like, comment and share it. Residents are told once, about the event.'"></span>
+                        </span>
+                    </label>
                 </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
-                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="saveEvent(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
-                    <x-ui.button size="sm" icon="send" x-show="!editing || editing.status !== 'Pending Review'" x-bind:disabled="processing" @click="saveEvent(true)"><span x-text="!editing ? 'Submit for Review' : (editing.status === 'Rejected' ? 'Save and Resubmit' : 'Save and Submit for Review')">Submit for Review</span></x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing || media.busy" @click="saveEvent(false)"><span x-text="editing ? 'Save Changes' : 'Save as Draft'">Save as Draft</span></x-ui.button>
+                    <x-ui.button size="sm" icon="send" x-show="!editing || !['Pending Review', 'Released'].includes(editing.status)" x-bind:disabled="processing || media.busy" @click="saveEvent(true)"><span x-text="!editing ? 'Submit for Review' : (editing.status === 'Rejected' ? 'Save and Resubmit' : 'Save and Submit for Review')">Submit for Review</span></x-ui.button>
                 </div>
             </x-ui.modal>
 
@@ -369,13 +270,15 @@
             <x-ui.modal title="Review Event" maxWidth="lg">
                 <template x-if="selected">
                     <div>
+                        <img x-show="selected.image_url" :src="selected.image_url" alt="" class="w-full max-h-48 object-cover rounded-xl mb-3">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="min-w-0 flex-1">
-                                <p class="text-xs text-ink-muted" x-text="(selected.barangay ? 'Brgy. ' + selected.barangay : 'Municipality-wide') + (selected.date ? (' · ' + selected.date) : '')"></p>
+                                <p class="text-xs text-ink-muted" x-text="(selected.barangay ? 'Brgy. ' + selected.barangay : 'Municipality-wide') + (selected.date ? (' · ' + dayLabel(selected.date)) : '')"></p>
                             </div>
                             <span class="text-[10px] font-medium text-white rounded-full px-2 py-0.5 shrink-0" :class="categoryColor[selected.category] || 'bg-slate-400'" x-text="selected.category"></span>
                         </div>
                         <p class="text-sm font-semibold text-ink mb-2" x-text="selected.title || selected.name"></p>
+                        <p x-show="selected.description" class="text-xs text-slate-600 whitespace-pre-line mb-3" x-text="selected.description"></p>
                         <dl class="grid grid-cols-2 gap-3 mb-3">
                             <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3">
                                 <dt class="text-[10px] text-ink-muted uppercase tracking-wide">Time</dt>
@@ -386,8 +289,9 @@
                                 <dd class="text-sm font-semibold text-ink" x-text="selected.venue || '—'"></dd>
                             </div>
                         </dl>
-                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5 text-xs text-ink-muted mb-3">
-                            This event is awaiting review before it appears on the citizen Events calendar. Approving will publish it immediately to its selected audience.
+                        <div class="rounded-xl bg-slate-50 border border-brand-600/10 p-3.5 text-xs text-ink-muted mb-3 space-y-1">
+                            <p x-text="'Approving publishes it to the Events calendar and tells ' + (selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident') + ' in their bell and on their phones.'"></p>
+                            <p x-text="selected.post_to_balita ? 'It also goes into Balita with its photos.' : 'It does not go into Balita.'"></p>
                         </div>
                         <div>
                             <label class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1">Remarks (required to send back)</label>
@@ -399,6 +303,25 @@
                 <x-slot:footer>
                     <x-ui.button variant="danger" size="sm" x-bind:disabled="processing || rejectReason.trim().length < 5" @click="requestChanges()">Request Changes</x-ui.button>
                     <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="approveAndPublish()">Approve &amp; Publish</x-ui.button>
+                </x-slot:footer>
+            </x-ui.modal>
+            </div>
+
+            <div x-data="{ get open() { return cancelOpen; }, set open(v) { cancelOpen = v; } }">
+            <x-ui.modal title="Cancel Event" maxWidth="md">
+                <template x-if="selected">
+                    <div class="space-y-3">
+                        <p class="text-sm text-ink"><span class="font-semibold" x-text="selected.title || selected.name"></span> <span class="text-ink-muted" x-text="'on ' + dayLabel(selected.date)"></span></p>
+                        <p class="text-xs text-ink-muted" x-text="'It comes off the Events calendar' + (selected.balita_post_id ? ' and out of Balita' : '') + ', and ' + (selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident') + ' who can see it, and anyone who asked for a reminder, are told it is cancelled.'"></p>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1" for="event-cancel-reason">Reason residents will read (optional)</label>
+                            <textarea id="event-cancel-reason" x-model="cancelReason" rows="2" maxlength="500" placeholder="e.g. Postponed because of the typhoon. A new date will be announced." class="w-full text-xs rounded-xl border border-slate-200 px-2.5 py-2 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                        </div>
+                    </div>
+                </template>
+                <x-slot:footer>
+                    <x-ui.button variant="secondary" size="sm" @click="cancelOpen = false">Keep It</x-ui.button>
+                    <x-ui.button variant="danger" size="sm" icon="calendar-x" x-bind:disabled="processing" @click="confirmCancel()">Cancel Event</x-ui.button>
                 </x-slot:footer>
             </x-ui.modal>
             </div>

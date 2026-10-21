@@ -1120,7 +1120,16 @@ function helpFeedback(docKey, item) {
 
 // ================================================================= Events
 
-/** Remind me: a calendar file with a reminder the day before, or Google Calendar. */
+// The upcoming events this resident asked to be reminded of: fetched once a
+// page, shared by every month the calendar shows.
+let reminderKeys = null;
+
+/**
+ * Remind me (2026-10-21): in the app - the resident is reminded the day
+ * before in their notifications and on their phone, and told if the event
+ * moves or is cancelled - or in their own calendar: a calendar file with a
+ * reminder the day before, or Google Calendar.
+ */
 function eventCalendar() {
     // The page keys its events by date (event.key), so the date and title
     // make the UID: two events on one day must not replace each other.
@@ -1134,9 +1143,43 @@ function eventCalendar() {
     });
     return {
         menu: null,
+        reminded: {},
+        saving: null,
+        async init() {
+            if (!window.Alpine?.store('citizenSession')?.account) return;
+            try {
+                reminderKeys ??= (await api.get('/citizen/event-reminders')).data || [];
+            } catch {
+                reminderKeys = null;
+                return;
+            }
+            this.reminded = Object.fromEntries(reminderKeys.map((k) => [k, true]));
+        },
         toggle(id) {
             this.menu = this.menu === id ? null : id;
             icons();
+        },
+        isReminded(e) { return !!this.reminded[e.ref]; },
+        async toggleReminder(e) {
+            if (this.saving || !e.ref) return;
+            this.menu = null;
+            this.saving = e.ref;
+            const on = !this.isReminded(e);
+            try {
+                const path = '/citizen/events/' + encodeURIComponent(e.ref) + '/reminder';
+                if (on) await api.post(path);
+                else await api.delete(path);
+                this.reminded = { ...this.reminded, [e.ref]: on };
+                reminderKeys = Object.keys(this.reminded).filter((k) => this.reminded[k]);
+                toast(on
+                    ? tr('We will remind you the day before, here and on your phone. You will also be told if it moves or is cancelled.', 'Ipapaalala namin ito isang araw bago, dito at sa iyong telepono. Sasabihan ka rin kung malilipat o makakansela ito.')
+                    : tr('Reminder turned off.', 'Pinatay ang paalala.'));
+                icons();
+            } catch (err) {
+                toast(errorText(err, 'Could not change the reminder. Try again.', 'Hindi mabago ang paalala. Subukang muli.'), 'error');
+            } finally {
+                this.saving = null;
+            }
         },
         save(e) {
             this.menu = null;
@@ -1956,6 +1999,8 @@ function balitaFeed() {
                 category: a.category, title: a.title, body: a.body || '', media: a.media || [],
                 likes: a.likes || 0, comments_count: a.comments_count || 0, liked_by_me: a.liked_by_me === true,
                 at: a.published_at,
+                // The event it was posted from: { key, date, time, venue, link } (2026-10-21).
+                event: a.event || null,
                 expanded: false, showComments: false, comments: null, commentsPage: 0, commentsMore: false, liking: false,
                 // The comment being written, on the post itself: a map keyed by
                 // post did not re-run the Send button's binding when it changed.
@@ -1980,7 +2025,7 @@ function balitaFeed() {
             try {
                 const [ann, ev] = await Promise.all([
                     this.fetchPage(1),
-                    api.get('/events', { params: { per_page: 4, from: new Date().toISOString().slice(0, 10) } }).catch(() => ({ data: [] })),
+                    api.get('/events', { params: { per_page: 4, from: new Date().toLocaleDateString('en-CA', { timeZone: TZ }) } }).catch(() => ({ data: [] })),
                 ]);
                 this.merge(ann);
                 this.events = ev.data || [];

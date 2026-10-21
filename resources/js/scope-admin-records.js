@@ -621,10 +621,265 @@ function balitaComments() {
     };
 }
 
+// ================================================================= Events
+
+const EVENT_CATEGORY_COLOR = { Community: 'bg-brand-500', Health: 'bg-emerald-500', 'Public Service': 'bg-indigo-500', Advisory: 'bg-amber-500', Livelihood: 'bg-teal-500', Governance: 'bg-purple-500' };
+
+/**
+ * The Events tab (2026-10-21). An event reaches residents now: publishing it
+ * tells the residents it is for (the bell and their phones) and, unless the
+ * officer unticks "Post in Balita too", puts it in Balita with its photos.
+ * A published event can still be put right by an officer who approves
+ * events - residents are told of a new date, time or place - and one
+ * withdrawn before its day is a cancellation, told with its reason.
+ */
+function adminEvents(barangays = []) {
+    const blank = () => ({ name: '', description: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: barangays[0] || '', post_to_balita: true });
+    return {
+        loading: true,
+        failed: false,
+        events: [],
+        open: false,
+        reviewOpen: false,
+        cancelOpen: false,
+        selected: null,
+        rejectReason: '',
+        cancelReason: '',
+        search: '',
+        status: 'All',
+        scope: 'All',
+        category: 'All',
+        processing: false,
+        statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],
+        categoryColor: EVENT_CATEGORY_COLOR,
+        editing: null,
+        form: blank(),
+        media: emptyMedia(),
+        formKey: 1,
+
+        async load() {
+            this.loading = true;
+            this.failed = false;
+            try {
+                const res = await api.getAll('/admin/events');
+                this.events = res.data || [];
+            } catch {
+                this.failed = true;
+            } finally {
+                this.loading = false;
+            }
+            this.openLinked();
+        },
+        // A reviewer's notification opens /admin/communications/?tab=events&event=KEY,
+        // once (the list reloads after every decision).
+        linkedDone: false,
+        openLinked() {
+            const params = new URLSearchParams(window.location.search);
+            if (this.linkedDone || params.get('tab') !== 'events' || !params.get('event')) return;
+            const e = this.events.find((x) => x.key === params.get('event'));
+            if (!e) return;
+            this.linkedDone = true;
+            if (e.status === 'Pending Review' && this.canMove(e, 'Approved')) this.openReview(e);
+            else this.search = e.title || e.name;
+        },
+        get categories() { return [...new Set(this.events.map((e) => e.category).filter(Boolean))].sort(); },
+        get filtered() {
+            const q = this.search.trim().toLowerCase();
+            return this.events.filter((e) =>
+                (!e.barangay || this.$store.session.inScope(e.barangay))
+                && (this.status === 'All' || e.status === this.status)
+                && (this.scope === 'All' || (this.scope === 'Municipal' ? !e.barangay : e.barangay === this.scope))
+                && (this.category === 'All' || e.category === this.category)
+                && (!q || (e.title || e.name || '').toLowerCase().includes(q)));
+        },
+        count(status) { return this.events.filter((e) => e.status === status).length; },
+        can(action) { return this.$store.session.canPerm('comm_events', action); },
+        canMove(e, to) {
+            const action = e.available_transitions?.[to];
+            return !!action && this.can(action);
+        },
+        // In the editorial flow, or published and put right by one who approves events.
+        canEdit(e) {
+            return (['Draft', 'Pending Review', 'Rejected'].includes(e.status) && this.can('edit'))
+                || (e.status === 'Released' && this.can('approve'));
+        },
+        // Withdrawing a published event before its day cancels it, and residents are told.
+        isCancel(e) { return e.status === 'Released' && !!e.upcoming; },
+        dayLabel(d) {
+            return d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        },
+
+        openNew() {
+            this.editing = null;
+            this.form = blank();
+            this.media = emptyMedia();
+            this.formKey += 1;
+            this.open = true;
+        },
+        // A time typed as text before (8:00 AM) for the time field; one it
+        // cannot read leaves the field empty and is kept as it was.
+        toTime(t) {
+            const m = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?$/.exec(String(t || '').trim());
+            if (!m) return '';
+            let h = Number(m[1]);
+            const ap = (m[3] || '').toLowerCase();
+            if (ap === 'pm' && h < 12) h += 12;
+            if (ap === 'am' && h === 12) h = 0;
+            return h > 23 ? '' : String(h).padStart(2, '0') + ':' + m[2];
+        },
+        openEdit(e) {
+            this.form = {
+                name: e.title || e.name || '', description: e.description || '', category: e.category || 'Community',
+                date: e.date || '', time: this.toTime(e.time), venue: e.venue || '',
+                audience: e.barangay ? 'Barangay' : 'Municipal', barangay: e.barangay || barangays[0] || '',
+                post_to_balita: e.post_to_balita !== false,
+            };
+            this.media = emptyMedia();
+            this.editing = e;
+            this.formKey += 1;
+            this.open = true;
+        },
+        get mediaProblem() {
+            if (this.media.busy) return 'Wait for the photos to finish uploading.';
+            if (this.media.failed) return 'A photo did not upload. Remove it or try it again.';
+            return '';
+        },
+        async saveEvent(submit) {
+            const f = this.form;
+            if (this.processing || !f.name.trim() || !f.date) return;
+            if (this.mediaProblem) { balitaToast(this.mediaProblem, 'error'); return; }
+            return this.editing ? this.saveEdit(submit) : this.create(submit);
+        },
+        async create(submit) {
+            const f = this.form;
+            this.processing = true;
+            try {
+                const key = f.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) + '-' + Date.now().toString(36);
+                await api.post('/admin/events', {
+                    key, name: f.name.trim(), title: f.name.trim(), description: f.description.trim() || null, date: f.date,
+                    time: f.time || null, venue: f.venue.trim() || null, category: f.category,
+                    barangay: f.audience === 'Barangay' ? f.barangay : null,
+                    post_to_balita: !!f.post_to_balita, media_ids: this.media.ids,
+                });
+                if (submit) await api.post('/admin/events/' + encodeURIComponent(key) + '/transition', { to: 'Pending Review' });
+                this.open = false;
+                balitaToast(submit ? 'Submitted for review.' : 'Saved as draft.');
+                await this.load();
+            } catch (err) {
+                balitaToast(errText(err, 'Could not create the event.'), 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+        // Only what changed goes; each step that succeeds is kept on the
+        // event, so trying again after a failure repeats only what is left.
+        async saveEdit(submit) {
+            const e = this.editing;
+            const f = this.form;
+            const barangay = f.audience === 'Barangay' ? f.barangay : null;
+            const changes = {};
+            if (f.name.trim() !== (e.title || e.name)) { changes.name = f.name.trim(); changes.title = f.name.trim(); }
+            if (f.description.trim() !== (e.description || '')) changes.description = f.description.trim() || null;
+            if (f.date !== e.date) changes.date = f.date;
+            if (f.time !== this.toTime(e.time)) changes.time = f.time || null;
+            if (f.venue.trim() !== (e.venue || '')) changes.venue = f.venue.trim() || null;
+            if (f.category !== (e.category || 'Community')) changes.category = f.category;
+            if (barangay !== (e.barangay || null)) changes.barangay = barangay;
+            if (!!f.post_to_balita !== (e.post_to_balita !== false)) changes.post_to_balita = !!f.post_to_balita;
+            if (!sameIds(this.media.ids, (e.media || []).map((m) => m.id))) changes.media_ids = this.media.ids;
+            if (!submit && !Object.keys(changes).length) {
+                this.open = false;
+                this.editing = null;
+                balitaToast('Nothing was changed.', 'info');
+                return;
+            }
+            this.processing = true;
+            try {
+                const path = '/admin/events/' + encodeURIComponent(e.key);
+                if (Object.keys(changes).length) { await api.put(path, changes); Object.assign(e, changes); }
+                if (submit && e.status === 'Rejected') { await api.post(path + '/transition', { to: 'Draft' }); e.status = 'Draft'; }
+                if (submit) { await api.post(path + '/transition', { to: 'Pending Review' }); e.status = 'Pending Review'; }
+                this.open = false;
+                this.editing = null;
+                const told = e.status === 'Released' && e.upcoming && ['date', 'time', 'venue'].some((k) => k in changes);
+                balitaToast(submit ? 'Saved and submitted for review.' : (told ? 'Saved. Residents were told of the change.' : 'Changes saved.'));
+                await this.load();
+            } catch (err) {
+                balitaToast(errText(err, 'Could not save the changes.'), 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+        async transition(e, to, remarks) {
+            try {
+                await api.post('/admin/events/' + encodeURIComponent(e.key) + '/transition', { to, remarks: remarks || undefined });
+                return true;
+            } catch (err) {
+                balitaToast(errText(err, 'Could not update this event.'), 'error');
+                return false;
+            }
+        },
+        async submit(e) {
+            if (await this.transition(e, 'Pending Review')) { balitaToast('Submitted for review.'); await this.load(); }
+        },
+        openReview(e) {
+            this.selected = e;
+            this.rejectReason = '';
+            this.reviewOpen = true;
+        },
+        // Approved and published in one go; a publish that fails leaves it
+        // Approved, with Publish on its card.
+        async approveAndPublish() {
+            if (this.processing) return;
+            this.processing = true;
+            if (await this.transition(this.selected, 'Approved')) {
+                const live = await this.transition(this.selected, 'Released');
+                this.reviewOpen = false;
+                balitaToast(live ? 'Published. Residents were told.' : 'Approved, but not yet published. Use Publish on its card.', live ? 'success' : 'error');
+                await this.load();
+            }
+            this.processing = false;
+        },
+        async requestChanges() {
+            if (this.processing || this.rejectReason.trim().length < 5) return;
+            this.processing = true;
+            if (await this.transition(this.selected, 'Rejected', this.rejectReason.trim())) {
+                this.reviewOpen = false;
+                this.rejectReason = '';
+                balitaToast('Sent back with remarks.');
+                await this.load();
+            }
+            this.processing = false;
+        },
+        async release(e) {
+            if (await this.transition(e, 'Released')) { balitaToast('Published. Residents were told.'); await this.load(); }
+        },
+        async archive(e) {
+            if (await this.transition(e, 'Archived')) { balitaToast('Archived.'); await this.load(); }
+        },
+        openCancel(e) {
+            this.selected = e;
+            this.cancelReason = '';
+            this.cancelOpen = true;
+        },
+        async confirmCancel() {
+            if (this.processing || !this.selected) return;
+            this.processing = true;
+            if (await this.transition(this.selected, 'Archived', this.cancelReason.trim())) {
+                this.cancelOpen = false;
+                balitaToast('Event cancelled. Residents were told.');
+                await this.load();
+            }
+            this.processing = false;
+        },
+    };
+}
+
 export function register(Alpine) {
     registerBalitaMedia(Alpine);
     registerOccasions(Alpine);
     Alpine.data('adminBalita', adminBalita);
+    Alpine.data('adminEvents', adminEvents);
     Alpine.data('balitaComments', balitaComments);
     // A correction request opened from the Data requests list: the account's
     // "Correct details" opens by itself, with that request to close.
