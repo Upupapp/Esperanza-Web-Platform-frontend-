@@ -192,7 +192,7 @@ class BannersAndOccasionsUiTest extends TestCase
         $this->assertStringContainsString('x-text="cardWhen(o)"', $view);
         $this->assertStringContainsString("@click=\"search = ''; setState('all')\">Clear filters", $view);
         // The occasion and post windows are sized to their content.
-        $this->assertStringContainsString('<x-ui.modal maxWidth="3xl" :bare="true">', $view);
+        $this->assertStringContainsString('<x-ui.modal maxWidth="xl" :bare="true">', $view);
         $this->assertStringContainsString('<x-ui.modal maxWidth="2xl" :bare="true">', $this->source('resources/views/admin/communications/balita.blade.php'));
         // The preview is drawn from the form; it calls nothing.
         $preview = substr($js, strpos($js, 'previewForm() {'), strpos($js, 'when,', strpos($js, 'previewForm() {')) - strpos($js, 'previewForm() {'));
@@ -210,6 +210,57 @@ class BannersAndOccasionsUiTest extends TestCase
         $this->assertStringContainsString('x-for="w in formWarnings"', $view);
         // Unsaved changes are asked about.
         $this->assertStringContainsString("'Discard the changes to this occasion?'", $js);
+    }
+
+    public function test_the_occasion_form_is_a_five_step_wizard(): void
+    {
+        $view = $this->source('resources/views/admin/communications/occasions.blade.php');
+        $js = $this->source('resources/js/admin-occasions.js');
+
+        // Five steps, in order (the banner is chosen with the pop-up), each with its Next label.
+        $labels = ["label: 'Details', next: 'Next: Schedule'", "label: 'Schedule & Trigger', next: 'Next: Audience'", "label: 'Audience', next: 'Next: Pop-up Content'", "label: 'Pop-up Content', next: 'Review'", "label: 'Review & Activate', next: ''"];
+        $at = 0;
+        foreach ($labels as $label) {
+            $found = strpos($js, $label, $at);
+            $this->assertNotFalse($found, $label);
+            $at = $found;
+        }
+        // One step shows at a time; x-show keeps the others (and the picture) in the page.
+        for ($n = 1; $n <= 5; $n++) {
+            $this->assertStringContainsString('<section x-show="step === '.$n.'"', $view);
+        }
+        $this->assertStringNotContainsString('<section x-show="step === 6"', $view);
+        $this->assertStringNotContainsString('x-if="step', $view);
+        // The banner is part of step 4; the live preview is on Review.
+        $step4 = substr($view, strpos($view, '<section x-show="step === 4"'), strpos($view, '<section x-show="step === 5"') - strpos($view, '<section x-show="step === 4"'));
+        $this->assertStringContainsString('name="occ-banner"', $step4);
+        $this->assertStringContainsString('@click="newBanner()"', $step4);
+        $this->assertStringNotContainsString('aria-label="Live preview"', $step4);
+        $this->assertStringContainsString('aria-label="Live preview"', substr($view, strpos($view, '<section x-show="step === 5"')));
+        // On a phone: "Step 3 of 5 — Audience".
+        $this->assertStringContainsString("x-text=\"'Step ' + step + ' of 5 — ' + stepInfo.label\"", $view);
+
+        // Next checks the step first; a step further on is reached only through ready steps.
+        $next = substr($js, strpos($js, 'next() {'), 300);
+        $this->assertLessThan(strpos($next, 'this.show('), strpos($next, 'this.stepProblems(this.step).length'));
+        $this->assertStringContainsString('@click="next()"', $view);
+        $this->assertStringContainsString('x-show="step > 1" x-cloak x-bind:disabled="processing" @click="back()">Back', $view);
+        $this->assertStringContainsString('canReach(n) { return n <= this.maxStep + 1; }', $js);
+
+        // Save Draft on every step; Save and activate only on Review. Both guard against a second press.
+        $this->assertMatchesRegularExpression('/<x-ui.button variant="secondary" size="sm" loading="processing"[^>]*@click="save\(\'draft\'\)">/', $view);
+        $this->assertStringContainsString('x-show="step === 5 && (!editing || editing.state === \'draft\')" x-cloak @click="save(\'activate\')"', $view);
+        $this->assertStringContainsString('if (this.processing) return;', substr($js, strpos($js, 'async save(how) {'), 200));
+
+        // Errors beside the field once its step was tried; the server's go to their step.
+        $this->assertStringContainsString("issue('name', 'name')", $view);
+        $this->assertStringContainsString("issue('popup_title', 'popup_title')", $view);
+        $this->assertStringContainsString('function serverFieldStep(key)', $js);
+        // Review: a card per step with Edit; a later start is labelled Scheduled.
+        $this->assertStringContainsString('@click="goTo(card.n)"', $view);
+        $this->assertStringContainsString("label: 'Scheduled'", $js);
+        // A saved occasion opens on its review.
+        $this->assertStringContainsString('await this.openForm(OCCASION_STEPS.length);', $js);
     }
 
     public function test_the_resident_pop_up_comes_from_the_server_birthday_included(): void
