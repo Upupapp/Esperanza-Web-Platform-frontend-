@@ -239,7 +239,7 @@ $roles = [
     [
         'key' => 'municipal_admin', 'name' => 'Municipal Administrator', 'icon' => 'shield-check',
         'color' => 'text-brand-700 bg-brand-50', 'users' => 2, 'editable' => true,
-        'desc' => 'Full operational control across Dokyu, Tulong, Constituents, Payments, and Communications, plus personnel and role management for the municipality.',
+        'desc' => 'Full operational control across Dokyu, Tulong, Constituents, Payments, and Communications, plus personnel and role management for the municipality. For the Office of the Mayor, leads the Municipal Information Officer: reviews what the Information Office sends for a second look, and can do everything it does.',
         'permissions' => $buildPermissions([
             'dokyu' => 'full', 'tulong' => 'full', 'constituents' => 'full', 'payments' => 'full',
             'communications' => 'full', 'reports' => 'view_export', 'user_management' => 'full', 'settings' => 'full',
@@ -289,7 +289,7 @@ $roles = [
     [
         'key' => 'info_officer', 'name' => 'Municipal Information Officer', 'icon' => 'megaphone',
         'color' => 'text-rose-700 bg-rose-50', 'users' => 2, 'editable' => true,
-        'desc' => 'Owns public-facing communications — drafts, reviews, and publishes announcements, events.',
+        'desc' => 'Heads the Municipal Information Office: writes, reviews and publishes Balita, banners, occasions and events for the whole municipality, and reviews what other offices write. Led by the Municipal Administrator, for the Office of the Mayor.',
         'permissions' => $buildPermissions([
             'communications' => 'full', 'reports' => 'view',
         ]),

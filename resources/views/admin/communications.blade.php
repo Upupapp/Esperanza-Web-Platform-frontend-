@@ -61,6 +61,17 @@
                     if (allowed) this.go(allowed);
                 }
             },
+            // Who does what here, for the roles that run Balita (owner,
+            // 2026-10-21: who is the Municipal Information Officer's lead?).
+            // The review alerts follow the same chain (StaffAlerts::reviewChain).
+            get roleNote() {
+                return {
+                    super_admin: 'Super Administrator: you can do everything here. Day to day the Municipal Information Office runs Balita and the Municipal Administrator leads it, so posts and events sent for review reach you only when neither is set up.',
+                    municipal_admin: 'Municipal Administrator: for the Office of the Mayor, you lead the Municipal Information Office. You can do everything here, and what the Information Office sends for a second look comes to you.',
+                    info_officer: 'Municipal Information Officer: you publish Balita, banners, occasions and events for the whole municipality, and review what the offices send. Your lead is the Municipal Administrator: save a draft and send it for review to get their second look.',
+                    department_head: 'Department Head: you approve and publish your office’s Balita posts; the Municipal Information Office can too.',
+                }[this.$store.session.account?.roleKey] || '';
+            },
             barangayNames: @js(config('esperanza.barangays')),
             initials(name) { return (name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); },
         }"
@@ -77,6 +88,8 @@
         </div>
 
         <div x-show="$store.session.can('communications') || $store.session.canPerm('comm_feedback', 'view')" x-cloak>
+
+        <p x-show="roleNote" x-cloak class="mb-3 flex items-start gap-2 rounded-2xl bg-white/70 border border-brand-600/10 px-3.5 py-2.5 text-xs text-ink-body"><i data-lucide="users-round" class="w-4 h-4 text-brand-600 shrink-0 mt-px"></i><span x-text="roleNote"></span></p>
 
         {{-- max-w-full: the tabs scroll inside the bar on a phone instead of
              widening the page (scope round 2026-10-15). --}}
@@ -180,6 +193,7 @@
                             <button x-show="e.status === 'Approved' && canMove(e, 'Released')" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
                             <button x-show="isCancel(e) && canMove(e, 'Archived')" @click="openCancel(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-red-600 hover:bg-red-50/60 transition-colors"><i data-lucide="calendar-x" class="w-3.5 h-3.5"></i>Cancel Event</button>
                             <button x-show="!isCancel(e) && ['Draft', 'Approved', 'Released', 'Rejected'].includes(e.status) && canMove(e, 'Archived')" @click="archive(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60 transition-colors"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                            <button x-show="canDelete(e)" @click="deleteEvent(e)" :disabled="processing" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-rose-700 hover:bg-rose-50/60 transition-colors disabled:opacity-50"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Delete</button>
                         </div>
                     </div>
                 </template>

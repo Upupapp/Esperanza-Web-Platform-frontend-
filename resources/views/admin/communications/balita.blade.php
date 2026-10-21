@@ -108,6 +108,7 @@
                     {{-- An approved post with a time waits for it; the server puts it out then. --}}
                     <p x-show="isScheduled(a)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 px-2 text-sky-800 text-center"><i data-lucide="calendar-clock" class="w-3.5 h-3.5 shrink-0"></i><span x-text="goesLiveText(a)"></span></p>
                     <button type="button" x-show="canMove(a, 'Archived')" @click="quick(a, 'Archived', 'Archived. Residents no longer see it.')" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-ink-muted hover:bg-white/60"><i data-lucide="archive" class="w-3.5 h-3.5"></i>Archive</button>
+                    <button type="button" x-show="canDelete(a)" @click="deletePost(a)" :disabled="processing" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-rose-700 hover:bg-rose-50/60 disabled:opacity-50"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Delete</button>
                     <button type="button" x-show="can('create')" @click="useAsTemplate(a)" :disabled="processing" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-700 hover:bg-brand-50/60 disabled:opacity-50"><i data-lucide="copy" class="w-3.5 h-3.5"></i>Use as template</button>
                 </div>
             </article>
