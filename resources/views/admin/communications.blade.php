@@ -144,7 +144,7 @@
             {{-- Every officer writes Balita; a writer's post waits for a head (2026-10-19). --}}
             <p x-show="can('create') && !approver" x-cloak class="mb-4 rounded-2xl bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
                 <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-                <span>You can write Balita posts with photos and videos and send them for review. Your Department Head or the Information Office approves and publishes them. You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
+                <span>You can write Balita posts with photos and videos and send them for review. Your Department Head or the Municipal Information Office approves and publishes them. You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-start">

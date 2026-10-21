@@ -86,7 +86,7 @@
                                     class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
                                     :class="post.liked_by_me ? 'text-rose-600' : 'text-ink-muted'">
                                     <i data-lucide="heart" class="w-4 h-4 transition-transform" :class="post.liked_by_me && 'scale-110'" :style="post.liked_by_me ? 'fill: currentColor' : ''"></i>
-                                    <span x-text="t('Like', 'Gusto')"></span>
+                                    <span x-text="t('Like', 'I-like')"></span>
                                 </button>
                                 <button type="button" @click="toggleComments(post)" :aria-expanded="post.showComments" class="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl hover:bg-white/60 transition-colors text-ink-muted focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100">
                                     <i data-lucide="message-circle" class="w-4 h-4"></i><span x-text="t('Comment', 'Komento')"></span>
@@ -171,7 +171,7 @@
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-medium text-ink truncate" x-text="tp.author"></p>
                                     <p class="text-[11px] text-ink-muted leading-snug" x-text="tp.title || (tp.body.length > 50 ? tp.body.slice(0, 50) + '…' : tp.body)"></p>
-                                    <p class="text-[10.5px] text-rose-700 font-medium mt-0.5 flex items-center gap-1"><i data-lucide="heart" class="w-2.5 h-2.5" style="fill: currentColor"></i><span x-text="tp.likes + ' ' + t(tp.likes === 1 ? 'like' : 'likes', 'gusto')"></span></p>
+                                    <p class="text-[10.5px] text-rose-700 font-medium mt-0.5 flex items-center gap-1"><i data-lucide="heart" class="w-2.5 h-2.5" style="fill: currentColor"></i><span x-text="tp.likes + ' ' + (tp.likes === 1 ? 'Like' : 'Likes')"></span></p>
                                 </div>
                             </div>
                         </template>

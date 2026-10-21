@@ -497,7 +497,7 @@ function adminBalita(barangays = [], occasions = [], frequencies = []) {
                 if (submit && post.status === 'Rejected') await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Draft' });
                 if (submit) await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Pending Review' });
                 this.open = false;
-                balitaToast(submit ? 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.' : 'Your Department Head or the Information Office approves it.') : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
+                balitaToast(submit ? 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.' : 'Your Department Head or the Municipal Information Office approves it.') : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
                 await this.load();
             } catch (err) {
                 if (err?.status === 422) this.fieldErrors = err.fields || {};
