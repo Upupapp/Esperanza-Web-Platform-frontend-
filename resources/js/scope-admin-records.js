@@ -13,6 +13,7 @@
 
 import api from './api/client';
 import { registerBalitaMedia } from './balita-media';
+import { registerOccasions } from './admin-occasions';
 
 const OPEN = ['Submitted', 'Under Review'];
 
@@ -170,12 +171,10 @@ const emptyMedia = () => ({ ids: [], busy: false, failed: false });
 const balitaToast = (message, variant = 'success') => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
 const sameIds = (a, b) => a.length === b.length && a.every((id, i) => id === b[i]);
 
-// Occasion greetings (2026-10-19): a Balita post that greets residents for a
-// festival, a holiday, Foundation Day and the like, in the feed, as a pop-up
-// when they open Esperanza, or both, each on its own schedule. The occasions
-// and pop-up frequencies come from config/esperanza_balita.php, the list the
-// backend checks against. Times are Esperanza's (UTC+8, no daylight saving),
-// whatever the officer's computer is set to.
+// One feed (owner, 2026-10-21): Balita is the LGU's posts, with no greeting
+// kind; the pop-ups residents see on an occasion are kept in Banners &
+// Occasions. Any post can be scheduled. Times are Esperanza's (UTC+8, no
+// daylight saving), whatever the officer's computer is set to.
 
 /** A Y-m-d day at an HH:MM time in Esperanza, as the ISO the server takes; null without a day. */
 const manilaIso = (ymd, hm) => (ymd ? String(ymd).slice(0, 10) + 'T' + (hm || '00:00') + ':00+08:00' : null);
@@ -187,101 +186,45 @@ function manilaParts(iso) {
     return { date: s.slice(0, 10), time: s.slice(11, 16) };
 }
 const instant = (iso) => (iso ? new Date(iso).getTime() : NaN);
-// What the schedule of a greeting is doing now; worked out by the server.
-const GREETING_STATES = { scheduled: 'Scheduled', live: 'Live', ended: 'Ended', cancelled: 'Cancelled' };
-const GREETING_STATE_TONES = {
-    scheduled: 'bg-sky-50 text-sky-800', live: 'bg-emerald-50 text-emerald-800', ended: 'bg-slate-100 text-slate-600', cancelled: 'bg-rose-50 text-rose-700',
-};
 
-/** The greeting half of the New/Edit form: a regular post, or a greeting's settings read from a row. */
-function greetingForm(post = null) {
-    const g = post?.post_type === 'greeting' ? (post.greeting || {}) : null;
-    const pub = manilaParts(g?.publish_at);
-    const until = manilaParts(g?.visible_until);
-    const start = manilaParts(g?.popup?.starts_at);
-    const end = manilaParts(g?.popup?.ends_at);
+/** The composer's fields, empty or read from a post. */
+function postForm(post = null, barangays = [], ownBarangay = null) {
+    const at = manilaParts(post?.publish_at);
     return {
-        post_type: g ? 'greeting' : 'regular',
-        occasion: g?.occasion || 'festival',
-        occasion_name: g?.occasion_name || '',
-        in_feed: g ? g.show_in_feed !== false : true,
-        as_popup: !!g?.popup,
-        publish_date: pub.date, publish_time: pub.time,
-        until_date: until.date, until_time: until.time,
-        popup_start_date: start.date, popup_start_time: start.time,
-        popup_end_date: end.date, popup_end_time: end.time,
-        popup_frequency: g?.popup?.frequency || 'once',
-        popup_button_label: g?.popup?.button_label || '',
-        popup_button_url: g?.popup?.button_url || '',
+        title: post?.title || '',
+        category: post?.category || 'Community',
+        body: post?.body || '',
+        audience: ownBarangay || post?.barangay ? 'Barangay' : 'Municipal',
+        barangay: ownBarangay || post?.barangay || barangays[0] || '',
+        schedule: !!post?.publish_at && instant(post.publish_at) > Date.now(),
+        publish_date: at.date,
+        publish_time: at.time || '08:00',
     };
 }
 
-/**
- * What the server is sent for the greeting half of the form. A start with no
- * time is the start of that day, an end with no time its last minute. A
- * part that is switched off is sent empty, so an edit clears it.
- */
-function greetingPayload(f) {
-    if (f.post_type !== 'greeting') return { post_type: 'regular' };
-    const body = {
-        post_type: 'greeting',
-        occasion: f.occasion,
-        occasion_name: f.occasion === 'custom' ? f.occasion_name.trim() : null,
-        show_in_feed: !!f.in_feed,
-        publish_at: f.in_feed ? manilaIso(f.publish_date, f.publish_time) : null,
-        visible_until: f.in_feed ? manilaIso(f.until_date, f.until_time || '23:59') : null,
-        popup_enabled: !!f.as_popup,
-    };
-    if (f.as_popup) {
-        Object.assign(body, {
-            popup_starts_at: manilaIso(f.popup_start_date, f.popup_start_time),
-            popup_ends_at: manilaIso(f.popup_end_date, f.popup_end_time || '23:59'),
-            popup_frequency: f.popup_frequency,
-            popup_button_label: f.popup_button_label.trim() || null,
-            popup_button_url: f.popup_button_url.trim() || null,
-        });
-    }
-    return body;
-}
-
-/** The first thing wrong with a greeting's settings, in the server's words; '' when none. The server still decides. */
-function greetingProblem(f) {
-    if (f.post_type !== 'greeting') return '';
-    if (f.occasion === 'custom' && !f.occasion_name.trim()) return 'Name the occasion.';
-    if (!f.in_feed && !f.as_popup) return 'Show the greeting in Balita, as a pop-up, or both.';
-    const p = greetingPayload(f);
-    // With no start it goes in when approved, so it must not have left already.
-    if (f.in_feed && p.visible_until && instant(p.visible_until) <= (p.publish_at ? instant(p.publish_at) : Date.now())) return 'It must leave Balita after it is shown there.';
-    if (f.as_popup && (!p.popup_starts_at || !p.popup_ends_at)) return 'Give the pop-up a start and an end.';
-    if (f.as_popup && instant(p.popup_ends_at) <= instant(p.popup_starts_at)) return 'The pop-up must end after it starts.';
-    if (f.as_popup && p.popup_button_url && !/^https:\/\/\S+$/i.test(p.popup_button_url)) return 'The button link must start with https://.';
-    return '';
-}
-
-/** The Balita tab: announcements on Draft -> Review -> Publish -> Archive. */
-function adminBalita(barangays = [], occasions = [], frequencies = []) {
+/** The Balita tab: one feed of LGU posts on Draft -> Review -> Publish -> Archive. */
+function adminBalita(barangays = []) {
     return {
         loading: true,
         failed: false,
         posts: [],
+        summary: null,
         search: '',
         status: 'All',
         scope: 'All',
         category: 'All',
         processing: false,
         statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],
-        // The Scheduled tab sits beside the status tabs but is not a status:
-        // greetings whose time in Balita or as a pop-up has not come yet.
+        // The Scheduled chip sits beside the status chips but is not a
+        // status: approved posts waiting for their time (2026-10-21).
         scheduledOnly: false,
         categoryList: BALITA_CATEGORIES,
-        occasions,
-        frequencies,
-        open: false,
+        composerOpen: false,
         editing: null,
-        form: { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: barangays[0] || '', ...greetingForm() },
-        // The server's reasons, by field, from the last save it refused.
+        form: postForm(null, barangays),
+        // What the form held when it opened, to ask before throwing changes away.
+        snapshot: '',
         fieldErrors: {},
-        previewOpen: false,
         media: emptyMedia(),
         formKey: 1,
         reviewOpen: false,
@@ -292,8 +235,12 @@ function adminBalita(barangays = [], occasions = [], frequencies = []) {
             this.loading = true;
             this.failed = false;
             try {
-                const res = await api.getAll('/admin/announcements');
+                const [res, summary] = await Promise.all([
+                    api.getAll('/admin/announcements'),
+                    api.get('/admin/announcements/summary').catch(() => null),
+                ]);
                 this.posts = res.data || [];
+                this.summary = summary?.data || null;
             } catch {
                 this.failed = true;
             } finally {
@@ -325,88 +272,41 @@ function adminBalita(barangays = [], occasions = [], frequencies = []) {
                 && (!q || (a.title || '').toLowerCase().includes(q) || (a.body || '').toLowerCase().includes(q)));
         },
         count(status) { return this.posts.filter((a) => a.status === status).length; },
+        // The four cards: the server's counts, or the list's while they load.
+        card(key) {
+            if (this.summary && key in this.summary) {
+                return key === 'drafts' ? this.summary.drafts + (this.summary.sent_back || 0) : this.summary[key];
+            }
+            return {
+                published: this.count('Released'), pending_review: this.count('Pending Review'),
+                drafts: this.count('Draft') + this.count('Rejected'), scheduled: this.scheduledCount,
+            }[key] ?? 0;
+        },
         get scheduledCount() { return this.posts.filter((a) => this.isScheduled(a)).length; },
         showStatus(s) { this.scheduledOnly = false; this.status = s; },
         showScheduled() { this.scheduledOnly = true; this.status = 'All'; },
 
-        // -- Occasion greetings
-        isGreeting(post) { return post?.post_type === 'greeting' && !!post.greeting; },
-        // Scheduled: the server says one of its schedules is waiting, or a
-        // greeting still being written or reviewed has a start to come.
-        isScheduled(post) {
-            if (!this.isGreeting(post)) return false;
-            const g = post.greeting;
-            if (g.feed_state === 'scheduled' || g.popup_state === 'scheduled') return true;
-            const ahead = (iso) => instant(iso) > Date.now();
-            return ['Draft', 'Pending Review', 'Rejected'].includes(post.status)
-                && ((g.show_in_feed && ahead(g.publish_at)) || (!!g.popup && ahead(g.popup.starts_at)));
+        // -- Scheduling
+        // Approved and waiting for its time; the server releases it then.
+        isScheduled(post) { return post.scheduled === true || (post.status === 'Approved' && instant(post.publish_at) > Date.now()); },
+        // Has a time to come, whatever its status: approving it keeps it until then.
+        hasFutureTime(post) { return instant(post?.publish_at) > Date.now(); },
+        goesLiveText(post) {
+            return post.publish_at ? 'Goes live ' + when(post.publish_at) : 'Goes live at its time';
         },
-        // Approved or out, with a time still to come: archiving it now is
-        // cancelling it, and the card says so.
-        cancellable(post) { return this.isScheduled(post) && !['Draft', 'Pending Review', 'Rejected'].includes(post.status); },
-        // Approved, and waiting for its time to go into Balita: the server
-        // releases it then, and refuses to publish it sooner.
-        waitsForFeed(post) {
-            if (!this.isGreeting(post) || post.status !== 'Approved') return false;
-            const g = post.greeting;
-            return g.feed_state === 'scheduled' || (g.show_in_feed && instant(g.publish_at) > Date.now());
+        get scheduleIso() { return this.form.schedule ? manilaIso(this.form.publish_date, this.form.publish_time) : null; },
+        get scheduleProblem() {
+            if (!this.form.schedule) return '';
+            if (!this.form.publish_date) return 'Choose the day it goes out.';
+            if (instant(this.scheduleIso) <= Date.now()) return 'Choose a time that is still to come.';
+            return '';
         },
-        // Approving it would not put it into Balita yet: its time there is still to come.
-        waitsOnApproval(post) {
-            return this.isGreeting(post) && !!post.greeting.show_in_feed && instant(post.greeting.publish_at) > Date.now();
-        },
-        occasionLabel(g) {
-            if (!g) return '';
-            if (g.occasion === 'custom' && g.occasion_name) return g.occasion_name;
-            return g.occasion_label?.en || this.occasions.find((o) => o.key === g.occasion)?.en || g.occasion || '';
-        },
-        frequencyLabel(key) { return this.frequencies.find((f) => f.key === key)?.en || key || ''; },
-        stateLabel(state) { return GREETING_STATES[state] || ''; },
-        stateTone(state) { return GREETING_STATE_TONES[state] || 'bg-slate-100 text-slate-600'; },
-        feedSpan(post) {
-            const g = post.greeting;
-            const from = g.publish_at || post.published_at;
-            return 'In Balita ' + (from ? when(from) : 'when approved') + ' – ' + (g.visible_until ? when(g.visible_until) : 'open');
-        },
-        popupSpan(post) {
-            const p = post.greeting.popup;
-            return 'Pop-up ' + when(p.starts_at) + ' – ' + when(p.ends_at) + ' · ' + this.frequencyLabel(p.frequency);
-        },
-        cancelGreeting(post) {
-            if (!window.confirm('Cancel the greeting "' + post.title + '"? It is archived: residents will not see it in Balita or as a pop-up.')) return;
-            this.quick(post, 'Archived', 'Greeting cancelled. Residents will not see it.');
-        },
-        // A greeting kept as a starting point for the next one: everything
-        // but the dates and photos, and nothing is saved until the officer does.
-        useAsTemplate(post) {
-            this.openNew();
-            const g = greetingForm(post);
-            Object.assign(this.form, {
-                title: post.title || '', body: post.body || '', category: post.category || 'Community',
-                ...(this.ownBarangay ? {} : { audience: post.barangay ? 'Barangay' : 'Municipal', barangay: post.barangay || barangays[0] || '' }),
-                post_type: g.post_type, occasion: g.occasion, occasion_name: g.occasion_name, in_feed: g.in_feed, as_popup: g.as_popup,
-                popup_frequency: g.popup_frequency, popup_button_label: g.popup_button_label, popup_button_url: g.popup_button_url,
-            });
-        },
-        get greetingProblem() { return greetingProblem(this.form); },
         fieldError(key) {
             const v = this.fieldErrors?.[key];
             return Array.isArray(v) ? (v[0] || '') : (v || '');
         },
-        // The resident's pop-up, as it will look: the post's title and text,
-        // its first photo as the poster, the occasion and the button.
-        get preview() {
-            const f = this.form;
-            const occasion = this.occasions.find((o) => o.key === f.occasion);
-            return {
-                occasion: f.occasion === 'custom' && f.occasion_name.trim() ? f.occasion_name.trim() : (occasion?.en || ''),
-                title: f.title.trim() || 'Title of the greeting',
-                message: f.body.trim() || 'The content of the post is the message.',
-                poster: this.media.cover || null,
-                button: f.popup_button_label.trim() || (f.popup_button_url.trim() ? 'Open' : (f.in_feed ? 'See it in Balita' : '')),
-            };
-        },
-        // One set of words for a status, in the tabs, the cards and the editor.
+
+        // One set of words for a status, in the chips, the cards and the editor.
         statusLabel(status) { return { Released: 'Published', Rejected: 'Sent back', 'Pending Review': 'Waiting for review' }[status] || status; },
         statusTone(status) {
             return {
@@ -436,97 +336,159 @@ function adminBalita(barangays = [], occasions = [], frequencies = []) {
             if (!account || account.roleKey === 'super_admin' || !account.scope || account.scope === 'Municipal') return null;
             return account.scope;
         },
+        get audienceText() {
+            if (this.ownBarangay) return 'Brgy. ' + this.ownBarangay;
+            return this.form.audience === 'Barangay' ? 'Brgy. ' + this.form.barangay : 'All of Esperanza';
+        },
 
-        // -- Writing
+        // -- Writing (Facebook-like: who it is for, the words, the photos, and
+        //    when it goes out; the preview beside it is what residents see)
         openNew() {
             this.editing = null;
-            this.form = this.ownBarangay
-                ? { title: '', category: 'Community', body: '', audience: 'Barangay', barangay: this.ownBarangay, ...greetingForm() }
-                : { title: '', category: 'Community', body: '', audience: 'Municipal', barangay: barangays[0] || '', ...greetingForm() };
+            this.form = postForm(null, barangays, this.ownBarangay);
             this.fieldErrors = {};
             this.media = emptyMedia();
             this.formKey += 1;
-            this.open = true;
+            this.composerOpen = true;
+            this.$nextTick(() => { this.snapshot = this.formState(); });
         },
         openEdit(post) {
             this.editing = post;
-            this.form = { title: post.title || '', category: post.category || 'Community', body: post.body || '', audience: post.barangay ? 'Barangay' : 'Municipal', barangay: post.barangay || barangays[0] || '', ...greetingForm(post) };
+            this.form = postForm(post, barangays, this.ownBarangay);
             this.fieldErrors = {};
             this.media = { ids: (post.media || []).map((m) => m.id), busy: false, failed: false };
             this.formKey += 1;
             this.reviewOpen = false;
-            this.open = true;
+            this.composerOpen = true;
+            this.$nextTick(() => { this.snapshot = this.formState(); });
         },
-        get formReady() { return this.form.title.trim() !== '' && this.form.body.trim() !== '' && !this.media.busy && !this.greetingProblem; },
-        async save(submit) {
+        formState() { return JSON.stringify([this.form, this.media.ids]); },
+        get dirty() { return this.composerOpen && this.snapshot !== '' && this.formState() !== this.snapshot; },
+        // Cancel, the X, Esc and a click outside all come here.
+        requestClose() {
+            if (this.processing) return;
+            if (this.media.busy || this.dirty) {
+                if (!window.confirm(this.media.busy ? 'A photo or video is still uploading. Close and discard it?' : 'Discard the changes to this post?')) return;
+            }
+            this.composerOpen = false;
+        },
+        get formReady() {
+            return this.form.title.trim() !== '' && this.form.body.trim() !== '' && !this.media.busy && !this.scheduleProblem;
+        },
+        // What the primary button does: publish now (an approver), send for
+        // review (a writer), or schedule (an approver with a time).
+        get primaryLabel() {
+            if (this.form.schedule) return this.approver ? 'Schedule Post' : 'Send for review';
+            return this.approver ? 'Publish Now' : 'Send for review';
+        },
+        // The post as residents will see it in Balita.
+        get previewWhen() {
+            if (this.form.schedule && this.scheduleIso && !this.scheduleProblem) return when(this.scheduleIso);
+            return 'Just now';
+        },
+
+        /** Saves the post as it stands; the saved post (with its status). */
+        async persist() {
+            const barangay = this.ownBarangay || (this.form.audience === 'Barangay' ? this.form.barangay : null);
+            const publishAt = this.scheduleIso;
+            let post = this.editing;
+            if (!post) {
+                const res = await api.post('/admin/announcements', {
+                    title: this.form.title.trim(), body: this.form.body.trim(), category: this.form.category,
+                    barangay, official: true, media_ids: this.media.ids, publish_at: publishAt,
+                });
+                return res.data;
+            }
+            const changes = {};
+            if (this.form.title.trim() !== post.title) changes.title = this.form.title.trim();
+            if (this.form.body.trim() !== post.body) changes.body = this.form.body.trim();
+            if (this.form.category !== post.category) changes.category = this.form.category;
+            if (barangay !== (post.barangay || null)) changes.barangay = barangay;
+            if (!sameIds(this.media.ids, (post.media || []).map((m) => m.id))) changes.media_ids = this.media.ids;
+            if ((publishAt ? instant(publishAt) : null) !== (post.publish_at ? instant(post.publish_at) : null)) changes.publish_at = publishAt;
+            if (Object.keys(changes).length) await api.put('/admin/announcements/' + post.id, changes);
+            return post;
+        },
+        /**
+         * how: 'draft' saves it; 'send' saves it and moves it on as far as
+         * this officer may: a writer sends it for review; an approver
+         * publishes it now, or approves it for its time (the server puts it
+         * out then).
+         */
+        async save(how) {
             if (this.processing || !this.formReady) return;
             if (this.media.failed) {
                 balitaToast('Some photos or videos did not upload. Try them again or remove them first.', 'error');
                 return;
             }
-            const barangay = this.ownBarangay || (this.form.audience === 'Barangay' ? this.form.barangay : null);
             this.processing = true;
             this.fieldErrors = {};
+            let saved = false;
             try {
-                let post = this.editing;
-                if (!post) {
-                    const res = await api.post('/admin/announcements', {
-                        title: this.form.title.trim(), body: this.form.body.trim(), category: this.form.category,
-                        barangay, official: true, media_ids: this.media.ids,
-                        ...greetingPayload(this.form),
-                    });
-                    post = res.data;
-                } else {
-                    const changes = {};
-                    if (this.form.title.trim() !== post.title) changes.title = this.form.title.trim();
-                    if (this.form.body.trim() !== post.body) changes.body = this.form.body.trim();
-                    if (this.form.category !== post.category) changes.category = this.form.category;
-                    if (barangay !== (post.barangay || null)) changes.barangay = barangay;
-                    if (!sameIds(this.media.ids, (post.media || []).map((m) => m.id))) changes.media_ids = this.media.ids;
-                    // The greeting's settings go as one set when any of them
-                    // changed: the server checks them against each other.
-                    const greeting = greetingPayload(this.form);
-                    if (JSON.stringify(greeting) !== JSON.stringify(greetingPayload(greetingForm(post)))) Object.assign(changes, greeting);
-                    if (Object.keys(changes).length) await api.put('/admin/announcements/' + post.id, changes);
-                    else if (!submit) {
-                        this.open = false;
-                        balitaToast('Nothing was changed.', 'info');
-                        return;
+                const post = await this.persist();
+                saved = true;
+                let status = post.status;
+                if (how === 'send') {
+                    const step = (to) => api.post('/admin/announcements/' + post.id + '/transition', { to }).then(() => { status = to; });
+                    if (status === 'Rejected') await step('Draft');
+                    if (status === 'Draft') await step('Pending Review');
+                    if (this.approver && status === 'Pending Review') {
+                        await step('Approved');
+                        if (!this.form.schedule) await step('Released');
                     }
                 }
-                if (submit && post.status === 'Rejected') await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Draft' });
-                if (submit) await api.post('/admin/announcements/' + post.id + '/transition', { to: 'Pending Review' });
-                this.open = false;
-                balitaToast(submit ? 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.' : 'Your Department Head or the Municipal Information Office approves it.') : (this.editing ? 'Changes saved.' : 'Saved as a draft.'));
+                this.composerOpen = false;
+                const where = post.barangay ? 'Residents of Brgy. ' + post.barangay : 'Residents';
+                balitaToast(
+                    how === 'draft' ? (this.editing ? 'Changes saved.' : 'Saved as a draft.')
+                        : status === 'Released' ? 'Published. ' + where + ' are notified.'
+                            : status === 'Approved' ? 'Scheduled for ' + when(this.scheduleIso) + '. It goes out by itself then.'
+                                : 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.' : 'Your Department Head or the Municipal Information Office approves it.'),
+                );
                 await this.load();
             } catch (err) {
                 if (err?.status === 422) this.fieldErrors = err.fields || {};
-                balitaToast(errText(err, 'Could not save this post.'), 'error');
+                balitaToast(errText(err, saved ? 'The post was saved, but could not be moved on. Do it from its card.' : 'Could not save this post.'), 'error');
+                if (saved) this.composerOpen = false;
                 await this.load();
             } finally {
                 this.processing = false;
             }
         },
 
+        // -- Use as Template: a new draft by this officer with the same words,
+        //    audience and photos, made by the server; it opens to edit.
+        async useAsTemplate(post) {
+            if (this.processing) return;
+            this.processing = true;
+            try {
+                const res = await api.post('/admin/announcements/' + post.id + '/duplicate');
+                await this.load();
+                const copy = this.posts.find((p) => p.id === res.data.id) || res.data;
+                balitaToast('A new draft was made from "' + post.title + '".', 'info');
+                this.openEdit(copy);
+            } catch (err) {
+                balitaToast(errText(err, 'Could not make a draft from this post.'), 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+
         // -- Moving it along
-        // true when it moved; 'scheduled' when a greeting may not be published
-        // before its time (the server releases it then); false otherwise.
+        // true when it moved; 'scheduled' when it may not be published before
+        // its time (the server releases it then); false otherwise.
         async move(post, to, remarks) {
             try {
                 await api.post('/admin/announcements/' + post.id + '/transition', { to, remarks: remarks || undefined });
                 return true;
             } catch (err) {
                 if (err?.code === 'SCHEDULED_FOR_LATER') {
-                    balitaToast(this.goesLiveText(post), 'info');
+                    balitaToast('Approved. ' + this.goesLiveText(post) + '.', 'info');
                     return 'scheduled';
                 }
                 balitaToast(errText(err, 'Could not update this post.'), 'error');
                 return false;
             }
-        },
-        goesLiveText(post) {
-            const at = post.greeting?.publish_at;
-            return at ? 'Approved. It goes into Balita on ' + when(at) + '.' : 'Approved. It goes into Balita at its scheduled time.';
         },
         openReview(post) {
             this.selected = post;
@@ -538,10 +500,10 @@ function adminBalita(barangays = [], occasions = [], frequencies = []) {
             this.processing = true;
             try {
                 if (!(await this.move(this.selected, 'Approved'))) return;
-                // A greeting with its own time in Balita is only approved: the
-                // server puts it in at that time (2026-10-19).
-                if (this.waitsOnApproval(this.selected)) {
-                    balitaToast(this.goesLiveText(this.selected));
+                // A post with its own time is only approved: the server puts
+                // it out at that time.
+                if (this.hasFutureTime(this.selected)) {
+                    balitaToast('Approved. ' + this.goesLiveText(this.selected) + '.');
                     this.reviewOpen = false;
                     await this.load();
                     return;
@@ -575,6 +537,7 @@ function adminBalita(barangays = [], occasions = [], frequencies = []) {
         },
         async quick(post, to, done) {
             if (this.processing) return;
+            if (to === 'Archived' && !window.confirm('Archive "' + post.title + '"? Residents no longer see it.')) return;
             this.processing = true;
             try {
                 const moved = await this.move(post, to);
@@ -660,6 +623,7 @@ function balitaComments() {
 
 export function register(Alpine) {
     registerBalitaMedia(Alpine);
+    registerOccasions(Alpine);
     Alpine.data('adminBalita', adminBalita);
     Alpine.data('balitaComments', balitaComments);
     // A correction request opened from the Data requests list: the account's

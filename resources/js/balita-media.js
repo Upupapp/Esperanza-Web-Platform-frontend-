@@ -125,8 +125,19 @@ async function withRetry(task, signal) {
 
 async function upload(base, item) {
     const kind = item.kind;
-    const started = await withRetry(() => api.post(base + '/uploads', { name: item.name, size: item.blob.size, kind }, { signal: item.abort.signal }), item.abort.signal);
+    // "Try again" carries on with the same upload, from where the server
+    // stopped, so nothing is sent twice (2026-10-21); a finished or expired
+    // one starts afresh.
+    let started = null;
+    if (item.uploadId) {
+        try {
+            const held = await api.get(base + '/uploads/' + item.uploadId, { signal: item.abort.signal });
+            if (held.data?.status === 'open') started = held;
+        } catch { /* gone: start again */ }
+    }
+    started ??= await withRetry(() => api.post(base + '/uploads', { name: item.name, size: item.blob.size, kind }, { signal: item.abort.signal }), item.abort.signal);
     const id = started.data.id;
+    item.uploadId = id;
     const step = started.data.chunk_bytes || 4 * 1024 * 1024;
     let offset = started.data.received_bytes || 0;
     while (offset < item.blob.size) {
@@ -208,7 +219,7 @@ export function balitaMediaField(base, existing = [], english = false) {
                 cover: done.find((i) => i.kind === 'image')?.preview || null,
             };
         },
-        pick(fileList) {
+        async pick(fileList) {
             this.notice = '';
             const files = [...(fileList || [])];
             for (const file of files) {
@@ -216,7 +227,10 @@ export function balitaMediaField(base, existing = [], english = false) {
                     this.notice = this.t('Up to ' + LIMITS.maxItems + ' photos or videos per post.', 'Hanggang ' + LIMITS.maxItems + ' larawan o video lamang bawat post.');
                     break;
                 }
-                const kind = IMAGE_TYPES.includes(file.type) ? 'image' : (VIDEO_TYPES.includes(file.type) ? 'video' : null);
+                let kind = IMAGE_TYPES.includes(file.type) ? 'image' : (VIDEO_TYPES.includes(file.type) ? 'video' : null);
+                // A photo is what its first bytes say, not its name (2026-10-21):
+                // a PDF called .jpg is refused here, as the server would.
+                if (kind === 'image' && !(await sniffImage(file))) kind = null;
                 if (!kind) {
                     this.notice = this.t(file.name + ': only JPG, PNG or WebP photos and MP4 or WebM videos.', file.name + ': JPG, PNG o WebP na larawan at MP4 o WebM na video lamang.');
                     continue;
@@ -307,6 +321,197 @@ export function balitaMediaField(base, existing = [], english = false) {
     };
 }
 
+// ------------------------------------------------- One picture (2026-10-21)
+
+/**
+ * What a file really is, read from its first bytes rather than its name or
+ * the type the computer claims: a PDF renamed .jpg is a PDF. The server
+ * checks the same again; this spares the officer the upload.
+ */
+export async function sniffImage(file) {
+    let head;
+    try {
+        head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    } catch {
+        return null;
+    }
+    const at = (i, ...bytes) => bytes.every((b, k) => head[i + k] === b);
+    if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
+    if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'image/png';
+    if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
+    return null;
+}
+
+/**
+ * The one-picture field of a banner or an occasion's pop-up (Banners &
+ * Occasions, 2026-10-21): one component for both, for a new record and an
+ * edited one. Choose or drop an image, see it, replace it, remove it. It goes
+ * up through the same pieces and checks as a Balita photo; the server checks
+ * it all again.
+ *
+ * `value` ({ id, url, busy, failed, changed }) is x-modelable. id is the
+ * media to save (null: no picture); changed is whether it differs from what
+ * the record had, so a form sends the picture only when the officer changed
+ * it and an edit of the words keeps the saved one.
+ *
+ * Nothing here touches the saved record. A replacement that fails keeps the
+ * saved picture: the form still holds it, and "Keep the current picture"
+ * goes back to it. Removing the saved picture is confirmed, and takes effect
+ * only when the form is saved; the file itself is never deleted from here.
+ * A picture uploaded and then replaced, removed or left behind by Cancel is
+ * dropped from the server at once (discardUnsaved), or swept a day later.
+ *
+ * existing: the record's image row ({ id, url, width, height }) or null.
+ * rules: { mime: [...], maxBytes, min: {width, height}, recommended: {width, height} }
+ */
+export function imageField(base, existing = null, rules = {}) {
+    const mime = rules.mime || IMAGE_TYPES;
+    const maxBytes = rules.maxBytes || LIMITS.imageBytes;
+    const savedItem = () => (existing ? { status: 'done', progress: 100, preview: existing.url, media: existing, width: existing.width, height: existing.height, error: '', abort: null } : null);
+    return {
+        item: savedItem(),
+        // What the field goes back to when a replacement fails.
+        kept: null,
+        original: existing ? existing.id : null,
+        dragging: false,
+        notice: '',
+        warning: '',
+        value: { id: existing ? existing.id : null, url: existing ? existing.url : null, busy: false, failed: false, changed: false },
+        init() {
+            this.sync();
+            setTimeout(() => this.sync(), 0);
+            // The form says when it closed without saving: what this field
+            // uploaded is not needed (the saved picture is untouched).
+            this.$el.addEventListener('image-field-discard', () => this.discardUnsaved());
+        },
+        destroy() { this.item?.abort?.abort(); },
+        get accept() { return mime.join(','); },
+        hint() {
+            const r = rules.recommended;
+            return 'JPEG, PNG or WebP, up to ' + mb(maxBytes) + ' MB' + (r ? '. Best at ' + r.width + ' × ' + r.height + ' pixels.' : '.');
+        },
+        sync() {
+            const item = this.item;
+            const done = item && item.status === 'done' && item.media;
+            // A replacement still uploading or failed: the form holds on to
+            // the picture it is replacing, so a save never drops it.
+            const holding = !done && item && this.kept ? this.kept : null;
+            const id = done ? item.media.id : (holding ? holding.media.id : null);
+            this.value = {
+                id,
+                url: item?.preview || holding?.preview || null,
+                busy: !!item && (item.status === 'preparing' || item.status === 'uploading'),
+                failed: !!item && item.status === 'error',
+                changed: id !== this.original,
+            };
+        },
+        async pick(fileList) {
+            this.notice = '';
+            this.warning = '';
+            const file = [...(fileList || [])][0];
+            if (!file) return;
+            const real = await sniffImage(file);
+            if (!real || !mime.includes(real)) {
+                this.notice = file.name + ' is not a JPEG, PNG or WebP picture.';
+                return;
+            }
+            if (file.size > 40 * 1024 * 1024) {
+                this.notice = file.name + ' is too large for a picture.';
+                return;
+            }
+            this.item?.abort?.abort();
+            // The last good picture is kept to fall back to until the new
+            // one is in.
+            if (this.item?.status === 'done' && this.item.media) this.kept = this.item;
+            this.item = { status: 'preparing', progress: 0, preview: null, media: null, error: '', file, name: file.name, kind: 'image', abort: new AbortController(), uploadId: null };
+            this.start();
+        },
+        async start() {
+            const item = this.item;
+            item.status = 'preparing';
+            item.error = '';
+            this.sync();
+            try {
+                if (!item.blob) {
+                    Object.assign(item, await preparePhoto(item.file));
+                    if (item.blob.size > maxBytes) {
+                        throw Object.assign(new Error('too big'), { local: 'This picture is still over ' + mb(maxBytes) + ' MB after resizing.' });
+                    }
+                    const min = rules.min;
+                    if (min && item.width && item.height && (item.width < min.width || item.height < min.height)) {
+                        this.warning = 'This picture is ' + item.width + ' × ' + item.height + ' pixels; under ' + min.width + ' × ' + min.height + ' it may look blurred.';
+                    }
+                }
+                if (item.abort?.signal.aborted) return;
+                item.status = 'uploading';
+                this.sync();
+                item.media = await upload(base, item);
+                item.status = 'done';
+                item.progress = 100;
+                // It is in: what it replaced is no longer needed to fall back
+                // to, and goes if it was never saved.
+                this.forget(this.kept);
+                this.kept = null;
+            } catch (err) {
+                if (item.abort?.signal.aborted) return;
+                item.status = 'error';
+                item.error = err?.local || (typeof err?.explain === 'function' ? err.explain('en') : 'Could not upload this picture. Check the connection and try again.');
+            } finally {
+                this.sync();
+                window.Alpine?.nextTick(() => window.renderIcons?.());
+            }
+        },
+        // The same upload again, from where the server stopped: nothing is
+        // sent twice.
+        retry() {
+            if (!this.item) return;
+            this.item.abort = new AbortController();
+            this.start();
+        },
+        // A replacement that failed: back to the picture it was replacing.
+        keepCurrent() {
+            this.item?.abort?.abort();
+            this.item = this.kept;
+            this.kept = null;
+            this.notice = '';
+            this.warning = '';
+            this.sync();
+        },
+        /** An upload this form made and has not saved: the server forgets it now (the sweep would, a day later). */
+        forget(entry) {
+            const id = entry?.media?.id;
+            if (id && id !== this.original) api.delete(base + '/media/' + id).catch(() => {});
+        },
+        discardUnsaved() {
+            this.forget(this.item);
+            this.forget(this.kept);
+        },
+        remove() {
+            const saved = (this.item?.media?.id ?? null) !== null && this.item.media.id === this.original;
+            if (saved && !window.confirm('Remove the picture? It is taken off when you save; until then, Cancel keeps it.')) return;
+            this.item?.abort?.abort();
+            this.discardUnsaved();
+            this.item = null;
+            this.kept = null;
+            this.notice = '';
+            this.warning = '';
+            this.sync();
+        },
+        drop(event) {
+            this.dragging = false;
+            this.pick(event.dataTransfer?.files);
+        },
+        statusText() {
+            const item = this.item;
+            if (!item) return '';
+            if (item.status === 'preparing') return 'Preparing…';
+            if (item.status === 'uploading') return 'Uploading ' + item.progress + '%';
+            if (item.status === 'error') return item.error;
+            return item.media && item.media.ready === false ? 'Being checked' : '';
+        },
+    };
+}
+
 // --------------------------------------------------------- Showing them
 
 /** The tiles of a post's card: the first four, the fourth saying how many more. */
@@ -372,6 +577,7 @@ export function viewerStore() {
 
 export function registerBalitaMedia(Alpine) {
     Alpine.data('balitaMediaField', balitaMediaField);
+    Alpine.data('imageField', imageField);
     if (!Alpine.store('balitaViewer')) Alpine.store('balitaViewer', viewerStore());
     window.balitaTiles = balitaTiles;
     window.balitaGridClass = balitaGridClass;

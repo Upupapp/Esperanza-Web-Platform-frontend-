@@ -39,11 +39,10 @@
     </div>
 
     <x-ui.toast-container />
-    <x-citizen.birthday-popup />
     <x-citizen.fiesta-popup />
     <x-citizen.alert-popup />
     <x-citizen.verified-popup />
-    {{-- Last: an occasion greeting waits for every pop-up above (2026-10-19). --}}
+    {{-- Last: an occasion pop-up (the birthday greeting is one, 2026-10-21) waits for every pop-up above. --}}
     <x-citizen.greeting-popup />
 </body>
 </html>
