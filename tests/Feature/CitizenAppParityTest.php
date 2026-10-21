@@ -106,7 +106,7 @@ class CitizenAppParityTest extends TestCase
         }
         $this->assertStringNotContainsString('reportFor', $page, 'no Report on a Balita post');
         $this->assertStringNotContainsString('x-balita.media-field', $page, 'no photo or video picker for residents');
-        $this->assertStringContainsString("t('Like', 'Gusto')", $page);
+        $this->assertStringContainsString("t('Like', 'I-like')", $page);
         $this->assertStringContainsString("t('Share', 'Ibahagi')", $page);
     }
 
