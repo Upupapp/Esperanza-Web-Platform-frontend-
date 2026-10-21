@@ -7,6 +7,9 @@
     // its own keeps ?tab= so a reload stays on it.
     $settingsTabs = [
         'general' => ['building-2', 'General', '/admin/settings'],
+        // The offices and barangay officials residents read in Direktoryo
+        // (owner, 2026-10-21: they were Balita's Offices and Barangays tabs).
+        'directory' => ['book-user', 'Direktoryo', '/admin/settings/directory'],
         'notifications' => ['bell', 'Notifications', null],
         'security' => ['shield', 'Security', null],
         'branding' => ['palette', 'Branding', '/admin/settings/branding'],
@@ -49,6 +52,9 @@
             tab: @js($tab),
             tabRoutes: @js($tabRoutes),
             can(sub, perm) { return this.$store.session.canPerm ? this.$store.session.canPerm(sub, perm) : true; },
+            // Direktoryo is also for officers without Settings: the Municipal
+            // Information Officer and each Barangay Secretary (2026-10-21).
+            get directoryAllowed() { return this.$store.session.canPerm('comm_directory', 'view') || this.$store.session.canPerm('comm_barangay_directory', 'view'); },
             // A tab's address replaces the current one, so a reload stays on it.
             go(t) {
                 this.tab = t;
@@ -58,16 +64,18 @@
             init() {
                 const asked = new URLSearchParams(window.location.search).get('tab');
                 if (this.tab === 'general' && ['notifications', 'security', 'integrations'].includes(asked)) this.tab = asked;
+                // Without Settings, Direktoryo is the only tab there is.
+                this.$store.session.whenReady().then(() => { if (!this.$store.session.can('settings') && this.directoryAllowed) this.go('directory'); });
             },
         }"
         class="animate-fade-up"
     >
 
-        <div x-show="!$store.session.can('settings')" x-cloak>
+        <div x-show="!$store.session.can('settings') && !directoryAllowed" x-cloak>
             <x-admin.access-restricted module="System Settings" icon="settings" />
         </div>
 
-        <div x-show="$store.session.can('settings')" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div x-show="$store.session.can('settings') || directoryAllowed" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
         {{-- A strip that scrolls sideways below the desktop width, a list beside the content from it. --}}
         <div class="lg:col-span-1 min-w-0">
@@ -77,7 +85,9 @@
                         <button
                             type="button"
                             @click="go('{{ $tabKey }}')"
-                            @if($tabKey === 'system') x-show="$store.session.canPerm('set_system', 'view')" x-cloak @endif
+                            @if($tabKey === 'system') x-show="$store.session.canPerm('set_system', 'view')" x-cloak
+                            @elseif($tabKey === 'directory') x-show="directoryAllowed" x-cloak
+                            @else x-show="$store.session.can('settings')" x-cloak @endif
                             class="shrink-0 lg:w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
                             :class="tab === '{{ $tabKey }}' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-white/60'"
                             :aria-current="tab === '{{ $tabKey }}' ? 'page' : null"
@@ -90,6 +100,10 @@
         </div>
 
         <div class="lg:col-span-3 min-w-0">
+            @include('admin.settings.directory')
+
+            <template x-if="$store.session.can('settings')">
+            <div>
             {{-- ============================= GENERAL ============================= --}}
             <div
                 x-show="tab === 'general'"
@@ -341,6 +355,8 @@
             @include('admin.settings.system')
 
             @include('admin.settings.audit-logs')
+            </div>
+            </template>
         </div>
 
         </div>

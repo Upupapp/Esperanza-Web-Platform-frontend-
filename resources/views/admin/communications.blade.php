@@ -2,17 +2,18 @@
     $tab = $tab ?? 'balita';
 @endphp
 
-{{-- One sidebar entry, Balita, for all eight tabs: the Directory (Offices,
-     Barangays), the Blotter and residents' Feedback are tabs here (owner,
-     2026-10-07: as few sidebar entries as possible). /admin/communications/offices,
-     /blotter, /banners and /feedback (and the old /admin/settings/support)
-     still open this page on that tab. --}}
+{{-- One sidebar entry, Balita, for its tabs: the Blotter and residents'
+     Feedback are tabs here (owner, 2026-10-07: as few sidebar entries as
+     possible). /blotter, /banners and /feedback (and the old
+     /admin/settings/support) still open this page on that tab. The directory
+     (Offices, Barangays) moved to Settings > Direktoryo (owner, 2026-10-21);
+     its old addresses open it there. --}}
 {{-- On its Feedback tab the page is titled Feedback, not Balita: when opened
      there (the sidebar entry of officers who only answer tickets) and when the
      tab is chosen (syncHeader) (2026-10-15). --}}
 @php
     $feedbackSubtitle = 'Tickets from residents, routed to the office that owns them.';
-    $balitaSubtitle = "Announcements, banners and occasions, events, the directory, the barangay blotter and residents' feedback.";
+    $balitaSubtitle = "Announcements, banners and occasions, events, the barangay blotter and residents' feedback.";
 @endphp
 <x-layouts.admin :title="$tab === 'feedback' ? 'Feedback' : 'Balita'" :subtitle="$tab === 'feedback' ? $feedbackSubtitle : $balitaSubtitle" active="communications">
     <div
@@ -21,11 +22,11 @@
             // One submodule per tab. The Barangay Secretary holds only their
             // directory entry and opened Balita to 'Something went wrong' and a
             // 'Walang pahintulot' pop-up per tab (QA run 2026-10-05).
-            tabSubs: { balita: 'comm_news', banners: 'comm_banners', events: 'comm_events', offices: 'comm_directory', barangays: 'comm_barangay_directory', blotter: 'comm_directory', feedback: 'comm_feedback' },
+            tabSubs: { balita: 'comm_news', banners: 'comm_banners', events: 'comm_events', blotter: 'comm_directory', feedback: 'comm_feedback' },
             tabAllowed(t) { return $store.session.canPerm(this.tabSubs[t], 'view'); },
             // Each tab's own address, so a reload stays on it; a tab without
             // a route of its own is ?tab= (scope round 2026-10-15).
-            tabPaths: { balita: '/admin/communications', banners: '/admin/communications/banners', offices: '/admin/communications/offices', blotter: '/admin/communications/blotter', feedback: '/admin/communications/feedback' },
+            tabPaths: { balita: '/admin/communications', banners: '/admin/communications/banners', blotter: '/admin/communications/blotter', feedback: '/admin/communications/feedback' },
             syncHeader(t) {
                 const fb = t === 'feedback';
                 const h = document.querySelector('[data-page-title]');
@@ -44,6 +45,11 @@
                 // ?tab= opens a tab with no route of its own; a reply notification
                 // links to ?tab=feedback&ref= (FeedbackDesk).
                 const asked = new URLSearchParams(window.location.search).get('tab');
+                // The directory is Settings > Direktoryo now (2026-10-21).
+                if (asked === 'offices' || asked === 'barangays') {
+                    window.location.replace('/admin/settings/directory' + (asked === 'barangays' ? '?view=barangays' : ''));
+                    return;
+                }
                 if (asked && this.tabSubs[asked]) this.tab = asked;
                 await $store.session.whenReady();
                 // An account that may not use the tab asked for opens on Feedback
@@ -72,14 +78,12 @@
 
         <div x-show="$store.session.can('communications') || $store.session.canPerm('comm_feedback', 'view')" x-cloak>
 
-        {{-- max-w-full: the eight tabs scroll inside the bar on a phone instead of
+        {{-- max-w-full: the tabs scroll inside the bar on a phone instead of
              widening the page (scope round 2026-10-15). --}}
         <div class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full mb-4 overflow-x-auto">
             <button x-show="tabAllowed('balita')" @click="go('balita')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'balita' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i>Balita</button>
             <button x-show="tabAllowed('banners')" @click="go('banners')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'banners' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="gallery-horizontal" class="w-3.5 h-3.5"></i>Banners &amp; Occasions</button>
             <button x-show="tabAllowed('events')" @click="go('events')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'events' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>Events</button>
-            <button x-show="tabAllowed('offices')" @click="go('offices')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'offices' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="building-2" class="w-3.5 h-3.5"></i>Offices</button>
-            <button x-show="tabAllowed('barangays')" @click="go('barangays')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'barangays' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i>Barangays</button>
             <button x-show="tabAllowed('blotter')" @click="go('blotter')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'blotter' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="book-text" class="w-3.5 h-3.5"></i>Blotter</button>
             <button x-show="tabAllowed('feedback')" @click="go('feedback')" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap" :class="tab === 'feedback' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="message-square-reply" class="w-3.5 h-3.5"></i>Feedback<span x-show="feedbackOpen" x-cloak class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700" :title="feedbackOpen + ' open'"><span x-text="feedbackOpen"></span><span class="sr-only"> open</span></span></button>
         </div>
@@ -393,188 +397,6 @@
         </div>
 
         <x-balita.viewer />
-
-        {{-- ============================= OFFICES (government directory) ============================= --}}
-        <div
-            x-show="tab === 'offices'" x-cloak
-            x-data="{
-                loading: true, failed: false,
-                entries: [],
-                open: false, mode: 'add', processing: false,
-                form: { id: null, office: '', official_name: '', position: '', contact: '', email: '' },
-                async load() {
-                    this.loading = true; this.failed = false;
-                    try {
-                        const res = await $api.get('/admin/directory', { params: { scope: 'government' } });
-                        this.entries = res.data || [];
-                    } catch { this.failed = true; } finally { this.loading = false; }
-                },
-                openAdd() { this.form = { id: null, office: '', official_name: '', position: '', contact: '', email: '' }; this.mode = 'add'; this.open = true; },
-                openEdit(e) { this.form = { ...e }; this.mode = 'edit'; this.open = true; },
-                async save() {
-                    if (this.processing || !this.form.office.trim()) return;
-                    this.processing = true;
-                    try {
-                        const payload = { office: this.form.office, official_name: this.form.official_name || null, position: this.form.position || null, contact: this.form.contact || null, email: this.form.email || null };
-                        if (this.mode === 'add') { await $api.post('/admin/directory', payload); }
-                        else { await $api.put('/admin/directory/' + this.form.id, payload); }
-                        this.open = false;
-                        this.$dispatch('toast', { message: this.mode === 'add' ? 'Office added.' : 'Office updated.', variant: 'success' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save.', variant: 'error' });
-                    } finally { this.processing = false; }
-                },
-                async remove(e) {
-                    if (!confirm('Remove ' + e.office + ' from the directory?')) return;
-                    try {
-                        await $api.delete('/admin/directory/' + e.id);
-                        this.$dispatch('toast', { message: 'Office removed.', variant: 'success' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not remove.', variant: 'error' });
-                    }
-                },
-            }"
-            x-init="$store.session.whenReady().then(() => tabAllowed('offices') && load())"
-        >
-            <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
-            <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load the directory.'" retryExpr="load()" :retryable="true" /></div>
-
-            <div x-show="!loading && !failed">
-            <div class="flex items-center justify-end mb-3">
-                <x-ui.button icon="plus" size="sm" @click="openAdd()">Add Office</x-ui.button>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                <template x-for="e in entries" :key="e.id">
-                    <div class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
-                        <div class="relative h-24 bg-gradient-to-br from-brand-600 to-navy-800 flex items-center justify-center">
-                            <i data-lucide="building-2" class="w-9 h-9 text-white/90"></i>
-                        </div>
-                        <div class="p-3.5">
-                            <p class="text-sm font-semibold text-ink leading-snug mb-2.5" x-text="e.office"></p>
-                            <div class="flex items-center gap-2 mb-2" x-show="e.official_name">
-                                <div class="w-6 h-6 text-[9px] rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0" x-text="initials(e.official_name)"></div>
-                                <span class="text-xs text-slate-600 truncate" x-text="e.official_name + (e.position ? ' — ' + e.position : '')"></span>
-                            </div>
-                            <p class="text-xs text-ink-muted flex items-center gap-1.5 mb-1" x-show="e.contact"><i data-lucide="phone" class="w-3 h-3 shrink-0"></i><span x-text="e.contact"></span></p>
-                            <p class="text-xs text-ink-muted flex items-center gap-1.5 truncate" x-show="e.email"><i data-lucide="mail" class="w-3 h-3 shrink-0"></i><span x-text="e.email"></span></p>
-                        </div>
-                        <div class="flex border-t border-brand-600/10">
-                            <button @click="openEdit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
-                            <button @click="remove(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50/60 py-2.5 transition-colors border-l border-brand-600/10"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Remove</button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-            </div>
-
-            <x-ui.modal :bare="true" maxWidth="md">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
-                    <h3 class="text-sm font-semibold text-ink" x-text="mode === 'add' ? 'Add Office' : 'Edit Office'"></h3>
-                    <button aria-label="Close" @click="open = false" class="text-ink-muted hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
-                </div>
-                <div class="px-6 py-5 space-y-4">
-                    <x-ui.input name="office_name" label="Office" x-model="form.office" />
-                    <x-ui.input name="office_official" label="Official Name" x-model="form.official_name" />
-                    <x-ui.input name="office_position" label="Position" x-model="form.position" />
-                    <x-ui.input name="office_contact" label="Contact" x-model="form.contact" />
-                    <x-ui.input name="office_email" type="email" label="Email" x-model="form.email" />
-                </div>
-                <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10">
-                    <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
-                    <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="save()">Save</x-ui.button>
-                </div>
-            </x-ui.modal>
-        </div>
-
-        {{-- ============================= BARANGAYS ============================= --}}
-        <div
-            x-show="tab === 'barangays'" x-cloak
-            x-data="{
-                loading: true, failed: false,
-                barangays: [],
-                open: false, selected: null, processing: false,
-                async load() {
-                    this.loading = true; this.failed = false;
-                    try {
-                        const res = await $api.get('/barangays');
-                        // seal_path comes back unprefixed (it names one of this
-                        // site's own bundled assets, not something the backend
-                        // hosts) — see window.staticAssetUrl's own comment.
-                        this.barangays = (res.data || []).map((b) => ({ ...b, seal_path: window.staticAssetUrl(b.seal_path) }));
-                    } catch { this.failed = true; } finally { this.loading = false; }
-                },
-                edit(b) { this.selected = { ...b }; this.open = true; },
-                async save() {
-                    if (this.processing) return;
-                    this.processing = true;
-                    try {
-                        await $api.put('/admin/directory/barangay/' + encodeURIComponent(this.selected.name), {
-                            punong_barangay: this.selected.punong_barangay, barangay_secretary: this.selected.barangay_secretary, contact: this.selected.contact,
-                        });
-                        this.open = false;
-                        this.$dispatch('toast', { message: 'Brgy. ' + this.selected.name + ' directory entry updated.', variant: 'success' });
-                        await this.load();
-                    } catch (err) {
-                        this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not save.', variant: 'error' });
-                    } finally { this.processing = false; }
-                },
-            }"
-            x-init="$store.session.whenReady().then(() => tabAllowed('barangays') && load())"
-        >
-            <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /></div>
-            <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load barangays.'" retryExpr="load()" :retryable="true" /></div>
-
-            <div x-show="!loading && !failed" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                <template x-for="b in barangays" :key="b.name">
-                    <div x-show="$store.session.inScope(b.name)" x-cloak class="surface-glass rounded-[26px] overflow-hidden hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-[220ms] ease-standard">
-                        <div class="flex items-center gap-3 p-3.5 pb-3 bg-gradient-to-br from-brand-50/70 to-white">
-                            <div class="relative w-12 h-12 shrink-0">
-                                <div class="absolute inset-0 rounded-full bg-white border-2 border-gold-400 flex items-center justify-center text-ink-faint"><i data-lucide="landmark" class="w-5 h-5"></i></div>
-                                <img :src="b.seal_path" x-show="b.seal_path" x-on:error="$el.style.display='none'" alt="" class="relative w-12 h-12 rounded-full object-cover border-2 border-gold-400">
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-sm font-semibold text-ink truncate"><span>Brgy.</span> <span x-text="b.name"></span></p>
-                                <p class="text-[11px] text-ink-muted truncate" x-text="b.punong_barangay || 'No punong barangay on file'"></p>
-                            </div>
-                        </div>
-                        <div class="p-3.5 pt-2.5">
-                            <p class="text-xs text-ink-muted flex items-center gap-1.5 mb-1" x-show="b.contact"><i data-lucide="phone" class="w-3 h-3 shrink-0 text-ink-muted"></i><span x-text="b.contact"></span></p>
-                            <p class="text-xs text-ink-muted flex items-center gap-1.5" x-show="b.barangay_secretary"><i data-lucide="user" class="w-3 h-3 shrink-0 text-ink-muted"></i><span x-text="'Secretary: ' + b.barangay_secretary"></span></p>
-                        </div>
-                        <button @click="edit(b)" x-show="$store.session.canPerm('comm_barangay_directory', 'edit')" class="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50/60 py-2.5 border-t border-brand-600/10 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
-                    </div>
-                </template>
-            </div>
-
-            <x-ui.modal title="Edit Barangay Directory Entry" maxWidth="md">
-                <template x-if="selected">
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-2.5 rounded-xl bg-slate-50 border border-brand-600/10 px-3.5 py-2.5">
-                            <i data-lucide="map-pinned" class="w-4 h-4 text-ink-muted shrink-0"></i>
-                            <p class="text-sm font-medium text-slate-700" x-text="'Brgy. ' + selected.name"></p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Punong Barangay</label>
-                            <input aria-label="Punong Barangay" type="text" x-model="selected.punong_barangay" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Barangay Secretary</label>
-                            <input aria-label="Barangay Secretary" type="text" x-model="selected.barangay_secretary" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Contact Number</label>
-                            <input aria-label="Contact Number" type="text" x-model="selected.contact" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body font-mono focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                        </div>
-                    </div>
-                </template>
-                <x-slot:footer>
-                    <x-ui.button variant="secondary" size="sm" @click="open = false">Cancel</x-ui.button>
-                    <x-ui.button size="sm" icon="check" x-bind:disabled="processing" @click="save()">Save Changes</x-ui.button>
-                </x-slot:footer>
-            </x-ui.modal>
-        </div>
 
         {{-- ============================= BLOTTER ============================= --}}
         <div

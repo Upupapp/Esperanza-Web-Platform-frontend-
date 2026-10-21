@@ -70,17 +70,18 @@
             showIf="$store.session.canPerm('appt_bookings', 'view') || $store.session.canPerm('appt_schedules', 'view')" />
         <x-ui.nav-item dense :href="route('admin.sakuna')" icon="shield-alert" label="Sakuna" :active="$active === 'sakuna'" moduleKey="sakuna" />
         <x-ui.nav-item dense :href="route('admin.payments')" icon="receipt" label="Payments" :active="$active === 'payments'" moduleKey="payments" />
-        {{-- One entry: the Directory and the Blotter are tabs of Balita. The
+        {{-- One entry: the Blotter is a tab of Balita (the directory is
+             Settings > Direktoryo since 2026-10-21). The
              owner wants as few sidebar entries as possible (2026-10-07), so the
              separate Directory and Blotter entries of the live test (NAV-2) are
              gone again. Shown to a role holding any of Balita's tabs. --}}
         <x-ui.nav-item dense :href="route('admin.communications')" icon="megaphone" label="Balita" :active="$active === 'communications'"
-            showIf="$store.session.can('communications') && ['comm_news','comm_banners','comm_events','comm_directory','comm_barangay_directory'].some((s) => $store.session.canPerm(s, 'view'))" />
+            showIf="$store.session.can('communications') && ['comm_news','comm_banners','comm_events','comm_directory'].some((s) => $store.session.canPerm(s, 'view'))" />
         {{-- Officers who answer residents' feedback but publish nothing (department
              and barangay staff) reach the Feedback desk here; anyone with Balita
              finds it as a tab there, so no one sees two entries (2026-10-15). --}}
         <x-ui.nav-item dense :href="route('admin.communications.feedback')" icon="messages-square" label="Feedback" :active="$active === 'communications'"
-            showIf="$store.session.canPerm('comm_feedback', 'view') && !['comm_news','comm_banners','comm_events','comm_directory','comm_barangay_directory'].some((s) => $store.session.canPerm(s, 'view'))" />
+            showIf="$store.session.canPerm('comm_feedback', 'view') && !['comm_news','comm_banners','comm_events','comm_directory'].some((s) => $store.session.canPerm(s, 'view'))" />
         <x-ui.nav-item dense :href="route('admin.reports')" icon="file-chart-column" label="Reports & Analytics" :active="$active === 'reports'" moduleKey="reports" />
         <x-ui.nav-item dense :href="route('admin.users')" icon="user-cog" label="User Management" :active="$active === 'users'" moduleKey="user_management" />
         <x-ui.nav-item dense :href="route('admin.internal-forms')" icon="clipboard-list" label="Internal Forms" :active="$active === 'internal-forms'" />
