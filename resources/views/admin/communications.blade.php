@@ -45,9 +45,11 @@
                 // ?tab= opens a tab with no route of its own; a reply notification
                 // links to ?tab=feedback&ref= (FeedbackDesk).
                 const asked = new URLSearchParams(window.location.search).get('tab');
-                // The directory is Settings > Direktoryo now (2026-10-21).
-                if (asked === 'offices' || asked === 'barangays') {
-                    window.location.replace('/admin/settings/directory' + (asked === 'barangays' ? '?view=barangays' : ''));
+                // The directory is Settings > Direktoryo now (2026-10-21), from
+                // ?tab= or the old /admin/communications/offices address.
+                const old = ['offices', 'barangays'].includes(asked) ? asked : (['offices', 'barangays'].includes(this.tab) ? this.tab : null);
+                if (old) {
+                    window.location.replace('/admin/settings/directory' + (old === 'barangays' ? '?view=barangays' : ''));
                     return;
                 }
                 if (asked && this.tabSubs[asked]) this.tab = asked;

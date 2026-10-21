@@ -62,8 +62,9 @@ class DirektoryoInSettingsTest extends TestCase
         foreach (["tabAllowed('offices')", "tabAllowed('barangays')", 'OFFICES (government directory)', '============================= BARANGAYS', 'comm_barangay_directory'] as $gone) {
             $this->assertStringNotContainsString($gone, $balita, $gone);
         }
-        $this->assertStringContainsString("window.location.replace('/admin/settings/directory' + (asked === 'barangays' ? '?view=barangays' : ''));", $balita);
-        $this->assertStringContainsString("Route::view('/admin/communications/offices', 'admin.settings', ['tab' => 'directory'])->name('admin.directory');", $routes);
+        $this->assertStringContainsString("window.location.replace('/admin/settings/directory' + (old === 'barangays' ? '?view=barangays' : ''));", $balita);
+        // The old address is Balita's page, which sends it on: Settings' scripts load only under /admin/settings.
+        $this->assertStringContainsString("Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');", $routes);
         $this->assertStringContainsString("Route::view('/admin/settings/directory', 'admin.settings', ['tab' => 'directory'])->name('admin.settings.directory');", $routes);
         $this->assertStringNotContainsString('comm_barangay_directory', $this->source('resources/views/components/admin/sidebar.blade.php'));
     }

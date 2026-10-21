@@ -74,8 +74,9 @@ Route::view('/admin/papeles', 'admin.papeles')->name('admin.papeles');
 
 // Communications — Balita (announcements, banners, events, blotter, feedback) in one page with tabs.
 Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');
-// The directory (offices and barangays) is Settings > Direktoryo (2026-10-21); the old address opens it.
-Route::view('/admin/communications/offices', 'admin.settings', ['tab' => 'directory'])->name('admin.directory');
+// The directory (offices and barangays) is Settings > Direktoryo (2026-10-21): the old address is
+// Balita's page, which sends it on (Settings' own scripts load only under /admin/settings).
+Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');
 Route::view('/admin/communications/blotter', 'admin.communications', ['tab' => 'blotter'])->name('admin.communications.blotter');
 Route::view('/admin/communications/banners', 'admin.communications', ['tab' => 'banners'])->name('admin.communications.banners');
 // Feedback and support tickets, routed to the office that owns them (2026-10-15).
