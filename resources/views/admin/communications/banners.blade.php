@@ -92,20 +92,20 @@
 
     <div x-data="{ get open() { return formOpen; }, set open(v) { v ? (formOpen = true) : requestClose(); } }">
     <x-ui.modal :bare="true" maxWidth="2xl">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-brand-600/10">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-brand-600/10">
             <h3 class="text-sm font-semibold text-ink" x-text="mode === 'add' ? 'New Banner' : 'Edit Banner'"></h3>
             <button aria-label="Close" type="button" @click="requestClose()" class="text-ink-muted hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
-        <div class="px-6 py-5 max-h-[72vh] overflow-y-auto scrollbar-thin">
+        <div class="px-5 py-4 max-h-[72vh] overflow-y-auto scrollbar-thin">
         <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 items-start">
             <div class="space-y-4 min-w-0">
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-title">Title <span class="text-rose-500">*</span></label>
-                    <input id="banner-title" type="text" x-model="form.title" maxlength="160" placeholder="e.g. Fiesta ng Esperanza 2026" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                    <input id="banner-title" type="text" x-model="form.title" maxlength="160" placeholder="e.g. Fiesta ng Esperanza 2026" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-subtitle">Subtitle</label>
-                    <textarea id="banner-subtitle" rows="2" maxlength="255" x-model="form.subtitle" placeholder="Short supporting line shown under the title" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                    <textarea id="banner-subtitle" rows="2" maxlength="255" x-model="form.subtitle" placeholder="Short supporting line shown under the title" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
                 </div>
 
                 <template x-for="k in [formKey]" :key="k">
@@ -113,7 +113,7 @@
                 </template>
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-alt">Picture description (alt text) <span x-show="image.id" class="text-rose-500">*</span></label>
-                    <input id="banner-alt" type="text" x-model="form.alt_text" maxlength="255" placeholder="e.g. Street dancers in the plaza during the fiesta" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                    <input id="banner-alt" type="text" x-model="form.alt_text" maxlength="255" placeholder="e.g. Street dancers in the plaza during the fiesta" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                     <p class="text-[10.5px] text-ink-muted mt-1">Read aloud to residents who use a screen reader.</p>
                 </div>
 
@@ -129,24 +129,24 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-placement">Placement</label>
-                        <select id="banner-placement" x-model="form.placement" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        <select id="banner-placement" x-model="form.placement" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                             <template x-for="p in contract.banner_placements" :key="p.key"><option :value="p.key" x-text="p.en" :selected="p.key === form.placement"></option></template>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-order">Order</label>
-                        <input id="banner-order" type="number" min="0" x-model.number="form.order" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        <input id="banner-order" type="number" min="0" x-model.number="form.order" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-start">Start date</label>
-                        <input id="banner-start" type="date" x-model="form.start_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        <input id="banner-start" type="date" x-model="form.start_date" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-end">End date</label>
-                        <input id="banner-end" type="date" x-model="form.end_date" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        <input id="banner-end" type="date" x-model="form.end_date" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                     </div>
                 </div>
                 <p class="text-[10.5px] text-ink-muted -mt-2">Dates are Esperanza's. Empty: from now on, or with no end. Status follows review: Draft, Waiting for review, Approved, Published, Archived.</p>
@@ -174,11 +174,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-cta-label">Button label</label>
-                        <input id="banner-cta-label" type="text" maxlength="60" x-model="form.cta_label" placeholder="e.g. View Schedule" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        <input id="banner-cta-label" type="text" maxlength="60" x-model="form.cta_label" placeholder="e.g. View Schedule" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 mb-1" for="banner-cta-route">Links to</label>
-                        <select id="banner-cta-route" x-model="form.cta_route" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        <select id="banner-cta-route" x-model="form.cta_route" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                             <template x-for="(name, key) in ctaRoutes" :key="key"><option :value="key" x-text="name" :selected="key === form.cta_route"></option></template>
                         </select>
                     </div>
@@ -210,7 +210,7 @@
             </aside>
         </div>
         </div>
-        <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10">
+        <div class="flex flex-wrap items-center justify-end gap-2 px-5 py-3 border-t border-brand-600/10">
             <p x-show="problem && touched" x-cloak role="status" class="mr-auto text-xs text-rose-700 flex items-center gap-1.5"><i data-lucide="circle-alert" class="w-3.5 h-3.5 shrink-0"></i><span x-text="problem"></span></p>
             <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="requestClose()">Cancel</x-ui.button>
             <x-ui.button size="sm" icon="check" x-bind:disabled="processing || !!problem" @click="save()"><span x-text="processing ? 'Saving…' : (mode === 'add' ? 'Save banner' : 'Save changes')">Save banner</span></x-ui.button>

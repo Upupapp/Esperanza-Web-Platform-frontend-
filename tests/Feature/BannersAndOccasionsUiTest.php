@@ -181,9 +181,19 @@ class BannersAndOccasionsUiTest extends TestCase
         foreach (["{ key: 'all', label: 'All' }", "{ key: 'draft', label: 'Draft' }", "{ key: 'scheduled', label: 'Scheduled' }", "{ key: 'active', label: 'Active' }", "{ key: 'paused', label: 'Paused' }", "{ key: 'completed', label: 'Completed' }"] as $chip) {
             $this->assertStringContainsString($chip, $js, $chip);
         }
-        foreach (['@click="view(o)"', '@click="openEdit(o)"', '@click="previewRow(o)"', "@click=\"act(o, 'duplicate')\"", "@click=\"act(o, 'pause')\"", "@click=\"act(o, 'resume')\"", "@click=\"act(o, 'activate')\"", "@click=\"act(o, 'archive')\""] as $action) {
+        foreach (['view(o)', 'openEdit(o)', 'previewRow(o)', "act(o, 'duplicate')", "act(o, 'pause')", "act(o, 'resume')", "act(o, 'activate')", "act(o, 'archive')"] as $action) {
             $this->assertStringContainsString($action, $view, $action);
         }
+        // A grid of compact cards (2026-10-21 UI pass): three, two or one across;
+        // the rarer actions in a More menu that Esc and a click away close.
+        $this->assertStringContainsString('grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4', $view);
+        $this->assertStringContainsString('role="menu"', $view);
+        $this->assertStringContainsString('@keydown.escape.stop="menu = false" @click.outside="menu = false"', $view);
+        $this->assertStringContainsString('x-text="cardWhen(o)"', $view);
+        $this->assertStringContainsString("@click=\"search = ''; setState('all')\">Clear filters", $view);
+        // The occasion and post windows are sized to their content.
+        $this->assertStringContainsString('<x-ui.modal maxWidth="3xl" :bare="true">', $view);
+        $this->assertStringContainsString('<x-ui.modal maxWidth="2xl" :bare="true">', $this->source('resources/views/admin/communications/balita.blade.php'));
         // The preview is drawn from the form; it calls nothing.
         $preview = substr($js, strpos($js, 'previewForm() {'), strpos($js, 'when,', strpos($js, 'previewForm() {')) - strpos($js, 'previewForm() {'));
         $this->assertStringNotContainsString('api.', $preview);

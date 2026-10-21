@@ -123,26 +123,23 @@
          out, with the post as residents will see it beside them. Cancel, the
          X, Esc and a click outside all ask before throwing changes away. --}}
     <div x-data="{ get open() { return composerOpen; }, set open(v) { v ? (composerOpen = true) : requestClose(); } }">
-    <x-ui.modal maxWidth="2xl" :fullscreen="true" :bare="true">
-        <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-brand-600/10 shrink-0">
+    {{-- Sized to its content (2026-10-21 UI pass): the composer and, beside it on
+         a computer, the post at the width residents see it; one column on a
+         phone, with the preview below. --}}
+    <x-ui.modal maxWidth="2xl" :bare="true">
+        <div class="flex items-center justify-between px-5 py-3 bg-white border-b border-brand-600/10 shrink-0">
             <h3 class="text-base font-extrabold text-ink" x-text="editing ? 'Edit post' : 'Create post'">Create post</h3>
-            <div class="flex items-center gap-1">
-                <button type="button" @click="compact = !compact" :aria-label="compact ? 'Expand to full screen' : 'Shrink to popup'" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all" :title="compact ? 'Expand to full screen' : 'Shrink to popup'">
-                    <span x-show="compact"><i data-lucide="maximize-2" class="w-4 h-4"></i></span>
-                    <span x-show="!compact"><i data-lucide="minimize-2" class="w-4 h-4"></i></span>
-                </button>
-                <button type="button" @click="requestClose()" aria-label="Close" class="w-9 h-9 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
+            <button type="button" @click="requestClose()" aria-label="Close" class="w-9 h-9 -mr-1.5 rounded-xl grid place-items-center text-ink-muted hover:text-ink hover:bg-brand-50 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
-        <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-5 sm:px-8 sm:py-7">
-        <div class="max-w-6xl mx-auto grid lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-start">
-            <div class="space-y-4 min-w-0">
+        <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-4 py-4 sm:px-5">
+        <div class="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
+            <div class="space-y-3 min-w-0">
                 <p x-show="editing" x-cloak class="text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="pencil" class="w-3.5 h-3.5 shrink-0"></i><span x-text="'Editing a post in ' + statusLabel(editing?.status || '') + '. It stays there until it is sent on.'"></span></p>
-                <p x-show="editing && editing.status === 'Rejected' && editing.review_remarks" x-cloak class="rounded-2xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 text-xs text-rose-800"><span class="font-semibold">Sent back:</span> <span x-text="editing?.review_remarks"></span></p>
+                <p x-show="editing && editing.status === 'Rejected' && editing.review_remarks" x-cloak class="rounded-xl bg-rose-50 border border-rose-100 px-3 py-2 text-xs text-rose-800"><span class="font-semibold">Sent back:</span> <span x-text="editing?.review_remarks"></span></p>
 
                 {{-- Posting as the LGU, to an audience, under a category --}}
-                <div class="flex items-center gap-3">
-                    <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-11 h-11 rounded-full object-cover shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-10 h-10 rounded-full object-cover shrink-0">
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-bold text-ink flex items-center gap-1">Esperanza LGU <i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500"></i></p>
                         <div class="mt-1 flex flex-wrap items-center gap-1.5">
@@ -163,62 +160,60 @@
 
                 <div>
                     <label for="balita-title" class="sr-only">Title</label>
-                    <input id="balita-title" type="text" x-model="form.title" maxlength="255" placeholder="Title, e.g. Free Medical Mission — Brgy. Poblacion" class="w-full rounded-2xl border-0 surface-pressed py-3 px-4 text-base font-semibold text-ink placeholder:text-ink-faint placeholder:font-normal focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                    <input id="balita-title" type="text" x-model="form.title" maxlength="255" placeholder="Title, e.g. Free Medical Mission — Brgy. Poblacion" class="w-full rounded-xl border-0 surface-pressed py-2 px-3 text-[15px] font-semibold text-ink placeholder:text-ink-faint placeholder:font-normal focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                     <p x-show="fieldError('title')" x-cloak class="text-[11px] text-rose-700 mt-1" x-text="fieldError('title')"></p>
                 </div>
                 <div>
                     <label class="sr-only" for="balita-content">What residents need to know</label>
-                    <textarea id="balita-content" rows="7" placeholder="What do residents need to know? What, when, where, who to contact." x-model="form.body" class="w-full rounded-2xl border-0 surface-pressed py-3 px-4 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
+                    {{-- Grows with what is written, up to a point; then it scrolls. --}}
+                    <textarea id="balita-content" rows="4" placeholder="What do residents need to know? What, when, where, who to contact." x-model="form.body" x-effect="form.body; $nextTick(() => { $el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 320) + 'px'; })" class="w-full resize-y rounded-xl border-0 surface-pressed py-2 px-3 text-sm text-ink-body placeholder:text-ink-faint focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></textarea>
                 </div>
 
                 <template x-for="k in [formKey]" :key="k">
                     <x-balita.media-field base="/admin/balita" model="media" existing="(editing ? (editing.media || []) : [])" :english="true" />
                 </template>
 
-                {{-- When it goes out --}}
-                <fieldset class="rounded-2xl border border-brand-600/10 bg-white/60 p-4 space-y-3">
-                    <legend class="px-1 text-sm font-medium text-slate-700">When it goes out</legend>
-                    <div class="grid sm:grid-cols-2 gap-2.5">
-                        <label class="flex items-start gap-2.5 rounded-2xl border p-3 cursor-pointer transition-all duration-[160ms] ease-standard" :class="!form.schedule ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
-                            <input type="radio" name="balita-when" :value="false" :checked="!form.schedule" @change="form.schedule = false" class="mt-0.5 border-slate-300 text-brand-600 focus:ring-brand-200">
-                            <span><span class="block text-xs font-semibold text-ink" x-text="approver ? 'Now' : 'As soon as it is approved'"></span><span class="block text-[10.5px] text-ink-muted mt-0.5">Residents are notified when it is published</span></span>
-                        </label>
-                        <label class="flex items-start gap-2.5 rounded-2xl border p-3 cursor-pointer transition-all duration-[160ms] ease-standard" :class="form.schedule ? 'border-brand-400 bg-brand-50/60 ring-2 ring-brand-100' : 'border-slate-200 hover:border-slate-300'">
-                            <input type="radio" name="balita-when" :value="true" :checked="form.schedule" @change="form.schedule = true" class="mt-0.5 border-slate-300 text-brand-600 focus:ring-brand-200">
-                            <span><span class="block text-xs font-semibold text-ink">At a time I choose</span><span class="block text-[10.5px] text-ink-muted mt-0.5">Once approved, it goes out by itself then</span></span>
-                        </label>
-                    </div>
-                    <div x-show="form.schedule" x-cloak class="flex flex-wrap items-end gap-2">
-                        <div>
-                            <label for="balita-publish-date" class="block text-xs font-medium text-slate-700 mb-1">Day</label>
-                            <input id="balita-publish-date" type="date" x-model="form.publish_date" class="rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                {{-- When it goes out: one row; the day and time appear only for a schedule. --}}
+                <fieldset class="rounded-xl border border-brand-600/10 bg-white/60 px-3 py-2.5 space-y-2">
+                    <legend class="sr-only">When it goes out</legend>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-medium text-slate-700 mr-1">When it goes out</span>
+                        <div class="inline-flex items-center gap-1 surface-pressed rounded-xl p-1" role="radiogroup" aria-label="When it goes out">
+                            <label class="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-brand-300" :class="!form.schedule ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-ink'">
+                                <input type="radio" name="balita-when" :value="false" :checked="!form.schedule" @change="form.schedule = false" class="sr-only"><span x-text="approver ? 'Now' : 'As soon as approved'"></span>
+                            </label>
+                            <label class="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-brand-300 inline-flex items-center gap-1" :class="form.schedule ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-ink'">
+                                <input type="radio" name="balita-when" :value="true" :checked="form.schedule" @change="form.schedule = true" class="sr-only"><i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i>At a time I choose
+                            </label>
                         </div>
-                        <div>
-                            <label for="balita-publish-time" class="block text-xs font-medium text-slate-700 mb-1">Time (Esperanza)</label>
-                            <input id="balita-publish-time" type="time" x-model="form.publish_time" class="rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                        <div x-show="form.schedule" x-cloak class="flex flex-wrap items-center gap-2">
+                            <label for="balita-publish-date" class="sr-only">Day</label>
+                            <input id="balita-publish-date" type="date" x-model="form.publish_date" class="rounded-xl border-0 surface-pressed py-1.5 px-3 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                            <label for="balita-publish-time" class="sr-only">Time (Esperanza)</label>
+                            <input id="balita-publish-time" type="time" x-model="form.publish_time" class="rounded-xl border-0 surface-pressed py-1.5 px-3 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
                         </div>
                     </div>
                     <p x-show="form.schedule && scheduleProblem" x-cloak class="text-[11px] text-rose-700" x-text="scheduleProblem"></p>
                     <p x-show="fieldError('publish_at')" x-cloak class="text-[11px] text-rose-700" x-text="fieldError('publish_at')"></p>
-                    <p class="text-[10.5px] text-ink-muted">Times are Esperanza time (Asia/Manila), whatever this computer is set to. A post stays in Balita until it is archived.</p>
+                    <p class="text-[10.5px] text-ink-muted" x-text="form.schedule ? 'Esperanza time (Asia/Manila). Once approved, it goes out by itself then; residents are notified.' : 'Residents are notified when it is published. A post stays in Balita until it is archived.'"></p>
                 </fieldset>
             </div>
 
-            {{-- The post as residents see it in Balita --}}
-            <aside class="lg:sticky lg:top-0 space-y-2" aria-label="Preview">
+            {{-- The post as residents see it in Balita, at about their width --}}
+            <aside class="lg:sticky lg:top-0 space-y-1.5" aria-label="Preview">
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted flex items-center gap-1.5"><i data-lucide="eye" class="w-3.5 h-3.5"></i>Preview · what residents see</p>
-                <div class="rounded-[22px] border border-brand-600/10 bg-white overflow-hidden shadow-sm">
-                    <div class="flex items-center gap-2.5 p-3.5 pb-2">
-                        <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-9 h-9 rounded-full object-cover">
+                <div class="rounded-[20px] border border-brand-600/10 bg-white overflow-hidden shadow-sm max-w-md">
+                    <div class="flex items-center gap-2.5 p-3 pb-2">
+                        <img src="{{ asset('images/esperanza/esperanza-seal-128.png') }}" alt="" class="w-8 h-8 rounded-full object-cover">
                         <div class="min-w-0 flex-1">
-                            <p class="text-sm font-semibold text-ink flex items-center gap-1">Esperanza LGU <i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500"></i></p>
-                            <p class="text-[11px] text-ink-muted" x-text="previewWhen + ' · ' + audienceText + ' · ' + form.category"></p>
+                            <p class="text-[13px] font-semibold text-ink flex items-center gap-1">Esperanza LGU <i data-lucide="badge-check" class="w-3.5 h-3.5 text-brand-500"></i></p>
+                            <p class="text-[10.5px] text-ink-muted truncate" x-text="previewWhen + ' · ' + audienceText + ' · ' + form.category"></p>
                         </div>
                     </div>
-                    <p class="px-3.5 pb-1 text-[15px] font-bold text-ink break-words" x-text="form.title.trim() || 'Title of the post'"></p>
-                    <p class="px-3.5 pb-3 text-[13px] text-slate-700 leading-relaxed whitespace-pre-line break-words line-clamp-6" x-text="form.body.trim() || 'What residents need to know.'"></p>
+                    <p class="px-3 pb-1 text-sm font-bold text-ink break-words" x-text="form.title.trim() || 'Title of the post'"></p>
+                    <p class="px-3 pb-2.5 text-[12.5px] text-slate-700 leading-relaxed whitespace-pre-line break-words line-clamp-6" x-text="form.body.trim() || 'What residents need to know.'"></p>
                     <img x-show="media.cover" :src="media.cover || ''" alt="" class="w-full aspect-[16/9] object-cover">
-                    <div class="flex items-center gap-4 px-3.5 py-2.5 border-t border-slate-100 text-[11px] text-ink-muted" aria-hidden="true">
+                    <div class="flex items-center gap-4 px-3 py-2 border-t border-slate-100 text-[11px] text-ink-muted" aria-hidden="true">
                         <span class="inline-flex items-center gap-1"><i data-lucide="heart" class="w-3.5 h-3.5"></i>Like</span>
                         <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i>Comment</span>
                         <span class="inline-flex items-center gap-1"><i data-lucide="share-2" class="w-3.5 h-3.5"></i>Share</span>
@@ -229,7 +224,7 @@
         </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-end gap-2.5 px-6 py-4 border-t border-brand-600/10 bg-white shrink-0">
+        <div class="flex flex-wrap items-center justify-end gap-2 px-5 py-3 border-t border-brand-600/10 bg-white shrink-0">
             <p x-show="media.busy" x-cloak class="mr-auto text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin"></i>Uploading photos and videos…</p>
             <p x-show="!media.busy && dirty" x-cloak class="mr-auto text-xs text-ink-muted flex items-center gap-1.5"><i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>Unsaved changes</p>
             <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="requestClose()">Cancel</x-ui.button>

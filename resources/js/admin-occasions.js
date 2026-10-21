@@ -34,6 +34,24 @@ function when(iso, withTime = true) {
     const opts = { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' };
     return d.toLocaleString('en-US', withTime ? { ...opts, hour: 'numeric', minute: '2-digit' } : opts);
 }
+/** Two instants as the days they fall on in Esperanza, said once: "Oct 21–31, 2026". */
+function dateRange(fromIso, toIso) {
+    const part = (iso) => {
+        const d = iso ? new Date(iso) : null;
+        if (!d || Number.isNaN(d.getTime())) return null;
+        const f = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: 'short', day: 'numeric' }).formatToParts(d);
+        const get = (t) => f.find((x) => x.type === t)?.value;
+        return { y: get('year'), m: get('month'), d: get('day') };
+    };
+    const a = part(fromIso);
+    const b = part(toIso);
+    if (!a && !b) return 'Any time';
+    if (!b) return 'From ' + a.m + ' ' + a.d + ', ' + a.y;
+    if (!a) return 'Until ' + b.m + ' ' + b.d + ', ' + b.y;
+    if (a.y === b.y && a.m === b.m) return a.d === b.d ? a.m + ' ' + a.d + ', ' + a.y : a.m + ' ' + a.d + '–' + b.d + ', ' + a.y;
+    if (a.y === b.y) return a.m + ' ' + a.d + ' – ' + b.m + ' ' + b.d + ', ' + a.y;
+    return a.m + ' ' + a.d + ', ' + a.y + ' – ' + b.m + ' ' + b.d + ', ' + b.y;
+}
 const label = (list, key) => (list || []).find((x) => x.key === key)?.en || key || '';
 const STATUS_WORDS = { Released: 'Published', Rejected: 'Sent back', 'Pending Review': 'Waiting for review' };
 
@@ -375,6 +393,12 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
         typeLabel(key) { return label(this.contract.types, key); },
         triggerLabel(key) { return label(this.contract.triggers, key); },
         frequencyLabel(key) { return label(this.contract.popup_frequencies, key); },
+        // The card's one line: "Oct 21–31, 2026", "Every year · Dec 24–26, 2026",
+        // "On each resident's birthday". View shows the times.
+        cardWhen(o) {
+            if (o.trigger === 'birthday') return "On each resident's birthday";
+            return (o.trigger === 'annual' ? 'Every year · ' : '') + dateRange(o.next_starts_at || o.starts_at, o.next_ends_at || o.ends_at);
+        },
         windowText(o) {
             if (o.trigger === 'birthday') {
                 return "On each resident's birthday" + (o.starts_at || o.ends_at ? ', ' + (o.starts_at ? when(o.starts_at, false) : 'now') + ' – ' + (o.ends_at ? when(o.ends_at, false) : 'no end') : '');
