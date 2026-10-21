@@ -1938,7 +1938,7 @@ function balitaFeed() {
         categories: POST_CATEGORIES,
         tabs: [
             ['all', 'All', 'Lahat', 'layout-list'],
-            ['barangay', 'My barangay', 'Aking barangay', 'map-pinned'],
+            ['barangay', 'Barangay', 'Barangay', 'map-pinned'],
         ],
 
         t(en, fil) { return this.$store.lang.current === 'en' ? en : fil; },
