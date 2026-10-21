@@ -301,6 +301,29 @@ function adminBanners(contract = {}, barangayNames = [], maxImageBytes = 1048576
 
 // ---------------------------------------------------------------- Occasions
 
+// The occasion form is a wizard (2026-10-21): one step at a time, checked
+// before the next, everything kept while moving between them. The banner is
+// chosen with the pop-up (step 4); Review shows the pop-up as residents see it.
+const OCCASION_STEPS = [
+    { n: 1, label: 'Details', next: 'Next: Schedule' },
+    { n: 2, label: 'Schedule & Trigger', next: 'Next: Audience' },
+    { n: 3, label: 'Audience', next: 'Next: Pop-up Content' },
+    { n: 4, label: 'Pop-up Content', next: 'Review' },
+    { n: 5, label: 'Review & Activate', next: '' },
+];
+// The step each field is on, and the input a refused step puts the cursor in.
+const FIELD_STEP = { name: 1, trigger: 2, start: 2, end: 2, audience: 3, popup_title: 4, popup_body: 4, button_url: 4, button_post: 4, button_label: 4, picture: 4, banner_id: 4 };
+const FIELD_INPUT = { name: 'occ-name', start: 'occ-start-date', end: 'occ-end-date', audience: 'occ-audience-some', popup_title: 'occ-title', popup_body: 'occ-body', button_url: 'occ-button-url', button_post: 'occ-button-post', button_label: 'occ-button-label', banner_id: 'occ-banner-id' };
+/** The step a field the server refused is on. */
+function serverFieldStep(key) {
+    const k = String(key).split('.')[0];
+    if (['name', 'description', 'type'].includes(k)) return 1;
+    if (['trigger', 'starts_at', 'ends_at'].includes(k)) return 2;
+    if (['barangays', 'sectors'].includes(k)) return 3;
+    if (k.startsWith('popup_') || k.startsWith('banner_') || k === 'media_id' || k === 'picture_from_banner') return 4;
+    return 5;
+}
+
 function occasionForm(o = null) {
     const s = manilaParts(o?.starts_at);
     const e = manilaParts(o?.ends_at);
@@ -362,6 +385,12 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
         viewOpen: false,
         viewing: null,
         rules: imageRules(contract, 'popup', maxImageBytes),
+        steps: OCCASION_STEPS,
+        step: 1,
+        maxStep: 1,
+        // The steps the officer has tried to leave (or save from): their
+        // problems show beside the fields from then on, not on an empty form.
+        tried: {},
         stateChips: [
             { key: 'all', label: 'All' }, { key: 'draft', label: 'Draft' }, { key: 'scheduled', label: 'Scheduled' },
             { key: 'active', label: 'Active' }, { key: 'paused', label: 'Paused' }, { key: 'completed', label: 'Completed' },
@@ -393,6 +422,7 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
         typeLabel(key) { return label(this.contract.types, key); },
         triggerLabel(key) { return label(this.contract.triggers, key); },
         frequencyLabel(key) { return label(this.contract.popup_frequencies, key); },
+        dismissalLabel(key) { return label(this.contract.popup_dismissals, key); },
         // The card's one line: "Oct 21–31, 2026", "Every year · Dec 24–26, 2026",
         // "On each resident's birthday". View shows the times.
         cardWhen(o) {
@@ -414,17 +444,21 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
             this.form = occasionForm();
             this.existingImage = null;
             this.image = noImage();
-            await this.openForm();
+            await this.openForm(1);
         },
+        // A saved occasion opens on its review: every step is there to edit.
         async openEdit(o) {
             this.editing = o;
             this.form = occasionForm(o);
             this.existingImage = o.popup?.image || null;
             this.image = noImage(o.popup?.image);
             this.viewOpen = false;
-            await this.openForm();
+            await this.openForm(OCCASION_STEPS.length);
         },
-        async openForm() {
+        async openForm(step = 1) {
+            this.step = step;
+            this.maxStep = step;
+            this.tried = {};
             this.fieldErrors = {};
             this.barangayQuery = '';
             this.formKey += 1;
@@ -504,27 +538,163 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
         get startsIso() { return this.form.start_date ? manilaIso(this.form.start_date, this.form.start_time) : null; },
         get endsIso() { return this.form.end_date ? manilaIso(this.form.end_date, this.form.end_time || '23:59') : null; },
         get chosenBanner() { return this.banners.find((b) => b.id === Number(this.form.banner_id)) || null; },
-        /** The first thing that would stop a save; the server still decides. */
-        get problem() {
+        /** What stops step n, field by field; the server still decides. */
+        stepProblems(n) {
             const f = this.form;
-            if (!f.name.trim()) return 'Name the occasion.';
-            if (f.type === 'birthday' && f.trigger !== 'birthday') return "A birthday occasion shows on each resident's birthday.";
-            if (f.trigger !== 'birthday' && (!f.start_date || !f.end_date)) return 'Say when it starts and ends.';
-            if (this.startsIso && this.endsIso && instant(this.endsIso) <= instant(this.startsIso)) return 'It must end after it starts.';
-            if (f.trigger === 'window' && this.endsIso && instant(this.endsIso) <= Date.now()) return 'It would already be over.';
-            if (f.audience === 'some' && !f.barangays.length && !f.sectors.length) return 'Choose the barangays or groups it is for, or choose all residents.';
-            if (!f.popup_title.trim() || !f.popup_body.trim()) return 'Write the pop-up\'s title and message.';
-            if (f.button === 'link' && !/^https:\/\/\S+$/i.test(f.popup_button_url.trim())) return 'The button link must start with https://.';
-            if (f.button === 'post' && !f.popup_post_id) return 'Choose the Balita post the button opens.';
-            if (f.button !== 'none' && !f.popup_button_label.trim()) return 'Write the button\'s label.';
-            if (f.banner_mode === 'existing' && !f.banner_id) return 'Choose the banner, or choose no banner.';
-            if (!this.sharesBannerPicture && this.image.busy) return 'Wait for the picture to finish uploading.';
-            if (!this.sharesBannerPicture && this.image.failed) return 'The picture did not upload. Try it again, keep the current one, or remove it.';
-            return '';
+            const out = [];
+            const add = (field, msg) => out.push({ field, msg });
+            if (n === 1) {
+                if (!f.name.trim()) add('name', 'Name the occasion.');
+            } else if (n === 2) {
+                if (f.type === 'birthday' && f.trigger !== 'birthday') add('trigger', "A birthday occasion shows on each resident's birthday.");
+                if (f.trigger !== 'birthday' && !f.start_date) add('start', 'Choose the day it starts.');
+                if (f.trigger !== 'birthday' && !f.end_date) add('end', 'Choose the day it ends.');
+                if (this.startsIso && this.endsIso && instant(this.endsIso) <= instant(this.startsIso)) add('end', 'It must end after it starts.');
+                else if (f.trigger === 'window' && this.endsIso && instant(this.endsIso) <= Date.now()) add('end', 'It would already be over. Choose a later end.');
+            } else if (n === 3) {
+                if (f.audience === 'some' && !f.barangays.length && !f.sectors.length) add('audience', 'Choose the barangays or groups it is for, or choose every resident.');
+            } else if (n === 4) {
+                if (!f.popup_title.trim()) add('popup_title', "Write the pop-up's title.");
+                if (!f.popup_body.trim()) add('popup_body', "Write the pop-up's message.");
+                if (f.button === 'link' && !/^https:\/\/\S+$/i.test(f.popup_button_url.trim())) add('button_url', 'The button link must start with https://.');
+                if (f.button === 'post' && !f.popup_post_id) add('button_post', 'Choose the Balita post the button opens.');
+                if (f.button !== 'none' && !f.popup_button_label.trim()) add('button_label', "Write the button's label.");
+                if (!this.sharesBannerPicture && this.image.busy) add('picture', 'Wait for the picture to finish uploading.');
+                if (!this.sharesBannerPicture && this.image.failed) add('picture', 'The picture did not upload. Try it again, keep the current one, or remove it.');
+                if (f.banner_mode === 'existing' && !f.banner_id) add('banner_id', 'Choose the banner, or choose no banner.');
+            }
+            return out;
+        },
+        /** The first step before Review that is not ready, or 0. */
+        get firstBadStep() {
+            for (let n = 1; n < OCCASION_STEPS.length; n += 1) if (this.stepProblems(n).length) return n;
+            return 0;
+        },
+        /** The first thing that would stop a save, with its step. */
+        get problem() {
+            const n = this.firstBadStep;
+            return n ? this.stepProblems(n)[0].msg + ' (Step ' + n + ': ' + OCCASION_STEPS[n - 1].label + ')' : '';
+        },
+        /** A field's problem, beside it, once its step has been tried; or what the server said. */
+        issue(field, serverKey = null) {
+            const n = FIELD_STEP[field];
+            if (n && this.tried[n]) {
+                const p = this.stepProblems(n).find((x) => x.field === field);
+                if (p) return p.msg;
+            }
+            return serverKey ? this.fieldError(serverKey) : '';
+        },
+        stepFlagged(n) { return (!!this.tried[n] && this.stepProblems(n).length > 0) || this.serverErrorsFor(n).length > 0; },
+        /** What the server refused on step n, said at the top of that step. */
+        serverErrorsFor(n) {
+            return Object.entries(this.fieldErrors || {})
+                .filter(([k]) => serverFieldStep(k) === n)
+                .map(([, v]) => (Array.isArray(v) ? v[0] : v))
+                .filter(Boolean);
+        },
+        get stepInfo() { return OCCASION_STEPS[this.step - 1]; },
+        // Moving between steps: Next checks this step; a step further on is
+        // reached only through steps that are ready.
+        next() {
+            if (this.step >= OCCASION_STEPS.length) return;
+            this.tried = { ...this.tried, [this.step]: true };
+            if (this.stepProblems(this.step).length) { this.focusProblem(this.step); return; }
+            this.show(this.step + 1);
+        },
+        back() { if (this.step > 1) this.show(this.step - 1); },
+        goTo(n) {
+            if (n === this.step) return;
+            if (n < this.step) { this.show(n); return; }
+            if (!this.canReach(n)) return;
+            for (let k = this.step; k < n; k += 1) {
+                if (this.stepProblems(k).length) {
+                    this.tried = { ...this.tried, [k]: true };
+                    if (k !== this.step) this.show(k);
+                    this.focusProblem(k);
+                    return;
+                }
+            }
+            this.show(n);
+        },
+        // A step not visited yet is reached one at a time, as with Next.
+        canReach(n) { return n <= this.maxStep + 1; },
+        show(n) {
+            this.step = n;
+            this.maxStep = Math.max(this.maxStep, n);
+            this.$nextTick(() => {
+                document.getElementById('occ-wizard-body')?.scrollTo({ top: 0 });
+                document.getElementById('occ-step-title')?.focus({ preventScroll: true });
+            });
+        },
+        focusProblem(n) {
+            const p = this.stepProblems(n)[0];
+            this.$nextTick(() => {
+                const el = p && FIELD_INPUT[p.field] ? document.getElementById(FIELD_INPUT[p.field]) : null;
+                if (el) { el.scrollIntoView({ block: 'center' }); el.focus({ preventScroll: true }); }
+                else document.getElementById('occ-step-title')?.focus();
+            });
+        },
+        /** It starts later: once activated it waits, labelled Scheduled (as the server works it out). */
+        get startsLater() {
+            const f = this.form;
+            if (f.trigger !== 'annual') return !!this.startsIso && instant(this.startsIso) > Date.now();
+            if (!f.start_date || !f.end_date) return false;
+            // Every year: on now if this year's (or the last) days hold today.
+            const span = Number(f.end_date.slice(0, 4)) - Number(f.start_date.slice(0, 4));
+            const now = Date.now();
+            for (let y = Number(f.start_date.slice(0, 4)); y <= new Date().getFullYear() + 1; y += 1) {
+                const from = instant(manilaIso(y + f.start_date.slice(4), f.start_time));
+                const to = instant(manilaIso((y + span) + f.end_date.slice(4), f.end_time || '23:59'));
+                if (now < from) return true;
+                if (now <= to) return false;
+            }
+            return true;
+        },
+        /** What Save and activate leads to, said on the review before it is pressed. */
+        get activateNote() {
+            if (!this.can('approve')) return { state: 'draft', label: 'Waiting for review', text: 'It goes to an approver. Residents see nothing until it is approved and activated.' };
+            if (this.startsLater) {
+                const from = this.form.trigger === 'annual' ? 'on its next start' : 'on ' + when(this.startsIso);
+                return { state: 'scheduled', label: 'Scheduled', text: 'It waits, labelled Scheduled, and starts by itself ' + from + '.' };
+            }
+            if (this.form.trigger === 'birthday') return { state: 'active', label: 'Active', text: 'Each resident in its audience sees it on their birthday.' };
+            return { state: 'active', label: 'Active', text: 'Residents in its audience see it the next time they open Esperanza.' };
+        },
+        get scheduleSummary() {
+            const f = this.form;
+            if (f.trigger === 'birthday') return "On each resident's birthday" + (f.start_date || f.end_date ? ' · ' + (f.start_date ? when(this.startsIso) : 'now') + ' – ' + (f.end_date ? when(this.endsIso) : 'no end') : '');
+            if (!f.start_date || !f.end_date) return 'Not set yet';
+            return (f.trigger === 'annual' ? 'Every year · ' : '') + when(this.startsIso) + ' – ' + when(this.endsIso);
+        },
+        get buttonSummary() {
+            const f = this.form;
+            if (f.button === 'none') return 'No button';
+            const text = f.popup_button_label.trim() || '(no label)';
+            if (f.button === 'link') return text + ' → ' + (f.popup_button_url.trim() || '(no link)');
+            const post = this.posts.find((p) => String(p.id) === String(f.popup_post_id));
+            return text + ' → Balita: ' + (post ? post.title : '(no post chosen)');
+        },
+        get bannerSummary() {
+            const f = this.form;
+            if (f.banner_mode !== 'existing') return 'No banner';
+            const b = this.chosenBanner;
+            if (!b) return 'Not chosen yet';
+            return b.title + ' (' + this.statusLabel(b.status) + ')' + (f.banner_sync ? ' · shown during this occasion, ' + label(this.contract.banner_displays, f.banner_display).toLowerCase() : ' · on its own dates');
+        },
+        get pictureSummary() {
+            if (this.sharesBannerPicture) return "The banner's picture";
+            return this.image.url ? 'Its own picture' : 'No picture';
         },
         // What may not work as expected, before it is saved; the server says
         // the same (and more) on the saved occasion.
         get formWarnings() {
+            const out = [...this.bannerWarnings];
+            if (this.partialSectors) out.push('PWD, solo parent, 4Ps and IP come from barangay constituent records: residents whose record is not linked or tagged will not see this.');
+            if (this.form.trigger === 'birthday') out.push('Residents with no birthdate on their account do not get this.');
+            return out;
+        },
+        // The banner's, said beside the banner in step 4 too.
+        get bannerWarnings() {
             const out = [];
             const b = this.form.banner_mode === 'existing' ? this.chosenBanner : null;
             if (b) {
@@ -537,8 +707,6 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
                 const others = (b.used_by || []).filter((o) => o.id !== this.editing?.id).map((o) => o.name);
                 if (others.length) out.push('This banner is also used by: ' + others.join(', ') + '. Its own schedule is not changed by either.');
             }
-            if (this.partialSectors) out.push('PWD, solo parent, 4Ps and IP come from barangay constituent records: residents whose record is not linked or tagged will not see this.');
-            if (this.form.trigger === 'birthday') out.push('Residents with no birthdate on their account do not get this.');
             return out;
         },
         payload() {
@@ -586,7 +754,17 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
         },
         /** how: 'draft' saves it; 'activate' saves it and takes it as far as this officer may, up to Activated. */
         async save(how) {
-            if (this.processing || this.problem) return;
+            if (this.processing) return;
+            // Save Draft is there on every step; what stops it is shown on its
+            // own step, beside the field.
+            const bad = this.firstBadStep;
+            if (bad) {
+                this.tried = { ...this.tried, [bad]: true };
+                if (bad !== this.step) this.show(bad);
+                this.focusProblem(bad);
+                toast((how === 'draft' ? 'Not saved yet: ' : 'Not activated yet: ') + this.stepProblems(bad)[0].msg, 'error');
+                return;
+            }
             this.processing = true;
             this.fieldErrors = {};
             let saved = null;
@@ -600,7 +778,12 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
                 toast(how === 'draft' ? (this.editing ? 'Changes saved.' : 'Saved as a draft.') : this.doneText(saved));
                 await this.load();
             } catch (err) {
-                if (err?.status === 422) this.fieldErrors = err.fields || {};
+                if (err?.status === 422 && !saved) {
+                    this.fieldErrors = err.fields || {};
+                    // To the first step the server refused, where it is said.
+                    const steps = Object.keys(this.fieldErrors).map(serverFieldStep);
+                    if (steps.length) this.show(Math.min(...steps));
+                }
                 toast(errText(err, saved ? 'Saved, but could not be activated. Do it from the list.' : 'Could not save this occasion.'), 'error');
                 if (saved) { this.formOpen = false; await this.load(); }
             } finally {
@@ -657,8 +840,13 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
 
         // -- Preview: the pop-up as a resident sees it. Nothing is saved or sent.
         previewForm() {
+            this.previewOf = this.livePreview;
+            this.previewOpen = true;
+        },
+        /** The pop-up as it stands in the form; the wizard's Review shows it beside the summary. */
+        get livePreview() {
             const f = this.form;
-            this.previewOf = {
+            return {
                 birthday: f.trigger === 'birthday',
                 type: this.typeLabel(f.type),
                 title: (f.popup_title.trim() || 'Title of the pop-up').replaceAll('{first_name}', 'Juan'),
@@ -669,7 +857,6 @@ function adminOccasions(contract = {}, barangayNames = [], maxImageBytes = 10485
                 dismissible: f.popup_dismissal === 'until_dismissed',
                 frequency: this.frequencyLabel(f.popup_frequency),
             };
-            this.previewOpen = true;
         },
         previewRow(o) {
             const p = o.popup || {};
