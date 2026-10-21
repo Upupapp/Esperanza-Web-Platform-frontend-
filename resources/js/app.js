@@ -323,8 +323,12 @@ function endSession() {
  * call it. This title-cases the key so every account always has SOMETHING to
  * show immediately after login, independent of what that account can see.
  */
+// A role whose label is not its key in words (owner, 2026-10-21).
+const ROLE_LABELS = { info_officer: 'Municipal Information Officer' };
+
 function formatRoleLabel(roleKey) {
     if (!roleKey) return '';
+    if (ROLE_LABELS[roleKey]) return ROLE_LABELS[roleKey];
 
     return roleKey
         .split('_')

@@ -287,7 +287,7 @@ $roles = [
         ]),
     ],
     [
-        'key' => 'info_officer', 'name' => 'Information Officer', 'icon' => 'megaphone',
+        'key' => 'info_officer', 'name' => 'Municipal Information Officer', 'icon' => 'megaphone',
         'color' => 'text-rose-700 bg-rose-50', 'users' => 2, 'editable' => true,
         'desc' => 'Owns public-facing communications — drafts, reviews, and publishes announcements, events.',
         'permissions' => $buildPermissions([
@@ -377,7 +377,7 @@ $sakunaGrantsByRoleName = [
         'sakuna_damage' => ['view', 'export'],
         'sakuna_reports' => ['view', 'export', 'print'],
     ],
-    'Information Officer' => [
+    'Municipal Information Officer' => [
         'sakuna_command' => ['view'],
         'sakuna_incidents' => ['view'],
         'sakuna_centers' => ['view'],
