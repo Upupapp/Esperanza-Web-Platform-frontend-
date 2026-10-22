@@ -144,7 +144,7 @@ class LiveTestFixesTest extends TestCase
         $this->assertTrue($fields->has('fatherMonthlyIncome') && $fields->has('motherMonthlyIncome'), 'one income per parent');
 
         $view = $this->source('resources/views/citizen/assistance-requests.blade.php');
-        $this->assertStringContainsString('if (!f.required || !this.fieldShown(f)) return false;', $view);
+        $this->assertStringContainsString("if (!f.required || f.type === 'derived_age' || !this.fieldShown(f)) return false;", $view);
         $this->assertStringContainsString('for (const f of (type?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];', $view);
         $this->assertStringContainsString('x-show="fieldShown(f)"', $view);
         $this->assertStringContainsString("'/withdraw', { reason: this.withdrawReason.trim() || null }", $view);
@@ -288,5 +288,20 @@ class LiveTestFixesTest extends TestCase
             $this->assertStringContainsString("get('new'); if (!want) return;", $this->source("resources/views/citizen/{$page}.blade.php"), $page.': the wizard opens from search');
         }
         $this->assertStringContainsString('select:not([multiple]):not([size]):not(.appearance-none):not(.doc-toolbar-select)', $this->source('resources/css/app.css'));
+    }
+
+    /** 2026-10-23: every question the form builder makes is drawn, and only what is on screen is required. */
+    public function test_every_form_builder_question_is_drawn_on_dokyu_and_tulong(): void
+    {
+        foreach (['document-requests', 'assistance-requests'] as $page) {
+            $view = $this->source("resources/views/citizen/{$page}.blade.php");
+            foreach (["x-if=\"f.type === 'textarea'\"", "x-if=\"f.type === 'checkbox'\"", "f.type === 'checkbox-group' || f.type === 'multiselect'", "x-if=\"f.type === 'derived_age'\"", 'x-show="fieldShown(f)"'] as $needle) {
+                $this->assertStringContainsString($needle, $view, $page.': '.$needle);
+            }
+        }
+        $dokyu = $this->source('resources/views/citizen/document-requests.blade.php');
+        // A required question that is hidden, a table, or worked out is never asked for.
+        $this->assertStringContainsString("if (!f.required || f.type === 'table' || f.type === 'derived_age' || !this.fieldShown(f)) return false;", $dokyu);
+        $this->assertStringContainsString('for (const f of (doc?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];', $dokyu);
     }
 }
