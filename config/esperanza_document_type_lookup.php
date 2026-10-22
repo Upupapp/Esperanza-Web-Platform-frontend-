@@ -63,4 +63,14 @@ return [
     'Application for Marriage License' => ['docKey' => 'mcro_marriage_license', 'previewType' => 'municipal_request', 'certTitle' => 'APPLICATION FOR MARRIAGE LICENSE'],
     'Delayed Registration of Birth' => ['docKey' => 'mcro_delayed_registration', 'previewType' => 'municipal_request', 'certTitle' => 'AFFIDAVIT FOR DELAYED REGISTRATION', 'nameField' => 'subject_name'],
     'Delayed Registration of Death' => ['docKey' => 'mcro_delayed_registration', 'previewType' => 'municipal_request', 'certTitle' => 'AFFIDAVIT FOR DELAYED REGISTRATION', 'nameField' => 'subject_name'],
+
+    // The six the templates drew but this table lacked, so "Your Document"
+    // said no preview was available while the app showed one (parity check,
+    // 2026-10-23). Names as esperanza_rbac.php lists the services.
+    'Barangay Certification (National ID / PSA Purpose)' => ['docKey' => 'brgy_cert_national_id', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'certSubtitle' => 'For Registration of National ID', 'nameField' => 'subject_name'],
+    'Barangay Certification (Land / Property)' => ['docKey' => 'brgy_cert_land_property', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'certSubtitle' => 'Land / Property Ownership', 'nameField' => 'owner_name'],
+    'Barangay Business Permit' => ['docKey' => 'brgy_business_permit', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY BUSINESS PERMIT', 'nameField' => 'proprietor_name'],
+    'Barangay Event / Special Permit' => ['docKey' => 'brgy_event_permit', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY PERMIT', 'certSubtitle' => 'Event / Special Occasion Permit', 'nameField' => 'organizer_name'],
+    'Certificate of Death (Certified Copy / Registration)' => ['docKey' => 'mcro_death', 'previewType' => 'municipal_request', 'certTitle' => 'REQUEST FOR CERTIFICATE OF DEATH'],
+    'PWD ID (Person with Disability Registration)' => ['docKey' => 'msw_pwd_id', 'previewType' => 'municipal_request', 'certTitle' => 'PHILIPPINE REGISTRY FOR PERSONS WITH DISABILITY — APPLICATION FORM', 'nameField' => 'full_name'],
 ];

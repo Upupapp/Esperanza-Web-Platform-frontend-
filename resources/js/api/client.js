@@ -46,18 +46,23 @@ function requestId() {
 
 export function getToken() {
     try {
-        return localStorage.getItem(TOKEN_KEY);
+        return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
     } catch {
         return null;
     }
 }
 
-export function setToken(token) {
+/**
+ * Keeps the sign-in. `remember: false` ("Remember me" left unticked) keeps it
+ * for this browser tab only, so it ends when the tab is closed; otherwise it
+ * stays on this browser. Clearing removes both.
+ */
+export function setToken(token, { remember = true } = {}) {
     try {
+        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
         if (token) {
-            localStorage.setItem(TOKEN_KEY, token);
-        } else {
-            localStorage.removeItem(TOKEN_KEY);
+            (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
         }
     } catch {
         // Private mode with storage disabled: the request simply goes unauthenticated

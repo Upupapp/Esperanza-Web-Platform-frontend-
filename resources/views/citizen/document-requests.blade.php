@@ -1667,6 +1667,18 @@
                             </template>
                         </div>
 
+                        {{-- Cancelled, by the office or withdrawn by the resident: said
+                             plainly with the reason, as on Tulong (parity check, 2026-10-23). --}}
+                        <div class="rounded-xl bg-slate-100 border border-slate-200 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Cancelled'">
+                            <div class="flex items-start gap-2.5">
+                                <i data-lucide="ban" class="w-4 h-4 text-ink-muted shrink-0 mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-slate-600"><x-ui.t fil="Kinansela ang kahilingang ito" en="This request was cancelled" /></p>
+                                    <p class="text-xs text-slate-600 mt-0.5" x-show="selectedRequest.remarks" x-text="selectedRequest.remarks"></p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="rounded-xl bg-rose-50 border border-rose-100 px-3.5 py-2.5 mt-5" x-show="selectedRequest.status === 'Rejected'">
                             <div class="flex items-start gap-2.5">
                                 <i data-lucide="circle-x" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>

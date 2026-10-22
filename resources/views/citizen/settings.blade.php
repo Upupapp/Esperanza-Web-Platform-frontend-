@@ -273,11 +273,11 @@
                                 >English</button>
                             </div>
                         </div>
+                        {{-- A fact, not a choice: the dropdown here saved nothing, and every
+                             date on the portal is in the LGU's own time (parity check, 2026-10-23). --}}
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Time Zone" en="Time Zone" /></label>
-                            <select class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                <option>(GMT+8:00) Manila</option>
-                            </select>
+                            <p class="block text-sm font-medium text-slate-700 mb-1"><x-ui.t fil="Time Zone" en="Time Zone" /></p>
+                            <p class="text-xs text-ink-muted"><x-ui.t fil="Lahat ng petsa at oras ay nasa oras ng Pilipinas (GMT+8, Manila)." en="Every date and time is shown in Philippine time (GMT+8, Manila)." /></p>
                         </div>
                     </div>
                 </x-ui.card>
