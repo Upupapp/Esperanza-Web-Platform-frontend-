@@ -288,4 +288,18 @@ class CitizenAppParityTest extends TestCase
         $this->assertFileDoesNotExist(base_path('resources/views/components/citizen/fiesta-popup.blade.php'));
         $this->assertStringNotContainsString('fiesta-popup', $this->source('resources/views/components/layouts/citizen.blade.php'));
     }
+
+    public function test_a_label_never_shows_an_escaped_ampersand(): void
+    {
+        // Blade escapes these itself: "&amp;" written here reached residents
+        // as "Officials &amp; Staff" (2026-10-23).
+        $pattern = '/<x-ui\.t\b[^>]*\b(?:fil|en)="[^"]*&amp;|\b(?:title|titleEn|subtitle|label|labelEn)="[^"]*&amp;/';
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path('resources/views')));
+        foreach ($files as $file) {
+            if (! str_ends_with($file->getFilename(), '.blade.php')) {
+                continue;
+            }
+            $this->assertDoesNotMatchRegularExpression($pattern, file_get_contents($file->getPathname()), $file->getFilename());
+        }
+    }
 }

@@ -285,7 +285,7 @@
                     <div>
                         <div class="flex gap-1.5 px-5 sm:px-7 pt-4" role="tablist">
                             <button type="button" role="tab" :aria-selected="profileTab === 'history'" @click="profileTab = 'history'" class="min-h-[44px] px-[18px] rounded-full text-sm font-semibold transition-colors" :class="profileTab === 'history' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-slate-50'"><x-ui.t fil="Kasaysayan" en="History" /></button>
-                            <button type="button" role="tab" :aria-selected="profileTab === 'officials'" @click="profileTab = 'officials'" class="min-h-[44px] px-[18px] rounded-full text-sm font-semibold transition-colors" :class="profileTab === 'officials' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-slate-50'"><x-ui.t fil="Mga Opisyal at Kawani" en="Officials &amp; Staff" /></button>
+                            <button type="button" role="tab" :aria-selected="profileTab === 'officials'" @click="profileTab = 'officials'" class="min-h-[44px] px-[18px] rounded-full text-sm font-semibold transition-colors" :class="profileTab === 'officials' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-slate-50'"><x-ui.t fil="Mga Opisyal at Kawani" en="Officials & Staff" /></button>
                         </div>
 
                         <!-- History -->

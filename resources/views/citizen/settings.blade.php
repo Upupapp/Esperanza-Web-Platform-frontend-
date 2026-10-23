@@ -245,7 +245,7 @@
                             <x-ui.t fil="Buong Patakaran sa Privacy" en="View Full Privacy Policy" />
                         </x-ui.button>
                         <x-ui.button variant="ghost" size="sm" :href="route('citizen.terms')" icon="file-text">
-                            <x-ui.t fil="Mga Tuntunin at Kundisyon" en="Terms &amp; Conditions" />
+                            <x-ui.t fil="Mga Tuntunin at Kundisyon" en="Terms & Conditions" />
                         </x-ui.button>
                     </div>
                 </x-ui.card>
