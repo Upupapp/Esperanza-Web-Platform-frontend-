@@ -24,7 +24,8 @@
         </template>
         <x-slot:footer>
             <x-ui.button variant="secondary" size="sm" @click="open = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
-            <x-ui.button :href="route('citizen.dashboard')" size="sm" icon="shield-alert" @click="open = false"><x-ui.t fil="Tingnan sa Home" en="View on Home" /></x-ui.button>
+            {{-- The alert's own page is Sakuna (Emergency), not Home (parity check, 2026-10-26). --}}
+            <x-ui.button :href="route('citizen.emergency')" size="sm" icon="shield-alert" @click="open = false"><x-ui.t fil="Buksan ang Sakuna" en="Open Emergency" /></x-ui.button>
         </x-slot:footer>
     </x-ui.modal>
 </div>

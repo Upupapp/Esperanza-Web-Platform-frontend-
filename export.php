@@ -148,6 +148,15 @@ foreach ($assets as $src => $dst) {
     }
 }
 
+// Android App Links (2026-10-26): the phone app opens a shared Balita post
+// when this file lists its signing key; Android reads it from /.well-known/.
+$assetLinks = __DIR__.'/public/.well-known/assetlinks.json';
+if (file_exists($assetLinks)) {
+    @mkdir($distDir.'/.well-known', 0777, true);
+    copy($assetLinks, $distDir.'/.well-known/assetlinks.json');
+    echo "  ✓  public/.well-known/assetlinks.json\n";
+}
+
 foreach (['favicon.ico', 'robots.txt'] as $file) {
     $src = __DIR__.'/public/'.$file;
     if (file_exists($src)) {

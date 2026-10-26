@@ -506,8 +506,23 @@
                         if (t.includes('word') || t.includes('docx')) return 'DOCX';
                         return 'IMG';
                     },
+                    // Only what the server keeps (uploads.allowed_mime) and the app
+                    // offers: JPG, PNG, WebP and PDF. Any image was accepted here,
+                    // and a HEIC or GIF failed only at the server (parity check, 2026-10-26).
+                    uploadError: '',
+                    papelesTypeOk(file) {
+                        const okTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+                        const ext = (String(file?.name || '').split('.').pop() || '').toLowerCase();
+                        return okTypes.includes(String(file?.type || '').toLowerCase()) || (!file?.type && ['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(ext));
+                    },
                     async upload(file) {
                         if (!file || this.uploading) return;
+                        this.uploadError = '';
+                        if (!this.papelesTypeOk(file)) {
+                            this.uploadError = lang('Only JPG, PNG, WebP or PDF files can be saved to your Papeles.', 'JPG, PNG, WebP o PDF lamang ang maaaring i-imbak sa iyong Papeles.');
+                            $dispatch('toast', { message: this.uploadError, variant: 'error' });
+                            return;
+                        }
                         this.uploading = true;
                         const form = new FormData();
                         form.append('file', file);
@@ -591,9 +606,10 @@
                             <label class="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-brand-600 rounded-lg px-3 py-1.5 hover:bg-brand-700 transition-colors cursor-pointer" :class="uploading && 'opacity-60 pointer-events-none'">
                                 <i data-lucide="upload" class="w-3.5 h-3.5"></i>
                                 <span x-text="uploading ? lang('Uploading…', 'Ina-upload…') : lang('Upload a Document', 'Mag-upload ng Dokumento')"></span>
-                                <input type="file" class="sr-only" accept="image/*,application/pdf" @change="upload($event.target.files[0]); $event.target.value = ''">
+                                <input type="file" class="sr-only" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" @change="upload($event.target.files[0]); $event.target.value = ''" data-papeles-upload>
                             </label>
                         </div>
+                        <p x-show="uploadError" x-cloak role="alert" class="-mt-2 mb-4 text-xs text-rose-600" x-text="uploadError"></p>
 
                         <div x-show="papelesLoading" class="grid grid-cols-2 sm:grid-cols-3 gap-3"><x-ui.skeleton class="h-32" /><x-ui.skeleton class="h-32 opacity-80" /></div>
                         <p x-show="!papelesLoading && !papeles.length" class="text-sm text-ink-muted py-6 text-center"><x-ui.t fil="Wala ka pang naka-imbak na dokumento." en="You have no saved documents yet." /></p>
@@ -691,7 +707,10 @@
                         // send, the form fields and the certificate wording.
                         serviceMeta: {},
                         catalogLoaded: false,
+                        catalogFailed: false,
                         async loadCatalog() {
+                            this.catalogLoaded = false;
+                            this.catalogFailed = false;
                             try {
                                 const res = await $api.get('/services', { params: { type: 'dokyu' } });
                                 const before = JSON.stringify(this.docs[this.selectedDoc]?.requirements || null);
@@ -716,9 +735,15 @@
                                 if (this.selectedDoc !== null && before !== JSON.stringify(this.docs[this.selectedDoc]?.requirements || null)) this.attachments = {};
                                 Object.values(this.serviceMeta).forEach((sv) => { if (sv.days) this.daysByKey[sv.key] = sv.days; });
                                 this.requests.forEach((r) => { if (r.serviceKey && this.serviceMeta[r.serviceKey]?.days) r.days = this.serviceMeta[r.serviceKey].days; });
-                            } catch { this.serviceMeta = {}; } finally { this.catalogLoaded = true; }
+                            } catch { this.serviceMeta = {}; this.catalogFailed = true; } finally { this.catalogLoaded = true; }
+                            // A document opened by link (?new=) that the server does not offer is let go.
+                            if (this.selectedDoc !== null && !this.offered(this.docs[this.selectedDoc])) this.selectedDoc = null;
                         },
-                        canFile(doc) { return !this.catalogLoaded || !Object.keys(this.serviceMeta).length || !!this.serviceMeta[doc?.key]; },
+                        // Only what the server's catalogue offers is listed: a document
+                        // known only to this site's config used to be listed, and
+                        // picking it silently disabled Continue (parity check, 2026-10-26).
+                        offered(doc) { return this.catalogLoaded && !this.catalogFailed && !!this.serviceMeta[doc?.key]; },
+                        canFile(doc) { return this.offered(doc); },
                         // A fee assessed on a declared amount (capital, income,
                         // gross receipts, project cost) needs that amount at
                         // filing: the server refuses the request without it
@@ -780,9 +805,9 @@
                         search: '',
                         get myBarangay() { return this.$store.citizenSession.account?.barangay ?? null; },
                         get myBarangayInfo() { return this.barangayCatalog[this.myBarangay] ?? null; },
-                        get myBarangayDocs() { return this.docs.map((d, i) => ({ ...d, i })).filter(d => d.barangay === this.myBarangay); },
+                        get myBarangayDocs() { return this.docs.map((d, i) => ({ ...d, i })).filter(d => d.barangay === this.myBarangay && this.offered(d)); },
                         get selectedDocBarangayInfo() { return this.barangayCatalog[this.docs[this.selectedDoc]?.barangay] ?? null; },
-                        get municipalDocs() { return this.docs.map((d, i) => ({ ...d, i })).filter(d => !d.barangay); },
+                        get municipalDocs() { return this.docs.map((d, i) => ({ ...d, i })).filter(d => !d.barangay && this.offered(d)); },
                         get filteredMyBarangayDocs() { return this.myBarangayDocs.filter(d => d.name.toLowerCase().includes(this.search.toLowerCase())); },
                         get filteredMunicipalDocs() { return this.municipalDocs.filter(d => d.name.toLowerCase().includes(this.search.toLowerCase())); },
                         get municipalCategories() {
@@ -804,6 +829,7 @@
                             this.otherPurposeText = {};
                             (this.docs[i]?.fields || []).forEach(f => {
                                 if (f.type === 'checkbox-group') { this.formData[f.key] = []; }
+                                else if (f.type === 'table') { this.formData[f.key] = []; }
                                 else { this.formData[f.key] = f.default || ''; }
                             });
                             Object.entries(window.profileDefaults(this.docs[i]?.fields, this.$store.citizenSession.account)).forEach(([k, v]) => {
@@ -838,12 +864,13 @@
                             if (!rule) return true;
                             return String(this.formData[rule.field] ?? '').includes(rule.contains);
                         },
-                        // Only what is on the screen can be required: a question the
-                        // page does not draw (a table) or that is hidden never blocks
-                        // Continue (2026-10-23: a required Long answer had no box).
+                        // Only what is on the screen can be required: a question that
+                        // is hidden never blocks Continue (2026-10-23: a required Long
+                        // answer had no box). A table is drawn and sent since
+                        // 2026-10-26, as on Tulong: a required one needs a row.
                         missingRequired() {
                             return (this.docs[this.selectedDoc]?.fields || []).filter((f) => {
-                                if (!f.required || f.type === 'table' || f.type === 'derived_age' || !this.fieldShown(f)) return false;
+                                if (!f.required || f.type === 'derived_age' || !this.fieldShown(f)) return false;
                                 const v = this.formData[f.key];
                                 return Array.isArray(v) ? v.length === 0 : String(v ?? '').trim() === '';
                             }).map((f) => f.label);
@@ -895,6 +922,13 @@
                             const i = list.indexOf(option);
                             if (i === -1) { list.push(option); } else { list.splice(i, 1); }
                             this.formData[fieldKey] = list;
+                        },
+                        // A row of a table question (the form builder's Table), as on Tulong.
+                        addTableRow(f) {
+                            if (!Array.isArray(this.formData[f.key])) this.formData[f.key] = [];
+                            const row = {};
+                            (f.columns || []).forEach(c => { row[c.key] = ''; });
+                            this.formData[f.key].push(row);
                         },
                         computeAge(dateStr) {
                             if (!dateStr) return null;
@@ -1045,8 +1079,19 @@
                                 </div>
                             </div>
 
+                            {{-- The list is the server's catalogue, so it waits for it
+                                 (parity check, 2026-10-26). --}}
+                            <div x-show="!catalogLoaded" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3" data-dokyu-catalog-loading>
+                                <x-ui.skeleton class="h-20" /><x-ui.skeleton class="h-20 opacity-80" /><x-ui.skeleton class="h-20 opacity-60" />
+                            </div>
+                            <div x-show="catalogLoaded && catalogFailed" x-cloak class="flex flex-col items-center text-center py-10 px-4 rounded-2xl bg-white border border-dashed border-rose-200" data-dokyu-catalog-failed>
+                                <span class="w-11 h-11 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-2.5"><i data-lucide="circle-alert" class="w-5 h-5"></i></span>
+                                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Hindi mai-load ang listahan ng mga dokumento." en="Could not load the list of documents." /></p>
+                                <button type="button" @click="loadCatalog()" class="mt-2 text-xs font-semibold text-brand-600 hover:underline"><x-ui.t fil="Subukang muli" en="Try again" /></button>
+                            </div>
+
                             <!-- My Barangay -->
-                            <div x-show="catalogTab === 'barangay'">
+                            <div x-show="catalogTab === 'barangay' && catalogLoaded && !catalogFailed">
                                 <template x-if="myBarangayInfo">
                                     <div class="space-y-4">
                                         <div class="flex items-center gap-3.5 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] px-4 py-3.5">
@@ -1097,7 +1142,7 @@
                             </div>
 
                             <!-- Municipal -->
-                            <div x-show="catalogTab === 'municipal'" x-cloak>
+                            <div x-show="catalogTab === 'municipal' && catalogLoaded && !catalogFailed" x-cloak>
                                 <!-- Category grid (shown first, or when searching) -->
                                 <template x-if="!selectedCategory || search">
                                     <div>
@@ -1276,6 +1321,65 @@
                                         </div>
                                     </template>
                                 </div>
+
+                                {{-- Table questions (the form builder's Table), drawn and sent as on
+                                     Tulong. They were neither, so a required one could never be
+                                     answered (parity check, 2026-10-26). --}}
+                                <template x-for="f in (docs[selectedDoc]?.fields || []).filter(f => f.type === 'table')" :key="f.key">
+                                    <div class="mt-5" x-show="fieldShown(f)" data-dokyu-table-field>
+                                        <div class="flex items-center justify-between mb-2.5">
+                                            <div>
+                                                <p class="text-sm font-semibold text-ink" x-text="f.label + (f.required ? ' *' : '')"></p>
+                                                <p class="text-xs text-ink-muted mt-0.5"><x-ui.t fil="Magdagdag ng isang hanay para sa bawat isa." en="Add a row for each one." /></p>
+                                            </div>
+                                            <span class="text-[11px] text-ink-muted shrink-0" x-text="(formData[f.key] || []).length + ' ' + ($store.lang.current === 'en' ? 'added' : 'nadagdag')"></span>
+                                        </div>
+                                        <div class="space-y-2.5">
+                                            <template x-for="(row, ri) in (formData[f.key] || [])" :key="ri">
+                                                <div class="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+                                                    <div class="flex items-center justify-between mb-3">
+                                                        <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-700 bg-brand-100/70 rounded-full pl-1.5 pr-2.5 py-1">
+                                                            <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3"></i>
+                                                            <span x-text="row[(f.columns || [])[0]?.key] || ((f.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
+                                                        </span>
+                                                        <button aria-label="Remove" type="button" @click="formData[f.key].splice(ri, 1)" class="text-ink-faint hover:text-rose-500 transition-colors">
+                                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                        <template x-for="col in (f.columns || [])" :key="col.key">
+                                                            <div>
+                                                                <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
+                                                                <template x-if="col.options">
+                                                                    <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                                                                        <option value="">—</option>
+                                                                        <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
+                                                                    </select>
+                                                                </template>
+                                                                <template x-if="!col.options">
+                                                                    <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                            <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[f.key] || []).length === 0">
+                                                <span class="w-9 h-9 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i :data-lucide="f.rowIcon || 'list'" class="w-4 h-4"></i></span>
+                                                <p class="text-xs text-ink-muted"><x-ui.t fil="Wala pang idinagdag." en="Nothing added yet." /></p>
+                                            </div>
+
+                                            <button
+                                                type="button" @click="addTableRow(f)"
+                                                class="w-full flex items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-ink-muted hover:text-brand-600 py-2.5 transition-all duration-[160ms] ease-standard"
+                                            >
+                                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                                <span x-text="($store.lang.current === 'en' ? 'Add ' : 'Magdagdag ng ') + (f.rowLabel || 'Entry')"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
                                 <p class="text-[11px] text-ink-muted mt-3" x-show="docs[selectedDoc]?.validity" x-text="docs[selectedDoc]?.validity"></p>
                             </div>
 
@@ -1469,6 +1573,36 @@
                                     />
                                 </template>
                             </div>
+
+                            {{-- The rows of each table question, which the preview has no place for (2026-10-26). --}}
+                            <template x-for="f in (docs[selectedDoc]?.fields || []).filter(f => f.type === 'table')" :key="f.key">
+                                <div class="mb-5" x-show="fieldShown(f) && (formData[f.key] || []).length">
+                                    <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                        <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3 text-brand-400"></i>
+                                        <span x-text="f.label"></span>
+                                    </p>
+                                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                                        <table class="w-full text-xs">
+                                            <thead>
+                                                <tr class="bg-brand-50/60 border-b border-slate-200">
+                                                    <template x-for="col in (f.columns || [])" :key="col.key">
+                                                        <th class="px-2.5 py-2 text-left font-semibold text-brand-700 whitespace-nowrap" x-text="col.label"></th>
+                                                    </template>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-brand-600/[.08]">
+                                                <template x-for="(row, ri) in (formData[f.key] || [])" :key="ri">
+                                                    <tr :class="ri % 2 === 1 && 'bg-slate-50/60'">
+                                                        <template x-for="col in (f.columns || [])" :key="col.key">
+                                                            <td class="px-2.5 py-2 text-slate-700 whitespace-nowrap" x-text="row[col.key] || '—'"></td>
+                                                        </template>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </template>
 
                             <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2"><x-ui.t fil="Mga Nakakabit na Requirement" en="Attached Requirements" /></p>
                             <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 mb-5">

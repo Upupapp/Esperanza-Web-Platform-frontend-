@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ph.gov.esperanza.esperanza_mobile",
+      "sha256_cert_fingerprints": [
+        "64:54:A1:73:13:DF:8C:F2:91:E1:4B:C6:93:3B:E7:3C:72:85:58:78:5C:93:E6:45:EE:84:BA:CA:EB:79:03:F6"
+      ]
+    }
+  }
+]

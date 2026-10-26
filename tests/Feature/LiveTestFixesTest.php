@@ -300,8 +300,9 @@ class LiveTestFixesTest extends TestCase
             }
         }
         $dokyu = $this->source('resources/views/citizen/document-requests.blade.php');
-        // A required question that is hidden, a table, or worked out is never asked for.
-        $this->assertStringContainsString("if (!f.required || f.type === 'table' || f.type === 'derived_age' || !this.fieldShown(f)) return false;", $dokyu);
+        // A required question that is hidden or worked out is never asked for.
+        // A table is drawn on Dokyu since 2026-10-26, so a required one is asked for.
+        $this->assertStringContainsString("if (!f.required || f.type === 'derived_age' || !this.fieldShown(f)) return false;", $dokyu);
         $this->assertStringContainsString('for (const f of (doc?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];', $dokyu);
     }
 }
