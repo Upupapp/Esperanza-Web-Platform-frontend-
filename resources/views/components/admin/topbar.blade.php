@@ -13,11 +13,12 @@
             ['en' => 'Tulong — Assistance Requests', 'icon' => 'hand-heart', 'href' => route('admin.assistance-requests'), 'module' => 'tulong'],
             ['en' => 'Sakuna — Disaster Management', 'icon' => 'shield-alert', 'href' => route('admin.sakuna'), 'module' => 'sakuna'],
             ['en' => 'Payments', 'icon' => 'receipt', 'href' => route('admin.payments'), 'module' => 'payments'],
-            ['en' => 'Balita — News, Events, Directory', 'icon' => 'megaphone', 'href' => route('admin.communications'), 'module' => 'communications'],
+            ['en' => 'Balita — News, Events, Blotter', 'icon' => 'megaphone', 'href' => route('admin.communications'), 'module' => 'communications'],
             ['en' => 'Reports & Analytics', 'icon' => 'file-chart-column', 'href' => route('admin.reports'), 'module' => 'reports'],
             ['en' => 'User Management', 'icon' => 'user-cog', 'href' => route('admin.users'), 'module' => 'user_management'],
             ['en' => 'Internal Forms', 'icon' => 'clipboard-list', 'href' => route('admin.internal-forms')],
             ['en' => 'Settings', 'icon' => 'settings', 'href' => route('admin.settings')],
+            ['en' => 'Direktoryo — Offices and Barangays', 'icon' => 'book-user', 'href' => route('admin.settings.directory')],
             ['en' => 'Audit Logs', 'icon' => 'scroll-text', 'href' => route('admin.audit-logs')],
         ],
         'routes' => [
@@ -137,7 +138,8 @@
                 <a href="#" @click.prevent="open = false; $dispatch('open-my-profile')" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-ink-muted"></i>My Profile
                 </a>
-                <a href="{{ route('admin.settings') }}" x-show="$store.session.can('settings')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
+                <a :href="$store.session.can('settings') ? '{{ route('admin.settings') }}' : '{{ route('admin.settings.directory') }}'" href="{{ route('admin.settings') }}"
+                   x-show="$store.session.can('settings') || $store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i>Settings
                 </a>
                 <div class="border-t border-brand-600/10 my-1.5"></div>

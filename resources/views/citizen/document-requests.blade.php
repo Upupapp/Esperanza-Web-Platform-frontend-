@@ -36,7 +36,11 @@
             'level' => $md['level'],
             'fee' => $md['fee'],
             'days' => $md['days'],
-            'requirements' => $md['requirements'],
+            // A requirement may carry a condition (showIf, the Solo Parent
+            // ID's category documents): the list shows text, requirementRules
+            // keeps each condition (2026-10-26).
+            'requirements' => array_values(array_map(fn ($r) => is_array($r) ? ($r['label'] ?? '') : $r, $md['requirements'])),
+            'requirementRules' => array_values(array_map(fn ($r) => is_array($r) ? ['label' => $r['label'] ?? '', 'showIf' => $r['showIf'] ?? null] : ['label' => $r, 'showIf' => null], $md['requirements'])),
             'process' => $md['process'],
             'fields' => $md['fields'],
             'certTitle' => $md['title'],
@@ -835,6 +839,7 @@
                             Object.entries(window.profileDefaults(this.docs[i]?.fields, this.$store.citizenSession.account)).forEach(([k, v]) => {
                                 if (this.formData[k] === '') this.formData[k] = v;
                             });
+                            window.prefillFamilyTables(this.docs[i]?.fields, this.formData);
                             this.stepError = '';
                             this.stepWarning = '';
                             this.attachWarned = false;
@@ -860,9 +865,16 @@
                         // A question shown only when another answer contains a word
                         // (the form builder's show-if), as on Tulong and the app.
                         fieldShown(f) {
-                            const rule = f?.showIf;
-                            if (!rule) return true;
-                            return String(this.formData[rule.field] ?? '').includes(rule.contains);
+                            return window.showIfMet(f?.showIf, this.formData);
+                        },
+                        // The requirements this application owes: one whose showIf
+                        // does not match the answers is not asked (the Solo Parent
+                        // ID's documents follow its category, 2026-10-26). Each keeps
+                        // its place in the full list, which keys the attachments.
+                        get shownReqs() {
+                            const d = this.docs[this.selectedDoc];
+                            const rules = d?.requirementRules || window.requirementRules(d?.requirements);
+                            return rules.map((r, i) => ({ label: r.label, req: r.label, i })).filter((r) => window.showIfMet(rules[r.i].showIf, this.formData));
                         },
                         // Only what is on the screen can be required: a question that
                         // is hidden never blocks Continue (2026-10-23: a required Long
@@ -898,7 +910,7 @@
                                 }
                                 // Names only what the resident owes: a step the office
                                 // does, or a document marked if applicable, is not missing.
-                                const owed = (this.docs[this.selectedDoc]?.requirements || []).filter((q, i) => reqKind(q) === 'required' && !this.attachments[i]);
+                                const owed = this.shownReqs.filter((r) => reqKind(r.label) === 'required' && !this.attachments[r.i]).map((r) => r.label);
                                 if (owed.length && !this.attachWarned) {
                                     this.attachWarned = true;
                                     this.stepWarning = en
@@ -991,10 +1003,12 @@
                             const serverReqs = created.requirements || [];
                             const failed = [];
                             const names = doc.requirements || [];
+                            const shown = new Set(this.shownReqs.map((r) => r.i));
+                            const conditional = (doc.requirementRules || []).some((r) => r.showIf);
                             for (const [i, att] of Object.entries(this.attachments)) {
-                                if (!att) continue;
+                                if (!att || !shown.has(Number(i))) continue;
                                 const label = names[i];
-                                const target = serverReqs.find((q) => q.label === label) || serverReqs[Number(i)];
+                                const target = serverReqs.find((q) => q.label === label) || (conditional ? null : serverReqs[Number(i)]);
                                 if (!target) { failed.push(label); continue; }
                                 try {
                                     const url = '/citizen/requests/' + encodeURIComponent(created.ref) + '/requirements/' + encodeURIComponent(target.key) + '/attach';
@@ -1246,7 +1260,7 @@
                                         <div class="space-y-1.5 text-xs border-t border-brand-100/70 pt-3">
                                             <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Bayarin" en="Fee" /></span><span class="font-semibold text-ink" x-text="docs[selectedDoc]?.fee"></span></div>
                                             <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Oras ng Pagproseso" en="Processing Time" /></span><span class="font-medium text-slate-600" x-text="docs[selectedDoc]?.days"></span></div>
-                                            <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length + ' attached'"></span></div>
+                                            <div class="flex items-center justify-between"><span class="text-ink-muted"><x-ui.t fil="Requirements" en="Requirements" /></span><span class="font-medium text-slate-600" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + shownReqs.filter(r => reqKind(r.label) !== 'office').length + ' attached'"></span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1298,7 +1312,7 @@
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                     <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                         <option value="">—</option>
-                                                        <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
+                                                        <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt" :selected="formData[f.key] === opt"></option></template>
                                                     </select>
                                                 </div>
                                             </template>
@@ -1353,7 +1367,7 @@
                                                                 <template x-if="col.options">
                                                                     <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                                                                         <option value="">—</option>
-                                                                        <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
+                                                                        <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt" :selected="row[col.key] === opt"></option></template>
                                                                     </select>
                                                                 </template>
                                                                 <template x-if="!col.options">
@@ -1385,14 +1399,14 @@
 
                             <div class="flex items-center justify-between mb-1">
                                 <p class="text-sm font-semibold text-ink"><x-ui.t fil="Mga Requirement" en="Requirements" /></p>
-                                <p class="text-[11px] font-medium text-ink-muted" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length"></p>
+                                <p class="text-[11px] font-medium text-ink-muted" x-text="Object.keys(attachments).filter(k => attachments[k]).length + ' / ' + shownReqs.filter(r => reqKind(r.label) !== 'office').length"></p>
                             </div>
                             <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
-                                <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + (((docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length ? Math.min(1, Object.keys(attachments).filter(k => attachments[k]).length / (docs[selectedDoc]?.requirements || []).filter(q => reqKind(q) !== 'office').length) : 0) * 100) + '%'"></div>
+                                <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + ((shownReqs.filter(r => reqKind(r.label) !== 'office').length ? Math.min(1, Object.keys(attachments).filter(k => attachments[k]).length / shownReqs.filter(r => reqKind(r.label) !== 'office').length) : 0) * 100) + '%'"></div>
                             </div>
                             <p class="text-xs text-ink-muted mb-3"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                <template x-for="(req, i) in docs[selectedDoc]?.requirements || []" :key="i">
+                                <template x-for="({ req, i }) in shownReqs" :key="i">
                                     <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
                                         <div class="flex items-center justify-between gap-3">
                                             <p class="text-xs text-slate-600 flex-1"><span x-text="req"></span> <span class="ml-1 inline-block rounded px-1.5 py-px text-[10px] font-semibold align-middle" :class="reqKindClass(req)" x-text="reqKindLabel(req)"></span></p>
@@ -1606,7 +1620,7 @@
 
                             <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2"><x-ui.t fil="Mga Nakakabit na Requirement" en="Attached Requirements" /></p>
                             <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 mb-5">
-                                <template x-for="(req, i) in docs[selectedDoc]?.requirements || []" :key="i">
+                                <template x-for="({ req, i }) in shownReqs" :key="i">
                                     <li class="flex items-center gap-2 text-xs">
                                         <i data-lucide="circle-check" class="w-3.5 h-3.5 shrink-0" :class="attachments[i] ? 'text-emerald-500' : 'text-ink-faint'"></i>
                                         <span :class="attachments[i] ? 'text-slate-600' : 'text-ink-muted'" class="truncate" x-text="req"></span>

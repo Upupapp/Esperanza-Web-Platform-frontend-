@@ -1931,6 +1931,12 @@
                 r.overdue = 'overdue' in d ? !!d.overdue : r.overdue;
                 // Control numbers, codes and QR for the printed copy (scope round 2026-10-15).
                 r.issued_documents = d.issued_documents || [];
+                // A Senior Citizen, PWD or Solo Parent ID: the number its office
+                // writes, asked before it is issued; and the IDs the resident
+                // already holds (MSWDO forms, 2026-10-26).
+                r.idNumberSpec = d.id_number || null;
+                r.sectorIds = d.applicant_sector_ids || [];
+                if (r._idNumber === undefined) r._idNumber = '';
                 // The service's steps and which are done (2026-10-17).
                 r.workflow = d.workflow || null;
                 r.payment = d.payment || null;
@@ -2282,6 +2288,18 @@
                     let res;
                     if (['Under Verification', 'Under Review', 'Resubmitted'].includes(r.status)) {
                         res = await $api.post(this.apiBase(r.ref) + '/approve');
+                    } else if (r.status === 'Approved' && r.idNumberSpec) {
+                        // An ID: issued first, so its number is checked before the
+                        // request moves on (MSWDO forms, 2026-10-26).
+                        const number = String(r._idNumber || '').trim();
+                        if (!number) {
+                            this.$dispatch('toast', { message: 'Write the ' + r.idNumberSpec.label + ' first.', variant: 'error' });
+                            return;
+                        }
+                        const issued = await $api.post('/admin/requests/' + encodeURIComponent(r.ref) + '/issue', { id_number: number });
+                        r.issued = issued.data;
+                        res = await $api.post(this.apiBase(r.ref) + '/mark-to-release');
+                        res = await $api.get(this.apiBase(r.ref)).catch(() => res);
                     } else if (r.status === 'Approved') {
                         res = await $api.post(this.apiBase(r.ref) + '/mark-to-release');
                         try {
@@ -2853,6 +2871,29 @@
                                     <p class="text-xs text-slate-600 mt-1 leading-relaxed" x-text="processAdvice.message"></p>
                                 </div>
                             </div>
+                        </div>
+
+                        {{-- The number written on a Senior Citizen, PWD or Solo Parent ID,
+                             recorded on the resident when it is issued (MSWDO forms,
+                             2026-10-26); and the IDs the resident already holds. --}}
+                        <div class="rounded-2xl border border-brand-200 bg-brand-50/30 p-4 mt-3" x-show="selected.idNumberSpec && selected.status === 'Approved'" x-cloak>
+                            <label for="id-number" class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted flex items-center gap-1.5">
+                                <i data-lucide="id-card" class="w-3.5 h-3.5"></i> <span x-text="selected.idNumberSpec?.label"></span>
+                            </label>
+                            <input id="id-number" type="text" x-model="selected._idNumber" maxlength="40" :placeholder="selected.idNumberSpec?.pattern ? 'e.g. 05-4107-001-0000123' : 'The number on the card'"
+                                class="mt-2 w-full rounded-xl border-0 surface-pressed py-2 px-3 text-sm font-mono text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                            <p class="text-[11px] text-ink-muted mt-1.5">Written on the card and kept on the resident's record and ID Wallet<span x-text="selected.idNumberSpec?.validity_months ? '; good for ' + selected.idNumberSpec.validity_months + ' months' : '; it does not expire'"></span>.</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="(selected.sectorIds || []).length" x-cloak>
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted flex items-center gap-1.5"><i data-lucide="wallet-cards" class="w-3.5 h-3.5"></i> IDs on record</p>
+                            <ul class="mt-2 space-y-1.5">
+                                <template x-for="sid in (selected.sectorIds || [])" :key="sid.id_number">
+                                    <li class="flex items-center justify-between gap-2 text-xs">
+                                        <span class="text-ink"><span class="font-semibold" x-text="sid.name"></span> <span class="font-mono text-ink-muted" x-text="sid.id_number"></span></span>
+                                        <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" :class="sid.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'" x-text="sid.status === 'active' ? (sid.valid_until ? 'Until ' + sid.valid_until : 'Active') : (sid.status === 'expired' ? 'Expired ' + sid.valid_until : 'Revoked')"></span>
+                                    </li>
+                                </template>
+                            </ul>
                         </div>
 
                         {{-- Proof of Release — a photo showing the citizen actually

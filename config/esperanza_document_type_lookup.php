@@ -73,4 +73,5 @@ return [
     'Barangay Event / Special Permit' => ['docKey' => 'brgy_event_permit', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY PERMIT', 'certSubtitle' => 'Event / Special Occasion Permit', 'nameField' => 'organizer_name'],
     'Certificate of Death (Certified Copy / Registration)' => ['docKey' => 'mcro_death', 'previewType' => 'municipal_request', 'certTitle' => 'REQUEST FOR CERTIFICATE OF DEATH'],
     'PWD ID (Person with Disability Registration)' => ['docKey' => 'msw_pwd_id', 'previewType' => 'municipal_request', 'certTitle' => 'PHILIPPINE REGISTRY FOR PERSONS WITH DISABILITY — APPLICATION FORM', 'nameField' => 'full_name'],
+    'Solo Parent ID (SPIC)' => ['docKey' => 'msw_solo_parent_id', 'previewType' => 'municipal_request', 'certTitle' => 'APPLICATION FORM FOR SOLO PARENT', 'certSubtitle' => 'Annex B (2023) — Solo Parent Identification Card', 'nameField' => 'full_name'],
 ];

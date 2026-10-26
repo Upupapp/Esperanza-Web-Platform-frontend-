@@ -50,8 +50,9 @@ class FullQaRunFixesTest extends TestCase
         $all = $view.$this->source('resources/views/admin/communications/balita.blade.php')
             .$this->source('resources/views/admin/communications/banners.blade.php')
             .$this->source('resources/views/admin/communications/occasions.blade.php');
-        $this->assertSame(7, substr_count($all, 'x-init="$store.session.whenReady().then(() => tabAllowed('), 'each of the 6 editorial tabs (Banners & Occasions has two views) loads only when permitted');
-        $this->assertSame(7, substr_count($view, '<button x-show="tabAllowed('), 'each of the 7 tab buttons shows only when permitted');
+        // Offices and Barangays are Settings > Direktoryo since 2026-10-21.
+        $this->assertSame(5, substr_count($all, 'x-init="$store.session.whenReady().then(() => tabAllowed('), 'each of the 4 editorial tabs (Banners & Occasions has two views) loads only when permitted');
+        $this->assertSame(5, substr_count($view, '<button x-show="tabAllowed('), 'each of the 5 tab buttons shows only when permitted');
         // The Feedback desk (scope round 2026-10-15) loads itself, and only
         // for an account holding comm_feedback view.
         $desk = $this->source('resources/js/scope-admin-records.js');

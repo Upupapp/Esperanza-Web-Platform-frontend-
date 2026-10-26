@@ -168,7 +168,10 @@ class CitizenAppParityTest extends TestCase
 
         $this->assertStringContainsString('if (sv.fee && sv.fee.display) entry.fee = sv.fee.display;', $js);
         $this->assertStringContainsString('if (sv.days) entry.days = sv.days;', $js);
-        $this->assertStringContainsString('entry.requirements = sv.requirements.map(itemText).filter(Boolean);', $js);
+        // Since 2026-10-26 a requirement may carry a condition (showIf):
+        // requirement_rules keeps it, the list stays text.
+        $this->assertStringContainsString('entry.requirementRules = window.requirementRules(Array.isArray(sv.requirement_rules) ? sv.requirement_rules : sv.requirements);', $js);
+        $this->assertStringContainsString('entry.requirements = entry.requirementRules.map((r) => r.label);', $js);
         $this->assertStringContainsString('if (steps.length) entry.process = steps;', $js);
         $this->assertStringContainsString('window.applyServiceCatalog = applyServiceCatalog;', $js);
 
@@ -185,7 +188,9 @@ class CitizenAppParityTest extends TestCase
         // Filing still sends the same service key, and attaches each file to the
         // requirement the server made for that line (by label, then position).
         $this->assertStringContainsString("\$api.post('/citizen/requests', { service_key: doc.key, form_data: formData", $dokyu);
-        $this->assertStringContainsString('const target = serverReqs.find((q) => q.label === label) || serverReqs[Number(i)];', $dokyu);
+        // A conditional list skips what the answers do not owe, so its rows are
+        // matched by label only (the server makes no row for a skipped one).
+        $this->assertStringContainsString('const target = serverReqs.find((q) => q.label === label) || (conditional ? null : serverReqs[Number(i)]);', $dokyu);
     }
 
     public function test_a8_documents_uploaded_lists_every_attached_file(): void

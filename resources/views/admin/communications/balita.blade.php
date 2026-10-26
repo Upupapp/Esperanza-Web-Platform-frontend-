@@ -147,6 +147,7 @@
                     {{-- An approved post with a time waits for it; the server puts it out then. --}}
                     <p x-show="isScheduled(a)" class="flex-1 h-10 inline-flex items-center justify-center gap-2 px-2 text-sm font-medium text-sky-800 text-center"><i data-lucide="calendar-clock" class="w-[18px] h-[18px] shrink-0"></i><span x-text="goesLiveText(a)"></span></p>
                     <button type="button" x-show="canMove(a, 'Archived')" @click="quick(a, 'Archived', 'Archived. Residents no longer see it.')" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-ink-body hover:bg-slate-100 whitespace-nowrap"><i data-lucide="archive" class="w-[18px] h-[18px]"></i>Archive</button>
+                    <button type="button" x-show="canDelete(a)" @click="deletePost(a)" :disabled="processing" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50 whitespace-nowrap"><i data-lucide="trash-2" class="w-[18px] h-[18px]"></i>Delete</button>
                     <button type="button" x-show="can('create')" @click="useAsTemplate(a)" :disabled="processing" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-ink-body hover:bg-slate-100 disabled:opacity-50 whitespace-nowrap"><i data-lucide="copy" class="w-[18px] h-[18px]"></i>Use as template</button>
                 </div>
             </article>

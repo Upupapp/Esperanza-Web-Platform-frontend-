@@ -191,7 +191,16 @@
                             <template x-for="(entry, i) in rules.{{ $listKey }}" :key="'{{ $listKey }}-' + i">
                                 <li class="flex items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-1.5 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-100">
                                     <span class="w-5 shrink-0 text-right text-[11px] font-semibold text-ink-muted" x-text="(i + 1) + '.'"></span>
-                                    <input type="text" x-model="rules.{{ $listKey }}[i]" :disabled="rulesLocked" :aria-label="'{{ ucfirst($listNoun) }} ' + (i + 1)" class="flex-1 min-w-0 bg-transparent border-0 p-0 py-1 text-sm text-slate-700 focus:outline-none focus:ring-0 disabled:opacity-70">
+                                    <template x-if="typeof entry !== 'object' || entry === null">
+                                        <input type="text" x-model="rules.{{ $listKey }}[i]" :disabled="rulesLocked" :aria-label="'{{ ucfirst($listNoun) }} ' + (i + 1)" class="flex-1 min-w-0 bg-transparent border-0 p-0 py-1 text-sm text-slate-700 focus:outline-none focus:ring-0 disabled:opacity-70">
+                                    </template>
+                                    {{-- Asked only for some answers: the wording edits, the condition shows. --}}
+                                    <template x-if="entry && typeof entry === 'object'">
+                                        <span class="flex-1 min-w-0" data-conditional-requirement>
+                                            <input type="text" x-model="entry.label" :disabled="rulesLocked" :aria-label="'{{ ucfirst($listNoun) }} ' + (i + 1)" class="w-full bg-transparent border-0 p-0 py-1 text-sm text-slate-700 focus:outline-none focus:ring-0 disabled:opacity-70">
+                                            <span class="block text-[11px] text-brand-700" x-text="reqCondition(entry)"></span>
+                                        </span>
+                                    </template>
                                     <span class="flex items-center shrink-0" x-show="!rulesLocked">
                                         <button type="button" @click="move('{{ $listKey }}', i, -1)" :disabled="i === 0" :aria-label="'Move {{ $listNoun }} ' + (i + 1) + ' up'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
                                         <button type="button" @click="move('{{ $listKey }}', i, 1)" :disabled="i === rules.{{ $listKey }}.length - 1" :aria-label="'Move {{ $listNoun }} ' + (i + 1) + ' down'" class="{{ $ui['iconBtn'] }}"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>

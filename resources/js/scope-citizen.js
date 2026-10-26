@@ -117,7 +117,10 @@ function applyServiceCatalog(entries, services, addEntry = null) {
         if (sv.fee && sv.fee.display) entry.fee = sv.fee.display;
         if (sv.days) entry.days = sv.days;
         if (Array.isArray(sv.requirements) && sv.version !== null && sv.version !== undefined) {
-            entry.requirements = sv.requirements.map(itemText).filter(Boolean);
+            // requirement_rules carries each requirement's condition (showIf);
+            // requirements stays plain text for older clients (2026-10-26).
+            entry.requirementRules = window.requirementRules(Array.isArray(sv.requirement_rules) ? sv.requirement_rules : sv.requirements);
+            entry.requirements = entry.requirementRules.map((r) => r.label);
         }
         const steps = (sv.process || []).map(itemText).filter(Boolean);
         if (steps.length) entry.process = steps;
@@ -138,7 +141,8 @@ function applyServiceCatalog(entries, services, addEntry = null) {
             const entry = addEntry(sv);
             if (!entry) return;
             entry.fields = JSON.parse(JSON.stringify(sv.fields || []));
-            entry.requirements = (sv.requirements || []).map(itemText).filter(Boolean);
+            entry.requirementRules = window.requirementRules(Array.isArray(sv.requirement_rules) ? sv.requirement_rules : (sv.requirements || []));
+            entry.requirements = entry.requirementRules.map((r) => r.label);
             entry.process = (sv.process || []).map(itemText).filter(Boolean);
             entry.workflow = Array.isArray(sv.workflow) ? sv.workflow : null;
             entries.push(entry);

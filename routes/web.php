@@ -72,8 +72,10 @@ Route::view('/admin/constituents/data-quality', 'admin.constituents', ['tab' => 
 // Papeles — citizen document repository, browsed Barangay -> Individual -> Documents.
 Route::view('/admin/papeles', 'admin.papeles')->name('admin.papeles');
 
-// Communications — Balita (announcements) and Directory merged into one page with tabs.
+// Communications — Balita (announcements, banners, events, blotter, feedback) in one page with tabs.
 Route::view('/admin/communications', 'admin.communications', ['tab' => 'balita'])->name('admin.communications');
+// The directory (offices and barangays) is Settings > Direktoryo (2026-10-21): the old address is
+// Balita's page, which sends it on (Settings' own scripts load only under /admin/settings).
 Route::view('/admin/communications/offices', 'admin.communications', ['tab' => 'offices'])->name('admin.directory');
 Route::view('/admin/communications/blotter', 'admin.communications', ['tab' => 'blotter'])->name('admin.communications.blotter');
 Route::view('/admin/communications/banners', 'admin.communications', ['tab' => 'banners'])->name('admin.communications.banners');
@@ -97,6 +99,7 @@ Route::view('/admin/internal-forms', 'admin.internal-forms', ['office' => 'hr'])
 // Settings — General, Notifications, Security, Branding, Integrations, Audit Logs as tabs.
 Route::view('/admin/settings', 'admin.settings', ['tab' => 'general'])->name('admin.settings');
 Route::view('/admin/settings/branding', 'admin.settings', ['tab' => 'branding'])->name('admin.branding');
+Route::view('/admin/settings/directory', 'admin.settings', ['tab' => 'directory'])->name('admin.settings.directory');
 Route::view('/admin/settings/audit-logs', 'admin.settings', ['tab' => 'audit-logs'])->name('admin.audit-logs');
 // Support tickets moved to Communications > Feedback (2026-10-15); the old
 // address still lands there.

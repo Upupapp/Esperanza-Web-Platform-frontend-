@@ -127,10 +127,16 @@
                     <tr class="hover:bg-white/60 transition-colors">
                         <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="d.ref"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="d.operation"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap font-medium text-ink-body" x-text="d.beneficiary"></td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="font-medium text-ink-body" x-text="d.beneficiary"></div>
+                            <div x-show="d.evacuee_ref" class="text-[11px] text-brand-600 font-mono" x-text="'FACED · ' + d.evacuee_ref"></div>
+                        </td>
                         <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="d.barangay"></td>
                         <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="d.item"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700" x-text="d.quantity"></td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700">
+                            <span x-text="d.quantity + (d.unit ? ' ' + d.unit : '')"></span>
+                            <div x-show="d.cost != null || d.provider" class="text-[11px] text-ink-muted" x-text="[d.cost != null ? '₱' + Number(d.cost).toLocaleString('en-PH') : null, d.provider].filter(Boolean).join(' · ')"></div>
+                        </td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap text-xs text-ink-muted" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
                         <td class="px-4 py-3 whitespace-nowrap text-right">
@@ -191,6 +197,15 @@
                 </datalist>
             </div>
             <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-evacuee">Evacuee Family (FACED card)</label>
+                <input id="dist-evacuee" type="text" x-model="distributionForm.evacuee_ref" list="relief-evacuee-suggestions" @change="pickReliefFamily()" placeholder="EVF-… — leave blank for a family not in a center"
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                <datalist id="relief-evacuee-suggestions">
+                    <template x-for="ev in evacueesList.filter(e => e.status === 'Processing')" :key="ev.ref"><option :value="ev.ref" x-text="ev.head_name + ' — ' + ev.barangay"></option></template>
+                </datalist>
+                <p class="text-[11px] text-ink-muted mt-1">Recorded on the family's FACED card, in its Family Assistance Record.</p>
+            </div>
+            <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-beneficiary">Beneficiary Name <span class="text-rose-500">*</span></label>
                 <input id="dist-beneficiary" type="text" x-model="distributionForm.beneficiary_name" placeholder="Household head or individual name"
                     class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
@@ -209,10 +224,27 @@
                 <input id="dist-item" type="text" x-model="distributionForm.item" placeholder="e.g. Family Food Pack"
                     class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
             </div>
-            <div class="sm:col-span-2">
+            <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-quantity">Quantity</label>
                 <input id="dist-quantity" type="number" min="1" x-model="distributionForm.quantity" placeholder="1"
                     class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+            </div>
+            <div>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-unit">Unit</label>
+                <input id="dist-unit" type="text" x-model="distributionForm.unit" list="relief-unit-suggestions" placeholder="e.g. pack"
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                <datalist id="relief-unit-suggestions"><option>pack</option><option>sack</option><option>kg</option><option>piece</option><option>kit</option><option>bottle</option><option>pesos</option></datalist>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-cost">Cost (₱)</label>
+                <input id="dist-cost" type="number" min="0" step="0.01" x-model="distributionForm.cost" placeholder="0.00"
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+            </div>
+            <div>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-provider">Provider</label>
+                <input id="dist-provider" type="text" x-model="distributionForm.provider" list="relief-provider-suggestions" placeholder="e.g. LGU, DSWD, NGO"
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                <datalist id="relief-provider-suggestions"><option>LGU</option><option>DSWD</option><option>Provincial Government</option><option>NGO</option><option>Private donor</option></datalist>
             </div>
         </div>
 

@@ -169,7 +169,7 @@ class LiveTestFixesTest extends TestCase
         $balita = $this->source('resources/views/admin/communications.blade.php');
         $this->assertStringContainsString("<x-layouts.admin :title=\"\$tab === 'feedback' ? 'Feedback' : 'Balita'\"", $balita);
         $this->assertStringNotContainsString('inGroup(', $balita);
-        foreach (['balita', 'banners', 'events', 'offices', 'barangays', 'blotter', 'feedback'] as $tab) {
+        foreach (['balita', 'banners', 'events', 'blotter', 'feedback'] as $tab) {
             $this->assertStringContainsString("<button x-show=\"tabAllowed('{$tab}')\" @click=\"go('{$tab}')\"", $balita, $tab);
         }
         $this->assertStringContainsString('<i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i>Settings', $this->source('resources/views/components/admin/topbar.blade.php'));

@@ -156,6 +156,29 @@
                     this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not record the decision.', variant: 'error' });
                 } finally { this.deciding = false; }
             },
+            // ERPAT & KALIPI: the officers, members and activities of each
+            // barangay's fathers' association, and the federation's meetings,
+            // read together from their forms (MSWDO forms, 2026-10-26). A view
+            // inside the MSWDO tab, not a sidebar entry of its own.
+            mswdView: 'forms',
+            assoc: null,
+            assocLoading: false,
+            assocFailed: false,
+            assocOpen: null,
+            get mayViewAssociations() { return this.$store.session.canPerm?.('tulong_erpat', 'view') ?? false; },
+            async showAssociations() {
+                this.mswdView = 'associations';
+                if (this.assoc || this.assocLoading) return;
+                this.assocLoading = true;
+                this.assocFailed = false;
+                try {
+                    const res = await $api.get('/admin/associations/erpat');
+                    this.assoc = res.data;
+                } catch { this.assocFailed = true; } finally {
+                    this.assocLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
+            },
             reset() { this.open = false; this.selectedForm = null; this.formData = {}; this.attachments = {}; this.doneSubmit = false; this.submitting = false; this.formStep = 1; },
             async submit() {
                 if (this.submitting) return;
@@ -205,12 +228,120 @@
                     ><i :data-lucide="o.icon" class="w-3.5 h-3.5"></i><span x-text="o.shortLabel"></span></button>
                 </template>
             </div>
-            <div class="relative">
+            <div x-show="officeKey === 'mswd' && mayViewAssociations" x-cloak class="flex items-center gap-1.5" data-mswd-views>
+                <button type="button" @click="mswdView = 'forms'" class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
+                    :class="mswdView === 'forms' ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-200 text-ink-muted hover:text-slate-700'">Forms</button>
+                <button type="button" @click="showAssociations()" class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors inline-flex items-center gap-1.5"
+                    :class="mswdView === 'associations' ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-200 text-ink-muted hover:text-slate-700'"><i data-lucide="users-round" class="w-3.5 h-3.5"></i> ERPAT &amp; KALIPI associations</button>
+            </div>
+            <div class="relative" x-show="!(officeKey === 'mswd' && mswdView === 'associations')">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                 <input aria-label="Search forms" type="text" x-model="search" placeholder="Search forms..." class="w-full max-w-sm pl-9 pr-3 py-2 text-xs rounded-2xl focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
             </div>
         </div>
 
+        <!-- ERPAT & KALIPI associations (MSWDO tab) -->
+        <div x-show="officeKey === 'mswd' && mswdView === 'associations'" x-cloak class="space-y-4 mb-5" data-associations>
+            <div x-show="assocLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-40 opacity-80" /></div>
+            <div x-show="assocFailed" x-cloak><x-ui.error-state messageExpr="'Could not load the associations.'" retryExpr="assoc = null; showAssociations()" :retryable="true" /></div>
+            <template x-if="assoc">
+                <div class="space-y-4">
+                    <p class="text-xs text-ink-muted">Read from the ERPAT forms already filed in Esperanza: the officers' list, each member's registration (Tulong), activity attendance, and the federation and BVAW Desk / KALIPI meetings.</p>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <x-ui.stat-card layout="compact" label="Barangays with officers" valueBind="assoc.totals.barangays_with_officers" icon="landmark" color="brand" />
+                        <x-ui.stat-card layout="compact" label="Registered members" valueBind="assoc.totals.members" icon="users-round" color="green" />
+                        <x-ui.stat-card layout="compact" label="Activities held" valueBind="assoc.totals.activities" icon="calendar-check" color="purple" />
+                        <x-ui.stat-card layout="compact" label="Federation meetings" valueBind="assoc.totals.meetings" icon="messages-square" color="orange" />
+                    </div>
+                    <x-ui.table>
+                        <thead>
+                            <tr class="bg-well/70">
+                                <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Barangay</th>
+                                <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">President</th>
+                                <th class="px-4 py-2.5 text-right text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Members</th>
+                                <th class="px-4 py-2.5 text-right text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Activities</th>
+                                <th class="px-4 py-2.5 text-right text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted"><span class="sr-only">Details</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-brand-600/[.08]">
+                            <template x-for="b in assoc.barangays" :key="b.barangay">
+                                <tr class="hover:bg-white/60 cursor-pointer" @click="assocOpen = assocOpen === b.barangay ? null : b.barangay">
+                                    <td class="px-4 py-2.5 font-medium text-ink-body" x-text="b.barangay"></td>
+                                    <td class="px-4 py-2.5" :class="b.officers ? 'text-ink-body' : 'text-ink-faint italic'" x-text="b.officers?.president || 'No officers listed yet'"></td>
+                                    <td class="px-4 py-2.5 text-right tabular-nums" x-text="b.members.length"></td>
+                                    <td class="px-4 py-2.5 text-right tabular-nums" x-text="b.activities.length"></td>
+                                    <td class="px-4 py-2.5 text-right"><i data-lucide="chevron-down" class="w-4 h-4 inline text-ink-muted transition-transform" :class="assocOpen === b.barangay && 'rotate-180'"></i></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </x-ui.table>
+                    <template x-for="b in assoc.barangays.filter(x => x.barangay === assocOpen)" :key="'open-' + b.barangay">
+                        <div class="surface-glass rounded-[26px] p-4 grid gap-4 md:grid-cols-3" data-association-detail>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[.07em] text-ink-muted mb-2" x-text="'Officers · ' + b.barangay"></p>
+                                <template x-if="b.officers">
+                                    <dl class="text-sm space-y-1">
+                                        <template x-for="[label, key] in [['President','president'],['Vice President','vice_president'],['Secretary','secretary'],['Treasurer','treasurer'],['Auditor','auditor']]" :key="key">
+                                            <div class="flex justify-between gap-2"><dt class="text-ink-muted" x-text="label"></dt><dd class="font-medium text-ink-body text-right" x-text="b.officers[key] || '—'"></dd></div>
+                                        </template>
+                                        <div x-show="b.officers.public_relations_officers.length" class="flex justify-between gap-2"><dt class="text-ink-muted">P.R.O.</dt><dd class="text-right" x-text="b.officers.public_relations_officers.join(', ')"></dd></div>
+                                        <div x-show="b.officers.peace_courting_officers.length" class="flex justify-between gap-2"><dt class="text-ink-muted">Peace courting</dt><dd class="text-right" x-text="b.officers.peace_courting_officers.join(', ')"></dd></div>
+                                        <p class="text-[11px] text-ink-muted pt-1" x-text="'From ' + b.officers.ref + ' · ' + (b.officers.submitted || '')"></p>
+                                    </dl>
+                                </template>
+                                <p x-show="!b.officers" class="text-xs text-ink-muted">File the "ERPAT Association Officers" form for this barangay.</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[.07em] text-ink-muted mb-2">Members</p>
+                                <ul class="text-sm space-y-1 max-h-56 overflow-y-auto">
+                                    <template x-for="m in b.members" :key="m.ref">
+                                        <li class="flex justify-between gap-2"><span class="text-ink-body" x-text="m.name"></span><span class="text-[11px] text-ink-muted" x-text="[m.occupation, m.status].filter(Boolean).join(' · ')"></span></li>
+                                    </template>
+                                </ul>
+                                <p x-show="!b.members.length" class="text-xs text-ink-muted">No ERPAT membership registrations from this barangay yet.</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[.07em] text-ink-muted mb-2">Activities</p>
+                                <ul class="text-sm space-y-1.5">
+                                    <template x-for="a in b.activities" :key="a.ref">
+                                        <li><p class="text-ink-body" x-text="a.activity || a.ref"></p><p class="text-[11px] text-ink-muted" x-text="[a.date, a.venue, a.attendees + ' attended'].filter(Boolean).join(' · ')"></p></li>
+                                    </template>
+                                </ul>
+                                <p x-show="!b.activities.length" class="text-xs text-ink-muted">No activity attendance filed yet.</p>
+                            </div>
+                        </div>
+                    </template>
+                    <div>
+                        <h3 class="text-sm font-semibold text-ink mb-2">Federation and BVAW Desk / KALIPI meetings</h3>
+                        <x-ui.table>
+                            <thead>
+                                <tr class="bg-well/70">
+                                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Meeting</th>
+                                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Date</th>
+                                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden sm:table-cell">Venue</th>
+                                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden md:table-cell">Next</th>
+                                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-brand-600/[.08]">
+                                <template x-for="m in assoc.meetings" :key="m.ref">
+                                    <tr>
+                                        <td class="px-4 py-2.5"><p class="text-ink-body" x-text="m.kind + (m.meeting_no ? ' #' + m.meeting_no : '')"></p><p class="text-[11px] font-mono text-ink-muted" x-text="m.ref"></p></td>
+                                        <td class="px-4 py-2.5" x-text="m.date || '—'"></td>
+                                        <td class="px-4 py-2.5 hidden sm:table-cell" x-text="m.venue || '—'"></td>
+                                        <td class="px-4 py-2.5 hidden md:table-cell" x-text="m.next || '—'"></td>
+                                        <td class="px-4 py-2.5"><x-ui.badge statusBind="m.status" /></td>
+                                    </tr>
+                                </template>
+                                <tr x-show="!assoc.meetings.length"><td colspan="5" class="px-4 py-6 text-center text-xs text-ink-muted">No meetings filed yet.</td></tr>
+                            </tbody>
+                        </x-ui.table>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="!(officeKey === 'mswd' && mswdView === 'associations')">
         <!-- Form cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-5">
             <template x-for="f in filteredForms" :key="f.key">
@@ -276,6 +407,7 @@
             <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600">No submissions in this view.</p>
         </div>
+        </div>{{-- /forms view --}}
         </div>
 
         <!-- Decide on the waiting step -->

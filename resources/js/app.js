@@ -372,6 +372,9 @@ function profileDefaults(fields, account) {
         if (months < 0 || (months === 0 && today.getDate() < dob.getDate())) years--;
         return years;
     })();
+    // The MSWDO forms name the same details their own way (the OSCA paper's
+    // "Marital Status", the PRPWD's "Residence Address"): those names are
+    // filled too (2026-10-26).
     const byKey = {
         requester_name: account.fullName,
         applicant_name: account.fullName,
@@ -380,16 +383,24 @@ function profileDefaults(fields, account) {
         age,
         purok: account.purok,
         address: account.address,
+        address_purok: [account.purok, account.barangay].filter(Boolean).join(', ') || account.address,
+        residence_address: account.address,
         date_of_birth: account.birthdate,
+        birthdate: account.birthdate,
         civil_status: account.civilStatus,
+        marital_status: account.civilStatus,
         sex: account.sex,
         occupation: account.occupation,
+        present_occupation: account.occupation,
+        mobile_no: account.mobile,
+        contact_number: account.mobile,
+        email: account.email,
     };
     const out = {};
     for (const field of fields || []) {
         const value = byKey[field.key];
         if (value === undefined || value === null || value === '') continue;
-        if (!['text', 'number', 'date', 'select'].includes(field.type)) continue;
+        if (!['text', 'number', 'date', 'select', 'tel'].includes(field.type)) continue;
         if (field.type === 'select' && !(field.options || []).includes(value)) continue;
         out[field.key] = field.type === 'date' ? String(value).slice(0, 10) : value;
     }
@@ -397,6 +408,93 @@ function profileDefaults(fields, account) {
 }
 
 window.profileDefaults = profileDefaults;
+
+// The family a resident listed in their Resident Profile (GET
+// /citizen/resident-profile, family.members), as rows of a form's family
+// table: each column is filled from the member's detail of the same meaning,
+// whatever the form calls it (relation or relationship, dob or birthday...).
+// Only an empty table is filled, and every row stays editable (2026-10-26).
+function familyRows(columns, members) {
+    const ageOf = (dob) => {
+        const d = dob ? new Date(dob) : null;
+        if (!d || isNaN(d)) return '';
+        const t = new Date();
+        let y = t.getFullYear() - d.getFullYear();
+        if (t.getMonth() < d.getMonth() || (t.getMonth() === d.getMonth() && t.getDate() < d.getDate())) y--;
+        return y;
+    };
+    const pick = (col, m) => {
+        const k = String(col.key || '').toLowerCase();
+        if (k === 'name') return m.name;
+        if (k === 'relation' || k === 'relationship') return m.relation;
+        if (k === 'age') return ageOf(m.dob);
+        if (k === 'dob' || k === 'birthday' || k === 'birthdate' || k === 'date_of_birth') return m.dob ? String(m.dob).slice(0, 10) : '';
+        if (k === 'sex') return m.sex;
+        if (k === 'civil_status') return m.civil_status;
+        if (k === 'education' || k === 'educational_attainment') return m.education;
+        if (k === 'occupation') return m.occupation;
+        return '';
+    };
+    return (members || []).filter((m) => m && m.name).map((m) => {
+        const row = {};
+        for (const col of columns || []) {
+            let v = pick(col, m) ?? '';
+            // A choice column takes the member's value only when it is one of the choices.
+            if (v !== '' && Array.isArray(col.options) && col.options.length && !col.options.includes(v)) {
+                const hit = col.options.find((o) => String(o).toLowerCase() === String(v).toLowerCase());
+                v = hit || '';
+            }
+            row[col.key] = v;
+        }
+        return row;
+    });
+}
+window.familyRows = familyRows;
+
+// The resident's family members, read once per page (null when they have no
+// Resident Profile yet or it cannot be read: the table then starts empty).
+let familyLoad = null;
+window.residentFamily = () => {
+    if (!familyLoad) {
+        familyLoad = api.get('/citizen/resident-profile')
+            .then((res) => (res?.data?.family?.members || []))
+            .catch(() => []);
+    }
+    return familyLoad;
+};
+// Fill a request form's family tables (a table whose name says family,
+// household or members) from the Resident Profile, when still empty.
+window.prefillFamilyTables = (fields, formData) => {
+    const tables = (fields || []).filter((f) => f.type === 'table' && /famil|household|member/i.test(String(f.key || '')));
+    if (!tables.length) return;
+    window.residentFamily().then((members) => {
+        if (!members.length) return;
+        tables.forEach((f) => {
+            if (!Array.isArray(formData[f.key]) || formData[f.key].length) return;
+            formData[f.key].push(...familyRows(f.columns, members));
+        });
+    });
+};
+
+// A form question or a requirement shown only for some answers (showIf):
+// { field, contains } where contains is a text or a list of texts (any of
+// them), or a list of such rules (all of them). The server applies the same
+// test to the requirements a request is filed with (App\Domain\Catalog\
+// ShowIf). Added for the Solo Parent ID's category documents (2026-10-26).
+function showIfMet(rule, answers) {
+    if (!rule) return true;
+    if (Array.isArray(rule)) return rule.every((r) => showIfMet(r, answers));
+    const value = String((answers || {})[rule.field] ?? '');
+    const wanted = Array.isArray(rule.contains) ? rule.contains : [rule.contains];
+    return wanted.some((c) => value.includes(String(c ?? '')));
+}
+window.showIfMet = showIfMet;
+
+// A catalog's requirements as {label, showIf}: staff and the config may give
+// each as text or as an object carrying its condition.
+window.requirementRules = (list) => (list || []).map((r) => (typeof r === 'string'
+    ? { label: r, showIf: null }
+    : { label: (r && (r.label || r.name || r.title || r.text)) || '', showIf: (r && r.showIf) || null })).filter((r) => r.label);
 
 // Why an uploaded file cannot be opened. The server links a file only once
 // the malware scan has cleared it; every other case used to read "Still

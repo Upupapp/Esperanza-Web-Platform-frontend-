@@ -290,7 +290,10 @@ function catalogEditor() {
                 this.rules = {
                     fee: c.fee ?? '',
                     days: c.days ?? '',
-                    requirements: Array.isArray(c.requirements) ? [...c.requirements] : [],
+                    // A requirement asked only for some answers ({label, showIf},
+                    // the Solo Parent ID's, 2026-10-26) stays an object: its
+                    // wording is editable, its condition kept as it is.
+                    requirements: Array.isArray(c.requirements) ? c.requirements.map((r) => (r && typeof r === 'object' ? { ...r } : r)) : [],
                     // The workflow and the form's questions (2026-10-17): copies,
                     // so editing them leaves the loaded record alone.
                     workflow: (Array.isArray(c.workflow) ? c.workflow : []).map((st) => ({ name: st.name || '', kind: st.kind || 'office', responsible: st.responsible || '', days: st.days ?? '' })),
@@ -370,7 +373,18 @@ function catalogEditor() {
         // rules: fee, time, required documents, steps - published as a version
         get rulesShapeOk() {
             const c = this.svc?.current || {};
-            return c.requirements == null || (Array.isArray(c.requirements) && c.requirements.every((x) => typeof x === 'string'));
+            return c.requirements == null || (Array.isArray(c.requirements) && c.requirements.every((x) => typeof x === 'string' || (x && typeof x === 'object' && typeof x.label === 'string')));
+        },
+        reqLabel(r) { return r && typeof r === 'object' ? String(r.label ?? '') : String(r ?? ''); },
+        // "Only when Application type is Renewal" - the condition in words.
+        reqCondition(r) {
+            if (!r || typeof r !== 'object' || !r.showIf) return '';
+            const name = (key) => {
+                const f = (this.rules.fields || []).find((x) => x.key === key);
+                return f?.label || String(key).replace(/_/g, ' ');
+            };
+            const one = (rule) => name(rule.field) + ' is ' + (Array.isArray(rule.contains) ? rule.contains.join(' or ') : rule.contains);
+            return 'Only when ' + (Array.isArray(r.showIf) ? r.showIf.map(one).join(' and ') : one(r.showIf));
         },
         // Whether the published version already tracks its steps on requests.
         get tracked() { return !!this.svc?.current?.tracked; },
@@ -420,7 +434,7 @@ function catalogEditor() {
             const days = String(this.rules.days ?? '').trim();
             if (!days) return 'Write the processing time, for example “1-2 working days”.';
             if (days.length > 120) return 'The processing time is at most 120 characters.';
-            if (this.rules.requirements.some((r) => !String(r).trim())) return 'A required document is empty: write it or remove it.';
+            if (this.rules.requirements.some((r) => !this.reqLabel(r).trim())) return 'A required document is empty: write it or remove it.';
             const wf = this.rules.workflow;
             if (!wf.length) return 'Add at least one processing step.';
             if (wf.some((st) => !String(st.name).trim())) return 'A processing step has no name: write it or remove it.';
@@ -445,7 +459,7 @@ function catalogEditor() {
             const body = {
                 fee: String(this.rules.fee).trim(),
                 days: String(this.rules.days).trim(),
-                requirements: this.rules.requirements.map((r) => String(r).trim()),
+                requirements: this.rules.requirements.map((r) => (r && typeof r === 'object' ? { ...r, label: this.reqLabel(r).trim() } : String(r).trim())),
                 workflow: this.rules.workflow.map((st) => ({
                     name: String(st.name).trim(), kind: st.kind, responsible: String(st.responsible || '').trim() || null,
                     days: st.days === '' || st.days === null ? null : Number(st.days),
@@ -1491,6 +1505,135 @@ function officesStore() {
     };
 }
 
+// ============================================================ Direktoryo
+
+/**
+ * Settings › Direktoryo (owner, 2026-10-21): the directory residents read,
+ * kept here and laid out like the residents' Direktoryo: a search, Municipal
+ * Offices | Barangays, a count, the cards. It was Balita's Offices and
+ * Barangays tabs. Each half is for whoever holds it: the offices for
+ * comm_directory (the Municipal Information Office and the administrators),
+ * the barangays for comm_barangay_directory (also each Barangay Secretary,
+ * who sees and edits their own barangay only).
+ */
+function directoryTab() {
+    const blankOffice = () => ({ id: null, office: '', official_name: '', position: '', contact: '', email: '' });
+    return {
+        view: 'offices',
+        search: '',
+        offices: [],
+        barangays: [],
+        loading: true,
+        failed: false,
+        processing: false,
+        officeOpen: false,
+        officeMode: 'add',
+        officeForm: blankOffice(),
+        removing: null,
+        barangayOpen: false,
+        selected: null,
+        may,
+        get canOffices() { return may('comm_directory', 'view'); },
+        get canBarangays() { return may('comm_barangay_directory', 'view'); },
+        async init() {
+            await sessionReady();
+            const asked = new URLSearchParams(window.location.search).get('view');
+            this.view = (asked === 'barangays' && this.canBarangays) || !this.canOffices ? 'barangays' : 'offices';
+            await this.load();
+        },
+        async load() {
+            if (!this.canOffices && !this.canBarangays) return;
+            this.loading = true;
+            this.failed = false;
+            try {
+                const [offices, barangays] = await Promise.all([
+                    this.canOffices ? api.get('/admin/directory', { params: { scope: 'government' } }) : { data: [] },
+                    this.canBarangays ? api.get('/barangays') : { data: [] },
+                ]);
+                this.offices = offices.data || [];
+                // seal_path names one of this site's own bundled pictures.
+                this.barangays = (barangays.data || [])
+                    .map((b) => ({ ...b, seal_path: window.staticAssetUrl ? window.staticAssetUrl(b.seal_path) : b.seal_path }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+            } catch {
+                this.failed = true;
+            } finally {
+                this.loading = false;
+            }
+        },
+        get filteredOffices() {
+            const q = this.search.trim().toLowerCase();
+            return this.offices.filter((o) => !q || (o.office || '').toLowerCase().includes(q) || (o.official_name || '').toLowerCase().includes(q));
+        },
+        // A Barangay Secretary sees their own barangay only.
+        get myBarangays() { return this.barangays.filter((b) => session()?.inScope(b.name)); },
+        get filteredBarangays() {
+            const q = this.search.trim().toLowerCase();
+            return this.myBarangays.filter((b) => !q || b.name.toLowerCase().includes(q) || (b.punong_barangay || '').toLowerCase().includes(q));
+        },
+        get countLine() {
+            return this.view === 'offices'
+                ? this.filteredOffices.length + ' of ' + this.offices.length + ' offices'
+                : this.filteredBarangays.length + ' of ' + this.myBarangays.length + (this.myBarangays.length === 1 ? ' barangay' : ' barangays');
+        },
+        initials(name) { return (name || '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase(); },
+
+        openAddOffice() { this.officeForm = blankOffice(); this.officeMode = 'add'; this.officeOpen = true; },
+        openEditOffice(o) { this.officeForm = { ...blankOffice(), ...o }; this.officeMode = 'edit'; this.officeOpen = true; },
+        async saveOffice() {
+            const f = this.officeForm;
+            if (this.processing || !f.office.trim()) return;
+            this.processing = true;
+            try {
+                const payload = { office: f.office.trim(), official_name: f.official_name || null, position: f.position || null, contact: f.contact || null, email: f.email || null };
+                if (this.officeMode === 'add') await api.post('/admin/directory', payload);
+                else await api.put('/admin/directory/' + f.id, payload);
+                this.officeOpen = false;
+                toast(this.officeMode === 'add' ? 'Office added. Residents see it in Direktoryo.' : 'Office updated.');
+                await this.load();
+            } catch (err) {
+                toast(errText(err, 'Could not save the office.'), 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+        async confirmRemove() {
+            const o = this.removing;
+            if (this.processing || !o) return;
+            this.processing = true;
+            try {
+                await api.delete('/admin/directory/' + o.id);
+                this.removing = null;
+                toast(o.office + ' was removed from the directory.');
+                await this.load();
+            } catch (err) {
+                toast(errText(err, 'Could not remove the office.'), 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+
+        editBarangay(b) { this.selected = { ...b }; this.barangayOpen = true; },
+        async saveBarangay() {
+            const b = this.selected;
+            if (this.processing || !b) return;
+            this.processing = true;
+            try {
+                await api.put('/admin/directory/barangay/' + encodeURIComponent(b.name), {
+                    punong_barangay: b.punong_barangay, barangay_secretary: b.barangay_secretary, contact: b.contact,
+                });
+                this.barangayOpen = false;
+                toast('Brgy. ' + b.name + ' updated.');
+                await this.load();
+            } catch (err) {
+                toast(errText(err, 'Could not save.'), 'error');
+            } finally {
+                this.processing = false;
+            }
+        },
+    };
+}
+
 // The scheduler's jobs in plain words (routes/console.php in the backend).
 const SCHEDULE_TASKS = {
     'esperanza:notifications deliver': 'Sends waiting email and SMS notifications',
@@ -1499,12 +1642,14 @@ const SCHEDULE_TASKS = {
     'esperanza:notifications overdue': 'The overdue-requests digest',
     'esperanza:appointment-reminders': "Tomorrow's appointment reminders",
     'esperanza:notifications weekly': 'The weekly summary',
+    'esperanza:event-reminders': 'Reminds residents of the events they asked about, the day before',
 };
 const SCHEDULE_WHEN = {
     '* * * * *': 'Every minute',
     '*/5 * * * *': 'Every 5 minutes',
     '0 8 * * *': 'Daily, 8:00 AM',
     '0 8 * * 1': 'Mondays, 8:00 AM',
+    '0 * * * *': 'Every hour',
 };
 const SCHEDULE_FALLBACK = [
     { key: 'a', when: 'Every minute', label: 'Sends waiting email and SMS notifications, and writes the heartbeat above', next: '' },
@@ -1515,6 +1660,7 @@ const SCHEDULE_FALLBACK = [
 
 export function register(Alpine) {
     Alpine.data('catalogEditor', catalogEditor);
+    Alpine.data('directoryTab', directoryTab);
     Alpine.data('siteHelpEditor', siteHelpEditor);
     Alpine.data('templatesTab', templatesTab);
     Alpine.data('systemTab', systemTab);

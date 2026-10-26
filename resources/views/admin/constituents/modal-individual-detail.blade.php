@@ -253,6 +253,27 @@
                     </div>
                 </div>
 
+                {{-- The Senior Citizen, PWD and Solo Parent IDs the LGU released to
+                     this resident: number, validity, status (MSWDO forms,
+                     2026-10-26). Releasing one also adds its sector above. --}}
+                <div class="surface-glass rounded-[26px] p-4" x-show="(selectedIndividual?.sector_ids || []).length > 0" x-cloak data-sector-ids>
+                    <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3">IDs issued by the LGU</h3>
+                    <ul class="space-y-2">
+                        <template x-for="sid in (selectedIndividual?.sector_ids || [])" :key="sid.sector + sid.id_number">
+                            <li class="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 px-3 py-2.5">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-ink" x-text="sid.name"></p>
+                                    <p class="text-xs font-mono text-ink-body" x-text="sid.id_number"></p>
+                                    <p class="text-[11px] text-ink-muted mt-0.5" x-text="[sid.category, sid.application_kind, 'Issued ' + sid.issued_on].filter(Boolean).join(' · ')"></p>
+                                </div>
+                                <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                    :class="sid.status === 'active' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : (sid.status === 'expired' ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-200' : 'bg-slate-100 text-slate-600')"
+                                    x-text="sid.status === 'active' ? (sid.valid_until ? 'Valid until ' + sid.valid_until : 'Valid, no expiry') : (sid.status === 'expired' ? 'Expired ' + sid.valid_until : 'Revoked')"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
             </div>
 
             {{-- Right column --}}
