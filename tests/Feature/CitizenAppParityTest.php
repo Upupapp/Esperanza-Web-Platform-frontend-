@@ -229,4 +229,77 @@ class CitizenAppParityTest extends TestCase
         }
         $this->get('/citizen/dashboard')->assertOk()->assertSee('guest: false,', false);
     }
+
+    public function test_the_six_documents_the_templates_draw_now_preview_on_track_request(): void
+    {
+        // They showed "Online preview isn't available" while the app drew them
+        // (parity check, 2026-10-23).
+        $keys = array_column(config('esperanza_document_type_lookup'), 'docKey');
+        foreach (['brgy_cert_national_id', 'brgy_cert_land_property', 'brgy_business_permit', 'brgy_event_permit', 'mcro_death', 'msw_pwd_id'] as $key) {
+            $this->assertContains($key, $keys, $key);
+        }
+        // Every document a template draws has a row here.
+        $templates = $this->source('resources/views/components/citizen/barangay-certificate-preview.blade.php')
+            .$this->source('resources/views/components/citizen/municipal-request-preview.blade.php');
+        preg_match_all("/=== '([a-z_]+)'/", $templates, $m);
+        foreach (array_unique($m[1]) as $key) {
+            $this->assertContains($key, $keys, "$key has a template but no lookup row");
+        }
+    }
+
+    public function test_an_unverified_resident_can_change_their_barangay_as_in_the_app(): void
+    {
+        $page = $this->source('resources/views/citizen/profile.blade.php');
+        $this->assertStringContainsString('<select id="edit_barangay" x-model="editForm.barangay"', $page);
+        $this->assertStringContainsString('<div x-show="!$store.citizenSession.account?.identityLocked">', $page);
+        // Sent only while the account is not verified; the server locks it after.
+        $this->assertStringContainsString("if (this.editForm.barangay && this.editForm.barangay !== (a.barangay || '')) payload.barangay = this.editForm.barangay;", $page);
+        $this->assertStringContainsString("\$api.get('/barangays')", $page);
+    }
+
+    public function test_a_cancelled_dokyu_request_says_so_with_its_reason(): void
+    {
+        $page = $this->source('resources/views/citizen/document-requests.blade.php');
+        $this->assertStringContainsString('x-show="selectedRequest.status === \'Cancelled\'"', $page);
+        $this->assertStringContainsString('<x-ui.t fil="Kinansela ang kahilingang ito" en="This request was cancelled" />', $page);
+    }
+
+    public function test_remember_me_decides_how_long_the_sign_in_is_kept(): void
+    {
+        $login = $this->source('resources/views/auth/citizen-login.blade.php');
+        $this->assertStringContainsString('<input type="checkbox" x-model="remember"', $login);
+        $this->assertStringContainsString('this.$store.citizenSession.login(this.identifier.trim(), this.password, this.remember)', $login);
+
+        $client = $this->source('resources/js/api/client.js');
+        $this->assertStringContainsString('export function setToken(token, { remember = true } = {})', $client);
+        $this->assertStringContainsString('(remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);', $client);
+        $this->assertStringContainsString('return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);', $client);
+        $this->assertStringContainsString('api.setToken(result.data.token, { remember });', $this->source('resources/js/app.js'));
+    }
+
+    public function test_no_control_that_does_nothing_is_left(): void
+    {
+        // The time zone was a one-option dropdown that saved nothing.
+        $settings = $this->source('resources/views/citizen/settings.blade.php');
+        $this->assertStringNotContainsString('<option>(GMT+8:00) Manila</option>', $settings);
+        $this->assertStringContainsString('Every date and time is shown in Philippine time (GMT+8, Manila).', $settings);
+
+        // The hard-coded Fiesta 2026 pop-up nothing opened; occasions replaced it.
+        $this->assertFileDoesNotExist(base_path('resources/views/components/citizen/fiesta-popup.blade.php'));
+        $this->assertStringNotContainsString('fiesta-popup', $this->source('resources/views/components/layouts/citizen.blade.php'));
+    }
+
+    public function test_a_label_never_shows_an_escaped_ampersand(): void
+    {
+        // Blade escapes these itself: "&amp;" written here reached residents
+        // as "Officials &amp; Staff" (2026-10-23).
+        $pattern = '/<x-ui\.t\b[^>]*\b(?:fil|en)="[^"]*&amp;|\b(?:title|titleEn|subtitle|label|labelEn)="[^"]*&amp;/';
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path('resources/views')));
+        foreach ($files as $file) {
+            if (! str_ends_with($file->getFilename(), '.blade.php')) {
+                continue;
+            }
+            $this->assertDoesNotMatchRegularExpression($pattern, file_get_contents($file->getPathname()), $file->getFilename());
+        }
+    }
 }

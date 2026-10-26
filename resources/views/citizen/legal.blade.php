@@ -12,7 +12,7 @@
      tab, before there is an account (the layout then skips the calls only a
      signed-in resident can make). The text is GET /site-content/privacy and
      /terms, both public, with the build's copy until they answer. --}}
-<x-layouts.citizen title="Privacy &amp; Terms" subtitle="Privacy Policy and Terms &amp; Conditions." active="legal" :public="true">
+<x-layouts.citizen title="Privacy & Terms" subtitle="Privacy Policy and Terms & Conditions." active="legal" :public="true">
     {{-- The Privacy Policy and Terms staff publish in Settings, Site Content.
          This page printed the build's copy, so a published change never
          reached residents on the website (the app already read it). --}}
@@ -51,7 +51,7 @@
                 <i data-lucide="shield-check" class="w-3.5 h-3.5"></i><x-ui.t fil="Patakaran sa Privacy" en="Privacy Policy" />
             </button>
             <button @click="tab = 'terms'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'terms' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
-                <i data-lucide="file-text" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tuntunin" en="Terms &amp; Conditions" />
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Tuntunin" en="Terms & Conditions" />
             </button>
         </div>
 

@@ -418,6 +418,17 @@
                     // A field asked only after another answer (the course, for a
                     // college year: QA2 of 2026-10-07). Hidden, it is neither
                     // required nor sent.
+                    // Age worked out from a birth date (the form builder's Age), as on Dokyu.
+                    computeAge(dateStr) {
+                        if (!dateStr) return null;
+                        const dob = new Date(dateStr);
+                        if (isNaN(dob)) return null;
+                        const today = new Date();
+                        let age = today.getFullYear() - dob.getFullYear();
+                        const monthDiff = today.getMonth() - dob.getMonth();
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+                        return age;
+                    },
                     fieldShown(f) {
                         const rule = f?.showIf;
                         if (!rule) return true;
@@ -425,7 +436,7 @@
                     },
                     missingRequired() {
                         return (this.types[this.selectedType]?.fields || []).filter((f) => {
-                            if (!f.required || !this.fieldShown(f)) return false;
+                            if (!f.required || f.type === 'derived_age' || !this.fieldShown(f)) return false;
                             const v = this.formData[f.key];
                             return Array.isArray(v) ? v.length === 0 : String(v ?? '').trim() === '';
                         }).map((f) => f.label);
@@ -710,7 +721,7 @@
                             <p class="text-xs text-ink-muted mb-3" x-show="types[selectedType]?.certSubtitle" x-text="types[selectedType]?.certSubtitle"></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type !== 'table')" :key="f.key">
-                                    <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2 lg:col-span-3' : ''" x-show="fieldShown(f)">
+                                    <div :class="(f.type === 'checkbox-group' || f.type === 'multiselect' || f.type === 'textarea') ? 'sm:col-span-2 lg:col-span-3' : ''" x-show="fieldShown(f)">
                                         <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date' || f.type === 'tel'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
@@ -722,6 +733,24 @@
                                                 >
                                             </div>
                                         </template>
+                                        <template x-if="f.type === 'derived_age'">
+                                            <div x-init="$watch(() => formData[f.derived_from], v => formData[f.key] = computeAge(v)); formData[f.key] = computeAge(formData[f.derived_from])">
+                                                <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label"></label>
+                                                <div class="w-full rounded-xl border border-slate-200 surface-pressed py-2.5 px-4 text-sm text-ink-muted" x-text="(formData[f.key] ?? null) !== null ? formData[f.key] + ' years old' : 'Set birthdate first'"></div>
+                                            </div>
+                                        </template>
+                                        <template x-if="f.type === 'textarea'">
+                                            <div>
+                                                <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
+                                                <textarea :aria-label="f.label" x-model="formData[f.key]" rows="3" :placeholder="f.placeholder || null" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"></textarea>
+                                            </div>
+                                        </template>
+                                        <template x-if="f.type === 'checkbox'">
+                                            <label class="flex items-start gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-xs text-slate-600 cursor-pointer hover:border-slate-300 transition-colors">
+                                                <input type="checkbox" class="mt-0.5 rounded text-brand-600 focus:ring-brand-200" :checked="formData[f.key] === true || formData[f.key] === 'Yes'" @change="formData[f.key] = $event.target.checked ? 'Yes' : ''">
+                                                <span x-text="f.label + (f.required ? ' *' : '')"></span>
+                                            </label>
+                                        </template>
                                         <template x-if="f.type === 'select'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
@@ -731,9 +760,9 @@
                                                 </select>
                                             </div>
                                         </template>
-                                        <template x-if="f.type === 'checkbox-group'">
+                                        <template x-if="f.type === 'checkbox-group' || f.type === 'multiselect'">
                                             <div>
-                                                <label class="block text-xs font-medium text-slate-700 mb-2" x-text="f.label"></label>
+                                                <label class="block text-xs font-medium text-slate-700 mb-2" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                                     <template x-for="opt in f.options" :key="opt">
                                                         <label class="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 text-xs text-slate-600 cursor-pointer hover:border-slate-300 transition-colors" :class="(formData[f.key] || []).includes(opt) && 'border-brand-300 bg-brand-50/60 text-brand-700'">

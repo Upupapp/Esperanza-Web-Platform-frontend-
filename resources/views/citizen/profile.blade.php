@@ -202,7 +202,11 @@
 
             showEditProfile: false,
             savingProfile: false,
-            editForm: { firstName: '', lastName: '', mobile: '', occupation: '', address: '' },
+            editForm: { firstName: '', lastName: '', mobile: '', occupation: '', address: '', barangay: '' },
+            // Until the account is verified the resident can still correct
+            // their barangay, as in the app (parity check, 2026-10-23); then it
+            // is locked like the name (IDENTITY_LOCKED on the server).
+            barangays: [],
             // A new mobile number is proven with a one-time code before it lands
             // (POST /citizen/profile/contact, then /verify). The field used to be
             // editable and its value silently dropped (Esperanza QA, 2026-10-07).
@@ -218,10 +222,13 @@
             openEditProfile() {
                 const a = this.$store.citizenSession.account || {};
                 this.originalMobile = window.phMobile.clean(a.mobile || '');
-                this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: this.originalMobile, occupation: a.occupation || '', address: a.address || '' };
+                this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: this.originalMobile, occupation: a.occupation || '', address: a.address || '', barangay: a.barangay || '' };
                 this.mobileStep = null;
                 this.mobileCode = '';
                 this.showEditProfile = true;
+                if (!a.identityLocked && !this.barangays.length) {
+                    $api.get('/barangays').then((res) => { this.barangays = (res.data || []).map((b) => b.name); }).catch(() => {});
+                }
             },
             get mobileChanged() { return this.editForm.mobile !== '' && this.editForm.mobile !== this.originalMobile; },
             async saveProfile() {
@@ -247,6 +254,7 @@
                     if (!a.identityLocked) {
                         if (this.editForm.firstName !== (a.firstName || '')) payload.first_name = this.editForm.firstName;
                         if (this.editForm.lastName !== (a.lastName || '')) payload.last_name = this.editForm.lastName;
+                        if (this.editForm.barangay && this.editForm.barangay !== (a.barangay || '')) payload.barangay = this.editForm.barangay;
                     }
                     if (!Object.keys(payload).length && !this.mobileChanged) {
                         this.showEditProfile = false;
@@ -734,9 +742,18 @@
                         <p class="text-xs text-slate-600" x-text="$store.lang.current === 'en' ? ('We sent a 6-digit code to ' + (mobileSentTo || 'you') + '. Enter it to change your mobile number.') : ('Nagpadala kami ng 6-digit na code sa ' + (mobileSentTo || 'iyo') + '. Ilagay ito para palitan ang mobile number.')"></p>
                         <x-ui.input name="edit_mobile_code" type="text" inputmode="numeric" maxlength="6" label="Verification code" placeholder="000000" x-model="mobileCode" @input="mobileCode = $event.target.value.replace(/[^0-9]/g, '').slice(0, 6)" />
                     </div>
+                    {{-- Barangay: editable until the account is verified, as in the app. --}}
+                    <div x-show="!$store.citizenSession.account?.identityLocked">
+                        <label for="edit_barangay" class="block text-sm font-medium text-slate-700 mb-1.5"><x-ui.t fil="Barangay" en="Barangay" /></label>
+                        <select id="edit_barangay" x-model="editForm.barangay" class="w-full rounded-xl border-0 surface-pressed py-2.5 px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                            <template x-if="editForm.barangay && !barangays.includes(editForm.barangay)"><option :value="editForm.barangay" x-text="editForm.barangay"></option></template>
+                            <template x-for="b in barangays" :key="b"><option :value="b" x-text="b" :selected="b === editForm.barangay"></option></template>
+                        </select>
+                    </div>
                     <x-ui.input name="edit_occupation" label="Occupation" icon="briefcase" x-model="editForm.occupation" />
                     <x-ui.input name="edit_address" label="Complete Address" icon="house" x-model="editForm.address" />
-                    <p class="text-xs text-ink-muted"><x-ui.t fil="Ang barangay at Resident ID ay hindi maaaring baguhin dito — makipag-ugnayan sa iyong Barangay Hall." en="Barangay and Resident ID can't be changed here — contact your Barangay Hall for those." /></p>
+                    <p class="text-xs text-ink-muted" x-show="$store.citizenSession.account?.identityLocked" x-cloak><x-ui.t fil="Ang barangay at Resident ID ay hindi maaaring baguhin dito — makipag-ugnayan sa iyong Barangay Hall." en="Barangay and Resident ID can't be changed here — contact your Barangay Hall for those." /></p>
+                    <p class="text-xs text-ink-muted" x-show="!$store.citizenSession.account?.identityLocked"><x-ui.t fil="Ang Resident ID ay hindi maaaring baguhin dito. Kapag beripikado na ang iyong account, ang barangay ay ipapaayos sa iyong Barangay Hall." en="Your Resident ID can't be changed here. Once your account is verified, your barangay is changed through your Barangay Hall." /></p>
                 </div>
 
                 <x-slot:footer>

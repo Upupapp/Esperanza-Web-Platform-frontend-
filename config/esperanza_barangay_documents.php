@@ -321,6 +321,25 @@ return [
                 ['name' => 'Sta. Cruz Chapel', 'location' => 'Barangay Proper', 'note' => 'Fiesta celebrated every May 3–5'],
                 ['name' => 'Public Cemetery', 'location' => 'Purok 12', 'note' => '4,099 sq. m.'],
             ],
+            // A quick read drawn from the text above (barangay profile
+            // redesign, 2026-10-22): a summary under the name, a few facts,
+            // where the name comes from, and what people live on. Each is
+            // optional; a barangay without them shows the rest.
+            'summary' => 'Puroks 9–12 · Formerly Barrio Tabunok',
+            'facts' => [
+                ['value' => '4', 'label' => 'Puroks (9–12)'],
+                ['value' => '1961', 'label' => 'Became a barrio'],
+                ['value' => '~90%', 'label' => 'Roads cemented'],
+                ['value' => 'May 3–5', 'label' => 'Sta. Cruz fiesta'],
+            ],
+            'name_origin' => [
+                'title' => 'labang + taytayan',
+                'text' => 'The bamboo bridge residents crossed to reach Poblacion. Renamed from Barrio Tabunok in 1962.',
+            ],
+            'livelihood' => [
+                'items' => ['Sari-sari stores', 'Fishing'],
+                'note' => 'Pukot, kitang, undak and bobo gear',
+            ],
         ],
         'seal' => 'images/esperanza/barangays/labangtaytay-seal.png',
         'contact' => '(056) 333-2001',

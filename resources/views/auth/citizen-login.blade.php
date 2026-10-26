@@ -3,6 +3,8 @@
         x-data="{
             identifier: '',
             password: '',
+            // Ticked: stay signed in on this browser. Unticked: until this tab closes.
+            remember: true,
             loading: false,
             error: '',
             async submit() {
@@ -10,7 +12,7 @@
                 this.error = '';
                 this.loading = true;
                 try {
-                    await this.$store.citizenSession.login(this.identifier.trim(), this.password);
+                    await this.$store.citizenSession.login(this.identifier.trim(), this.password, this.remember);
                     window.location.href = '{{ route('citizen.dashboard') }}';
                 } catch (err) {
                     this.error = err.explain ? err.explain($store.lang.current) : ($store.lang.current === 'en' ? 'Sign in failed.' : 'Hindi ma-sign in.');
@@ -58,7 +60,7 @@
                 </div>
                 <div class="flex items-center justify-between mt-2">
                     <label class="flex items-center gap-2 text-sm text-ink-muted">
-                        <input type="checkbox" class="rounded border-slate-300 text-brand-600 focus:ring-brand-200">
+                        <input type="checkbox" x-model="remember" class="rounded border-slate-300 text-brand-600 focus:ring-brand-200">
                         <x-ui.t fil="Tandaan ako" en="Remember me" />
                     </label>
                     <a href="{{ route('citizen.password-reset') }}" class="text-sm text-brand-600 hover:underline"><x-ui.t fil="Nakalimutan ang password?" en="Forgot password?" /></a>

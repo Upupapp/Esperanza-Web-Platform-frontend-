@@ -717,7 +717,9 @@ document.addEventListener('alpine:init', () => {
     // one endpoint with every field the portal's views already read this
     // account object for (name parts, contact, barangay, verification tier).
     Alpine.store('citizenSession', {
-        account: readJson('esperanza_citizen_session'),
+        // Nothing cached is trusted without a sign-in: one kept for a tab only
+        // ("Remember me" unticked) is gone once the tab closes.
+        account: api.getToken() ? readJson('esperanza_citizen_session') : null,
 
         setAccount(p) {
             this.account = {
@@ -753,9 +755,9 @@ document.addEventListener('alpine:init', () => {
             writeJson('esperanza_citizen_session', this.account);
         },
 
-        async login(identifier, password) {
+        async login(identifier, password, remember = true) {
             const result = await api.post('/auth/citizen/login', { identifier, password });
-            api.setToken(result.data.token);
+            api.setToken(result.data.token, { remember });
             await this.refresh();
         },
 
