@@ -33,6 +33,9 @@ const mobileOrEmpty = (v) => {
     return /^09\d{9}$/.test(digits) ? digits : '';
 };
 
+// The record statuses in which the profile is shown, not edited (axis 3).
+const LOCKED_STATUSES = ['For Validation', 'Verified'];
+
 const text = (v) => {
     const t = String(v ?? '').trim();
     return t === '' || t === '—' ? null : t;
@@ -49,12 +52,21 @@ export function residentProfileForm() {
         household: blankHousehold(),
         surname: '',
         members: [],
+        // View only once sent (parity check, 2026-10-26): while the barangay
+        // checks it (For Validation) or once it is Verified, the resident sees
+        // what they sent, greyed out, and cannot change or resend it - the
+        // app's ResidentProfile.editable and ResidentProfileLockNote.
+        readOnly: false,
+        lockedStatus: null,
 
         get en() { return this.$store.lang.current === 'en'; },
 
         // Opened from the profile page with what the server already holds, so
         // a correction starts from the record the barangay sent back.
-        openWith(view) {
+        openWith(view, status = null) {
+            const lockedStatus = status ?? view?.individual?.verification ?? null;
+            this.readOnly = LOCKED_STATUSES.includes(lockedStatus);
+            this.lockedStatus = this.readOnly ? lockedStatus : null;
             const me = view?.individual || {};
             const hh = view?.household || {};
             const fam = view?.family || {};
@@ -101,14 +113,16 @@ export function residentProfileForm() {
         },
 
         toggleTag(tag) {
+            if (this.readOnly) return;
             const i = this.personal.tags.indexOf(tag);
             if (i === -1) this.personal.tags.push(tag); else this.personal.tags.splice(i, 1);
         },
         addMember() {
+            if (this.readOnly) return;
             this.members.push(blankMember());
             this.$nextTick(() => window.renderIcons?.());
         },
-        removeMember(i) { this.members.splice(i, 1); },
+        removeMember(i) { if (!this.readOnly) this.members.splice(i, 1); },
 
         // What is still missing before the barangay can check it.
         get problems() {
@@ -153,7 +167,7 @@ export function residentProfileForm() {
         },
 
         async save() {
-            if (this.saving) return;
+            if (this.saving || this.readOnly) return;
             if (this.problems.length) {
                 this.error = (this.en ? 'Please complete: ' : 'Pakikumpleto ang: ') + this.problems.join(', ');
                 return;

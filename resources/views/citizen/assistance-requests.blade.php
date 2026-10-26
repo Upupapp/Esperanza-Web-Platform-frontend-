@@ -374,10 +374,13 @@
                             this.offered = keys.length ? keys : null;
                         } catch { this.offered = null; }
                     },
-                    get filteredTypes() { return this.types.map((t, i) => ({ ...t, i })).filter(t => (!this.offered || !t.key || this.offered.includes(t.key)) && t.name.toLowerCase().includes(this.search.toLowerCase())); },
+                    isOffered(t) { return !this.offered || !t.key || this.offered.includes(t.key); },
+                    get filteredTypes() { return this.types.map((t, i) => ({ ...t, i })).filter(t => this.isOffered(t) && t.name.toLowerCase().includes(this.search.toLowerCase())); },
+                    // A category counts only the programs on offer: a switched-off
+                    // one was counted while not listed (parity check, 2026-10-26).
                     get assistanceCategories() {
                         const counts = {};
-                        this.types.forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
+                        this.types.filter(t => this.isOffered(t)).forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
                         return Object.keys(counts).map(name => ({ name, count: counts[name], icon: this.categoryIcons[name] || 'folder' }));
                     },
                     get typesInCategory() { return this.filteredTypes.filter(t => t.category === this.selectedCategory); },
@@ -788,8 +791,10 @@
                         </div>
 
                         <!-- Full-width table fields (e.g. Family Composition, FACED Family Members) -->
+                        {{-- A table follows its show-if rule like every other question: it was
+                             drawn while the submit dropped its rows (parity check, 2026-10-26). --}}
                         <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type === 'table')" :key="f.key">
-                            <div class="mb-6">
+                            <div class="mb-6" x-show="fieldShown(f)">
                                 <div class="flex items-center justify-between mb-2.5">
                                     <div>
                                         <p class="text-sm font-semibold text-ink" x-text="f.label"></p>
@@ -1001,7 +1006,7 @@
                             </div>
 
                             <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type === 'table')" :key="f.key">
-                                <div class="mt-3" x-show="(formData[f.key] || []).length">
+                                <div class="mt-3" x-show="fieldShown(f) && (formData[f.key] || []).length">
                                     <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
                                         <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3 text-brand-400"></i>
                                         <span x-text="f.label"></span>

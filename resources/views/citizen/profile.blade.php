@@ -537,6 +537,13 @@
                         @click="$dispatch('open-resident-profile', residentProfileView)">
                         <span x-text="$store.lang.current === 'en' ? (profileReview?.outcome === 'returned' ? 'Fix my Resident Profile' : 'Fill in my Resident Profile') : (profileReview?.outcome === 'returned' ? 'Ayusin ang Resident Profile' : 'Punan ang Resident Profile')"></span>
                     </x-ui.button>
+                    {{-- Once sent, the resident can still see what they sent, view
+                         only, as in the app; only the family list showed before
+                         (parity check, 2026-10-26). --}}
+                    <x-ui.button variant="secondary" size="sm" class="mt-3 w-full justify-center" icon="eye" x-show="profileVerification === 'For Validation' || profileVerification === 'Verified'" x-cloak data-view-resident-profile
+                        @click="$dispatch('view-resident-profile', { view: residentProfileView, status: profileVerification })">
+                        <x-ui.t fil="Tingnan ang ipinadala mo" en="View what you sent" />
+                    </x-ui.button>
                 </x-ui.card>
 
                 <!-- Household -->

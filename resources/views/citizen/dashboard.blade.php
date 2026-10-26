@@ -40,6 +40,7 @@
                     const result = await $api.get('/announcements', { params: { per_page: 4 } });
                     this.balitaPreview = (result.data || []).map((post, i) => ({
                         id: post.id ?? i,
+                        postId: post.id ?? null,
                         official: post.official,
                         author: post.author,
                         initials: post.official ? 'LGU' : (post.author || '').split(/\s+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join(''),
@@ -402,8 +403,10 @@
 
                             <div class="px-4 py-2.5 hover:bg-white/60 transition-colors">
 
+                                {{-- Each post opens itself in Balita (?post=ID), not the
+                                     top of the feed (parity check, 2026-10-26). --}}
                                 <a
-                                    :href="'{{ route('citizen.announcements') }}'"
+                                    :href="'{{ route('citizen.announcements') }}' + (post.postId !== null ? '?post=' + encodeURIComponent(post.postId) : '')"
                                     class="flex items-start gap-2.5"
                                 >
 
@@ -473,7 +476,7 @@
                                     </button>
 
                                     <a
-                                        :href="'{{ route('citizen.announcements') }}'"
+                                        :href="'{{ route('citizen.announcements') }}' + (post.postId !== null ? '?post=' + encodeURIComponent(post.postId) : '')"
                                         class="flex items-center gap-1 text-[10.5px] font-medium text-ink-muted hover:text-slate-600 transition-colors"
                                         x-show="post.commentCount > 0"
                                     >

@@ -133,5 +133,24 @@
                     </div>
                 </x-ui.card>
         </x-ui.data-panel>
+
+        {{-- Older notifications, a page at a time, while the server has more
+             (meta.last_page). Only the newest 25 were ever reachable before
+             (parity check, 2026-10-26). --}}
+        <div class="mt-4 flex flex-col items-center gap-2" x-show="$store.citizenNotifications.hasMore" x-cloak data-notifications-load-more>
+            <button type="button"
+                @click="$store.citizenNotifications.loadMore()"
+                x-bind:disabled="$store.citizenNotifications.loadingMore"
+                class="inline-flex items-center gap-2 rounded-xl surface-glass px-4 py-2 text-xs font-semibold text-brand-700 hover:text-brand-800 disabled:opacity-60 transition-colors"
+            >
+                <i data-lucide="loader-circle" class="w-3.5 h-3.5 animate-spin" x-show="$store.citizenNotifications.loadingMore" x-cloak></i>
+                <i data-lucide="chevrons-down" class="w-3.5 h-3.5" x-show="!$store.citizenNotifications.loadingMore"></i>
+                <span x-show="!$store.citizenNotifications.loadingMore"><x-ui.t fil="Mag-load pa" en="Load more" /></span>
+                <span x-show="$store.citizenNotifications.loadingMore" x-cloak><x-ui.t fil="Naglo-load…" en="Loading…" /></span>
+            </button>
+            <p class="text-[11px] text-rose-600" x-show="$store.citizenNotifications.moreFailed" x-cloak>
+                <x-ui.t fil="Hindi mai-load ang mga naunang abiso. Subukang muli." en="Could not load older notifications. Try again." />
+            </p>
+        </div>
     </div>
 </x-layouts.citizen>

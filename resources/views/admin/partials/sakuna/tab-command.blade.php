@@ -11,6 +11,11 @@
     for a true severity-ranked priority queue (the projection's own `markers`
     only cover incidents that carry lat/lng, so it isn't a complete ranking).
 
+    Active Incident Locations is a real map (2026-10-26, sakunaCommandMap in
+    resources/js/sakuna-map.js): the board's `markers` and `center_markers`
+    at their saved coordinates. An incident without a pin is counted, not
+    placed; it stays in the queue below and on the Incidents tab.
+
     Everything the mock's KPI row, map panel, "Operational Alerts", "Recent
     Activity Feed" and "Pending Decisions" showed was fabricated -- none of
     it (responder/vehicle counts, priority-needs counts, per-barangay
@@ -71,23 +76,6 @@
     x-transition:enter-start="opacity-0 translate-y-2"
     x-transition:enter-end="opacity-100 translate-y-0"
     class="space-y-5"
-    x-data="{
-        get groupedMarkers() {
-            const byBarangay = {};
-            (commandBoard?.markers || []).forEach(m => {
-                const g = byBarangay[m.barangay] = byBarangay[m.barangay] || { name: m.barangay, incidents: [] };
-                g.incidents.push(m);
-            });
-            const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-            return Object.values(byBarangay).map(g => ({
-                ...g,
-                worst: [...g.incidents].sort((a, b) => (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9))[0]?.severity,
-            }));
-        },
-        dotColor(sev) {
-            return { Critical: 'bg-rose-500', High: 'bg-orange-500', Medium: 'bg-amber-400', Low: 'bg-slate-300' }[sev] || 'bg-emerald-400';
-        },
-    }"
 >
 
     {{-- ── B1. KPI Cards ──────────────────────────────────────────────────── --}}
@@ -102,50 +90,80 @@
 
 
     {{-- ── B2. Active Incident Locations ───────────────────────────────────── --}}
-    <div class="surface-glass rounded-[26px] overflow-hidden">
-        <div class="px-5 py-4 border-b border-brand-600/10">
-            <h3 class="text-sm font-semibold text-ink-body">Active Incident Locations</h3>
-            <p class="text-xs text-ink-muted mt-0.5">Barangays with at least one open incident that carries coordinates</p>
+    {{-- A real map (2026-10-26): incidents and evacuation centres at the
+         coordinates saved on their records, nothing estimated. --}}
+    <div class="surface-glass rounded-[26px] overflow-hidden" x-data="sakunaCommandMap" x-effect="draw()">
+        <div class="px-5 py-4 border-b border-brand-600/10 flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <h3 class="text-sm font-semibold text-ink-body">Active Incident Locations</h3>
+                <p class="text-xs text-ink-muted mt-0.5">Incidents and evacuation centres at the places saved on their records</p>
+            </div>
+            <button type="button" @click="fit()" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 surface-glass-sm rounded-2xl px-3 py-1.5 hover:bg-white/90 transition-colors">
+                <i data-lucide="scan" class="w-3.5 h-3.5"></i> Fit to records
+            </button>
         </div>
 
-        <div class="p-5">
-            <div class="relative bg-slate-50 rounded-2xl border border-brand-600/10 p-4 overflow-hidden">
-                <div class="absolute inset-0 opacity-30" style="background-image: linear-gradient(rgba(203,213,225,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(203,213,225,0.4) 1px, transparent 1px); background-size: 40px 40px;"></div>
-
-                <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 min-h-[120px]">
-                    <template x-for="g in groupedMarkers" :key="g.name">
-                        <div class="flex flex-col items-center gap-1.5 py-2 px-1 rounded-xl transition-all hover:bg-white/70 cursor-default" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
-                            <div class="relative">
-                                <div class="w-4 h-4 rounded-full ring-2 ring-white ring-offset-1 shadow-sm" :class="dotColor(g.worst)"></div>
-                                <span class="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-white rounded-full border border-slate-200 text-[8px] font-bold flex items-center justify-center text-slate-700" x-text="g.incidents.length"></span>
-                            </div>
-                            <span class="text-[9px] sm:text-[10px] text-center text-slate-600 font-medium leading-tight max-w-[70px]" x-text="g.name"></span>
-
-                            <div x-show="open" x-cloak x-transition:enter="transition duration-[160ms] ease-standard" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100"
-                                 class="absolute z-30 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] rounded-xl p-3 w-56 shadow-float pointer-events-none" style="white-space: normal;">
-                                <p class="font-semibold text-xs mb-1.5" x-text="'Brgy. ' + g.name"></p>
-                                <template x-for="inc in g.incidents" :key="inc.ref">
-                                    <p class="text-ink-faint mb-0.5"><span class="text-white" x-text="inc.title"></span> — <span x-text="inc.severity"></span>, <span x-text="inc.status"></span></p>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-                    <div x-show="groupedMarkers.length === 0" class="col-span-full flex items-center justify-center text-xs text-ink-muted py-10">
-                        No open incidents currently carry map coordinates.
-                    </div>
-                </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-200 flex flex-wrap gap-x-5 gap-y-1.5">
-                    <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 flex-shrink-0"></span>Critical</span>
-                    <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0"></span>High</span>
-                    <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0"></span>Medium</span>
-                    <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-2.5 h-2.5 rounded-full bg-slate-300 flex-shrink-0"></span>Low</span>
-                    <span class="ml-auto text-[10px] text-ink-muted italic">Dot badge = open incident count in that barangay</span>
-                </div>
+        <div class="p-5 space-y-3">
+            {{-- Filters --}}
+            <div class="flex flex-wrap items-center gap-2">
+                <select aria-label="Incident status on the map" x-model="statusFilter"
+                    class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                    <option value="open">Open incidents</option>
+                    <option value="all">All on the map (incl. resolved)</option>
+                    <template x-for="st in mapStatuses" :key="st"><option :value="st" x-text="'Only ' + incidentStatusLabel(st)"></option></template>
+                </select>
+                <select aria-label="Severity on the map" x-model="severityFilter"
+                    class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                    <option value="">All severities</option>
+                    <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+                </select>
+                <select aria-label="Incident type on the map" x-model="typeFilter"
+                    class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                    <option value="">All types</option>
+                    <template x-for="ty in mapTypes" :key="ty"><option :value="ty" x-text="ty"></option></template>
+                </select>
+                <label class="inline-flex items-center gap-2 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3 py-2 cursor-pointer select-none">
+                    <input type="checkbox" x-model="showCentres" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-400">
+                    Evacuation centres
+                </label>
             </div>
 
-            <p class="text-[11px] text-ink-muted mt-2 text-center italic">
-                Note: this is a schematic panel, not a GIS map — evacuation centers have no stored coordinates yet, so only incidents are plotted.
+            {{-- The map --}}
+            <div class="relative">
+                <div x-ref="map" class="sakuna-map h-[360px] sm:h-[460px] w-full rounded-2xl overflow-hidden border border-brand-600/10"
+                     role="application" aria-label="Map of incidents and evacuation centres. Select a marker for its summary."></div>
+                <div x-show="mapState === 'loading'" class="pointer-events-none absolute inset-x-0 top-3 flex justify-center z-[500]">
+                    <span class="text-[11px] font-semibold text-slate-600 bg-white/90 rounded-full px-2.5 py-1 shadow">Loading the map…</span>
+                </div>
+                <div x-show="mapState !== 'failed' && !commandLoading && nothingToPlot" x-cloak class="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center px-4 z-[500]">
+                    <p class="text-xs text-slate-700 bg-white/95 rounded-2xl px-3.5 py-2 shadow text-center max-w-md">
+                        Nothing to plot with these filters: no incident or centre here has a saved map location.
+                    </p>
+                </div>
+            </div>
+            <div x-show="mapState === 'failed'" x-cloak role="alert" class="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-900">
+                <p class="font-semibold">The map background could not load (no connection, or the map service is busy).</p>
+                <p class="mt-0.5">The markers are still placed at their saved coordinates; the queue below lists every incident.</p>
+                <button type="button" @click="retryMap()" class="mt-1 font-semibold underline underline-offset-2">Try again</button>
+            </div>
+
+            {{-- Legend --}}
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-1">
+                <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-3 h-3 rounded-full bg-rose-500 ring-2 ring-white shadow flex-shrink-0"></span>Critical</span>
+                <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-3 h-3 rounded-full bg-orange-500 ring-2 ring-white shadow flex-shrink-0"></span>High</span>
+                <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-3 h-3 rounded-full bg-amber-400 ring-2 ring-white shadow flex-shrink-0"></span>Medium</span>
+                <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-3 h-3 rounded-full bg-slate-400 ring-2 ring-white shadow flex-shrink-0"></span>Low</span>
+                <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-3.5 h-3.5 rounded bg-teal-600 ring-2 ring-white shadow flex-shrink-0"></span>Centre, open</span>
+                <span class="flex items-center gap-1.5 text-xs text-ink-muted"><span class="w-3.5 h-3.5 rounded bg-slate-500 ring-2 ring-white shadow flex-shrink-0"></span>Centre, not open</span>
+                <span class="text-[11px] text-ink-muted italic sm:ml-auto">A numbered circle groups nearby incidents (its colour is the most severe); zoom in or select it.</span>
+            </div>
+
+            {{-- Open incidents nobody pinned: counted, never placed at a guessed point. --}}
+            <p x-show="unmapped > 0" x-cloak class="flex items-start gap-2 rounded-2xl surface-pressed-sm px-3.5 py-2.5 text-xs text-slate-700">
+                <i data-lucide="map-pin-off" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-px"></i>
+                <span x-text="unmapped === 1
+                    ? '1 open incident has no map location, so it is not on the map. It is in the queue below and on the Incidents tab, where staff can pin it.'
+                    : unmapped + ' open incidents have no map location, so they are not on the map. They are in the queue below and on the Incidents tab, where staff can pin them.'"></span>
             </p>
         </div>
     </div>{{-- /Map Panel --}}

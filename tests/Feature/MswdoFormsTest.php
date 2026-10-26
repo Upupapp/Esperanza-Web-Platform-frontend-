@@ -87,7 +87,7 @@ class MswdoFormsTest extends TestCase
         }
         // Dokyu draws a family table now (it skipped every table before).
         $dokyu = $this->source('resources/views/citizen/document-requests.blade.php');
-        $this->assertStringContainsString("filter(f => f.type === 'table' && fieldShown(f))", $dokyu);
+        $this->assertStringContainsString('<div class="mt-5" x-show="fieldShown(f)" data-dokyu-table-field>', $dokyu);
         $this->assertStringContainsString("'requirementRules' => array_values(array_map(", $dokyu);
     }
 

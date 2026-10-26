@@ -7,10 +7,24 @@
     $inputClass = 'w-full rounded-xl border-0 surface-pressed py-2.5 px-3.5 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none';
     $labelClass = 'block text-xs font-medium text-slate-700 mb-1';
 @endphp
-<div x-data="residentProfileForm" @open-resident-profile.window="openWith($event.detail)" class="contents">
+{{-- view-resident-profile (detail: { view, status }) opens the same form view
+     only, once it is sent: For Validation or Verified, every field greyed out,
+     no Send, and the app's note (ResidentProfileLockNote) on top (parity check,
+     2026-10-26). --}}
+<div x-data="residentProfileForm" @open-resident-profile.window="openWith($event.detail)" @view-resident-profile.window="openWith($event.detail?.view, $event.detail?.status)" class="contents">
     <x-ui.modal title="Resident Profile" titleEn="Resident Profile" maxWidth="2xl">
         <div class="space-y-5">
-            <p class="text-xs text-ink-muted leading-relaxed"><x-ui.t fil="Ito ang talaan mo at ng iyong sambahayan sa barangay. Susuriin ito ng iyong barangay office bago ka ma-verify." en="Your record and your household's at the barangay. Your barangay office checks it before you are verified." /></p>
+            <p class="text-xs text-ink-muted leading-relaxed" x-show="!readOnly"><x-ui.t fil="Ito ang talaan mo at ng iyong sambahayan sa barangay. Susuriin ito ng iyong barangay office bago ka ma-verify." en="Your record and your household's at the barangay. Your barangay office checks it before you are verified." /></p>
+
+            {{-- The app's lock note, in its words. --}}
+            <div x-show="readOnly" x-cloak role="note" data-resident-profile-lock-note
+                class="flex items-start gap-2.5 rounded-xl px-3.5 py-3 text-xs leading-relaxed"
+                :class="lockedStatus === 'Verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-brand-50 text-brand-700'">
+                <i data-lucide="badge-check" class="w-4 h-4 shrink-0 mt-0.5" x-show="lockedStatus === 'Verified'"></i>
+                <i data-lucide="hourglass" class="w-4 h-4 shrink-0 mt-0.5" x-show="lockedStatus !== 'Verified'"></i>
+                <p x-show="lockedStatus === 'Verified'"><x-ui.t fil="Na-verify ng iyong barangay office ang impormasyon mo at ng iyong sambahayan. Para may baguhin, makipag-ugnayan sa iyong barangay office." en="Your barangay office verified your information and your household's. To change something, ask your barangay office." /></p>
+                <p x-show="lockedStatus !== 'Verified'"><x-ui.t fil="Sinusuri ito ng iyong barangay office. Aabisuhan ka kapag tapos na, at maaari mo itong baguhin muli kung ibalik nila ito." en="Your barangay office is reviewing it. You will be told when it is done, and you can change it again if they send it back." /></p>
+            </div>
 
             <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto" role="tablist">
                 @foreach (['personal' => ['Ikaw', 'You'], 'household' => ['Sambahayan', 'Household'], 'family' => ['Pamilya', 'Family']] as $key => [$fil, $en])
@@ -20,6 +34,8 @@
                 @endforeach
             </div>
 
+            {{-- A disabled fieldset turns off every box, choice and button inside it at once. --}}
+            <fieldset class="min-w-0 transition-opacity" :disabled="readOnly" :aria-disabled="readOnly ? 'true' : 'false'" :class="readOnly && 'opacity-60 cursor-not-allowed select-text'" data-resident-profile-fields>
             {{-- You --}}
             <div x-show="section === 'personal'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -101,7 +117,7 @@
                     <div class="rounded-xl border border-slate-200 p-3 space-y-3">
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-xs font-semibold text-ink" x-text="(en ? 'Family member ' : 'Kasapi ') + (i + 1)"></p>
-                            <button type="button" @click="removeMember(i)" class="text-xs text-rose-600 hover:text-rose-700"><x-ui.t fil="Alisin" en="Remove" /></button>
+                            <button type="button" x-show="!readOnly" @click="removeMember(i)" class="text-xs text-rose-600 hover:text-rose-700"><x-ui.t fil="Alisin" en="Remove" /></button>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div class="sm:col-span-2">
@@ -127,17 +143,21 @@
                         </div>
                     </div>
                 </template>
-                <button type="button" @click="addMember()" class="inline-flex items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-600 hover:border-brand-400 hover:text-brand-700">
+                <p class="text-xs text-ink-muted" x-show="readOnly && !members.length" x-cloak><x-ui.t fil="Walang kasaping idinagdag." en="No family members added." /></p>
+                <button type="button" x-show="!readOnly" @click="addMember()" class="inline-flex items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-600 hover:border-brand-400 hover:text-brand-700">
                     <i data-lucide="user-plus" class="w-3.5 h-3.5"></i><x-ui.t fil="Magdagdag ng kasapi" en="Add a family member" />
                 </button>
             </div>
+            </fieldset>
 
             <p class="text-xs text-rose-600 bg-rose-50 rounded-lg px-3 py-2 break-words" x-show="error" x-text="error" role="alert"></p>
         </div>
 
         <x-slot:footer>
-            <x-ui.button variant="secondary" size="sm" @click="open = false"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
-            <x-ui.button size="sm" icon="send" ::disabled="saving" @click="save()">
+            {{-- View only: Close, and nothing to send. --}}
+            <x-ui.button variant="secondary" size="sm" x-show="readOnly" x-cloak @click="open = false"><x-ui.t fil="Isara" en="Close" /></x-ui.button>
+            <x-ui.button variant="secondary" size="sm" x-show="!readOnly" @click="open = false"><x-ui.t fil="Kanselahin" en="Cancel" /></x-ui.button>
+            <x-ui.button size="sm" icon="send" x-show="!readOnly" ::disabled="saving" @click="save()">
                 <span x-text="saving ? (en ? 'Sending…' : 'Ipinapadala…') : (en ? 'Send to my barangay' : 'Ipadala sa barangay')"></span>
             </x-ui.button>
         </x-slot:footer>

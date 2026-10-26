@@ -937,7 +937,34 @@ document.addEventListener('alpine:init', () => {
         summary: ['calendar-range', 'indigo'],
     };
 
-    function makeNotificationStore(path) {
+    function notificationItem(n) {
+        const [icon, color] = notificationStyle[n.category] || ['bell', 'brand'];
+        const lang = window.Alpine?.store('lang')?.current || 'fil';
+
+        return {
+            id: n.id,
+            portal: n.category,
+            icon, color,
+            title: n.title?.[lang] || n.title?.en || '',
+            titleFil: n.title?.fil, titleEn: n.title?.en,
+            body: n.body?.[lang] || n.body?.en || '',
+            bodyFil: n.body?.fil, bodyEn: n.body?.en,
+            pill: n.pill, ref: n.ref, link: n.link,
+            pinned: n.pinned, unread: n.unread,
+            popup: n.popup === true,
+            createdAt: n.time,
+        };
+    }
+
+    // The server pages notifications 25 at a time unless asked; the page only
+    // ever showed the newest 25. It now asks for 100 (the server's most) and
+    // "Load more" fetches the next page while meta.last_page allows
+    // (parity check, 2026-10-26). Residents only: the staff bell draws every
+    // row it holds, so it keeps the server's 25.
+    const NOTIFICATIONS_PER_PAGE = 100;
+
+    function makeNotificationStore(path, perPage = null) {
+        const pageParams = (page = null) => ({ ...(perPage ? { per_page: perPage } : {}), ...(page ? { page } : {}) });
         return {
             items: [],
             state: 'idle',
@@ -946,37 +973,35 @@ document.addEventListener('alpine:init', () => {
             // The server's count of every unread notification (meta.unread),
             // not just the page loaded here: the number on the bell.
             serverUnread: null,
+            page: 1,
+            lastPage: 1,
+            loadingMore: false,
+            moreFailed: false,
 
             get loading() { return this.state === 'loading'; },
             get failed() { return this.state === 'error'; },
             get visible() { return this.items.filter((n) => !this.dismissed.includes(n.id)); },
             get unreadCount() { return this.serverUnread ?? this.visible.filter((n) => n.unread).length; },
+            get hasMore() { return this.state === 'loaded' && this.page < this.lastPage; },
 
             // quiet: a background refresh keeps what is on screen until the answer comes.
             async load(quiet = false) {
                 if (!quiet) this.state = 'loading';
                 this.error = null;
                 try {
-                    const result = await api.get(path);
+                    const result = await api.get(path, { params: pageParams() });
                     this.serverUnread = Number.isInteger(result.meta?.unread) ? result.meta.unread : null;
-                    this.items = (result.data || []).map((n) => {
-                        const [icon, color] = notificationStyle[n.category] || ['bell', 'brand'];
-                        const lang = window.Alpine?.store('lang')?.current || 'fil';
-
-                        return {
-                            id: n.id,
-                            portal: n.category,
-                            icon, color,
-                            title: n.title?.[lang] || n.title?.en || '',
-                            titleFil: n.title?.fil, titleEn: n.title?.en,
-                            body: n.body?.[lang] || n.body?.en || '',
-                            bodyFil: n.body?.fil, bodyEn: n.body?.en,
-                            pill: n.pill, ref: n.ref, link: n.link,
-                            pinned: n.pinned, unread: n.unread,
-                            popup: n.popup === true,
-                            createdAt: n.time,
-                        };
-                    });
+                    const fresh = (result.data || []).map(notificationItem);
+                    if (quiet && this.page > 1) {
+                        // The bell's minute refresh keeps the older pages the
+                        // resident already opened with "Load more".
+                        const ids = new Set(fresh.map((n) => n.id));
+                        this.items = [...fresh, ...this.items.filter((n) => !ids.has(n.id))];
+                    } else {
+                        this.items = fresh;
+                        this.page = 1;
+                    }
+                    this.lastPage = Math.max(this.page, Number(result.meta?.last_page) || 1);
                     this.state = 'loaded';
                     // The rows' <i data-lucide> placeholders only become icons
                     // when Lucide runs after Alpine has drawn them.
@@ -984,6 +1009,28 @@ document.addEventListener('alpine:init', () => {
                 } catch (err) {
                     this.error = err;
                     this.state = 'error';
+                }
+            },
+
+            // The next page, added under what is shown. A row already shown
+            // (new ones arriving shift the pages down) is not repeated.
+            async loadMore() {
+                if (this.loadingMore || !this.hasMore) return;
+                this.loadingMore = true;
+                this.moreFailed = false;
+                try {
+                    const next = this.page + 1;
+                    const result = await api.get(path, { params: pageParams(next) });
+                    const ids = new Set(this.items.map((n) => n.id));
+                    this.items = [...this.items, ...(result.data || []).map(notificationItem).filter((n) => !ids.has(n.id))];
+                    this.page = next;
+                    this.lastPage = Math.max(next, Number(result.meta?.last_page) || next);
+                    if (Number.isInteger(result.meta?.unread)) this.serverUnread = result.meta.unread;
+                    window.Alpine?.nextTick(() => window.renderIcons?.());
+                } catch {
+                    this.moreFailed = true;
+                } finally {
+                    this.loadingMore = false;
                 }
             },
 
@@ -1050,7 +1097,7 @@ document.addEventListener('alpine:init', () => {
         };
     }
 
-    Alpine.store('citizenNotifications', makeNotificationStore('/citizen/notifications'));
+    Alpine.store('citizenNotifications', makeNotificationStore('/citizen/notifications', NOTIFICATIONS_PER_PAGE));
     Alpine.store('adminNotifications', makeNotificationStore('/admin/notifications'));
 
     // The sidebar's Dokyu/Tulong badges. They were fixed numbers in the markup
@@ -1700,6 +1747,8 @@ area(/^\/admin\/(settings|users)(\/|$)/.test(areaPath), () => import('./scope-ad
 // too (its Balita and Feedback tabs), so they need its components (2026-10-18).
 area(/^\/admin\/(constituents|communications|announcements|settings\/support)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
 area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
+// Sakuna's maps (2026-10-26): Leaflet only where a map is drawn.
+area(/^\/(admin\/sakuna|citizen\/emergency)(\/|$)/.test(areaPath), () => import('./sakuna-map'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 

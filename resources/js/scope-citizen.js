@@ -1573,7 +1573,9 @@ function citizenEmergency() {
         detailFailure: null,
 
         reportOpen: false,
-        form: { type: '', severity: '', barangay: '', sitio: '', description: '' },
+        // lat/lng: where the emergency is, pinned on the map or from the
+        // device (2026-10-26); optional, both or neither.
+        form: { type: '', severity: '', barangay: '', sitio: '', description: '', lat: null, lng: null },
         photos: [],
         photoError: '',
         // One per report, kept across retries: the server answers a repeated
@@ -1685,9 +1687,9 @@ function citizenEmergency() {
             if (c.pct >= 75) return this.t('Almost full', 'Halos puno na');
             return '';
         },
-        // Directions: to the point when the centre has coordinates, otherwise a
-        // Google Maps search for its name and address (the API carries none
-        // today, as the app notes).
+        // Directions: to the point when the centre has coordinates (staff pin
+        // each centre since 2026-10-26), otherwise a Google Maps search for its
+        // name and address, for a centre registered before the map.
         directionsUrl(c) {
             if (c && c.lat !== null && c.lng !== null && c.lat !== undefined && c.lng !== undefined) {
                 return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(c.lat + ',' + c.lng);
@@ -1840,12 +1842,16 @@ function citizenEmergency() {
             if (!this.clientUuid) this.clientUuid = newUuid();
             const f = this.form;
             const sitio = f.sitio.trim();
+            const pinned = f.lat !== null && f.lng !== null && Number.isFinite(Number(f.lat)) && Number.isFinite(Number(f.lng));
             const fields = {
                 title: f.type + ' — ' + (sitio ? sitio + ', ' : '') + f.barangay,
                 type: f.type,
                 severity: f.severity,
                 barangay: f.barangay,
                 sitio: sitio || null,
+                // Sent together, or not at all (the API refuses half a pin).
+                lat: pinned ? Number(f.lat) : null,
+                lng: pinned ? Number(f.lng) : null,
                 description: f.description.trim() || null,
                 client_uuid: this.clientUuid,
             };
@@ -1877,7 +1883,7 @@ function citizenEmergency() {
             this.photos.forEach((p) => URL.revokeObjectURL(p.preview));
             this.photos = [];
             this.photoError = '';
-            this.form = { type: '', severity: '', barangay: this.$store.citizenSession.account?.barangay || '', sitio: '', description: '' };
+            this.form = { type: '', severity: '', barangay: this.$store.citizenSession.account?.barangay || '', sitio: '', description: '', lat: null, lng: null };
             this.clientUuid = '';
         },
         closeReport() {
