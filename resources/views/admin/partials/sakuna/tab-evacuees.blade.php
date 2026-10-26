@@ -475,7 +475,7 @@
          x-trap="facedCard" role="dialog" aria-modal="true" aria-label="FACED card" @keydown.escape.window="facedCard = null">
         <div class="bg-white rounded-[28px] shadow-float w-full max-w-4xl mb-8">
             <div class="flex items-center justify-between px-6 py-3 border-b border-brand-600/10">
-                <h3 class="font-semibold text-ink-body">Family Access Card in Emergencies and Disasters</h3>
+                <h3 class="font-semibold text-ink-body">Family Assistance Card in Emergencies and Disasters</h3>
                 <div class="flex items-center gap-2">
                     <button type="button" @click="printFacedCard()" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print</button>
                     <button type="button" aria-label="Close" @click="facedCard = null" class="w-8 h-8 rounded-xl grid place-items-center text-ink-muted hover:bg-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -490,7 +490,7 @@
                     <div class="text-center">
                         <p>Republic of the Philippines · Municipality of Esperanza</p>
                         <p class="font-bold">MUNICIPAL SOCIAL WELFARE AND DEVELOPMENT OFFICE</p>
-                        <p class="text-sm font-bold mt-1">FAMILY ACCESS CARD IN EMERGENCIES AND DISASTERS (FACED)</p>
+                        <p class="text-sm font-bold mt-1">FAMILY ASSISTANCE CARD IN EMERGENCIES AND DISASTERS (FACED)</p>
                     </div>
                     <p class="text-right">Ref. <span class="font-mono" x-text="facedCard.ref"></span></p>
                 </div>

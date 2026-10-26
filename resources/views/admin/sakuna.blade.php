@@ -482,7 +482,7 @@
                 this.toast(err.localised ? err.localised('en') : 'Could not check in this household.', 'error');
             } finally { this.checkInSaving = false; }
         },
-        // The DSWD Family Access Card for Emergencies and Disasters (FACED):
+        // The DSWD Family Assistance Card in Emergencies and Disasters (FACED):
         // the family's registration side is kept on the evacuee family and
         // every relief it receives lands on its Family Assistance Record
         // (MSWDO forms, 2026-10-26).
