@@ -264,6 +264,16 @@ return [
                 ['check' => 'Identity/profile match', 'accept' => 'Personal details materially match government ID/profile.', 'weak' => 'Manual verification for discrepancies.', 'reject' => 'Confirmed different person/fraud.'],
             ],
         ],
+        'Solo Parent ID (SPIC)' => [
+            'group' => 'Dokyu', 'office' => 'Municipal Social Welfare & Development Office',
+            'source_basis' => 'Official Esperanza source', 'source_note' => 'MSWD - SOLO Parent Application Form.xlsx (DSWD Annex B, 2023; RA 11861)',
+            'checks' => [
+                ['check' => 'Category documents', 'accept' => 'The documents listed for the chosen category (and for New, Renewal or Lost) are complete and readable.', 'weak' => 'Ask for the missing category document, or correct the category with the applicant.', 'reject' => 'Confirmed not a solo parent under any RA 11861 category.'],
+                ['check' => 'Children', 'accept' => 'Birth certificates show the children under the applicant\'s sole parental care and support.', 'weak' => 'Request originals or certified copies at the interview.', 'reject' => 'Confirmed no child or dependent under the applicant\'s care.'],
+                ['check' => 'Sworn affidavit and barangay affidavit', 'accept' => 'Both are signed and current; the barangay official attests residency and care of the children.', 'weak' => 'Request a current affidavit.', 'reject' => 'Confirmed cohabiting with a partner or co-parent.'],
+                ['check' => 'Interview / home visit', 'accept' => 'The social worker\'s interview or home visit supports the circumstances.', 'weak' => 'Schedule a home visit for further assessment.', 'reject' => 'The assessment finds the circumstances untrue.'],
+            ],
+        ],
         'TUPAD Emergency Employment' => [
             'group' => 'Tulong', 'office' => 'Municipal Public Employment Service Office',
             'source_basis' => 'Official Esperanza source', 'source_note' => 'MPESO - DOLE TUPAD PROFILE FORM.pdf',

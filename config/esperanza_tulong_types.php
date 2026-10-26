@@ -75,14 +75,26 @@ return [
             'process' => ['Submit Request', 'Barangay Verification', 'Approval', 'Distribution'],
             'certTitle' => 'Family Assistance Card in Emergencies and Disasters (FACED)',
             'certSubtitle' => 'Head of Family details, per DSWD FACED card',
+            // Checked against the MSWD's copy of the card ("FACED Form.pdf",
+            // 2026-10-21): the district, occupation, the permanent address
+            // parts and the data privacy declaration (item 33) were added
+            // (2026-10-26). The serial number is the office's, given when the
+            // family is registered in Sakuna, where its relief is recorded.
             'fields' => [
                 ['key' => 'evacuation_center', 'label' => 'Evacuation Center / Site (if applicable)', 'type' => 'text'],
+                ['key' => 'district', 'label' => 'District (if any)', 'type' => 'text'],
                 ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
+                ['key' => 'date_of_birth', 'label' => 'Date of Birth', 'type' => 'date'],
                 ['key' => 'place_of_birth', 'label' => 'Place of Birth', 'type' => 'text'],
                 ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widowed', 'Separated']],
                 ['key' => 'mother_maiden_name', 'label' => "Mother's Maiden Name", 'type' => 'text'],
                 ['key' => 'religion', 'label' => 'Religion', 'type' => 'text'],
+                ['key' => 'occupation', 'label' => 'Occupation', 'type' => 'text'],
                 ['key' => 'monthly_income', 'label' => 'Monthly Family Net Income', 'type' => 'text'],
+                ['key' => 'house_block_lot', 'label' => 'Permanent Address — House / Block / Lot No.', 'type' => 'text'],
+                ['key' => 'street', 'label' => 'Permanent Address — Street', 'type' => 'text'],
+                ['key' => 'subdivision', 'label' => 'Permanent Address — Subdivision / Village', 'type' => 'text'],
+                ['key' => 'zip_code', 'label' => 'Permanent Address — Zip Code', 'type' => 'text'],
                 ['key' => 'id_card_presented', 'label' => 'ID Card Presented', 'type' => 'text'],
                 ['key' => 'id_card_number', 'label' => 'ID Card Number', 'type' => 'text'],
                 ['key' => 'contact_alternate', 'label' => 'Alternate Contact Number', 'type' => 'tel'],
@@ -104,6 +116,7 @@ return [
                     ['key' => 'occupation', 'label' => 'Occupation'],
                     ['key' => 'vulnerability', 'label' => 'Vulnerability', 'options' => ['None', '4Ps Beneficiary', 'Indigenous Person', 'Person with Disability', 'Senior Citizen', 'Solo Parent']],
                 ]],
+                ['key' => 'data_privacy_consent', 'label' => 'I agree that this information is used to identify my family for disaster risk reduction and management programs, under the Data Privacy Act of 2012 (RA 10173).', 'type' => 'checkbox', 'required' => true],
             ],
         ],
         [
