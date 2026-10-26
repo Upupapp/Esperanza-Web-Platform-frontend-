@@ -1924,6 +1924,12 @@
                 r.form_data = d.form_data || {};
                 r.purpose = (d.form_data && d.form_data.purpose) ? [].concat(d.form_data.purpose).join(', ') : '';
                 r.form_steps = this.formStepsFor(r.type, d.form_data, r.service_key);
+                // The document's fields are filled from these answers: a snapshot
+                // taken before they arrived (the list row, the dialog's first draw)
+                // has only the name, so it is rebuilt from them. A Certificate of
+                // Indigency printed blank but for the name (2026-10-27). Not while
+                // this officer is editing it; hand-authored ones are kept.
+                if (!r.previewType && !(this.editingDocument && this.selected === r)) r.formSnapshot = null;
                 r.requirements = (d.requirements || []).map((q) => this.fromApiRequirement(q));
                 r.assigned = 'assigned' in d ? d.assigned : r.assigned;
                 r.assigned_employee_id = 'assigned_employee_id' in d ? d.assigned_employee_id : r.assigned_employee_id;
