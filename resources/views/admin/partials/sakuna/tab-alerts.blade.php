@@ -22,8 +22,8 @@
     actions with nothing behind them (only create/edit/publish/cancel exist) -- left
     alone rather than invented, matching the restraint already applied to sakuna_relief's
     `approve`, sakuna_resources' `assign` and sakuna_damage's `validate`/`approve`. The
-    real channel vocabulary is exactly in_app/sms/email (AlertService::publish()'s own
-    channel match), not the mock's SMS/Mobile Push/Barangay Notification/Portal Banner/
+    real channel vocabulary is in_app/sms/email (in_app also pushes to residents' phones,
+    2026-10-26), not the mock's SMS/Mobile Push/Barangay Notification/Portal Banner/
     Social Media list. target_barangays is the only real audience axis -- there is no
     demographic/occupational "target group" concept (All Residents/Farmers/Senior
     Citizens/PWD Households/etc.) anywhere in the schema; a null/empty target means
@@ -440,7 +440,9 @@
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block">Channels</label>
                 <div class="flex flex-wrap gap-1.5">
-                    @foreach(['in_app' => 'In-App', 'sms' => 'SMS', 'email' => 'Email'] as $key => $label)
+                    {{-- In-App is the bell on the website and the app, and a push to the
+                         residents' phones (AlertService, 2026-10-26). --}}
+                    @foreach(['in_app' => 'In-App + phone push', 'sms' => 'SMS', 'email' => 'Email'] as $key => $label)
                         <button type="button" @click="toggleAlertFormChannel('{{ $key }}')"
                             :class="alertForm.channels.includes('{{ $key }}') ? 'clay-blue border-brand-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'"
                             class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors">

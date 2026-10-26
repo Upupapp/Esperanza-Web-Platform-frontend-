@@ -780,8 +780,8 @@
         alertForm: { ref: null, type: '', level: 'Advisory', title_fil: '', title_en: '', body_fil: '', body_en: '', target_barangays: [], channels: ['in_app'], expires_at: '' },
         cancelReason: '',
         cancelSaving: false,
-        // GET /sakuna/alerts -- the real channel vocabulary is exactly
-        // in_app/sms/email (AlertService::publish()'s own channel match);
+        // GET /sakuna/alerts -- the real channel vocabulary is in_app/sms/
+        // email; in_app also pushes to residents' phones (2026-10-26);
         // the mock's SMS/Mobile Push/Barangay Notification/Portal Banner/
         // Social Media list was never real. target_barangays is the only
         // real audience axis -- there is no demographic/occupational
