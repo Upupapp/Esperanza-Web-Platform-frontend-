@@ -208,6 +208,13 @@ export function balitaMediaField(base, existing = [], english = false) {
                 'Hanggang ' + LIMITS.maxItems + ' larawan o video. Larawan hanggang ' + mb(LIMITS.imageBytes) + ' MB (pinapaliit bago ipadala); video hanggang ' + mb(LIMITS.videoBytes) + ' MB, MP4 o WebM.',
             );
         },
+        // The composer's count line: the sizes, short.
+        shortHint() {
+            return this.t(
+                'photos up to ' + mb(LIMITS.imageBytes) + ' MB, videos up to ' + mb(LIMITS.videoBytes) + ' MB',
+                'larawan hanggang ' + mb(LIMITS.imageBytes) + ' MB, video hanggang ' + mb(LIMITS.videoBytes) + ' MB',
+            );
+        },
         sync() {
             const done = this.items.filter((i) => i.status === 'done' && i.media);
             this.value = {
