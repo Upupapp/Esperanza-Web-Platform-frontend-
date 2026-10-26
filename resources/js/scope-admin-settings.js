@@ -290,7 +290,10 @@ function catalogEditor() {
                 this.rules = {
                     fee: c.fee ?? '',
                     days: c.days ?? '',
-                    requirements: Array.isArray(c.requirements) ? [...c.requirements] : [],
+                    // A requirement asked only for some answers ({label, showIf},
+                    // the Solo Parent ID's, 2026-10-26) stays an object: its
+                    // wording is editable, its condition kept as it is.
+                    requirements: Array.isArray(c.requirements) ? c.requirements.map((r) => (r && typeof r === 'object' ? { ...r } : r)) : [],
                     // The workflow and the form's questions (2026-10-17): copies,
                     // so editing them leaves the loaded record alone.
                     workflow: (Array.isArray(c.workflow) ? c.workflow : []).map((st) => ({ name: st.name || '', kind: st.kind || 'office', responsible: st.responsible || '', days: st.days ?? '' })),
@@ -370,7 +373,18 @@ function catalogEditor() {
         // rules: fee, time, required documents, steps - published as a version
         get rulesShapeOk() {
             const c = this.svc?.current || {};
-            return c.requirements == null || (Array.isArray(c.requirements) && c.requirements.every((x) => typeof x === 'string'));
+            return c.requirements == null || (Array.isArray(c.requirements) && c.requirements.every((x) => typeof x === 'string' || (x && typeof x === 'object' && typeof x.label === 'string')));
+        },
+        reqLabel(r) { return r && typeof r === 'object' ? String(r.label ?? '') : String(r ?? ''); },
+        // "Only when Application type is Renewal" - the condition in words.
+        reqCondition(r) {
+            if (!r || typeof r !== 'object' || !r.showIf) return '';
+            const name = (key) => {
+                const f = (this.rules.fields || []).find((x) => x.key === key);
+                return f?.label || String(key).replace(/_/g, ' ');
+            };
+            const one = (rule) => name(rule.field) + ' is ' + (Array.isArray(rule.contains) ? rule.contains.join(' or ') : rule.contains);
+            return 'Only when ' + (Array.isArray(r.showIf) ? r.showIf.map(one).join(' and ') : one(r.showIf));
         },
         // Whether the published version already tracks its steps on requests.
         get tracked() { return !!this.svc?.current?.tracked; },
@@ -420,7 +434,7 @@ function catalogEditor() {
             const days = String(this.rules.days ?? '').trim();
             if (!days) return 'Write the processing time, for example “1-2 working days”.';
             if (days.length > 120) return 'The processing time is at most 120 characters.';
-            if (this.rules.requirements.some((r) => !String(r).trim())) return 'A required document is empty: write it or remove it.';
+            if (this.rules.requirements.some((r) => !this.reqLabel(r).trim())) return 'A required document is empty: write it or remove it.';
             const wf = this.rules.workflow;
             if (!wf.length) return 'Add at least one processing step.';
             if (wf.some((st) => !String(st.name).trim())) return 'A processing step has no name: write it or remove it.';
@@ -445,7 +459,7 @@ function catalogEditor() {
             const body = {
                 fee: String(this.rules.fee).trim(),
                 days: String(this.rules.days).trim(),
-                requirements: this.rules.requirements.map((r) => String(r).trim()),
+                requirements: this.rules.requirements.map((r) => (r && typeof r === 'object' ? { ...r, label: this.reqLabel(r).trim() } : String(r).trim())),
                 workflow: this.rules.workflow.map((st) => ({
                     name: String(st.name).trim(), kind: st.kind, responsible: String(st.responsible || '').trim() || null,
                     days: st.days === '' || st.days === null ? null : Number(st.days),

@@ -13,6 +13,8 @@
     was no way to read a family's members or movement history back before this;
     familyDetail() was write-response-only), POST /sakuna/centers/{ref}/check-in,
     POST /sakuna/evacuees/{ref}/transfer, POST /sakuna/evacuees/{ref}/check-out.
+    GET/PUT /sakuna/evacuees/{ref}/faced: the DSWD FACED card - the family's
+    registration side and its Family Assistance Record (MSWDO forms, 2026-10-26).
 
     Evacuees are tracked BY FAMILY, not by individual (SakunaEvacueeFamily). The real
     status axis has exactly two values -- Processing (checked in) and Completed
@@ -281,6 +283,29 @@
                 </div>
             </div>
 
+            <div data-faced-panel>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="id-card" class="w-3.5 h-3.5"></i> FACED Card (DSWD)</h4>
+                    <button type="button" x-show="can('sakuna_evacuees','check_in') && !facedEditing" @click="editFaced()" class="text-xs font-medium text-brand-600 hover:text-brand-700">Edit</button>
+                </div>
+                <div x-show="!facedEditing" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Serial No.</p><p class="text-sm font-mono font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced?.serial || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Contact No.</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced?.contact || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">House Ownership</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced?.house_ownership || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Shelter Damage</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.faced?.shelter_damage === 'Totally Damaged' ? 'text-rose-600' : (selectedEvacuee?.faced?.shelter_damage === 'Partially Damaged' ? 'text-amber-600' : 'text-ink-body')" x-text="selectedEvacuee?.faced?.shelter_damage || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Monthly Income</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced?.monthly_income || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">4Ps Beneficiary</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced ? (selectedEvacuee.faced.is_4ps ? 'Yes' : 'No') : '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Indigenous People</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced ? (selectedEvacuee.faced.is_ip ? 'Yes' + (selectedEvacuee.faced.ip_ethnicity ? ' — ' + selectedEvacuee.faced.ip_ethnicity : '') : 'No') : '—'"></p></div>
+                </div>
+                <div x-show="facedEditing" x-cloak class="space-y-3 rounded-2xl border border-brand-600/10 p-3" data-faced-edit>
+                    @include('admin.partials.sakuna.faced-fields', ['model' => 'facedForm', 'idPrefix' => 'faced-edit'])
+                    <div class="flex justify-end gap-2">
+                        <button type="button" @click="facedEditing = false" class="text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5">Cancel</button>
+                        <button type="button" :disabled="facedSaving" @click="saveFaced()" class="text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-1.5 disabled:opacity-50" x-text="facedSaving ? 'Saving…' : 'Save FACED details'"></button>
+                    </div>
+                </div>
+            </div>
+
             <div>
                 <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Current Location</h4>
                 <div class="grid grid-cols-2 gap-3">
@@ -296,9 +321,11 @@
                         <div class="flex items-center justify-between px-4 py-2.5">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium text-slate-700 truncate" x-text="m.name"></p>
-                                <p class="text-xs text-ink-muted" x-text="[m.relation, m.age ? m.age + ' yrs' : null, m.sex].filter(Boolean).join(' · ') || '—'"></p>
+                                <p class="text-xs text-ink-muted" x-text="[m.relation, m.age ? m.age + ' yrs' : null, m.sex, m.dob ? 'born ' + m.dob : null].filter(Boolean).join(' · ') || '—'"></p>
+                                <p class="text-xs text-ink-muted" x-show="m.education || m.occupation" x-text="[m.education, m.occupation].filter(Boolean).join(' · ')"></p>
                             </div>
                             <div class="flex flex-wrap gap-1 justify-end shrink-0 max-w-[50%]">
+                                <span x-show="m.vulnerability" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-violet-50 text-violet-700 border border-violet-200" x-text="m.vulnerability"></span>
                                 <template x-for="n in (m.needs || [])" :key="n">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200" x-text="n"></span>
                                 </template>
@@ -328,6 +355,10 @@
         </div>
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex flex-wrap items-center gap-2">
+            <button type="button" @click="openFacedCard(selectedEvacuee)" :disabled="facedLoading" data-faced-open
+                class="inline-flex items-center gap-1.5 text-sm text-brand-700 bg-white border border-brand-200 rounded-xl px-3 py-2 hover:border-brand-300 transition-colors disabled:opacity-50">
+                <i data-lucide="printer" class="w-4 h-4"></i> FACED Card
+            </button>
             <button x-show="can('sakuna_evacuees','transfer') && selectedEvacuee?.status === 'Processing'" @click="transferToCenter = ''; showTransferForm = true; showEvacueeDetail = false; $nextTick(() => window.renderIcons?.())"
                 class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:border-slate-300 transition-colors">
                 <i data-lucide="arrow-right-left" class="w-4 h-4"></i> Transfer Center
@@ -391,6 +422,11 @@
                 </div>
             </div>
 
+            <div class="rounded-2xl border border-brand-600/10 p-3 space-y-3" data-checkin-faced>
+                <p class="text-xs font-semibold text-ink-body flex items-center gap-1.5"><i data-lucide="id-card" class="w-3.5 h-3.5 text-brand-600"></i> FACED card details <span class="font-normal text-ink-muted">(optional — can be filled in later)</span></p>
+                @include('admin.partials.sakuna.faced-fields', ['model' => 'checkInForm', 'idPrefix' => 'checkin-faced'])
+            </div>
+
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <label class="text-xs font-medium text-ink-muted uppercase tracking-wide">Members (optional — otherwise just the head is recorded)</label>
@@ -398,6 +434,7 @@
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Member
                     </button>
                 </div>
+                <datalist id="faced-education"><option>None</option><option>Elementary</option><option>High School</option><option>Senior High School</option><option>Vocational</option><option>College</option><option>Post-graduate</option></datalist>
                 <div class="space-y-2">
                     <template x-for="(m, idx) in checkInForm.members" :key="idx">
                         <div class="flex flex-wrap items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white">
@@ -408,6 +445,12 @@
                                 <option value="">Sex</option><option>Male</option><option>Female</option>
                             </select>
                             <input type="text" x-model="m.needs" :aria-label="'Member ' + (idx+1) + ' needs'" placeholder="Needs (comma-separated)" class="flex-1 min-w-[140px] text-xs border border-slate-200 rounded-xl px-2 py-1.5">
+                            <input type="date" x-model="m.dob" :aria-label="'Member ' + (idx+1) + ' birthdate'" class="w-32 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
+                            <input type="text" x-model="m.education" list="faced-education" :aria-label="'Member ' + (idx+1) + ' highest educational attainment'" placeholder="Education" class="w-28 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
+                            <input type="text" x-model="m.occupation" :aria-label="'Member ' + (idx+1) + ' occupation'" placeholder="Occupation" class="w-28 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
+                            <select x-model="m.vulnerability" :aria-label="'Member ' + (idx+1) + ' vulnerable sector'" class="w-36 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
+                                <option value="">Vulnerable sector</option><option>Older person</option><option>Pregnant</option><option>Lactating mother</option><option>PWD</option><option>Solo parent</option><option>Child (under 18)</option>
+                            </select>
                             <button aria-label="Close" type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-ink-muted hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                         </div>
                     </template>
@@ -425,5 +468,82 @@
         </div>
     </div>
 </div>
+
+{{-- ── FACED Card (print) ─────────────────────────────────────────────────────────────── --}}
+<template x-if="facedCard">
+    <div class="fixed inset-0 z-[60] flex items-start justify-center p-4 pt-8 bg-navy-950/60 backdrop-blur-sm overflow-y-auto" @click.self="facedCard = null"
+         x-trap="facedCard" role="dialog" aria-modal="true" aria-label="FACED card" @keydown.escape.window="facedCard = null">
+        <div class="bg-white rounded-[28px] shadow-float w-full max-w-4xl mb-8">
+            <div class="flex items-center justify-between px-6 py-3 border-b border-brand-600/10">
+                <h3 class="font-semibold text-ink-body">Family Access Card in Emergencies and Disasters</h3>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="printFacedCard()" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print</button>
+                    <button type="button" aria-label="Close" @click="facedCard = null" class="w-8 h-8 rounded-xl grid place-items-center text-ink-muted hover:bg-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+            <div id="dp-print-area" class="doc-paper p-8 text-[11px] leading-snug text-black" data-faced-card>
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="font-bold">DSWD-DRMB-FACED</p>
+                        <p>Serial No. <span class="font-mono font-semibold" x-text="facedCard.faced?.serial || '__________'"></span></p>
+                    </div>
+                    <div class="text-center">
+                        <p>Republic of the Philippines · Municipality of Esperanza</p>
+                        <p class="font-bold">MUNICIPAL SOCIAL WELFARE AND DEVELOPMENT OFFICE</p>
+                        <p class="text-sm font-bold mt-1">FAMILY ACCESS CARD IN EMERGENCIES AND DISASTERS (FACED)</p>
+                    </div>
+                    <p class="text-right">Ref. <span class="font-mono" x-text="facedCard.ref"></span></p>
+                </div>
+
+                <p class="font-bold mt-3 border-b border-black">Location of the Affected Family</p>
+                <table class="w-full mt-1"><tbody>
+                    <tr><td class="w-1/4 py-0.5">Barangay</td><td class="font-semibold" x-text="facedCard.barangay"></td><td class="w-1/4">Sitio / Purok</td><td class="font-semibold" x-text="facedCard.sitio || '—'"></td></tr>
+                    <tr><td class="py-0.5">Evacuation center</td><td class="font-semibold" x-text="facedCard.center || '—'"></td><td>Checked in</td><td x-text="facedCard.checked_in ? new Date(facedCard.checked_in).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}) : '—'"></td></tr>
+                </tbody></table>
+
+                <p class="font-bold mt-3 border-b border-black">Head of the Family</p>
+                <table class="w-full mt-1"><tbody>
+                    <tr><td class="w-1/4 py-0.5">Name</td><td class="font-semibold" x-text="facedCard.head_name"></td><td class="w-1/4">Contact no.</td><td x-text="facedCard.faced?.contact || '—'"></td></tr>
+                    <tr><td class="py-0.5">Monthly family net income</td><td x-text="facedCard.faced?.monthly_income || '—'"></td><td>4Ps beneficiary</td><td x-text="facedCard.faced?.is_4ps ? 'Yes' : 'No'"></td></tr>
+                    <tr><td class="py-0.5">House ownership</td><td x-text="facedCard.faced?.house_ownership || '—'"></td><td>Shelter damage</td><td x-text="facedCard.faced?.shelter_damage || '—'"></td></tr>
+                    <tr><td class="py-0.5">Indigenous People</td><td colspan="3" x-text="facedCard.faced?.is_ip ? 'Yes' + (facedCard.faced.ip_ethnicity ? ' — ' + facedCard.faced.ip_ethnicity : '') : 'No'"></td></tr>
+                </tbody></table>
+
+                <p class="font-bold mt-3 border-b border-black">Family Information</p>
+                <table class="w-full mt-1 border border-black border-collapse">
+                    <thead><tr class="bg-slate-100">
+                        <th class="border border-black px-1 text-left">Family members</th><th class="border border-black px-1">Relation to head</th><th class="border border-black px-1">Birthdate</th><th class="border border-black px-1">Age</th><th class="border border-black px-1">Sex</th><th class="border border-black px-1">Highest educ. attainment</th><th class="border border-black px-1">Occupation</th><th class="border border-black px-1">Remarks (vulnerable sector)</th>
+                    </tr></thead>
+                    <tbody>
+                        <template x-for="(m, i) in (facedCard.members || [])" :key="i">
+                            <tr><td class="border border-black px-1" x-text="m.name"></td><td class="border border-black px-1" x-text="m.relation || ''"></td><td class="border border-black px-1" x-text="m.dob || ''"></td><td class="border border-black px-1 text-center" x-text="m.age ?? ''"></td><td class="border border-black px-1" x-text="m.sex || ''"></td><td class="border border-black px-1" x-text="m.education || ''"></td><td class="border border-black px-1" x-text="m.occupation || ''"></td><td class="border border-black px-1" x-text="[m.vulnerability, ...(m.needs || [])].filter(Boolean).join(', ')"></td></tr>
+                        </template>
+                        <tr x-show="!(facedCard.members || []).length"><td colspan="8" class="border border-black px-1 py-2 text-center italic">Only the household count was recorded at check-in.</td></tr>
+                    </tbody>
+                </table>
+
+                <p class="font-bold mt-3 border-b border-black">Family Assistance Record</p>
+                <table class="w-full mt-1 border border-black border-collapse" data-faced-assistance>
+                    <thead><tr class="bg-slate-100">
+                        <th class="border border-black px-1">Date</th><th class="border border-black px-1 text-left">Kind / type of assistance</th><th class="border border-black px-1">Unit</th><th class="border border-black px-1">Qty</th><th class="border border-black px-1">Cost</th><th class="border border-black px-1">Provider</th><th class="border border-black px-1">Ref.</th>
+                    </tr></thead>
+                    <tbody>
+                        <template x-for="a in (facedCard.assistance || [])" :key="a.ref">
+                            <tr><td class="border border-black px-1" x-text="a.created_at ? new Date(a.created_at).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}) : ''"></td><td class="border border-black px-1" x-text="a.item"></td><td class="border border-black px-1" x-text="a.unit || ''"></td><td class="border border-black px-1 text-center" x-text="a.quantity ?? ''"></td><td class="border border-black px-1 text-right" x-text="a.cost != null ? '₱' + Number(a.cost).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : ''"></td><td class="border border-black px-1" x-text="a.provider || ''"></td><td class="border border-black px-1 font-mono" x-text="a.ref"></td></tr>
+                        </template>
+                        <tr x-show="!(facedCard.assistance || []).length"><td colspan="7" class="border border-black px-1 py-2 text-center italic">No assistance released to this family yet.</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="grid grid-cols-2 gap-10 mt-8 text-center">
+                    <div><p class="border-t border-black pt-1">Signature / thumbmark of the family head</p></div>
+                    <div><p class="border-t border-black pt-1">Barangay Captain</p></div>
+                    <div><p class="border-t border-black pt-1">MSWDO / LSWDO</p></div>
+                    <div><p class="border-t border-black pt-1">Date registered</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
 </div>{{-- end x-data wrapper --}}

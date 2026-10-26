@@ -95,6 +95,19 @@
             // reference and the proof.
             assessNotes: '',
             assessAmount: '',
+            // The MSWDO General Intake Sheet's part of the assessment (the
+            // MSWD's General Intake Sheet.xls), for the cases of the office whose
+            // sheet it is: the server sends its choices (case.intake_options).
+            intake: { mode_of_admission: '', referring_party: '', beneficiary_name: '', beneficiary_relation: '', problem_presented: '', client_category: '', client_sub_category: '', services: [], referral_to: '', mode: '', source_of_funds: '', legislator: '', payee_name: '', payee_address: '' },
+            intakeOpen: false,
+            toggleIntakeService(name) {
+                const i = this.intake.services.indexOf(name);
+                if (i === -1) this.intake.services.push(name); else this.intake.services.splice(i, 1);
+            },
+            printIntake() {
+                document.body.classList.add('dp-printing');
+                this.$nextTick(() => window.print());
+            },
             approveAmount: '',
             releaseTo: '',
             releaseAmount: '',
@@ -461,6 +474,7 @@
                 this.sideReason = '';
                 this.assessNotes = '';
                 this.assessAmount = '';
+                this.intake = { mode_of_admission: '', referring_party: '', beneficiary_name: '', beneficiary_relation: '', problem_presented: '', client_category: '', client_sub_category: '', services: [], referral_to: '', mode: '', source_of_funds: '', legislator: '', payee_name: '', payee_address: '' };
                 this.approveAmount = '';
                 this.releaseTo = '';
                 this.releaseAmount = '';
@@ -819,7 +833,11 @@
                 if (['Initial Screening', 'Returned for Reassessment'].includes(r.status)) {
                     await this.moveCase('begin-assessment', {});
                 } else if (r.status === 'Assessment') {
-                    await this.moveCase('recommend', { assessment_notes: this.assessNotes.trim(), recommended_amount: this.showsAmount ? amount(this.assessAmount) : null }, r.ref + ' submitted for approval.');
+                    await this.moveCase('recommend', {
+                        assessment_notes: this.assessNotes.trim(),
+                        recommended_amount: this.showsAmount ? amount(this.assessAmount) : null,
+                        ...(r.case?.intake_options ? { intake: JSON.parse(JSON.stringify(this.intake)) } : {}),
+                    }, r.ref + ' submitted for approval.');
                 } else if (r.status === 'For Approval') {
                     await this.moveCase('approve-assistance', { approved_amount: this.showsAmount ? amount(this.approveAmount) : null }, 'Assistance approved for ' + r.ref + '.');
                 } else if (r.status === 'Assistance Processing') {
@@ -838,6 +856,66 @@
         class="animate-fade-up"
     >
 
+
+    {{-- The MSWDO General Intake Sheet, printed in the paper's layout from the
+         case (MSWDO forms, 2026-10-26). Only the open sheet is #dp-print-area. --}}
+    <template x-if="intakeOpen && selected">
+        <div class="fixed inset-0 z-[70] bg-slate-900/50 flex items-start justify-center overflow-y-auto p-4" @keydown.escape.window="intakeOpen = false">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl my-6">
+                <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200 dp-no-print">
+                    <p class="text-sm font-semibold text-ink">General Intake Sheet — <span x-text="selected.ref"></span></p>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="printIntake()" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print</button>
+                        <button type="button" aria-label="Close" @click="intakeOpen = false" class="w-8 h-8 rounded-xl grid place-items-center text-ink-muted hover:bg-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <div id="dp-print-area" class="doc-paper p-8 text-[11.5px] leading-snug text-black" data-intake-sheet>
+                    <div class="text-center">
+                        <p>Republic of the Philippines · Province of Masbate · Municipality of Esperanza</p>
+                        <p class="font-bold">MUNICIPAL SOCIAL WELFARE AND DEVELOPMENT OFFICE</p>
+                        <p class="text-base font-bold mt-1">General Intake Sheet</p>
+                    </div>
+                    <p class="text-right mt-1">Case no. <span class="font-mono font-semibold" x-text="selected.ref"></span> · <span x-text="formatDay(selected.case?.assessed_at || new Date().toISOString())"></span></p>
+                    <p class="font-bold mt-3 border-b border-black">I. Client's Identifying Information</p>
+                    <table class="w-full mt-1"><tbody>
+                        <tr><td class="w-1/3 py-0.5">Name</td><td class="font-semibold" x-text="selected.citizen"></td></tr>
+                        <tr><td class="py-0.5">Present address</td><td x-text="[selected.form_data?.applicant_address, selected.barangay ? 'Brgy. ' + selected.barangay : '', 'Esperanza, Masbate'].filter(Boolean).join(', ')"></td></tr>
+                        <tr><td class="py-0.5">Contact no.</td><td x-text="selected.form_data?.applicant_mobile || '________________'"></td></tr>
+                        <tr><td class="py-0.5">Mode of admission</td><td x-text="[selected.case?.intake?.mode_of_admission, selected.case?.intake?.referring_party].filter(Boolean).join(' · ') || '________________'"></td></tr>
+                    </tbody></table>
+                    <p class="font-bold mt-3 border-b border-black">II. Beneficiary's Identifying Information</p>
+                    <p class="mt-1" x-text="selected.case?.intake?.beneficiary_name ? selected.case.intake.beneficiary_name + (selected.case.intake.beneficiary_relation ? ' (' + selected.case.intake.beneficiary_relation + ' of the client)' : '') : 'Same as the client'"></p>
+                    <p class="font-bold mt-3 border-b border-black">III. Family Composition</p>
+                    <template x-for="(row, ri) in (Object.values(selected.form_data || {}).find((v) => Array.isArray(v) && v.length && typeof v[0] === 'object') || [])" :key="ri">
+                        <p class="mt-0.5" x-text="(ri + 1) + '. ' + Object.values(row).filter(Boolean).join(' · ')"></p>
+                    </template>
+                    <p class="mt-0.5 text-slate-500" x-show="!Object.values(selected.form_data || {}).some((v) => Array.isArray(v) && v.length && typeof v[0] === 'object')">(see the Resident Profile)</p>
+                    <p class="font-bold mt-3 border-b border-black">IV. Assessment</p>
+                    <p class="mt-1"><span class="font-semibold">Problem presented:</span> <span x-text="selected.case?.intake?.problem_presented || selected.form_data?.purpose || '—'"></span></p>
+                    <p class="mt-1 whitespace-pre-line"><span class="font-semibold">Social worker's assessment:</span> <span x-text="selected.case?.assessment_notes || '—'"></span></p>
+                    <p class="mt-1"><span class="font-semibold">Client category:</span> <span x-text="[selected.case?.intake?.client_category, selected.case?.intake?.client_sub_category].filter(Boolean).join(' · ') || '—'"></span></p>
+                    <p class="font-bold mt-3 border-b border-black">V. Recommended Services and Assistance</p>
+                    <div class="grid grid-cols-2 gap-x-6 mt-1">
+                        <template x-for="o in (selected.case?.intake_options?.services || [])" :key="o">
+                            <p><span x-text="(selected.case?.intake?.services || []).includes(o) ? '☑' : '☐'"></span> <span x-text="o"></span></p>
+                        </template>
+                    </div>
+                    <table class="w-full mt-2"><tbody>
+                        <tr><td class="w-1/3 py-0.5">Amount recommended / approved</td><td class="font-semibold" x-text="[peso(selected.case?.recommended_amount), peso(selected.case?.approved_amount)].filter((v) => v && v !== '—').join(' / ') || '—'"></td></tr>
+                        <tr><td class="py-0.5">Mode of financial assistance</td><td x-text="selected.case?.intake?.mode || '—'"></td></tr>
+                        <tr><td class="py-0.5">Source of assistance</td><td x-text="[selected.case?.intake?.source_of_funds, selected.case?.intake?.legislator].filter(Boolean).join(' · ') || '—'"></td></tr>
+                        <tr><td class="py-0.5">Name of payee</td><td x-text="selected.case?.intake?.payee_name || '—'"></td></tr>
+                        <tr><td class="py-0.5">Address of payee</td><td x-text="selected.case?.intake?.payee_address || '—'"></td></tr>
+                    </tbody></table>
+                    <div class="grid grid-cols-3 gap-6 mt-10 text-center">
+                        <div><p class="border-t border-black pt-1">Client's Signature / Thumb Mark</p></div>
+                        <div><p class="border-t border-black pt-1">Interviewed by: Social Worker</p></div>
+                        <div><p class="border-t border-black pt-1">Reviewed and Approved by: Unit Head</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
         <div x-show="!$store.session.can('tulong')" x-cloak>
             <x-admin.access-restricted module="Tulong (Citizen Assistance)" icon="hand-heart" />
         </div>
@@ -1312,6 +1390,60 @@
                             <input id="tulong-assess-amount" type="number" min="0" step="0.01" inputmode="decimal" x-model="assessAmount" placeholder="0.00"
                                 class="w-full sm:w-48 rounded-2xl py-2 px-3 text-sm text-slate-700 tabular-nums focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm">
                         </div>
+                        {{-- The MSWDO General Intake Sheet (MSWDO forms, 2026-10-26). --}}
+                        <template x-if="selected.case?.intake_options">
+                            <div class="mt-3 border-t border-indigo-100 pt-3 space-y-2.5" data-intake-form>
+                                <p class="text-[11px] font-semibold text-indigo-800 uppercase tracking-wide">General Intake Sheet</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <label class="block text-[11px] font-medium text-slate-600">Mode of admission
+                                        <select x-model="intake.mode_of_admission" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink">
+                                            <option value="">—</option><template x-for="o in selected.case.intake_options.admission" :key="o"><option :value="o" x-text="o"></option></template>
+                                        </select></label>
+                                    <label class="block text-[11px] font-medium text-slate-600" x-show="intake.mode_of_admission === 'Referral'">Referring party
+                                        <input type="text" x-model="intake.referring_party" maxlength="160" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                    <label class="block text-[11px] font-medium text-slate-600">Beneficiary (if not the client)
+                                        <input type="text" x-model="intake.beneficiary_name" maxlength="160" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                    <label class="block text-[11px] font-medium text-slate-600">Client's relationship to the beneficiary
+                                        <input type="text" x-model="intake.beneficiary_relation" maxlength="60" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                </div>
+                                <label class="block text-[11px] font-medium text-slate-600">Problem presented
+                                    <textarea x-model="intake.problem_presented" rows="2" maxlength="2000" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink resize-none"></textarea></label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <label class="block text-[11px] font-medium text-slate-600">Client category
+                                        <select x-model="intake.client_category" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink">
+                                            <option value="">—</option><template x-for="o in selected.case.intake_options.client_categories" :key="o"><option :value="o" x-text="o"></option></template>
+                                        </select></label>
+                                    <label class="block text-[11px] font-medium text-slate-600">Sub-category
+                                        <input type="text" x-model="intake.client_sub_category" maxlength="160" placeholder="e.g. Indigent, Senior citizen" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-medium text-slate-600 mb-1">Services and assistance</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <template x-for="o in selected.case.intake_options.services" :key="o">
+                                            <button type="button" @click="toggleIntakeService(o)" :aria-pressed="intake.services.includes(o)" class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="intake.services.includes(o) ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600'" x-text="o"></button>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    <label class="block text-[11px] font-medium text-slate-600">Mode
+                                        <select x-model="intake.mode" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink">
+                                            <option value="">—</option><template x-for="o in selected.case.intake_options.modes" :key="o"><option :value="o" x-text="o"></option></template>
+                                        </select></label>
+                                    <label class="block text-[11px] font-medium text-slate-600">Source of funds
+                                        <select x-model="intake.source_of_funds" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink">
+                                            <option value="">—</option><template x-for="o in selected.case.intake_options.sources" :key="o"><option :value="o" x-text="o"></option></template>
+                                        </select></label>
+                                    <label class="block text-[11px] font-medium text-slate-600" x-show="intake.source_of_funds === 'Priority Development Assistance Fund'">Legislator
+                                        <input type="text" x-model="intake.legislator" maxlength="160" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <label class="block text-[11px] font-medium text-slate-600">Name of payee
+                                        <input type="text" x-model="intake.payee_name" maxlength="160" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                    <label class="block text-[11px] font-medium text-slate-600">Address of payee
+                                        <input type="text" x-model="intake.payee_address" maxlength="255" class="mt-1 w-full rounded-xl border-0 surface-pressed-sm py-1.5 px-2.5 text-xs text-ink"></label>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     {{-- Approval (For Approval): the approved amount, kept apart
@@ -1404,6 +1536,17 @@
                                 <dd class="text-sm font-semibold text-ink tabular-nums" x-text="peso(selected.case?.released_amount)"></dd>
                             </div>
                         </dl>
+                        {{-- The General Intake Sheet's part, and the sheet itself (MSWDO forms, 2026-10-26). --}}
+                        <div class="mt-2.5 rounded-lg bg-indigo-50/40 px-3 py-2.5 text-xs text-slate-700 space-y-0.5" x-show="selected.case?.intake" x-cloak data-intake-summary>
+                            <p class="text-[10px] text-ink-muted uppercase tracking-wide mb-1">General Intake Sheet</p>
+                            <p x-show="selected.case?.intake?.client_category"><span class="text-ink-muted">Client category</span> <span class="font-medium" x-text="selected.case?.intake?.client_category + (selected.case?.intake?.client_sub_category ? ' · ' + selected.case.intake.client_sub_category : '')"></span></p>
+                            <p x-show="(selected.case?.intake?.services || []).length"><span class="text-ink-muted">Services</span> <span class="font-medium" x-text="(selected.case?.intake?.services || []).join(', ')"></span></p>
+                            <p x-show="selected.case?.intake?.mode || selected.case?.intake?.source_of_funds"><span class="text-ink-muted">Mode and funds</span> <span class="font-medium" x-text="[selected.case?.intake?.mode, selected.case?.intake?.source_of_funds, selected.case?.intake?.legislator].filter(Boolean).join(' · ')"></span></p>
+                            <p x-show="selected.case?.intake?.payee_name"><span class="text-ink-muted">Payee</span> <span class="font-medium" x-text="selected.case?.intake?.payee_name"></span></p>
+                        </div>
+                        <button type="button" x-show="selected.case?.intake_options && selected.case?.assessment_notes" x-cloak @click="intakeOpen = true" class="mt-2.5 inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">
+                            <i data-lucide="printer" class="w-3.5 h-3.5"></i> General Intake Sheet
+                        </button>
                         <div class="mt-2.5 text-xs text-slate-700 space-y-0.5" x-show="selected.case?.released_to">
                             <p><span class="text-ink-muted">Received by</span> <span class="font-medium" x-text="selected.case?.released_to"></span><span x-show="selected.case?.released_at" x-text="' · ' + formatDay(selected.case?.released_at)"></span></p>
                             <p x-show="selected.case?.release_reference"><span class="text-ink-muted">Reference</span> <span class="font-mono" x-text="selected.case?.release_reference"></span></p>

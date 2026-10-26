@@ -85,8 +85,9 @@ class BugsQaFixesTest extends TestCase
             $this->assertSame(2, substr_count($view, 'x-text="reqKindLabel('), "{$path}: the form and Track Request both label it");
             $this->assertStringContainsString("'Accepted' : 'Tinanggap'", $view, "{$path}: an accepted one says so");
             $this->assertStringContainsString("reqKind(req.name) !== 'office'", $view, "{$path}: no Attach on a step the office does");
-            $this->assertStringContainsString("reqKind(q) === 'required' && !this.attachments[i]", $view, "{$path}: the wizard names the documents still owed, not office steps");
-            $this->assertStringContainsString("filter(q => reqKind(q) !== 'office').length", $view, "{$path}: the attached count leaves out office steps");
+            // Of the documents these answers call for (MSWDO forms, 2026-10-26).
+            $this->assertStringContainsString("this.shownReqs.filter((r) => reqKind(r.label) === 'required' && !this.attachments[r.i])", $view, "{$path}: the wizard names the documents still owed, not office steps");
+            $this->assertStringContainsString("shownReqs.filter(r => reqKind(r.label) !== 'office').length", $view, "{$path}: the attached count leaves out office steps");
             $this->assertStringContainsString("'Not yet submitted' : 'Wala pang naisumite'", $view, "{$path}: the correction box speaks both languages");
             $this->assertStringNotContainsString("req.status === 'Approved' ? 'Verified'", $view, "{$path}: 'Verified' is an account tier, not a document's");
             $this->assertStringContainsString('x-show="(selectedRequest.requirements || []).length" x-cloak>', $view, "{$path}: the list shows at every stage, not only the first");

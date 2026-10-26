@@ -86,4 +86,58 @@ class MswdoFormsTest extends TestCase
         $this->assertStringContainsString("filter(f => f.type === 'table' && fieldShown(f))", $dokyu);
         $this->assertStringContainsString("'requirementRules' => array_values(array_map(", $dokyu);
     }
+
+    /** The ID number written at release, kept on the record and the wallet. */
+    public function test_a_released_sector_id_carries_its_number_to_the_wallet(): void
+    {
+        $dokyu = $this->source('resources/views/admin/document-requests.blade.php');
+        $this->assertStringContainsString('r.idNumberSpec = d.id_number || null;', $dokyu);
+        $this->assertStringContainsString("'/issue', { id_number: number }", $dokyu);
+        $this->assertStringContainsString('<input id="id-number" type="text" x-model="selected._idNumber"', $dokyu);
+
+        $this->assertStringContainsString('x-for="sid in (selectedIndividual?.sector_ids || [])"', $this->source('resources/views/admin/constituents/modal-individual-detail.blade.php'));
+
+        $wallet = $this->source('resources/views/components/citizen/digital-id-wallet.blade.php');
+        $this->assertStringContainsString('<template x-for="sid in (wallet.sector_ids || [])"', $wallet);
+        $this->assertStringContainsString('window.qrSvg(sid.verify_url, 3)', $wallet, 'each card verifies by QR');
+    }
+
+    /** The General Intake Sheet inside a Tulong case, and FACED inside Sakuna. */
+    public function test_the_intake_sheet_and_the_faced_card_live_in_their_modules(): void
+    {
+        $tulong = $this->source('resources/views/admin/assistance-requests.blade.php');
+        $this->assertStringContainsString('...(r.case?.intake_options ? { intake: JSON.parse(JSON.stringify(this.intake)) } : {}),', $tulong);
+        $this->assertStringContainsString('data-intake-form', $tulong);
+        $this->assertStringContainsString('<div id="dp-print-area" class="doc-paper p-8 text-[11.5px] leading-snug text-black" data-intake-sheet>', $tulong);
+
+        $sakuna = $this->source('resources/views/admin/sakuna.blade.php');
+        $this->assertStringContainsString("\$api.put('/admin/sakuna/evacuees/' + this.selectedEvacuee.ref + '/faced', this.facedPayload(this.facedForm))", $sakuna);
+        $this->assertStringContainsString("\$api.get('/admin/sakuna/evacuees/' + ev.ref + '/faced')", $sakuna);
+        $this->assertStringContainsString('vulnerability: m.vulnerability || null,', $sakuna, 'every member detail reaches the server');
+        $this->assertStringContainsString('evacuee_ref: f.evacuee_ref || undefined,', $sakuna, 'a relief release lands on the FACED card');
+
+        $evacuees = $this->source('resources/views/admin/partials/sakuna/tab-evacuees.blade.php');
+        $this->assertStringContainsString("@include('admin.partials.sakuna.faced-fields', ['model' => 'checkInForm', 'idPrefix' => 'checkin-faced'])", $evacuees);
+        $this->assertStringContainsString('data-faced-assistance', $evacuees, 'the Family Assistance Record');
+        $this->assertSame(1, substr_count($evacuees, 'id="dp-print-area"'));
+        $this->assertStringContainsString('commandBoard.counts.houses_totally_damaged', $this->source('resources/views/admin/partials/sakuna/tab-command.blade.php'));
+    }
+
+    /** ERPAT & KALIPI as a view inside the MSWDO tab, not a sidebar entry. */
+    public function test_the_associations_view_sits_in_the_mswdo_tab(): void
+    {
+        $forms = $this->source('resources/views/admin/internal-forms.blade.php');
+        $this->assertStringContainsString("\$api.get('/admin/associations/erpat')", $forms);
+        $this->assertStringContainsString("x-show=\"officeKey === 'mswd' && mayViewAssociations\"", $forms);
+        $this->assertStringNotContainsString('associations', strtolower($this->source('resources/views/components/admin/sidebar.blade.php')));
+    }
+
+    /** Staff editing a service keep its conditional requirements. */
+    public function test_the_catalog_editor_keeps_a_requirement_condition(): void
+    {
+        $js = $this->source('resources/js/scope-admin-settings.js');
+        $this->assertStringContainsString("requirements: Array.isArray(c.requirements) ? c.requirements.map((r) => (r && typeof r === 'object' ? { ...r } : r)) : [],", $js);
+        $this->assertStringContainsString('{ ...r, label: this.reqLabel(r).trim() }', $js);
+        $this->assertStringContainsString('data-conditional-requirement', $this->source('resources/views/admin/settings/service-catalog.blade.php'));
+    }
 }

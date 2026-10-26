@@ -333,6 +333,37 @@
                     : t('Your Resident ID is issued once your identity is verified and the LGU approves your residency.', 'Iisyu ang iyong Resident ID kapag beripikado na ang iyong pagkakakilanlan at inaprubahan ng LGU ang iyong paninirahan.')"></p>
             </div>
 
+            {{-- The Senior Citizen, PWD and Solo Parent IDs the LGU released to
+                 this resident, each with its number, validity and a QR for the
+                 public Verify page (MSWDO forms, 2026-10-26). --}}
+            <div x-show="(wallet.sector_ids || []).length" x-cloak data-sector-ids>
+                <p class="text-sm font-semibold text-ink"><x-ui.t fil="Mga ID mula sa LGU" en="IDs from the LGU" /></p>
+                <div class="space-y-3 mt-2">
+                    <template x-for="sid in (wallet.sector_ids || [])" :key="sid.sector + sid.id_number">
+                        <div class="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-card"
+                             x-data="{ qr: '' }" x-init="if (sid.verify_url && window.qrSvg) window.qrSvg(sid.verify_url, 3).then((svg) => { qr = svg; }).catch(() => {})">
+                            <div class="h-11 px-3 flex items-center justify-between text-white bg-gradient-to-r"
+                                 :class="{ senior: 'from-amber-500 to-orange-600', pwd: 'from-sky-600 to-blue-700', solo_parent: 'from-rose-500 to-pink-600' }[sid.sector] || 'from-slate-600 to-slate-700'">
+                                <span class="text-sm font-bold" x-text="sid.name"></span>
+                                <span class="text-[10px] font-semibold uppercase tracking-wide opacity-90" x-text="sid.issuer + ' · Esperanza'"></span>
+                            </div>
+                            <div class="p-3 flex items-center gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[10px] uppercase tracking-wide text-ink-muted"><x-ui.t fil="Numero" en="Number" /></p>
+                                    <p class="text-sm font-mono font-semibold text-ink break-all" x-text="sid.id_number"></p>
+                                    <p class="text-xs text-ink-body mt-1" x-text="sid.holder_name"></p>
+                                    <p class="text-[11px] text-ink-muted" x-show="sid.category" x-text="sid.category"></p>
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 mt-1.5 text-[11px] font-semibold ring-1"
+                                          :class="sid.status === 'active' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : (sid.status === 'expired' ? 'bg-amber-50 text-amber-800 ring-amber-200' : 'bg-slate-100 text-slate-600 ring-slate-200')"
+                                          x-text="sid.status === 'active' ? (sid.valid_until ? t('Valid until ', 'Valid hanggang ') + sid.valid_until : t('Valid, no expiry', 'Valid, walang expiry')) : (sid.status === 'expired' ? t('Expired ', 'Nag-expire ') + sid.valid_until + t(' — renew it in Dokyu', ' — i-renew sa Dokyu') : t('Revoked', 'Binawi'))"></span>
+                                </div>
+                                <div class="shrink-0 w-20 h-20" x-show="qr" x-html="qr" :aria-label="t('QR code to verify this ID', 'QR code para beripikahin ang ID na ito')"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
             {{-- Where things stand --}}
             <div class="rounded-2xl border border-slate-200 p-4 space-y-3">
                 <p class="text-sm font-semibold text-ink"><x-ui.t fil="Kalagayan" en="Where things stand" /></p>

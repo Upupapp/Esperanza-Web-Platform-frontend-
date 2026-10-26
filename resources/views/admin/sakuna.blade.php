@@ -416,7 +416,7 @@
         evacueesLoading: true,
         evacueesFailed: false,
         evacueeCentersOpen: [],
-        checkInForm: { center: '', head_name: '', barangay: '', sitio: '', members: [] },
+        checkInForm: { center: '', head_name: '', barangay: '', sitio: '', members: [], faced_serial: '', contact: '', monthly_income: '', house_ownership: '', shelter_damage: '', is_4ps: false, is_ip: false, ip_ethnicity: '' },
         checkInSaving: false,
         // GET /sakuna/evacuees (list) + GET /sakuna/centers filtered to open
         // ones, for the check-in/transfer center pickers.
@@ -434,14 +434,14 @@
             } catch { this.evacueesFailed = true; } finally { this.evacueesLoading = false; }
         },
         resetCheckInForm() {
-            this.checkInForm = { center: '', head_name: '', barangay: '', sitio: '', members: [] };
+            this.checkInForm = { center: '', head_name: '', barangay: '', sitio: '', members: [], faced_serial: '', contact: '', monthly_income: '', house_ownership: '', shelter_damage: '', is_4ps: false, is_ip: false, ip_ethnicity: '' };
         },
         openEvacueeReg() {
             this.resetCheckInForm();
             this.showEvacueeReg = true;
             this.$nextTick(() => window.renderIcons?.());
         },
-        addCheckInMember() { this.checkInForm.members.push({ name: '', relation: '', age: '', sex: '', needs: '' }); },
+        addCheckInMember() { this.checkInForm.members.push({ name: '', relation: '', age: '', sex: '', needs: '', dob: '', education: '', occupation: '', vulnerability: '' }); },
         removeCheckInMember(i) { this.checkInForm.members.splice(i, 1); },
         // members[] is optional on the real endpoint (a bare member_count is
         // enough), but sending it is what makes the detail view's real
@@ -457,8 +457,13 @@
                     age: m.age === '' ? null : Number(m.age),
                     sex: m.sex || null,
                     needs: m.needs ? m.needs.split(',').map(s => s.trim()).filter(Boolean) : [],
+                    dob: m.dob || null,
+                    education: m.education || null,
+                    occupation: m.occupation || null,
+                    vulnerability: m.vulnerability || null,
                 }));
-            const payload = { head_name: this.checkInForm.head_name, barangay: this.checkInForm.barangay, sitio: this.checkInForm.sitio || null, members };
+            const f = this.checkInForm;
+            const payload = { head_name: f.head_name, barangay: f.barangay, sitio: f.sitio || null, members, ...this.facedPayload(f) };
             try {
                 const res = await $api.post('/admin/sakuna/centers/' + this.checkInForm.center + '/check-in', payload);
                 this.evacueesList.unshift(res.data);
@@ -468,8 +473,69 @@
                 this.toast(err.localised ? err.localised('en') : 'Could not check in this household.', 'error');
             } finally { this.checkInSaving = false; }
         },
+        // The DSWD Family Access Card for Emergencies and Disasters (FACED):
+        // the family's registration side is kept on the evacuee family and
+        // every relief it receives lands on its Family Assistance Record
+        // (MSWDO forms, 2026-10-26).
+        houseOwnershipChoices: ['Owner', 'Renter', 'Sharer', 'Informal Settler'],
+        shelterDamageChoices: ['None', 'Partially Damaged', 'Totally Damaged'],
+        facedEditing: false,
+        facedForm: {},
+        facedSaving: false,
+        facedCard: null,
+        facedLoading: false,
+        facedPayload(f) {
+            return {
+                faced_serial: f.faced_serial || null,
+                contact: f.contact || null,
+                monthly_income: f.monthly_income || null,
+                house_ownership: f.house_ownership || null,
+                shelter_damage: f.shelter_damage || null,
+                is_4ps: !!f.is_4ps,
+                is_ip: !!f.is_ip,
+                ip_ethnicity: f.is_ip ? (f.ip_ethnicity || null) : null,
+            };
+        },
+        editFaced() {
+            const fc = this.selectedEvacuee?.faced || {};
+            this.facedForm = {
+                faced_serial: fc.serial || '', contact: fc.contact || '', monthly_income: fc.monthly_income || '',
+                house_ownership: fc.house_ownership || '', shelter_damage: fc.shelter_damage || '',
+                is_4ps: !!fc.is_4ps, is_ip: !!fc.is_ip, ip_ethnicity: fc.ip_ethnicity || '',
+            };
+            this.facedEditing = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        async saveFaced() {
+            if (this.facedSaving || !this.selectedEvacuee) return;
+            this.facedSaving = true;
+            try {
+                const res = await $api.put('/admin/sakuna/evacuees/' + this.selectedEvacuee.ref + '/faced', this.facedPayload(this.facedForm));
+                this.selectedEvacuee = { ...this.selectedEvacuee, ...res.data };
+                this.facedEditing = false;
+                this.toast('FACED card details saved.', 'success');
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not save the FACED card.', 'error');
+            } finally { this.facedSaving = false; }
+        },
+        async openFacedCard(ev) {
+            this.facedLoading = true;
+            this.facedCard = null;
+            try {
+                const res = await $api.get('/admin/sakuna/evacuees/' + ev.ref + '/faced');
+                this.facedCard = res.data;
+                this.$nextTick(() => window.renderIcons?.());
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not open the FACED card.', 'error');
+            } finally { this.facedLoading = false; }
+        },
+        printFacedCard() {
+            document.body.classList.add('dp-printing');
+            this.$nextTick(() => window.print());
+        },
         async openEvacueeDetail(row) {
             this.selectedEvacuee = row;
+            this.facedEditing = false;
             this.showEvacueeDetail = true;
             this.$nextTick(() => window.renderIcons?.());
             // The list row has no members/movements; GET /sakuna/evacuees/{ref}
@@ -620,7 +686,7 @@
         reliefFailed: false,
         showCreateDistribution: false,
         distributionSaving: false,
-        distributionForm: { operation: '', barangay: '', beneficiary_name: '', item: '', quantity: '' },
+        distributionForm: { operation: '', barangay: '', beneficiary_name: '', item: '', quantity: '', unit: '', cost: '', provider: '', evacuee_ref: '' },
         // GET /sakuna/relief -- SakunaReliefDistribution is the ONLY real model
         // behind this submodule (see tab-relief.blade.php's header for what
         // that means for the UI: no inventory, request-approval or donation
@@ -637,10 +703,15 @@
             return [...new Set(this.reliefList.map(d => d.operation).filter(Boolean))].sort();
         },
         resetDistributionForm() {
-            this.distributionForm = { operation: this.reliefOperationFilter || '', barangay: '', beneficiary_name: '', item: '', quantity: '' };
+            this.distributionForm = { operation: this.reliefOperationFilter || '', barangay: '', beneficiary_name: '', item: '', quantity: '', unit: '', cost: '', provider: '', evacuee_ref: '' };
         },
         openCreateDistribution() {
             this.resetDistributionForm();
+            // The sheltered families, for the FACED card picker, when the
+            // Evacuees tab has not loaded them yet.
+            if (!this.evacueesList.length && this.can('sakuna_evacuees', 'view')) {
+                $api.getAll('/admin/sakuna/evacuees').then(r => { this.evacueesList = r.data || []; }).catch(() => {});
+            }
             this.showCreateDistribution = true;
             this.$nextTick(() => window.renderIcons?.());
         },
@@ -650,7 +721,15 @@
         async submitDistribution() {
             if (this.distributionSaving || !this.distributionForm.operation || !this.distributionForm.barangay || !this.distributionForm.beneficiary_name || !this.distributionForm.item) return;
             this.distributionSaving = true;
-            const payload = { ...this.distributionForm, quantity: this.distributionForm.quantity === '' ? undefined : Number(this.distributionForm.quantity) };
+            const f = this.distributionForm;
+            const payload = {
+                ...f,
+                quantity: f.quantity === '' ? undefined : Number(f.quantity),
+                cost: f.cost === '' ? undefined : Number(f.cost),
+                unit: f.unit || undefined,
+                provider: f.provider || undefined,
+                evacuee_ref: f.evacuee_ref || undefined,
+            };
             try {
                 const res = await $api.post('/admin/sakuna/relief', payload);
                 this.reliefList.unshift(res.data);
@@ -659,6 +738,14 @@
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not record this distribution.', 'error');
             } finally { this.distributionSaving = false; }
+        },
+        // A release for a sheltered family lands on its FACED card's Family
+        // Assistance Record; picking the family fills its name and barangay.
+        pickReliefFamily() {
+            const ev = this.evacueesList.find(e => e.ref === this.distributionForm.evacuee_ref);
+            if (!ev) return;
+            this.distributionForm.beneficiary_name = ev.head_name;
+            this.distributionForm.barangay = ev.barangay;
         },
         async releaseDistribution(d) {
             try {
