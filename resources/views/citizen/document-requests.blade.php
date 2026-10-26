@@ -1325,7 +1325,7 @@
                                                                 <template x-if="col.options">
                                                                     <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                                                                         <option value="">—</option>
-                                                                        <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
+                                                                        <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt" :selected="row[col.key] === opt"></option></template>
                                                                     </select>
                                                                 </template>
                                                                 <template x-if="!col.options">

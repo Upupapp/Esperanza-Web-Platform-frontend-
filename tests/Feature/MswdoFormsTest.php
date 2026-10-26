@@ -83,6 +83,7 @@ class MswdoFormsTest extends TestCase
             // A choice filled from the profile shows as chosen: x-model sets the
             // select before its options exist, so each option says so itself.
             $this->assertStringContainsString('<option :value="opt" x-text="opt" :selected="formData[f.key] === opt"></option>', $view, $page);
+            $this->assertStringContainsString('<option :value="opt" x-text="opt" :selected="row[col.key] === opt"></option>', $view, $page.': a family row filled from the profile too');
         }
         // Dokyu draws a family table now (it skipped every table before).
         $dokyu = $this->source('resources/views/citizen/document-requests.blade.php');
