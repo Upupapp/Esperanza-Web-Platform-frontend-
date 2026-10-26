@@ -80,6 +80,9 @@ class MswdoFormsTest extends TestCase
             $this->assertStringContainsString('<template x-for="({ req, i }) in shownReqs" :key="i">', $view, $page);
             $this->assertStringContainsString('window.prefillFamilyTables(', $view, $page);
             $this->assertStringContainsString('return window.showIfMet(f?.showIf, this.formData);', $view, $page);
+            // A choice filled from the profile shows as chosen: x-model sets the
+            // select before its options exist, so each option says so itself.
+            $this->assertStringContainsString('<option :value="opt" x-text="opt" :selected="formData[f.key] === opt"></option>', $view, $page);
         }
         // Dokyu draws a family table now (it skipped every table before).
         $dokyu = $this->source('resources/views/citizen/document-requests.blade.php');

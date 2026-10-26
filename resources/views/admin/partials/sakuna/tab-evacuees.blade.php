@@ -177,7 +177,7 @@
     <div class="px-4 py-3 border-t border-brand-600/10 bg-slate-50/40 flex items-center justify-between">
         <p class="text-xs text-ink-muted">
             Showing <strong x-text="filteredEvacuees.length"></strong> household(s) &bull;
-            <strong x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0)"></strong> individuals
+            <strong x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0)"></strong> <span x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0) === 1 ? 'individual' : 'individuals'"></span>
         </p>
     </div>
 </div>
@@ -276,7 +276,7 @@
                 <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5"></i> Household</h4>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Household Head</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.head_name ?? '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Total Members</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="(selectedEvacuee?.member_count ?? 0) + ' persons'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Total Members</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="(selectedEvacuee?.member_count ?? 0) + ((selectedEvacuee?.member_count ?? 0) === 1 ? ' person' : ' persons')"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Barangay</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.barangay ?? '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Sitio/Purok</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.sitio || '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Resident Record</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.registered ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.registered ? 'Linked' : 'Unregistered household'"></p></div>

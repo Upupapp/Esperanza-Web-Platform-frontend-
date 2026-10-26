@@ -1273,7 +1273,7 @@
                                                     <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
                                                     <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                                         <option value="">—</option>
-                                                        <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
+                                                        <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt" :selected="formData[f.key] === opt"></option></template>
                                                     </select>
                                                 </div>
                                             </template>

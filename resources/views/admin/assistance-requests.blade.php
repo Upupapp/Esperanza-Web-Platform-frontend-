@@ -859,8 +859,12 @@
 
     {{-- The MSWDO General Intake Sheet, printed in the paper's layout from the
          case (MSWDO forms, 2026-10-26). Only the open sheet is #dp-print-area. --}}
+    {{-- At the body, above the case (a modal layer, z-index 90): inside the
+         page it stacked under it and never showed (QA of the video, 2026-10-26). --}}
+    <template x-teleport="body">
+    <div>
     <template x-if="intakeOpen && selected">
-        <div class="fixed inset-0 z-[70] bg-slate-900/50 flex items-start justify-center overflow-y-auto p-4" @keydown.escape.window="intakeOpen = false">
+        <div style="z-index: 100;" class="fixed inset-0 bg-slate-900/50 flex items-start justify-center overflow-y-auto p-4" @keydown.escape.window="intakeOpen = false">
             <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl my-6">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200 dp-no-print">
                     <p class="text-sm font-semibold text-ink">General Intake Sheet — <span x-text="selected.ref"></span></p>
@@ -915,6 +919,8 @@
                 </div>
             </div>
         </div>
+    </template>
+    </div>
     </template>
         <div x-show="!$store.session.can('tulong')" x-cloak>
             <x-admin.access-restricted module="Tulong (Citizen Assistance)" icon="hand-heart" />
