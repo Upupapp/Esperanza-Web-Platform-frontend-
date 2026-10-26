@@ -224,13 +224,21 @@ function adminBalita(barangays = []) {
         form: postForm(null, barangays),
         // What the form held when it opened, to ask before throwing changes away.
         snapshot: '',
+        // The day and time show in the schedule strip while they are chosen.
+        scheduleEditing: false,
         fieldErrors: {},
         media: emptyMedia(),
         formKey: 1,
         reviewOpen: false,
         selected: null,
         rejectReason: '',
+        // How many posts the feed shows; Show more adds ten (redesign 2026-10-26).
+        shown: 10,
 
+        init() {
+            // A new filter starts the feed at the top again.
+            this.$watch(() => [this.search, this.status, this.scope, this.category, this.scheduledOnly].join('|'), () => { this.shown = 10; });
+        },
         async load() {
             this.loading = true;
             this.failed = false;
@@ -271,7 +279,17 @@ function adminBalita(barangays = []) {
                 && (this.category === 'All' || a.category === this.category)
                 && (!q || (a.title || '').toLowerCase().includes(q) || (a.body || '').toLowerCase().includes(q)));
         },
+        get shownPosts() { return this.filtered.slice(0, this.shown); },
         count(status) { return this.posts.filter((a) => a.status === status).length; },
+        // Needs your attention: posts this officer can decide, and their own sent back.
+        get waitingForMe() { return this.posts.filter((a) => a.status === 'Pending Review' && this.canMove(a, 'Approved')).length; },
+        get sentBackToMe() { return this.posts.filter((a) => a.status === 'Rejected' && (a.mine || this.approver)).length; },
+        // The post's line under its writer: when it went out, or when it will.
+        postWhen(post) {
+            if (post.published_at) return when(post.published_at).split(',').slice(0, 2).join(',');
+            if (this.isScheduled(post) && post.publish_at) return 'Scheduled · ' + when(post.publish_at);
+            return 'Not yet published';
+        },
         // The four cards: the server's counts, or the list's while they load.
         card(key) {
             if (this.summary && key in this.summary) {
@@ -284,6 +302,9 @@ function adminBalita(barangays = []) {
         },
         get scheduledCount() { return this.posts.filter((a) => this.isScheduled(a)).length; },
         showStatus(s) { this.scheduledOnly = false; this.status = s; },
+        // The status pill: a status, or Scheduled, which is a filter of its own.
+        get statusChoice() { return this.scheduledOnly ? 'Scheduled' : this.status; },
+        set statusChoice(v) { if (v === 'Scheduled') this.showScheduled(); else this.showStatus(v); },
         showScheduled() { this.scheduledOnly = true; this.status = 'All'; },
 
         // -- Scheduling
@@ -351,6 +372,7 @@ function adminBalita(barangays = []) {
             this.form = postForm(null, barangays, this.ownBarangay);
             this.fieldErrors = {};
             this.media = emptyMedia();
+            this.scheduleEditing = false;
             this.formKey += 1;
             this.composerOpen = true;
             this.$nextTick(() => { this.snapshot = this.formState(); });
@@ -360,10 +382,37 @@ function adminBalita(barangays = []) {
             this.form = postForm(post, barangays, this.ownBarangay);
             this.fieldErrors = {};
             this.media = { ids: (post.media || []).map((m) => m.id), busy: false, failed: false };
+            this.scheduleEditing = false;
             this.formKey += 1;
             this.reviewOpen = false;
             this.composerOpen = true;
             this.$nextTick(() => { this.snapshot = this.formState(); });
+        },
+        // Share an update: the composer, opened on photos, a time or an advisory.
+        compose(start) {
+            this.openNew();
+            this.$nextTick(() => {
+                if (start === 'schedule') this.addSchedule();
+                if (start === 'advisory') this.form.category = 'Advisory';
+                // Where it started is not a change to ask about on closing.
+                this.snapshot = this.formState();
+                // The picker is remade with the form; ask it once it is there.
+                if (start === 'media') setTimeout(() => window.dispatchEvent(new CustomEvent('balita-add-media')), 50);
+            });
+        },
+        // -- Add to your post: a time to go out, or one barangay.
+        addSchedule() {
+            this.form.schedule = true;
+            this.scheduleEditing = true;
+            this.$nextTick(() => document.getElementById('balita-publish-date')?.focus());
+        },
+        removeSchedule() {
+            this.form.schedule = false;
+            this.scheduleEditing = false;
+        },
+        toggleBarangay() {
+            this.form.audience = this.form.audience === 'Barangay' ? 'Municipal' : 'Barangay';
+            if (this.form.audience === 'Barangay') this.$nextTick(() => document.getElementById('balita-barangay')?.focus());
         },
         formState() { return JSON.stringify([this.form, this.media.ids]); },
         get dirty() { return this.composerOpen && this.snapshot !== '' && this.formState() !== this.snapshot; },

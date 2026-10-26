@@ -49,12 +49,25 @@ class BannersAndOccasionsUiTest extends TestCase
         $js = $this->source('resources/js/scope-admin-records.js');
 
         $this->assertStringContainsString("x-data=\"adminBalita(@js(config('esperanza.barangays')))\"", $view);
-        foreach (["label=\"Published\" valueBind=\"card('published')\"", "label=\"Pending Review\" valueBind=\"card('pending_review')\"", "label=\"Drafts and sent back\" valueBind=\"card('drafts')\"", "label=\"Scheduled\" valueBind=\"card('scheduled')\""] as $card) {
+        // The four counts are the Overview beside the feed (redesign 2026-10-26),
+        // each a filter of it.
+        foreach (["x-text=\"card('published')\"", "x-text=\"card('pending_review')\"", "x-text=\"card('drafts')\"", "x-text=\"card('scheduled')\""] as $card) {
             $this->assertStringContainsString($card, $view);
+        }
+        $this->assertStringContainsString('aria-label="Balita overview"', $view);
+        $this->assertStringContainsString('<template x-for="a in shownPosts" :key="a.id">', $view);
+        // A card holds its screen-reader words; unanchored, they made a second scrollbar (2026-10-26).
+        $this->assertStringContainsString('<article class="relative bg-white', $view);
+        $this->assertStringContainsString('get shownPosts() { return this.filtered.slice(0, this.shown); }', $js);
+        // Share an update opens the composer on photos, a time or an advisory.
+        foreach (["compose('media')", "compose('schedule')", "compose('advisory')"] as $start) {
+            $this->assertStringContainsString('@click="'.$start.'"', $view);
         }
         $this->assertStringContainsString("api.get('/admin/announcements/summary')", $js);
         $this->assertStringContainsString('aria-label="Balita audience" x-model="scope"', $view);
-        $this->assertStringContainsString('@click="showScheduled()" :aria-pressed="scheduledOnly"', $view);
+        // The status is a pill with Scheduled among the choices (redesign 2026-10-26).
+        $this->assertStringContainsString('aria-label="Balita status" x-model="statusChoice"', $view);
+        $this->assertStringContainsString("set statusChoice(v) { if (v === 'Scheduled') this.showScheduled(); else this.showStatus(v); },", $js);
         $this->assertStringContainsString("statuses: ['Draft', 'Pending Review', 'Approved', 'Released', 'Rejected', 'Archived'],", $js, 'Scheduled is a filter, not a status');
         // Edit, Archive, Use as Template - the template is made by the server.
         $this->assertStringContainsString('@click="openEdit(a)"', $view);
@@ -73,10 +86,18 @@ class BannersAndOccasionsUiTest extends TestCase
         $view = $this->source('resources/views/admin/communications/balita.blade.php');
         $js = $this->source('resources/js/scope-admin-records.js');
 
-        $this->assertStringContainsString('aria-label="Preview"', $view);
-        $this->assertStringContainsString('x-text="previewWhen + ', $view);
+        // One column, like the post itself (redesign 2026-10-26): the pills
+        // under the seal, Add to your post below the words, a schedule strip.
         $this->assertStringContainsString('aria-label="Who sees it" x-model="form.audience"', $view);
         $this->assertStringContainsString('<x-balita.media-field base="/admin/balita" model="media"', $view);
+        $this->assertStringContainsString('look="composer"', $view);
+        $this->assertStringContainsString("@click=\"\$dispatch('balita-add-media')\"", $view);
+        $this->assertStringContainsString('@balita-add-media.window="if (room > 0) $refs.picker.click()"', $this->source('resources/views/components/balita/media-field.blade.php'));
+        $this->assertStringContainsString('@click="toggleBarangay()"', $view);
+        $this->assertStringContainsString('aria-label="Remove schedule, post now"', $view);
+        $this->assertStringContainsString('previewWhen', $view);
+        // Only controls that do something: no document or More button.
+        $this->assertStringNotContainsString('Attach a document', $view);
         $this->assertStringContainsString("@click=\"save('draft')\"", $view);
         $this->assertStringContainsString("@click=\"save('send')\"", $view);
         $this->assertStringContainsString("if (this.form.schedule) return this.approver ? 'Schedule Post' : 'Send for review';", $js);
@@ -193,7 +214,7 @@ class BannersAndOccasionsUiTest extends TestCase
         $this->assertStringContainsString("@click=\"search = ''; setState('all')\">Clear filters", $view);
         // The occasion and post windows are sized to their content.
         $this->assertStringContainsString('<x-ui.modal maxWidth="xl" :bare="true">', $view);
-        $this->assertStringContainsString('<x-ui.modal maxWidth="2xl" :bare="true">', $this->source('resources/views/admin/communications/balita.blade.php'));
+        $this->assertStringContainsString('<x-ui.modal maxWidth="sm" :bare="true">', $this->source('resources/views/admin/communications/balita.blade.php'));
         // The preview is drawn from the form; it calls nothing.
         $preview = substr($js, strpos($js, 'previewForm() {'), strpos($js, 'when,', strpos($js, 'previewForm() {')) - strpos($js, 'previewForm() {'));
         $this->assertStringNotContainsString('api.', $preview);
