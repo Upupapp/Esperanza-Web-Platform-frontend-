@@ -159,6 +159,15 @@
             </div>
 
             <p class="text-xs text-ink-muted" x-show="c.address"><i data-lucide="map-pin" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i><span x-text="c.address"></span></p>
+            {{-- On the residents' map, or not yet (registered before the map, 2026-10-26). --}}
+            <div class="flex items-center justify-between gap-2 text-xs">
+                <span class="flex items-center gap-1 font-semibold" :class="hasMapPin(c) ? 'text-emerald-700' : 'text-amber-700'">
+                    <i :data-lucide="hasMapPin(c) ? 'map-pin-check' : 'map-pin-off'" class="w-3.5 h-3.5"></i>
+                    <span x-text="hasMapPin(c) ? 'On the map' : 'No map location yet'"></span>
+                </span>
+                <button x-show="hasMapPin(c)" @click="openCenterDetail(c)" class="font-semibold text-brand-600 hover:underline">View on map</button>
+                <button x-show="!hasMapPin(c) && can('sakuna_centers','edit')" @click="openEditCenter(c)" class="font-semibold text-brand-600 hover:underline">Add location</button>
+            </div>
 
             <div class="flex items-center gap-2 border-t border-slate-50 pt-3 mt-auto">
                 <button @click="openCenterDetail(c)" class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-2 rounded-2xl transition-colors">
@@ -200,6 +209,7 @@
                         <td class="px-4 py-3">
                             <p class="text-sm font-medium text-ink-body" x-text="c.name"></p>
                             <p class="text-xs text-ink-muted" x-text="c.address || ''"></p>
+                            <p x-show="!hasMapPin(c)" class="text-[10.5px] font-semibold text-amber-700">No map location yet</p>
                         </td>
                         <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap" x-text="c.barangay"></td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(c.status)" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span></td>
@@ -291,6 +301,7 @@
                         <div class="flex justify-between"><span class="text-ink-muted">Ref</span><span class="font-mono font-medium text-ink-body" x-text="selectedCenter?.ref || '—'"></span></div>
                         <div class="flex justify-between"><span class="text-ink-muted">Barangay</span><span class="font-medium text-ink-body" x-text="selectedCenter?.barangay || '—'"></span></div>
                         <div class="flex justify-between gap-3"><span class="text-ink-muted shrink-0">Address</span><span class="font-medium text-ink-body text-right" x-text="selectedCenter?.address || '—'"></span></div>
+                        <div class="flex justify-between gap-3"><span class="text-ink-muted shrink-0">Coordinates</span><span class="font-mono text-xs text-ink-body text-right" x-text="hasMapPin(selectedCenter) ? window.sakunaGeo.coordText(selectedCenter.lat, selectedCenter.lng) : 'Not pinned yet'"></span></div>
                     </div>
                 </div>
                 <div class="bg-slate-50 rounded-xl p-4 space-y-2.5">
@@ -303,6 +314,24 @@
                             <span class="font-medium text-emerald-600" x-text="selectedCenter ? (selectedCenter.capacity - selectedCenter.individuals) : '—'"></span>
                         </div>
                     </div>
+                </div>
+            </div>
+            {{-- Where it is (2026-10-26): what residents see on their map. --}}
+            <div>
+                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r mb-2">Map Location</h4>
+                <div x-show="hasMapPin(selectedCenter)">
+                    <div x-data="sakunaPinView({ point: () => ({ lat: selectedCenter?.lat, lng: selectedCenter?.lng }), tone: 'centre' })" x-effect="show()">
+                        <div x-ref="map" class="sakuna-map h-56 w-full rounded-xl overflow-hidden border border-slate-200" role="img" aria-label="Map showing where the centre is"></div>
+                        <p x-show="viewState === 'failed'" x-cloak class="text-[11px] text-amber-800 font-semibold mt-1.5">The map could not load. The coordinates above are still the saved ones.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 mt-2 text-xs">
+                        <a :href="hasMapPin(selectedCenter) ? window.sakunaGeo.osmUrl(selectedCenter.lat, selectedCenter.lng) : '#'" target="_blank" rel="noopener" class="font-semibold text-brand-600 hover:underline">Open in OpenStreetMap</a>
+                        <a :href="hasMapPin(selectedCenter) ? window.sakunaGeo.directionsUrl(selectedCenter.lat, selectedCenter.lng) : '#'" target="_blank" rel="noopener" class="font-semibold text-brand-600 hover:underline">Directions</a>
+                    </div>
+                </div>
+                <div x-show="!hasMapPin(selectedCenter)" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                    <p class="font-semibold">This centre is not on the map yet.</p>
+                    <p class="mt-0.5">Residents still see it in their list, but not on the map or as a nearest centre. Edit it to pin where it is.</p>
                 </div>
             </div>
         </div>
@@ -450,7 +479,7 @@
                 <span class="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center"><i data-lucide="building-2" class="w-5 h-5 text-brand-600"></i></span>
                 <div>
                     <h3 class="text-base font-semibold text-ink-body" x-text="centerFormMode === 'create' ? 'Register Evacuation Center' : 'Edit Center — ' + centerForm.ref"></h3>
-                    <p class="text-xs text-ink-muted">Facility name, barangay and capacity, plus optional services.</p>
+                    <p class="text-xs text-ink-muted">Facility name, barangay, capacity and its place on the map, plus optional services.</p>
                 </div>
             </div>
             <button aria-label="Close" @click="showCreateCenter = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -483,6 +512,8 @@
                 <input id="center-address" type="text" x-model="centerForm.address" placeholder="Street / Sitio, Barangay, Esperanza, Masbate"
                     class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
             </div>
+            {{-- Where it stands (2026-10-26): required to register, so residents can find it. --}}
+            <x-sakuna.location-picker target="centerForm" search subject="centre" required="centerFormMode === 'create'" />
             <div>
                 <span class="block text-xs font-medium text-slate-700 mb-1.5">Services</span>
                 <div class="flex flex-wrap gap-1.5">
@@ -498,7 +529,8 @@
 
         <div class="flex items-center gap-3 px-6 py-4 border-t border-brand-600/10 bg-slate-50/70 rounded-b-2xl">
             <button @click="showCreateCenter = false" class="text-sm text-slate-600 bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-2xl transition-colors">Cancel</button>
-            <button :disabled="centerSaving || !centerForm.name || !centerForm.barangay || centerForm.capacity === ''" @click="saveCenter()"
+            <p x-show="centerNeedsPin && centerForm.name && centerForm.barangay && centerForm.capacity !== ''" class="text-[11px] font-semibold text-rose-700 ml-auto text-right">Pin the centre on the map to register it.</p>
+            <button :disabled="centerSaving || !centerForm.name || !centerForm.barangay || centerForm.capacity === '' || centerNeedsPin" @click="saveCenter()"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-5 py-2 rounded-2xl transition-colors ml-auto disabled:opacity-50">
                 <i data-lucide="save" class="w-4 h-4"></i>
                 <span x-text="centerSaving ? 'Saving…' : (centerFormMode === 'create' ? 'Register Center' : 'Save Changes')"></span>

@@ -1649,6 +1649,8 @@ area(/^\/admin\/(settings|users)(\/|$)/.test(areaPath), () => import('./scope-ad
 // too (its Balita and Feedback tabs), so they need its components (2026-10-18).
 area(/^\/admin\/(constituents|communications|announcements|settings\/support)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
 area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
+// Sakuna's maps (2026-10-26): Leaflet only where a map is drawn.
+area(/^\/(admin\/sakuna|citizen\/emergency)(\/|$)/.test(areaPath), () => import('./sakuna-map'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 

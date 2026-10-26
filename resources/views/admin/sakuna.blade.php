@@ -163,7 +163,7 @@
         incidentsLoading: true,
         incidentsFailed: false,
         incidentSaving: false,
-        incidentForm: { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '' },
+        incidentForm: { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '', lat: null, lng: null },
         // GET /sakuna/incidents (full list for this tab, distinct from Command
         // Center's own severity-ranked slice of the same endpoint).
         async loadIncidentsList() {
@@ -175,7 +175,7 @@
             } catch { this.incidentsFailed = true; } finally { this.incidentsLoading = false; }
         },
         resetIncidentForm() {
-            this.incidentForm = { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '' };
+            this.incidentForm = { title: '', type: '', barangay: '', sitio: '', severity: '', description: '', source: '', lat: null, lng: null };
         },
         openCreateIncident() {
             this.resetIncidentForm();
@@ -313,10 +313,10 @@
         centersFailed: false,
         centerFormMode: 'create',
         centerSaving: false,
-        centerForm: { ref: null, name: '', barangay: '', address: '', capacity: '', services: [] },
+        centerForm: { ref: null, name: '', barangay: '', address: '', capacity: '', services: [], lat: null, lng: null },
         centerEvacuees: [],
-        // GET /sakuna/centers (real, derived occupancy -- SakunaCenter has no
-        // lat/lng, no manager/contact column, no inspection/room/personnel
+        // GET /sakuna/centers (real, derived occupancy; lat/lng since
+        // 2026-10-26 -- no manager/contact column, no inspection/room/personnel
         // sub-model; see tab-centers.blade.php's header comment).
         async loadCenters() {
             this.centersLoading = true;
@@ -325,9 +325,14 @@
                 const res = await $api.getAll('/admin/sakuna/centers');
                 this.centersList = res.data || [];
             } catch { this.centersFailed = true; } finally { this.centersLoading = false; }
+            // A centre opened from the Command Center's map (?center=REF).
+            const ref = new URLSearchParams(window.location.search).get('center');
+            const hit = ref && this.centersList.find((c) => c.ref === ref);
+            if (hit) this.openCenterDetail(hit);
         },
+        hasMapPin(row) { return !!row && window.sakunaGeo ? window.sakunaGeo.isPair(row.lat, row.lng) : (row?.lat != null && row?.lng != null); },
         resetCenterForm() {
-            this.centerForm = { ref: null, name: '', barangay: '', address: '', capacity: '', services: [] };
+            this.centerForm = { ref: null, name: '', barangay: '', address: '', capacity: '', services: [], lat: null, lng: null };
         },
         openCreateCenter() {
             this.resetCenterForm();
@@ -336,7 +341,7 @@
             this.$nextTick(() => window.renderIcons?.());
         },
         openEditCenter(c) {
-            this.centerForm = { ref: c.ref, name: c.name, barangay: c.barangay, address: c.address || '', capacity: c.capacity, services: [...(c.services || [])] };
+            this.centerForm = { ref: c.ref, name: c.name, barangay: c.barangay, address: c.address || '', capacity: c.capacity, services: [...(c.services || [])], lat: c.lat ?? null, lng: c.lng ?? null };
             this.centerFormMode = 'edit';
             this.showCreateCenter = true;
             this.$nextTick(() => window.renderIcons?.());
@@ -346,10 +351,14 @@
                 ? this.centerForm.services.filter(x => x !== s)
                 : [...this.centerForm.services, s];
         },
+        // A new centre is registered on the map (2026-10-26); one from before
+        // the map can be saved without a pin and pinned later.
+        get centerNeedsPin() { return this.centerFormMode === 'create' && !this.hasMapPin(this.centerForm); },
         async saveCenter() {
-            if (this.centerSaving || !this.centerForm.name || !this.centerForm.barangay || this.centerForm.capacity === '') return;
+            if (this.centerSaving || !this.centerForm.name || !this.centerForm.barangay || this.centerForm.capacity === '' || this.centerNeedsPin) return;
             this.centerSaving = true;
-            const payload = { name: this.centerForm.name, barangay: this.centerForm.barangay, address: this.centerForm.address || null, capacity: Number(this.centerForm.capacity), services: this.centerForm.services };
+            const pinned = this.hasMapPin(this.centerForm);
+            const payload = { name: this.centerForm.name, barangay: this.centerForm.barangay, address: this.centerForm.address || null, capacity: Number(this.centerForm.capacity), services: this.centerForm.services, lat: pinned ? Number(this.centerForm.lat) : null, lng: pinned ? Number(this.centerForm.lng) : null };
             try {
                 const res = this.centerFormMode === 'create'
                     ? await $api.post('/admin/sakuna/centers', payload)
@@ -952,12 +961,50 @@
             this.showIncidentDetail = true;
             this.showEscalateForm = false;
             this.showAssignForm = false;
+            this.incidentLocationEditing = false;
             this.$nextTick(() => window.renderIcons?.());
             // The list row is lean; the detail fetch adds description/timeline.
             try {
                 const res = await $api.get('/admin/sakuna/incidents/' + row.ref);
                 this.selectedIncident = { ...row, ...res.data };
             } catch { /* keep the list row's fields if the detail fetch fails */ }
+        },
+        // Pin an incident on the map, move its pin or take it off (2026-10-26):
+        // PUT /sakuna/incidents/{ref}/location, sakuna_incidents.edit. For the
+        // reports filed without one, and a resident's pin that was off.
+        incidentLocationEditing: false,
+        incidentLocationDraft: { lat: null, lng: null },
+        incidentLocationSaving: false,
+        startIncidentLocation() {
+            const i = this.selectedIncident || {};
+            this.incidentLocationDraft = { lat: i.lat ?? null, lng: i.lng ?? null };
+            this.incidentLocationEditing = true;
+            this.$nextTick(() => window.renderIcons?.());
+        },
+        async saveIncidentLocation() {
+            const inc = this.selectedIncident;
+            if (!inc || this.incidentLocationSaving) return;
+            const pinned = this.hasMapPin(this.incidentLocationDraft);
+            this.incidentLocationSaving = true;
+            try {
+                const res = await $api.put('/admin/sakuna/incidents/' + inc.ref + '/location', {
+                    lat: pinned ? Number(this.incidentLocationDraft.lat) : null,
+                    lng: pinned ? Number(this.incidentLocationDraft.lng) : null,
+                });
+                this.selectedIncident = { ...inc, ...res.data };
+                [this.incidentsList, this.priorityIncidents].forEach((list) => {
+                    const row = (list || []).find((r) => r.ref === inc.ref);
+                    if (row) Object.assign(row, { lat: res.data.lat, lng: res.data.lng });
+                });
+                this.incidentLocationEditing = false;
+                this.toast(inc.ref + (pinned ? ': map location saved.' : ': map location removed.'), 'success');
+                // The Command Center's map and its count of unpinned incidents.
+                if (this.activeTab === 'command-center') {
+                    $api.get('/admin/sakuna/command-center').then((b) => { this.commandBoard = b.data; }).catch(() => {});
+                }
+            } catch (err) {
+                this.toast(err.localised ? err.localised('en') : 'Could not save the map location.', 'error');
+            } finally { this.incidentLocationSaving = false; }
         },
         // One method for every verb in the chain (validate/assign/dispatch/
         // escalate/resolve/close) -- the verb IS the permission on the backend

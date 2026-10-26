@@ -175,6 +175,11 @@
                         <td class="px-4 py-3">
                             <span class="text-sm font-medium text-slate-700" x-text="inc.barangay"></span><br>
                             <span class="text-xs text-ink-muted" x-text="inc.sitio || '—'"></span>
+                            {{-- On the Command Center's map, or not (no pin saved): never a guessed point. --}}
+                            <span class="mt-0.5 flex items-center gap-1 text-[10.5px] font-semibold" :class="hasMapPin(inc) ? 'text-emerald-700' : 'text-ink-muted'">
+                                <i :data-lucide="hasMapPin(inc) ? 'map-pin-check' : 'map-pin-off'" class="w-3 h-3"></i>
+                                <span x-text="hasMapPin(inc) ? 'On the map' : 'No map pin'"></span>
+                            </span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap"><span :class="severityBadge(inc.severity)" class="px-2.5 py-0.5 rounded-full text-xs font-medium" x-text="inc.severity"></span></td>
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -288,6 +293,10 @@
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-sitio">Sitio / Exact Location</label>
                     <input id="incident-sitio" type="text" x-model="incidentForm.sitio" placeholder="e.g. Near the old bridge"
                         class="w-full text-sm border border-slate-200 rounded-2xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-colors">
+                </div>
+                {{-- Where it is on the map (2026-10-26): optional, as the written place above is kept either way. --}}
+                <div class="sm:col-span-2">
+                    <x-sakuna.location-picker target="incidentForm" search subject="incident" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-700 mb-1.5" for="incident-severity">Severity <span class="text-rose-500">*</span></label>

@@ -144,6 +144,43 @@
                 </div>
             </div>
 
+            {{-- Where it is on the map (2026-10-26). A report without a pin says so;
+                 staff who may edit incidents add one or move it. --}}
+            <div>
+                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5 mb-2">
+                    <i data-lucide="map" class="w-3.5 h-3.5"></i> Map Location
+                </h4>
+                <div x-show="!incidentLocationEditing">
+                    <div x-show="hasMapPin(selectedIncident)">
+                        <div x-data="sakunaPinView({ point: () => ({ lat: selectedIncident?.lat, lng: selectedIncident?.lng }) })" x-effect="show()">
+                            <div x-ref="map" class="sakuna-map h-56 w-full rounded-xl overflow-hidden border border-slate-200" role="img" aria-label="Map showing where the incident is"></div>
+                            <p x-show="viewState === 'failed'" x-cloak class="text-[11px] text-amber-800 font-semibold mt-1.5">The map could not load. The coordinates below are still the saved ones.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
+                            <span class="font-mono text-slate-700" x-text="hasMapPin(selectedIncident) ? window.sakunaGeo.coordText(selectedIncident.lat, selectedIncident.lng) : ''"></span>
+                            <a :href="hasMapPin(selectedIncident) ? window.sakunaGeo.osmUrl(selectedIncident.lat, selectedIncident.lng) : '#'" target="_blank" rel="noopener" class="font-semibold text-brand-600 hover:underline">Open in OpenStreetMap</a>
+                            <a :href="hasMapPin(selectedIncident) ? window.sakunaGeo.directionsUrl(selectedIncident.lat, selectedIncident.lng) : '#'" target="_blank" rel="noopener" class="font-semibold text-brand-600 hover:underline">Directions</a>
+                        </div>
+                        <p x-show="selectedIncident?.source === 'Citizen Portal'" class="text-[11px] text-ink-muted mt-1">Pinned by the resident who reported it. Where it matters, confirm the place when you call back.</p>
+                    </div>
+                    <p x-show="!hasMapPin(selectedIncident)" class="text-xs text-ink-muted">No map location was saved with this incident. Use the barangay and sitio above.</p>
+                    <button x-show="can('sakuna_incidents', 'edit')" type="button" @click="startIncidentLocation()"
+                        class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-xl transition-colors">
+                        <i data-lucide="map-pinned" class="w-3.5 h-3.5"></i><span x-text="hasMapPin(selectedIncident) ? 'Move the pin' : 'Add map location'"></span>
+                    </button>
+                </div>
+                <div x-show="incidentLocationEditing" x-cloak>
+                    <x-sakuna.location-picker target="incidentLocationDraft" search subject="incident" />
+                    <div class="flex items-center gap-2 mt-2">
+                        <button type="button" @click="saveIncidentLocation()" :disabled="incidentLocationSaving"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors disabled:opacity-50">
+                            <i data-lucide="save" class="w-3.5 h-3.5"></i><span x-text="incidentLocationSaving ? 'Saving…' : (hasMapPin(incidentLocationDraft) ? 'Save location' : 'Save without a pin')"></span>
+                        </button>
+                        <button type="button" @click="incidentLocationEditing = false" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 border border-slate-200 rounded-xl transition-colors">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
             {{-- Timeline --}}
             <div>
                 <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5 mb-3">
