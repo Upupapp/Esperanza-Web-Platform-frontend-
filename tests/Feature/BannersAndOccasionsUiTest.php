@@ -56,6 +56,8 @@ class BannersAndOccasionsUiTest extends TestCase
         }
         $this->assertStringContainsString('aria-label="Balita overview"', $view);
         $this->assertStringContainsString('<template x-for="a in shownPosts" :key="a.id">', $view);
+        // A card holds its screen-reader words; unanchored, they made a second scrollbar (2026-10-26).
+        $this->assertStringContainsString('<article class="relative bg-white', $view);
         $this->assertStringContainsString('get shownPosts() { return this.filtered.slice(0, this.shown); }', $js);
         // Share an update opens the composer on photos, a time or an advisory.
         foreach (["compose('media')", "compose('schedule')", "compose('advisory')"] as $start) {

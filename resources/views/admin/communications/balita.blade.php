@@ -81,7 +81,7 @@
         {{-- Filters: one row (redesign 2026-10-26); the status is a pill like the others. --}}
         <div class="bg-white rounded-[14px] border border-slate-200 shadow-sm p-3">
             <div class="flex flex-wrap gap-2">
-                <label class="flex-1 basis-[100px] min-w-[100px] h-10 px-3 rounded-full bg-slate-100 flex items-center gap-2 text-ink-muted focus-within:ring-4 focus-within:ring-brand-100">
+                <label class="relative flex-1 basis-[100px] min-w-[100px] h-10 px-3 rounded-full bg-slate-100 flex items-center gap-2 text-ink-muted focus-within:ring-4 focus-within:ring-brand-100">
                     <i data-lucide="search" class="w-4 h-4 shrink-0"></i>
                     <span class="sr-only">Search Balita</span>
                     <input aria-label="Search Balita" type="search" x-model="search" placeholder="Search posts" class="flex-1 min-w-0 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0 outline-none">
@@ -116,7 +116,8 @@
 
         {{-- The posts, as residents see them, with what this officer may do --}}
         <template x-for="a in shownPosts" :key="a.id">
-            <article class="bg-white rounded-[14px] border border-slate-200 shadow-sm overflow-hidden">
+            {{-- relative: the screen-reader words inside stay in the card, or they stretch the page past its scroller. --}}
+            <article class="relative bg-white rounded-[14px] border border-slate-200 shadow-sm overflow-hidden">
                 <div class="px-4 pt-3.5 flex items-start gap-2.5">
                     <span class="w-[42px] h-[42px] rounded-full bg-brand-600 text-white text-sm font-bold grid place-items-center shrink-0" aria-hidden="true" x-text="initials(a.author)"></span>
                     <div class="flex-1 min-w-0">
