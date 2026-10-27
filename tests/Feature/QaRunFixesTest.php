@@ -62,7 +62,9 @@ class QaRunFixesTest extends TestCase
         }
         $this->assertStringContainsString("'/admin/sakuna/bdrrmc-forms/' + key + '/submit'", $view, 'Save submits to the server');
         $this->assertStringContainsString('window.print()', $view, 'Print prints');
-        $this->assertStringContainsString('x-model="signoff.', $this->source('resources/views/components/admin/sakuna/bdrrmc-signoff.blade.php'));
+        // The names are the form's own, typed on the signature lines (2026-10-27: one
+        // line per signer, drawn from the form's description).
+        $this->assertStringContainsString('x-model="signoff[s.model]"', $this->source('resources/views/components/admin/sakuna/bdrrmc-signoff.blade.php'));
     }
 
     /** "Assign to me" only changed the screen; a reload showed the case unassigned. */
@@ -218,5 +220,20 @@ class QaRunFixesTest extends TestCase
         $this->assertStringContainsString("' · ' + p.request_ref", $payments, 'each payment names its request');
         $this->assertStringContainsString("(p.request_ref || '').toLowerCase().includes(q)", $payments, 'the search finds a payment by its request');
         $this->assertStringContainsString("'Receipt ' + payments[selected].receipt_no + ' · paid on '", $payments, 'a paid payment reopened later still shows its receipt');
+    }
+
+    /**
+     * 2026-10-28: on the Incidents tab, Assign opened an empty "Assign to" list:
+     * the staff list was loaded only by the Command Center, and each tab is its
+     * own page. Assign now loads it wherever it is opened.
+     */
+    public function test_assign_lists_staff_on_every_sakuna_tab(): void
+    {
+        $page = $this->source('resources/views/admin/sakuna.blade.php');
+        $this->assertStringContainsString('async loadPersonnel() {', $page);
+        $this->assertStringContainsString("const res = await (this.\$store.session.canPerm('um_personnel', 'view') ? \$api.getAll('/admin/users') : this.nothing());", $page);
+        $modal = $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php');
+        $this->assertStringContainsString('@click="showAssignForm = !showAssignForm; showEscalateForm = false; loadPersonnel()"', $modal);
+        $this->assertStringContainsString('ask an administrator to assign this incident', $modal);
     }
 }

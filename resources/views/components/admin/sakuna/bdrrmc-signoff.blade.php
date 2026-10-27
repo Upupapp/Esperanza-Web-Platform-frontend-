@@ -1,39 +1,28 @@
 @props([
-    'preparedLabel' => 'Assigned Barangay Official',
-    'preparedRole' => 'Prepared by',
-    'consolidatedLabel' => 'Barangay Secretary',
-    'consolidatedRole' => 'Consolidated by',
-    'notedLabel' => 'Punong Barangay',
-    'notedRole' => 'Noted by',
-    'twoColumn' => false,
+    // 'edit' while the form is filled in; 'view' for a saved form.
+    'mode' => 'edit',
 ])
 
-{{-- The names are the form's own (signoff.prepared / .consolidated / .noted in
-     the capture forms' component), filled from the officer and the
-     barangay's officials and editable; they were hard-coded to one
-     barangay's officials. --}}
+{{-- The signature lines at the foot of a BDRRMC paper form, as the barangay's
+     files print them: "Prepared by:" (or "Distributed by:"), the line, the
+     signer's title and "Signature Over Printed Name". Who signs and under what
+     title comes from the form's description (resources/js/bdrrmc-paper.js).
 
-<div class="grid {{ $twoColumn ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3' }} gap-4 pt-2">
-    <div class="rounded-xl border-0 surface-pressed p-3.5 text-center">
-        <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-4">{{ $preparedRole }}</p>
-        <input type="text" aria-label="{{ $preparedRole }}: name" x-model="signoff.prepared" placeholder="Name" class="w-full text-center text-sm font-semibold text-slate-700 bg-transparent border-0 border-b border-slate-300 pb-1 mb-1 px-1 focus:ring-0 focus:border-brand-400 outline-none">
-        <p class="text-xs text-ink-muted">{{ $preparedLabel }}</p>
-        <p class="text-[10px] text-ink-muted mt-1">Signature Over Printed Name</p>
-    </div>
-
-    @unless($twoColumn)
-    <div class="rounded-xl border-0 surface-pressed p-3.5 text-center">
-        <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-4">{{ $consolidatedRole }}</p>
-        <input type="text" aria-label="{{ $consolidatedRole }}: name" x-model="signoff.consolidated" placeholder="Name" class="w-full text-center text-sm font-semibold text-slate-700 bg-transparent border-0 border-b border-slate-300 pb-1 mb-1 px-1 focus:ring-0 focus:border-brand-400 outline-none">
-        <p class="text-xs text-ink-muted">{{ $consolidatedLabel }}</p>
-        <p class="text-[10px] text-ink-muted mt-1">Signature Over Printed Name</p>
-    </div>
-    @endunless
-
-    <div class="rounded-xl border-0 surface-pressed p-3.5 text-center">
-        <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide mb-4">{{ $notedRole }}</p>
-        <input type="text" aria-label="{{ $notedRole }}: name" x-model="signoff.noted" placeholder="Name" class="w-full text-center text-sm font-semibold text-slate-700 bg-transparent border-0 border-b border-slate-300 pb-1 mb-1 px-1 focus:ring-0 focus:border-brand-400 outline-none">
-        <p class="text-xs text-ink-muted">{{ $notedLabel }}</p>
-        <p class="text-[10px] text-ink-muted mt-1">Signature Over Printed Name</p>
-    </div>
+     The names are the form's own and editable (signoff.prepared /
+     .consolidated / .noted): Consolidated and Noted are filled from the
+     barangay's officials; Prepared by is left blank to be written in, as on
+     the paper (owner, 2026-10-27), never the signed-in officer. --}}
+<div class="pp-sign" :class="paperSigners({{ $mode === 'view' ? "'view'" : "'edit'" }}).length === 2 && 'pp-sign-two'">
+    <template x-for="s in paperSigners({{ $mode === 'view' ? "'view'" : "'edit'" }})" :key="s.model">
+        <div class="pp-signer">
+            <p x-text="s.role"></p>
+            @if ($mode === 'view')
+                <p class="pp-sign-name" x-text="s.name"></p>
+            @else
+                <input type="text" x-model="signoff[s.model]" :aria-label="s.role.replace(':', '') + ' name'" class="pp-sign-name pp-input">
+            @endif
+            <p x-text="s.title"></p>
+            <p>Signature Over Printed Name</p>
+        </div>
+    </template>
 </div>

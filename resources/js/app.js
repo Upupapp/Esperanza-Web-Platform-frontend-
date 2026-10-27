@@ -1751,6 +1751,10 @@ area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistan
 area(/^\/(admin\/sakuna|citizen\/emergency)(\/|$)/.test(areaPath), () => import('./sakuna-map'));
 // Two BDRRMC forms filled from records, and saved forms reopened (2026-10-27).
 area(/^\/admin\/sakuna(\/|$)/.test(areaPath), () => import('./sakuna-bdrrmc'));
+// Shelter and relief records, Phase 2 (2026-10-27).
+area(/^\/admin\/sakuna(\/|$)/.test(areaPath), () => import('./sakuna-shelter'));
+// The resident's own shelter and relief, on the Emergency page (2026-10-27).
+area(/^\/citizen\/emergency(\/|$)/.test(areaPath), () => import('./citizen-shelter'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 

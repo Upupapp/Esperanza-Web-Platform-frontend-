@@ -531,6 +531,14 @@
                         <p class="text-[11px] text-ink-muted"><x-ui.t fil="Ayusin ito rito, o sa Esperanza app (Android), at isumite muli." en="Fix it here, or in the Esperanza app (Android), and send it again." /></p>
                     </div>
                     <p class="text-xs text-slate-600 leading-relaxed" x-show="profileVerification === 'Unverified' && profileReview?.outcome !== 'returned'"><x-ui.t fil="Hindi pa naisusumite. Kumpletuhin ito rito, o sa Esperanza app (Android)." en="Not submitted yet. Complete it here, or in the Esperanza app (Android)." /></p>
+                    {{-- The household's code in the barangay's resident registry
+                         (2026-10-27): the server assigns it; shown as the app shows it. --}}
+                    <div class="mt-2.5 rounded-xl surface-pressed-sm px-3 py-2.5" x-show="residentProfileView?.household?.ref" x-cloak data-household-code>
+                        <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide"><x-ui.t fil="Code ng sambahayan" en="Household code" /></p>
+                        <p class="text-sm font-bold text-ink font-mono tracking-wide select-all" x-text="residentProfileView?.household?.ref"></p>
+                        <p class="text-[11px] text-ink-muted leading-relaxed mt-0.5"><x-ui.t fil="Ang code ng inyong sambahayan sa talaan ng mga residente ng barangay. Ginagamit ito ng staff sa mga form ng paglikas at relief." en="Your household's code in the barangay's resident registry. Staff use it on evacuation and relief forms." /></p>
+                        <p class="text-[11px] text-amber-700 leading-relaxed mt-0.5" x-show="profileVerification !== 'Verified'"><x-ui.t fil="Kukumpirmahin ito ng iyong barangay office kapag na-verify ang iyong profile." en="Your barangay office confirms it when it verifies your profile." /></p>
+                    </div>
                     {{-- The website fills and corrects it too (live test 2026-10-07,
                          UX-8): the app is Android only. --}}
                     <x-ui.button size="sm" class="mt-3 w-full justify-center" icon="clipboard-pen" x-show="profileVerification === 'Unverified'" x-cloak

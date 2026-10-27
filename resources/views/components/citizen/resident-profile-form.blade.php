@@ -84,6 +84,12 @@
 
             {{-- Household --}}
             <div x-show="section === 'household'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {{-- The registry's code, read only (2026-10-27). --}}
+                <div class="sm:col-span-2 rounded-xl surface-pressed-sm px-3 py-2.5" x-show="householdRef" x-cloak data-household-code-form>
+                    <p class="text-[11px] font-semibold text-ink-muted uppercase tracking-wide"><x-ui.t fil="Code ng sambahayan" en="Household code" /></p>
+                    <p class="text-sm font-bold text-ink font-mono tracking-wide select-all" x-text="householdRef"></p>
+                    <p class="text-[11px] text-ink-muted leading-relaxed mt-0.5"><x-ui.t fil="Ang code ng inyong sambahayan sa talaan ng mga residente ng barangay. Ginagamit ito ng staff sa mga form ng paglikas at relief." en="Your household's code in the barangay's resident registry. Staff use it on evacuation and relief forms." /></p>
+                </div>
                 <div>
                     <label class="{{ $labelClass }}" for="rp-hh-sitio"><x-ui.t fil="Sitio / Purok ng bahay" en="Sitio / Purok of the house" /></label>
                     <input id="rp-hh-sitio" type="text" x-model="household.sitio" maxlength="120" class="{{ $inputClass }}">

@@ -74,6 +74,9 @@
     x-show="$store.session.can('sakuna')"
     x-cloak
     x-data="{
+        // Phase 2 of the shelter and relief records (2026-10-27): the registry
+        // at check-in, the head, corrections at the source, where relief was given.
+        ...(window.sakunaShelter ? sakunaShelter() : {}),
         activeTab: '{{ $activeTab }}',
         tabUrls: @js($tabUrls),
         // The status bar reads the live board (GET /admin/sakuna/command-center):
@@ -425,7 +428,7 @@
         evacueesLoading: true,
         evacueesFailed: false,
         evacueeCentersOpen: [],
-        checkInForm: { center: '', head_name: '', barangay: '', sitio: '', members: [], faced_serial: '', contact: '', monthly_income: '', house_ownership: '', shelter_damage: '', is_4ps: false, is_ip: false, ip_ethnicity: '' },
+        checkInForm: { center: '', head_name: '', barangay: '', sitio: '', purok: '', hh_code: '', family_id: null, members: [], faced_serial: '', contact: '', monthly_income: '', house_ownership: '', shelter_damage: '', is_4ps: false, is_ip: false, ip_ethnicity: '' },
         checkInSaving: false,
         // GET /sakuna/evacuees (list) + GET /sakuna/centers filtered to open
         // ones, for the check-in/transfer center pickers.
@@ -443,23 +446,30 @@
             } catch { this.evacueesFailed = true; } finally { this.evacueesLoading = false; }
         },
         resetCheckInForm() {
-            this.checkInForm = { center: '', head_name: '', barangay: '', sitio: '', members: [], faced_serial: '', contact: '', monthly_income: '', house_ownership: '', shelter_damage: '', is_4ps: false, is_ip: false, ip_ethnicity: '' };
+            this.checkInForm = { center: '', head_name: '', barangay: '', sitio: '', purok: '', hh_code: '', family_id: null, members: [], faced_serial: '', contact: '', monthly_income: '', house_ownership: '', shelter_damage: '', is_4ps: false, is_ip: false, ip_ethnicity: '' };
+            this.registryQuery = '';
+            this.registryResults = [];
+            this.registrySearched = false;
+            this.registryPicked = null;
+            this.checkInDuplicate = '';
         },
         openEvacueeReg() {
             this.resetCheckInForm();
             this.showEvacueeReg = true;
             this.$nextTick(() => window.renderIcons?.());
         },
-        addCheckInMember() { this.checkInForm.members.push({ name: '', relation: '', age: '', sex: '', needs: '', dob: '', education: '', occupation: '', vulnerability: '' }); },
+        addCheckInMember() { this.checkInForm.members.push({ name: '', relation: '', age: '', sex: '', needs: '', dob: '', education: '', occupation: '', vulnerability: '', individual_id: null, is_head: false, arrived: true }); },
         removeCheckInMember(i) { this.checkInForm.members.splice(i, 1); },
         // members[] is optional on the real endpoint (a bare member_count is
         // enough), but sending it is what makes the detail view's real
         // per-person needs/relation breakdown possible later.
-        async submitCheckIn() {
+        // Only the members ticked as arrived are sent. A family already staying
+        // somewhere comes back as 409 ALREADY_SHELTERED; the officer may then
+        // confirm (confirm = true) that this is a second stay (2026-10-27).
+        async submitCheckIn(confirm = false) {
             if (this.checkInSaving || !this.checkInForm.center || !this.checkInForm.head_name || !this.checkInForm.barangay) return;
             this.checkInSaving = true;
-            const members = this.checkInForm.members
-                .filter(m => m.name.trim())
+            const members = this.checkInArrived()
                 .map(m => ({
                     name: m.name.trim(),
                     relation: m.relation || null,
@@ -470,15 +480,19 @@
                     education: m.education || null,
                     occupation: m.occupation || null,
                     vulnerability: m.vulnerability || null,
+                    individual_id: m.individual_id || undefined,
+                    is_head: !!m.is_head,
                 }));
             const f = this.checkInForm;
-            const payload = { head_name: f.head_name, barangay: f.barangay, sitio: f.sitio || null, members, ...this.facedPayload(f) };
+            const payload = { head_name: f.head_name, barangay: f.barangay, sitio: f.sitio || null, members, ...this.facedPayload(f), ...this.checkInExtras(confirm) };
             try {
                 const res = await $api.post('/admin/sakuna/centers/' + this.checkInForm.center + '/check-in', payload);
                 this.evacueesList.unshift(res.data);
                 this.showEvacueeReg = false;
+                this.checkInDuplicate = '';
                 this.toast(res.data.ref + ' checked in.', 'success');
             } catch (err) {
+                if (err.code === 'ALREADY_SHELTERED') { this.checkInDuplicate = err.localised('en'); return; }
                 this.toast(err.localised ? err.localised('en') : 'Could not check in this household.', 'error');
             } finally { this.checkInSaving = false; }
         },
@@ -545,6 +559,8 @@
         async openEvacueeDetail(row) {
             this.selectedEvacuee = row;
             this.facedEditing = false;
+            this.recordEditing = false;
+            this.memberEditing = null;
             this.showEvacueeDetail = true;
             this.$nextTick(() => window.renderIcons?.());
             // The list row has no members/movements; GET /sakuna/evacuees/{ref}
@@ -695,7 +711,7 @@
         reliefFailed: false,
         showCreateDistribution: false,
         distributionSaving: false,
-        distributionForm: { operation: '', barangay: '', beneficiary_name: '', item: '', quantity: '', unit: '', cost: '', provider: '', evacuee_ref: '' },
+        distributionForm: { operation: '', barangay: '', beneficiary_name: '', item: '', quantity: '', unit: '', cost: '', provider: '', evacuee_ref: '', center: '', location: '' },
         // GET /sakuna/relief -- SakunaReliefDistribution is the ONLY real model
         // behind this submodule (see tab-relief.blade.php's header for what
         // that means for the UI: no inventory, request-approval or donation
@@ -712,7 +728,7 @@
             return [...new Set(this.reliefList.map(d => d.operation).filter(Boolean))].sort();
         },
         resetDistributionForm() {
-            this.distributionForm = { operation: this.reliefOperationFilter || '', barangay: '', beneficiary_name: '', item: '', quantity: '', unit: '', cost: '', provider: '', evacuee_ref: '' };
+            this.distributionForm = { operation: this.reliefOperationFilter || '', barangay: '', beneficiary_name: '', item: '', quantity: '', unit: '', cost: '', provider: '', evacuee_ref: '', center: '', location: '' };
         },
         openCreateDistribution() {
             this.resetDistributionForm();
@@ -721,13 +737,16 @@
             if (!this.evacueesList.length && this.can('sakuna_evacuees', 'view')) {
                 $api.getAll('/admin/sakuna/evacuees').then(r => { this.evacueesList = r.data || []; }).catch(() => {});
             }
+            this.loadReliefCenters();
             this.showCreateDistribution = true;
             this.$nextTick(() => window.renderIcons?.());
         },
         // DUPLICATE_DISTRIBUTION (409) is a real, enforced guard -- the same
-        // beneficiary cannot receive twice from the same operation. Surfaced
-        // via the ordinary error toast rather than re-implemented client-side.
-        async submitDistribution() {
+        // item cannot go to the same beneficiary twice in one operation; a
+        // different item can (2026-10-27). Surfaced via the ordinary error
+        // toast rather than re-implemented client-side. another = true keeps
+        // the form open on the same family for its next item.
+        async submitDistribution(another = false) {
             if (this.distributionSaving || !this.distributionForm.operation || !this.distributionForm.barangay || !this.distributionForm.beneficiary_name || !this.distributionForm.item) return;
             this.distributionSaving = true;
             const f = this.distributionForm;
@@ -738,11 +757,18 @@
                 unit: f.unit || undefined,
                 provider: f.provider || undefined,
                 evacuee_ref: f.evacuee_ref || undefined,
+                center: f.center || undefined,
+                location: f.location.trim() || undefined,
             };
             try {
                 const res = await $api.post('/admin/sakuna/relief', payload);
                 this.reliefList.unshift(res.data);
-                this.showCreateDistribution = false;
+                if (another) {
+                    Object.assign(this.distributionForm, { item: '', quantity: '', unit: '', cost: '' });
+                    this.$nextTick(() => document.getElementById('dist-item')?.focus());
+                } else {
+                    this.showCreateDistribution = false;
+                }
                 this.toast(res.data.ref + ' recorded.', 'success');
             } catch (err) {
                 this.toast(err.localised ? err.localised('en') : 'Could not record this distribution.', 'error');
@@ -754,7 +780,10 @@
             const ev = this.evacueesList.find(e => e.ref === this.distributionForm.evacuee_ref);
             if (!ev) return;
             this.distributionForm.beneficiary_name = ev.head_name;
-            this.distributionForm.barangay = ev.barangay;
+            // A barangay officer records the relief their barangay gives, also
+            // to a family from elsewhere staying at their centre (2026-10-27).
+            this.distributionForm.barangay = this.$store.session.inScope(ev.barangay) ? ev.barangay : this.$store.session.account.scope;
+            this.distributionForm.center = this.reliefCenterFor(ev);
         },
         async releaseDistribution(d) {
             try {
@@ -1022,6 +1051,15 @@
         // projection over everything else) plus the real incidents list for
         // a true severity-ranked priority queue, which the projection itself
         // doesn't provide (its own `markers` are only incidents with lat/lng).
+        // The Assign picker's people outside the Command Center: each tab is
+        // its own page, so the Incidents tab asks when Assign is first opened.
+        async loadPersonnel() {
+            if (this.personnel.length) return;
+            try {
+                const res = await (this.$store.session.canPerm('um_personnel', 'view') ? $api.getAll('/admin/users') : this.nothing());
+                this.personnel = res.data || [];
+            } catch { /* the picker stays empty */ }
+        },
         async loadCommandCenter() {
             this.commandLoading = true;
             this.commandFailed = false;

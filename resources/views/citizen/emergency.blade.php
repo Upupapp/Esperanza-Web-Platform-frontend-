@@ -4,7 +4,8 @@
      following it (GET/POST /citizen/incidents, GET /citizen/incidents/{ref}),
      open to an unverified account on purpose. ?incident=REF opens a report;
      ?report=1 opens the form. Mirrors the app's Sakuna tab. Logic in
-     resources/js/scope-citizen.js (citizenEmergency). --}}
+     resources/js/scope-citizen.js (citizenEmergency); the resident's own
+     shelter and relief in resources/js/citizen-shelter.js (2026-10-27). --}}
 <x-layouts.citizen title="Emergency" subtitle="Hotlines, evacuation centres, alerts, and incident reports." active="emergency">
     <div x-data="citizenEmergency" class="animate-fade-up">
 
@@ -88,6 +89,122 @@
                             </li>
                         </template>
                     </ul>
+                </section>
+
+                {{-- My shelter and relief (2026-10-27, Phase 3): the family's
+                     stays and the relief released to it, found by the registry
+                     link only; confirming an item came; a mistake becomes a
+                     support ticket; and a household list kept ready, with
+                     consent, while the LGU has it on. Logic in
+                     resources/js/citizen-shelter.js. --}}
+                <section id="my-records" class="surface-glass rounded-[26px] p-5 scroll-mt-4" aria-labelledby="my-records-heading" x-data="citizenShelter">
+                    <h2 id="my-records-heading" class="text-base font-extrabold text-ink flex items-center gap-2"><i data-lucide="house" class="w-5 h-5 text-brand-600"></i><x-ui.t fil="Aking Paglikas at Relief" en="My Shelter and Relief" /></h2>
+                    <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Ang mga pananatili ng inyong pamilya sa evacuation center at ang relief na inilabas para sa inyo. Ang staff pa rin ang nagtatala ng check-in at relief." en="Your family's stays at evacuation centres and the relief released to you. Staff still record check-ins and relief." /></p>
+
+                    <div x-show="recordsState === 'loading'" class="space-y-2 mt-4"><x-ui.skeleton class="h-14 rounded-2xl" /><x-ui.skeleton class="h-14 rounded-2xl opacity-70" /></div>
+                    <div x-show="recordsState === 'error'" x-cloak>
+                        <x-ui.error-state title="Hindi ma-load" titleEn="Could not load" messageExpr="$store.lang.current === 'en' ? 'Your shelter and relief records could not be loaded.' : 'Hindi ma-load ang iyong mga tala.'" retryExpr="loadRecords()" class="!py-8" />
+                    </div>
+                    <p x-show="recordsState === 'loaded' && enabled && !linked" x-cloak class="mt-4 rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted" data-records-unlinked><x-ui.t fil="Lalabas dito ang inyong mga tala kapag naka-link na ang inyong account sa talaan ng mga residente (pagkatapos ma-verify ng munisipyo)." en="Your records appear here once your account is linked to the resident registry (after the Municipality verifies it)." /></p>
+                    <p x-show="recordsState === 'loaded' && enabled && linked && !stays.length && !relief.length" x-cloak class="mt-4 rounded-2xl surface-pressed-sm px-4 py-3 text-xs text-ink-muted"><x-ui.t fil="Wala pang pananatili o relief na nakatala para sa inyong pamilya." en="No stay or relief is on record for your family yet." /></p>
+
+                    <div x-show="recordsState === 'loaded' && stays.length" x-cloak class="mt-4">
+                        <h3 class="text-xs font-bold uppercase tracking-[.07em] text-ink-muted mb-2.5"><x-ui.t fil="Mga Pananatili" en="Stays" /></h3>
+                        <ul class="space-y-2">
+                            <template x-for="s in stays" :key="s.ref">
+                                <li class="rounded-2xl border border-brand-600/10 bg-white/70 px-3.5 py-3">
+                                    <div class="flex flex-wrap items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-ink" x-text="s.center || t('Evacuation centre', 'Evacuation center')"></p>
+                                            <p class="text-[11px] text-ink-muted"><span class="font-mono" x-text="s.ref"></span> · <span x-text="t('Checked in ', 'Nag-check in ') + when(s.checked_in) + (s.checked_out ? t(' · left the centre ', ' · umalis sa center ') + when(s.checked_out) : '')"></span></p>
+                                            <p class="text-[11px] text-ink-muted mt-0.5" x-text="s.members.length ? s.members.map((m) => m.name).join(', ') : (s.member_count + ' ' + t('people', 'katao'))"></p>
+                                        </div>
+                                        <span class="shrink-0 text-[10.5px] font-bold rounded-full px-2 py-0.5" :class="s.status === 'Processing' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'" x-text="s.status === 'Processing' ? t('Staying now', 'Nananatili ngayon') : t('Left the centre', 'Umalis na sa center')"></span>
+                                    </div>
+                                    <button type="button" @click="openReport(s.ref)" class="mt-2 text-xs font-semibold text-brand-700 hover:text-brand-800 min-h-[44px]" :aria-expanded="reportFor === s.ref" x-text="t('Report a mistake', 'Mag-ulat ng mali')"></button>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                    <div x-show="recordsState === 'loaded' && relief.length" x-cloak class="mt-4">
+                        <h3 class="text-xs font-bold uppercase tracking-[.07em] text-ink-muted mb-2.5"><x-ui.t fil="Relief na Inilabas" en="Relief Released" /></h3>
+                        <ul class="space-y-2">
+                            <template x-for="r in relief" :key="r.ref">
+                                <li class="rounded-2xl border border-brand-600/10 bg-white/70 px-3.5 py-3" data-relief-item>
+                                    <p class="text-sm font-semibold text-ink" x-text="reliefLine(r)"></p>
+                                    <p class="text-[11px] text-ink-muted"><span x-text="r.operation"></span> · <span x-text="when(r.released_at)"></span><span x-show="r.where" x-text="' · ' + r.where"></span></p>
+                                    <div x-show="r.can_acknowledge" class="mt-2 flex flex-wrap items-center gap-2">
+                                        <span class="text-xs text-ink-body" x-text="t('Did your family receive this?', 'Natanggap ba ito ng inyong pamilya?')"></span>
+                                        <button type="button" :disabled="answering === r.ref" @click="acknowledge(r, true)" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-700" x-text="t('Received', 'Natanggap')"></button>
+                                        <button type="button" :disabled="answering === r.ref" @click="acknowledge(r, false)" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-white text-ink border border-slate-200 hover:border-slate-300" x-text="t('Not received', 'Hindi natanggap')"></button>
+                                    </div>
+                                    <p x-show="r.acknowledgement" class="mt-2 text-xs font-semibold" :class="r.acknowledgement === 'received' ? 'text-emerald-700' : 'text-amber-700'"
+                                        x-text="(r.acknowledgement === 'received' ? t('You confirmed this was received', 'Kinumpirma ninyong natanggap ito') : t('You said this was not received', 'Sinabi ninyong hindi ito natanggap')) + (r.acknowledged_at ? ' · ' + when(r.acknowledged_at) : '')"></p>
+                                    <button type="button" @click="openReport(r.ref)" class="mt-1 text-xs font-semibold text-brand-700 hover:text-brand-800 min-h-[44px]" :aria-expanded="reportFor === r.ref" x-text="t('Report a mistake', 'Mag-ulat ng mali')"></button>
+                                </li>
+                            </template>
+                        </ul>
+                        <p class="text-[11px] text-ink-muted mt-2"><x-ui.t fil="Ang inyong sagot dito ay katabi ng pirma sa papel na listahan ng relief; hindi nito pinapalitan ang pirma." en="Your answer here sits beside the signature on the paper relief sheet; it does not replace the signature." /></p>
+                    </div>
+
+                    <div x-show="reportFor" x-cloak class="mt-4 rounded-2xl border border-brand-600/10 p-3 space-y-2" data-report-mistake>
+                        <label class="block">
+                            <span class="block text-xs font-semibold text-ink mb-1.5" x-text="t('What is wrong in ', 'Ano ang mali sa ') + reportFor + '?'"></span>
+                            <textarea x-model="reportMessage" rows="3" maxlength="2000" class="w-full rounded-2xl border-0 surface-pressed px-3.5 py-2.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"
+                                :placeholder="t('e.g. My son is not listed; we left on Oct 30, not Oct 31.', 'hal. Wala sa listahan ang anak ko; umalis kami noong Okt 30, hindi Okt 31.')"></textarea>
+                        </label>
+                        <p class="text-[11px] text-ink-muted"><x-ui.t fil="Ipapadala ito bilang support ticket; doon sasagot ang opisina." en="This is sent as a support ticket; the office replies there." /></p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="reportFor = ''" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-white text-ink border border-slate-200" x-text="t('Cancel', 'Kanselahin')"></button>
+                            <button type="button" :disabled="reportSending || reportMessage.trim().length < 5" @click="sendReport()" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-brand-600 text-white hover:bg-brand-700" x-text="reportSending ? t('Sending…', 'Ipinapadala…') : t('Send', 'Ipadala')"></button>
+                        </div>
+                    </div>
+
+                    {{-- The household list, kept ready for check-in. --}}
+                    <div x-show="hhState === 'loaded' && hhEnabled" x-cloak class="mt-6 pt-5 border-t border-brand-600/10" data-household-ready>
+                        <h3 class="text-sm font-extrabold text-ink flex items-center gap-2"><i data-lucide="users-round" class="w-4 h-4 text-brand-600"></i><x-ui.t fil="Listahan ng Sambahayan para sa Paglikas" en="Household List for Evacuation" /></h3>
+                        <p class="text-xs text-ink-muted mt-1"><x-ui.t fil="Ihanda ang listahan ng mga kasama ninyo sa bahay. Kung lumikas kayo, mapupunan ng staff ang check-in mula rito; sila pa rin ang magtatala ng pagdating ninyo." en="Keep a list of the people in your home ready. If you evacuate, staff can fill the check-in from it; they still record your arrival." /></p>
+                        <div x-show="household && !hhEditing" class="mt-3 rounded-2xl border border-brand-600/10 bg-white/70 px-3.5 py-3">
+                            <p class="text-sm font-semibold text-ink" x-text="(household?.members || []).length + ' ' + t('people', 'katao') + ' · Brgy. ' + (household?.barangay || '') + (household?.purok ? ', ' + household.purok : '')"></p>
+                            <p class="text-[11px] text-ink-muted" x-text="(household?.members || []).map((m) => m.name).join(', ')"></p>
+                            <p class="text-[11px] text-ink-muted mt-0.5" x-text="t('Updated ', 'Na-update ') + when(household?.updated_at)"></p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <button type="button" @click="editHousehold()" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-white text-ink border border-slate-200" x-text="t('Edit', 'I-edit')"></button>
+                                <button type="button" @click="withdrawHousehold()" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-white text-rose-700 border border-rose-200" x-text="t('Delete', 'Burahin')"></button>
+                            </div>
+                        </div>
+                        <button type="button" x-show="!household && !hhEditing" @click="editHousehold()" class="mt-3 inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-brand-600 text-white hover:bg-brand-700" x-text="t('Prepare my household list', 'Ihanda ang listahan')"></button>
+
+                        <div x-show="hhEditing" x-cloak class="mt-3 space-y-3" data-household-form>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <label class="block"><span class="block text-xs font-semibold text-ink mb-1.5">Barangay <span class="text-rose-600">*</span></span>
+                                    <select x-model="hhForm.barangay" class="w-full min-h-[44px] rounded-2xl border-0 surface-pressed px-3.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"><option value="" x-text="t('Choose the barangay', 'Piliin ang barangay')"></option><template x-for="b in barangays" :key="b"><option :value="b" x-text="b" :selected="b === hhForm.barangay"></option></template></select></label>
+                                <label class="block"><span class="block text-xs font-semibold text-ink mb-1.5">Sitio</span><input type="text" x-model="hhForm.sitio" maxlength="120" class="w-full min-h-[44px] rounded-2xl border-0 surface-pressed px-3.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></label>
+                                <label class="block"><span class="block text-xs font-semibold text-ink mb-1.5">Purok</span><input type="text" x-model="hhForm.purok" maxlength="80" class="w-full min-h-[44px] rounded-2xl border-0 surface-pressed px-3.5 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"></label>
+                            </div>
+                            <template x-for="(m, i) in hhForm.members" :key="i">
+                                <fieldset class="rounded-2xl border border-brand-600/10 p-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                    <legend class="sr-only" x-text="t('Person ', 'Tao ') + (i + 1)"></legend>
+                                    <input type="text" x-model="m.name" maxlength="160" :aria-label="t('Person ' + (i + 1) + ' full name', 'Buong pangalan ng tao ' + (i + 1))" :placeholder="t('Full name', 'Buong Pangalan')" class="col-span-2 min-h-[44px] rounded-2xl border-0 surface-pressed px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <input type="text" x-model="m.relation" maxlength="60" :aria-label="t('Person ' + (i + 1) + ' relation', 'Kaugnayan ng tao ' + (i + 1))" :placeholder="i === 0 ? 'Head' : t('Relation', 'Kaugnayan')" class="min-h-[44px] rounded-2xl border-0 surface-pressed px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <select x-model="m.sex" :aria-label="t('Person ' + (i + 1) + ' sex', 'Kasarian ng tao ' + (i + 1))" class="min-h-[44px] rounded-2xl border-0 surface-pressed px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"><option value="" x-text="t('Sex', 'Kasarian')"></option><option value="Male" x-text="t('Male', 'Lalaki')"></option><option value="Female" x-text="t('Female', 'Babae')"></option></select>
+                                    <input type="date" x-model="m.dob" :aria-label="t('Person ' + (i + 1) + ' birth date', 'Kaarawan ng tao ' + (i + 1))" class="min-h-[44px] rounded-2xl border-0 surface-pressed px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <select x-model="m.vulnerability" :aria-label="t('Person ' + (i + 1) + ' needs special care', 'Kailangan ng tao ' + (i + 1) + ' ng espesyal na alaga')" class="col-span-2 sm:col-span-4 min-h-[44px] rounded-2xl border-0 surface-pressed px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none"><option value="" x-text="t('No special care needed', 'Walang espesyal na alaga')"></option><template x-for="v in vulnerabilities" :key="v"><option :value="v" x-text="v"></option></template></select>
+                                    <button type="button" @click="removeHouseholdMember(i)" class="min-h-[44px] text-xs font-semibold text-rose-700" x-text="t('Remove', 'Alisin')"></button>
+                                </fieldset>
+                            </template>
+                            <button type="button" @click="addHouseholdMember()" class="text-xs font-semibold text-brand-700 min-h-[44px]" x-text="t('+ Add a person', '+ Magdagdag ng tao')"></button>
+                            <label class="flex items-start gap-2 rounded-2xl surface-pressed-sm px-3.5 py-3 text-xs text-ink-body">
+                                <input type="checkbox" x-model="hhForm.consent" class="mt-0.5 rounded border-slate-300 text-brand-600">
+                                <span><x-ui.t fil="Pumapayag akong itago ng munisipyo ang listahang ito, kasama ang mga detalye ng mga bata, para lamang sa check-in sa evacuation center. Maaari ko itong burahin anumang oras." en="I agree that the Municipality keeps this list, including children's details, only for check-in at an evacuation centre. I can delete it at any time." /></span>
+                            </label>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" @click="hhEditing = false" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-white text-ink border border-slate-200" x-text="t('Cancel', 'Kanselahin')"></button>
+                                <button type="button" :disabled="hhSaving || !hhReady" @click="saveHousehold()" class="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-colors disabled:opacity-50 bg-brand-600 text-white hover:bg-brand-700" x-text="hhSaving ? t('Saving…', 'Itinatala…') : t('Save list', 'Itala ang listahan')"></button>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 {{-- Evacuation centres --}}

@@ -230,6 +230,7 @@
                         <template x-for="p in personnel" :key="p.id"><option :value="p.id" x-text="p.name + ' (' + p.employee_id + ')'"></option></template>
                     </select>
                 </div>
+                <p x-show="!$store.session.canPerm('um_personnel', 'view')" class="text-xs text-violet-800">Your role cannot see the staff list; ask an administrator to assign this incident.</p>
                 <div class="flex gap-2">
                     <button :disabled="!assignTo" @click="actIncidentVerb(selectedIncident, 'assign', { assigned_to: assignTo }); assignTo = ''" class="px-3 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors disabled:opacity-40">Confirm Assignment</button>
                     <button @click="showAssignForm = false" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 border border-slate-200 rounded-xl transition-colors">Cancel</button>
@@ -241,7 +242,7 @@
         {{-- Modal Footer Actions --}}
         <div class="flex flex-wrap items-center gap-2 px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 flex-shrink-0">
             <button x-show="selectedIncident?.available_verbs?.includes('validate')" @click="actIncidentVerb(selectedIncident, 'validate')" class="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors">Validate</button>
-            <button x-show="selectedIncident?.available_verbs?.includes('assign')" @click="showAssignForm = !showAssignForm; showEscalateForm = false" class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-white/60 text-violet-700 border border-violet-200 rounded-xl transition-colors">Assign</button>
+            <button x-show="selectedIncident?.available_verbs?.includes('assign')" @click="showAssignForm = !showAssignForm; showEscalateForm = false; loadPersonnel()" class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-white/60 text-violet-700 border border-violet-200 rounded-xl transition-colors">Assign</button>
             <button x-show="selectedIncident?.available_verbs?.includes('dispatch')" @click="actIncidentVerb(selectedIncident, 'dispatch')" class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-white/60 text-purple-700 border border-purple-200 rounded-xl transition-colors">Dispatch</button>
             <button x-show="selectedIncident?.available_verbs?.includes('escalate')" @click="showEscalateForm = !showEscalateForm; showAssignForm = false" class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-white/60 text-orange-700 border border-orange-200 rounded-xl transition-colors">Escalate</button>
             <button x-show="selectedIncident?.available_verbs?.includes('resolve')" @click="actIncidentVerb(selectedIncident, 'resolve')" class="px-3 py-1.5 text-xs font-medium bg-white hover:bg-white/60 text-emerald-700 border border-emerald-200 rounded-xl transition-colors">Resolve</button>

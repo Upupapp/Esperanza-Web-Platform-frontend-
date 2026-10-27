@@ -272,13 +272,29 @@
 
         <div class="p-6 space-y-5">
 
-            <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5"></i> Household</h4>
+            <div data-shelter-record>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5"></i> Household</h4>
+                    <button type="button" x-show="mayEditShelter() && !recordEditing" @click="editShelterRecord()" class="text-xs font-medium text-brand-600 hover:text-brand-700">Edit</button>
+                </div>
+                <div x-show="recordEditing" x-cloak class="mb-3 grid grid-cols-2 gap-3 rounded-2xl border border-brand-600/10 p-3" data-shelter-edit>
+                    <div><label for="record-sitio" class="text-xs text-ink-muted mb-1 block">Sitio</label><input id="record-sitio" type="text" x-model="recordForm.sitio" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
+                    <div><label for="record-purok" class="text-xs text-ink-muted mb-1 block">Purok</label><input id="record-purok" type="text" x-model="recordForm.purok" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
+                    <div><label for="record-hh" class="text-xs text-ink-muted mb-1 block">Household code (typed)</label><input id="record-hh" type="text" x-model="recordForm.hh_code" :disabled="!!selectedEvacuee?.household_ref" :placeholder="selectedEvacuee?.household_ref ? 'From the registry' : ''" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 disabled:opacity-50"></div>
+                    <div><label for="record-count" class="text-xs text-ink-muted mb-1 block">Headcount</label><input id="record-count" type="number" :min="Math.max(1, (selectedEvacuee?.members || []).length)" x-model="recordForm.member_count" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
+                    <p class="col-span-2 text-[11px] text-ink-muted">A sitio is not a purok; leave the purok blank if it is not known. The headcount cannot be lower than the members listed below.</p>
+                    <div class="col-span-2 flex justify-end gap-2">
+                        <button type="button" @click="recordEditing = false" class="text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5">Cancel</button>
+                        <button type="button" :disabled="recordSaving" @click="saveShelterRecord()" class="text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-1.5 disabled:opacity-50" x-text="recordSaving ? 'Saving…' : 'Save'"></button>
+                    </div>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Household Head</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.head_name ?? '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Total Members</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="(selectedEvacuee?.member_count ?? 0) + ((selectedEvacuee?.member_count ?? 0) === 1 ? ' person' : ' persons')"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Barangay</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.barangay ?? '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Sitio/Purok</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.sitio || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Sitio</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.sitio || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Purok</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.purok || '—'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Household Code</p><p class="text-sm font-mono font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code || '—'"></p><p class="text-[11px] mt-0.5" x-show="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code" :class="selectedEvacuee?.household_ref ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.household_ref ? 'From the registry' : 'Typed at the centre, not verified'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Resident Record</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.registered ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.registered ? 'Linked' : 'Unregistered household'"></p></div>
                 </div>
             </div>
@@ -286,9 +302,10 @@
             <div data-faced-panel>
                 <div class="flex items-center justify-between mb-3">
                     <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="id-card" class="w-3.5 h-3.5"></i> FACED Card (DSWD)</h4>
-                    <button type="button" x-show="can('sakuna_evacuees','check_in') && !facedEditing" @click="editFaced()" class="text-xs font-medium text-brand-600 hover:text-brand-700">Edit</button>
+                    <button type="button" x-show="can('sakuna_evacuees','check_in') && !facedEditing && !selectedEvacuee?.faced_restricted" @click="editFaced()" class="text-xs font-medium text-brand-600 hover:text-brand-700">Edit</button>
                 </div>
-                <div x-show="!facedEditing" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <p x-show="selectedEvacuee?.faced_restricted" x-cloak class="text-xs text-ink-muted rounded-xl bg-slate-50 p-3 flex items-center gap-1.5" data-faced-restricted><i data-lucide="lock" class="w-3.5 h-3.5 shrink-0"></i> FACED details are kept by the family's home barangay (<span x-text="selectedEvacuee?.barangay"></span>) and the municipality.</p>
+                <div x-show="!facedEditing && !selectedEvacuee?.faced_restricted" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Serial No.</p><p class="text-sm font-mono font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced?.serial || '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Contact No.</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced?.contact || '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">House Ownership</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.faced?.house_ownership || '—'"></p></div>
@@ -315,12 +332,28 @@
             </div>
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="users-round" class="w-3.5 h-3.5"></i> Members</h4>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="users-round" class="w-3.5 h-3.5"></i> Members</h4>
+                    <button type="button" x-show="mayEditShelter() && memberEditing === null" @click="newMember()" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add member</button>
+                </div>
+                <div x-show="memberEditing !== null" x-cloak class="mb-3 grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-2xl border border-brand-600/10 p-3" data-member-edit>
+                    <div class="col-span-2 sm:col-span-3"><label for="member-name" class="text-xs text-ink-muted mb-1 block">Name</label><input id="member-name" type="text" x-model="memberForm.name" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
+                    <div><label for="member-relation" class="text-xs text-ink-muted mb-1 block">Relation</label><input id="member-relation" type="text" x-model="memberForm.relation" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
+                    <div><label for="member-sex" class="text-xs text-ink-muted mb-1 block">Sex</label><select id="member-sex" x-model="memberForm.sex" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"><option value="">Not recorded</option><option>Male</option><option>Female</option></select></div>
+                    <div><label for="member-age" class="text-xs text-ink-muted mb-1 block">Age</label><input id="member-age" type="number" min="0" max="130" x-model="memberForm.age" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
+                    <div><label for="member-dob" class="text-xs text-ink-muted mb-1 block">Birth date</label><input id="member-dob" type="date" x-model="memberForm.dob" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
+                    <div class="col-span-2"><label for="member-vulnerability" class="text-xs text-ink-muted mb-1 block">Vulnerable sector</label><select id="member-vulnerability" x-model="memberForm.vulnerability" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"><option value="">None</option><option>Older person</option><option>Pregnant</option><option>Lactating mother</option><option>PWD</option><option>Solo parent</option><option>Child (under 18)</option></select></div>
+                    <label class="col-span-2 sm:col-span-3 flex items-center gap-2 text-sm text-ink-body"><input type="checkbox" x-model="memberForm.is_head" class="rounded border-slate-300 text-brand-600"> Family head (unmarks anyone else)</label>
+                    <div class="col-span-2 sm:col-span-3 flex justify-end gap-2">
+                        <button type="button" @click="memberEditing = null" class="text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5">Cancel</button>
+                        <button type="button" :disabled="memberSaving || !memberForm.name.trim()" @click="saveMember()" class="text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-1.5 disabled:opacity-50" x-text="memberSaving ? 'Saving…' : (memberEditing === 'new' ? 'Add member' : 'Save member')"></button>
+                    </div>
+                </div>
                 <div class="divide-y divide-brand-600/[.08] border border-brand-600/10 rounded-xl overflow-hidden">
-                    <template x-for="(m, idx) in (selectedEvacuee?.members || [])" :key="idx">
+                    <template x-for="(m, idx) in (selectedEvacuee?.members || [])" :key="m.id ?? idx">
                         <div class="flex items-center justify-between px-4 py-2.5">
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-slate-700 truncate" x-text="m.name"></p>
+                                <p class="text-sm font-medium text-slate-700 truncate"><span x-text="m.name"></span> <span x-show="m.is_head" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-brand-50 text-brand-700 border border-brand-200">Head</span> <span x-show="!m.sex || (m.age == null && !m.dob)" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10.5px] font-medium bg-amber-50 text-amber-700 border border-amber-200" x-text="!m.sex ? 'No sex recorded' : 'No age recorded'"></span></p>
                                 <p class="text-xs text-ink-muted" x-text="[m.relation, m.age ? m.age + ' yrs' : null, m.sex, m.dob ? 'born ' + m.dob : null].filter(Boolean).join(' · ') || '—'"></p>
                                 <p class="text-xs text-ink-muted" x-show="m.education || m.occupation" x-text="[m.education, m.occupation].filter(Boolean).join(' · ')"></p>
                             </div>
@@ -329,6 +362,7 @@
                                 <template x-for="n in (m.needs || [])" :key="n">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200" x-text="n"></span>
                                 </template>
+                                <button type="button" x-show="mayEditShelter() && m.id && memberEditing === null" @click="editMember(m)" :aria-label="'Edit ' + m.name" class="text-xs font-medium text-brand-600 hover:text-brand-700 ml-1">Edit</button>
                             </div>
                         </div>
                     </template>
@@ -392,6 +426,30 @@
         </div>
 
         <div class="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
+            <div class="rounded-2xl border border-brand-600/10 p-3 space-y-2" data-registry-search>
+                <label class="text-xs font-semibold text-ink-body flex items-center gap-1.5" for="checkin-registry"><i data-lucide="search" class="w-3.5 h-3.5 text-brand-600"></i> Find the family in the resident registry <span class="font-normal text-ink-muted">(optional)</span></label>
+                <div x-show="!registryPicked">
+                    <input id="checkin-registry" type="search" x-model="registryQuery" @input="searchRegistry()" placeholder="Surname, member name, or family/household code — at least 3 letters" autocomplete="off" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                    <p x-show="registrySearching" class="text-xs text-ink-muted mt-1.5">Searching…</p>
+                    <p x-show="registrySearched && !registrySearching && !registryResults.length" class="text-xs text-ink-muted mt-1.5">No family in the registry matches. Fill the form by hand.</p>
+                    <div x-show="registryResults.length" class="mt-2 divide-y divide-brand-600/[.08] border border-brand-600/10 rounded-xl overflow-hidden">
+                        <template x-for="f in registryResults" :key="f.ref">
+                            <button type="button" @click="pickRegistryFamily(f)" class="w-full text-left px-3 py-2 hover:bg-brand-50/60 transition-colors">
+                                <p class="text-sm font-medium text-ink-body"><span x-text="f.head_name || f.label"></span> <span class="text-xs font-normal text-ink-muted" x-text="'· ' + f.barangay + (f.sitio ? ', ' + f.sitio : '') + ' · ' + f.members.length + (f.members.length === 1 ? ' member' : ' members')"></span></p>
+                                <p class="text-[11px] text-ink-muted"><span x-show="f.source === 'kept_by_resident'" class="mr-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-violet-50 text-violet-700 border border-violet-200">Kept by the resident</span><span class="font-mono" x-text="f.household_ref || f.ref"></span> <span x-show="f.already_sheltered" class="text-amber-700" x-text="f.already_sheltered ? '· already at ' + f.already_sheltered.center + ' (' + f.already_sheltered.ref + ')' : ''"></span></p>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+                <div x-show="registryPicked" x-cloak class="flex items-start justify-between gap-3" data-registry-picked>
+                    <div class="text-xs text-ink-body">
+                        <p class="font-medium"><span x-text="registryPicked?.source === 'kept_by_resident' ? 'Filled from the list the resident keeps: ' : 'Filled from the registry: '"></span><span class="font-mono" x-text="registryPicked?.household_ref || registryPicked?.ref"></span></p>
+                        <p class="text-ink-muted">Untick anyone who did not come to the centre. Corrections here change this shelter record only, not the registry.</p>
+                        <p x-show="registryPicked?.already_sheltered" class="text-amber-700 mt-1" x-text="registryPicked?.already_sheltered ? 'Already checked in at ' + registryPicked.already_sheltered.center + ' (' + registryPicked.already_sheltered.ref + ').' : ''"></p>
+                    </div>
+                    <button type="button" @click="clearRegistryPick()" class="text-xs font-medium text-brand-600 hover:text-brand-700 shrink-0">Unlink</button>
+                </div>
+            </div>
             <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-center">Evacuation Center <span class="text-rose-500">*</span></label>
                 <select id="checkin-center" x-model="checkInForm.center" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
@@ -416,9 +474,17 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="sm:col-span-2">
-                    <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-sitio">Home Sitio/Purok</label>
+                <div>
+                    <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-sitio">Home Sitio</label>
                     <input id="checkin-sitio" type="text" x-model="checkInForm.sitio" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-purok">Purok</label>
+                    <input id="checkin-purok" type="text" x-model="checkInForm.purok" placeholder="If known" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                </div>
+                <div class="sm:col-span-2" x-show="!registryPicked?.household_ref">
+                    <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="checkin-hh">Household code</label>
+                    <input id="checkin-hh" type="text" x-model="checkInForm.hh_code" placeholder="If the family knows it — kept as typed, not verified" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
                 </div>
             </div>
 
@@ -429,7 +495,7 @@
 
             <div>
                 <div class="flex items-center justify-between mb-2">
-                    <label class="text-xs font-medium text-ink-muted uppercase tracking-wide">Members (optional — otherwise just the head is recorded)</label>
+                    <label class="text-xs font-medium text-ink-muted uppercase tracking-wide">Members (optional — otherwise just the head is recorded). Mark the head with ◉.</label>
                     <button type="button" @click="addCheckInMember()" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Member
                     </button>
@@ -437,7 +503,9 @@
                 <datalist id="faced-education"><option>None</option><option>Elementary</option><option>High School</option><option>Senior High School</option><option>Vocational</option><option>College</option><option>Post-graduate</option></datalist>
                 <div class="space-y-2">
                     <template x-for="(m, idx) in checkInForm.members" :key="idx">
-                        <div class="flex flex-wrap items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white">
+                        <div class="flex flex-wrap items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white" :class="m.arrived === false ? 'opacity-50' : ''">
+                            <label x-show="registryPicked" class="flex items-center gap-1 text-[11px] text-ink-muted"><input type="checkbox" x-model="m.arrived" :aria-label="'Member ' + (idx+1) + ' arrived at the centre'" class="rounded border-slate-300 text-brand-600"> Here</label>
+                            <input type="radio" name="checkin-head-pick" :checked="m.is_head" @change="setCheckInHead(idx)" :aria-label="'Member ' + (idx+1) + ' is the family head'" class="text-brand-600 border-slate-300">
                             <input type="text" x-model="m.name" :aria-label="'Member ' + (idx+1) + ' name'" placeholder="Name" class="flex-1 min-w-[120px] text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                             <input type="text" x-model="m.relation" :aria-label="'Member ' + (idx+1) + ' relation'" placeholder="Relation" class="w-24 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                             <input type="number" min="0" x-model="m.age" :aria-label="'Member ' + (idx+1) + ' age'" placeholder="Age" class="w-16 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
@@ -458,6 +526,10 @@
             </div>
         </div>
 
+        <div x-show="checkInDuplicate" x-cloak role="alert" class="mx-6 mb-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex flex-wrap items-center justify-between gap-2" data-checkin-duplicate>
+            <p class="flex items-start gap-1.5"><i data-lucide="triangle-alert" class="w-4 h-4 shrink-0 mt-0.5"></i><span x-text="checkInDuplicate"></span></p>
+            <button type="button" :disabled="checkInSaving" @click="submitCheckIn(true)" class="text-xs font-semibold text-amber-900 bg-white border border-amber-300 rounded-2xl px-3 py-1.5 disabled:opacity-50">It's a different family — check in</button>
+        </div>
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex items-center justify-between">
             <button @click="showEvacueeReg = false" class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-4 py-2 hover:border-slate-300 transition-colors">Cancel</button>
             <button :disabled="checkInSaving || !checkInForm.center || !checkInForm.head_name || !checkInForm.barangay" @click="submitCheckIn()"

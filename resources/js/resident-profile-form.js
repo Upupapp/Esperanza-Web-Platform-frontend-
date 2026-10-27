@@ -50,6 +50,8 @@ export function residentProfileForm() {
         options,
         personal: blankPersonal(),
         household: blankHousehold(),
+        // The household's registry code, read only: the server assigns it (2026-10-27).
+        householdRef: '',
         surname: '',
         members: [],
         // View only once sent (parity check, 2026-10-26): while the barangay
@@ -83,6 +85,7 @@ export function residentProfileForm() {
                 income_range: me.income_range || '',
                 tags: Array.isArray(me.tags) ? me.tags.filter((t) => options.tags.includes(t)) : [],
             };
+            this.householdRef = hh.ref || '';
             this.household = {
                 ...blankHousehold(),
                 sitio: hh.sitio || me.sitio || '',

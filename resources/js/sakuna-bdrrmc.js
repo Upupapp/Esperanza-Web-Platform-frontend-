@@ -14,6 +14,7 @@
 // hold arrive blank with a warning and are typed by hand, or left blank.
 
 import api from './api/client';
+import { PAPER, captionRow, headerRows, leavesOf, storedKeys, totalCells } from './bdrrmc-paper';
 
 const TZ = 'Asia/Manila';
 const BRACKETS = ['pre03', 'pre46', 'ch712', 'yth1317', 'ad1859', 'sc60'];
@@ -32,6 +33,32 @@ function manilaText(iso) {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return String(iso);
     return d.toLocaleString('en-US', { timeZone: TZ, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+/** A date as the paper form is filled in by hand, e.g. "October 27, 2026". */
+function longDate(value) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ''));
+    if (!m) return value ? String(value) : '';
+    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], 12)).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+/** A time of day, e.g. "2:30 PM". */
+function clockTime(value) {
+    const m = /^(\d{2}):(\d{2})/.exec(String(value || ''));
+    if (!m) return value ? String(value) : '';
+    const h = +m[1];
+    return `${((h + 11) % 12) + 1}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
+/** An instant's date and time in Esperanza, for the paper's "As of Date / Time". */
+function manilaParts(iso) {
+    if (!iso) return { date: '', time: '' };
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return { date: String(iso), time: '' };
+    return {
+        date: d.toLocaleDateString('en-US', { timeZone: TZ, month: 'long', day: 'numeric', year: 'numeric' }),
+        time: d.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }),
+    };
 }
 
 /** A cell as the server compares it: blanks alike, numbers by value. */
@@ -61,11 +88,18 @@ function printArea(el) {
         if (s.type === 'checkbox' || s.type === 'radio') {
             if (s.checked) d.setAttribute('checked', ''); else d.removeAttribute('checked');
         } else if (s.tagName === 'SELECT') {
-            [...d.options].forEach((o, j) => { if (j === s.selectedIndex) o.setAttribute('selected', ''); else o.removeAttribute('selected'); });
-        } else if (s.tagName === 'TEXTAREA' || ['text', 'number', 'date', 'search', ''].includes(s.type)) {
+            // As the paper is written on: the choice as text, nothing for no
+            // choice (it printed "Choose a barangay"), the flood level as its
+            // number where the column asks for one.
+            const text = document.createElement('span');
+            text.className = s.className;
+            text.textContent = s.value === '' ? '' : (s.dataset.print === 'value' ? s.value : (s.options[s.selectedIndex]?.text || ''));
+            d.replaceWith(text);
+        } else if (s.tagName === 'TEXTAREA' || ['text', 'number', 'date', 'time', 'search', ''].includes(s.type)) {
             // As plain text: a box prints only as much as fits its width.
             const text = document.createElement('span');
-            text.textContent = s.value;
+            text.className = s.className;
+            text.textContent = s.type === 'date' ? longDate(s.value) : (s.type === 'time' ? clockTime(s.value) : s.value);
             text.style.whiteSpace = 'pre-wrap';
             d.replaceWith(text);
         } else {
@@ -102,8 +136,16 @@ function bdrrmcRecords() {
         // The relief sheet has two dates on paper: when the disaster happened
         // (the shared Date of Occurrence) and when relief was given.
         distributedOn: '',
-        // The evacuee profile's "as of", for a form typed by hand.
+        // The evacuee profile's "as of", for a form typed by hand: the paper
+        // asks for a date and a time apart.
         asOfTyped: '',
+        asOfDate: '',
+        asOfTime: '',
+        // Bumped whenever a form's rows are replaced, added or removed (not while
+        // typing): the sheets are keyed by it, so they are drawn again. A sheet
+        // kept by position kept showing its old blank rows after Fill from
+        // records replaced them.
+        paperVersion: 0,
         // A saved form being read or reprinted.
         viewing: null,
         viewLoading: false,
@@ -185,7 +227,8 @@ function bdrrmcRecords() {
                 if (h.distributed_by) this.signoff.prepared = h.distributed_by;
             }
             this[this.rowsOf[key]] = draft.rows.map((r, i) => ({ ...r, _src: i }));
-            if (!draft.rows.length) this.blankRow(key);
+            this.padRows(key);
+            this.paperVersion++;
         },
         /**
          * A row's x-for key. Keyed by position, the empty starting row's
@@ -235,6 +278,8 @@ function bdrrmcRecords() {
                 this.drafted[key].removed.push({ ref: src.ref, reason });
             }
             rows.splice(ri, 1);
+            this.padRows(key);
+            this.paperVersion++;
         },
         /** Drop a form's draft: its rows become ordinary typed rows. */
         forgetDraft(key) {
@@ -287,12 +332,139 @@ function bdrrmcRecords() {
             });
             return out;
         },
+        /** A family is listed on the evacuee profile (its count lines stay blank until one is). */
+        hasFamilies() {
+            return (this.evacueeRows || []).some((r) => !this.isBlankRow(r));
+        },
         fiveRule() {
             return this.drafted.evacuees?.summary?.five_member_rule || 'unresolved';
         },
         recordedHeadcount() {
             return (this.evacueeRows || []).filter((r) => !this.isBlankRow(r)).reduce((s, r) => s + this.rowHeadcount(r), 0);
         },
+
+        // -- The paper form (resources/js/bdrrmc-paper.js)
+
+        /** The form on screen: the one being filled in, or the saved one being read. */
+        paperKey(mode) {
+            return mode === 'view' ? this.viewing?.form : this.openForm;
+        },
+        paperSpec(mode) {
+            return PAPER[this.paperKey(mode)] || { orientation: 'landscape', rows: 20, rowHeight: 15, columns: [], sign: {} };
+        },
+        paperLeaves(mode) { return leavesOf(this.paperSpec(mode).columns); },
+        paperHead(mode) { return headerRows(this.paperSpec(mode).columns); },
+        paperCaption(mode) { return captionRow(this.paperSpec(mode)); },
+        paperTotals(mode) { return totalCells(this.paperSpec(mode)); },
+        paperRowsOf(mode) {
+            return mode === 'view' ? (this.viewing?.rows || []) : (this[this.rowsOf[this.openForm]] || []);
+        },
+        /**
+         * Whole sheets, as on paper: 20 numbered rows a sheet (25 on the relief
+         * sheet), a further sheet when they are full, numbering carried on. A
+         * saved form's rows fill its sheets and the rest stay blank.
+         */
+        paperPages(mode) {
+            const spec = PAPER[this.paperKey(mode)];
+            if (!spec) return [];
+            const all = this.paperRowsOf(mode);
+            const n = spec.rows;
+            const count = Math.max(1, Math.ceil(all.length / n));
+            const v = this.paperVersion;
+            return Array.from({ length: count }, (_, p) => ({
+                p,
+                key: p + ':' + v,
+                last: p === count - 1,
+                slots: Array.from({ length: n }, (__, k) => ({ i: p * n + k, r: all[p * n + k] || null })),
+            }));
+        },
+        /** Fill the form's last sheet with blank rows (never fewer than one sheet). */
+        padRows(key) {
+            const n = PAPER[key]?.rows || 1;
+            const rows = this[this.rowsOf[key]];
+            const target = Math.max(n, Math.ceil(rows.length / n) * n);
+            if (rows.length >= target) return;
+            while (rows.length < target) this.blankRow(key);
+            this.paperVersion++;
+        },
+        /** Another sheet: as many blank rows as the paper holds. */
+        addPage(key) {
+            const n = PAPER[key]?.rows || 1;
+            for (let k = 0; k < n; k++) this.blankRow(key);
+            this.paperVersion++;
+        },
+        paperNo(mode, i, side) {
+            const spec = this.paperSpec(mode);
+            return String(i + 1) + (spec.noDot ? '.' : '');
+        },
+        paperNoAlign(mode, key) {
+            const a = this.paperSpec(mode).noAlign || ['left'];
+            return key === 'no2' ? (a[1] || a[0]) : a[0];
+        },
+        paperHeadClass(h) {
+            return [h.leaf ? 'pp-leaf' : 'pp-group', h.hl ? 'pp-hl-' + h.hl : '', h.small ? 'pp-small' : ''].join(' ');
+        },
+        /** The evacuee profile's computed cells; blank on a blank row. */
+        paperComputed(r, type) {
+            if (!r || this.isBlankRow(r)) return '';
+            if (type === 'sum-m') return this.sexTotal(r, 'm');
+            if (type === 'sum-f') return this.sexTotal(r, 'f');
+            return this.sexTotal(r, 'm') + this.sexTotal(r, 'f');
+        },
+        /** A saved cell as written on the form. */
+        paperValue(r, c) {
+            if (!r) return '';
+            if (['sum-m', 'sum-f', 'sum-all'].includes(c.type)) return this.paperComputed(r, c.type);
+            const v = r[c.key];
+            return v === null || v === undefined ? '' : (typeof v === 'boolean' ? (v ? 'Yes' : '') : v);
+        },
+        /** The TOTAL row's figure for a column: the rows written on, summed. */
+        paperTotal(mode, t) {
+            if (!t.sum) return '';
+            const rows = this.paperRowsOf(mode).filter((r) => r && !this.isBlankRow(r));
+            if (!rows.length) return '';
+            const value = (r) => (['sum-m', 'sum-f', 'sum-all'].includes(t.type) ? this.paperComputed(r, t.type) : Number(r[t.key]) || 0);
+            const sum = rows.reduce((s, r) => s + value(r), 0);
+            return t.type === 'num' ? sum.toLocaleString('en-PH', { maximumFractionDigits: 2 }) : sum;
+        },
+        /** Who signs, under the paper's titles, with the names on this form. */
+        paperSigners(mode) {
+            const s = this.paperSpec(mode).sign || {};
+            const m = this.viewing?.meta || {};
+            const name = (k) => (mode === 'view' ? (m[k + '_by'] || '') : '');
+            const out = [{ role: s.preparedRole || 'Prepared by:', title: s.prepared, model: 'prepared', name: name('prepared') }];
+            if (!s.twoColumn) out.push({ role: 'Consolidated by:', title: s.consolidated, model: 'consolidated', name: name('consolidated') });
+            out.push({ role: s.notedRole || 'Noted by:', title: s.noted, model: 'noted', name: name('noted') });
+            return out;
+        },
+        /**
+         * A saved form is drawn as the paper form when it was filed against
+         * the paper's columns; one saved under older columns (before
+         * 2026-10-27, or the housing form's two estimated-damage columns) keeps
+         * the plain table it was saved with, so nothing it holds is hidden.
+         */
+        paperFits() {
+            const v = this.viewing;
+            const spec = v && PAPER[v.form];
+            if (!spec) return false;
+            const filed = (v.meta?.definition?.columns || this.definitionsByKey?.[v.form]?.columns || []).map((c) => c.key);
+            const keys = storedKeys(spec);
+            if (filed.length && (filed.length !== keys.length || !keys.every((k) => filed.includes(k)))) return false;
+            return (v.rows || []).every((r) => Object.keys(r).every((k) => keys.includes(k)));
+        },
+        /**
+         * A saved evacuee profile's people: the headcount recorded at check-in
+         * and those its age and sex columns hold, as filed (the summary the
+         * server kept), else counted from its rows.
+         */
+        viewHeadcount() {
+            const rows = (this.viewing?.rows || []).filter((r) => r && !this.isBlankRow(r));
+            const counted = rows.reduce((s, r) => s + this.sexTotal(r, 'm') + this.sexTotal(r, 'f'), 0);
+            const sum = this.viewing?.meta?.summary || {};
+            return { recorded: sum.headcount ?? counted, classified: sum.grand_total ?? counted };
+        },
+        paperDate(value) { return longDate(value); },
+        paperAsOf(iso) { return manilaParts(iso); },
 
         // -- A saved form, reopened
 
@@ -350,7 +522,7 @@ function bdrrmcRecords() {
             }[this.viewing?.form] || { prepared: 'Assigned Barangay Official', noted: 'Punong Barangay' };
         },
         viewPortrait() {
-            return ['fishing', 'rds'].includes(this.viewing?.form);
+            return (PAPER[this.viewing?.form]?.orientation) === 'portrait';
         },
         /** A numeric column of a damage form gets a TOTAL; the evacuee profile has its own. */
         viewTotals(column) {

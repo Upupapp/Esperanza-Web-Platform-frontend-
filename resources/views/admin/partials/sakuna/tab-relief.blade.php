@@ -137,7 +137,9 @@
                             <span x-text="d.quantity + (d.unit ? ' ' + d.unit : '')"></span>
                             <div x-show="d.cost != null || d.provider" class="text-[11px] text-ink-muted" x-text="[d.cost != null ? '₱' + Number(d.cost).toLocaleString('en-PH') : null, d.provider].filter(Boolean).join(' · ')"></div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span></td>
+                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span>
+                            <div x-show="d.acknowledgement" class="text-[11px] font-medium mt-0.5" :class="d.acknowledgement === 'received' ? 'text-emerald-700' : 'text-rose-700'" data-relief-answer
+                                x-text="d.acknowledgement === 'received' ? 'Resident confirmed in app' : 'Resident says not received'"></div></td>
                         <td class="px-4 py-3 whitespace-nowrap text-xs text-ink-muted" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
                         <td class="px-4 py-3 whitespace-nowrap text-right">
                             <button x-show="can('sakuna_relief','release') && d.status === 'Submitted'" @click="releaseDistribution(d)"
@@ -220,6 +222,18 @@
                 </select>
             </div>
             <div>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-center">Given at (centre)</label>
+                <select id="dist-center" x-model="distributionForm.center" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                    <option value="">Not at a centre</option>
+                    <template x-for="c in reliefCenters" :key="c.ref"><option :value="c.ref" x-text="c.name + ' — ' + c.barangay"></option></template>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-location">Or another place</label>
+                <input id="dist-location" type="text" x-model="distributionForm.location" maxlength="160" placeholder="e.g. Barangay hall, Purok 3 chapel"
+                    class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+            </div>
+            <div>
                 <label class="text-xs font-medium text-ink-muted uppercase tracking-wide mb-1.5 block" for="dist-item">Item <span class="text-rose-500">*</span></label>
                 <input id="dist-item" type="text" x-model="distributionForm.item" placeholder="e.g. Family Food Pack"
                     class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
@@ -250,6 +264,10 @@
 
         <div class="px-6 py-4 border-t border-brand-600/10 bg-slate-50/60 rounded-b-2xl flex gap-3">
             <button @click="showCreateDistribution = false" class="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60 transition-colors">Cancel</button>
+            <button :disabled="distributionSaving || !distributionForm.operation || !distributionForm.barangay || !distributionForm.beneficiary_name || !distributionForm.item" @click="submitDistribution(true)"
+                class="flex-1 py-2.5 text-sm font-medium text-brand-700 bg-white border border-brand-200 rounded-2xl hover:bg-brand-50 transition-colors disabled:opacity-50" data-dist-another>
+                Record &amp; add another item
+            </button>
             <button :disabled="distributionSaving || !distributionForm.operation || !distributionForm.barangay || !distributionForm.beneficiary_name || !distributionForm.item" @click="submitDistribution()"
                 class="flex-1 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl transition-colors disabled:opacity-50">
                 <span x-text="distributionSaving ? 'Recording…' : 'Record Distribution'"></span>
