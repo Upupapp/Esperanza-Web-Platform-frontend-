@@ -1749,6 +1749,8 @@ area(/^\/admin\/(constituents|communications|announcements|settings\/support)(\/
 area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
 // Sakuna's maps (2026-10-26): Leaflet only where a map is drawn.
 area(/^\/(admin\/sakuna|citizen\/emergency)(\/|$)/.test(areaPath), () => import('./sakuna-map'));
+// Two BDRRMC forms filled from records, and saved forms reopened (2026-10-27).
+area(/^\/admin\/sakuna(\/|$)/.test(areaPath), () => import('./sakuna-bdrrmc'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 
