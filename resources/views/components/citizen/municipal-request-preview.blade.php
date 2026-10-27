@@ -77,7 +77,9 @@
             <p class="text-sm font-bold text-navy-900" x-text="{{ $office }}"></p>
         </div>
         <div class="text-right shrink-0">
-            <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2.5 py-1">
+            {{-- Not on an issued certificate: the Certificate of Indigency is the
+                 office's own paper, not a request for one (2026-10-27). --}}
+            <span x-show="{{ $docKey }} !== 'dokyu_indigency'" class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2.5 py-1">
                 <i data-lucide="file-text" class="w-3 h-3"></i> Request Slip
             </span>
             <p class="text-[10px] text-slate-500 mt-1" x-show="{{ $formNo }}" x-text="{{ $formNo }}"></p>
@@ -537,9 +539,9 @@
                 <p>
                     This is to certify that <x-citizen.doc-field :bind="$bind" field="requester_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
                     <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years of age, residing at
-                    <x-citizen.doc-field :bind="$bind" field="address" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, belongs to a household of
+                    <x-citizen.doc-field :bind="$bind" field="address" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, lives in a household of
                     <x-citizen.doc-field :bind="$bind" field="family_size" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> member(s) with a monthly household income of
-                    <x-citizen.doc-field :bind="$bind" field="monthly_income" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, and belongs to the indigent sector of this municipality.
+                    <x-citizen.doc-field :bind="$bind" field="monthly_income" fallback="___" transform="peso" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, and belongs to the indigent sector of this municipality.
                 </p>
                 <p>This certification is being issued upon request of the above-named person for <x-citizen.doc-field :bind="$bind" field="purpose" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> purposes.</p>
             </div>

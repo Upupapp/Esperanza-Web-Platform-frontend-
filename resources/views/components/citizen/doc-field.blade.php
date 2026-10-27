@@ -26,20 +26,26 @@
      Never used for decorative elements (seals, letterhead labels, static
      certificate wording) — only for the specific values a document
      actually varies by, matching the CORE RULE this whole feature is
-     built around. --}}
+     built around.
+
+       - 'peso': an amount shown with the peso sign, whether or not the
+         answer was typed with one ("6,000" and "₱6,000" both read ₱6,000).
+
+     The value and its (hidden) input touch, with nothing after them: in a
+     sentence, the line breaks between them read as a space before the next
+     comma ("Test Resident , 36 years of age", 2026-10-27). --}}
 @props(['bind', 'field', 'fallback' => '', 'class' => '', 'transform' => 'none', 'tag' => 'span', 'editing' => 'false'])
 @php
     $expr = "{$bind}.{$field}";
     $displayExpr = match ($transform) {
         'lowercase' => "({$expr} || '').toLowerCase()",
         'array' => "({$expr} || []).join(', ')",
+        'peso' => "(String({$expr} ?? '').trim() ? '₱' + String({$expr}).trim().replace(/^₱\\s*/, '') : '')",
         default => $expr,
     };
     $fallbackJs = "'" . addslashes($fallback) . "'";
 @endphp
-<{{ $tag }} class="{{ $class }}" x-show="!({{ $editing }})" x-text="{{ $displayExpr }} || {{ $fallbackJs }}"></{{ $tag }}>
-@if ($transform === 'array')
-    <input
+<{{ $tag }} class="{{ $class }}" x-show="!({{ $editing }})" x-text="{{ $displayExpr }} || {{ $fallbackJs }}"></{{ $tag }}>@if ($transform === 'array')<input
         type="text"
         x-show="{{ $editing }}"
         x-cloak
@@ -47,14 +53,11 @@
         @input="{{ $expr }} = $event.target.value.split(',').map(s => s.trim()).filter(Boolean)"
         placeholder="{{ $fallback }}"
         class="doc-field-input {{ $class }}"
-    >
-@else
-    <input
+    >@else<input
         type="text"
         x-show="{{ $editing }}"
         x-cloak
         x-model="{{ $expr }}"
         placeholder="{{ $fallback }}"
         class="doc-field-input {{ $class }}"
-    >
-@endif
+    >@endif
