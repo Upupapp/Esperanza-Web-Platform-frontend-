@@ -9,6 +9,10 @@
 //   Tulong page's "Services rendered" view, the "Record a service" window, a
 //   counseling / referral / session case's "Service records", and the
 //   Constituents individual detail's latest ten.
+// - sessionList, sessionDesk, caseSession: group sessions and their
+//   certificates (section D) - the Sessions view, the session window (its
+//   participants, attendance, and "Finish and issue certificates") with the
+//   New / Edit session window, and a session case's own Session panel.
 //
 // Loaded only where it is used (the area loader at the end of app.js), so
 // neither the shared bundle nor the Tulong page's HTML carries it; register()
@@ -17,6 +21,7 @@
 // openRequest() through Alpine's scope chain; every name they define is
 // prefixed (ap*, ...) so none shadows the page's.
 import api from './api/client';
+import { registerCertificate, openWelfareCertificate } from './welfare-certificate';
 
 const TZ = 'Asia/Manila';
 
@@ -211,6 +216,7 @@ export function tulongApply() {
         apError: '',
         apSessionRef: null,
         apSessionTitle: '',
+        apFixedKey: '',
         apLive: {},
         apSearch: '',
         apKey: '',
@@ -234,13 +240,10 @@ export function tulongApply() {
         apCreatable() {
             return this.apCatalog().filter((t) => can(t.key, 'create'));
         },
-        apCanApply() {
-            return Object.values(this.tulongTypesByName || {}).some((t) => t && t.key && can(t.key, 'create'));
-        },
         apGroups() {
             const q = this.apSearch.trim().toLowerCase();
             const groups = {};
-            this.apCreatable()
+            (this.apFixedKey ? this.apCatalog().filter((t) => t.key === this.apFixedKey) : this.apCreatable())
                 .filter((t) => !q || [t.name, t.category, t.office_short].some((v) => String(v || '').toLowerCase().includes(q)))
                 .forEach((t) => { (groups[t.category || 'Other'] ||= []).push(t); });
             return Object.keys(groups).sort().map((category) => ({ category, items: groups[category] }));
@@ -261,6 +264,8 @@ export function tulongApply() {
             this.apRecordOnly = false;
             this.apRecord = { completed_on: manilaToday(), amount: '', released_to: '', note: '' };
             this.apSessionRef = opts.sessionRef || null;
+            // A walk-in files the session's own service.
+            this.apFixedKey = opts.sessionRef ? (opts.serviceKey || '') : '';
             this.apSessionTitle = opts.sessionTitle || '';
             this.apOpen = true;
             liveServices().then((live) => {
@@ -776,10 +781,454 @@ export function residentServices() {
     };
 }
 
+// ------------------------------------------------- Sessions and certificates
+
+const SESSION_TABS = [['Scheduled', 'Upcoming'], ['Done', 'Done'], ['Cancelled', 'Cancelled']];
+const FACILITATOR_ROLES = [['team_leader', 'Team leader'], ['member', 'Member'], ['counselor', 'Counselor']];
+const PARTICIPANT_ROLES = { applicant: 'Applicant', partner: 'Partner', participant: 'Participant' };
+
+/** The catalog's session services (processingKind 'session'). */
+function sessionServices(byName) {
+    return Object.values(byName || {}).filter((t) => t && t.key && t.processingKind === 'session');
+}
+
+// 'desk' marks a change the session window made itself, so it does not reload for it.
+const changed = (ref, session = null, source = null) => window.dispatchEvent(new CustomEvent('welfare-session-changed', { detail: { ref, session, source } }));
+
+/**
+ * The Sessions view: GET /admin/tulong/sessions?status=&service_key=, as
+ * Upcoming / Done / Cancelled. A row opens the session window
+ * ('tulong-open-session'); New session opens its form ('tulong-new-session').
+ */
+export function sessionList() {
+    return {
+        slTab: 'Scheduled',
+        slService: '',
+        slRows: [],
+        slLoading: false,
+        slFailed: false,
+        slLoaded: false,
+        slSeq: 0,
+        slTabs: SESSION_TABS,
+        day,
+        time,
+        slServices() { return sessionServices(this.tulongTypesByName); },
+        slCanCreate() { return can('tulong_sessions', 'create'); },
+        async slLoad() {
+            const seq = ++this.slSeq;
+            this.slLoading = true;
+            this.slFailed = false;
+            try {
+                const params = { status: this.slTab };
+                if (this.slService) params.service_key = this.slService;
+                const res = await api.get('/admin/tulong/sessions', { params });
+                if (seq !== this.slSeq) return;
+                const rows = Array.isArray(res?.data) ? res.data : [];
+                // Upcoming soonest first; done and cancelled newest first.
+                rows.sort((a, b) => (String(a.date) + String(a.start_time || '')).localeCompare(String(b.date) + String(b.start_time || '')) * (this.slTab === 'Scheduled' ? 1 : -1));
+                this.slRows = rows;
+                this.slLoaded = true;
+            } catch {
+                if (seq === this.slSeq) this.slFailed = true;
+            } finally {
+                if (seq === this.slSeq) this.slLoading = false;
+                icons();
+            }
+        },
+        slSetTab(t) {
+            this.slTab = t;
+            this.slLoad();
+        },
+        slOpen(s) { window.dispatchEvent(new CustomEvent('tulong-open-session', { detail: { ref: s.ref } })); },
+        slNew() { window.dispatchEvent(new CustomEvent('tulong-new-session', { detail: {} })); },
+        slCount(s) {
+            const c = s.counts || {};
+            const n = c.participants ?? (s.participants || []).length;
+            return n + (s.capacity ? ' of ' + s.capacity : '') + ' participant' + (n === 1 ? '' : 's') + (s.status === 'Done' && c.certificates !== undefined ? ' · ' + c.certificates + ' certificate' + (c.certificates === 1 ? '' : 's') : '');
+        },
+    };
+}
+
+/**
+ * The session window and its form (section D):
+ *   GET /admin/tulong/sessions/{ref}; POST /admin/tulong/sessions and
+ *   PUT .../{ref} (the form); POST .../cancel { reason };
+ *   GET /admin/tulong/sessions/waiting?service_key= and
+ *   POST .../participants { request_ref } (Add waiting cases);
+ *   DELETE .../participants/{id}; POST .../attendance { participants: [{ id, attended }] };
+ *   POST .../finish (perm tulong_sessions release).
+ * A walk-in is filed through Apply for New Tulong ('tulong-apply' with the
+ * session). A refusal (ACCREDITATION_REQUIRED, SESSION_FULL...) is shown in
+ * the server's own words.
+ */
+export function sessionDesk() {
+    return {
+        sdOpen: false,
+        ses: null,
+        sdLoading: false,
+        sdBusy: false,
+        sdError: '',
+        sdPanel: null,
+        sdWaiting: [],
+        sdWaitingLoading: false,
+        sdWaitingFailed: false,
+        sdCancelReason: '',
+        sdResult: '',
+        sfOpen: false,
+        sfRef: null,
+        sf: null,
+        sfBusy: false,
+        sfError: '',
+        sfRoles: FACILITATOR_ROLES,
+        day,
+        time,
+        roleLabel: (r) => PARTICIPANT_ROLES[r] || r || '',
+        facRole: (r) => (FACILITATOR_ROLES.find((x) => x[0] === r) || [r, r || ''])[1],
+        sdServices() { return sessionServices(this.tulongTypesByName); },
+        sdType(key) { return this.sdServices().find((t) => t.key === key) || null; },
+        sdCan(action) { return can('tulong_sessions', action); },
+        sdScheduled() { return this.ses?.status === 'Scheduled'; },
+
+        // ---- the window
+        sdFrom(d) {
+            const s = { ...d };
+            s.facilitators = Array.isArray(d.facilitators) ? d.facilitators : [];
+            s.participants = (d.participants || []).map((p) => ({ ...p, _attended: p.attended === true, _confirmRemove: false, _busy: false }));
+            s.counts = d.counts || {};
+            return s;
+        },
+        async sdShow(ref) {
+            if (!ref) return;
+            this.sdOpen = true;
+            this.sdPanel = null;
+            this.sdError = '';
+            this.sdResult = '';
+            if (this.ses?.ref !== ref) this.ses = null;
+            this.sdLoading = true;
+            try {
+                const res = await api.get('/admin/tulong/sessions/' + encodeURIComponent(ref));
+                this.ses = this.sdFrom(res?.data || {});
+            } catch (err) {
+                this.sdError = says(err, 'Could not open the session.');
+            } finally {
+                this.sdLoading = false;
+                icons();
+            }
+        },
+        /** After a change made elsewhere (a walk-in filed), or here. */
+        sdTake(data) {
+            if (data && data.ref) this.ses = this.sdFrom(data);
+            if (this.ses?.ref) changed(this.ses.ref, null, 'desk');
+            icons();
+        },
+        sdUrl(tail = '') { return '/admin/tulong/sessions/' + encodeURIComponent(this.ses.ref) + tail; },
+        async sdRun(fn, okMessage) {
+            if (this.sdBusy) return false;
+            this.sdBusy = true;
+            this.sdError = '';
+            try {
+                const res = await fn();
+                if (res?.data?.ref) this.sdTake(res.data); else await this.sdShow(this.ses.ref).then(() => changed(this.ses?.ref, null, 'desk'));
+                if (okMessage) toast(typeof okMessage === 'function' ? okMessage(res?.data || {}) : okMessage);
+                return true;
+            } catch (err) {
+                this.sdError = says(err, 'The session could not be changed.');
+                toast(this.sdError, 'error');
+                return false;
+            } finally {
+                this.sdBusy = false;
+                icons();
+            }
+        },
+
+        // ---- participants
+        sdTotals() {
+            const list = this.ses?.participants || [];
+            return { all: list.length, here: list.filter((p) => p._attended).length };
+        },
+        sdDirty() { return (this.ses?.participants || []).some((p) => p._attended !== (p.attended === true)); },
+        /** The session's cases, each with whether everyone in it attended. */
+        sdCases() {
+            const by = {};
+            (this.ses?.participants || []).forEach((p) => {
+                const key = p.request_ref || 'p' + p.id;
+                (by[key] ||= { ref: p.request_ref, names: [], complete: true }).names.push(p.name);
+                if (!p._attended) by[key].complete = false;
+            });
+            return Object.values(by);
+        },
+        async sdLoadWaiting() {
+            this.sdPanel = 'waiting';
+            this.sdWaitingLoading = true;
+            this.sdWaitingFailed = false;
+            try {
+                const res = await api.get('/admin/tulong/sessions/waiting', { params: { service_key: this.ses.service_key } });
+                const inThis = new Set((this.ses.participants || []).map((p) => p.request_ref).filter(Boolean));
+                this.sdWaiting = (res?.data || []).filter((c) => !inThis.has(c.ref)).map((c) => ({ ...c, _pick: false }));
+            } catch {
+                this.sdWaitingFailed = true;
+            } finally {
+                this.sdWaitingLoading = false;
+                icons();
+            }
+        },
+        sdPicked() { return this.sdWaiting.filter((c) => c._pick); },
+        /** One at a time, in order; a refusal (the session is full) stops the rest. */
+        async sdAddWaiting() {
+            const picked = this.sdPicked();
+            if (!picked.length || this.sdBusy) return;
+            this.sdBusy = true;
+            this.sdError = '';
+            let added = 0;
+            let last = null;
+            try {
+                for (const c of picked) {
+                    const res = await api.post(this.sdUrl('/participants'), { request_ref: c.ref });
+                    last = res?.data || last;
+                    added += 1;
+                }
+            } catch (err) {
+                this.sdError = says(err, 'A case could not be added.') + (added ? ' (' + added + ' added before this.)' : '');
+            } finally {
+                this.sdBusy = false;
+            }
+            if (added) {
+                toast(added + ' case' + (added === 1 ? '' : 's') + ' added. The residents are told the date, time and venue.');
+                if (last?.ref) this.sdTake(last); else await this.sdShow(this.ses.ref).then(() => changed(this.ses?.ref, null, 'desk'));
+            }
+            if (!this.sdError) this.sdPanel = null;
+            icons();
+        },
+        sdWalkIn() {
+            const type = this.sdType(this.ses.service_key);
+            window.dispatchEvent(new CustomEvent('tulong-apply', { detail: { sessionRef: this.ses.ref, serviceKey: this.ses.service_key, sessionTitle: this.ses.title || type?.name || '' } }));
+        },
+        sdRemove(p) {
+            return this.sdRun(() => api.delete(this.sdUrl('/participants/' + encodeURIComponent(p.id))), p.name + ' was removed from the session.');
+        },
+        sdSaveAttendance() {
+            const participants = (this.ses?.participants || []).map((p) => ({ id: p.id, attended: !!p._attended }));
+            return this.sdRun(() => api.post(this.sdUrl('/attendance'), { participants }), 'Attendance saved.');
+        },
+        sdCancel() {
+            const reason = this.sdCancelReason.trim();
+            if (reason.length < 5) { this.sdError = 'Write why the session is cancelled (at least 5 characters).'; return false; }
+            return this.sdRun(() => api.post(this.sdUrl('/cancel'), { reason }), 'The session is cancelled. Its cases wait for a new schedule.').then((ok) => { if (ok) this.sdPanel = null; return ok; });
+        },
+        /** The attendance on screen is saved first, then the session is finished. */
+        async sdFinish() {
+            if (this.sdBusy) return;
+            if (this.sdDirty()) {
+                const saved = await this.sdSaveAttendance();
+                if (!saved) return;
+            }
+            const ok = await this.sdRun(() => api.post(this.sdUrl('/finish')), (d) => {
+                const n = d.counts?.certificates;
+                return 'The session is finished' + (n !== undefined ? ': ' + n + ' certificate' + (n === 1 ? '' : 's') + ' issued.' : '.');
+            });
+            if (ok) {
+                this.sdPanel = null;
+                const c = this.ses?.counts || {};
+                this.sdResult = c.certificates !== undefined ? c.certificates + ' certificate' + (c.certificates === 1 ? '' : 's') + ' issued; ' + (c.attended ?? 0) + ' of ' + (c.participants ?? 0) + ' attended.' : '';
+            }
+        },
+        sdOpenCase(p) {
+            if (!p.request_ref) return;
+            this.sdOpen = false;
+            if (typeof this.openByRef === 'function') this.$nextTick(() => this.openByRef(p.request_ref));
+        },
+        /** A participant's certificate, drawn from its case's issued document. */
+        async sdCert(p) {
+            const meta = { service_key: this.ses.service_key, session: { date: this.ses.date, venue: this.ses.venue } };
+            let doc = { control_number: p.certificate?.control_number, verify_url: p.certificate?.verify_url };
+            if (p.request_ref) {
+                try {
+                    const res = await api.get('/admin/tulong/requests/' + encodeURIComponent(p.request_ref));
+                    doc = (res?.data?.issued_documents || []).find((d) => d.control_number === p.certificate?.control_number) || doc;
+                } catch {
+                    // The minimal copy still shows the number and the QR.
+                }
+            }
+            openWelfareCertificate(doc, meta);
+        },
+
+        // ---- the form
+        sfBlank() {
+            return { service_key: '', title: '', date: '', start_time: '09:00', end_time: '', venue: '', capacity: '', notes: '', facilitators: [{ name: '', position: '', role: 'team_leader', accreditation_no: '', accreditation_valid_until: '' }] };
+        },
+        sfNew() {
+            this.sfRef = null;
+            this.sf = this.sfBlank();
+            const only = this.sdServices();
+            if (only.length === 1) this.sfService(only[0].key);
+            this.sfError = '';
+            this.sfOpen = true;
+            icons();
+        },
+        sfEdit() {
+            const s = this.ses;
+            if (!s) return;
+            this.sfRef = s.ref;
+            this.sf = {
+                service_key: s.service_key || '', title: s.title || '', date: s.date || '', start_time: (s.start_time || '').slice(0, 5), end_time: (s.end_time || '').slice(0, 5),
+                venue: s.venue || '', capacity: s.capacity ?? '', notes: s.notes || '',
+                facilitators: (s.facilitators || []).map((f) => ({ name: f.name || '', position: f.position || '', role: f.role || 'member', accreditation_no: f.accreditation_no || '', accreditation_valid_until: f.accreditation_valid_until || '' })),
+            };
+            if (!this.sf.facilitators.length) this.sf.facilitators = this.sfBlank().facilitators;
+            this.sfError = '';
+            this.sfOpen = true;
+            icons();
+        },
+        sfService(key) {
+            this.sf.service_key = key;
+            const t = this.sdType(key);
+            if (t && !this.sf.title.trim()) this.sf.title = t.name;
+            if (t?.certificate?.signedBy === 'counselor' && !this.sf.facilitators.some((f) => f.role === 'counselor')) this.sf.facilitators[0].role = 'counselor';
+        },
+        sfAdd() { this.sf.facilitators.push({ name: '', position: '', role: 'member', accreditation_no: '', accreditation_valid_until: '' }); },
+        sfDrop(i) { this.sf.facilitators.splice(i, 1); },
+        /** A counselor accredited on the session day, as the certificate needs (DSWD MC 01 s. 2019). */
+        sfAccredited() {
+            return this.sf.facilitators.some((f) => f.role === 'counselor' && f.accreditation_no.trim() && f.accreditation_valid_until && (!this.sf.date || f.accreditation_valid_until >= this.sf.date));
+        },
+        sfNeedsAccreditation() { return !!this.sdType(this.sf?.service_key)?.certificate?.requiresAccreditation; },
+        sfProblem() {
+            const f = this.sf;
+            if (!f.service_key) return 'Choose the service.';
+            if (f.title.trim().length < 3) return 'Give the session a title.';
+            if (!f.date) return 'Give the date.';
+            if (!f.start_time) return 'Give the start time.';
+            if (f.end_time && f.end_time <= f.start_time) return 'The end time must be after the start time.';
+            if (f.venue.trim().length < 3) return 'Give the venue.';
+            if (f.capacity !== '' && !(Number(f.capacity) >= 1)) return 'The capacity is a number of 1 or more, or empty for no limit.';
+            const named = f.facilitators.filter((x) => x.name.trim());
+            if (!named.length) return 'Name at least one facilitator.';
+            if (named.some((x) => !x.position.trim())) return 'Give each facilitator\'s position (it is printed under their name).';
+            if (named.some((x) => x.role === 'counselor' && x.accreditation_no.trim() && !x.accreditation_valid_until)) return 'Give the date the counselor\'s accreditation is valid until.';
+            return '';
+        },
+        async sfSave() {
+            if (this.sfBusy) return;
+            const problem = this.sfProblem();
+            this.sfError = problem;
+            if (problem) return;
+            const f = this.sf;
+            const body = {
+                service_key: f.service_key, title: f.title.trim(), date: f.date, start_time: f.start_time, end_time: f.end_time || null,
+                venue: f.venue.trim(), capacity: f.capacity === '' ? null : Number(f.capacity), notes: f.notes.trim() || null,
+                facilitators: f.facilitators.filter((x) => x.name.trim()).map((x) => ({
+                    name: x.name.trim(), position: x.position.trim(), role: x.role,
+                    accreditation_no: x.role === 'counselor' ? (x.accreditation_no.trim() || null) : null,
+                    accreditation_valid_until: x.role === 'counselor' ? (x.accreditation_valid_until || null) : null,
+                })),
+            };
+            this.sfBusy = true;
+            try {
+                const res = this.sfRef
+                    ? await api.put('/admin/tulong/sessions/' + encodeURIComponent(this.sfRef), body)
+                    : await api.post('/admin/tulong/sessions', body);
+                const data = res?.data || {};
+                this.sfOpen = false;
+                toast(this.sfRef ? 'The session is updated. Its participants are told of a new date, time or venue.' : 'The session is scheduled.');
+                if (data.ref) {
+                    this.ses = this.sdFrom(data);
+                    this.sdOpen = true;
+                    changed(data.ref, null, 'desk');
+                }
+            } catch (err) {
+                this.sfError = says(err, 'Could not save the session.');
+            } finally {
+                this.sfBusy = false;
+                icons();
+            }
+        },
+    };
+}
+
+/**
+ * A session case's Session panel: its session (from the case detail's
+ * session { ref, date, start_time, venue, status }) or "Waiting for a
+ * session" with Add to a session (the service's scheduled sessions, then
+ * POST /admin/tulong/sessions/{ref}/participants { request_ref }); for
+ * pre-marriage counseling whether Family Code art. 16 requires it; and the
+ * certificate once issued.
+ */
+export function caseSession() {
+    return {
+        csPicking: false,
+        csOptions: [],
+        csLoading: false,
+        csBusy: false,
+        csError: '',
+        day,
+        time,
+        csShown() { return !!this.selected && this.processingKind === 'session'; },
+        csCanAdd() {
+            return can('tulong_sessions', 'edit') && !this.selected?.session && !['Completed', 'Rejected', 'Cancelled'].includes(this.selected?.status);
+        },
+        async csPick() {
+            this.csPicking = true;
+            this.csLoading = true;
+            this.csError = '';
+            try {
+                const res = await api.get('/admin/tulong/sessions', { params: { status: 'Scheduled', service_key: this.selected.service_key } });
+                this.csOptions = (res?.data || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+            } catch (err) {
+                this.csError = says(err, 'Could not load the sessions.');
+            } finally {
+                this.csLoading = false;
+                icons();
+            }
+        },
+        async csAdd(s) {
+            if (this.csBusy) return;
+            this.csBusy = true;
+            this.csError = '';
+            try {
+                await api.post('/admin/tulong/sessions/' + encodeURIComponent(s.ref) + '/participants', { request_ref: this.selected.ref });
+                this.csPicking = false;
+                toast(this.selected.ref + ' is in the session of ' + day(s.date) + '. The resident is told the date, time and venue.');
+                if (typeof this.refreshSelected === 'function') await this.refreshSelected();
+                changed(s.ref);
+            } catch (err) {
+                this.csError = says(err, 'Could not add the case to the session.');
+            } finally {
+                this.csBusy = false;
+                icons();
+            }
+        },
+        csOpen() {
+            const ref = this.selected?.session?.ref;
+            if (ref) window.dispatchEvent(new CustomEvent('tulong-open-session', { detail: { ref } }));
+        },
+        /** Family Code art. 16: counseling is required when either partner is 18 to 25. */
+        csArt16() {
+            if (this.selected?.service_key !== 'tulong_pmc') return null;
+            const f = this.selected.form_data || {};
+            const onDay = this.selected.session?.date || manilaToday();
+            const ages = [ageOn(this.selected.applicant_birth_date || f.applicant_birth_date || f.birth_date || f.dateOfBirth, onDay), ageOn(f.partner_birth_date, onDay)];
+            if (ages.some((a) => a !== null && a >= 18 && a <= 25)) return { required: true, text: 'Required (Art. 16): a partner is 18 to 25 years old on the session day.' };
+            if (ages.every((a) => a !== null)) return { required: false, text: 'Optional: both partners are over 25.' };
+            return { required: null, text: 'Required (Art. 16) when either partner is 18 to 25. Check the ages.' };
+        },
+        csCerts() {
+            const t = Object.values(this.tulongTypesByName || {}).find((x) => x && x.key === this.selected?.service_key);
+            return t?.certificate ? (this.selected.issued_documents || []) : [];
+        },
+        csCert(d) {
+            openWelfareCertificate(d, { service_key: this.selected.service_key, session: this.selected.session || null });
+        },
+    };
+}
+
 export function register(Alpine) {
+    registerCertificate(Alpine);
     Alpine.data('tulongApply', tulongApply);
     Alpine.data('servicesRendered', servicesRendered);
     Alpine.data('serviceRecordForm', serviceRecordForm);
     Alpine.data('caseServiceRecords', caseServiceRecords);
     Alpine.data('residentServices', residentServices);
+    Alpine.data('sessionList', sessionList);
+    Alpine.data('sessionDesk', sessionDesk);
+    Alpine.data('caseSession', caseSession);
 }

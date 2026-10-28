@@ -19,13 +19,10 @@
         'input' => 'w-full rounded-2xl border-0 surface-pressed-sm py-2 px-3.5 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard',
     ];
 @endphp
-<div class="contents" x-data="tulongApply()" x-on:tulong-apply.window="openApply($event.detail || {})">
-    <button type="button" x-show="apCanApply()" x-cloak @click="openApply()"
-            title="File a Tulong case for a person at the office, or record assistance already given."
-            class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-2xl px-3 py-2 clay-blue btn-shine hover:brightness-95 transition-colors shrink-0">
-        <i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Apply for New Tulong
-    </button>
-
+{{-- The page's "Apply for New Tulong" button opens it with a 'tulong-apply'
+     window event; placed after the session window, so a walk-in filed from a
+     session opens above it. --}}
+<div x-data="tulongApply()" x-on:tulong-apply.window="openApply($event.detail || {})">
     <div x-data="{ get open() { return apOpen }, set open(v) { apOpen = v } }">
     <x-ui.modal title="Apply for New Tulong" maxWidth="xl">
         {{-- The four steps --}}

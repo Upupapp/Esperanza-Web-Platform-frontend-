@@ -462,6 +462,9 @@
                 r.due = d.due || r.due || null;
                 r.overdue = 'overdue' in d ? !!d.overdue : r.overdue;
                 r.issued_documents = d.issued_documents || [];
+                // A group session's case: { ref, date, start_time, venue, status }
+                // of its session, or null while it waits (welfare round, 2026-10-29).
+                r.session = d.session || null;
                 // The program's steps and which are done (2026-10-17).
                 r.workflow = d.workflow || null;
                 r.payment = d.payment || null;
@@ -502,6 +505,10 @@
                 const res = await $api.get(this.apiBase(r.ref));
                 this.applyDetail(r, res.data);
                 this.$nextTick(() => window.renderIcons?.());
+            },
+            // Apply for New Tulong: any Tulong service this officer may create.
+            canApplyAny() {
+                return Object.values(this.tulongTypesByName).some((t) => t && t.key && this.$store.session.canPerm(t.key, 'create'));
             },
             setView(v) {
                 this.view = v;
@@ -1046,8 +1053,13 @@
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
                 </button>
                 @include('admin.partials.modal-request-import', ['importType' => 'tulong'])
-                {{-- File for a person at the office (welfare round, 2026-10-29). --}}
-                @include('admin.tulong.apply')
+                {{-- File for a person at the office (welfare round, 2026-10-29); the
+                     window (admin/tulong/apply) sits after the session window. --}}
+                <button type="button" x-show="canApplyAny()" x-cloak @click="$dispatch('tulong-apply', {})"
+                        title="File a Tulong case for a person at the office, or record assistance already given."
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold rounded-2xl px-3 py-2 clay-blue btn-shine hover:brightness-95 transition-colors shrink-0">
+                    <i data-lucide="file-plus-2" class="w-3.5 h-3.5"></i> Apply for New Tulong
+                </button>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
@@ -1181,7 +1193,8 @@
         </div>
         </div>
 
-        {{-- Services rendered (welfare round, 2026-10-29). --}}
+        {{-- Sessions and Services rendered (welfare round, 2026-10-29). --}}
+        @include('admin.tulong.sessions')
         @include('admin.tulong.services-rendered')
 
         <x-ui.modal title="Tulong Case" maxWidth="4xl">
@@ -1311,7 +1324,9 @@
                     {{-- Shown only once a document was issued for this case. --}}
                     <x-admin.scope.issued-documents can="may('release')" />
 
-                    {{-- The work done on a counseling, referral or session case (welfare round, 2026-10-29). --}}
+                    {{-- A session case's session and certificate, and the work done on a
+                         counseling, referral or session case (welfare round, 2026-10-29). --}}
+                    @include('admin.tulong.case-session')
                     @include('admin.tulong.case-service-records')
 
                     <x-admin.request-form-review />
@@ -1452,7 +1467,7 @@
 
                     {{-- Eligibility assessment (Assessment): the findings and the
                          recommendation the approver decides on. --}}
-                    <div class="rounded-xl border border-indigo-200 bg-indigo-50/30 p-3.5 mt-3" x-show="selected.status === 'Assessment' && !detailLoading" x-cloak>
+                    <div class="rounded-xl border border-indigo-200 bg-indigo-50/30 p-3.5 mt-3" x-show="selected.status === 'Assessment' && !detailLoading && processingKind !== 'session'" x-cloak>
                         <p class="text-xs font-semibold text-indigo-800 uppercase tracking-wide flex items-center gap-1.5"><i data-lucide="clipboard-pen" class="w-3.5 h-3.5"></i> Eligibility Assessment</p>
                         <p class="text-[11px] text-ink-muted mt-1">What you found and what you recommend. The approver reads this; the resident does not.</p>
                         <label for="tulong-assess-notes" class="block text-[11px] font-medium text-slate-600 mt-2.5 mb-1">Findings <span class="text-rose-600">*</span></label>
@@ -1875,8 +1890,14 @@
             </x-slot:footer>
         </x-ui.modal>
 
-        {{-- Record a service: above the case window it can open from (welfare round, 2026-10-29). --}}
+        {{-- Above the case window, in the order they open over one another
+             (welfare round, 2026-10-29): Record a service, the session window
+             and its form, Apply for New Tulong (a walk-in from a session), and
+             the certificate. --}}
         @include('admin.tulong.record-service')
+        @include('admin.tulong.session-desk')
+        @include('admin.tulong.apply')
+        <x-welfare.certificate />
 
         </div>
     </div>
