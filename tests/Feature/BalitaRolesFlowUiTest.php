@@ -39,7 +39,8 @@ class BalitaRolesFlowUiTest extends TestCase
         $js = $this->source('resources/js/scope-admin-records.js');
 
         $this->assertStringContainsString("canDelete(post) { return ['Draft', 'Rejected', 'Archived'].includes(post.status) && this.can('delete')", $js);
-        $this->assertStringContainsString("await api.delete('/admin/announcements/' + post.id);", $js);
+        // Since 2026-10-29 a post on the LGU's Facebook Page can be removed there too.
+        $this->assertStringContainsString("await api.delete('/admin/announcements/' + post.id, onFacebook && this.delFromFb ? { params: { delete_on_facebook: 1 } } : undefined);", $js);
         $this->assertStringContainsString('x-show="canDelete(a)" @click="deletePost(a)"', $this->source('resources/views/admin/communications/balita.blade.php'));
         $this->assertStringContainsString("canDelete(e) { return ['Draft', 'Rejected', 'Archived'].includes(e.status) && this.can('delete'); }", $js);
         $this->assertStringContainsString("await api.delete('/admin/events/' + encodeURIComponent(e.key));", $js);

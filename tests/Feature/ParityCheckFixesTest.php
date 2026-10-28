@@ -84,7 +84,8 @@ class ParityCheckFixesTest extends TestCase
     {
         $page = $this->source('resources/views/citizen/assistance-requests.blade.php');
 
-        $this->assertStringContainsString('isOffered(t) { return !this.offered || !t.key || this.offered.includes(t.key); },', $page);
+        // An office-only service (welfare round 2026-10-29) is never offered to a resident.
+        $this->assertStringContainsString('isOffered(t) { return !t.staffOnly && (!this.offered || !t.key || this.offered.includes(t.key)); },', $page);
         $this->assertStringContainsString('this.types.filter(t => this.isOffered(t)).forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });', $page);
         $this->assertStringNotContainsString('this.types.forEach(t => { counts[t.category]', $page);
 

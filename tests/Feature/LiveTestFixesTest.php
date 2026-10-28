@@ -145,7 +145,8 @@ class LiveTestFixesTest extends TestCase
 
         $view = $this->source('resources/views/citizen/assistance-requests.blade.php');
         $this->assertStringContainsString("if (!f.required || f.type === 'derived_age' || !this.fieldShown(f)) return false;", $view);
-        $this->assertStringContainsString('for (const f of (type?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];', $view);
+        $this->assertStringContainsString('for (const f of (type?.fields || [])) {', $view);
+        $this->assertStringContainsString('if (!this.fieldShown(f)) delete formData[f.key];', $view);
         $this->assertStringContainsString('x-show="fieldShown(f)"', $view);
         $this->assertStringContainsString("'/withdraw', { reason: this.withdrawReason.trim() || null }", $view);
         $this->assertStringContainsString('r.canWithdraw = !!d.can_withdraw;', $view);

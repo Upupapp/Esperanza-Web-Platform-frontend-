@@ -176,7 +176,8 @@ class CitizenAppParityTest extends TestCase
         $this->assertStringContainsString('window.applyServiceCatalog = applyServiceCatalog;', $js);
 
         $this->assertStringContainsString('this.serviceMeta = window.applyServiceCatalog(this.docs, res.data || [], (sv) => {', $dokyu);
-        $this->assertStringContainsString('const meta = window.applyServiceCatalog(this.types, res.data || [], (sv) => ({', $tulong);
+        // Office-only services (welfare round 2026-10-29) never reach a resident's list.
+        $this->assertStringContainsString('const meta = window.applyServiceCatalog(this.types, (res.data || []).filter((sv) => !sv.staff_only), (sv) => ({', $tulong);
 
         // Since 2026-10-17 the form's questions, the name and the category are
         // the server's too (staff edit them in the Service Catalog), and a
