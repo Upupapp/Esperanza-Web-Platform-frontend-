@@ -179,7 +179,7 @@
                     <div class="flex flex-wrap items-end gap-3 mb-5">
                         <div x-show="catalog.offices.length > 1" class="flex flex-col gap-1">
                             <label for="pr-office" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office</label>
-                            <select id="pr-office" x-model="office" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[260px]">
+                            <select id="pr-office" x-model="office" @change="service = ''" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[260px]">
                                 <template x-for="o in catalog.offices" :key="o.name">
                                     <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
                                 </template>
@@ -196,6 +196,35 @@
                         <div class="flex flex-col gap-1">
                             <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Period</span>
                             <x-admin.dashboards.period-picker />
+                        </div>
+                        {{-- An office's reports narrow as its dashboard does (2026-10-28). --}}
+                        <div x-show="office && departmentReports.length" class="flex flex-col gap-1">
+                            <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office reports narrowed to</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <label class="sr-only" for="pr-service">Program or document</label>
+                                <select id="pr-service" x-model="service" x-show="services.length > 1" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[240px]">
+                                    <option value="">All programs and documents</option>
+                                    <template x-for="o in services" :key="o.key">
+                                        <option :value="o.key" x-text="o.name" :selected="o.key === service"></option>
+                                    </template>
+                                </select>
+                                <label class="sr-only" for="pr-sex">Sex</label>
+                                <select id="pr-sex" x-model="sex" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <option value="">Any sex</option>
+                                    <template x-for="o in sexOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === sex"></option></template>
+                                </select>
+                                <label class="sr-only" for="pr-age">Age group</label>
+                                <select id="pr-age" x-model="age" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <option value="">Any age</option>
+                                    <template x-for="o in ageOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === age"></option></template>
+                                </select>
+                                <label class="sr-only" for="pr-sector">Sector</label>
+                                <select id="pr-sector" x-model="sector" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                    <option value="">Any sector</option>
+                                    <template x-for="o in sectorOptions" :key="o.value"><option :value="o.value" x-text="o.label" :selected="o.value === sector"></option></template>
+                                </select>
+                                <button type="button" x-show="anyFilter()" x-cloak @click="service = ''; sex = ''; age = ''; sector = ''" class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear</button>
+                            </div>
                         </div>
                     </div>
 

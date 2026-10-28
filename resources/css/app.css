@@ -790,6 +790,67 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     margin: 0 0 1.5mm;
     font-size: 10.5pt;
     font-weight: 700;
+    break-after: avoid;
+    page-break-after: avoid;
+}
+/* What an office report is narrowed to, under the period (2026-10-28). */
+.rep-filters {
+    margin: -2.5mm 0 1mm;
+    text-align: center;
+}
+.rep-filters-note {
+    margin: 0 0 4mm;
+    text-align: center;
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #333;
+}
+/* A Summary Report: the figures at a glance, then a graph over each table.
+   A graph never splits across pages; its colours are its own (report-charts.js). */
+.rep-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.rep-tile {
+    border: 1px solid #111;
+    border-radius: 1.5mm;
+    padding: 2mm 2.4mm;
+}
+.rep-tile p {
+    margin: 0;
+}
+.rep-tile-label {
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #333;
+}
+.rep-tile-value {
+    margin-top: 0.8mm !important;
+    font-size: 15pt;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+}
+.rep-tile-hint {
+    font-size: 8pt;
+    color: #444;
+}
+.rep-chart {
+    margin: 1mm 0 2.5mm;
+}
+.rep-keep {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.rep-chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
 }
 .rep-paper table {
     width: 100%;

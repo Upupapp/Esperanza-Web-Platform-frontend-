@@ -38,6 +38,9 @@
 
                             <h1 class="rep-title" x-text="report.title"></h1>
                             <p class="rep-period"><span x-text="report.as_of ? '' : 'Period Covered: '"></span><strong x-text="periodText"></strong></p>
+                            {{-- What an office report is narrowed to, as its dashboard was (2026-10-28). --}}
+                            <p class="rep-filters" x-show="filterText">Narrowed to: <strong x-text="filterText"></strong></p>
+                            <p class="rep-filters-note" x-show="report.filters && report.filters.note" x-text="report.filters ? report.filters.note : ''"></p>
 
                             <template x-if="report.key === 'dept_accomplishment'">
                                 <dl class="rep-ident">
@@ -48,9 +51,28 @@
                             </template>
 
                             <template x-for="(s, si) in report.sections" :key="si">
-                                <section class="rep-section">
+                                {{-- A short section stays on one page; a longer one keeps its
+                                     heading with its graph and lets the table run on (the PDF
+                                     honours break-inside only, not break-after). --}}
+                                <section class="rep-section" :class="(s.rows || []).length <= 6 && 'rep-keep'">
+                                    <div class="rep-keep">
                                     <h2 x-show="s.title" x-text="s.title"></h2>
-                                    <table>
+                                    {{-- The figures at a glance (a Summary Report's first section). --}}
+                                    <template x-if="s.display === 'tiles'">
+                                        <div class="rep-tiles">
+                                            <template x-for="(t, ti) in s.rows" :key="ti">
+                                                <div class="rep-tile">
+                                                    <p class="rep-tile-label" x-text="t.item"></p>
+                                                    <p class="rep-tile-value" x-text="t.value"></p>
+                                                    <p class="rep-tile-hint" x-text="t.hint"></p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    {{-- A graph over the table, drawn by resources/js/report-charts.js. --}}
+                                    <div class="rep-chart" x-show="s.chart && chartSvg(s)" x-html="chartSvg(s)"></div>
+                                    </div>
+                                    <table x-show="s.display !== 'tiles'">
                                         <thead>
                                             <tr>
                                                 <template x-for="c in s.columns" :key="c.key">
