@@ -166,14 +166,24 @@
             this.$nextTick(() => window.renderIcons?.());
         },
         turnRemotePage(step) { this.searchRegistry(Math.min(Math.max(1, this.remote.page + step), this.remote.lastPage)); },
-        // Exporting what the server found: every page of it, not the one shown.
+        // Exports go through the server, which checks the export permission,
+        // keeps to the account's scope and logs each one (owner, 2026-10-29):
+        // hiding the buttons alone enforced nothing. A server search sends
+        // its filters; otherwise only a narrowed list sends its refs.
         async exportIndividuals(format = 'csv') {
-            const out = (rows) => (format === 'pdf' ? this.exportPDF(rows, 'individuals-export.csv') : this.exportCSV(rows, 'individuals-export.csv'));
-            if (!this.remoteActive) return out(this.filteredIndividuals);
+            if (this.remoteActive) return this.exportFrom('residents', { filters: this.remote.params }, format, 'individuals-export.csv');
+            return this.exportShown('residents', this.filteredIndividuals, this.individuals, format, 'individuals-export.csv');
+        },
+        exportShown(dataset, shown, all, format, filename) {
+            return this.exportFrom(dataset, shown.length === all.length ? {} : { refs: shown.map(r => r.ref) }, format, filename);
+        },
+        async exportFrom(dataset, body, format, filename) {
+            let rows;
             try {
-                const res = await $api.getAll('/admin/residents', { params: this.remote.params, maxPages: 200 });
-                out(res.data || []);
-            } catch { this.$dispatch('toast', { message: 'Could not export these residents.', variant: 'error' }); }
+                const res = await $api.post('/admin/constituents/exports/' + dataset, { ...body, format: format === 'pdf' ? 'PDF' : 'CSV' });
+                rows = res.data || [];
+            } catch { this.$dispatch('toast', { message: 'Could not export these records.', variant: 'error' }); return; }
+            return format === 'pdf' ? this.exportPDF(rows, filename) : this.exportCSV(rows, filename);
         },
         get remoteActive() { return !!this.remoteKey && this.remote.key === this.remoteKey && !!this.remote.rows; },
 
@@ -994,11 +1004,11 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button @click="view==='individuals'?exportIndividuals():exportCSV(view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
+                    <button x-show="can(view==='individuals' ? 'const_resident' : 'const_household', 'export')" @click="view==='individuals'?exportIndividuals():(view==='families'?exportShown('families',filteredFamilies,families,'csv','families-export.csv'):exportShown('households',filteredHouseholds,households,'csv','households-export.csv'))"
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>Export CSV
                     </button>
-                    <button @click="view==='individuals'?exportIndividuals('pdf'):exportPDF(view==='families'?filteredFamilies:filteredHouseholds,view+'-export.csv')"
+                    <button x-show="can(view==='individuals' ? 'const_resident' : 'const_household', 'export')" @click="view==='individuals'?exportIndividuals('pdf'):(view==='families'?exportShown('families',filteredFamilies,families,'pdf','families-export.csv'):exportShown('households',filteredHouseholds,households,'pdf','households-export.csv'))"
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 transition-all">
                         <i data-lucide="file-down" class="w-3.5 h-3.5"></i>Export PDF
                     </button>

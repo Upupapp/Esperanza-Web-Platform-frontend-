@@ -126,13 +126,15 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <button
-                    @click="exportCSV(barangayCoverage, 'profiling-coverage-export.csv')"
+                    x-show="can('const_barangay', 'export')"
+                    @click="exportFrom('coverage', {}, 'csv', 'profiling-coverage-export.csv')"
                     class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-2xl surface-glass-sm text-ink-body hover:bg-white/90 transition"
                 >
                     <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
                 </button>
                 <button
-                    @click="exportPDF(barangayCoverage, 'profiling-coverage-export.csv')"
+                    x-show="can('const_barangay', 'export')"
+                    @click="exportFrom('coverage', {}, 'pdf', 'profiling-coverage-export.csv')"
                     class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-2xl surface-glass-sm text-ink-body hover:bg-white/90 transition"
                 >
                     <i data-lucide="file-down" class="w-3.5 h-3.5"></i> Export PDF

@@ -251,6 +251,39 @@ class QaRunFixesTest extends TestCase
     }
 
     /**
+     * 2026-10-28/29 (owner): Constituents' Export CSV and PDF built the file in
+     * the browser from what was on screen, for every role that could view the
+     * registry. Now each export asks the server, which checks the dataset's
+     * export permission, keeps to the account's scope and logs it; the
+     * buttons show only with that permission. Print prints the page on
+     * screen (one page of at most 50 rows), so it stays as it was.
+     */
+    public function test_constituents_export_goes_through_the_server(): void
+    {
+        $page = $this->source('resources/views/admin/constituents.blade.php');
+        $quality = $this->source('resources/views/admin/constituents/tab-data-quality.blade.php');
+        $profiling = $this->source('resources/views/admin/constituents/tab-profiling.blade.php');
+
+        $this->assertSame(2, substr_count($page, "x-show=\"can(view==='individuals' ? 'const_resident' : 'const_household', 'export')\" @click=\"view==='individuals'?exportIndividuals("));
+        $this->assertSame(2, substr_count($quality, "x-show=\"can('const_data_quality', 'export')\""));
+        $this->assertSame(2, substr_count($profiling, "x-show=\"can('const_barangay', 'export')\""));
+
+        // Every file is made from the rows the server returned.
+        $this->assertStringContainsString("\$api.post('/admin/constituents/exports/' + dataset", $page);
+        foreach (['residents', 'families', 'households'] as $dataset) {
+            $this->assertStringContainsString("'{$dataset}'", $page);
+        }
+        $this->assertSame(2, substr_count($quality, "exportShown('data-quality', filteredQualityIssues, qualityIssues"));
+        $this->assertSame(2, substr_count($profiling, "exportFrom('coverage', {}"));
+        foreach ([$page, $quality, $profiling] as $source) {
+            $this->assertDoesNotMatchRegularExpression('/@click="[^"]*export(CSV|PDF)\(/', $source, 'no button builds a file from browser data');
+        }
+        $this->assertStringNotContainsString("\$api.getAll('/admin/residents', { params: this.remote.params", $page);
+
+        $this->assertStringContainsString('<button @click="window.print()"', $page, 'Print stays');
+    }
+
+    /**
      * 2026-10-28: the MDRRMO's roles, made in Users -> Roles, read "MDRRMO
      * Head" rather than "Mdrrmo Head", are office-restricted like a
      * department (backend Scope.php), and the Head is told what Balita is for.
