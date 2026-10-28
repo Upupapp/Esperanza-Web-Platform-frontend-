@@ -66,6 +66,10 @@
     <div
         x-data="{
             tab: 'all',
+            // Cases | Sessions | Services rendered (welfare round, 2026-10-29):
+            // views of this page, never sidebar entries (owner rule). ?view=
+            // opens one (the Constituents detail's See all, a notification).
+            view: 'cases',
             search: '',
             categoryFilter: '',
             officeFilter: '',
@@ -228,6 +232,7 @@
                 const params = new URLSearchParams(window.location.search);
                 const ref = params.get('ref');
                 const citizen = params.get('citizen');
+                if (['sessions', 'services'].includes(params.get('view'))) this.view = params.get('view');
                 // From the dashboard's Open Requests by Barangay card.
                 if (params.get('barangay')) { this.barangayFilter = params.get('barangay'); this.tab = 'all'; }
                 if (params.get('open') === '1') { this.openOnly = true; this.tab = 'all'; }
@@ -498,10 +503,35 @@
                 this.applyDetail(r, res.data);
                 this.$nextTick(() => window.renderIcons?.());
             },
+            setView(v) {
+                this.view = v;
+                const url = new URL(window.location.href);
+                if (v === 'cases') url.searchParams.delete('view'); else url.searchParams.set('view', v);
+                window.history.replaceState(null, '', url);
+                this.$nextTick(() => window.renderIcons?.());
+            },
+            // A case by its ref, from a services-rendered record or a session's
+            // participant: the list's row, else the server's detail.
+            async openByRef(ref) {
+                if (!ref) return;
+                let r = this.requests.find((x) => x.ref === ref);
+                if (!r) {
+                    try {
+                        const res = await $api.get(this.apiBase(ref));
+                        r = this.fromApi(res.data);
+                        this.requests.unshift(r);
+                    } catch (err) {
+                        this.$dispatch('toast', { message: this.apiMessage(err, 'Could not open ' + ref + '.'), variant: 'error' });
+                        return;
+                    }
+                }
+                this.openRequest(r);
+            },
             // A case an officer just filed (Apply for New Tulong, welfare round
             // 2026-10-29): listed first, and opened.
             openFiledCase(d) {
                 if (!d || !d.ref) return;
+                if (this.view !== 'cases') this.setView('cases');
                 let r = this.requests.find((x) => x.ref === d.ref);
                 if (!r) { r = this.fromApi(d); this.requests.unshift(r); }
                 this.$nextTick(() => this.openRequest(r));
@@ -747,6 +777,8 @@
                 }
                 if (st === 'For Approval') return { icon: 'stamp', tone: 'amber', title: 'Awaiting Approval', message: 'Approve the assistance (the approved amount may differ from the recommendation), return it for reassessment, or reject the case.' };
                 if (st === 'Returned for Reassessment') return { icon: 'rotate-ccw', tone: 'orange', title: 'Reassess', message: 'The approver sent this back' + (this.selected.returnReason ? ': ' + this.selected.returnReason : '.') + ' Resume the assessment to revise it.' };
+                if (st === 'Assessment' && this.processingKind === 'session') return { icon: 'calendar-days', tone: 'indigo', title: 'Session', message: this.selected.session ? 'The case is in a session. It completes, and the certificate is issued, when the session is finished with everyone in it attending.' : 'Add the case to a scheduled session. It completes when that session is finished with everyone attending.' };
+                if (st === 'Assessment' && ['counseling', 'referral'].includes(this.processingKind)) return { icon: 'clipboard-list', tone: 'indigo', title: 'Service Work', message: 'Record each session, visit or referral under Service records, then close the case with a summary. Submit for approval only when the case needs an approved amount.' };
                 if (st === 'Assessment') return { icon: 'clipboard-pen', tone: 'indigo', title: 'Assess Eligibility', message: 'Record the eligibility findings' + (this.showsAmount ? ' and a recommended amount' : '') + ', then submit for approval.' };
                 const reqs = this.selected.requirements || [];
                 const flagged = reqs.filter(r => r.status === 'Flagged for Replacement').length;
@@ -782,6 +814,9 @@
             },
             get nextStageLabel() {
                 if (!this.selected || this.detailLoading) return '';
+                // A group session's case is completed by finishing its session,
+                // not by an approval (welfare round, 2026-10-29).
+                if (this.processingKind === 'session' && this.selected.status === 'Assessment') return '';
                 return this.stageActionLabels[this.selected.status] ?? '';
             },
             // Why the primary button is not available yet, or '' when it is.
@@ -956,6 +991,21 @@
             </button>
         </div>
 
+        {{-- Cases | Sessions | Services rendered (welfare round, 2026-10-29): views
+             of this page, never sidebar entries (owner rule). --}}
+        <div class="flex flex-wrap items-center gap-2 mb-4" x-show="$store.session.canPerm('tulong_sessions', 'view') || $store.session.canPerm('tulong_records', 'view')" x-cloak>
+            <div class="flex items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full overflow-x-auto" role="group" aria-label="Tulong views">
+                @foreach(['cases' => ['Cases', 'folder-open', null], 'sessions' => ['Sessions', 'calendar-days', 'tulong_sessions'], 'services' => ['Services rendered', 'clipboard-list', 'tulong_records']] as $viewKey => [$viewLabel, $viewIcon, $viewPerm])
+                    <button type="button" @click="setView('{{ $viewKey }}')" :aria-pressed="view === '{{ $viewKey }}'" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" @endif
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors whitespace-nowrap"
+                            :class="view === '{{ $viewKey }}' ? 'bg-white text-brand-700 shadow-sm' : 'text-ink-muted hover:text-ink'">
+                        <i data-lucide="{{ $viewIcon }}" class="w-3.5 h-3.5"></i>{{ $viewLabel }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+
+        <div x-show="view === 'cases'">
         {{-- Live-computed from $requests (see valueBind), matching Dokyu's
              own pattern — these used to be hardcoded literals ("417",
              "34", "112") that never actually reflected the mock data. --}}
@@ -1129,6 +1179,10 @@
             <span class="w-16 h-16 rounded-2xl bg-slate-100 text-ink-muted flex items-center justify-center mb-4"><i data-lucide="search-x" class="w-7 h-7"></i></span>
             <p class="text-sm font-medium text-slate-600" x-text="requests.length || mineOnly || overdueOnly ? 'No cases match these filters.' : 'No assistance requests yet.'"></p>
         </div>
+        </div>
+
+        {{-- Services rendered (welfare round, 2026-10-29). --}}
+        @include('admin.tulong.services-rendered')
 
         <x-ui.modal title="Tulong Case" maxWidth="4xl">
             <template x-if="selected">
@@ -1256,6 +1310,9 @@
 
                     {{-- Shown only once a document was issued for this case. --}}
                     <x-admin.scope.issued-documents can="may('release')" />
+
+                    {{-- The work done on a counseling, referral or session case (welfare round, 2026-10-29). --}}
+                    @include('admin.tulong.case-service-records')
 
                     <x-admin.request-form-review />
 
@@ -1817,6 +1874,9 @@
                 </template>
             </x-slot:footer>
         </x-ui.modal>
+
+        {{-- Record a service: above the case window it can open from (welfare round, 2026-10-29). --}}
+        @include('admin.tulong.record-service')
 
         </div>
     </div>
