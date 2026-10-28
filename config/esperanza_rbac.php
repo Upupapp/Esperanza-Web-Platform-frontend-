@@ -75,6 +75,27 @@ $permissionModules = [
             ['key' => 'tulong_livelihood_mapping', 'name' => 'Livelihood Business Mapping', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
             ['key' => 'tulong_kabuhayan', 'name' => 'Kabuhayan Program Beneficiary Application', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
             ['key' => 'tulong_business_plan', 'name' => 'Individual Business Plan', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_transport', 'name' => 'Transportation Assistance (AICS)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_shelter', 'name' => 'Emergency Shelter Assistance', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_assistive_device', 'name' => 'Assistive Device for Persons with Disability', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_counseling', 'name' => 'Individual Counseling and Psychosocial Support', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_marriage_counseling', 'name' => 'Marriage and Family Counseling', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_pmo', 'name' => 'Pre-Marriage Orientation (PMOC)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_pmc', 'name' => 'Pre-Marriage Counseling (Family Code Art. 16)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_pes', 'name' => 'Parent Effectiveness Service (PES)', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_social_case_study', 'name' => 'Social Case Study Report', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_referral_letter', 'name' => 'Referral or Guarantee Letter', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_cdc', 'name' => 'Child Development Center Enrollment', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_pfa', 'name' => 'Psychological First Aid / Stress Debriefing', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_cicl', 'name' => 'Children in Conflict with the Law', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_child_protection', 'name' => 'Children at Risk and Child Protection', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            ['key' => 'tulong_vawc', 'name' => 'VAWC Assistance and Referral', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'reject', 'assign', 'release']],
+            // Welfare round 2026-10-29: the office's group sessions (and the
+            // certificates issued when one is closed), and its log of services
+            // given to a person. release = close a session and issue certificates;
+            // edit = void a record with a reason.
+            ['key' => 'tulong_sessions', 'name' => 'Group Sessions & Certificates', 'perms' => ['view', 'create', 'edit', 'release']],
+            ['key' => 'tulong_records', 'name' => 'Services Rendered Records', 'perms' => ['view', 'create', 'edit']],
         ],
     ],
     [
@@ -445,6 +466,21 @@ $balitaGrants = [
 foreach ($roles as &$role) {
     if (isset($balitaGrants[$role['key']])) {
         $role['permissions'] = array_merge($role['permissions'], $balitaGrants[$role['key']]);
+    }
+}
+unset($role);
+
+// ---------------------------------------------------------------
+// Welfare round 2026-10-29: a Department Head runs the office's sessions,
+// closes them (the certificates go out then) and keeps the services-rendered
+// log too; its 'approve' preset would give it no create on either.
+// ---------------------------------------------------------------
+$welfareGrants = [
+    'department_head' => ['tulong_sessions' => ['view', 'create', 'edit', 'release'], 'tulong_records' => ['view', 'create', 'edit']],
+];
+foreach ($roles as &$role) {
+    if (isset($welfareGrants[$role['key']])) {
+        $role['permissions'] = array_merge($role['permissions'], $welfareGrants[$role['key']]);
     }
 }
 unset($role);
