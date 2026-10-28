@@ -329,7 +329,7 @@
                     submitted: this.formatDay(row.submitted),
                     submitted_at: row.submitted,
                     status: row.status,
-                    category: cls.category || 'Social Protection',
+                    category: cls.category || this.tulongTypesByName[name]?.category || 'Social Protection',
                     level: cls.level || 'Municipal',
                     reference_pdf: this.referencePdfByType[name] || this.referencePdfByType[type] || null,
                     service_guide_key: this.typeToServiceGuideKey[name] || this.typeToServiceGuideKey[type] || null,
@@ -497,6 +497,14 @@
                 const res = await $api.get(this.apiBase(r.ref));
                 this.applyDetail(r, res.data);
                 this.$nextTick(() => window.renderIcons?.());
+            },
+            // A case an officer just filed (Apply for New Tulong, welfare round
+            // 2026-10-29): listed first, and opened.
+            openFiledCase(d) {
+                if (!d || !d.ref) return;
+                let r = this.requests.find((x) => x.ref === d.ref);
+                if (!r) { r = this.fromApi(d); this.requests.unshift(r); }
+                this.$nextTick(() => this.openRequest(r));
             },
             backToProfile() {
                 if (!this.returnToProfile) return;
@@ -988,6 +996,8 @@
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
                 </button>
                 @include('admin.partials.modal-request-import', ['importType' => 'tulong'])
+                {{-- File for a person at the office (welfare round, 2026-10-29). --}}
+                @include('admin.tulong.apply')
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
