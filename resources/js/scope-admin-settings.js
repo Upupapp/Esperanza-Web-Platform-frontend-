@@ -1056,6 +1056,181 @@ function integrationsTab() {
     };
 }
 
+/**
+ * The Facebook Page card on Integrations (welfare round 2026-10-29): Balita
+ * posts copied to the LGU's Page when published. Seen by the officers who
+ * approve Balita (comm_news approve) and technical administrators
+ * (set_system view); changed by comm_news approve or set_system edit.
+ * GET /admin/integrations/facebook sends the connection without its token:
+ * {connected, page_id, page_name, page_link, connected_by_name, connected_at,
+ * auto_post, default_share, status: ok|token_problem, last_error,
+ * last_checked_at}. The token typed here goes up once (PUT) and is dropped
+ * from the page as soon as the server answers.
+ */
+function facebookConnection(d) {
+    const data = d || {};
+    return {
+        connected: data.connected ?? Boolean(data.page_id),
+        page_id: data.page_id || '',
+        page_name: data.page_name || '',
+        page_link: data.page_link || '',
+        connected_by_name: data.connected_by_name || data.connected_by?.name || '',
+        connected_at: data.connected_at || null,
+        auto_post: data.auto_post !== false,
+        default_share: ['municipal', 'all', 'none'].includes(data.default_share) ? data.default_share : 'municipal',
+        status: data.status || 'ok',
+        last_error: data.last_error || '',
+        last_checked_at: data.last_checked_at || null,
+    };
+}
+
+function facebookPage() {
+    return {
+        started: false, loading: false, loaded: false, failed: false,
+        fb: facebookConnection(null),
+        formOpen: false,
+        form: { page_id: '', access_token: '' },
+        showToken: false,
+        connecting: false,
+        connectError: '',
+        fieldErrors: {},
+        patching: false,
+        checking: false,
+        checkNote: '',
+        checkOk: true,
+        confirmDisconnect: false,
+        disconnecting: false,
+
+        when: fmtWhen,
+        get visible() { return may('comm_news', 'approve') || may('set_system', 'view'); },
+        get canManage() { return may('comm_news', 'approve') || may('set_system', 'edit'); },
+        async start() {
+            if (this.started) return;
+            this.started = true;
+            await sessionReady();
+            if (this.visible) await this.load();
+        },
+        async load() {
+            if (this.loading) return;
+            this.loading = true; this.failed = false;
+            try {
+                const res = await api.get('/admin/integrations/facebook');
+                this.fb = facebookConnection(res.data);
+                this.loaded = true;
+            } catch { this.failed = true; } finally { this.loading = false; }
+        },
+        get state() {
+            if (!this.fb.connected) return 'none';
+            return this.fb.status === 'token_problem' ? 'problem' : 'ok';
+        },
+        get stateLabel() { return { none: 'Not connected', ok: 'Connected', problem: 'Token problem' }[this.state]; },
+        get stateTone() { return { none: 'slate', ok: 'emerald', problem: 'rose' }[this.state]; },
+        get connectedLine() {
+            const by = this.fb.connected_by_name;
+            const at = this.fb.connected_at ? fmtWhen(this.fb.connected_at) : '';
+            if (!by && !at) return '';
+            return 'Connected' + (by ? ' by ' + by : '') + (at ? ' on ' + at : '');
+        },
+        fieldError(key) {
+            const v = this.fieldErrors?.[key];
+            return Array.isArray(v) ? (v[0] || '') : (v || '');
+        },
+        get formReady() { return /^\d{5,}$/.test(this.form.page_id.trim()) && this.form.access_token.trim().length >= 20; },
+        openForm() {
+            this.form = { page_id: this.fb.page_id || '', access_token: '' };
+            this.showToken = false;
+            this.connectError = '';
+            this.fieldErrors = {};
+            this.checkNote = '';
+            this.formOpen = true;
+            this.$nextTick(() => document.getElementById(this.form.page_id ? 'fb-token' : 'fb-page-id')?.focus());
+        },
+        closeForm() {
+            this.formOpen = false;
+            this.form = { page_id: '', access_token: '' };
+        },
+        async connect() {
+            if (this.connecting || !this.formReady || !this.canManage) return;
+            this.connecting = true;
+            this.connectError = '';
+            this.fieldErrors = {};
+            try {
+                const res = await api.put('/admin/integrations/facebook', { page_id: this.form.page_id.trim(), access_token: this.form.access_token.trim() });
+                this.fb = facebookConnection(res.data);
+                this.closeForm();
+                this.checkNote = '';
+                toast('Connected to ' + (this.fb.page_name || 'the Facebook Page') + '.');
+            } catch (err) {
+                if (err?.status === 422) this.fieldErrors = err.fields || {};
+                if (err?.status !== 403) this.connectError = errExplain(err, 'Could not connect the Page. Check the Page ID and the token.');
+            } finally {
+                // The token leaves the page whatever the answer; it is pasted again to retry.
+                this.form.access_token = '';
+                this.showToken = false;
+                this.connecting = false;
+            }
+        },
+        async patch(changes, revert) {
+            if (this.patching || !this.canManage) return;
+            this.patching = true;
+            try {
+                const res = await api.patch('/admin/integrations/facebook', changes);
+                if (res?.data) this.fb = facebookConnection(res.data);
+                toast('Saved.');
+            } catch (err) {
+                revert();
+                if (err?.status !== 403) toast(errText(err, 'Could not save the change.'), 'error');
+            } finally {
+                this.patching = false;
+            }
+        },
+        setAutoPost(on) {
+            const before = this.fb.auto_post;
+            this.fb.auto_post = on;
+            this.patch({ auto_post: on }, () => { this.fb.auto_post = before; });
+        },
+        setDefaultShare(value) {
+            const before = this.fb.default_share;
+            this.fb.default_share = value;
+            this.patch({ default_share: value }, () => { this.fb.default_share = before; });
+        },
+        async check() {
+            if (this.checking) return;
+            this.checking = true;
+            this.checkNote = '';
+            try {
+                const res = await api.post('/admin/integrations/facebook/check');
+                if (res?.data) this.fb = facebookConnection(res.data);
+                this.checkOk = this.fb.status !== 'token_problem';
+                this.checkNote = this.checkOk
+                    ? 'The connection works: Facebook answered as ' + (this.fb.page_name || 'the Page') + '.'
+                    : 'Facebook refused the token' + (this.fb.last_error ? ': ' + this.fb.last_error : '.') + ' Reconnect with a new token.';
+            } catch (err) {
+                this.checkOk = false;
+                if (err?.status !== 403) this.checkNote = errText(err, 'Could not reach Facebook to check. Try again in a moment.');
+            } finally {
+                this.checking = false;
+            }
+        },
+        async disconnect() {
+            if (this.disconnecting || !this.canManage) return;
+            this.disconnecting = true;
+            try {
+                await api.delete('/admin/integrations/facebook');
+                this.fb = facebookConnection(null);
+                this.confirmDisconnect = false;
+                this.checkNote = '';
+                this.closeForm();
+                toast('The Facebook Page is disconnected.');
+            } catch (err) {
+                if (err?.status !== 403) toast(errText(err, 'Could not disconnect the Page.'), 'error');
+            } finally {
+                this.disconnecting = false;
+            }
+        },
+    };
+}
+
 /** Status for technical administrators (SystemController; set_system view / edit). */
 function systemTab() {
     return {
@@ -1665,6 +1840,7 @@ export function register(Alpine) {
     Alpine.data('templatesTab', templatesTab);
     Alpine.data('systemTab', systemTab);
     Alpine.data('integrationsTab', integrationsTab);
+    Alpine.data('facebookPage', facebookPage);
     Alpine.data('auditLogTab', auditLogTab);
     Alpine.data('departmentsTab', departmentsTab);
     Alpine.store('offices', officesStore());

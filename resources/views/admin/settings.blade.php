@@ -55,6 +55,9 @@
             // Direktoryo is also for officers without Settings: the Municipal
             // Information Officer and each Barangay Secretary (2026-10-21).
             get directoryAllowed() { return this.$store.session.canPerm('comm_directory', 'view') || this.$store.session.canPerm('comm_barangay_directory', 'view'); },
+            // The Facebook Page card on Integrations is also for the officers
+            // who approve Balita, without the rest of Settings (2026-10-29).
+            get facebookAllowed() { return this.$store.session.canPerm('comm_news', 'approve') || this.$store.session.canPerm('set_system', 'view'); },
             // A tab's address replaces the current one, so a reload stays on it.
             go(t) {
                 this.tab = t;
@@ -64,18 +67,23 @@
             init() {
                 const asked = new URLSearchParams(window.location.search).get('tab');
                 if (this.tab === 'general' && ['notifications', 'security', 'integrations'].includes(asked)) this.tab = asked;
-                // Without Settings, Direktoryo is the only tab there is.
-                this.$store.session.whenReady().then(() => { if (!this.$store.session.can('settings') && this.directoryAllowed) this.go('directory'); });
+                // Without Settings, Direktoryo and the Facebook Page are the only tabs there are.
+                this.$store.session.whenReady().then(() => {
+                    if (this.$store.session.can('settings')) return;
+                    if (this.tab === 'integrations' && this.facebookAllowed) return;
+                    if (this.directoryAllowed) this.go('directory');
+                    else if (this.facebookAllowed) this.go('integrations');
+                });
             },
         }"
         class="animate-fade-up"
     >
 
-        <div x-show="!$store.session.can('settings') && !directoryAllowed" x-cloak>
+        <div x-show="!$store.session.can('settings') && !directoryAllowed && !facebookAllowed" x-cloak>
             <x-admin.access-restricted module="System Settings" icon="settings" />
         </div>
 
-        <div x-show="$store.session.can('settings') || directoryAllowed" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div x-show="$store.session.can('settings') || directoryAllowed || facebookAllowed" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
         {{-- A strip that scrolls sideways below the desktop width, a list beside the content from it. --}}
         <div class="lg:col-span-1 min-w-0">
@@ -87,6 +95,7 @@
                             @click="go('{{ $tabKey }}')"
                             @if($tabKey === 'system') x-show="$store.session.canPerm('set_system', 'view')" x-cloak
                             @elseif($tabKey === 'directory') x-show="directoryAllowed" x-cloak
+                            @elseif($tabKey === 'integrations') x-show="$store.session.can('settings') || facebookAllowed" x-cloak
                             @else x-show="$store.session.can('settings')" x-cloak @endif
                             class="shrink-0 lg:w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
                             :class="tab === '{{ $tabKey }}' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-white/60'"
@@ -101,6 +110,10 @@
 
         <div class="lg:col-span-3 min-w-0">
             @include('admin.settings.directory')
+
+            {{-- Outside the Settings-only block: its Facebook Page card is also
+                 for Balita's approvers (welfare round 2026-10-29). --}}
+            @include('admin.settings.integrations')
 
             <template x-if="$store.session.can('settings')">
             <div>
@@ -349,8 +362,6 @@
             @include('admin.settings.templates')
 
             @include('admin.settings.site-content')
-
-            @include('admin.settings.integrations')
 
             @include('admin.settings.system')
 

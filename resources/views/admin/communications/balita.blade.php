@@ -19,7 +19,11 @@
 
     {{-- Overview: the four counts, each a filter of the feed --}}
     <aside aria-label="Balita overview" class="order-first lg:order-last w-full lg:w-[300px] shrink-0 lg:sticky lg:top-4 space-y-1">
-        <h2 class="px-2 py-1 text-[17px] font-semibold text-ink-body">Overview</h2>
+        <div class="flex items-center justify-between gap-2">
+            <h2 class="px-2 py-1 text-[17px] font-semibold text-ink-body">Overview</h2>
+            {{-- Balita settings: the photo watermark (welfare round 2026-10-29), for the officers who approve Balita. --}}
+            <button type="button" x-show="approver" x-cloak @click="window.dispatchEvent(new CustomEvent('balita-settings'))" class="h-9 px-2.5 rounded-[10px] inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-body hover:bg-slate-200/60 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 transition-colors"><i data-lucide="settings" class="w-4 h-4"></i>Balita settings</button>
+        </div>
         <div class="grid grid-cols-2 lg:grid-cols-1 gap-1">
         <button type="button" @click="showStatus('Released')" :aria-pressed="!scheduledOnly && status === 'Released' ? 'true' : 'false'" class="w-full min-h-14 px-2 rounded-[10px] flex items-center gap-2 lg:gap-3 text-left hover:bg-slate-200/60 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 transition-colors" :class="!scheduledOnly && status === 'Released' && 'bg-slate-200/60'">
             <span class="w-9 h-9 rounded-[10px] bg-brand-600 text-white grid place-items-center shrink-0"><i data-lucide="megaphone" class="w-[18px] h-[18px]"></i></span>
@@ -140,6 +144,7 @@
                     <span class="inline-flex items-center gap-1.5"><i data-lucide="heart" class="w-4 h-4"></i><span x-text="a.likes || 0"></span><span class="sr-only"> likes</span></span>
                     <button type="button" @click="openComments(a)" class="hover:text-brand-700 hover:underline" x-text="(a.comments_count || 0) + ' comment' + ((a.comments_count || 0) === 1 ? '' : 's')"></button>
                 </div>
+                @include('admin.communications.balita-facebook', ['post' => 'a', 'class' => 'px-4 pb-2.5'])
                 <div class="mx-4 py-1 border-t border-slate-200 flex flex-wrap gap-1">
                     <button type="button" x-show="a.status === 'Pending Review' && (canMove(a, 'Approved') || canMove(a, 'Rejected'))" @click="openReview(a)" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-orange-700 hover:bg-orange-50 whitespace-nowrap"><i data-lucide="file-search" class="w-[18px] h-[18px]"></i>Review</button>
                     <button type="button" x-show="canEdit(a)" @click="openEdit(a)" class="flex-1 h-10 rounded-lg inline-flex items-center justify-center gap-2 text-sm font-semibold text-brand-700 hover:bg-slate-100 whitespace-nowrap"><i data-lucide="pencil" class="w-[18px] h-[18px]"></i>Edit</button>
@@ -261,6 +266,17 @@
                     <button type="button" x-show="!ownBarangay" @click="toggleBarangay()" :aria-pressed="form.audience === 'Barangay' ? 'true' : 'false'" :aria-label="form.audience === 'Barangay' ? 'Send to all of Esperanza' : 'Send to one barangay'" :title="form.audience === 'Barangay' ? 'Send to all of Esperanza' : 'Send to one barangay'" class="w-10 h-10 rounded-full grid place-items-center text-rose-600 hover:bg-rose-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-100 transition-colors" :class="form.audience === 'Barangay' && 'bg-rose-50'"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
                 </div>
             </div>
+
+            {{-- Also on the LGU's Facebook Page (welfare round 2026-10-29): shown while a
+                 Page is connected and posts by itself; it starts as the Page's default
+                 sharing says for this audience, and the writer may change it. --}}
+            <label x-show="fbOffered()" x-cloak class="flex items-start gap-3 rounded-[10px] border border-slate-200 px-4 py-3 cursor-pointer hover:bg-slate-50 focus-within:ring-4 focus-within:ring-brand-100">
+                <input type="checkbox" :checked="fbShareChecked()" @change="form.fb_share = $event.target.checked" class="mt-1 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                <span class="min-w-0">
+                    <span class="flex items-center gap-1.5 text-[15px] font-semibold text-ink"><x-balita.fb-mark class="w-4 h-4 text-[#1877F2]" />Also post on Facebook when published</span>
+                    <span class="block text-xs text-ink-muted" x-text="'On ' + fbPageName() + (fb && fb.status === 'token_problem' ? '. The Facebook connection needs attention; the post goes there once it is fixed.' : ', with a link back to the post on the website.')"></span>
+                </span>
+            </label>
         </div>
 
         <div class="px-4 pt-3 pb-4 bg-white border-t border-slate-200 shrink-0 space-y-2">
@@ -293,6 +309,7 @@
                     <p class="px-3.5 pb-3 text-[13px] text-slate-700 leading-relaxed whitespace-pre-line" x-text="selected.body"></p>
                     <x-balita.gallery media="selected.media" label="selected.title" :english="true" />
                 </div>
+                @include('admin.communications.balita-facebook', ['post' => 'selected', 'class' => ''])
                 <p x-show="!hasFutureTime(selected)" class="text-xs text-ink-muted">Residents see it under the writer's name with the official seal. Approving publishes it at once and notifies <span x-text="selected.barangay ? 'the residents of Brgy. ' + selected.barangay : 'every resident'"></span> in the app and on the website.</p>
                 <p x-show="hasFutureTime(selected)" x-cloak class="text-xs text-ink-muted">Residents see it under the writer's name with the official seal. Approving keeps it until <span x-text="when(selected.publish_at)"></span>; it goes out by itself then.</p>
                 <div x-show="canMove(selected, 'Rejected')">
@@ -308,4 +325,24 @@
         </x-slot:footer>
     </x-ui.modal>
     </div>
+
+    {{-- Delete, asked in the page (welfare round 2026-10-29): a post that went to
+         Facebook can be taken off there too (delete_on_facebook=1). --}}
+    <div x-data="{ get open() { return delOpen; }, set open(v) { if (!processing) delOpen = v; } }">
+    <x-ui.modal title="Delete this post?" maxWidth="sm">
+        <div class="space-y-3 text-sm text-ink-body">
+            <p>Delete <span class="font-semibold text-ink" x-text="'“' + (delPost?.title || '') + '”'"></span> for good? Its comments and likes go with it. This cannot be undone.</p>
+            <label x-show="delPost?.facebook?.status === 'posted'" class="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 cursor-pointer">
+                <input type="checkbox" x-model="delFromFb" class="mt-0.5 rounded border-slate-300 text-rose-600 focus:ring-rose-500">
+                <span><span class="block font-semibold text-ink">Also remove it from Facebook</span><span class="block text-xs text-ink-muted">Left unticked, the post stays on the Facebook Page.</span></span>
+            </label>
+        </div>
+        <x-slot:footer>
+            <x-ui.button variant="secondary" size="sm" x-bind:disabled="processing" @click="delOpen = false">Cancel</x-ui.button>
+            <x-ui.button variant="danger" size="sm" icon="trash-2" x-bind:disabled="processing" @click="confirmDelete()"><span x-text="processing ? 'Deleting…' : 'Delete'"></span></x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
+    </div>
+
+    @include('admin.communications.balita-settings')
 </div>

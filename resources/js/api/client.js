@@ -111,7 +111,13 @@ http.interceptors.response.use(
 
         // The single place 401/403 are interpreted. Pages listen for these
         // rather than each deciding what an expired token means.
-        if (apiError.isAuth) {
+        // `silent: true` is for a question the page asks only in case the
+        // visitor happens to be an officer (the public Verify page's officer
+        // card, welfare round 2026-10-29): a resident's token answering 401
+        // or 403 there is not a lost session and is not an error to show.
+        if (error?.config?.silent) {
+            // The caller decides; nothing is announced.
+        } else if (apiError.isAuth) {
             window.dispatchEvent(new CustomEvent('api:unauthorized', { detail: { error: apiError } }));
         } else if (apiError.isForbidden) {
             window.dispatchEvent(new CustomEvent('api:forbidden', { detail: { error: apiError } }));

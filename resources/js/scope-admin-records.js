@@ -14,6 +14,7 @@
 import api from './api/client';
 import { registerBalitaMedia } from './balita-media';
 import { registerOccasions } from './admin-occasions';
+import { telHref, GUARDIAN_SOURCES } from './guardian-scan';
 
 const OPEN = ['Submitted', 'Under Review'];
 
@@ -199,8 +200,22 @@ function postForm(post = null, barangays = [], ownBarangay = null) {
         schedule: !!post?.publish_at && instant(post.publish_at) > Date.now(),
         publish_date: at.date,
         publish_time: at.time || '08:00',
+        // Also post on Facebook when published: the writer's choice, or null
+        // to follow the Page's default sharing (welfare round 2026-10-29).
+        fb_share: typeof post?.facebook?.share === 'boolean' ? post.facebook.share : null,
     };
 }
+
+// A post's Facebook status as a chip (welfare round 2026-10-29), from the
+// row's `facebook: {share, status, permalink, error, posted_at}`.
+const FACEBOOK_CHIPS = {
+    pending: { label: 'Waiting to post on Facebook', tone: 'bg-sky-50 text-sky-800 ring-sky-200' },
+    posting: { label: 'Posting to Facebook…', tone: 'bg-sky-50 text-sky-800 ring-sky-200' },
+    posted: { label: 'Posted on Facebook', tone: 'bg-emerald-50 text-emerald-800 ring-emerald-200' },
+    failed: { label: 'Facebook: failed', tone: 'bg-rose-50 text-rose-800 ring-rose-200' },
+    notShared: { label: 'Not shared on Facebook', tone: 'bg-slate-100 text-slate-700 ring-slate-200' },
+    planned: { label: 'Goes to Facebook when published', tone: 'bg-slate-100 text-slate-700 ring-slate-200' },
+};
 
 /** The Balita tab: one feed of LGU posts on Draft -> Review -> Publish -> Archive. */
 function adminBalita(barangays = []) {
@@ -234,6 +249,14 @@ function adminBalita(barangays = []) {
         rejectReason: '',
         // How many posts the feed shows; Show more adds ten (redesign 2026-10-26).
         shown: 10,
+        // The Facebook Page connection, without its token (GET
+        // /admin/integrations/facebook), or null when it could not be read.
+        fb: null,
+        fbBusy: null,
+        // Delete asks in the page, with "Also remove it from Facebook".
+        delOpen: false,
+        delPost: null,
+        delFromFb: false,
 
         init() {
             // A new filter starts the feed at the top again.
@@ -243,12 +266,14 @@ function adminBalita(barangays = []) {
             this.loading = true;
             this.failed = false;
             try {
-                const [res, summary] = await Promise.all([
+                const [res, summary, fb] = await Promise.all([
                     api.getAll('/admin/announcements'),
                     api.get('/admin/announcements/summary').catch(() => null),
+                    api.get('/admin/integrations/facebook').catch(() => null),
                 ]);
                 this.posts = res.data || [];
                 this.summary = summary?.data || null;
+                this.fb = fb?.data || null;
             } catch {
                 this.failed = true;
             } finally {
@@ -448,6 +473,7 @@ function adminBalita(barangays = []) {
                 const res = await api.post('/admin/announcements', {
                     title: this.form.title.trim(), body: this.form.body.trim(), category: this.form.category,
                     barangay, official: true, media_ids: this.media.ids, publish_at: publishAt,
+                    ...(this.fbOffered() ? { facebook_share: this.fbShareChecked() } : {}),
                 });
                 return res.data;
             }
@@ -458,6 +484,7 @@ function adminBalita(barangays = []) {
             if (barangay !== (post.barangay || null)) changes.barangay = barangay;
             if (!sameIds(this.media.ids, (post.media || []).map((m) => m.id))) changes.media_ids = this.media.ids;
             if ((publishAt ? instant(publishAt) : null) !== (post.publish_at ? instant(post.publish_at) : null)) changes.publish_at = publishAt;
+            if (this.fbOffered() && this.form.fb_share !== null && this.form.fb_share !== (post.facebook?.share ?? null)) changes.facebook_share = this.form.fb_share;
             if (Object.keys(changes).length) await api.put('/admin/announcements/' + post.id, changes);
             return post;
         },
@@ -601,12 +628,22 @@ function adminBalita(barangays = []) {
                 this.processing = false;
             }
         },
-        async deletePost(post) {
-            if (this.processing || !window.confirm('Delete "' + post.title + '" for good? Its comments and likes go with it. This cannot be undone.')) return;
+        // Asked in the page: a post that is on Facebook may go from there too.
+        deletePost(post) {
+            if (this.processing) return;
+            this.delPost = post;
+            this.delFromFb = false;
+            this.delOpen = true;
+        },
+        async confirmDelete() {
+            const post = this.delPost;
+            if (this.processing || !post) return;
             this.processing = true;
             try {
-                await api.delete('/admin/announcements/' + post.id);
-                balitaToast('Deleted.');
+                const onFacebook = post.facebook?.status === 'posted';
+                await api.delete('/admin/announcements/' + post.id, onFacebook && this.delFromFb ? { params: { delete_on_facebook: 1 } } : undefined);
+                this.delOpen = false;
+                balitaToast(onFacebook && this.delFromFb ? 'Deleted here and on Facebook.' : 'Deleted.');
                 await this.load();
             } catch (err) {
                 balitaToast(errText(err, 'Could not delete this post.'), 'error');
@@ -619,6 +656,153 @@ function adminBalita(barangays = []) {
         },
         cover(post) { return (post.media || [])[0] || null; },
         when,
+
+        // -- Facebook (welfare round 2026-10-29)
+        fbConnected() { return !!(this.fb && (this.fb.connected ?? this.fb.page_id)); },
+        // The editor's tick box: only while a Page is connected and posts there by itself.
+        fbOffered() { return this.fbConnected() && this.fb.auto_post !== false; },
+        fbPageName() { return this.fb?.page_name || 'the Facebook Page'; },
+        // What the box starts as: the Page's default sharing for this audience.
+        fbDefault() {
+            const share = this.fb?.default_share || 'municipal';
+            if (share === 'all') return true;
+            if (share === 'none') return false;
+            return !this.ownBarangay && this.form.audience !== 'Barangay';
+        },
+        fbShareChecked() { return this.form.fb_share === null ? this.fbDefault() : this.form.fb_share; },
+        fbChip(post) {
+            const f = post.facebook || {};
+            if (['pending', 'posting', 'posted', 'failed'].includes(f.status)) {
+                return { kind: f.status, ...FACEBOOK_CHIPS[f.status], error: f.error || '', permalink: f.permalink || '' };
+            }
+            if (!this.fbConnected()) return null;
+            if (post.status === 'Released') return { kind: 'notShared', ...FACEBOOK_CHIPS.notShared, error: '', permalink: '' };
+            if (f.share === true && !['Archived', 'Rejected'].includes(post.status)) return { kind: 'planned', ...FACEBOOK_CHIPS.planned, error: '', permalink: '' };
+            return null;
+        },
+        // Post now, or again after a failure (POST /admin/announcements/{id}/facebook).
+        fbMayPost(post) { return this.approver && post.status === 'Released' && this.fbConnected() && this.fb?.status !== 'token_problem'; },
+        async fbPost(post) {
+            if (this.fbBusy) return;
+            this.fbBusy = post.id;
+            try {
+                const res = await api.post('/admin/announcements/' + post.id + '/facebook');
+                const d = res?.data || {};
+                post.facebook = d.facebook || (d.status ? d : { ...(post.facebook || {}), status: 'pending', error: null });
+                balitaToast('Sent to Facebook. It goes up within a minute or two.');
+            } catch (err) {
+                balitaToast(errText(err, 'Could not send this post to Facebook.'), 'error');
+            } finally {
+                this.fbBusy = null;
+            }
+        },
+    };
+}
+
+// The watermark's geometry, as App\Domain\Balita\Watermark burns it in
+// (welfare round 2026-10-29): the seal's width is a share of the photo's
+// shorter side, clamped; the margin a quarter of the mark; 85% opacity; the
+// wordmark's height 60% of the seal size, never wider than half the photo.
+// GET /admin/balita/watermark may send its own `geometry`, which wins.
+const WATERMARK_GEOMETRY = {
+    size_percent: { small: 12, medium: 15, large: 20 },
+    min_px: 64,
+    max_px: { small: 230, medium: 288, large: 384 },
+    margin_ratio: 0.25,
+    opacity: 0.85,
+    wordmark_height_ratio: 0.6,
+    wordmark_max_width_ratio: 0.5,
+};
+// The sample photo's own size, so the preview is the photo as uploaded.
+const SAMPLE_PHOTO = { src: '/images/esperanza/esperanza_community1.jpg', width: 1537, height: 1023 };
+// backend resources/branding/watermark-wordmark.png (seal + two lines of words).
+const WORDMARK_ASPECT = 1053 / 228;
+
+/**
+ * Balita settings (welfare round 2026-10-29), for the officers who approve
+ * Balita (comm_news approve): the watermark the server puts on every photo an
+ * officer uploads - on or off, the seal or the seal with the municipality's
+ * name, and its size - with a preview drawn to the server's numbers.
+ * GET/PUT /admin/balita/watermark {enabled, mark, size}.
+ */
+function balitaSettings() {
+    return {
+        wmOpen: false,
+        wmLoading: false,
+        wmFailed: false,
+        wmSaving: false,
+        wm: { enabled: true, mark: 'seal', size: 'medium' },
+        wmSaved: '',
+        wmGeometry: WATERMARK_GEOMETRY,
+        sample: SAMPLE_PHOTO,
+
+        async wmShow() {
+            this.wmOpen = true;
+            await this.wmLoad();
+        },
+        async wmLoad() {
+            this.wmLoading = true;
+            this.wmFailed = false;
+            try {
+                const res = await api.get('/admin/balita/watermark');
+                const d = res.data || {};
+                this.wm = {
+                    enabled: d.enabled !== false,
+                    mark: d.mark === 'wordmark' ? 'wordmark' : 'seal',
+                    size: ['small', 'medium', 'large'].includes(d.size) ? d.size : 'medium',
+                };
+                if (d.geometry) this.wmGeometry = { ...WATERMARK_GEOMETRY, ...d.geometry };
+                this.wmSaved = JSON.stringify(this.wm);
+            } catch (err) {
+                this.wmFailed = true;
+                fail(err, 'Could not read the Balita settings.');
+            } finally {
+                this.wmLoading = false;
+                window.Alpine?.nextTick(() => window.renderIcons?.());
+            }
+        },
+        wmDirty() { return this.wmSaved !== '' && JSON.stringify(this.wm) !== this.wmSaved; },
+        async wmSave() {
+            if (this.wmSaving || !this.wmDirty()) return;
+            this.wmSaving = true;
+            try {
+                await api.put('/admin/balita/watermark', { ...this.wm });
+                this.wmSaved = JSON.stringify(this.wm);
+                this.wmOpen = false;
+                toast(this.wm.enabled ? 'Saved. Photos uploaded from now on carry the watermark.' : 'Saved. Photos uploaded from now on have no watermark.');
+            } catch (err) {
+                fail(err, 'Could not save the Balita settings.');
+            } finally {
+                this.wmSaving = false;
+            }
+        },
+        // The mark on the sample photo, in percentages of the photo, to the
+        // pixel rules the server uses on a photo of this size.
+        wmBox() {
+            const g = this.wmGeometry;
+            const { width, height } = this.sample;
+            const short = Math.min(width, height);
+            const pct = g.size_percent?.[this.wm.size] ?? 15;
+            const max = g.max_px?.[this.wm.size] ?? 288;
+            const target = Math.max(g.min_px ?? 64, Math.min(max, Math.round(short * pct / 100)));
+            let w = target;
+            let h = target;
+            if (this.wm.mark === 'wordmark') {
+                h = Math.round(target * (g.wordmark_height_ratio ?? 0.6));
+                w = Math.round(h * WORDMARK_ASPECT);
+                const cap = Math.floor(width * (g.wordmark_max_width_ratio ?? 0.5));
+                if (w > cap) { w = cap; h = Math.round(w / WORDMARK_ASPECT); }
+            }
+            const margin = Math.round(Math.min(w, h) * (g.margin_ratio ?? 0.25));
+            // An object, not a string: a string :style replaces the whole
+            // attribute, x-show's display:none with it.
+            return {
+                width: (w / width * 100).toFixed(3) + '%',
+                right: (margin / width * 100).toFixed(3) + '%',
+                bottom: (margin / height * 100).toFixed(3) + '%',
+                opacity: String(g.opacity ?? 0.85),
+            };
+        },
     };
 }
 
@@ -962,6 +1146,7 @@ export function register(Alpine) {
     Alpine.data('adminBalita', adminBalita);
     Alpine.data('adminEvents', adminEvents);
     Alpine.data('balitaComments', balitaComments);
+    Alpine.data('balitaSettings', balitaSettings);
     // A correction request opened from the Data requests list: the account's
     // "Correct details" opens by itself, with that request to close.
     Alpine.store('recordsDesk', { pendingCorrection: null });
@@ -1468,6 +1653,139 @@ export function register(Alpine) {
         },
         rhField(field) { return HISTORY_FIELDS[field] || humanize(field); },
         rhValue: shown,
+    }));
+
+    // ---------------------------------------------------------------------
+    // A resident's guardian (welfare round 2026-10-29), on the individual
+    // detail: what the server resolved (the office's own entry, else the ID
+    // application's, else a minor's household adult) and, for an officer
+    // with const_resident edit, setting or clearing the office's entry.
+    // Markup: admin/constituents/section-guardian.blade.php.
+    Alpine.data('residentGuardian', () => ({
+        gdOpen: false,
+        gdMode: 'typed',
+        gdForm: { name: '', relationship: '', contact: '', address: '' },
+        gdQuery: '',
+        gdResults: [],
+        gdSearching: false,
+        gdSearched: false,
+        gdPicked: null,
+        gdBusy: false,
+        gdErrors: {},
+        gdConfirmClear: false,
+        gdSeq: 0,
+
+        init() {
+            // Another resident opened in the same window starts clean.
+            this.$watch('selectedIndividual?.ref', () => { this.gdOpen = false; this.gdConfirmClear = false; });
+        },
+        get gdCurrent() { return this.selectedIndividual?.guardian || null; },
+        get gdMayEdit() { return this.$store.session.canPerm('const_resident', 'edit'); },
+        gdTel: telHref,
+        get gdSourceLine() {
+            const g = this.gdCurrent;
+            if (!g) return '';
+            const where = GUARDIAN_SOURCES[g.source]?.en || '';
+            const who = g.source === 'record' && (g.updated_by || g.updated_at)
+                ? ' · ' + [g.updated_by, g.updated_at ? when(g.updated_at) : null].filter(Boolean).join(', ')
+                : '';
+            return where + who;
+        },
+        get gdReady() {
+            if (!this.gdForm.relationship.trim()) return false;
+            return this.gdMode === 'linked' ? !!this.gdPicked : this.gdForm.name.trim().length >= 2;
+        },
+        gdError(key) {
+            const v = this.gdErrors?.[key];
+            return Array.isArray(v) ? (v[0] || '') : (v || '');
+        },
+        gdStart() {
+            const g = this.gdCurrent?.source === 'record' ? this.gdCurrent : null;
+            this.gdMode = g?.individual_ref ? 'linked' : 'typed';
+            this.gdPicked = g?.individual_ref ? { ref: g.individual_ref, name: g.name } : null;
+            this.gdForm = { name: g?.name || '', relationship: g?.relationship || '', contact: g?.contact || '', address: g?.address || '' };
+            this.gdQuery = '';
+            this.gdResults = [];
+            this.gdSearched = false;
+            this.gdErrors = {};
+            this.gdConfirmClear = false;
+            this.gdOpen = true;
+            this.$nextTick(() => document.getElementById(this.gdMode === 'linked' ? 'gd-relationship' : 'gd-name')?.focus());
+        },
+        // The registry, searched the way the Individuals list searches it.
+        async gdSearch() {
+            const q = this.gdQuery.trim();
+            const seq = ++this.gdSeq;
+            if (q.length < 2) { this.gdResults = []; this.gdSearched = false; return; }
+            this.gdSearching = true;
+            try {
+                const res = await api.get('/admin/residents', { params: { q, per_page: 8 } });
+                if (seq !== this.gdSeq) return;
+                this.gdResults = (res.data || []).filter((r) => r.ref !== this.selectedIndividual?.ref);
+                this.gdSearched = true;
+            } catch (err) {
+                if (seq === this.gdSeq) { this.gdResults = []; fail(err, 'Could not search the registry.'); }
+            } finally {
+                if (seq === this.gdSeq) this.gdSearching = false;
+            }
+        },
+        gdPick(r) {
+            this.gdPicked = { ref: r.ref, name: r.name };
+            this.gdResults = [];
+            this.gdQuery = '';
+            this.$nextTick(() => document.getElementById('gd-relationship')?.focus());
+        },
+        // The server's answer ({ref, guardian_applicable, guardian}) onto the
+        // open record and its row in the list.
+        gdApply(data) {
+            const patch = { guardian: data?.guardian ?? null, guardian_applicable: !!data?.guardian_applicable };
+            if (this.selectedIndividual) Object.assign(this.selectedIndividual, patch);
+            const row = (this.individuals || []).find((x) => x.ref === this.selectedIndividual?.ref);
+            if (row) Object.assign(row, patch);
+        },
+        async gdSave() {
+            const ref = this.selectedIndividual?.ref;
+            if (!ref || this.gdBusy || !this.gdReady) return;
+            this.gdBusy = true;
+            this.gdErrors = {};
+            const f = this.gdForm;
+            const body = { relationship: f.relationship.trim() };
+            if (this.gdMode === 'linked') {
+                body.individual_ref = this.gdPicked.ref;
+                // Left empty, the linked record's own number and address are used.
+                if (f.contact.trim()) body.contact = f.contact.trim();
+                if (f.address.trim()) body.address = f.address.trim();
+            } else {
+                Object.assign(body, { name: f.name.trim(), contact: f.contact.trim() || null, address: f.address.trim() || null });
+            }
+            try {
+                const res = await api.put('/admin/residents/' + encodeURIComponent(ref) + '/guardian', body);
+                this.gdApply(res.data);
+                this.gdOpen = false;
+                toast('Guardian saved.');
+            } catch (err) {
+                if (err?.status === 422) this.gdErrors = err.fields || {};
+                fail(err, 'Could not save the guardian.');
+            } finally {
+                this.gdBusy = false;
+                window.Alpine?.nextTick(() => window.renderIcons?.());
+            }
+        },
+        async gdClear() {
+            const ref = this.selectedIndividual?.ref;
+            if (!ref || this.gdBusy) return;
+            this.gdBusy = true;
+            try {
+                const res = await api.delete('/admin/residents/' + encodeURIComponent(ref) + '/guardian');
+                this.gdApply(res.data);
+                this.gdConfirmClear = false;
+                toast('Guardian cleared.');
+            } catch (err) {
+                fail(err, 'Could not clear the guardian.');
+            } finally {
+                this.gdBusy = false;
+            }
+        },
     }));
 
     // ---------------------------------------------------------------------

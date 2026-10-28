@@ -62,7 +62,9 @@
             if (params.get('barangay')) this.barangayFilter = params.get('barangay');
             const wanted = params.get('ref');
             if (wanted) {
-                const person = this.individuals.find(i => i.ref === wanted);
+                // A record past the loaded pages (Scan ID's link, 2026-10-29)
+                // opens from its own detail; the server says if it is not in scope.
+                const person = this.individuals.find(i => i.ref === wanted) || (/^[A-Z]+-\d{4}-\d+$/i.test(wanted) ? { ref: wanted, name: wanted, stub: true } : null);
                 if (person) this.$nextTick(() => this.openIndividual(person));
             }
             // Landed here via the Back to Profile link from Dokyu/Tulong — reopen
@@ -718,7 +720,11 @@
                 this.selectedIndividual = merged;
                 const idx = this.individuals.findIndex(x => x.ref === r.ref);
                 if (idx !== -1) this.individuals[idx] = { ...this.individuals[idx], ...merged };
-            } catch { /* keep the list row's fields if the detail fetch fails */ }
+            } catch {
+                // Keep the list row's fields if the detail fetch fails; a record
+                // opened by its link alone has none to keep.
+                if (r.stub) this.showIndividualDetail = false;
+            }
         },
         async loadResidentRequests(ref) {
             this.residentRequests = { ref, rows: [], loading: true, failed: false };

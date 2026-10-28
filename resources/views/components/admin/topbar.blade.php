@@ -59,6 +59,13 @@
 
 <x-ui.global-search :config="$searchConfig" placeholder-en="Search residents, requests, barangays..." />
 
+        {{-- Scan ID (welfare round 2026-10-29): who a presented ID belongs to,
+             and a minor's or a PWD's guardian. For officers who read the
+             registry; the window and its logic load on the first press. --}}
+        <button type="button" x-show="$store.session.canPerm('const_resident', 'view')" x-cloak @click="window.openIdScan()" aria-label="Scan ID" title="Scan ID: who it belongs to, and a minor's or a PWD's guardian" class="w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
+            <i data-lucide="scan-qr-code" class="w-5 h-5"></i>
+        </button>
+
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" aria-label="Notifications" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
                 <i data-lucide="bell" class="w-5 h-5"></i>
@@ -138,8 +145,9 @@
                 <a href="#" @click.prevent="open = false; $dispatch('open-my-profile')" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-ink-muted"></i>My Profile
                 </a>
-                <a :href="$store.session.can('settings') ? '{{ route('admin.settings') }}' : '{{ route('admin.settings.directory') }}'" href="{{ route('admin.settings') }}"
-                   x-show="$store.session.can('settings') || $store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
+                {{-- Without Settings: Direktoryo, or the Facebook Page card for Balita's approvers (2026-10-29). --}}
+                <a :href="$store.session.can('settings') ? '{{ route('admin.settings') }}' : (($store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view')) ? '{{ route('admin.settings.directory') }}' : '{{ route('admin.settings') }}?tab=integrations')" href="{{ route('admin.settings') }}"
+                   x-show="$store.session.can('settings') || $store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view') || $store.session.canPerm('comm_news', 'approve')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i>Settings
                 </a>
                 <div class="border-t border-brand-600/10 my-1.5"></div>
@@ -149,4 +157,5 @@
             </div>
         </div>
     </div>
+    <x-admin.id-scan />
 </header>
