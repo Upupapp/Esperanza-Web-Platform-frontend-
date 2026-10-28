@@ -1755,6 +1755,9 @@ area(/^\/admin\/sakuna(\/|$)/.test(areaPath), () => import('./sakuna-bdrrmc'));
 area(/^\/admin\/sakuna(\/|$)/.test(areaPath), () => import('./sakuna-shelter'));
 // The resident's own shelter and relief, on the Emergency page (2026-10-27).
 area(/^\/citizen\/emergency(\/|$)/.test(areaPath), () => import('./citizen-shelter'));
+// Services received and session certificates, on the resident's Tulong page
+// (welfare round, 2026-10-29).
+area(/^\/citizen\/assistance-requests(\/|$)/.test(areaPath), () => import('./welfare-citizen'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 

@@ -10,18 +10,30 @@
     // single source of truth for every Tulong fee (see admin Settings >
     // Service Catalog) — same mechanism as the Dokyu municipal/barangay
     // catalogs.
-    $assistanceTypes = config('esperanza_tulong_types.types');
+    // Staff-only services (psychological first aid, CICL, child protection,
+    // VAWC: filed by an officer on a referral) are never in the resident's
+    // list (welfare round, 2026-10-29); the server refuses them from here too.
+    // The lookups below keep the whole catalog, so such a case filed FOR the
+    // resident still reads right in their list.
+    $allTulongTypes = config('esperanza_tulong_types.types');
+    $assistanceTypes = collect($allTulongTypes)->reject(fn ($t) => ! empty($t['staffOnly']))->values()->all();
 
     // Attach expected-processing-time onto each seeded request by matching its
     // type against $assistanceTypes, same mechanism as the Dokyu tracker.
-    $daysByAssistType = collect($assistanceTypes)->pluck('days', 'name');
-    $officeByAssistType = collect($assistanceTypes)->pluck('office', 'name');
+    $daysByAssistType = collect($allTulongTypes)->pluck('days', 'name');
+    $officeByAssistType = collect($allTulongTypes)->pluck('office', 'name');
     // By service key too: the API's service_key is exact, and the backend's
     // display name differs from this catalog's for TUPAD and ERPAT.
-    $daysByAssistKey = collect($assistanceTypes)->filter(fn ($t) => ! empty($t['key']))->pluck('days', 'key');
+    $daysByAssistKey = collect($allTulongTypes)->filter(fn ($t) => ! empty($t['key']))->pluck('days', 'key');
     // The pickup directory is keyed by an office's SHORT name, which the API
     // does not send; the catalog has it per service key.
-    $officeShortByAssistKey = collect($assistanceTypes)->filter(fn ($t) => ! empty($t['key']))->pluck('office_short', 'key');
+    $officeShortByAssistKey = collect($allTulongTypes)->filter(fn ($t) => ! empty($t['key']))->pluck('office_short', 'key');
+    // How each service is worked (welfare round, 2026-10-29): a 'session'
+    // case shows its schedule, a 'counseling' one says what is shared stays
+    // with the MSWDO, and one with a certificate offers it once issued.
+    $kindByAssistKey = collect($allTulongTypes)->filter(fn ($t) => ! empty($t['key']))
+        ->mapWithKeys(fn ($t) => [$t['key'] => ['kind' => $t['processingKind'] ?? null, 'couple' => ! empty($t['sessionCouple']), 'certificate' => $t['certificate']['title'] ?? null]])
+        ->all();
 
     // Where to follow up / claim assistance, keyed by office name.
     $pickupDirectory = $__fixtures['pickupDirectory'];
@@ -40,6 +52,7 @@
             daysByKey: @js($daysByAssistKey),
             officeShortByKey: @js($officeShortByAssistKey),
             officeByType: @js($officeByAssistType),
+            kindByKey: @js($kindByAssistKey),
             papeles: [],
             // Tulong runs its own case lifecycle on the server (the eleven
             // statuses of config/esperanza_tulong_lifecycle.php); these are
@@ -159,6 +172,10 @@
                 r.pickup = d.pickup || null;
                 r.formSnapshot = d.form_data || {};
                 r.barangay = d.barangay || r.barangay || null;
+                // A group session's case (welfare round, 2026-10-29): the session
+                // it is scheduled to, { ref, date, start_time, venue, status }, or
+                // null while it waits for one.
+                r.session = d.session || null;
                 r.requirements = (d.requirements || []).map((q) => ({
                     key: q.key,
                     name: q.label,
@@ -238,6 +255,24 @@
                 const side = { 'Needs Requirements': 'Initial Screening', 'Returned for Reassessment': 'For Approval' };
                 // An unknown status sits on no step (it is flagged below the steps).
                 return this.stepOrder.indexOf(side[status] || status);
+            },
+            // How the service is worked: 'session', 'counseling', 'referral', ...
+            kindOf(r) { return (r && this.kindByKey[r.serviceKey]?.kind) || null; },
+            isCouple(r) { return !!(r && this.kindByKey[r.serviceKey]?.couple); },
+            clock(hm) {
+                const m = /^(\d{1,2}):(\d{2})/.exec(String(hm || ''));
+                if (!m) return hm || '';
+                const h = Number(m[1]);
+                return (h % 12 || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM');
+            },
+            sessionStatus(s) {
+                return { Scheduled: this.lang('Scheduled', 'Naka-iskedyul'), Done: this.lang('Done', 'Tapos na'), Cancelled: this.lang('Cancelled', 'Kinansela') }[s?.status] || s?.status || '';
+            },
+            // The certificates issued on this case, still valid or not; the
+            // service's catalog says it gives one.
+            certDocs(r) { return r && this.kindByKey[r.serviceKey]?.certificate ? (r.issuedDocuments || []) : []; },
+            openCert(r, d) {
+                window.openWelfareCertificate?.(d, { service_key: r.serviceKey, title: this.kindByKey[r.serviceKey]?.certificate, session: r.session });
             },
             peso(v) {
                 if (v === null || v === undefined || v === '') return '';
@@ -346,6 +381,10 @@
                         'Medical & Health': 'stethoscope', 'Burial & Bereavement': 'flower', 'Education': 'graduation-cap',
                         'Financial Assistance': 'wallet', 'Food & Relief': 'package', 'Social Protection': 'shield-check',
                         'Employment & Livelihood': 'briefcase',
+                        // The MSWDO's services beyond assistance (welfare round, 2026-10-29).
+                        'Counseling & Case Management': 'message-circle-heart', 'Marriage & Family': 'heart-handshake',
+                        'Children & Youth': 'baby', 'Women & Children Protection': 'shield-alert',
+                        'Certifications & Referrals': 'file-user', 'Disaster Assistance': 'house-plus',
                     },
                     formData: {},
                     // The programs the backend offers now (GET /services?type=tulong), as
@@ -361,7 +400,8 @@
                             const before = JSON.stringify(this.types[this.selectedType]?.requirements || null);
                             // A program added in the Service Catalog after this site was
                             // built (2026-10-17) is listed too.
-                            const meta = window.applyServiceCatalog(this.types, res.data || [], (sv) => ({
+                            // A staff-only service never reaches this list, from the server or not.
+                            const meta = window.applyServiceCatalog(this.types, (res.data || []).filter((sv) => !sv.staff_only), (sv) => ({
                                 key: sv.key, name: sv.name, category: sv.category || 'Social Protection', level: sv.level,
                                 office: sv.office, office_short: sv.office_short || sv.office, amount: sv.form_spec?.entitlement || '',
                                 fee: sv.fee?.display || 'Free', days: sv.days || '', icon: 'hand-heart', desc: '',
@@ -374,7 +414,7 @@
                             this.offered = keys.length ? keys : null;
                         } catch { this.offered = null; }
                     },
-                    isOffered(t) { return !this.offered || !t.key || this.offered.includes(t.key); },
+                    isOffered(t) { return !t.staffOnly && (!this.offered || !t.key || this.offered.includes(t.key)); },
                     get filteredTypes() { return this.types.map((t, i) => ({ ...t, i })).filter(t => this.isOffered(t) && t.name.toLowerCase().includes(this.search.toLowerCase())); },
                     // A category counts only the programs on offer: a switched-off
                     // one was counted while not listed (parity check, 2026-10-26).
@@ -518,7 +558,10 @@
                     async submitRequest() {
                         const type = this.types[this.selectedType];
                         const formData = JSON.parse(JSON.stringify(this.formData || {}));
-                        for (const f of (type?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];
+                        for (const f of (type?.fields || [])) {
+                            if (!this.fieldShown(f)) delete formData[f.key];
+                            if (!this.fieldShown(f) || !/^others?$/i.test(formData[f.key] || '') || !String(formData[f.key + '_other'] || '').trim()) delete formData[f.key + '_other'];
+                        }
                         // The applicant block says 'edit if needed', so what the
                         // resident confirmed or corrected goes with the request.
                         Object.assign(formData, {
@@ -770,6 +813,10 @@
                                                     <option value="">—</option>
                                                     <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt" :selected="formData[f.key] === opt"></option></template>
                                                 </select>
+                                                {{-- "Other" with room to say what (welfare round, 2026-10-29): sent as <key>_other. --}}
+                                                <input x-show="f.allowOther && /^others?$/i.test(formData[f.key] || '')" x-cloak type="text" x-model="formData[f.key + '_other']" maxlength="120"
+                                                    :aria-label="f.label + ($store.lang.current === 'en' ? ': please specify' : ': pakisabi kung ano')" :placeholder="$store.lang.current === 'en' ? 'Please specify' : 'Pakisabi kung ano'"
+                                                    class="mt-2 w-full rounded-2xl border-0 surface-pressed py-2 px-4 text-sm text-ink-body focus:bg-white focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
                                             </div>
                                         </template>
                                         <template x-if="f.type === 'checkbox-group' || f.type === 'multiselect'">
@@ -856,7 +903,11 @@
                         <div class="h-1 rounded-full bg-slate-100 overflow-hidden mb-3">
                             <div class="h-full bg-emerald-400 rounded-full transition-all duration-[600ms] ease-standard" :style="'width:' + ((shownReqs.filter(r => reqKind(r.label) !== 'office').length ? Math.min(1, Object.keys(attachments).filter(k => attachments[k]).length / shownReqs.filter(r => reqKind(r.label) !== 'office').length) : 0) * 100) + '%'"></div>
                         </div>
-                        <p class="text-xs text-ink-muted mb-3"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
+                        <p class="text-xs text-ink-muted mb-3" x-show="shownReqs.length"><x-ui.t fil="Mag-upload ng file (larawan o PDF), o gamitin ang isang dokumentong naka-imbak na sa iyong Papeles. Ipapadala ang mga ito kasama ng iyong kahilingan." en="Upload a file (photo or PDF), or reuse a document already saved in your Papeles. They are sent with your request." /></p>
+                        {{-- Some services ask for nothing (counseling, the Parent Effectiveness Service: welfare round, 2026-10-29). --}}
+                        <p class="text-xs text-ink-muted mb-3 flex items-center gap-1.5" x-show="!shownReqs.length" x-cloak><i data-lucide="circle-check" class="w-3.5 h-3.5 text-emerald-500"></i><x-ui.t fil="Walang kailangang i-upload para sa serbisyong ito." en="Nothing to upload for this service." /></p>
+                        {{-- What is shared in counseling stays with the MSWDO (RA 10173). --}}
+                        <p class="text-xs text-slate-600 mb-3 flex items-start gap-1.5 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2" x-show="types[selectedType]?.processingKind === 'counseling'" x-cloak><i data-lucide="lock" class="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5"></i><x-ui.t fil="Ang ibabahagi mo ay mananatili sa MSWDO at hindi ipapakita sa ibang opisina." en="What you share stays with the MSWDO and is not shown to other offices." /></p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             <template x-for="({ req, i }) in shownReqs" :key="i">
                                 <div class="rounded-xl border p-3 transition-colors duration-[220ms] ease-standard" :class="attachments[i] ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'">
@@ -1035,7 +1086,7 @@
                             </template>
                         </div>
 
-                        <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2"><x-ui.t fil="Mga Nakakabit na Requirement" en="Attached Requirements" /></p>
+                        <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-2" x-show="shownReqs.length"><x-ui.t fil="Mga Nakakabit na Requirement" en="Attached Requirements" /></p>
                         <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 mb-5">
                             <template x-for="({ req, i }) in shownReqs" :key="i">
                                 <li class="flex items-center gap-2 text-xs">
@@ -1175,6 +1226,9 @@
 
         {{-- What the office recorded for them before they had an account (2026-10-13). --}}
         <x-citizen.records type="tulong" class="mt-6" />
+
+        {{-- Services received and certificates (welfare round, 2026-10-29). --}}
+        <x-citizen.welfare-received class="mt-6" />
 
         <!-- Track Request -->
         <div x-data="{ get open() { return progressOpen }, set open(v) { progressOpen = v } }">
@@ -1355,7 +1409,8 @@
                             <div class="flex items-start gap-2.5">
                                 <i data-lucide="circle-check" class="w-4 h-4 text-green-600 shrink-0 mt-0.5"></i>
                                 <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-green-800"><x-ui.t fil="Natanggap na ang tulong" en="Assistance received" /></p>
+                                    <p class="text-xs font-semibold text-green-800" x-show="!['session', 'counseling', 'referral'].includes(kindOf(selectedRequest))"><x-ui.t fil="Natanggap na ang tulong" en="Assistance received" /></p>
+                                    <p class="text-xs font-semibold text-green-800" x-show="['session', 'counseling', 'referral'].includes(kindOf(selectedRequest))"><x-ui.t fil="Natapos na ang serbisyo" en="The service is complete" /></p>
                                     <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.released_amount">
                                         <x-ui.t fil="Halaga:" en="Amount:" /> <span class="font-semibold tabular-nums" x-text="peso(selectedRequest.assistance?.released_amount)"></span>
                                     </p>
@@ -1365,6 +1420,41 @@
                                     <p class="text-xs text-green-700 mt-0.5" x-show="selectedRequest.assistance?.released_at" x-text="formatDay(selectedRequest.assistance?.released_at)"></p>
                                 </div>
                             </div>
+                        </div>
+
+                        {{-- A group session's case (welfare round, 2026-10-29): when and where,
+                             from the case's own session, or that it waits for one. --}}
+                        <div class="rounded-xl border border-indigo-200 bg-indigo-50/40 px-3.5 py-3 mt-5" x-show="kindOf(selectedRequest) === 'session' && !['Rejected', 'Cancelled'].includes(selectedRequest.status)" x-cloak data-testid="tulong-session">
+                            <p class="text-xs font-semibold text-indigo-900 flex items-center gap-1.5"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i><x-ui.t fil="Iskedyul ng sesyon" en="Session schedule" /></p>
+                            <template x-if="selectedRequest.session">
+                                <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                                    <dt class="text-ink-muted"><x-ui.t fil="Petsa" en="Date" /></dt><dd class="font-semibold text-ink" x-text="formatDay(selectedRequest.session.date)"></dd>
+                                    <dt class="text-ink-muted"><x-ui.t fil="Oras" en="Time" /></dt><dd class="font-semibold text-ink" x-text="clock(selectedRequest.session.start_time) || '—'"></dd>
+                                    <dt class="text-ink-muted"><x-ui.t fil="Lugar" en="Venue" /></dt><dd class="font-semibold text-ink" x-text="selectedRequest.session.venue || '—'"></dd>
+                                    <dt class="text-ink-muted"><x-ui.t fil="Katayuan" en="Status" /></dt><dd class="font-semibold text-ink" x-text="sessionStatus(selectedRequest.session)"></dd>
+                                </dl>
+                            </template>
+                            <p x-show="!selectedRequest.session && selectedRequest.status !== 'Completed'" class="text-xs text-indigo-800 mt-1"><x-ui.t fil="Naghihintay ng iskedyul. Aabisuhan ka kapag naka-iskedyul ka na sa isang sesyon." en="Waiting for a schedule. You will be notified once you are scheduled to a session." /></p>
+                            <p x-show="isCouple(selectedRequest) && selectedRequest.status !== 'Completed'" class="text-[11px] text-indigo-800 mt-1.5"><x-ui.t fil="Kailangang dumalo kayong dalawa. Ang sertipiko ay ibibigay lamang kapag pareho kayong dumalo." en="Both of you must attend. The certificate is issued only when both of you attended." /></p>
+                        </div>
+
+                        {{-- Counseling: what is shared stays with the MSWDO. --}}
+                        <p class="mt-5 flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-600" x-show="kindOf(selectedRequest) === 'counseling'" x-cloak>
+                            <i data-lucide="lock" class="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5"></i>
+                            <x-ui.t fil="Ang ibinabahagi mo sa social worker ay mananatili sa MSWDO. Hindi ito ipinapakita sa ibang opisina." en="What you share with the social worker stays with the MSWDO. It is not shown to other offices." />
+                        </p>
+
+                        {{-- The certificate issued once the session was finished: opens printable. --}}
+                        <div class="rounded-xl border border-amber-200 bg-amber-50/40 px-3.5 py-3 mt-5" x-show="certDocs(selectedRequest).length" x-cloak>
+                            <p class="text-xs font-semibold text-amber-900 flex items-center gap-1.5"><i data-lucide="award" class="w-3.5 h-3.5"></i><x-ui.t fil="Ang iyong sertipiko" en="Your certificate" /></p>
+                            <ul class="mt-2 space-y-1.5">
+                                <template x-for="d in certDocs(selectedRequest)" :key="d.control_number">
+                                    <li class="flex flex-wrap items-center justify-between gap-2">
+                                        <span class="text-[11px] text-ink-muted"><span class="font-mono font-semibold text-ink" x-text="d.control_number"></span><span x-show="d.revoked" class="text-rose-700" x-text="' · ' + lang('Revoked', 'Binawi')"></span></span>
+                                        <x-ui.button size="sm" variant="secondary" icon="award" @click="openCert(selectedRequest, d)"><x-ui.t fil="Tingnan ang sertipiko" en="View certificate" /></x-ui.button>
+                                    </li>
+                                </template>
+                            </ul>
                         </div>
 
                         <x-citizen.request-fee />
@@ -1418,5 +1508,8 @@
                 </x-slot:footer>
             </x-ui.modal>
         </div>
+
+        {{-- The printable certificate, above Track Request (welfare round, 2026-10-29). --}}
+        <x-welfare.certificate :bilingual="true" />
     </div>
 </x-layouts.citizen>
