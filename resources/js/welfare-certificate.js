@@ -160,7 +160,14 @@ export function welfareCertificate(certByKey = {}, bilingual = false) {
             this.certOpen = true;
             const url = this.cert.verifyUrl;
             if (url) qrSvg(url, 4).then((svg) => { if (this.cert && this.cert.verifyUrl === url) this.certQr = svg; }).catch(() => { this.certQr = ''; });
-            window.Alpine?.nextTick(() => window.renderIcons?.());
+            window.Alpine?.nextTick(() => {
+                window.renderIcons?.();
+                // The page opens at its top (the seal and the title), not
+                // wherever the window was last scrolled to.
+                for (let el = document.getElementById('welfare-cert-sheet')?.parentElement; el && el !== document.body; el = el.parentElement) {
+                    if (el.scrollTop) el.scrollTop = 0;
+                }
+            });
         },
         printCertificate() {
             const sheet = document.getElementById('welfare-cert-sheet');

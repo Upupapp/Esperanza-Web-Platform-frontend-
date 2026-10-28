@@ -100,7 +100,7 @@
                         <td class="px-4 py-3 align-top hidden md:table-cell text-right text-xs font-semibold tabular-nums text-slate-700" x-text="peso(r.amount) || '—'"></td>
                         <td class="px-4 py-3 align-top hidden xl:table-cell text-xs text-ink-muted" x-text="r.rendered_by_name || '—'"></td>
                         <td class="px-4 py-3 align-top text-right">
-                            <button type="button" x-show="srCanVoid() && !r.voided_at" @click="r._voiding = !r._voiding; r._reason = ''" :aria-expanded="r._voiding" class="text-xs font-medium text-rose-600 hover:underline">Void</button>
+                            <button type="button" x-show="srCanVoid() && !r.voided_at" @click="r._voiding = !r._voiding; r._reason = ''" :aria-expanded="r._voiding" class="text-xs font-medium text-ink-muted hover:text-rose-700 hover:underline" title="Void this record, with a reason (it stays on file)">Void…</button>
                         </td>
                     </tr>
                     <tr x-show="r.voided_at" class="lg:hidden"><td colspan="7" class="px-4 pb-2 text-[11px] text-rose-700" x-text="'Voided ' + day(r.voided_at) + (r.void_reason ? ': ' + r.void_reason : '')"></td></tr>

@@ -408,7 +408,10 @@ export function tulongApply() {
                     window.dispatchEvent(new CustomEvent('welfare-session-changed', { detail: { ref: sessionRef, session: data.participants ? data : null } }));
                 } else {
                     toast((data.ref ? data.ref + ' filed' : 'Filed') + ' for ' + (data.applicant || this.pName()) + '.');
-                    if (typeof this.openFiledCase === 'function') this.openFiledCase(data);
+                    // To the page by an event, never through this window's scope:
+                    // there the case window's `this.open = true` would land on
+                    // this window's own open setter and open it again.
+                    window.dispatchEvent(new CustomEvent('tulong-case-filed', { detail: data }));
                 }
             } catch (err) {
                 this.apError = says(err, 'Could not file the request.');

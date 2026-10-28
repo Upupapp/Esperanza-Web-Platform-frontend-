@@ -154,7 +154,7 @@
                         <li x-show="sdType(ses.service_key)?.certificate?.requiresAccreditation">This certificate needs a counselor with a DSWD accreditation valid on the session day; it is printed with their name and number.</li>
                         <li>The attendance on screen is saved first. Finishing cannot be undone.</li>
                     </ul>
-                    <p class="text-xs font-semibold text-emerald-900" x-text="sdCases().filter((c) => c.complete).length + ' case(s) will receive a certificate; ' + sdCases().filter((c) => !c.complete).length + ' will wait for a new session.'"></p>
+                    <p class="text-xs font-semibold text-emerald-900" x-text="((n, m) => (n === 1 ? '1 case receives' : n + ' cases receive') + ' a certificate; ' + (m === 0 ? 'none waits' : (m === 1 ? '1 case waits' : m + ' cases wait')) + ' for a new session.')(sdCases().filter((c) => c.complete).length, sdCases().filter((c) => !c.complete).length)"></p>
                     <ul class="text-[11px] text-emerald-900 space-y-0.5 max-h-32 overflow-y-auto">
                         <template x-for="c in sdCases()" :key="c.ref || c.names.join()">
                             <li x-text="(c.complete ? '✓ ' : '✗ ') + c.names.join(' and ') + (c.ref ? ' (' + c.ref + ')' : '')"></li>

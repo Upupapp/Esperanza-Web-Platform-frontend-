@@ -63,7 +63,11 @@
 @endphp
 
 <x-layouts.admin title="Tulong" subtitle="Review and manage citizen assistance requests." active="assistance-requests">
+    {{-- A case filed in Apply for New Tulong arrives by a window event: called
+         through the Apply window's own scope, openRequest()'s `this.open = true`
+         landed on that window's open setter and reopened it (2026-10-29). --}}
     <div
+        x-on:tulong-case-filed.window="openFiledCase($event.detail)"
         x-data="{
             tab: 'all',
             // Cases | Sessions | Services rendered (welfare round, 2026-10-29):
