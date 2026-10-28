@@ -78,17 +78,22 @@
                     <a x-show="holder?.individual_ref" :href="recordHref(holder?.individual_ref)" class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline"><i data-lucide="user-round-search" class="w-4 h-4"></i>Open the resident record</a>
                 </div>
 
-                {{-- The paper that was scanned --}}
+                {{-- The paper that was scanned. Labelled apart from the IDs on
+                     the record below: the same PWD ID showed twice, once by its
+                     control number and once by its PWD number, and read as a
+                     duplicate (frame review, 2026-10-29). --}}
+                <p x-show="doc" class="text-[11px] font-extrabold uppercase tracking-[.08em] text-ink-muted -mb-1">The document scanned</p>
                 <div x-show="doc" class="rounded-2xl border border-brand-600/10 bg-white px-4 py-3 flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <p class="text-sm font-semibold text-ink break-words" x-text="doc?.title || 'Document'"></p>
-                        <p class="text-xs font-mono text-ink-body" x-show="doc?.control_number" x-text="doc?.control_number"></p>
+                        <p class="text-xs font-mono text-ink-body" x-show="doc?.control_number" x-text="'Control No. ' + doc?.control_number"></p>
                         <p class="text-[11px] text-ink-muted" x-show="doc?.valid_until" x-text="'Valid until ' + doc?.valid_until"></p>
                     </div>
                     <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset" :class="docState.tone" x-text="docState.label"></span>
                 </div>
 
                 {{-- The sector IDs the LGU released to the holder --}}
+                <p x-show="sectors.length" class="text-[11px] font-extrabold uppercase tracking-[.08em] text-ink-muted -mb-1">IDs on the person's record</p>
                 <ul x-show="sectors.length" class="rounded-2xl border border-brand-600/10 bg-white divide-y divide-brand-600/[.08]" aria-label="IDs issued by the LGU">
                     <template x-for="s in sectors" :key="s.key">
                         <li class="px-4 py-2.5 flex items-start justify-between gap-3">

@@ -26,11 +26,11 @@
 
                 {{-- The preview: a sample photo as uploaded, with the mark where the server puts it --}}
                 <figure class="space-y-1.5">
-                    <div class="relative rounded-2xl overflow-hidden bg-slate-200 aspect-[1537/1023]" data-testid="watermark-preview">
+                    <div class="relative rounded-2xl overflow-hidden bg-slate-200 aspect-[4/3]" data-testid="watermark-preview">
                         {{-- Drawn only while the window is open: the photo and the seal are not loaded with the page. --}}
                         <template x-if="wmOpen">
                         <div class="absolute inset-0">
-                        <img src="{{ asset('images/esperanza/esperanza_community1.jpg') }}" alt="Sample photo: residents of Esperanza" class="absolute inset-0 w-full h-full object-cover">
+                        <img src="{{ asset('images/esperanza/esperanza-aerial.jpg') }}" alt="Sample photo: the coast of Esperanza from above" class="absolute inset-0 w-full h-full object-cover">
                         <div x-show="wm.enabled && wm.mark === 'seal'" class="absolute" :style="wmBox()" aria-hidden="true">
                             <img src="{{ asset('images/esperanza/esperanza-seal.png') }}" alt="" class="block w-full h-auto p-[3.1%] drop-shadow-[0_1px_4px_rgb(0_0_0/.45)]">
                         </div>
@@ -42,7 +42,7 @@
                         </div>
                         </template>
                     </div>
-                    <figcaption class="text-[11px] text-ink-muted" x-text="wm.enabled ? 'Preview: a 1537 × 1023 photo as residents will see it.' : 'No watermark: photos are posted as uploaded.'"></figcaption>
+                    <figcaption class="text-[11px] text-ink-muted" x-text="wm.enabled ? 'Preview: a 2000 × 1500 photo as residents will see it.' : 'No watermark: photos are posted as uploaded.'"></figcaption>
                 </figure>
 
                 <fieldset :disabled="!wm.enabled" class="space-y-2 disabled:opacity-50">

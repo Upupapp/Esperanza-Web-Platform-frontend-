@@ -714,7 +714,8 @@ const WATERMARK_GEOMETRY = {
     wordmark_max_width_ratio: 0.5,
 };
 // The sample photo's own size, so the preview is the photo as uploaded.
-const SAMPLE_PHOTO = { src: '/images/esperanza/esperanza_community1.jpg', width: 1537, height: 1023 };
+// No people in the sample (a review found identifiable residents in the first one, 2026-10-29).
+const SAMPLE_PHOTO = { src: '/images/esperanza/esperanza-aerial.jpg', width: 2000, height: 1500 };
 // backend resources/branding/watermark-wordmark.png (seal + two lines of words).
 const WORDMARK_ASPECT = 1053 / 228;
 
