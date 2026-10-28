@@ -32,13 +32,16 @@
             },
             officeColors: { MHRMO: '#2f62f5', MGSO: '#f59e0b', Agriculture: '#22c55e', MSWD: '#a855f7' },
             severityColors: { Critical: '#e11d48', High: '#f97316', Medium: '#f59e0b', Low: '#64748b' },
+            get mayRuns() { return this.$store.session.canPerm('rep_population', 'view'); },
             async init() {
                 this.loading = true;
                 this.failed = false;
                 try {
+                    // Only what this account may read: a refused call shows a
+                    // permission notice (Department Staff, 2026-10-28).
                     const [reportsRes, runsRes] = await Promise.all([
                         $api.get('/admin/reports'),
-                        $api.get('/admin/reports/runs', { params: { per_page: 10 } }).catch(() => ({ data: [] })),
+                        this.mayRuns ? $api.get('/admin/reports/runs', { params: { per_page: 10 } }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
                     ]);
                     this.reports = reportsRes.data || [];
                     this.printable = reportsRes.meta?.printable || null;
@@ -47,7 +50,8 @@
                 this.loadAnalytics();
             },
             async loadAnalytics() {
-                const get = (key) => $api.get('/admin/reports/' + key).then(r => r.data).catch(() => null);
+                // GET /admin/reports lists only the reports this account may view.
+                const get = (key) => (this.reports.some((r) => r.key === key) ? $api.get('/admin/reports/' + key).then(r => r.data).catch(() => null) : Promise.resolve(null));
                 const [dash, doc, assist, sat, forms, sakuna, brgy, rev] = await Promise.all([
                     $api.get('/admin/dashboard').then(r => r.data).catch(() => null),
                     get('document_requests_summary'), get('assistance_programs'), get('citizen_satisfaction'),
@@ -277,6 +281,7 @@
                 </template>
             </div>
 
+            <div x-show="mayRuns">
             <h3 class="text-base font-extrabold text-ink mb-3">Recently Generated</h3>
             <x-ui.table>
                 <thead>
@@ -308,6 +313,7 @@
                     <tr x-show="!runs.length"><td colspan="6" class="px-4 py-6 text-center text-xs text-ink-muted">No reports generated yet.</td></tr>
                 </tbody>
             </x-ui.table>
+            </div>
             </div>
         </div>
 
