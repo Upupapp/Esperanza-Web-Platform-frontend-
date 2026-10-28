@@ -200,8 +200,22 @@ function postForm(post = null, barangays = [], ownBarangay = null) {
         schedule: !!post?.publish_at && instant(post.publish_at) > Date.now(),
         publish_date: at.date,
         publish_time: at.time || '08:00',
+        // Also post on Facebook when published: the writer's choice, or null
+        // to follow the Page's default sharing (welfare round 2026-10-29).
+        fb_share: typeof post?.facebook?.share === 'boolean' ? post.facebook.share : null,
     };
 }
+
+// A post's Facebook status as a chip (welfare round 2026-10-29), from the
+// row's `facebook: {share, status, permalink, error, posted_at}`.
+const FACEBOOK_CHIPS = {
+    pending: { label: 'Waiting to post on Facebook', tone: 'bg-sky-50 text-sky-800 ring-sky-200' },
+    posting: { label: 'Posting to Facebook…', tone: 'bg-sky-50 text-sky-800 ring-sky-200' },
+    posted: { label: 'Posted on Facebook', tone: 'bg-emerald-50 text-emerald-800 ring-emerald-200' },
+    failed: { label: 'Facebook: failed', tone: 'bg-rose-50 text-rose-800 ring-rose-200' },
+    notShared: { label: 'Not shared on Facebook', tone: 'bg-slate-100 text-slate-700 ring-slate-200' },
+    planned: { label: 'Goes to Facebook when published', tone: 'bg-slate-100 text-slate-700 ring-slate-200' },
+};
 
 /** The Balita tab: one feed of LGU posts on Draft -> Review -> Publish -> Archive. */
 function adminBalita(barangays = []) {
@@ -235,6 +249,14 @@ function adminBalita(barangays = []) {
         rejectReason: '',
         // How many posts the feed shows; Show more adds ten (redesign 2026-10-26).
         shown: 10,
+        // The Facebook Page connection, without its token (GET
+        // /admin/integrations/facebook), or null when it could not be read.
+        fb: null,
+        fbBusy: null,
+        // Delete asks in the page, with "Also remove it from Facebook".
+        delOpen: false,
+        delPost: null,
+        delFromFb: false,
 
         init() {
             // A new filter starts the feed at the top again.
@@ -244,12 +266,14 @@ function adminBalita(barangays = []) {
             this.loading = true;
             this.failed = false;
             try {
-                const [res, summary] = await Promise.all([
+                const [res, summary, fb] = await Promise.all([
                     api.getAll('/admin/announcements'),
                     api.get('/admin/announcements/summary').catch(() => null),
+                    api.get('/admin/integrations/facebook').catch(() => null),
                 ]);
                 this.posts = res.data || [];
                 this.summary = summary?.data || null;
+                this.fb = fb?.data || null;
             } catch {
                 this.failed = true;
             } finally {
@@ -449,6 +473,7 @@ function adminBalita(barangays = []) {
                 const res = await api.post('/admin/announcements', {
                     title: this.form.title.trim(), body: this.form.body.trim(), category: this.form.category,
                     barangay, official: true, media_ids: this.media.ids, publish_at: publishAt,
+                    ...(this.fbOffered() ? { facebook_share: this.fbShareChecked() } : {}),
                 });
                 return res.data;
             }
@@ -459,6 +484,7 @@ function adminBalita(barangays = []) {
             if (barangay !== (post.barangay || null)) changes.barangay = barangay;
             if (!sameIds(this.media.ids, (post.media || []).map((m) => m.id))) changes.media_ids = this.media.ids;
             if ((publishAt ? instant(publishAt) : null) !== (post.publish_at ? instant(post.publish_at) : null)) changes.publish_at = publishAt;
+            if (this.fbOffered() && this.form.fb_share !== null && this.form.fb_share !== (post.facebook?.share ?? null)) changes.facebook_share = this.form.fb_share;
             if (Object.keys(changes).length) await api.put('/admin/announcements/' + post.id, changes);
             return post;
         },
@@ -602,12 +628,22 @@ function adminBalita(barangays = []) {
                 this.processing = false;
             }
         },
-        async deletePost(post) {
-            if (this.processing || !window.confirm('Delete "' + post.title + '" for good? Its comments and likes go with it. This cannot be undone.')) return;
+        // Asked in the page: a post that is on Facebook may go from there too.
+        deletePost(post) {
+            if (this.processing) return;
+            this.delPost = post;
+            this.delFromFb = false;
+            this.delOpen = true;
+        },
+        async confirmDelete() {
+            const post = this.delPost;
+            if (this.processing || !post) return;
             this.processing = true;
             try {
-                await api.delete('/admin/announcements/' + post.id);
-                balitaToast('Deleted.');
+                const onFacebook = post.facebook?.status === 'posted';
+                await api.delete('/admin/announcements/' + post.id, onFacebook && this.delFromFb ? { params: { delete_on_facebook: 1 } } : undefined);
+                this.delOpen = false;
+                balitaToast(onFacebook && this.delFromFb ? 'Deleted here and on Facebook.' : 'Deleted.');
                 await this.load();
             } catch (err) {
                 balitaToast(errText(err, 'Could not delete this post.'), 'error');
@@ -620,6 +656,46 @@ function adminBalita(barangays = []) {
         },
         cover(post) { return (post.media || [])[0] || null; },
         when,
+
+        // -- Facebook (welfare round 2026-10-29)
+        fbConnected() { return !!(this.fb && (this.fb.connected ?? this.fb.page_id)); },
+        // The editor's tick box: only while a Page is connected and posts there by itself.
+        fbOffered() { return this.fbConnected() && this.fb.auto_post !== false; },
+        fbPageName() { return this.fb?.page_name || 'the Facebook Page'; },
+        // What the box starts as: the Page's default sharing for this audience.
+        fbDefault() {
+            const share = this.fb?.default_share || 'municipal';
+            if (share === 'all') return true;
+            if (share === 'none') return false;
+            return !this.ownBarangay && this.form.audience !== 'Barangay';
+        },
+        fbShareChecked() { return this.form.fb_share === null ? this.fbDefault() : this.form.fb_share; },
+        fbChip(post) {
+            const f = post.facebook || {};
+            if (['pending', 'posting', 'posted', 'failed'].includes(f.status)) {
+                return { kind: f.status, ...FACEBOOK_CHIPS[f.status], error: f.error || '', permalink: f.permalink || '' };
+            }
+            if (!this.fbConnected()) return null;
+            if (post.status === 'Released') return { kind: 'notShared', ...FACEBOOK_CHIPS.notShared, error: '', permalink: '' };
+            if (f.share === true && !['Archived', 'Rejected'].includes(post.status)) return { kind: 'planned', ...FACEBOOK_CHIPS.planned, error: '', permalink: '' };
+            return null;
+        },
+        // Post now, or again after a failure (POST /admin/announcements/{id}/facebook).
+        fbMayPost(post) { return this.approver && post.status === 'Released' && this.fbConnected() && this.fb?.status !== 'token_problem'; },
+        async fbPost(post) {
+            if (this.fbBusy) return;
+            this.fbBusy = post.id;
+            try {
+                const res = await api.post('/admin/announcements/' + post.id + '/facebook');
+                const d = res?.data || {};
+                post.facebook = d.facebook || (d.status ? d : { ...(post.facebook || {}), status: 'pending', error: null });
+                balitaToast('Sent to Facebook. It goes up within a minute or two.');
+            } catch (err) {
+                balitaToast(errText(err, 'Could not send this post to Facebook.'), 'error');
+            } finally {
+                this.fbBusy = null;
+            }
+        },
     };
 }
 

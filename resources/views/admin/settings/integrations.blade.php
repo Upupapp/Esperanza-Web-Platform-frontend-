@@ -4,8 +4,15 @@
      Anyone else is told where to find it. This was a static list that called
      GCash and an SMS gateway "Approved" though neither exists (docs review,
      scope round 2026-10-15). integrationsTab in
-     resources/js/scope-admin-settings.js. --}}
-<div x-data="integrationsTab" x-show="tab === 'integrations'" x-cloak x-effect="tab === 'integrations' && start()">
+     resources/js/scope-admin-settings.js.
+
+     The Facebook Page card (welfare round 2026-10-29) is for the officers who
+     approve Balita (comm_news approve) and technical administrators
+     (set_system), so this tab is included outside the Settings-only block:
+     an approver without Settings sees that card and nothing else here. --}}
+<div x-show="tab === 'integrations'" x-cloak class="space-y-4">
+    <template x-if="$store.session.can('settings')">
+    <div x-data="integrationsTab" x-effect="tab === 'integrations' && start()">
     <x-ui.card>
         <h3 class="text-sm font-semibold text-ink mb-1">Connected Services</h3>
         <p class="text-xs text-ink-muted mb-4">As the server is set up now. Keys and passwords are never shown.</p>
@@ -37,4 +44,8 @@
             </div>
         </div>
     </x-ui.card>
+    </div>
+    </template>
+
+    @include('admin.settings.facebook-page')
 </div>

@@ -74,6 +74,15 @@
                     <p class="text-[11px] text-ink-muted mt-1.5">A share of the photo's shorter side, so a portrait and a landscape photo carry the same mark. Photos smaller than 320 pixels on a side are left as they are.</p>
                 </fieldset>
             </section>
+
+            {{-- The Facebook Page lives in Settings > Integrations (welfare round 2026-10-29). --}}
+            <section aria-labelledby="wm-fb-heading" class="pt-4 border-t border-brand-600/10 flex flex-wrap items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <h4 id="wm-fb-heading" class="text-sm font-bold text-ink flex items-center gap-1.5"><x-balita.fb-mark class="w-4 h-4 text-[#1877F2]" />Facebook Page</h4>
+                    <p class="text-xs text-ink-muted mt-0.5" x-text="fbConnected() ? ('Connected as ' + fbPageName() + (fb.status === 'token_problem' ? '. The connection needs attention.' : (fb.auto_post === false ? '. Auto-post is off.' : '. Published posts go there by themselves.'))) : 'Not connected. Balita posts are not shared to Facebook.'"></p>
+                </div>
+                <a href="{{ route('admin.settings') }}?tab=integrations" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">Settings › Integrations<i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+            </section>
         </div>
 
         <x-slot:footer>
