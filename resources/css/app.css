@@ -1020,6 +1020,190 @@ body.dp-printing #dp-print-area:has(.rep-paper) {
     }
 }
 
+/* The e-certificate of a group session (welfare round, 2026-10-29;
+   components/welfare/certificate.blade.php): one A4 LANDSCAPE sheet, unlike
+   the portrait .doc-paper. Every size inside is in cqw - a share of the
+   paper's own width - so the same sheet reads the same in a phone-wide
+   preview, on the 297mm printed page and in the PDF (html2canvas reads the
+   sizes the browser already worked out). Printing, it takes its own named
+   page, as the landscape report does. */
+.cert-paper {
+    container-type: inline-size;
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 297mm;
+    aspect-ratio: 297 / 210;
+    margin: 0 auto;
+    background: #fff;
+    color: #1a1a1a;
+    font-family: Georgia, 'Times New Roman', serif;
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgb(11 23 48 / 0.12), 0 8px 24px rgb(11 23 48 / 0.08);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}
+.cert-frame {
+    position: absolute;
+    inset: 2.2cqw;
+    border: 0.45cqw double #1f3a68;
+    padding: 2.2cqw 4cqw 1.8cqw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.cert-head {
+    display: flex;
+    align-items: center;
+    gap: 2cqw;
+}
+.cert-seal {
+    width: 8.5cqw;
+    height: 8.5cqw;
+    object-fit: contain;
+}
+.cert-lgu {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.15cqw;
+    line-height: 1.35;
+    color: #333;
+}
+.cert-lgu strong {
+    display: block;
+    font-size: 1.5cqw;
+    color: #111;
+    letter-spacing: 0.04em;
+}
+.cert-title {
+    margin-top: 2.4cqw;
+    font-size: 3.6cqw;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1f3a68;
+    line-height: 1.1;
+}
+.cert-subtitle {
+    margin-top: 0.6cqw;
+    font-size: 1.45cqw;
+    font-style: italic;
+    color: #444;
+}
+.cert-body {
+    margin-top: 2.4cqw;
+    max-width: 82cqw;
+    font-size: 1.55cqw;
+    line-height: 1.6;
+    text-align: justify;
+    text-align-last: center;
+}
+.cert-body strong {
+    font-size: 1.75cqw;
+    color: #111;
+}
+.cert-given {
+    margin-top: 1.4cqw;
+    font-size: 1.3cqw;
+    color: #333;
+}
+.cert-signs {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.6cqw 4cqw;
+    width: 100%;
+}
+.cert-sign {
+    min-width: 20cqw;
+    max-width: 28cqw;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.cert-sign-name {
+    border-bottom: 0.12cqw solid #111;
+    padding-bottom: 0.3cqw;
+    font-size: 1.3cqw;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.cert-sign-pos {
+    margin-top: 0.3cqw;
+    font-size: 1.05cqw;
+    color: #333;
+}
+.cert-sign-acc {
+    font-size: 0.95cqw;
+    color: #444;
+}
+.cert-foot {
+    margin-top: 1.6cqw;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2cqw;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.95cqw;
+    color: #444;
+    text-align: left;
+}
+.cert-qr {
+    width: 8cqw;
+    height: 8cqw;
+    flex-shrink: 0;
+}
+.cert-qr svg {
+    width: 100%;
+    height: 100%;
+}
+.cert-void {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    font: 700 9cqw/1 Arial, Helvetica, sans-serif;
+    color: rgb(190 18 60 / 0.18);
+    transform: rotate(-18deg);
+    letter-spacing: 0.1em;
+}
+body.dp-printing #dp-print-area:has(.cert-paper) {
+    width: 297mm !important;
+}
+body.dp-printing .cert-paper {
+    width: 297mm !important;
+    max-width: none !important;
+    height: 210mm !important;
+    aspect-ratio: auto !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+/* Download PDF only: one row short of the page, so no blank second page
+   (the same rounding as the portrait paper's 296mm above). */
+body.dp-printing .html2pdf__container .cert-paper {
+    height: 209.5mm !important;
+}
+@media print {
+    @page cert-landscape {
+        size: A4 landscape;
+        margin: 0;
+    }
+    html:has(body.dp-printing .cert-paper),
+    html:has(body.dp-printing .cert-paper) body {
+        width: 297mm !important;
+        min-width: 297mm !important;
+    }
+    body.dp-printing #dp-print-area:has(.cert-paper) {
+        width: 297mm !important;
+    }
+    body.dp-printing .cert-paper {
+        page: cert-landscape;
+        break-inside: avoid-page;
+    }
+}
+
 /* The connection notice (scope round 2026-10-15): fixed at the top of every
    page while the browser is offline, green for a moment when it is back. */
 .offline-bar {

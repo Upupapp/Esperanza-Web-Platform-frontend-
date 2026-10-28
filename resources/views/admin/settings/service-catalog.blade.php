@@ -64,7 +64,7 @@
                         <tr class="hover:bg-white/60 transition-colors cursor-pointer group" @click="edit(s)">
                             <td class="px-4 py-3 min-w-[11rem]">
                                 <p class="text-slate-700 font-medium group-hover:text-brand-600 transition-colors" x-text="s.name"></p>
-                                <p class="text-[11px] text-ink-muted" x-text="kindLabel(s.type) + (s.category ? ' · ' + s.category : '')"></p>
+                                <p class="text-[11px] text-ink-muted" x-text="kindLabel(s.type) + (s.category ? ' · ' + s.category : '') + (s.staff_only ? ' · Office only' : '') + (s.sensitive ? ' · Confidential' : '')"></p>
                                 <p class="text-[11px] text-ink-muted md:hidden" x-text="s.office"></p>
                                 <p class="text-[11px] text-ink-muted sm:hidden" x-text="(s.fee || 'No fee set') + (s.days ? ' · ' + s.days : '')"></p>
                             </td>
@@ -108,6 +108,10 @@
                     <div class="flex flex-wrap gap-1.5">
                         <span class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-brand-50 text-brand-700" x-text="kindLabel(svc.type)"></span>
                         <span class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-slate-100 text-slate-600" x-text="'Version ' + (svc.current?.version || 1)"></span>
+                        {{-- The welfare round's marks (2026-10-29): filed by officers only, records kept to the office. --}}
+                        <span x-show="svc.staff_only" x-cloak class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-amber-50 text-amber-700" title="Filed only by officers; residents do not see it in their list.">Office only</span>
+                        <span x-show="svc.sensitive" x-cloak class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-rose-50 text-rose-700" title="Its records are shown only to officers of its own office.">Confidential</span>
+                        <span x-show="['counseling', 'session', 'referral'].includes(svc.processing_kind)" x-cloak class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-indigo-50 text-indigo-700" x-text="({ counseling: 'Counseling', session: 'Group session', referral: 'Letter or report' })[svc.processing_kind] || ''"></span>
                         <span class="text-[11px] font-semibold rounded-full px-2 py-0.5" :class="svc.active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'" x-text="svc.active ? 'Offered' : 'Switched off'"></span>
                     </div>
                 </div>
