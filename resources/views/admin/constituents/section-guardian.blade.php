@@ -2,7 +2,8 @@
      minor or a PWD found alone. GET /admin/residents/{ref} carries
      `guardian_applicable` and `guardian` ({name, relationship, contact, address,
      source, individual_ref, updated_by, updated_at}; contact and address come
-     only with view_sensitive). An officer with const_resident edit sets one -
+     only with view_sensitive; `guardian_withheld_on_scan` when an ID scan
+     withholds it). An officer with const_resident edit sets one -
      typed, or another registry record found by search, whose name is copied -
      or clears it, after which the other sources (the ID application, the
      household) answer again. PUT / DELETE /admin/residents/{ref}/guardian.
@@ -49,6 +50,8 @@
         </template>
         <p x-show="!gdCurrent && selectedIndividual?.guardian_applicable" class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">No guardian on record. A minor or a PWD found alone is easier to bring home with one.</p>
         <p x-show="!gdCurrent && !selectedIndividual?.guardian_applicable" class="text-xs text-ink-muted">None recorded. A guardian matters most for a minor or a PWD; you can still record one.</p>
+        {{-- guardian_withheld_on_scan: the record still shows it to the officers who keep it. --}}
+        <p x-show="selectedIndividual?.guardian_withheld_on_scan" class="mt-2 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 flex items-start gap-1.5"><i data-lucide="shield-alert" class="w-3.5 h-3.5 shrink-0 mt-px"></i><span>An ID scan does not show the guardian's contact while the MSWDO handles a case for this person.</span></p>
     </div>
 
     {{-- Setting one --}}
