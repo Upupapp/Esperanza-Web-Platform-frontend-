@@ -323,8 +323,9 @@ function endSession() {
  * call it. This title-cases the key so every account always has SOMETHING to
  * show immediately after login, independent of what that account can see.
  */
-// A role whose label is not its key in words (owner, 2026-10-21).
-const ROLE_LABELS = { info_officer: 'Municipal Information Officer' };
+// A role whose label is not its key in words (owner, 2026-10-21); the
+// MDRRMO's roles, made in Users -> Roles, keep their acronym (2026-10-28).
+const ROLE_LABELS = { info_officer: 'Municipal Information Officer', mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff' };
 
 function formatRoleLabel(roleKey) {
     if (!roleKey) return '';
@@ -777,12 +778,13 @@ document.addEventListener('alpine:init', () => {
             return this.account.scope === barangay;
         },
         // Department-based row visibility for Dokyu/Tulong, mirroring inScope()
-        // above. Only Department Head / Department Staff are office-restricted —
-        // Front Desk, Records Officer, Municipal/Super Admin see across offices
-        // (per the Dokyu & Tulong routing plan's role x scope matrix).
+        // above. Only Department Head / Department Staff (and the MDRRMO's own
+        // roles, 2026-10-28) are office-restricted — Front Desk, Records
+        // Officer, Municipal/Super Admin see across offices (per the Dokyu &
+        // Tulong routing plan's role x scope matrix; backend Scope.php).
         inDeptScope(office) {
             if (!this.account) return false;
-            if (!['department_head', 'department_staff'].includes(this.account.roleKey)) return true;
+            if (!['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff'].includes(this.account.roleKey)) return true;
             return this.account.dept === office;
         },
         // Report-download gate: true if the account has 'export' on any

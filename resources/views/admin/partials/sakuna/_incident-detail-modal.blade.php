@@ -227,10 +227,10 @@
                 <div class="flex items-center gap-2">
                     <select aria-label="Assign to" x-model="assignTo" class="flex-1 text-xs rounded-xl border border-violet-200 py-1.5 px-2">
                         <option value="">Select…</option>
-                        <template x-for="p in personnel" :key="p.id"><option :value="p.id" x-text="p.name + ' (' + p.employee_id + ')'"></option></template>
+                        <template x-for="p in personnel.filter(p => p.scope === 'Municipal' || p.scope === selectedIncident?.barangay)" :key="p.id"><option :value="p.id" x-text="p.name + ' (' + p.employee_id + ') - ' + p.role"></option></template>
                     </select>
                 </div>
-                <p x-show="!$store.session.canPerm('um_personnel', 'view')" class="text-xs text-violet-800">Your role cannot see the staff list; ask an administrator to assign this incident.</p>
+                <p class="text-xs text-violet-800">Only officers who can see incidents in this barangay are listed.</p>
                 <div class="flex gap-2">
                     <button :disabled="!assignTo" @click="actIncidentVerb(selectedIncident, 'assign', { assigned_to: assignTo }); assignTo = ''" class="px-3 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors disabled:opacity-40">Confirm Assignment</button>
                     <button @click="showAssignForm = false" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 border border-slate-200 rounded-xl transition-colors">Cancel</button>

@@ -64,7 +64,7 @@ class FullQaRunFixesTest extends TestCase
     /** Constituents and the Command Center asked every role for the personnel list. */
     public function test_no_page_asks_for_the_personnel_list_without_the_permission(): void
     {
-        foreach (['resources/views/admin/constituents.blade.php', 'resources/views/admin/sakuna.blade.php'] as $path) {
+        foreach (['resources/views/admin/constituents.blade.php'] as $path) {
             $view = $this->source($path);
             preg_match_all("/(.{0,60})\\\$api\\.getAll\\('\\/admin\\/users'\\)/", $view, $m);
             $this->assertNotEmpty($m[1], $path);
@@ -73,7 +73,10 @@ class FullQaRunFixesTest extends TestCase
             }
         }
 
+        // Sakuna's Assign picker asks its own list since 2026-10-28, behind assign.
         $sakuna = $this->source('resources/views/admin/sakuna.blade.php');
+        $this->assertStringNotContainsString("/admin/users'", $sakuna);
+        $this->assertSame(2, substr_count($sakuna, "canPerm('sakuna_incidents', 'assign') ? \$api.get('/admin/sakuna/assignees')"));
         $this->assertStringContainsString('mayListCenters()', $sakuna, 'the centers list for check-in and transfer pickers is asked for only when allowed');
         $this->assertStringContainsString("this.allowed('sakuna_incidents') ? \$api.getAll('/admin/sakuna/incidents')", $sakuna);
     }

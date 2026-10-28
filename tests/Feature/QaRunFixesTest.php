@@ -231,9 +231,35 @@ class QaRunFixesTest extends TestCase
     {
         $page = $this->source('resources/views/admin/sakuna.blade.php');
         $this->assertStringContainsString('async loadPersonnel() {', $page);
-        $this->assertStringContainsString("const res = await (this.\$store.session.canPerm('um_personnel', 'view') ? \$api.getAll('/admin/users') : this.nothing());", $page);
+        $this->assertStringContainsString("const res = await (this.\$store.session.canPerm('sakuna_incidents', 'assign') ? \$api.get('/admin/sakuna/assignees') : this.nothing());", $page);
         $modal = $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php');
         $this->assertStringContainsString('@click="showAssignForm = !showAssignForm; showEscalateForm = false; loadPersonnel()"', $modal);
-        $this->assertStringContainsString('ask an administrator to assign this incident', $modal);
+        $this->assertStringNotContainsString('ask an administrator to assign this incident', $modal);
+    }
+
+    /**
+     * 2026-10-28 (owner): an MDRRMO Head holds Sakuna but not User Management,
+     * and still picks a person. The picker reads Sakuna's own list and offers
+     * only officers who cover the incident's barangay.
+     */
+    public function test_assign_picker_reads_the_sakuna_list(): void
+    {
+        $modal = $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php');
+        $this->assertStringContainsString("personnel.filter(p => p.scope === 'Municipal' || p.scope === selectedIncident?.barangay)", $modal);
+        $this->assertStringContainsString("') - ' + p.role", $modal);
+        $this->assertStringNotContainsString("canPerm('um_personnel'", $modal);
+    }
+
+    /**
+     * 2026-10-28: the MDRRMO's roles, made in Users -> Roles, read "MDRRMO
+     * Head" rather than "Mdrrmo Head", are office-restricted like a
+     * department (backend Scope.php), and the Head is told what Balita is for.
+     */
+    public function test_mdrrmo_roles_are_named_and_kept_to_their_office(): void
+    {
+        $app = $this->source('resources/js/app.js');
+        $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff'", $app);
+        $this->assertStringContainsString("['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff'].includes(this.account.roleKey)", $app);
+        $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts", $this->source('resources/views/admin/communications.blade.php'));
     }
 }
