@@ -23,7 +23,11 @@
         </div>
         <div class="flex flex-wrap items-center justify-between gap-3">
             <x-admin.dashboards.period-picker />
-            <p class="text-[12.5px] font-semibold text-ink-muted" x-show="data" x-text="data ? 'Period: ' + data.period.label : ''"></p>
+            <div class="flex flex-wrap items-center gap-3">
+                <p class="text-[12.5px] font-semibold text-ink-muted" x-show="data" x-text="data ? 'Period: ' + data.period.label : ''"></p>
+                {{-- The Barangay Summary Report: this dashboard on paper, with its graphs (2026-10-28). --}}
+                <x-ui.button icon="file-down" x-show="summary && data" x-cloak @click="print('brgy_summary')">Download report</x-ui.button>
+            </div>
         </div>
     </div>
 

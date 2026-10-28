@@ -14,7 +14,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <label class="sr-only" for="dept-office">Office</label>
-                <select id="dept-office" x-show="choosesOffice" x-model="office" @change="barangay = ''; load()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[380px]">
+                <select id="dept-office" x-show="choosesOffice" x-model="office" @change="officeChanged()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[380px]">
                     <template x-for="o in subjects.offices" :key="o.name">
                         <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
                     </template>
@@ -30,7 +30,47 @@
         </div>
         <div class="flex flex-wrap items-center justify-between gap-3">
             <x-admin.dashboards.period-picker />
-            <p class="text-[12.5px] font-semibold text-ink-muted" x-show="data" x-text="data ? 'Period: ' + data.period.label : ''"></p>
+            <div class="flex flex-wrap items-center gap-3">
+                <p class="text-[12.5px] font-semibold text-ink-muted" x-show="data" x-text="data ? 'Period: ' + data.period.label : ''"></p>
+                {{-- The Summary Report: this dashboard on paper, with its graphs,
+                     as narrowed now; preview, then PDF, Excel or print. --}}
+                <x-ui.button icon="file-down" x-show="summary && data" x-cloak @click="print('dept_summary')">Download report</x-ui.button>
+            </div>
+        </div>
+        {{-- Narrow the dashboard and its reports (2026-10-28): one program,
+             and who was helped. --}}
+        <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-brand-600/[.08]">
+            <span class="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted mr-1"><i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>Filter</span>
+            <label class="sr-only" for="dept-service">Program or document</label>
+            <select id="dept-service" x-model="service" @change="changed()" x-show="services.length > 1" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[260px]">
+                <option value="" x-text="hasTulong && hasDokyu ? 'All programs and documents' : (hasTulong ? 'All programs' : 'All documents')"></option>
+                <template x-for="o in services" :key="o.key">
+                    <option :value="o.key" x-text="o.name" :selected="o.key === service"></option>
+                </template>
+            </select>
+            <label class="sr-only" for="dept-sex">Sex</label>
+            <select id="dept-sex" x-model="sex" @change="changed()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                <option value="">Any sex</option>
+                <template x-for="o in sexOptions" :key="o.value">
+                    <option :value="o.value" x-text="o.label" :selected="o.value === sex"></option>
+                </template>
+            </select>
+            <label class="sr-only" for="dept-age">Age group</label>
+            <select id="dept-age" x-model="age" @change="changed()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                <option value="">Any age</option>
+                <template x-for="o in ageOptions" :key="o.value">
+                    <option :value="o.value" x-text="o.label" :selected="o.value === age"></option>
+                </template>
+            </select>
+            <label class="sr-only" for="dept-sector">Sector</label>
+            <select id="dept-sector" x-model="sector" @change="changed()" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                <option value="">Any sector</option>
+                <template x-for="o in sectorOptions" :key="o.value">
+                    <option :value="o.value" x-text="o.label" :selected="o.value === sector"></option>
+                </template>
+            </select>
+            <button type="button" x-show="anyFilter()" x-cloak @click="clearFilters()" class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear filters</button>
+            <p x-show="personFilter()" x-cloak class="basis-full text-[12px] text-ink-muted">Counting only cases linked to a resident record, with each person's age as it was on the day counted.</p>
         </div>
     </div>
 
@@ -177,6 +217,25 @@
                     <x-ui.clay-trend data="trend" label="Cases received and served in each of the last twelve months" />
                 </x-ui.card>
             </div>
+
+            {{-- The Senior Citizen, PWD and Solo Parent IDs the office released
+                 (MSWDO, OSCA): in the period, and of all, good today and
+                 lapsing within 30 days. --}}
+            <x-ui.card x-show="data.ids" x-cloak>
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 class="text-lg font-extrabold text-ink">IDs released</h3>
+                    <span class="text-[12.5px] font-semibold text-ink-muted" x-text="data.ids ? num(data.ids.valid) + ' valid today · ' + num(data.ids.lapsing) + ' lapsing within 30 days' : ''"></span>
+                </div>
+                <div class="grid gap-3 grid-cols-1 sm:grid-cols-3">
+                    <template x-for="k in (data.ids ? data.ids.kinds : [])" :key="k.sector">
+                        <div class="rounded-2xl surface-pressed-sm px-4 py-3">
+                            <p class="text-[13px] font-bold text-ink-body" x-text="k.name"></p>
+                            <p class="mt-1 text-2xl font-extrabold text-ink tabular-nums" x-text="num(k.released)"></p>
+                            <p class="text-[12px] text-ink-muted" x-text="'released in the period · ' + num(k.valid) + ' valid today' + (k.lapsing ? ' · ' + num(k.lapsing) + ' lapsing soon' : '')"></p>
+                        </div>
+                    </template>
+                </div>
+            </x-ui.card>
 
             <x-ui.card>
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">

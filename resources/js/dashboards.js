@@ -1,5 +1,6 @@
 import api from './api/client';
 import { loadXlsx } from './resident-import';
+import { chartSvg } from './report-charts';
 
 // Office and barangay dashboards, and the standard printed reports (owner,
 // 2026-10-14; the MSWDO first). The numbers are the backend's
@@ -71,6 +72,8 @@ export function openReport(detail) {
 
 /** What each printed report is, for the cards that open it. */
 export const REPORT_INFO = {
+    dept_summary: { icon: 'chart-column', desc: 'The dashboard on paper: the figures, then a graph over each table - by month, program, barangay, sex, age group, sector.' },
+    brgy_summary: { icon: 'chart-column', desc: 'The barangay on paper: the figures, then graphs of its residents, certificates and the assistance they received.' },
     dept_services_extended: { icon: 'hand-heart', desc: 'Clients served by type of assistance or document, by sex, with the sectors.' },
     dept_by_barangay: { icon: 'map-pinned', desc: 'All 20 barangays: cases served, persons, amount released, still pending.' },
     dept_masterlist: { icon: 'users', desc: 'Every person served, with the date, amount and who received it. Contains names; each copy is recorded.' },
@@ -85,6 +88,49 @@ const info = (key) => REPORT_INFO[key] || { icon: 'file-text', desc: '' };
 
 const AGE_LABELS = { child: 'Children (0-17)', adult: 'Adults (18-59)', senior: 'Seniors (60+)' };
 const SECTOR_LABELS = { senior: 'Senior citizens (60+)', pwd: 'Persons with disability', solo_parent: 'Solo parents', '4ps': '4Ps beneficiaries', ip: 'Indigenous peoples' };
+const SEX_LABELS = { female: 'Female', male: 'Male' };
+const asOptions = (labels) => Object.entries(labels).map(([value, label]) => ({ value, label }));
+
+/**
+ * What an office's dashboard and its reports narrow to (2026-10-28: "filters
+ * that they can modify"): one program, and who was helped - sex, age group,
+ * sector, each person as on the day counted (the backend's ReportFilters).
+ * Shared by the office dashboard and the Reports page.
+ */
+function reportFilters() {
+    return {
+        service: '',
+        sex: '',
+        age: '',
+        sector: '',
+        sexOptions: asOptions(SEX_LABELS),
+        ageOptions: asOptions(AGE_LABELS),
+        sectorOptions: asOptions(SECTOR_LABELS),
+        /** The chosen ones, as the API takes them; nothing for "everyone". */
+        filterParams() {
+            const out = {};
+            ['service', 'sex', 'age', 'sector'].forEach((k) => { if (this[k]) out[k] = this[k]; });
+            return out;
+        },
+        // Methods, not getters: a getter spread into the component is read once.
+        anyFilter() { return !!(this.service || this.sex || this.age || this.sector); },
+        personFilter() { return !!(this.sex || this.age || this.sector); },
+        /** Picks up a choice from the address, if it is one of the choices. */
+        readFilters(q) {
+            if (SEX_LABELS[q.get('sex')]) this.sex = q.get('sex');
+            if (AGE_LABELS[q.get('age')]) this.age = q.get('age');
+            if (SECTOR_LABELS[q.get('sector')]) this.sector = q.get('sector');
+            this.service = q.get('service') || '';
+        },
+        clearFilters() {
+            this.service = '';
+            this.sex = '';
+            this.age = '';
+            this.sector = '';
+            this.changed();
+        },
+    };
+}
 
 /** Bars relative to the largest, for the pressed-track bar lists. */
 function bars(rows) {
@@ -190,6 +236,7 @@ export function dashboardHost() {
 export function deptDashboard() {
     return {
         ...periodPicker(),
+        ...reportFilters(),
         office: null,
         barangay: '',
         data: null,
@@ -210,9 +257,17 @@ export function deptDashboard() {
             // Only when the address names one: PESO has no short name, and null matched it.
             const found = asked ? offices.find((o) => o.name === asked || o.short === asked) : null;
             this.office = found?.name || (offices.find((o) => o.short === 'MSWDO') || offices[0])?.name || null;
+            this.readFilters(query());
+            if (this.service && !this.services.some((x) => x.key === this.service)) this.service = '';
             this.load();
         },
         changed() { this.load(); },
+        /** Another office: its own programs, so the program chosen goes. */
+        officeChanged() {
+            this.barangay = '';
+            this.service = '';
+            this.load();
+        },
         async load() {
             if (!this.office) { this.loading = false; return; }
             // Only the latest answer is shown: an earlier period's, arriving late, is dropped.
@@ -221,12 +276,12 @@ export function deptDashboard() {
             this.failed = false;
             try {
                 const res = await api.get('/admin/dashboard/department', {
-                    params: { office: this.office, barangay: this.barangay || '', from: this.from, to: this.to },
+                    params: { office: this.office, barangay: this.barangay || '', from: this.from, to: this.to, ...this.filterParams() },
                 });
                 if (mine !== this.seq) return;
                 this.data = res.data;
                 const entry = (this.subjects?.offices || []).find((o) => o.name === this.office);
-                remember({ view: 'department', office: entry?.short || this.office });
+                remember({ view: 'department', office: entry?.short || this.office, service: this.service, sex: this.sex, age: this.age, sector: this.sector });
             } catch (e) {
                 if (mine !== this.seq) return;
                 this.failed = true;
@@ -240,6 +295,8 @@ export function deptDashboard() {
         },
         get entry() { return (this.subjects?.offices || []).find((o) => o.name === this.office) || null; },
         get choosesOffice() { return (this.subjects?.offices || []).length > 1; },
+        /** The office's programs and documents, for the Program filter. */
+        get services() { return this.entry?.services || []; },
         get hasTulong() { return (this.data?.types || this.entry?.types || []).includes('tulong'); },
         get hasDokyu() { return (this.data?.types || this.entry?.types || []).includes('dokyu'); },
         get k() { return this.data?.kpis || {}; },
@@ -273,8 +330,10 @@ export function deptDashboard() {
             return { view: !!o?.can_view, print: !!o?.can_print, export: !!o?.can_export };
         },
         mayOpen(r) { return r.with_names ? this.may.export : this.may.view; },
+        /** The Summary Report, with graphs, as the dashboard is narrowed now. */
+        get summary() { return this.reports().find((r) => r.key === 'dept_summary' && this.mayOpen(r)) || null; },
         print(key) {
-            openReport({ key, office: this.office, barangay: this.barangay || '', from: this.from, to: this.to });
+            openReport({ key, office: this.office, barangay: this.barangay || '', from: this.from, to: this.to, ...this.filterParams() });
         },
         requestsUrl(r) {
             return (r.type === 'tulong' ? '/admin/assistance-requests' : '/admin/document-requests') + '?ref=' + encodeURIComponent(r.ref);
@@ -349,6 +408,7 @@ export function brgyDashboard() {
         reports() {
             return (this.catalog?.reports || []).filter((r) => r.kind === 'barangay' && r.can_view);
         },
+        get summary() { return this.reports().find((r) => r.key === 'brgy_summary') || null; },
         print(key) {
             openReport({ key, barangay: this.barangay, from: this.from, to: this.to });
         },
@@ -364,6 +424,7 @@ export function brgyDashboard() {
 export function printableReports() {
     return {
         ...periodPicker(),
+        ...reportFilters(),
         catalog: { reports: [], offices: [], barangays: [] },
         office: null,
         barangay: null,
@@ -384,6 +445,7 @@ export function printableReports() {
         get departmentReports() { return (this.catalog.reports || []).filter((r) => r.kind === 'department'); },
         get barangayReports() { return (this.catalog.reports || []).filter((r) => r.kind === 'barangay'); },
         get officeEntry() { return (this.catalog.offices || []).find((o) => o.name === this.office) || null; },
+        get services() { return this.officeEntry?.services || []; },
         mayOpen(r) {
             if (r.kind === 'barangay') return !!r.can_view;
             return r.with_names ? !!this.officeEntry?.can_export : !!this.officeEntry?.can_view;
@@ -393,7 +455,8 @@ export function printableReports() {
             return (this.officeEntry?.types || []).includes('tulong') ? 'Report of Assistance Extended' : 'Report of Documents Issued';
         },
         open(r) {
-            openReport({ key: r.key, office: r.kind === 'department' ? this.office : undefined, barangay: r.kind === 'barangay' ? this.barangay : undefined, from: this.from, to: this.to });
+            const dept = r.kind === 'department';
+            openReport({ key: r.key, office: dept ? this.office : undefined, barangay: dept ? undefined : this.barangay, from: this.from, to: this.to, ...(dept ? this.filterParams() : {}) });
         },
     };
 }
@@ -418,6 +481,7 @@ export function reportSheet() {
         params: null,
         report: null,
         signatories: [],
+        chartSvg,
         async show(detail) {
             this.params = detail;
             this.open = true;
@@ -439,10 +503,11 @@ export function reportSheet() {
         query() {
             const p = this.params || {};
             const out = { from: p.from, to: p.to };
-            if (p.office) out.office = p.office;
-            if (p.barangay) out.barangay = p.barangay;
+            ['office', 'barangay', 'service', 'sex', 'age', 'sector'].forEach((k) => { if (p[k]) out[k] = p[k]; });
             return out;
         },
+        /** "Medical Assistance (AICS) · Female", when an office report is narrowed. */
+        get filterText() { return this.report?.filters?.label || ''; },
         get landscape() { return LANDSCAPE.includes(this.report?.key); },
         get isBarangay() { return this.report?.kind === 'barangay'; },
         get officeLine() {
@@ -543,6 +608,8 @@ export function reportSheet() {
                 aoa.push([]);
                 aoa.push([String(r.title || '').toUpperCase()]);
                 aoa.push([r.as_of ? 'As of ' + r.as_of : 'Period Covered: ' + (r.period?.label || '')]);
+                if (r.filters?.label) aoa.push(['Narrowed to: ' + r.filters.label]);
+                if (r.filters?.note) aoa.push([r.filters.note]);
                 aoa.push([]);
                 (r.sections || []).forEach((s) => {
                     if (s.title) aoa.push([s.title]);
