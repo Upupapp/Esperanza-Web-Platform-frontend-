@@ -1058,9 +1058,11 @@ function integrationsTab() {
 
 /**
  * The Facebook Page card on Integrations (welfare round 2026-10-29): Balita
- * posts copied to the LGU's Page when published. Seen by the officers who
- * approve Balita (comm_news approve) and technical administrators
- * (set_system view); changed by comm_news approve or set_system edit.
+ * posts copied to the LGU's Page when published. Seen and changed by those
+ * who run the LGU's own channels (comm_banners edit: the Information Officer,
+ * the Municipal Administrator, the Super Admin) and by technical
+ * administrators (set_system view; changed with set_system edit). An office's
+ * head approves its own posts but does not connect the LGU's Page.
  * GET /admin/integrations/facebook sends the connection without its token:
  * {connected, page_id, page_name, page_link, connected_by_name, connected_at,
  * auto_post, default_share, status: ok|token_problem, last_error,
@@ -1102,8 +1104,8 @@ function facebookPage() {
         disconnecting: false,
 
         when: fmtWhen,
-        get visible() { return may('comm_news', 'approve') || may('set_system', 'view'); },
-        get canManage() { return may('comm_news', 'approve') || may('set_system', 'edit'); },
+        get visible() { return may('comm_banners', 'edit') || may('set_system', 'view'); },
+        get canManage() { return may('comm_banners', 'edit') || may('set_system', 'edit'); },
         async start() {
             if (this.started) return;
             this.started = true;

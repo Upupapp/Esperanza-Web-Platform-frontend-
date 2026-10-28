@@ -145,9 +145,9 @@
                 <a href="#" @click.prevent="open = false; $dispatch('open-my-profile')" class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="user" class="w-4 h-4 text-ink-muted"></i>My Profile
                 </a>
-                {{-- Without Settings: Direktoryo, or the Facebook Page card for Balita's approvers (2026-10-29). --}}
+                {{-- Without Settings: Direktoryo, or the Facebook Page card for the Information Officer and the Municipal Administrator (2026-10-29). --}}
                 <a :href="$store.session.can('settings') ? '{{ route('admin.settings') }}' : (($store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view')) ? '{{ route('admin.settings.directory') }}' : '{{ route('admin.settings') }}?tab=integrations')" href="{{ route('admin.settings') }}"
-                   x-show="$store.session.can('settings') || $store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view') || $store.session.canPerm('comm_news', 'approve')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
+                   x-show="$store.session.can('settings') || $store.session.canPerm('comm_directory', 'view') || $store.session.canPerm('comm_barangay_directory', 'view') || $store.session.canPerm('comm_banners', 'edit') || $store.session.canPerm('set_system', 'view')" x-cloak class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-body hover:bg-white/60 transition-colors">
                     <i data-lucide="settings" class="w-4 h-4 text-ink-muted"></i>Settings
                 </a>
                 <div class="border-t border-brand-600/10 my-1.5"></div>

@@ -6,10 +6,11 @@
      scope round 2026-10-15). integrationsTab in
      resources/js/scope-admin-settings.js.
 
-     The Facebook Page card (welfare round 2026-10-29) is for the officers who
-     approve Balita (comm_news approve) and technical administrators
-     (set_system), so this tab is included outside the Settings-only block:
-     an approver without Settings sees that card and nothing else here. --}}
+     The Facebook Page card (welfare round 2026-10-29) is for those who run
+     the LGU's own channels (comm_banners edit: the Information Officer, the
+     Municipal Administrator) and technical administrators (set_system), so
+     this tab is included outside the Settings-only block: such an officer
+     without Settings sees that card and nothing else here. --}}
 <div x-show="tab === 'integrations'" x-cloak class="space-y-4">
     <template x-if="$store.session.can('settings')">
     <div x-data="integrationsTab" x-effect="tab === 'integrations' && start()">
