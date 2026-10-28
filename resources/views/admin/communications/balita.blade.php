@@ -19,7 +19,11 @@
 
     {{-- Overview: the four counts, each a filter of the feed --}}
     <aside aria-label="Balita overview" class="order-first lg:order-last w-full lg:w-[300px] shrink-0 lg:sticky lg:top-4 space-y-1">
-        <h2 class="px-2 py-1 text-[17px] font-semibold text-ink-body">Overview</h2>
+        <div class="flex items-center justify-between gap-2">
+            <h2 class="px-2 py-1 text-[17px] font-semibold text-ink-body">Overview</h2>
+            {{-- Balita settings: the photo watermark (welfare round 2026-10-29), for the officers who approve Balita. --}}
+            <button type="button" x-show="approver" x-cloak @click="window.dispatchEvent(new CustomEvent('balita-settings'))" class="h-9 px-2.5 rounded-[10px] inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-body hover:bg-slate-200/60 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 transition-colors"><i data-lucide="settings" class="w-4 h-4"></i>Balita settings</button>
+        </div>
         <div class="grid grid-cols-2 lg:grid-cols-1 gap-1">
         <button type="button" @click="showStatus('Released')" :aria-pressed="!scheduledOnly && status === 'Released' ? 'true' : 'false'" class="w-full min-h-14 px-2 rounded-[10px] flex items-center gap-2 lg:gap-3 text-left hover:bg-slate-200/60 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 transition-colors" :class="!scheduledOnly && status === 'Released' && 'bg-slate-200/60'">
             <span class="w-9 h-9 rounded-[10px] bg-brand-600 text-white grid place-items-center shrink-0"><i data-lucide="megaphone" class="w-[18px] h-[18px]"></i></span>
@@ -308,4 +312,6 @@
         </x-slot:footer>
     </x-ui.modal>
     </div>
+
+    @include('admin.communications.balita-settings')
 </div>

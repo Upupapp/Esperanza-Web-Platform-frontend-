@@ -623,6 +623,113 @@ function adminBalita(barangays = []) {
     };
 }
 
+// The watermark's geometry, as App\Domain\Balita\Watermark burns it in
+// (welfare round 2026-10-29): the seal's width is a share of the photo's
+// shorter side, clamped; the margin a quarter of the mark; 85% opacity; the
+// wordmark's height 60% of the seal size, never wider than half the photo.
+// GET /admin/balita/watermark may send its own `geometry`, which wins.
+const WATERMARK_GEOMETRY = {
+    size_percent: { small: 12, medium: 15, large: 20 },
+    min_px: 64,
+    max_px: { small: 230, medium: 288, large: 384 },
+    margin_ratio: 0.25,
+    opacity: 0.85,
+    wordmark_height_ratio: 0.6,
+    wordmark_max_width_ratio: 0.5,
+};
+// The sample photo's own size, so the preview is the photo as uploaded.
+const SAMPLE_PHOTO = { src: '/images/esperanza/esperanza_community1.jpg', width: 1537, height: 1023 };
+// backend resources/branding/watermark-wordmark.png (seal + two lines of words).
+const WORDMARK_ASPECT = 1053 / 228;
+
+/**
+ * Balita settings (welfare round 2026-10-29), for the officers who approve
+ * Balita (comm_news approve): the watermark the server puts on every photo an
+ * officer uploads - on or off, the seal or the seal with the municipality's
+ * name, and its size - with a preview drawn to the server's numbers.
+ * GET/PUT /admin/balita/watermark {enabled, mark, size}.
+ */
+function balitaSettings() {
+    return {
+        wmOpen: false,
+        wmLoading: false,
+        wmFailed: false,
+        wmSaving: false,
+        wm: { enabled: true, mark: 'seal', size: 'medium' },
+        wmSaved: '',
+        wmGeometry: WATERMARK_GEOMETRY,
+        sample: SAMPLE_PHOTO,
+
+        async wmShow() {
+            this.wmOpen = true;
+            await this.wmLoad();
+        },
+        async wmLoad() {
+            this.wmLoading = true;
+            this.wmFailed = false;
+            try {
+                const res = await api.get('/admin/balita/watermark');
+                const d = res.data || {};
+                this.wm = {
+                    enabled: d.enabled !== false,
+                    mark: d.mark === 'wordmark' ? 'wordmark' : 'seal',
+                    size: ['small', 'medium', 'large'].includes(d.size) ? d.size : 'medium',
+                };
+                if (d.geometry) this.wmGeometry = { ...WATERMARK_GEOMETRY, ...d.geometry };
+                this.wmSaved = JSON.stringify(this.wm);
+            } catch (err) {
+                this.wmFailed = true;
+                fail(err, 'Could not read the Balita settings.');
+            } finally {
+                this.wmLoading = false;
+                window.Alpine?.nextTick(() => window.renderIcons?.());
+            }
+        },
+        wmDirty() { return this.wmSaved !== '' && JSON.stringify(this.wm) !== this.wmSaved; },
+        async wmSave() {
+            if (this.wmSaving || !this.wmDirty()) return;
+            this.wmSaving = true;
+            try {
+                await api.put('/admin/balita/watermark', { ...this.wm });
+                this.wmSaved = JSON.stringify(this.wm);
+                this.wmOpen = false;
+                toast(this.wm.enabled ? 'Saved. Photos uploaded from now on carry the watermark.' : 'Saved. Photos uploaded from now on have no watermark.');
+            } catch (err) {
+                fail(err, 'Could not save the Balita settings.');
+            } finally {
+                this.wmSaving = false;
+            }
+        },
+        // The mark on the sample photo, in percentages of the photo, to the
+        // pixel rules the server uses on a photo of this size.
+        wmBox() {
+            const g = this.wmGeometry;
+            const { width, height } = this.sample;
+            const short = Math.min(width, height);
+            const pct = g.size_percent?.[this.wm.size] ?? 15;
+            const max = g.max_px?.[this.wm.size] ?? 288;
+            const target = Math.max(g.min_px ?? 64, Math.min(max, Math.round(short * pct / 100)));
+            let w = target;
+            let h = target;
+            if (this.wm.mark === 'wordmark') {
+                h = Math.round(target * (g.wordmark_height_ratio ?? 0.6));
+                w = Math.round(h * WORDMARK_ASPECT);
+                const cap = Math.floor(width * (g.wordmark_max_width_ratio ?? 0.5));
+                if (w > cap) { w = cap; h = Math.round(w / WORDMARK_ASPECT); }
+            }
+            const margin = Math.round(Math.min(w, h) * (g.margin_ratio ?? 0.25));
+            // An object, not a string: a string :style replaces the whole
+            // attribute, x-show's display:none with it.
+            return {
+                width: (w / width * 100).toFixed(3) + '%',
+                right: (margin / width * 100).toFixed(3) + '%',
+                bottom: (margin / height * 100).toFixed(3) + '%',
+                opacity: String(g.opacity ?? 0.85),
+            };
+        },
+    };
+}
+
 /** The comments of one announcement, for the officers who moderate them. */
 function balitaComments() {
     return {
@@ -963,6 +1070,7 @@ export function register(Alpine) {
     Alpine.data('adminBalita', adminBalita);
     Alpine.data('adminEvents', adminEvents);
     Alpine.data('balitaComments', balitaComments);
+    Alpine.data('balitaSettings', balitaSettings);
     // A correction request opened from the Data requests list: the account's
     // "Correct details" opens by itself, with that request to close.
     Alpine.store('recordsDesk', { pendingCorrection: null });

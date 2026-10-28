@@ -5,7 +5,10 @@
      reads `value` ({ ids, busy, failed }) through x-model.
      look="composer": the staff's Create post (2026-10-26). No drop zone; a
      button outside opens the picker with a `balita-add-media` event, and the
-     files show as large tiles with Add more and the count below. --}}
+     files show as large tiles with Add more and the count below.
+     A photo the server put the municipal seal on (media row `watermarked`,
+     welfare round 2026-10-29) says so on its tile; the tile itself shows the
+     photo as picked, before the seal. --}}
 @props(['base', 'model', 'existing' => '[]', 'english' => false, 'look' => 'drop'])
 @if($look === 'composer')
 <div x-data="balitaMediaField('{{ $base }}', {{ $existing }}, {{ $english ? 'true' : 'false' }})" x-modelable="value" x-model="{{ $model }}" @balita-add-media.window="if (room > 0) $refs.picker.click()" {{ $attributes }}>
@@ -21,6 +24,7 @@
                     <video x-show="!item.preview && item.videoSrc" :src="item.videoSrc" muted playsinline preload="metadata" class="w-full h-full object-cover" aria-hidden="true"></video>
                     <span x-show="!item.preview && !item.videoSrc" class="absolute inset-0 grid place-items-center text-ink-muted"><i :data-lucide="item.kind === 'video' ? 'film' : 'image'" class="w-6 h-6"></i></span>
                     <span x-show="item.kind === 'video' && item.durationMs" class="absolute left-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-navy-950/75 text-white text-[10px] font-semibold px-1.5 py-0.5"><i data-lucide="play" class="w-3 h-3"></i><span x-text="fmtDuration(item.durationMs)"></span></span>
+                    <span x-show="item.media && item.media.watermarked" x-cloak class="absolute left-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-navy-950/75 text-white text-[10px] font-semibold px-1.5 py-0.5"><i data-lucide="stamp" class="w-3 h-3"></i><span x-text="t('Watermarked', 'May watermark')"></span></span>
 
                     <div x-show="item.status !== 'done' || (item.media && item.media.ready === false)" class="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-1.5 p-2 text-center" role="status">
                         <span x-show="item.status === 'preparing' || item.status === 'uploading'"><i data-lucide="loader-circle" class="w-4 h-4 animate-spin text-brand-600"></i></span>
@@ -68,6 +72,7 @@
                 <video x-show="!item.preview && item.videoSrc" :src="item.videoSrc" muted playsinline preload="metadata" class="w-full h-full object-cover" aria-hidden="true"></video>
                 <span x-show="!item.preview && !item.videoSrc" class="absolute inset-0 grid place-items-center text-ink-muted"><i :data-lucide="item.kind === 'video' ? 'film' : 'image'" class="w-6 h-6"></i></span>
                 <span x-show="item.kind === 'video' && item.durationMs" class="absolute left-1.5 bottom-1.5 inline-flex items-center gap-1 rounded-full bg-navy-950/75 text-white text-[10px] font-semibold px-1.5 py-0.5"><i data-lucide="play" class="w-3 h-3"></i><span x-text="fmtDuration(item.durationMs)"></span></span>
+                <span x-show="item.media && item.media.watermarked" x-cloak class="absolute left-1.5 bottom-1.5 inline-flex items-center gap-1 rounded-full bg-navy-950/75 text-white text-[10px] font-semibold px-1.5 py-0.5"><i data-lucide="stamp" class="w-3 h-3"></i><span x-text="t('Watermarked', 'May watermark')"></span></span>
 
                 <div x-show="item.status !== 'done' || (item.media && item.media.ready === false)" class="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-1.5 p-2 text-center" role="status">
                     <span x-show="item.status === 'preparing' || item.status === 'uploading'"><i data-lucide="loader-circle" class="w-4 h-4 animate-spin text-brand-600"></i></span>
