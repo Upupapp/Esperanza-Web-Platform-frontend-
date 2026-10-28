@@ -59,6 +59,13 @@
 
 <x-ui.global-search :config="$searchConfig" placeholder-en="Search residents, requests, barangays..." />
 
+        {{-- Scan ID (welfare round 2026-10-29): who a presented ID belongs to,
+             and a minor's or a PWD's guardian. For officers who read the
+             registry; the window and its logic load on the first press. --}}
+        <button type="button" x-show="$store.session.canPerm('const_resident', 'view')" x-cloak @click="window.openIdScan()" aria-label="Scan ID" title="Scan ID: who it belongs to, and a minor's or a PWD's guardian" class="w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
+            <i data-lucide="scan-qr-code" class="w-5 h-5"></i>
+        </button>
+
         <div class="relative" x-data="dropdown" @click.outside="close">
             <button @click="toggle" aria-label="Notifications" class="relative w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body hover:text-brand-600 transition-colors">
                 <i data-lucide="bell" class="w-5 h-5"></i>
@@ -149,4 +156,5 @@
             </div>
         </div>
     </div>
+    <x-admin.id-scan />
 </header>

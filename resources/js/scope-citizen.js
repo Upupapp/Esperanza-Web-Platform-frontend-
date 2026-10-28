@@ -6,6 +6,7 @@
 
 import api from './api/client';
 import { registerBalitaMedia } from './balita-media';
+import { scanId, telHref, isPwd, revealProblem, REVEAL_REASONS, GUARDIAN_SOURCES } from './guardian-scan';
 
 // ------------------------------------------------------------------ Shared
 
@@ -738,6 +739,18 @@ function verifyPage() {
         result: null,
         failure: null,
         typeName: '',
+        // For an officer who is signed in on this browser: the officers'
+        // scan of the same code (GET /admin/id-scan), with the holder and, for
+        // a minor or a PWD, the guardian behind a stated reason (welfare
+        // round 2026-10-29). Anyone else - a resident's token, no token, no
+        // match - sees nothing of it, and nothing is said.
+        officer: null,
+        reasons: REVEAL_REASONS,
+        ofRvOpen: false,
+        ofRvReason: '',
+        ofRvNote: '',
+        ofRvBusy: false,
+        ofRvError: '',
 
         init() {
             const params = new URLSearchParams(window.location.search);
@@ -773,6 +786,7 @@ function verifyPage() {
             this.failure = null;
             this.typeName = '';
             this.checked = value;
+            this.officerCheck(value);
             try {
                 const res = await api.get('/verify/' + encodeURIComponent(value));
                 const r = res.data || {};
@@ -799,11 +813,69 @@ function verifyPage() {
             }
             icons();
         },
+        // -- For officers
+        async officerCheck(value) {
+            this.officer = null;
+            this.ofReset();
+            if (!api.getToken()) return;
+            try {
+                const res = await scanId(value, { silent: true });
+                if (this.checked === value) this.officer = res.data || null;
+            } catch {
+                // 401, 403, 404, a limit: not an officer's question to answer here.
+            }
+            icons();
+        },
+        get ofHolder() { return this.officer?.holder || null; },
+        get ofGuardian() { return this.officer?.guardian || null; },
+        get ofPwd() { return isPwd(this.ofHolder); },
+        get ofFacts() {
+            const h = this.ofHolder || {};
+            return [h.age != null ? h.age + this.t(' years old', ' taong gulang') : null, h.sex, h.barangay ? 'Brgy. ' + h.barangay : null].filter(Boolean).join(' · ');
+        },
+        ofTel: telHref,
+        ofSource(key) { const s = GUARDIAN_SOURCES[key]; return s ? this.t(s.en, s.fil) : ''; },
+        ofRecordHref(ref) { return '/admin/constituents?ref=' + encodeURIComponent(ref || ''); },
+        ofReset() {
+            this.ofRvOpen = false;
+            this.ofRvReason = '';
+            this.ofRvNote = '';
+            this.ofRvError = '';
+            this.ofRvBusy = false;
+        },
+        ofOpenReveal() {
+            this.ofRvOpen = true;
+            this.ofRvError = '';
+            this.$nextTick(() => document.getElementById('verify-officer-reason')?.focus());
+        },
+        get ofRvProblem() { return revealProblem(this.ofRvReason, this.ofRvNote); },
+        async ofReveal() {
+            const value = this.checked;
+            if (this.ofRvBusy || this.ofRvProblem || !value) return;
+            this.ofRvBusy = true;
+            this.ofRvError = '';
+            try {
+                const res = await scanId(value, { reveal: { reason: this.ofRvReason, note: this.ofRvNote }, silent: true });
+                if (this.checked !== value) return;
+                this.officer = res.data || this.officer;
+                if (this.officer?.guardian) this.ofRvOpen = false;
+                else if (!this.officer?.guardian_withheld) this.ofRvError = this.t('No guardian contact came back for this person.', 'Walang bumalik na contact ng guardian para sa taong ito.');
+            } catch (err) {
+                this.ofRvError = err?.status === 429
+                    ? this.t('You have reached the limit of 30 guardian look-ups an hour. Try again later, or contact the MSWDO.', 'Naabot mo na ang limitasyong 30 pagtingin ng guardian sa isang oras. Subukan muli mamaya, o makipag-ugnayan sa MSWDO.')
+                    : this.t('Could not get the guardian’s contact right now.', 'Hindi makuha ngayon ang contact ng guardian.');
+            } finally {
+                this.ofRvBusy = false;
+                icons();
+            }
+        },
         another() {
             this.code = '';
             this.checked = '';
             this.state = 'idle';
             this.result = null;
+            this.officer = null;
+            this.ofReset();
             this.$nextTick(() => document.getElementById('verify-code')?.focus());
         },
     };

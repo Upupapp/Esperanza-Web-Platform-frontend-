@@ -274,6 +274,9 @@
                     </ul>
                 </div>
 
+                {{-- Who to call for a minor or a PWD (welfare round 2026-10-29) --}}
+                @include('admin.constituents.section-guardian')
+
             </div>
 
             {{-- Right column --}}

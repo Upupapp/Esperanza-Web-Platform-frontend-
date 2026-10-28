@@ -256,6 +256,14 @@ async function openCamera({ facingMode, mirror = false, title, capture, cancel, 
     });
 }
 
+// Scan ID, the admin top bar's button (welfare round 2026-10-29): the window,
+// the camera loop and the QR reader are a chunk of their own
+// (resources/js/id-scan.js), fetched on the first press.
+let idScanChunk = null;
+window.openIdScan = () => (idScanChunk ??= import('./id-scan'))
+    .then((m) => m.open(Alpine))
+    .catch(() => { idScanChunk = null; toast('Could not open the scanner. Check the connection and try again.'); });
+
 // Exposed globally for the same reason — the admin Dokyu "Edit Document"
 // rich-text editor (document-requests.blade.php + document-editor-toolbar/
 // document-editor-background-panel.blade.php) calls these directly from

@@ -14,6 +14,7 @@
 import api from './api/client';
 import { registerBalitaMedia } from './balita-media';
 import { registerOccasions } from './admin-occasions';
+import { telHref, GUARDIAN_SOURCES } from './guardian-scan';
 
 const OPEN = ['Submitted', 'Under Review'];
 
@@ -1468,6 +1469,139 @@ export function register(Alpine) {
         },
         rhField(field) { return HISTORY_FIELDS[field] || humanize(field); },
         rhValue: shown,
+    }));
+
+    // ---------------------------------------------------------------------
+    // A resident's guardian (welfare round 2026-10-29), on the individual
+    // detail: what the server resolved (the office's own entry, else the ID
+    // application's, else a minor's household adult) and, for an officer
+    // with const_resident edit, setting or clearing the office's entry.
+    // Markup: admin/constituents/section-guardian.blade.php.
+    Alpine.data('residentGuardian', () => ({
+        gdOpen: false,
+        gdMode: 'typed',
+        gdForm: { name: '', relationship: '', contact: '', address: '' },
+        gdQuery: '',
+        gdResults: [],
+        gdSearching: false,
+        gdSearched: false,
+        gdPicked: null,
+        gdBusy: false,
+        gdErrors: {},
+        gdConfirmClear: false,
+        gdSeq: 0,
+
+        init() {
+            // Another resident opened in the same window starts clean.
+            this.$watch('selectedIndividual?.ref', () => { this.gdOpen = false; this.gdConfirmClear = false; });
+        },
+        get gdCurrent() { return this.selectedIndividual?.guardian || null; },
+        get gdMayEdit() { return this.$store.session.canPerm('const_resident', 'edit'); },
+        gdTel: telHref,
+        get gdSourceLine() {
+            const g = this.gdCurrent;
+            if (!g) return '';
+            const where = GUARDIAN_SOURCES[g.source]?.en || '';
+            const who = g.source === 'record' && (g.updated_by || g.updated_at)
+                ? ' · ' + [g.updated_by, g.updated_at ? when(g.updated_at) : null].filter(Boolean).join(', ')
+                : '';
+            return where + who;
+        },
+        get gdReady() {
+            if (!this.gdForm.relationship.trim()) return false;
+            return this.gdMode === 'linked' ? !!this.gdPicked : this.gdForm.name.trim().length >= 2;
+        },
+        gdError(key) {
+            const v = this.gdErrors?.[key];
+            return Array.isArray(v) ? (v[0] || '') : (v || '');
+        },
+        gdStart() {
+            const g = this.gdCurrent?.source === 'record' ? this.gdCurrent : null;
+            this.gdMode = g?.individual_ref ? 'linked' : 'typed';
+            this.gdPicked = g?.individual_ref ? { ref: g.individual_ref, name: g.name } : null;
+            this.gdForm = { name: g?.name || '', relationship: g?.relationship || '', contact: g?.contact || '', address: g?.address || '' };
+            this.gdQuery = '';
+            this.gdResults = [];
+            this.gdSearched = false;
+            this.gdErrors = {};
+            this.gdConfirmClear = false;
+            this.gdOpen = true;
+            this.$nextTick(() => document.getElementById(this.gdMode === 'linked' ? 'gd-relationship' : 'gd-name')?.focus());
+        },
+        // The registry, searched the way the Individuals list searches it.
+        async gdSearch() {
+            const q = this.gdQuery.trim();
+            const seq = ++this.gdSeq;
+            if (q.length < 2) { this.gdResults = []; this.gdSearched = false; return; }
+            this.gdSearching = true;
+            try {
+                const res = await api.get('/admin/residents', { params: { q, per_page: 8 } });
+                if (seq !== this.gdSeq) return;
+                this.gdResults = (res.data || []).filter((r) => r.ref !== this.selectedIndividual?.ref);
+                this.gdSearched = true;
+            } catch (err) {
+                if (seq === this.gdSeq) { this.gdResults = []; fail(err, 'Could not search the registry.'); }
+            } finally {
+                if (seq === this.gdSeq) this.gdSearching = false;
+            }
+        },
+        gdPick(r) {
+            this.gdPicked = { ref: r.ref, name: r.name };
+            this.gdResults = [];
+            this.gdQuery = '';
+            this.$nextTick(() => document.getElementById('gd-relationship')?.focus());
+        },
+        // The server's answer ({ref, guardian_applicable, guardian}) onto the
+        // open record and its row in the list.
+        gdApply(data) {
+            const patch = { guardian: data?.guardian ?? null, guardian_applicable: !!data?.guardian_applicable };
+            if (this.selectedIndividual) Object.assign(this.selectedIndividual, patch);
+            const row = (this.individuals || []).find((x) => x.ref === this.selectedIndividual?.ref);
+            if (row) Object.assign(row, patch);
+        },
+        async gdSave() {
+            const ref = this.selectedIndividual?.ref;
+            if (!ref || this.gdBusy || !this.gdReady) return;
+            this.gdBusy = true;
+            this.gdErrors = {};
+            const f = this.gdForm;
+            const body = { relationship: f.relationship.trim() };
+            if (this.gdMode === 'linked') {
+                body.individual_ref = this.gdPicked.ref;
+                // Left empty, the linked record's own number and address are used.
+                if (f.contact.trim()) body.contact = f.contact.trim();
+                if (f.address.trim()) body.address = f.address.trim();
+            } else {
+                Object.assign(body, { name: f.name.trim(), contact: f.contact.trim() || null, address: f.address.trim() || null });
+            }
+            try {
+                const res = await api.put('/admin/residents/' + encodeURIComponent(ref) + '/guardian', body);
+                this.gdApply(res.data);
+                this.gdOpen = false;
+                toast('Guardian saved.');
+            } catch (err) {
+                if (err?.status === 422) this.gdErrors = err.fields || {};
+                fail(err, 'Could not save the guardian.');
+            } finally {
+                this.gdBusy = false;
+                window.Alpine?.nextTick(() => window.renderIcons?.());
+            }
+        },
+        async gdClear() {
+            const ref = this.selectedIndividual?.ref;
+            if (!ref || this.gdBusy) return;
+            this.gdBusy = true;
+            try {
+                const res = await api.delete('/admin/residents/' + encodeURIComponent(ref) + '/guardian');
+                this.gdApply(res.data);
+                this.gdConfirmClear = false;
+                toast('Guardian cleared.');
+            } catch (err) {
+                fail(err, 'Could not clear the guardian.');
+            } finally {
+                this.gdBusy = false;
+            }
+        },
     }));
 
     // ---------------------------------------------------------------------
