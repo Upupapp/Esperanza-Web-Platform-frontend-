@@ -58,10 +58,7 @@
                     <label class="{{ $labelClass }}" for="rp-contact"><x-ui.t fil="Mobile number" en="Mobile number" /></label>
                     <input id="rp-contact" type="tel" inputmode="numeric" maxlength="11" placeholder="09XXXXXXXXX" x-model="personal.contact" @input="personal.contact = window.phMobile.clean($event.target.value)" class="{{ $inputClass }}">
                 </div>
-                <div>
-                    <label class="{{ $labelClass }}" for="rp-occupation"><x-ui.t fil="Hanapbuhay" en="Occupation" /></label>
-                    <input id="rp-occupation" type="text" x-model="personal.occupation" maxlength="100" class="{{ $inputClass }}">
-                </div>
+                <x-livelihood-select model="personal" id="rp-livelihood" class="sm:col-span-2" :label-class="$labelClass" :input-class="$inputClass" />
                 <div>
                     <label class="{{ $labelClass }}" for="rp-education"><x-ui.t fil="Natapos na pag-aaral" en="Education" /></label>
                     <select id="rp-education" x-model="personal.education" class="{{ $inputClass }}"><option value="">—</option><template x-for="o in options.education" :key="o"><option :value="o" x-text="o"></option></template></select>
@@ -146,6 +143,7 @@
                                 <label class="{{ $labelClass }}" :for="'rp-m-civil-' + i"><x-ui.t fil="Katayuang sibil" en="Civil status" /></label>
                                 <select :id="'rp-m-civil-' + i" x-model="m.civil_status" class="{{ $inputClass }}"><option value="">—</option><template x-for="o in options.civilStatus" :key="o"><option :value="o" x-text="o"></option></template></select>
                             </div>
+                            <x-livelihood-select model="m" dynamic-id="'rp-m-lv-' + i" class="sm:col-span-2" :label-class="$labelClass" :input-class="$inputClass" />
                         </div>
                     </div>
                 </template>

@@ -64,7 +64,11 @@ function sakunaShelter() {
                 purok: f.purok || this.checkInForm.purok || '',
                 members: f.members.map((m) => ({
                     name: m.name, relation: m.relation || '', age: '', sex: m.sex || '', needs: '', dob: m.dob || '',
-                    education: '', occupation: '', vulnerability: '',
+                    education: '', vulnerability: '',
+                    // The registry's occupation is taken on the server; the desk
+                    // only learns that there is one (owner, 2026-10-29).
+                    occupation: '', livelihood_code: '', livelihood_other: '',
+                    registry_has_occupation: !!m.occupation_on_record, update_registry: false,
                     individual_id: m.individual_id, is_head: !!m.is_head, arrived: true,
                 })),
             });

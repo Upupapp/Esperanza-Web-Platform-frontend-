@@ -258,6 +258,51 @@ class QaRunFixesTest extends TestCase
      * buttons show only with that permission. Print prints the page on
      * screen (one page of at most 50 rows), so it stays as it was.
      */
+    /**
+     * 2026-10-29 (owner): every occupation field is the two DRRM dropdowns from
+     * one list (GET /livelihood-classes): the registry's add and edit, the
+     * resident's My Profile and Resident Profile with family members, and
+     * Sakuna check-in, where a registered resident's occupation comes from the
+     * registry. The Occupations tab is the review list; imports take a DRRM
+     * code column and say how the file's occupations were classified.
+     */
+    public function test_occupations_use_the_drrm_dropdowns_everywhere(): void
+    {
+        $component = $this->source('resources/views/components/livelihood-select.blade.php');
+        $this->assertStringContainsString('$store.livelihood.items(lvGroup)', $component);
+        $this->assertStringContainsString('livelihood_other', $component);
+        $this->assertStringContainsString("api.get('/livelihood-classes')", $this->source('resources/js/app.js'));
+
+        foreach ([
+            'resources/views/admin/constituents/modal-add-individual.blade.php' => 'model="form"',
+            'resources/views/admin/constituents/modal-individual-detail.blade.php' => 'model="edit"',
+            'resources/views/citizen/profile.blade.php' => 'model="editForm"',
+            'resources/views/components/citizen/resident-profile-form.blade.php' => 'model="personal"',
+            'resources/views/admin/partials/sakuna/tab-evacuees.blade.php' => 'model="m"',
+        ] as $path => $model) {
+            $view = $this->source($path);
+            $this->assertStringContainsString('<x-livelihood-select '.$model, $view, $path);
+            $this->assertDoesNotMatchRegularExpression('/<input[^>]*x-model="[^"]*occupation"/', $view, "{$path}: no free-text occupation left");
+        }
+        $this->assertStringContainsString('<x-livelihood-select model="m" dynamic-id', $this->source('resources/views/components/citizen/resident-profile-form.blade.php'), 'family members too');
+
+        // An unchanged choice is not re-sent, so saving another field never makes the matcher's reading a staff decision.
+        $this->assertStringContainsString('delete body.livelihood_code', $this->source('resources/views/admin/constituents/modal-individual-detail.blade.php'));
+        $this->assertStringContainsString('x._lv.code', $this->source('resources/js/resident-profile-form.js'));
+        // Check-in sends nothing for a registered resident's standing occupation.
+        $this->assertStringContainsString('if (m.individual_id && m.registry_has_occupation && !m.update_registry) return {};', $this->source('resources/views/admin/sakuna.blade.php'));
+        // The desk learns only that the registry has one, never the occupation itself.
+        $this->assertStringContainsString('registry_has_occupation: !!m.occupation_on_record', $this->source('resources/js/sakuna-shelter.js'));
+
+        $review = $this->source('resources/views/admin/constituents/tab-occupations.blade.php');
+        foreach (["'/admin/livelihood/review'", "'/admin/livelihood/review/records'", "'/admin/livelihood/review/classify'"] as $endpoint) {
+            $this->assertStringContainsString($endpoint, $review);
+        }
+        $this->assertStringContainsString("@include('admin.constituents.tab-occupations')", $this->source('resources/views/admin/constituents.blade.php'));
+        $this->assertStringContainsString("key: 'livelihood_code'", $this->source('resources/js/resident-import.js'));
+        $this->assertStringContainsString('livelihood-review-import', $this->source('resources/views/admin/constituents/modal-import.blade.php'));
+    }
+
     public function test_constituents_export_goes_through_the_server(): void
     {
         $page = $this->source('resources/views/admin/constituents.blade.php');

@@ -15,7 +15,7 @@
             sex: '', dob: '', civil_status: '', contact: '',
             barangay: '', sitio: '', household_ref: '',
             family_ref: '', relation: '',
-            occupation: '', education: '', income_range: '',
+            occupation: '', livelihood_code: '', livelihood_other: '', education: '', income_range: '',
             tags: [], verification: 'Unverified',
         },
 
@@ -25,7 +25,7 @@
                 sex:'', dob:'', civil_status:'', contact:'',
                 barangay:'', sitio:'', household_ref:'',
                 family_ref:'', relation:'',
-                occupation:'', education:'', income_range:'',
+                occupation:'', livelihood_code:'', livelihood_other:'', education:'', income_range:'',
                 tags:[], verification:'Unverified',
             };
             addIndividualStep = 1;
@@ -437,15 +437,10 @@
 
                 {{-- Occupation, Education, Income --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="occupation">Occupation</label>
-                        <input id="occupation"
-                            type="text"
-                            x-model="form.occupation"
-                            placeholder="e.g. Farmer, Teacher"
-                            class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"
-                        />
-                    </div>
+                    {{-- The DRRM classification, two dropdowns (owner, 2026-10-29). --}}
+                    <x-livelihood-select model="form" id="ind-add-livelihood" class="sm:col-span-3"
+                        label-class="block text-xs font-semibold text-slate-600 mb-1.5"
+                        input-class="w-full px-3.5 py-2.5 rounded-xl text-sm text-ink focus:outline-none focus:ring-brand-400 focus:border-transparent transition border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100" />
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5" for="highest-education">Highest Education</label>
                         <select id="highest-education"

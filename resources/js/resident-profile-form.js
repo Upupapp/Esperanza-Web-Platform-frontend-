@@ -19,9 +19,13 @@ const options = {
     electricity: ['Grid-Connected (Meralco/Coop)', 'Solar', 'Shared / Informal Connection', 'None'],
 };
 
-const blankPersonal = () => ({ sex: '', dob: '', civil_status: '', sitio: '', contact: '', occupation: '', education: '', income_range: '', tags: [] });
+// The occupation is the two DRRM dropdowns (owner, 2026-10-29); `_lv` keeps
+// what was loaded, so an unchanged choice is not re-sent as a new one.
+const blankLivelihood = () => ({ livelihood_code: '', livelihood_other: '', _lv: { code: '', other: '' } });
+const livelihoodOf = (x) => ({ livelihood_code: x?.livelihood?.code || '', livelihood_other: x?.livelihood?.other || '', _lv: { code: x?.livelihood?.code || '', other: x?.livelihood?.other || '' } });
+const blankPersonal = () => ({ sex: '', dob: '', civil_status: '', sitio: '', contact: '', occupation: '', ...blankLivelihood(), education: '', income_range: '', tags: [] });
 const blankHousehold = () => ({ sitio: '', address: '', dwelling_type: '', housing_tenure: '', electricity: '', water: '', toilet: '' });
-const blankMember = () => ({ ref: null, name: '', sex: '', dob: '', civil_status: '', relation: '', occupation: '', education: '', contact: '' });
+const blankMember = () => ({ ref: null, name: '', sex: '', dob: '', civil_status: '', relation: '', occupation: '', ...blankLivelihood(), education: '', contact: '' });
 
 // The record's contact is the email when the resident gave no mobile number:
 // only a Philippine mobile number belongs in a Mobile number box (retest
@@ -81,6 +85,7 @@ export function residentProfileForm() {
                 sitio: me.sitio || '',
                 contact: mobileOrEmpty(me.contact) || mobileOrEmpty(account.mobile),
                 occupation: me.occupation || '',
+                ...livelihoodOf(me),
                 education: me.education || '',
                 income_range: me.income_range || '',
                 tags: Array.isArray(me.tags) ? me.tags.filter((t) => options.tags.includes(t)) : [],
@@ -106,6 +111,7 @@ export function residentProfileForm() {
                 civil_status: m.civil_status || '',
                 relation: m.relation || '',
                 occupation: m.occupation || '',
+                ...livelihoodOf(m),
                 education: m.education || '',
                 contact: mobileOrEmpty(m.contact),
             }));
@@ -147,8 +153,14 @@ export function residentProfileForm() {
         payload() {
             const person = (x) => ({
                 sex: text(x.sex), dob: text(x.dob), civil_status: text(x.civil_status),
-                occupation: text(x.occupation), education: text(x.education), contact: text(x.contact),
+                education: text(x.education), contact: text(x.contact),
+                ...occupation(x),
             });
+            // A changed choice is sent as the code; otherwise the words, which
+            // the server leaves alone when they are the same.
+            const occupation = (x) => ((x.livelihood_code || '') !== x._lv.code || (x.livelihood_other || '') !== x._lv.other)
+                ? { livelihood_code: x.livelihood_code || null, livelihood_other: text(x.livelihood_other), ...(x.livelihood_code ? {} : { occupation: text(x.occupation) }) }
+                : { occupation: text(x.occupation) };
             return {
                 personal: {
                     ...person(this.personal),

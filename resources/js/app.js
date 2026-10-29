@@ -629,6 +629,31 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('residentImport', residentImport);
     Alpine.data('requestImport', requestImport);
     Alpine.data('citizenRecords', citizenRecords);
+    // The DRRM employment and livelihood list (owner, 2026-10-28/29): the two
+    // dropdowns every occupation field uses, loaded once from the backend so
+    // the website, the app and imports share one list.
+    Alpine.store('livelihood', {
+        groups: [],
+        loaded: false,
+        failed: false,
+        pending: null,
+        load() {
+            if (this.loaded) return Promise.resolve();
+            this.pending ??= api.get('/livelihood-classes')
+                .then((res) => { this.groups = res.data || []; this.loaded = true; this.failed = false; })
+                .catch(() => { this.failed = true; this.pending = null; });
+            return this.pending;
+        },
+        items(group) { return (this.groups.find((g) => g.code === group) || { items: [] }).items; },
+        item(code) {
+            for (const g of this.groups) { const i = g.items.find((x) => x.code === code); if (i) return i; }
+            return null;
+        },
+        isOther(code) { return !!this.item(code)?.other; },
+        // "Transport Worker › Tricycle Driver" for a code, or '' when unknown.
+        label(code) { const i = this.item(code); return i ? (i.heading ? i.heading + ' › ' + i.label : i.label) : ''; },
+    });
+
     // Document wording staff edit, and the verification strip (2026-10-15).
     Alpine.store('docTemplates', docTemplatesStore);
     Alpine.data('verifyStrip', verifyStrip);
@@ -846,6 +871,8 @@ document.addEventListener('alpine:init', () => {
                 sex: p.sex,
                 civilStatus: p.civil_status,
                 occupation: p.occupation,
+                // The DRRM classification of that occupation, or null.
+                livelihood: p.livelihood ?? null,
                 residentSince: p.resident_since,
                 status: p.status,
                 accessLevel: p.access_level,

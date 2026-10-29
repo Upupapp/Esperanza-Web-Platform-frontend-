@@ -49,6 +49,8 @@
         encoders:     [],
         dqScanning:   false,
         barangayCoverage: [],
+        // Occupations waiting for a DRRM classification (the Occupations tab).
+        lvReviewCount: 0,
         coverageMunicipal: null,
         barangayOptions: @js($barangayOptions),
 
@@ -820,6 +822,7 @@
          again loaded the whole registry twice (live test 2026-10-12: every
          list fetched twice with 14,584 residents). --}}
     x-on:residents-imported.window="loadRegistry()"
+    x-on:livelihood-review-import.window="tab = 'occupations'"
     x-on:registry-show-import.window="tab='registry';view='individuals';clearFilters();search=$event.detail.ref"
     class="animate-fade-up"
 >
@@ -908,6 +911,13 @@
                 {{-- The same colours on the active tab: it is white now, and white
                      text on it hid the count (live test 2026-10-13). --}}
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600" x-text="qualityIssues.length"></span>
+            </button>
+            <button x-show="can('const_resident','view')" @click="tab='occupations';clearFilters()"
+                    x-on:livelihood-review-count.window="lvReviewCount = $event.detail"
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative whitespace-nowrap"
+                    :class="tab==='occupations' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
+                <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>Occupations
+                <span x-show="lvReviewCount > 0" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700" x-text="lvReviewCount"></span>
             </button>
             <button @click="tab='citizen-verification';clearFilters()"
                     class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 relative whitespace-nowrap"
@@ -1039,6 +1049,11 @@
         {{-- ── Citizen Verification tab ────────────────────────────── --}}
         <div x-show="tab === 'citizen-verification'" x-cloak>
             @include('admin.constituents.tab-citizen-verification')
+        </div>
+
+        {{-- ── Occupations tab: the DRRM review list (owner, 2026-10-29) ── --}}
+        <div x-show="tab === 'occupations'" x-cloak>
+            @include('admin.constituents.tab-occupations')
         </div>
 
         {{-- ── Data Quality tab ────────────────────────────────────── --}}

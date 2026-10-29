@@ -202,7 +202,7 @@
 
             showEditProfile: false,
             savingProfile: false,
-            editForm: { firstName: '', lastName: '', mobile: '', occupation: '', address: '', barangay: '' },
+            editForm: { firstName: '', lastName: '', mobile: '', occupation: '', livelihood_code: '', livelihood_other: '', address: '', barangay: '' },
             // Until the account is verified the resident can still correct
             // their barangay, as in the app (parity check, 2026-10-23); then it
             // is locked like the name (IDENTITY_LOCKED on the server).
@@ -222,7 +222,7 @@
             openEditProfile() {
                 const a = this.$store.citizenSession.account || {};
                 this.originalMobile = window.phMobile.clean(a.mobile || '');
-                this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: this.originalMobile, occupation: a.occupation || '', address: a.address || '', barangay: a.barangay || '' };
+                this.editForm = { firstName: a.firstName || '', lastName: a.lastName || '', mobile: this.originalMobile, occupation: a.occupation || '', livelihood_code: a.livelihood?.code || '', livelihood_other: a.livelihood?.other || '', address: a.address || '', barangay: a.barangay || '' };
                 this.mobileStep = null;
                 this.mobileCode = '';
                 this.showEditProfile = true;
@@ -249,7 +249,13 @@
                     // goes through the code step below instead.
                     const a = this.$store.citizenSession.account || {};
                     const payload = {};
-                    if ((this.editForm.occupation || '') !== (a.occupation || '')) payload.occupation = this.editForm.occupation;
+                    // The occupation is the two DRRM dropdowns (owner, 2026-10-29),
+                    // sent only when the resident changed them.
+                    if ((this.editForm.livelihood_code || '') !== (a.livelihood?.code || '') || (this.editForm.livelihood_other || '') !== (a.livelihood?.other || '')) {
+                        payload.livelihood_code = this.editForm.livelihood_code || null;
+                        payload.livelihood_other = this.editForm.livelihood_other || null;
+                        if (!this.editForm.livelihood_code) payload.occupation = this.editForm.occupation || null;
+                    }
                     if ((this.editForm.address || '') !== (a.address || '')) payload.address = this.editForm.address;
                     if (!a.identityLocked) {
                         if (this.editForm.firstName !== (a.firstName || '')) payload.first_name = this.editForm.firstName;
@@ -765,7 +771,8 @@
                             <template x-for="b in barangays" :key="b"><option :value="b" x-text="b" :selected="b === editForm.barangay"></option></template>
                         </select>
                     </div>
-                    <x-ui.input name="edit_occupation" label="Occupation" icon="briefcase" x-model="editForm.occupation" />
+                    <x-livelihood-select model="editForm" id="edit-livelihood" label-class="block text-sm font-medium text-slate-700 mb-1.5"
+                        input-class="w-full rounded-xl border-0 surface-pressed py-2.5 px-3 text-sm text-ink focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none" />
                     <x-ui.input name="edit_address" label="Complete Address" icon="house" x-model="editForm.address" />
                     <p class="text-xs text-ink-muted" x-show="$store.citizenSession.account?.identityLocked" x-cloak><x-ui.t fil="Ang barangay at Resident ID ay hindi maaaring baguhin dito — makipag-ugnayan sa iyong Barangay Hall." en="Barangay and Resident ID can't be changed here — contact your Barangay Hall for those." /></p>
                     <p class="text-xs text-ink-muted" x-show="!$store.citizenSession.account?.identityLocked"><x-ui.t fil="Ang Resident ID ay hindi maaaring baguhin dito. Kapag beripikado na ang iyong account, ang barangay ay ipapaayos sa iyong Barangay Hall." en="Your Resident ID can't be changed here. Once your account is verified, your barangay is changed through your Barangay Hall." /></p>

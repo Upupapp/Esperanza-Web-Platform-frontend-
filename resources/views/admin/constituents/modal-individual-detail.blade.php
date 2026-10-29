@@ -25,6 +25,7 @@
             const i = selectedIndividual;
             this.edit = {
                 sex: i.sex, civil_status: i.civil_status, contact: i.contact, occupation: i.occupation,
+                livelihood_code: i.livelihood?.code || '', livelihood_other: i.livelihood?.other || '',
                 education: i.education, income_range: i.income_range, sitio: i.sitio, relation: i.relation,
                 tags: [...(i.tags || [])],
             };
@@ -38,7 +39,12 @@
             if (this.saving) return;
             this.saving = true;
             try {
-                const res = await $api.put('/admin/residents/' + selectedIndividual.ref, this.edit);
+                // The classification goes only when changed: saving another
+                // field must not turn the matcher's reading into a staff choice.
+                const body = { ...this.edit };
+                const was = selectedIndividual.livelihood || {};
+                if ((body.livelihood_code || '') === (was.code || '') && (body.livelihood_other || '') === (was.other || '')) { delete body.livelihood_code; delete body.livelihood_other; }
+                const res = await $api.put('/admin/residents/' + selectedIndividual.ref, body);
                 Object.assign(selectedIndividual, res.data);
                 const idx = this.individuals.findIndex(x => x.ref === selectedIndividual.ref);
                 if (idx !== -1) this.individuals[idx] = { ...this.individuals[idx], ...res.data };
@@ -167,6 +173,8 @@
                         <div>
                             <dt class="flex items-center gap-1 text-xs text-ink-muted uppercase tracking-wide mb-0.5"><i data-lucide="briefcase" class="w-3 h-3"></i>Occupation</dt>
                             <dd class="text-sm font-semibold text-ink" x-text="selectedIndividual?.occupation || '—'"></dd>
+                            <dd class="text-xs text-ink-muted mt-0.5" x-show="selectedIndividual?.livelihood?.code" x-text="selectedIndividual?.livelihood?.code + ' · ' + (selectedIndividual?.livelihood?.full_label || '')"></dd>
+                            <dd class="text-xs text-amber-700 mt-0.5" x-show="selectedIndividual?.livelihood && !selectedIndividual?.livelihood?.code" x-text="({ needs_review: 'Waiting for a DRRM classification', likely_test: 'Looks like test data', conflict: 'Differs from the linked account' })[selectedIndividual?.livelihood?.status] || ''"></dd>
                         </div>
                         <div>
                             <dt class="flex items-center gap-1 text-xs text-ink-muted uppercase tracking-wide mb-0.5"><i data-lucide="graduation-cap" class="w-3 h-3"></i>Highest Education</dt>
@@ -515,11 +523,10 @@
                             <input id="ind-edit-sitio" type="text" x-model="edit.sitio" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
                         </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-occ">Occupation</label>
-                            <input id="ind-edit-occ" type="text" x-model="edit.occupation" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">
-                        </div>
+                    <x-livelihood-select model="edit" id="ind-edit-livelihood"
+                        label-class="block text-xs font-medium text-slate-700 mb-1.5"
+                        input-class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm" />
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1.5" for="ind-edit-edu">Education</label>
                             <input id="ind-edit-edu" type="text" x-model="edit.education" class="w-full rounded-2xl py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all border-0 surface-pressed-sm">

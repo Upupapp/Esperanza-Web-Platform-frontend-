@@ -295,6 +295,8 @@ export function residentImport() {
                     (res.data?.rows || []).forEach((result, k) => {
                         const r = chunk[k];
                         r.key = result.key;
+                        // How the occupation would be classified (owner, 2026-10-29).
+                        r.livelihood = result.occupation?.livelihood || null;
                         if (result.status === 'error') { r.status = 'error'; r.errors = (result.errors || []).map((e) => e.message); }
                         else if (result.status === 'match') { r.status = 'match'; r.match = result.match; }
                     });
@@ -320,7 +322,7 @@ export function residentImport() {
             return {
                 row: r.row, first_name: r.first_name, middle_name: r.middle_name || null, last_name: r.last_name, suffix: r.suffix || null,
                 sex: r.sex, dob: r.dob, civil_status: r.civil_status, barangay: r.barangay, sitio: r.sitio, address: r.address,
-                contact: r.contact, occupation: r.occupation, education: r.education, income_range: r.income_range,
+                contact: r.contact, occupation: r.occupation, livelihood_code: r.livelihood_code || null, education: r.education, income_range: r.income_range,
                 relation: r.relation, household_key: r.household_key, is_head: r.is_head, action,
             };
         },
@@ -347,6 +349,12 @@ export function residentImport() {
         // Rows not yet sent in an import: all of them, until an import has
         // run; then the ones left to fix.
         get pending() { return this.rows.filter((r) => !r.outcome); },
+        // The file's occupations against the DRRM list, for the review step.
+        get occupationCounts() {
+            const c = { classified: 0, waiting: 0 };
+            this.pending.forEach((r) => { if (r.status !== 'error' && r.status !== 'outside' && r.livelihood) c[r.livelihood.status === 'classified' ? 'classified' : 'waiting']++; });
+            return c;
+        },
         get counts() {
             const c = { all: 0, ready: 0, match: 0, twice: 0, error: 0, outside: 0 };
             this.pending.forEach((r) => { c.all++; c[r.status]++; });
@@ -584,6 +592,7 @@ export function residentImport() {
                     skipped: d.skipped + this.pending.filter((r) => r.status !== 'error' && !this.sendable(r)).length,
                     failed: this.leftovers,
                     households: d.households_created,
+                    occupations: d.occupations || {},
                     // Stopped, or finished with what is in after a drop.
                     stopped: this.stoppedAt !== null,
                 };

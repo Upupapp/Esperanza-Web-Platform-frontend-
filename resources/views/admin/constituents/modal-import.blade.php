@@ -205,6 +205,10 @@
             </div>
         </div>
 
+        <p x-show="occupationCounts.classified + occupationCounts.waiting" class="text-xs text-ink-muted mb-3">
+            Occupations: <strong class="text-ink" x-text="occupationCounts.classified.toLocaleString()"></strong> match the DRRM list;
+            <strong class="text-ink" x-text="occupationCounts.waiting.toLocaleString()"></strong> will wait for a person in Constituents → Occupations. The words in the file are kept either way.
+        </p>
         <div class="rounded-2xl bg-white border border-slate-200 overflow-hidden">
             <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-50 text-xs">
                 <span class="font-semibold text-ink" x-text="(filter==='all' ? 'All rows' : {ready:'New residents',match:'Already in the registry',twice:'Listed twice',error:'Need fixing'}[filter]) + ' · ' + filtered.length.toLocaleString()"></span>
@@ -340,10 +344,13 @@
             <p x-show="summary?.stopped" class="text-xs text-ink-muted mb-4">The rest of the file was not sent. To add it, import the same file again: the residents already in are recognised and left as they are.</p>
             <p x-show="summary?.households" class="text-xs text-ink-muted mb-4" x-text="summary?.households + (summary?.households === 1 ? ' household and its family was' : ' households and their families were') + ' made from the household numbers.'"></p>
             <p x-show="summary?.undone" class="text-xs text-amber-700 mb-4">This import was undone.</p>
+            <p x-show="!summary?.undone && Object.keys(summary?.occupations || {}).length" class="text-xs text-ink-muted mb-4"
+               x-text="'Occupations: ' + (summary?.occupations?.classified || 0) + ' classified from the DRRM list; ' + ((summary?.occupations?.needs_review || 0) + (summary?.occupations?.likely_test || 0)) + ' waiting for a person.'"></p>
             <div class="flex flex-wrap gap-2">
                 <button type="button" @click="showImported(summary.ref)" x-show="!summary?.undone" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold clay-blue"><i data-lucide="users" class="w-4 h-4"></i>Show the imported residents</button>
                 <button type="button" @click="fixLeftovers()" x-show="!summary?.undone && leftovers" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100"><i data-lucide="pencil" class="w-4 h-4"></i><span x-text="leftovers === 1 ? 'Fix the row that needs it' : 'Fix the ' + leftovers + ' rows that need it'"></span></button>
                 <button type="button" @click="downloadNotAdded()" x-show="notAdded.length" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-ink hover:bg-slate-200"><i data-lucide="download" class="w-4 h-4"></i><span x-text="'Rows not added (' + notAdded.length + ')'"></span></button>
+                <button type="button" x-show="!summary?.undone && ((summary?.occupations?.needs_review || 0) + (summary?.occupations?.likely_test || 0))" @click="open = false; $dispatch('livelihood-review-import', summary.ref)" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-amber-50 text-amber-800 hover:bg-amber-100"><i data-lucide="briefcase" class="w-4 h-4"></i>Review occupations</button>
                 <button type="button" @click="startOver()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-ink hover:bg-slate-200"><i data-lucide="file-up" class="w-4 h-4"></i>Import another file</button>
                 <button type="button" x-show="mayUndo && !summary?.undone" @click="panel='history';loadHistory().then(()=>askUndo(history.find(h=>h.ref===summary.ref)))" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-rose-700 hover:bg-rose-50"><i data-lucide="undo-2" class="w-4 h-4"></i>Undo this import</button>
             </div>

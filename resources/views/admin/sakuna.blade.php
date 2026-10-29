@@ -458,7 +458,17 @@
             this.showEvacueeReg = true;
             this.$nextTick(() => window.renderIcons?.());
         },
-        addCheckInMember() { this.checkInForm.members.push({ name: '', relation: '', age: '', sex: '', needs: '', dob: '', education: '', occupation: '', vulnerability: '', individual_id: null, is_head: false, arrived: true }); },
+        addCheckInMember() { this.checkInForm.members.push({ name: '', relation: '', age: '', sex: '', needs: '', dob: '', education: '', occupation: '', livelihood_code: '', livelihood_other: '', registry_has_occupation: false, update_registry: false, vulnerability: '', individual_id: null, is_head: false, arrived: true }); },
+        // A member's occupation as sent: none for a registered resident whose
+        // registry occupation stands (the server takes it from there), else
+        // the DRRM choice, or the words when no choice was made.
+        checkInOccupation(m) {
+            if (m.individual_id && m.registry_has_occupation && !m.update_registry) return {};
+            const extra = m.update_registry ? { update_registry: true } : {};
+            return m.livelihood_code
+                ? { livelihood_code: m.livelihood_code, livelihood_other: m.livelihood_other || null, ...extra }
+                : { occupation: m.occupation || null, ...extra };
+        },
         removeCheckInMember(i) { this.checkInForm.members.splice(i, 1); },
         // members[] is optional on the real endpoint (a bare member_count is
         // enough), but sending it is what makes the detail view's real
@@ -478,7 +488,7 @@
                     needs: m.needs ? m.needs.split(',').map(s => s.trim()).filter(Boolean) : [],
                     dob: m.dob || null,
                     education: m.education || null,
-                    occupation: m.occupation || null,
+                    ...this.checkInOccupation(m),
                     vulnerability: m.vulnerability || null,
                     individual_id: m.individual_id || undefined,
                     is_head: !!m.is_head,

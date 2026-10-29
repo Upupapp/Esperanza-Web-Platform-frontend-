@@ -515,11 +515,22 @@
                             <input type="text" x-model="m.needs" :aria-label="'Member ' + (idx+1) + ' needs'" placeholder="Needs (comma-separated)" class="flex-1 min-w-[140px] text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                             <input type="date" x-model="m.dob" :aria-label="'Member ' + (idx+1) + ' birthdate'" class="w-32 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                             <input type="text" x-model="m.education" list="faced-education" :aria-label="'Member ' + (idx+1) + ' highest educational attainment'" placeholder="Education" class="w-28 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
-                            <input type="text" x-model="m.occupation" :aria-label="'Member ' + (idx+1) + ' occupation'" placeholder="Occupation" class="w-28 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                             <select x-model="m.vulnerability" :aria-label="'Member ' + (idx+1) + ' vulnerable sector'" class="w-36 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                                 <option value="">Vulnerable sector</option><option>Older person</option><option>Pregnant</option><option>Lactating mother</option><option>PWD</option><option>Solo parent</option><option>Child (under 18)</option>
                             </select>
                             <button aria-label="Close" type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-ink-muted hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                            {{-- Occupation (owner, 2026-10-29): a registered resident's comes from the registry. --}}
+                            <div class="basis-full flex flex-wrap items-center gap-2 text-xs" x-show="m.individual_id && m.registry_has_occupation && !m.update_registry">
+                                <span class="text-ink-muted">Occupation: recorded from the resident's registry record.</span>
+                                <button type="button" x-show="can('const_resident','edit')" @click="m.update_registry = true" class="text-brand-600 hover:text-brand-700 font-medium">Correct it in the registry</button>
+                            </div>
+                            <div class="basis-full" x-show="!(m.individual_id && m.registry_has_occupation) || m.update_registry">
+                                <x-livelihood-select model="m" dynamic-id="'checkin-m-lv-' + idx"
+                                    label-class="block text-[11px] font-medium text-ink-muted mb-1"
+                                    input-class="w-full text-xs border border-slate-200 rounded-xl px-2 py-1.5" />
+                                <p class="text-[11px] text-ink-muted mt-1" x-show="m.individual_id && !m.registry_has_occupation && can('const_resident','edit')">Saved to this resident's registry record too.</p>
+                                <p class="text-[11px] text-amber-700 mt-1" x-show="m.update_registry">This changes the resident's registry record. <button type="button" class="underline" @click="m.update_registry = false; m.livelihood_code = ''; m.livelihood_other = ''">Keep the registry's</button></p>
+                            </div>
                         </div>
                     </template>
                 </div>
