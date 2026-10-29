@@ -57,7 +57,7 @@
             get directoryAllowed() { return this.$store.session.canPerm('comm_directory', 'view') || this.$store.session.canPerm('comm_barangay_directory', 'view'); },
             // The Facebook Page card on Integrations is also for anyone who can
             // post in Balita, without the rest of Settings (owner, 2026-10-29:
-            // "should apply to anyone who can post").
+            // should apply to anyone who can post).
             get facebookAllowed() { return this.$store.session.canPerm('comm_news', 'create') || this.$store.session.canPerm('set_system', 'view'); },
             // A tab's address replaces the current one, so a reload stays on it.
             go(t) {
