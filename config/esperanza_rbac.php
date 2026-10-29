@@ -207,6 +207,9 @@ $permissionModules = [
             ['key' => 'sakuna_damage', 'name' => 'Damage Assessment', 'perms' => ['view', 'create', 'edit', 'validate', 'approve', 'export']],
             ['key' => 'sakuna_alerts', 'name' => 'Public Alerts', 'perms' => ['view', 'create', 'edit', 'review', 'approve', 'publish', 'cancel', 'archive', 'export']],
             ['key' => 'sakuna_reports', 'name' => 'Reports', 'perms' => ['view', 'export', 'print']],
+            // Missing, found, deceased and unidentified persons, each case linked
+            // to an incident (owner, 2026-10-30). close = close a resolved case.
+            ['key' => 'sakuna_missing', 'name' => 'Missing Persons', 'perms' => ['view', 'create', 'edit', 'close']],
         ],
     ],
 ];
@@ -481,6 +484,21 @@ $welfareGrants = [
 foreach ($roles as &$role) {
     if (isset($welfareGrants[$role['key']])) {
         $role['permissions'] = array_merge($role['permissions'], $welfareGrants[$role['key']]);
+    }
+}
+unset($role);
+
+// ---------------------------------------------------------------
+// Missing Persons (owner, 2026-10-30): only the MDRRMO's roles (made in
+// Users -> Roles) and the Super Administrator create and update cases. Every
+// role that reads Sakuna incidents reads the cases; the Municipal
+// Administrator, whose 'sakuna' => 'full' preset would give it everything,
+// keeps view only.
+// ---------------------------------------------------------------
+$missingPersonsViewers = ['municipal_admin', 'department_head', 'department_staff', 'front_desk', 'info_officer'];
+foreach ($roles as &$role) {
+    if (in_array($role['key'], $missingPersonsViewers, true)) {
+        $role['permissions'] = array_merge($role['permissions'], ['sakuna_missing' => ['view']]);
     }
 }
 unset($role);
