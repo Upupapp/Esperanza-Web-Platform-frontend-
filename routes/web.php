@@ -114,6 +114,7 @@ Route::view('/admin/settings/site-content', 'admin.settings', ['tab' => 'site-co
 Route::view('/admin/sakuna', 'admin.sakuna', ['tab' => 'command-center'])->name('admin.sakuna');
 Route::view('/admin/sakuna/vulnerability', 'admin.sakuna', ['tab' => 'vulnerability'])->name('admin.sakuna.vulnerability');
 Route::view('/admin/sakuna/incidents', 'admin.sakuna', ['tab' => 'incidents'])->name('admin.sakuna.incidents');
+Route::view('/admin/sakuna/missing-persons', 'admin.sakuna', ['tab' => 'missing-persons'])->name('admin.sakuna.missing-persons');
 Route::view('/admin/sakuna/evacuation-centers', 'admin.sakuna', ['tab' => 'evacuation-centers'])->name('admin.sakuna.evacuation-centers');
 Route::view('/admin/sakuna/evacuees', 'admin.sakuna', ['tab' => 'evacuees'])->name('admin.sakuna.evacuees');
 Route::view('/admin/sakuna/resources', 'admin.sakuna', ['tab' => 'resources'])->name('admin.sakuna.resources');

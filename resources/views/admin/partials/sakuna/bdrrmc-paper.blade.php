@@ -53,7 +53,7 @@
                                     @if ($edit)
                                         <template x-if="c.type === 'text'">
                                             <div>
-                                                <input type="text" x-model="slot.r[c.key]" :aria-label="c.aria || c.label" class="pp-cell-input" :class="editedClass(openForm, slot.r, c.key)">
+                                                <input type="text" x-model="slot.r[c.key]" @input="if (c.key === 'owner' && slot.r.owner_ref) slot.r.owner_ref = ''" :aria-label="c.aria || c.label" class="pp-cell-input" :class="editedClass(openForm, slot.r, c.key)">
                                                 <template x-if="c.notes && rowSource(openForm, slot.r)">
                                                     <div class="no-print pp-notes">
                                                         <p class="pp-mono" x-text="rowSource(openForm, slot.r).ref + (rowSource(openForm, slot.r).released_by ? ' · released by ' + rowSource(openForm, slot.r).released_by : '')"></p>

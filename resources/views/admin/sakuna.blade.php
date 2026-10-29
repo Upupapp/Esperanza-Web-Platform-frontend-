@@ -16,6 +16,7 @@
         ['key' => 'command-center',    'label' => 'Command Center',    'icon' => 'monitor-check'],
         ['key' => 'vulnerability',      'label' => 'Vulnerability',     'icon' => 'map-pin'],
         ['key' => 'incidents',          'label' => 'Incidents',         'icon' => 'flame'],
+        ['key' => 'missing-persons',    'label' => 'Missing Persons',   'icon' => 'user-search'],
         ['key' => 'evacuation-centers', 'label' => 'Evac. Centers',    'icon' => 'house'],
         ['key' => 'evacuees',           'label' => 'Evacuees',          'icon' => 'users'],
         ['key' => 'resources',          'label' => 'Resources',         'icon' => 'truck'],
@@ -1363,7 +1364,7 @@
         // (QA run 2026-10-05).
         tabSubs: {
             'command-center': 'sakuna_command', 'vulnerability': 'sakuna_vulnerability',
-            'incidents': 'sakuna_incidents', 'evacuation-centers': 'sakuna_centers',
+            'incidents': 'sakuna_incidents', 'missing-persons': 'sakuna_missing', 'evacuation-centers': 'sakuna_centers',
             'evacuees': 'sakuna_evacuees', 'resources': 'sakuna_resources',
             'relief': 'sakuna_relief', 'damage-assessment': 'sakuna_damage',
             'bdrrmc-forms': 'sakuna_reports', 'alerts': 'sakuna_alerts', 'reports': 'sakuna_reports',
@@ -1527,6 +1528,14 @@
             <div>
                 {{-- Loads its own data from GET/POST /sakuna/incidents; $barangays is real, static reference data. --}}
                 @include('admin.partials.sakuna.tab-incidents', ['barangays' => $barangays])
+            </div>
+            @endif
+
+            {{-- Missing Persons (owner, 2026-10-30) --}}
+            @if($activeTab === 'missing-persons')
+            <div>
+                {{-- Loads its own data from GET /sakuna/missing; $barangays is real, static reference data. --}}
+                @include('admin.partials.sakuna.tab-missing', ['barangays' => $barangays])
             </div>
             @endif
 

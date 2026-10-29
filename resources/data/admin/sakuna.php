@@ -21,6 +21,7 @@ return [
         'command-center' => 'admin.sakuna',
         'vulnerability' => 'admin.sakuna.vulnerability',
         'incidents' => 'admin.sakuna.incidents',
+        'missing-persons' => 'admin.sakuna.missing-persons',
         'evacuation-centers' => 'admin.sakuna.evacuation-centers',
         'evacuees' => 'admin.sakuna.evacuees',
         'resources' => 'admin.sakuna.resources',

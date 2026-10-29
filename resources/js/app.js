@@ -8,6 +8,7 @@ import { requestImport } from './request-import-ui';
 import { citizenRecords } from './citizen-records';
 import { docTemplatesStore, verifyStrip, qrSvg } from './shared-docs';
 import { dashboardHost, deptDashboard, brgyDashboard, printableReports, reportSheet } from './dashboards';
+import { sakunaReport } from './sakuna-report';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import { createIcons } from 'lucide';
@@ -662,6 +663,8 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('dashboardHost', dashboardHost);
     Alpine.data('deptDashboard', deptDashboard);
     Alpine.data('brgyDashboard', brgyDashboard);
+    // Sakuna's Reports tab: one server calculation, exports checked and logged (2026-10-30).
+    Alpine.data('sakunaReport', sakunaReport);
     Alpine.data('printableReports', printableReports);
     Alpine.data('reportSheet', reportSheet);
     // Why a record matched, for the account review's Registry record panel.

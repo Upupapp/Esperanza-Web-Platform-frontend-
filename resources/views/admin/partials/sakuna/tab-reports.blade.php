@@ -1,174 +1,199 @@
 {{--
-    tab-reports.blade.php
-    Disaster Reports & Analytics
-    Included by sakuna.blade.php — NO x-data at root.
-    Parent Alpine state: reportBarangayFilter, reportsLoading/reportsFailed,
-    reportIncidents/reportCenters/reportVulnerability (raw) and reportScopedIncidents/
-    reportScopedCenters/reportScopedVulnerability (barangay-filtered getters).
-    Helpers: exportCSV(rows, filename), loadReports(), reportTrendLabels(),
-    reportTrendData(), reportTypeBreakdown(), reportLowestReadiness(n).
-
-    Reads GET /sakuna/incidents, GET /sakuna/centers, GET /sakuna/vulnerability --
-    no new backend endpoint was needed for this tab; every chart and KPI below is
-    computed client-side from data those three already-real endpoints return.
-
-    The mock's 4 charts were entirely hardcoded (a 14-day incident trend, an
-    incidents-by-category donut, a center occupancy bar chart and a barangay
-    readiness ranking, none reading from any of the other tabs' real data) and its
-    "Performance Metrics" section invented four response-time KPIs -- Avg.
-    Validation/Dispatch/Arrival Time -- that nothing in the schema tracks:
-    SakunaIncidentEvent timestamps each verb transition, but computing a real
-    department-wide average from that would mean fetching every incident's full
-    detail (its timeline lives only on GET /sakuna/incidents/{ref}, not the list),
-    an N+1 cost this tab doesn't take on. "Top Requesting Barangays" mapped to no
-    real concept at all -- there is no relief "request" step, only a distribution
-    created directly (see tab-relief.blade.php). Both are dropped rather than
-    faked. The "Report Catalogue" (Generate/Export/Print buttons that only ever
-    toasted, no real PDF generation anywhere in the codebase) is replaced with
-    real CSV exports of the three lists this tab already has in memory.
+    tab-reports.blade.php — Disaster Reports (owner, 2026-10-28/30).
+    Its own component (resources/js/sakuna-report.js): every card, chart and
+    table row comes from the server's one calculation under the same filters
+    (GET /admin/sakuna/reports/summary and /incidents), so they agree with
+    each other and with the export (POST /admin/sakuna/reports/export, needs
+    sakuna_reports.export; checked and logged on the server). People,
+    families and incidents are counted apart and never added together; what
+    the records cannot say is said in the notes, not estimated.
 --}}
+@php
+    // SakunaVocabulary::TYPES on the backend; the filter is checked there too.
+    $reportTypes = ['Flood', 'Fire', 'Landslide', 'Earthquake', 'Vehicular Accident', 'Medical Emergency', 'Missing Person',
+        'Stranded Resident', 'Fallen Tree', 'Downed Power Line', 'Road Obstruction', 'Damaged Bridge', 'Rescue Request',
+        'Drowning or Water Rescue', 'Agricultural Damage', 'Structural Damage', 'Water Interruption', 'Power Interruption',
+        'Public Health Emergency', 'Other'];
+    $reportStatuses = ['Submitted', 'Under Verification', 'Assigned', 'Processing', 'Completed', 'Archived', 'Rejected'];
+@endphp
 
-<div x-init="loadReports()" class="space-y-4">
+<div x-data="sakunaReport" class="space-y-5">
 
-{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h2 class="text-base font-semibold text-ink-body">Disaster Reports &amp; Analytics</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Live analytics derived from incidents, evacuation centers and vulnerability assessments.</p>
-    </div>
-    <select aria-label="Report barangay filter" x-model="reportBarangayFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Barangays</option>
-        @foreach($barangays as $brgy)
-            <option value="{{ $brgy }}">{{ $brgy }}</option>
-        @endforeach
-    </select>
-</div>
-
-<div x-show="reportsLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
-<div x-show="reportsFailed" x-cloak><x-ui.error-state messageExpr="'Could not load report data.'" retryExpr="loadReports()" :retryable="true" /></div>
-
-<template x-if="!reportsLoading && !reportsFailed">
-<div class="space-y-4">
-
-{{-- ── KPI Tiles ────────────────────────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <x-ui.stat-card layout="compact" tone="rose" object="flame" label="Incidents" valueBind="reportScopedIncidents.length" />
-    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Incidents Resolved" valueBind="reportScopedIncidents.length ? Math.round(reportScopedIncidents.filter(i => ['Completed','Archived'].includes(i.status)).length / reportScopedIncidents.length * 100) + '%' : '—'" />
-    <x-ui.stat-card layout="compact" tone="brand" object="people" label="Evacuees Sheltered" valueBind="reportScopedCenters.reduce((s,c) => s + (c.individuals || 0), 0)" />
-    <x-ui.stat-card layout="compact" tone="violet" object="ring" label="Avg. Readiness Score" valueBind="reportScopedVulnerability.length ? Math.round(reportScopedVulnerability.reduce((s,v) => s + (v.readiness_score || 0), 0) / reportScopedVulnerability.length) : '—'" />
-</div>
-
-{{-- ── Charts (2×2): the dashboard's clay charts (owner, 2026-10-08) ───────────────────── --}}
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-
-    <div class="surface-glass rounded-[26px] p-5">
-        <h3 class="text-lg font-extrabold text-ink">Incident Trend</h3>
-        <p class="text-[13px] text-ink-muted mb-3">Last 14 days · <span x-text="reportBarangayFilter || 'All Barangays'"></span></p>
-        <x-ui.clay-trend data="{ labels: reportTrendLabels(), series: [{ label: 'Incidents', values: reportTrendData(), color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 }] }" label="Incidents reported on each of the last 14 days" />
-    </div>
-
-    <div class="surface-glass rounded-[26px] p-5">
-        <h3 class="text-lg font-extrabold text-ink">Incidents by Type</h3>
-        <p class="text-[13px] text-ink-muted mb-4">Current data</p>
-        <x-ui.clay-donut rows="reportTypeBreakdown().map(t => ({ label: t[0], value: t[1] }))" total-label="Incidents" empty="No incidents to chart." />
-    </div>
-
-    <div class="surface-glass rounded-[26px] p-5">
-        <h3 class="text-lg font-extrabold text-ink">Center Occupancy vs Capacity</h3>
-        <p class="text-[13px] text-ink-muted mb-4" x-text="reportScopedCenters.length + ' center(s)'"></p>
-        <div class="space-y-4">
-            <template x-for="c in reportScopedCenters" :key="c.name">
-                <div x-data="{ get pct() { return c.capacity ? Math.round((c.individuals || 0) / c.capacity * 100) : 0 } }">
-                    <div class="flex items-center justify-between gap-3 mb-2">
-                        <span class="text-[14.5px] font-semibold text-ink-body truncate" x-text="c.name"></span>
-                        <span class="text-sm text-ink-muted shrink-0 tabular-nums" x-text="(c.individuals || 0) + ' / ' + (c.capacity || 0) + ' · ' + pct + '%'"></span>
-                    </div>
-                    <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                        <div class="h-full rounded-full bg-gradient-to-r transition-all duration-[600ms] ease-standard" :class="pct >= 100 ? 'from-rose-400 to-rose-600' : (pct >= 75 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, pct) + '%'"></div>
-                    </div>
-                </div>
-            </template>
-            <div x-show="!reportScopedCenters.length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No centers to chart.</div>
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+            <h2 class="text-base font-semibold text-ink-body">Disaster Reports</h2>
+            <p class="text-sm text-ink-muted mt-0.5">Incidents, evacuation, missing persons, damage and livelihoods, from the records, under the filters below.</p>
+        </div>
+        <div class="flex items-center gap-2" x-show="can('sakuna_reports','export')">
+            <x-ui.button size="sm" variant="secondary" icon="file-spreadsheet" x-bind:disabled="!!exporting || !!rangeError" @click="exportAs('XLSX')"><span x-text="exporting === 'XLSX' ? 'Exporting…' : 'Export XLSX'"></span></x-ui.button>
+            <x-ui.button size="sm" variant="secondary" icon="file-down" x-bind:disabled="!!exporting || !!rangeError" @click="exportAs('PDF')"><span x-text="exporting === 'PDF' ? 'Exporting…' : 'Export PDF'"></span></x-ui.button>
         </div>
     </div>
 
-    <div class="surface-glass rounded-[26px] p-5">
-        <h3 class="text-lg font-extrabold text-ink">Readiness Score — Lowest Barangays</h3>
-        <p class="text-[13px] text-ink-muted mb-4">Score out of 100</p>
-        <div class="space-y-4">
-            <template x-for="v in reportLowestReadiness(8)" :key="v.barangay">
-                <div>
-                    <div class="flex items-center justify-between gap-3 mb-2">
-                        <span class="text-[14.5px] font-semibold text-ink-body truncate" x-text="'Brgy. ' + v.barangay"></span>
-                        <span class="text-sm text-ink-muted shrink-0 tabular-nums" x-text="(v.readiness_score || 0) + ' / 100'"></span>
-                    </div>
-                    <div class="h-3.5 rounded-full bg-track shadow-pressed-sm p-[2px]">
-                        <div class="h-full rounded-full bg-gradient-to-r transition-all duration-[600ms] ease-standard" :class="v.readiness_score < 50 ? 'from-rose-400 to-rose-600' : (v.readiness_score < 70 ? 'from-amber-400 to-amber-600' : 'from-brand-400 to-brand-600')" :style="'width:' + Math.min(100, v.readiness_score || 0) + '%'"></div>
-                    </div>
+    {{-- Filters: all of them apply together. --}}
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-4">
+        <label class="text-xs text-ink-muted">Barangay
+            <select x-model="f.barangay" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+                <option value="">All barangays</option>
+                @foreach($barangays as $b)<option value="{{ is_array($b) ? $b['name'] : $b }}">{{ is_array($b) ? $b['name'] : $b }}</option>@endforeach
+            </select>
+        </label>
+        <label class="text-xs text-ink-muted">From
+            <input type="date" x-model="f.from" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+        </label>
+        <label class="text-xs text-ink-muted">To
+            <input type="date" x-model="f.to" :min="f.from" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+        </label>
+        <label class="text-xs text-ink-muted">Disaster type
+            <select x-model="f.type" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+                <option value="">All types</option>
+                @foreach($reportTypes as $t)<option>{{ $t }}</option>@endforeach
+            </select>
+        </label>
+        <label class="text-xs text-ink-muted">Incident status
+            <select x-model="f.status" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+                <option value="">All statuses</option>
+                @foreach($reportStatuses as $s)<option>{{ $s }}</option>@endforeach
+            </select>
+        </label>
+        <label class="text-xs text-ink-muted">Livelihood group
+            <select x-model="f.livelihood_group" @change="groupChanged()" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+                <option value="">All groups</option>
+                <template x-for="g in $store.livelihood.groups" :key="g.code"><option :value="g.code" x-text="g.code + ' · ' + g.label"></option></template>
+            </select>
+        </label>
+        <label class="text-xs text-ink-muted">Occupation or livelihood
+            <select x-model="f.livelihood_code" @change="load(1)" :disabled="!f.livelihood_group" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2 disabled:opacity-60">
+                <option value="">All in the group</option>
+                <template x-for="i in $store.livelihood.items(f.livelihood_group)" :key="i.code"><option :value="i.code" x-text="(i.heading ? i.heading + ' › ' : '') + i.label"></option></template>
+            </select>
+        </label>
+        <div class="flex items-end gap-3">
+            <button type="button" @click="clear()" class="text-xs text-ink-muted hover:text-rose-600">Clear filters</button>
+            <span class="text-xs text-ink-muted" x-show="summary" x-text="summary ? summary.period.from + ' to ' + summary.period.to : ''"></span>
+        </div>
+        <p class="sm:col-span-2 lg:col-span-4 text-xs text-rose-700" x-show="rangeError" x-text="rangeError"></p>
+    </div>
+
+    <p x-show="failed" x-cloak class="text-sm text-rose-700">The report could not load. Check the filters and try again.</p>
+    <p x-show="loading && !summary" class="text-sm text-ink-muted">Loading the report…</p>
+
+    <template x-if="summary">
+    <div class="space-y-5">
+        {{-- Figures: incidents, people and families each on their own. --}}
+        <div class="grid gap-3 grid-cols-2 sm:grid-cols-4 xl:grid-cols-8">
+            <template x-for="card in [
+                ['Incidents', summary.incidents.total, 'text-ink'],
+                ['Evacuated individuals', summary.evacuated.individuals, 'text-brand-700'],
+                ['Evacuated families', summary.evacuated.families, 'text-brand-700'],
+                ['Still missing', summary.persons.missing, 'text-rose-700'],
+                ['Found', summary.persons.found, 'text-emerald-700'],
+                ['Deceased', summary.persons.deceased, 'text-slate-700'],
+                ['Unidentified', summary.persons.unidentified, 'text-amber-700'],
+                ['Damage reports', summary.damage.reports, 'text-violet-700'],
+            ]" :key="card[0]">
+                <div class="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+                    <p class="text-[11px] text-ink-muted" x-text="card[0]"></p>
+                    <p class="text-xl font-extrabold tabular-nums" :class="card[2]" x-text="card[1].toLocaleString()"></p>
                 </div>
             </template>
-            <div x-show="!reportLowestReadiness(8).length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No assessed barangays to chart.</div>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-sm font-semibold text-ink mb-2">Incidents over time</p>
+                <x-ui.clay-trend data="{ labels: reportTrendLabels(), series: [{ label: 'Incidents', values: reportTrendData(), color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 }] }" label="Incidents reported in the period" />
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-sm font-semibold text-ink mb-2">Incidents by disaster type</p>
+                <x-ui.clay-donut rows="reportTypeBreakdown().map(t => ({ label: t[0], value: t[1] }))" total-label="Incidents" empty="No incidents to chart." />
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-sm font-semibold text-ink mb-3">Incidents by barangay</p>
+                <p class="text-sm text-ink-muted" x-show="!barangayRows().length">No incidents to chart.</p>
+                <ul class="space-y-1.5">
+                    <template x-for="b in barangayRows()" :key="b.label">
+                        <li class="grid grid-cols-[8rem_1fr_2.5rem] items-center gap-2 text-xs">
+                            <span class="truncate" x-text="b.label"></span>
+                            <span class="h-2.5 rounded-full bg-slate-100"><span class="block h-full rounded-full bg-brand-500" :style="'width:' + b.pct + '%'"></span></span>
+                            <span class="text-right tabular-nums font-semibold" x-text="b.count"></span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-sm font-semibold text-ink mb-2">Incidents by status</p>
+                <x-ui.clay-donut rows="statusRows()" total-label="Incidents" empty="No incidents to chart." />
+            </div>
+        </div>
+
+        {{-- Livelihoods of the people evacuated, as recorded at check-in. --}}
+        <div class="grid gap-4 lg:grid-cols-2">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-sm font-semibold text-ink mb-2">Evacuated people by livelihood group</p>
+                <x-ui.clay-donut rows="livelihoodRows()" total-label="People" empty="No classified livelihoods among the people evacuated." />
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <p class="text-sm font-semibold text-ink mb-2">Evacuated people by livelihood</p>
+                <table class="w-full text-sm">
+                    <thead class="text-xs text-ink-muted"><tr><th scope="col" class="text-left font-medium py-1">Livelihood</th><th scope="col" class="text-right font-medium py-1">People</th></tr></thead>
+                    <tbody>
+                        <template x-for="i in summary.livelihood.items" :key="i.code">
+                            <tr class="border-t border-slate-100"><td class="py-1"><span class="font-mono text-xs text-ink-muted" x-text="i.code"></span> <span x-text="i.label"></span></td><td class="py-1 text-right tabular-nums" x-text="i.people"></td></tr>
+                        </template>
+                        <tr class="border-t border-slate-100"><td class="py-1 text-ink-muted">Not yet classified</td><td class="py-1 text-right tabular-nums" x-text="summary.livelihood.unclassified"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 grid gap-2 sm:grid-cols-3 text-sm">
+            <div><p class="text-xs text-ink-muted">Damage: units affected</p><p class="font-bold tabular-nums" x-text="summary.damage.units_affected.toLocaleString()"></p></div>
+            <div><p class="text-xs text-ink-muted">Damage: estimated cost</p><p class="font-bold tabular-nums" x-text="'₱' + summary.damage.estimated_cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })"></p></div>
+            <div><p class="text-xs text-ink-muted">By sector</p><p class="text-xs" x-text="summary.damage.by_sector.map((s) => s.sector + ' ' + s.reports).join(', ') || '—'"></p></div>
+        </div>
+
+        <ul class="rounded-2xl bg-slate-50 p-4 text-xs text-ink-muted space-y-1 list-disc pl-8">
+            <template x-for="(n, i) in summary.notes" :key="i"><li x-text="n"></li></template>
+        </ul>
+
+        {{-- The incidents themselves. --}}
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+            <table class="w-full text-sm">
+                <thead class="text-xs text-ink-muted uppercase tracking-wide bg-slate-50">
+                    <tr>
+                        <th scope="col" class="text-left font-medium px-3 py-2">Incident</th>
+                        <th scope="col" class="text-left font-medium px-3 py-2">Reported</th>
+                        <th scope="col" class="text-left font-medium px-3 py-2">Type</th>
+                        <th scope="col" class="text-left font-medium px-3 py-2">Barangay</th>
+                        <th scope="col" class="text-left font-medium px-3 py-2">Summary</th>
+                        <th scope="col" class="text-left font-medium px-3 py-2">Status</th>
+                        <th scope="col" class="text-right font-medium px-3 py-2">Missing</th>
+                        <th scope="col" class="text-right font-medium px-3 py-2">Damage reports</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="r in rows" :key="r.ref">
+                        <tr class="border-t border-slate-100">
+                            <td class="px-3 py-2 font-mono text-xs" x-text="r.ref"></td>
+                            <td class="px-3 py-2 text-xs" x-text="new Date(r.reported).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })"></td>
+                            <td class="px-3 py-2" x-text="r.type"></td>
+                            <td class="px-3 py-2" x-text="r.barangay"></td>
+                            <td class="px-3 py-2" x-text="r.title"></td>
+                            <td class="px-3 py-2 text-xs" x-text="r.status"></td>
+                            <td class="px-3 py-2 text-right tabular-nums" x-text="r.missing"></td>
+                            <td class="px-3 py-2 text-right tabular-nums" x-text="r.damage_reports"></td>
+                        </tr>
+                    </template>
+                    <tr x-show="!rows.length"><td colspan="8" class="px-3 py-6 text-center text-sm text-ink-muted">No incidents match these filters.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div x-show="lastPage > 1" class="flex items-center justify-end gap-2 text-xs">
+            <button type="button" :disabled="page <= 1" @click="load(page - 1)" class="px-3 py-1.5 rounded-xl border border-slate-200 disabled:opacity-40">Previous</button>
+            <span x-text="'Page ' + page + ' of ' + lastPage + ' · ' + total + ' incidents'"></span>
+            <button type="button" :disabled="page >= lastPage" @click="load(page + 1)" class="px-3 py-1.5 rounded-xl border border-slate-200 disabled:opacity-40">Next</button>
         </div>
     </div>
+    </template>
 </div>
-
-{{-- ── Export ───────────────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] p-5">
-    <h3 class="text-lg font-extrabold text-ink mb-3">Export Data</h3>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button @click="exportCSV(reportScopedIncidents, 'incidents-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
-            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="flame" class="w-4 h-4"></i></span>
-            <span>
-                <span class="block text-sm font-medium text-slate-700">Incidents (CSV)</span>
-                <span class="block text-xs text-ink-muted" x-text="reportScopedIncidents.length + ' records'"></span>
-            </span>
-        </button>
-        <button @click="exportPDF(reportScopedIncidents, 'incidents-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
-            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="flame" class="w-4 h-4"></i></span>
-            <span>
-                <span class="block text-sm font-medium text-slate-700">Incidents (PDF)</span>
-                <span class="block text-xs text-ink-muted" x-text="reportScopedIncidents.length + ' records'"></span>
-            </span>
-        </button>
-        <button @click="exportCSV(reportScopedCenters, 'centers-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
-            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="house" class="w-4 h-4"></i></span>
-            <span>
-                <span class="block text-sm font-medium text-slate-700">Evacuation Centers (CSV)</span>
-                <span class="block text-xs text-ink-muted" x-text="reportScopedCenters.length + ' records'"></span>
-            </span>
-        </button>
-        <button @click="exportPDF(reportScopedCenters, 'centers-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
-            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="house" class="w-4 h-4"></i></span>
-            <span>
-                <span class="block text-sm font-medium text-slate-700">Evacuation Centers (PDF)</span>
-                <span class="block text-xs text-ink-muted" x-text="reportScopedCenters.length + ' records'"></span>
-            </span>
-        </button>
-        <button @click="exportCSV(reportScopedVulnerability, 'vulnerability-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
-            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="shield-alert" class="w-4 h-4"></i></span>
-            <span>
-                <span class="block text-sm font-medium text-slate-700">Vulnerability Assessments (CSV)</span>
-                <span class="block text-xs text-ink-muted" x-text="reportScopedVulnerability.length + ' records'"></span>
-            </span>
-        </button>
-        <button @click="exportPDF(reportScopedVulnerability, 'vulnerability-report.csv')"
-            class="flex items-center gap-3 text-left p-3 rounded-2xl bg-white border border-brand-600/10 shadow-[0_1px_2px_rgb(11_23_48/.04),0_4px_12px_rgb(29_71_214/.05)] hover:border-brand-300 hover:-translate-y-px transition-all">
-            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0"><i data-lucide="shield-alert" class="w-4 h-4"></i></span>
-            <span>
-                <span class="block text-sm font-medium text-slate-700">Vulnerability Assessments (PDF)</span>
-                <span class="block text-xs text-ink-muted" x-text="reportScopedVulnerability.length + ' records'"></span>
-            </span>
-        </button>
-    </div>
-</div>
-
-</div>
-</template>
-
-</div>{{-- end wrapper --}}

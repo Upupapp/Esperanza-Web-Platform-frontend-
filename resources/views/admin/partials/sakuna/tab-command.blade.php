@@ -88,6 +88,28 @@
         <x-ui.stat-card layout="compact" tone="amber"  object="bell"     label="Active Public Alerts" valueBind="commandBoard.counts.alerts_live"        @click="setTab('alerts')" :delay="200" />
     </div>{{-- /KPI Cards --}}
 
+    {{-- ── B1b. Missing Persons (owner, 2026-10-30) ───────────────────────────
+         Counted as people, not cases, from GET /sakuna/missing/summary; hidden
+         where the role may not read cases or the feature is not switched on. --}}
+    <div x-data="{ mp: null }"
+         x-init="if (can('sakuna_missing','view')) $api.get('/admin/sakuna/missing/summary').then((r) => { mp = r.data; }).catch(() => { mp = null; })"
+         x-show="mp" x-cloak
+         class="rounded-[22px] border border-rose-100 bg-white p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div class="flex items-center gap-2">
+            <i data-lucide="user-search" class="w-5 h-5 text-rose-600"></i>
+            <p class="text-sm font-bold text-ink">Missing Persons</p>
+        </div>
+        <dl class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <div><dt class="text-[11px] text-ink-muted">Still missing</dt><dd class="text-lg font-extrabold tabular-nums text-rose-700" x-text="mp?.missing ?? 0"></dd></div>
+            <div><dt class="text-[11px] text-ink-muted">Unidentified</dt><dd class="text-lg font-extrabold tabular-nums text-amber-700" x-text="mp?.unidentified ?? 0"></dd></div>
+            <div><dt class="text-[11px] text-ink-muted">Recorded this week</dt><dd class="text-lg font-extrabold tabular-nums text-ink" x-text="mp?.recent ?? 0"></dd></div>
+            <div><dt class="text-[11px] text-ink-muted">Found</dt><dd class="text-lg font-extrabold tabular-nums text-emerald-700" x-text="mp?.found ?? 0"></dd></div>
+            <div><dt class="text-[11px] text-ink-muted">Closed</dt><dd class="text-lg font-extrabold tabular-nums text-slate-600" x-text="mp?.closed ?? 0"></dd></div>
+        </dl>
+        <button type="button" @click="setTab('missing-persons')" class="ml-auto text-xs font-semibold text-brand-600 hover:text-brand-700">Open Missing Persons</button>
+        <p class="basis-full text-[11px] text-ink-muted" x-show="mp && mp.cases === 0">No one has been recorded missing.</p>
+    </div>
+
 
     {{-- ── B2. Active Incident Locations ───────────────────────────────────── --}}
     {{-- A real map (2026-10-26): incidents and evacuation centres at the

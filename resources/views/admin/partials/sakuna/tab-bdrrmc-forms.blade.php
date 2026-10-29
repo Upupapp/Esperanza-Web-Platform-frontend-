@@ -442,6 +442,33 @@
                 </div>
                 </template>
 
+                {{-- Registered owners (owner, 2026-10-30): pick a farmer, fisherfolk or
+                     business owner from the registry so the name is not typed again;
+                     anyone not registered is still written in on the form. --}}
+                <div x-show="['agriculture', 'fishing', 'business'].includes(openForm) && can('sakuna_damage','create')" x-cloak class="no-print rounded-xl border border-slate-200 bg-white p-3 space-y-2"
+                     x-data="{ q: '', found: [], kinds: { agriculture: 'farmer', fishing: 'fisherfolk', business: 'business' },
+                        async search() {
+                            if (this.q.trim().length < 2) { this.found = []; return; }
+                            try { this.found = (await $api.get('/admin/sakuna/registered-people', { params: { kind: this.kinds[openForm], q: this.q.trim(), barangay: barangay || undefined } })).data || []; } catch { this.found = []; }
+                        },
+                        pick(p) {
+                            const rows = $data[rowsOf[openForm]];
+                            const blank = rows.find((r) => Object.entries(r).every(([k, v]) => k.startsWith('_') || v === '' || v === null));
+                            const row = blank || (blankRow(openForm), rows[rows.length - 1]);
+                            row.owner = p.name; row.owner_ref = p.ref;
+                            this.q = ''; this.found = [];
+                            this.$dispatch('toast', { message: p.name + ' added from the registry.', variant: 'success' });
+                        } }">
+                    <label class="text-xs font-semibold text-ink" :for="'reg-owner-' + openForm" x-text="{ agriculture: 'Add a registered farmer', fishing: 'Add registered fisherfolk', business: 'Add a registered business owner or vendor' }[openForm] || ''"></label>
+                    <input :id="'reg-owner-' + openForm" type="search" x-model="q" @input.debounce.400ms="search()" placeholder="Name or RES number" class="w-full rounded-xl border border-slate-200 py-2 px-3 text-sm">
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="p in found" :key="p.ref">
+                            <button type="button" @click="pick(p)" class="text-xs px-2.5 py-1 rounded-full border border-slate-200 hover:border-brand-300" x-text="p.name + ' · ' + p.barangay + (p.sitio ? ', ' + p.sitio : '')"></button>
+                        </template>
+                    </div>
+                    <p class="text-[11px] text-ink-muted">Only residents classified on the DRRM list appear. Not registered? Write the owner in on the form.</p>
+                </div>
+
                 @include('admin.partials.sakuna.bdrrmc-paper', ['mode' => 'edit'])
 
                 <button type="button" @click="addPage(openForm); $nextTick(() => window.renderIcons?.())" class="no-print w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-300 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-ink-muted hover:text-brand-600 py-2 transition-all duration-[160ms] ease-standard">

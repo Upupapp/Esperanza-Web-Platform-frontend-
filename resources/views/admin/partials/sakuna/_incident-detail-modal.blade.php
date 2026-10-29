@@ -56,6 +56,26 @@
                 <p class="text-sm text-slate-700 leading-relaxed" x-text="selectedIncident?.description || '—'"></p>
             </div>
 
+            {{-- The people recorded under this incident (owner, 2026-10-30): the
+                 same cases the Missing Persons tab lists, not a copy. Null when
+                 the role may not read them or the feature is off. --}}
+            <div x-show="Array.isArray(selectedIncident?.persons)" x-cloak class="p-4 rounded-xl border border-rose-100 bg-white">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <p class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]">Missing, deceased or unidentified persons</p>
+                    <a x-show="can('sakuna_missing','create')" :href="tabUrls['missing-persons'] + '?incident=' + encodeURIComponent(selectedIncident?.ref || '')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Record a person</a>
+                </div>
+                <p x-show="!(selectedIncident?.persons || []).length" class="text-xs text-ink-muted">No one is recorded under this incident.</p>
+                <ul class="space-y-1">
+                    <template x-for="p in (selectedIncident?.persons || [])" :key="p.ref">
+                        <li class="flex flex-wrap items-center gap-2 text-xs">
+                            <a :href="tabUrls['missing-persons'] + '?incident=' + encodeURIComponent(selectedIncident?.ref || '')" class="font-mono text-brand-600 hover:underline" x-text="p.ref"></a>
+                            <span class="font-semibold text-ink" x-text="p.name || 'Unidentified'"></span>
+                            <span class="text-ink-muted" x-text="p.status"></span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+
             {{-- The photos the resident sent with the report (citizen app). A photo
                  still being scanned has no link yet. --}}
             <div x-show="(selectedIncident?.photos || []).length" x-cloak>

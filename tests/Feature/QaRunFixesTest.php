@@ -266,6 +266,82 @@ class QaRunFixesTest extends TestCase
      * registry. The Occupations tab is the review list; imports take a DRRM
      * code column and say how the file's occupations were classified.
      */
+    /**
+     * 2026-10-30 (owner): Missing Persons in Sakuna. Its own permission
+     * (sakuna_missing: the MDRRMO's roles and the Super Administrator write;
+     * the Municipal Administrator reads only), a tab with filters, the case
+     * lifecycle and a record form, the Command Center widget, and the
+     * incident's own list of the people recorded under it.
+     */
+    /**
+     * 2026-10-30 (owner): Sakuna's Reports tab is one server calculation under
+     * combined filters (barangay, dates, type, status, livelihood group and
+     * item); XLSX and PDF are built from the export endpoint, which checks
+     * sakuna_reports.export and logs it. Nothing is computed from lists in
+     * the browser any more.
+     */
+    /**
+     * 2026-10-30 (owner): livelihood in Sakuna. The Vulnerability tab shows
+     * registered residents by DRRM livelihood beside the flood risk their
+     * households record; the Agriculture, Fishing and Business forms pick
+     * registered farmers, fisherfolk and business owners (owner_ref), and a
+     * name typed over a picked one drops the link.
+     */
+    public function test_vulnerability_and_damage_forms_use_registered_livelihoods(): void
+    {
+        $vulnerability = $this->source('resources/views/admin/partials/sakuna/tab-vulnerability.blade.php');
+        $this->assertStringContainsString("'/admin/sakuna/vulnerability/livelihood'", $vulnerability);
+        $this->assertStringContainsString('x-model="lvF.flood_risk"', $vulnerability);
+
+        $forms = $this->source('resources/views/admin/partials/sakuna/tab-bdrrmc-forms.blade.php');
+        $this->assertStringContainsString("'/admin/sakuna/registered-people'", $forms);
+        $this->assertStringContainsString('row.owner = p.name; row.owner_ref = p.ref;', $forms);
+        $this->assertStringContainsString('Not registered? Write the owner in on the form.', $forms);
+        $this->assertStringContainsString("if (c.key === 'owner' && slot.r.owner_ref) slot.r.owner_ref = ''", $this->source('resources/views/admin/partials/sakuna/bdrrmc-paper.blade.php'));
+    }
+
+    public function test_sakuna_reports_come_from_the_server_with_combined_filters(): void
+    {
+        $tab = $this->source('resources/views/admin/partials/sakuna/tab-reports.blade.php');
+        $this->assertStringContainsString('x-data="sakunaReport"', $tab);
+        foreach (['f.barangay', 'f.from', 'f.to', 'f.type', 'f.status', 'f.livelihood_group', 'f.livelihood_code'] as $filter) {
+            $this->assertStringContainsString('x-model="'.$filter.'"', $tab, $filter);
+        }
+        $this->assertStringContainsString("x-show=\"can('sakuna_reports','export')\"", $tab);
+        $this->assertStringNotContainsString('reportScopedIncidents', $tab, 'no figures computed in the browser');
+
+        $js = $this->source('resources/js/sakuna-report.js');
+        foreach (["'/admin/sakuna/reports/summary'", "'/admin/sakuna/reports/incidents'", "'/admin/sakuna/reports/export'", 'writeXlsx', 'writePdf'] as $needle) {
+            $this->assertStringContainsString($needle, $js);
+        }
+        $this->assertStringContainsString("Alpine.data('sakunaReport', sakunaReport)", $this->source('resources/js/app.js'));
+    }
+
+    public function test_missing_persons_has_its_tab_widget_and_permission(): void
+    {
+        $roles = collect(config('esperanza_rbac.roles'))->keyBy('key');
+        $this->assertSame(['view', 'create', 'edit', 'close'], $roles['super_admin']['permissions']['sakuna_missing']);
+        $this->assertSame(['view'], $roles['municipal_admin']['permissions']['sakuna_missing']);
+        $this->assertArrayNotHasKey('sakuna_missing', $roles['records_officer']['permissions']);
+
+        $page = $this->source('resources/views/admin/sakuna.blade.php');
+        $this->assertStringContainsString("'missing-persons': 'sakuna_missing'", $page);
+        $this->assertStringContainsString("@include('admin.partials.sakuna.tab-missing'", $page);
+        $this->get('/admin/sakuna/missing-persons')->assertOk();
+
+        $tab = $this->source('resources/views/admin/partials/sakuna/tab-missing.blade.php');
+        foreach (["'/admin/sakuna/missing'", "'/missing'", "'/status'", "can('sakuna_missing','create')", "can('sakuna_missing','close')", 'FEATURE_OFF'] as $needle) {
+            $this->assertStringContainsString($needle, $tab);
+        }
+        $this->assertStringContainsString("'/admin/sakuna/missing/summary'", $this->source('resources/views/admin/partials/sakuna/tab-command.blade.php'));
+        $this->assertStringContainsString('selectedIncident?.persons', $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php'));
+
+        // A Balita post from a case is a draft for review, never posted by itself.
+        $this->assertStringContainsString("'/announcement'", $tab);
+        $this->assertStringContainsString("can('sakuna_missing','edit') && can('comm_news','create')", $tab);
+        $this->assertStringContainsString('Nothing is posted by itself.', $tab);
+    }
+
     public function test_occupations_use_the_drrm_dropdowns_everywhere(): void
     {
         $component = $this->source('resources/views/components/livelihood-select.blade.php');
