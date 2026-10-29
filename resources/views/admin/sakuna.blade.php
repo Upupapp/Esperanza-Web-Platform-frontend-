@@ -1053,10 +1053,12 @@
         // doesn't provide (its own `markers` are only incidents with lat/lng).
         // The Assign picker's people outside the Command Center: each tab is
         // its own page, so the Incidents tab asks when Assign is first opened.
+        // Sakuna's own list, held to assign rather than Personnel, so an
+        // MDRRMO Head assigns without User Management (owner, 2026-10-28).
         async loadPersonnel() {
             if (this.personnel.length) return;
             try {
-                const res = await (this.$store.session.canPerm('um_personnel', 'view') ? $api.getAll('/admin/users') : this.nothing());
+                const res = await (this.$store.session.canPerm('sakuna_incidents', 'assign') ? $api.get('/admin/sakuna/assignees') : this.nothing());
                 this.personnel = res.data || [];
             } catch { /* the picker stays empty */ }
         },
@@ -1064,13 +1066,13 @@
             this.commandLoading = true;
             this.commandFailed = false;
             try {
-                // The personnel list feeds the Assign picker; only a role that
-                // may see Personnel asks for it (every 403 pops up).
+                // The Sakuna list feeds the Assign picker; only a role that
+                // may assign asks for it (every 403 pops up).
                 await this.$store.session.whenReady();
                 const [board, incidents, personnel] = await Promise.all([
                     $api.get('/admin/sakuna/command-center'),
                     this.allowed('sakuna_incidents') ? $api.getAll('/admin/sakuna/incidents') : this.nothing(),
-                    this.$store.session.canPerm('um_personnel', 'view') ? $api.getAll('/admin/users').catch(() => ({ data: [] })) : this.nothing(),
+                    this.$store.session.canPerm('sakuna_incidents', 'assign') ? $api.get('/admin/sakuna/assignees').catch(() => ({ data: [] })) : this.nothing(),
                 ]);
                 this.commandBoard = board.data;
                 const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };

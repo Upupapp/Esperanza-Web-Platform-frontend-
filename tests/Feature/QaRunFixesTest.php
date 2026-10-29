@@ -231,9 +231,68 @@ class QaRunFixesTest extends TestCase
     {
         $page = $this->source('resources/views/admin/sakuna.blade.php');
         $this->assertStringContainsString('async loadPersonnel() {', $page);
-        $this->assertStringContainsString("const res = await (this.\$store.session.canPerm('um_personnel', 'view') ? \$api.getAll('/admin/users') : this.nothing());", $page);
+        $this->assertStringContainsString("const res = await (this.\$store.session.canPerm('sakuna_incidents', 'assign') ? \$api.get('/admin/sakuna/assignees') : this.nothing());", $page);
         $modal = $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php');
         $this->assertStringContainsString('@click="showAssignForm = !showAssignForm; showEscalateForm = false; loadPersonnel()"', $modal);
-        $this->assertStringContainsString('ask an administrator to assign this incident', $modal);
+        $this->assertStringNotContainsString('ask an administrator to assign this incident', $modal);
+    }
+
+    /**
+     * 2026-10-28 (owner): an MDRRMO Head holds Sakuna but not User Management,
+     * and still picks a person. The picker reads Sakuna's own list and offers
+     * only officers who cover the incident's barangay.
+     */
+    public function test_assign_picker_reads_the_sakuna_list(): void
+    {
+        $modal = $this->source('resources/views/admin/partials/sakuna/_incident-detail-modal.blade.php');
+        $this->assertStringContainsString("personnel.filter(p => p.scope === 'Municipal' || p.scope === selectedIncident?.barangay)", $modal);
+        $this->assertStringContainsString("') - ' + p.role", $modal);
+        $this->assertStringNotContainsString("canPerm('um_personnel'", $modal);
+    }
+
+    /**
+     * 2026-10-28/29 (owner): Constituents' Export CSV and PDF built the file in
+     * the browser from what was on screen, for every role that could view the
+     * registry. Now each export asks the server, which checks the dataset's
+     * export permission, keeps to the account's scope and logs it; the
+     * buttons show only with that permission. Print prints the page on
+     * screen (one page of at most 50 rows), so it stays as it was.
+     */
+    public function test_constituents_export_goes_through_the_server(): void
+    {
+        $page = $this->source('resources/views/admin/constituents.blade.php');
+        $quality = $this->source('resources/views/admin/constituents/tab-data-quality.blade.php');
+        $profiling = $this->source('resources/views/admin/constituents/tab-profiling.blade.php');
+
+        $this->assertSame(2, substr_count($page, "x-show=\"can(view==='individuals' ? 'const_resident' : 'const_household', 'export')\" @click=\"view==='individuals'?exportIndividuals("));
+        $this->assertSame(2, substr_count($quality, "x-show=\"can('const_data_quality', 'export')\""));
+        $this->assertSame(2, substr_count($profiling, "x-show=\"can('const_barangay', 'export')\""));
+
+        // Every file is made from the rows the server returned.
+        $this->assertStringContainsString("\$api.post('/admin/constituents/exports/' + dataset", $page);
+        foreach (['residents', 'families', 'households'] as $dataset) {
+            $this->assertStringContainsString("'{$dataset}'", $page);
+        }
+        $this->assertSame(2, substr_count($quality, "exportShown('data-quality', filteredQualityIssues, qualityIssues"));
+        $this->assertSame(2, substr_count($profiling, "exportFrom('coverage', {}"));
+        foreach ([$page, $quality, $profiling] as $source) {
+            $this->assertDoesNotMatchRegularExpression('/@click="[^"]*export(CSV|PDF)\(/', $source, 'no button builds a file from browser data');
+        }
+        $this->assertStringNotContainsString("\$api.getAll('/admin/residents', { params: this.remote.params", $page);
+
+        $this->assertStringContainsString('<button @click="window.print()"', $page, 'Print stays');
+    }
+
+    /**
+     * 2026-10-28: the MDRRMO's roles, made in Users -> Roles, read "MDRRMO
+     * Head" rather than "Mdrrmo Head", are office-restricted like a
+     * department (backend Scope.php), and the Head is told what Balita is for.
+     */
+    public function test_mdrrmo_roles_are_named_and_kept_to_their_office(): void
+    {
+        $app = $this->source('resources/js/app.js');
+        $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff'", $app);
+        $this->assertStringContainsString("['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff'].includes(this.account.roleKey)", $app);
+        $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts", $this->source('resources/views/admin/communications.blade.php'));
     }
 }

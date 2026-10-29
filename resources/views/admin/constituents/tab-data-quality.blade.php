@@ -131,13 +131,15 @@
             </p>
             <div class="flex items-center gap-3">
                 <button
-                    @click="exportCSV(filteredQualityIssues, 'data-quality-export.csv')"
+                    x-show="can('const_data_quality', 'export')"
+                    @click="exportShown('data-quality', filteredQualityIssues, qualityIssues, 'csv', 'data-quality-export.csv')"
                     class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 transition"
                 >
                     <i data-lucide="download" class="w-3 h-3"></i> Export CSV
                 </button>
                 <button
-                    @click="exportPDF(filteredQualityIssues, 'data-quality-export.csv')"
+                    x-show="can('const_data_quality', 'export')"
+                    @click="exportShown('data-quality', filteredQualityIssues, qualityIssues, 'pdf', 'data-quality-export.csv')"
                     class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 transition"
                 >
                     <i data-lucide="file-down" class="w-3 h-3"></i> Export PDF

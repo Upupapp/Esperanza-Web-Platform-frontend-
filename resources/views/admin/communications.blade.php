@@ -72,6 +72,7 @@
                     municipal_admin: 'Municipal Administrator: for the Office of the Mayor, you lead the Municipal Information Office. You can do everything here, and what the Information Office sends for a second look comes to you.',
                     info_officer: 'Municipal Information Officer: you publish Balita, banners, occasions and events for the whole municipality, and review what the offices send. Your lead is the Municipal Administrator: save a draft and send it for review to get their second look.',
                     department_head: 'Department Head: you approve and publish your office’s Balita posts; the Municipal Information Office can too.',
+                    mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts, such as disaster updates, and approve or delete what your staff send; the Municipal Information Office can too. An urgent warning belongs in Sakuna > Alerts, which also reaches residents on their phones.',
                 }[this.$store.session.account?.roleKey] || '';
             },
             barangayNames: @js(config('esperanza.barangays')),
