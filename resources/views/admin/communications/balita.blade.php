@@ -21,9 +21,9 @@
     <aside aria-label="Balita overview" class="order-first lg:order-last w-full lg:w-[300px] shrink-0 lg:sticky lg:top-4 space-y-1">
         <div class="flex items-center justify-between gap-2">
             <h2 class="px-2 py-1 text-[17px] font-semibold text-ink-body">Overview</h2>
-            {{-- Balita settings: the photo watermark (welfare round 2026-10-29), for those who run the LGU's own channels
-                 (comm_banners edit: the Information Officer, the Municipal Administrator, the Super Admin), not every office's head. --}}
-            <button type="button" x-show="$store.session.canPerm('comm_banners', 'edit')" x-cloak @click="window.dispatchEvent(new CustomEvent('balita-settings'))" class="h-9 px-2.5 rounded-[10px] inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-body hover:bg-slate-200/60 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 transition-colors"><i data-lucide="settings" class="w-4 h-4"></i>Balita settings</button>
+            {{-- Balita settings: the photo watermark (welfare round 2026-10-29), for anyone who can post
+                 (comm_news create; owner: "should apply to anyone who can post"). --}}
+            <button type="button" x-show="$store.session.canPerm('comm_news', 'create')" x-cloak @click="window.dispatchEvent(new CustomEvent('balita-settings'))" class="h-9 px-2.5 rounded-[10px] inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-body hover:bg-slate-200/60 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 transition-colors"><i data-lucide="settings" class="w-4 h-4"></i>Balita settings</button>
         </div>
         <div class="grid grid-cols-2 lg:grid-cols-1 gap-1">
         <button type="button" @click="showStatus('Released')" :aria-pressed="!scheduledOnly && status === 'Released' ? 'true' : 'false'" class="w-full min-h-14 px-2 rounded-[10px] flex items-center gap-2 lg:gap-3 text-left hover:bg-slate-200/60 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 transition-colors" :class="!scheduledOnly && status === 'Released' && 'bg-slate-200/60'">

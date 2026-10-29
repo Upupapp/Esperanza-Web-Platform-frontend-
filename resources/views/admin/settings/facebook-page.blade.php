@@ -1,8 +1,7 @@
 {{-- Facebook Page (welfare round 2026-10-29): Balita posts copied to the LGU's
-     Facebook Page when published. For those who run the LGU's own channels
-     (comm_banners edit: the Information Officer, the Municipal Administrator,
-     the Super Admin) and technical administrators (set_system); changing it
-     takes comm_banners edit or set_system edit. Three states: not
+     Facebook Page when published. For anyone who can post in Balita
+     (comm_news create; owner, 2026-10-29) and technical administrators
+     (set_system); changing it takes comm_news create or set_system edit. Three states: not
      connected (how to get the Page ID and a token, and the form), connected
      (the Page, who connected it, auto-post, default sharing, check,
      disconnect), and a token problem (reconnect). The token is sent once and
@@ -84,7 +83,7 @@
                 <x-ui.button size="sm" variant="ghost" icon="key-round" x-show="state !== 'problem'" @click="openForm()">Replace token</x-ui.button>
                 <x-ui.button size="sm" variant="ghost" icon="unplug" @click="confirmDisconnect = true">Disconnect</x-ui.button>
             </div>
-            <p x-show="!canManage" class="{{ $ui['note'] }}"><i data-lucide="lock" class="w-4 h-4 shrink-0 mt-px"></i><span>Only the Information Officer, the Municipal Administrator and technical administrators change this.</span></p>
+            <p x-show="!canManage" class="{{ $ui['note'] }}"><i data-lucide="lock" class="w-4 h-4 shrink-0 mt-px"></i><span>Only officers who can post in Balita, and technical administrators, change this.</span></p>
         </div>
 
         {{-- Not connected --}}
@@ -129,7 +128,7 @@
                 </div>
             </form>
         </div>
-        <p x-show="state === 'none' && !canManage" class="{{ $ui['note'] }}"><i data-lucide="lock" class="w-4 h-4 shrink-0 mt-px"></i><span>Only the Information Officer, the Municipal Administrator and technical administrators connect the Page.</span></p>
+        <p x-show="state === 'none' && !canManage" class="{{ $ui['note'] }}"><i data-lucide="lock" class="w-4 h-4 shrink-0 mt-px"></i><span>Only officers who can post in Balita, and technical administrators, connect the Page.</span></p>
     </div>
 </x-ui.card>
 </div>

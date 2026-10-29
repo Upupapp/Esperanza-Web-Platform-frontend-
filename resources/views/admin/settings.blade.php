@@ -55,11 +55,10 @@
             // Direktoryo is also for officers without Settings: the Municipal
             // Information Officer and each Barangay Secretary (2026-10-21).
             get directoryAllowed() { return this.$store.session.canPerm('comm_directory', 'view') || this.$store.session.canPerm('comm_barangay_directory', 'view'); },
-            // The Facebook Page card on Integrations is also for those who run
-            // the LGU's own channels (comm_banners edit: the Information
-            // Officer, the Municipal Administrator), without the rest of
-            // Settings (2026-10-29).
-            get facebookAllowed() { return this.$store.session.canPerm('comm_banners', 'edit') || this.$store.session.canPerm('set_system', 'view'); },
+            // The Facebook Page card on Integrations is also for anyone who can
+            // post in Balita, without the rest of Settings (owner, 2026-10-29:
+            // "should apply to anyone who can post").
+            get facebookAllowed() { return this.$store.session.canPerm('comm_news', 'create') || this.$store.session.canPerm('set_system', 'view'); },
             // A tab's address replaces the current one, so a reload stays on it.
             go(t) {
                 this.tab = t;
