@@ -232,7 +232,8 @@ export function tulongApply() {
         apReferredBy: '',
         apRecordOnly: false,
         apRecord: { completed_on: '', amount: '', released_to: '', note: '' },
-        apSteps: ['Person', 'Service', 'Form', 'Requirements & consent'],
+        // The steps' names (round 2: the owner's "Tulong Type", never "Service").
+        apSteps: ['Person', 'Tulong Type', 'Form', 'Requirements & consent'],
         day,
         fileSize,
 
@@ -357,7 +358,7 @@ export function tulongApply() {
         /** Step by step, '' when the step is complete. */
         apProblem(step = this.apStep) {
             if (step === 1) return this.pProblem();
-            if (step === 2) return this.apKey ? '' : 'Choose the service.';
+            if (step === 2) return this.apKey ? '' : 'Choose the Tulong type.';
             if (step === 3) {
                 const missing = (this.apType?.fields || []).filter((f) => {
                     if (!f.required || f.type === 'derived_age' || !this.apShown(f)) return false;
@@ -1016,7 +1017,7 @@ export function sessionDesk() {
         sfNeedsAccreditation() { return !!this.sdType(this.sf?.service_key)?.certificate?.requiresAccreditation; },
         sfProblem() {
             const f = this.sf;
-            if (!f.service_key) return 'Choose the service.';
+            if (!f.service_key) return 'Choose the Tulong type.';
             if (f.title.trim().length < 3) return 'Give the session a title.';
             if (!f.date) return 'Give the date.';
             if (!f.start_time) return 'Give the start time.';

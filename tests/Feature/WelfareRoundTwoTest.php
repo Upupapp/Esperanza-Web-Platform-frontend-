@@ -292,4 +292,37 @@ class WelfareRoundTwoTest extends TestCase
         $this->assertStringContainsString('<x-ui.t fil="Aking mga sertipiko" en="My certificates" />', $card);
         $this->assertStringContainsString("api.get('/citizen/certificates')", $citizen);
     }
+
+    // ------------------------------------------------ 5. "Tulong Type" wording
+
+    public function test_the_tulong_screens_say_tulong_type_not_service(): void
+    {
+        $apply = $this->shown('resources/views/admin/tulong/apply.blade.php');
+        $js = $this->source('resources/js/welfare-admin.js');
+
+        $this->assertStringContainsString("apSteps: ['Person', 'Tulong Type', 'Form', 'Requirements & consent'],", $js);
+        $this->assertStringContainsString("'Which Tulong type?'", $apply);
+        $this->assertStringContainsString('aria-label="Search Tulong types" placeholder="Search Tulong types"', $apply);
+        $this->assertStringContainsString("if (step === 2) return this.apKey ? '' : 'Choose the Tulong type.';", $js);
+        $this->assertStringContainsString('<label for="sf-service" class="{{ $sdLabel }}">Tulong Type *</label>', $this->source('resources/views/admin/tulong/session-desk.blade.php'));
+        $this->assertStringContainsString('<option value="">All Tulong types</option>', $this->source('resources/views/admin/tulong/sessions.blade.php'));
+
+        // No "service" left in what these screens show: text between tags,
+        // and the quoted strings their bindings print.
+        $left = [];
+        foreach (['apply', 'sessions', 'session-desk', 'case-session', 'case-notes'] as $partial) {
+            $view = $this->shown('resources/views/admin/tulong/'.$partial.'.blade.php');
+            preg_match_all('/>([^<>]*)</', $view, $text);
+            preg_match_all("/'([^'\\n]*)'/", $view, $strings);
+            foreach (array_merge($text[1], $strings[1]) as $words) {
+                if (preg_match('/\bservices?\b/i', $words)) {
+                    $left[] = $partial.': '.trim($words);
+                }
+            }
+        }
+        $this->assertSame([], $left);
+        foreach (["'Choose the service.'", "'Service'", 'All session services', 'Which service?', 'Search the services'] as $gone) {
+            $this->assertStringNotContainsString($gone, $js.$apply, $gone);
+        }
+    }
 }

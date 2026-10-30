@@ -114,7 +114,7 @@
 
                 {{-- Add waiting cases --}}
                 <div x-show="sdPanel === 'waiting'" x-cloak class="rounded-xl border border-indigo-200 bg-indigo-50/40 p-3">
-                    <p class="text-xs font-semibold text-indigo-900">Cases waiting for a session of this service</p>
+                    <p class="text-xs font-semibold text-indigo-900">Cases waiting for a session of this Tulong type</p>
                     <p x-show="sdWaitingLoading" class="text-xs text-ink-muted mt-1">Loading…</p>
                     <p x-show="sdWaitingFailed" class="text-xs text-rose-700 mt-1">Could not load them. <button type="button" class="underline" @click="sdLoadWaiting()">Try again</button></p>
                     <p x-show="!sdWaitingLoading && !sdWaitingFailed && !sdWaiting.length" class="text-xs text-ink-muted mt-1">No case is waiting.</p>
@@ -187,7 +187,7 @@
                 <p class="text-sm font-bold text-ink" x-text="sfRef ? 'Edit ' + sfRef : 'New session'"></p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="sm:col-span-2">
-                        <label for="sf-service" class="{{ $sdLabel }}">Service *</label>
+                        <label for="sf-service" class="{{ $sdLabel }}">Tulong Type *</label>
                         <select id="sf-service" x-model="sf.service_key" @change="sfService(sf.service_key)" :disabled="!!sfRef" class="{{ $sdInput }}">
                             <option value="">—</option>
                             <template x-for="t in sdServices()" :key="t.key"><option :value="t.key" x-text="t.name" :selected="sf.service_key === t.key"></option></template>

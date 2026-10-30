@@ -27,7 +27,7 @@
         </div>
         <div x-show="csPicking" x-cloak class="mt-2 space-y-1.5">
             <p x-show="csLoading" class="text-xs text-ink-muted">Loading the scheduled sessions…</p>
-            <p x-show="!csLoading && !csOptions.length && !csError" class="text-xs text-ink-muted">No scheduled session of this service. Schedule one in the Sessions view.</p>
+            <p x-show="!csLoading && !csOptions.length && !csError" class="text-xs text-ink-muted">No scheduled session of this Tulong type. Schedule one in the Sessions view.</p>
             <template x-for="s in csOptions" :key="s.ref">
                 <button type="button" :disabled="csBusy" @click="csAdd(s)" class="w-full text-left rounded-xl border border-slate-200 bg-white/80 hover:border-brand-200 px-3 py-1.5 text-xs disabled:opacity-50">
                     <span class="font-semibold text-ink" x-text="(s.title || s.service_name) + ' · ' + day(s.date) + ', ' + time(s.start_time)"></span>

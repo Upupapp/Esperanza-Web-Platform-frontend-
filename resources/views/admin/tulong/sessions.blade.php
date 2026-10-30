@@ -30,8 +30,8 @@
                     <button type="button" @click="slSetTab(t[0])" :aria-pressed="slTab === t[0]" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="slTab === t[0] ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'" x-text="t[1]"></button>
                 </template>
             </div>
-            <select x-model="slService" @change="slLoad()" aria-label="Service" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
-                <option value="">All session services</option>
+            <select x-model="slService" @change="slLoad()" aria-label="Tulong type" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                <option value="">All Tulong types</option>
                 <template x-for="t in slServices()" :key="t.key"><option :value="t.key" x-text="t.name" :selected="slService === t.key"></option></template>
             </select>
         </div>

@@ -1778,7 +1778,7 @@
                                     </a>
                                 </div>
                             </template>
-                            <p class="text-[11px] text-ink-muted mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this service.</p>
+                            <p class="text-[11px] text-ink-muted mt-1 leading-relaxed" x-show="!selected.reference_pdf">No reference form on file for this Tulong type.</p>
                         </div>
                     </div>
                 </div>

@@ -42,7 +42,7 @@
             Walk-in participant for the session <span class="font-semibold" x-text="apSessionTitle || apSessionRef"></span>. The case is filed and added to the session.
         </p>
 
-        <h4 id="ap-step-title" tabindex="-1" class="text-sm font-bold text-ink mb-3 outline-none" x-text="apStep === 3 ? (apType?.name || 'The form') : ['Who is the request for?', 'Which service?', '', 'Requirements and consent'][apStep - 1]"></h4>
+        <h4 id="ap-step-title" tabindex="-1" class="text-sm font-bold text-ink mb-3 outline-none" x-text="apStep === 3 ? (apType?.name || 'The form') : ['Who is the request for?', 'Which Tulong type?', '', 'Requirements and consent'][apStep - 1]"></h4>
 
         {{-- 1. Person --}}
         <section x-show="apStep === 1">
@@ -114,13 +114,13 @@
             </div>
         </section>
 
-        {{-- 2. Service --}}
+        {{-- 2. Tulong type (owner, round 2: "Rename Service words into Tulong Type") --}}
         <section x-show="apStep === 2" x-cloak>
             <div class="relative mb-3">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input type="search" x-model="apSearch" aria-label="Search the services" placeholder="Search the services" class="{{ $apUi['input'] }} pl-9">
+                <input type="search" x-model="apSearch" aria-label="Search Tulong types" placeholder="Search Tulong types" class="{{ $apUi['input'] }} pl-9">
             </div>
-            <p x-show="!apGroups().length" class="text-xs text-ink-muted">No service matches, or you may not file any.</p>
+            <p x-show="!apGroups().length" class="text-xs text-ink-muted">No Tulong type matches, or you may not file any.</p>
             <div class="space-y-4 max-h-[48vh] overflow-y-auto pr-1">
                 <template x-for="g in apGroups()" :key="g.category">
                     <fieldset>
@@ -145,7 +145,7 @@
             </div>
         </section>
 
-        {{-- 3. The service's form --}}
+        {{-- 3. The Tulong type's form --}}
         <section x-show="apStep === 3" x-cloak>
             <p class="text-xs text-ink-muted mb-3 -mt-2" x-text="'For ' + pName() + (apType?.sessionCouple ? '. Both partners attend; the certificate names both.' : '.')"></p>
             <div x-show="!(apType?.fields || []).length">
@@ -258,7 +258,7 @@
             <fieldset data-testid="ap-requirements">
                 <legend class="text-sm font-bold text-ink mb-1">Requirements</legend>
                 <p class="text-xs text-ink-muted mb-2" x-show="apShownReqs().length">Upload a photo or scan of each document. Documents not uploaded now can be attached to the case later.</p>
-                <p class="text-xs text-ink-muted" x-show="!apShownReqs().length">This service asks for no documents.</p>
+                <p class="text-xs text-ink-muted" x-show="!apShownReqs().length">This Tulong type asks for no documents.</p>
                 <ul class="space-y-1.5">
                     <template x-for="r in apShownReqs()" :key="r.key">
                         <li class="rounded-xl border px-3 py-2 text-xs transition-colors" :class="r.state === 'done' ? 'border-emerald-200 bg-emerald-50/40' : (r.state === 'failed' || r.error ? 'border-rose-200 bg-rose-50/30' : (r.file ? 'border-brand-200 bg-brand-50/30' : 'border-slate-200'))">
@@ -295,7 +295,7 @@
             <p x-show="apFiled && !apBusy" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/50 px-3 py-2 text-xs text-emerald-800" x-text="(apFiled?.ref ? apFiled.ref + ' is filed' : 'Filed') + (apFiled?.sessionRef ? ' and added to the session' : '') + '. Attach the documents marked above from the case with Upload file.'"></p>
 
             <div class="rounded-xl border border-brand-100 bg-brand-50/50 p-3">
-                <p class="text-xs text-slate-700 leading-relaxed">Read to the person: "The Municipality of Esperanza collects your personal information only to process this request and to keep the record of the service given, under the Data Privacy Act of 2012 (RA 10173). It is kept by the office handling your request and shared only as the law allows."</p>
+                <p class="text-xs text-slate-700 leading-relaxed">Read to the person: "The Municipality of Esperanza collects your personal information only to process this request and to keep the record of the assistance given, under the Data Privacy Act of 2012 (RA 10173). It is kept by the office handling your request and shared only as the law allows."</p>
                 <label class="mt-2 flex items-start gap-2 text-xs font-semibold text-ink">
                     <input type="checkbox" x-model="apConsent" class="mt-0.5 rounded text-brand-600 focus:ring-brand-200">
                     <span>The person heard this and agrees *</span>
