@@ -1227,7 +1227,8 @@
         {{-- What the office recorded for them before they had an account (2026-10-13). --}}
         <x-citizen.records type="tulong" class="mt-6" />
 
-        {{-- Services received and certificates (welfare round, 2026-10-29). --}}
+        {{-- Session certificates (welfare round, 2026-10-29). The services-received
+             card left in round 2 (2026-10-30): this list is what they received. --}}
         <x-citizen.welfare-received class="mt-6" />
 
         <!-- Track Request -->

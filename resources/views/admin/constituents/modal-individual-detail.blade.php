@@ -461,35 +461,6 @@
                 </div>
             </div>
 
-            {{-- Services rendered (welfare round, 2026-10-29): the latest ten
-                 services the offices recorded as given to this resident (GET
-                 /admin/services-rendered?individual_ref=&per_page=10; a
-                 confidential one only to its own office), and See all in the
-                 Tulong page's Services rendered view. Component
-                 residentServices (resources/js/welfare-admin.js). --}}
-            <div x-show="!editing && $store.session.canPerm('tulong_records', 'view')" x-cloak
-                 x-data="residentServices()" x-effect="rsSync(selectedIndividual?.ref, showIndividualDetail)"
-                 class="surface-glass rounded-[26px] p-4" data-testid="resident-services-rendered">
-                <div class="flex items-center justify-between gap-3">
-                    <h3 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>Services Rendered</h3>
-                    <a x-show="rsTotal" :href="rsSeeAll(selectedIndividual?.ref, selectedIndividual?.name)" class="text-xs font-semibold text-brand-700 hover:underline" x-text="rsTotal > rsRows.length ? 'See all ' + rsTotal : 'See all'"></a>
-                </div>
-                <div x-show="rsLoading && !rsRows.length" class="mt-3"><x-ui.skeleton class="h-10" /></div>
-                <p x-show="rsFailed" x-cloak class="mt-2 text-xs text-rose-700" role="alert">Could not load them. <button type="button" class="underline" @click="rsLoad()">Try again</button></p>
-                <p x-show="!rsLoading && !rsFailed && !rsRows.length" x-cloak class="mt-2 text-xs text-ink-muted">No services recorded for this resident yet.</p>
-                <ul x-show="rsRows.length" x-cloak class="mt-2 divide-y divide-brand-600/[.08]">
-                    <template x-for="s in rsRows" :key="s.ref">
-                        <li class="py-2" :class="s.voided_at && 'opacity-60'">
-                            <p class="flex flex-wrap items-baseline justify-between gap-x-2">
-                                <span class="text-sm font-semibold text-ink" :class="s.voided_at && 'line-through'" x-text="s.service_name"></span>
-                                <span class="text-[11px] text-ink-muted" x-text="day(s.rendered_on)"></span>
-                            </p>
-                            <p class="text-[11px] text-ink-muted" x-text="[kindLabel(s.kind), s.office, s.amount ? peso(s.amount) : '', s.confidential ? 'Confidential' : '', s.request_ref].filter(Boolean).join(' · ')"></p>
-                        </li>
-                    </template>
-                </ul>
-            </div>
-
             {{-- ── EDIT FORM ── --}}
             <template x-if="editing">
                 <div class="max-w-2xl space-y-4">

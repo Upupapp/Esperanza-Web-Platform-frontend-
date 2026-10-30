@@ -1,14 +1,12 @@
-// The welfare round's staff screens (2026-10-29), on the Tulong page and the
-// Constituents individual detail:
+// The welfare round's staff screens (2026-10-29), on the Tulong page:
 //
 // - tulongApply: "Apply for New Tulong" - an officer files a case for a
 //   walk-in or a referral (person, service, its form, the requirements'
 //   documents uploaded and consent), or records assistance already given.
-// - servicesRendered, serviceRecordForm, caseServiceRecords,
-//   residentServices: the services given to a person (section C) - the
-//   Tulong page's "Services rendered" view, the "Record a service" window, a
-//   counseling / referral / session case's "Service records", and the
-//   Constituents individual detail's latest ten.
+// - caseNotes: a counseling / referral / session case's "Case notes" (round
+//   2, 2026-10-30). The Services rendered view, the "Record a service"
+//   window and the Constituents detail's list of them were removed then: the
+//   owner's "services rendered just means the tulong".
 // - sessionList, sessionDesk, caseSession: group sessions and their
 //   certificates (section D) - the Sessions view, the session window (its
 //   participants, attendance, and "Finish and issue certificates") with the
@@ -76,8 +74,8 @@ const icons = () => window.Alpine?.nextTick(() => window.renderIcons?.());
 
 // The Tulong catalog as the page has it (config/esperanza_tulong_types.php,
 // staff-only services included), laid over by what the server publishes now
-// (GET /services?type=tulong): staff edit a service's requirements and form
-// in the Service Catalog, and the request's requirement rows (req_1, req_2...)
+// (GET /services?type=tulong): staff edit a type's requirements and form
+// under Tulong types, and the request's requirement rows (req_1, req_2...)
 // follow the server's list. The public list leaves staff-only services out,
 // so those keep the page's own.
 let livePromise = null;
@@ -107,15 +105,10 @@ function catalogEntry(type, live) {
     return t;
 }
 
-/** How a service is worked, as a services-rendered record's kind. */
-export function recordKind(processingKind) {
-    return { medical: 'assistance', cash: 'assistance', goods: 'assistance', registration: 'registration', counseling: 'counseling', session: 'session', referral: 'referral' }[processingKind] || 'other';
-}
-
 // ------------------------------------------------------------ Person search
 
 /**
- * The person a case or a record is for: GET /admin/people/search?q= (two
+ * The person a case is for: GET /admin/people/search?q= (two
  * characters or more; residents of the registry and citizen accounts, merged,
  * at most 20), or a person not in the list. Spread into a component: methods
  * only, no getters (a getter in a spread object is read once and frozen).
@@ -532,23 +525,19 @@ export function tulongApply() {
     };
 }
 
-// ------------------------------------------------------ Services rendered
+// ---------------------------------------------------------------- Case notes
 
-const RECORD_KINDS = [['assistance', 'Assistance'], ['counseling', 'Counseling'], ['session', 'Group session'], ['referral', 'Referral'], ['registration', 'Registration'], ['other', 'Other']];
-const RECORD_MODES = [['office', 'At the office'], ['home_visit', 'Home visit'], ['field', 'In the field'], ['online', 'Online or by phone']];
-const RECORD_SOURCES = [['walk-in', 'Walk-in'], ['PNP-WCPD', 'PNP-WCPD'], ['barangay', 'Barangay'], ['BCPC', 'BCPC'], ['court', 'Court'], ['school', 'School'], ['DSWD', 'DSWD'], ['RHU', 'RHU'], ['other', 'Other']];
-const SOURCE_LABELS = { manual: 'Recorded', tulong: 'Tulong case', session: 'Session', record: 'Filed as given', backfill: 'Past case' };
-const kindLabel = (k) => (RECORD_KINDS.find((x) => x[0] === k) || [k, k || ''])[1];
-const modeLabel = (m) => (RECORD_MODES.find((x) => x[0] === m) || [m, m || ''])[1];
-const sourceLabel = (s) => (RECORD_SOURCES.find((x) => x[0] === s) || [s, s || ''])[1];
+// How a session or visit was held (services-rendered `mode`).
+const NOTE_MODES = [['office', 'At the office'], ['home_visit', 'Home visit'], ['field', 'In the field'], ['online', 'Online or by phone']];
+const modeLabel = (m) => (NOTE_MODES.find((x) => x[0] === m) || [m, m || ''])[1];
 
-/** A record row with the per-row state its Void form needs (kept on the row). */
-function recordRow(r) {
+/** A note with the per-row state its Void form needs (kept on the row). */
+function noteRow(r) {
     return { ...r, person: r.person || {}, _voiding: false, _reason: '', _busy: false };
 }
 
-/** POST /admin/services-rendered/{ref}/void { reason }: the row comes back voided. */
-async function voidRecord(r) {
+/** POST /admin/services-rendered/{ref}/void { reason }: the note comes back voided. */
+async function voidNote(r) {
     const reason = String(r._reason || '').trim();
     if (reason.length < 5 || r._busy) return false;
     r._busy = true;
@@ -558,10 +547,10 @@ async function voidRecord(r) {
         r.voided_at = back.voided_at || new Date().toISOString();
         r.void_reason = back.void_reason || reason;
         r._voiding = false;
-        toast(r.ref + ' is voided.', 'warning');
+        toast('The note is voided.', 'warning');
         return true;
     } catch (err) {
-        toast(says(err, 'Could not void ' + r.ref + '.'), 'error');
+        toast(says(err, 'Could not void the note.'), 'error');
         return false;
     } finally {
         r._busy = false;
@@ -569,326 +558,145 @@ async function voidRecord(r) {
 }
 
 /**
- * The Tulong page's "Services rendered" view: GET /admin/services-rendered
- * with the filters, a page at a time. Arriving with
- * ?view=services&individual_ref=...|account_no=...&person=Name (the
- * Constituents detail's "See all") shows that person's records.
+ * A counseling, referral or session case's "Case notes" (round 2,
+ * 2026-10-30; the welfare round's "Service records"). The owner folded the
+ * separate Services rendered view, the "Record a service" window and the
+ * resident's list of them back into Tulong ("the services rendered just
+ * means the tulong"): what is written now is a note on a case, still a
+ * services-rendered row with the case's request_ref, which the server keeps.
+ *   GET /admin/services-rendered?request_ref=&include_voided=1 - the notes;
+ *   POST /admin/services-rendered { request_ref, rendered_on, mode, details }
+ *     - "Add a note": the person and the Tulong type are the case's, and a
+ *     confidential type's notes stay with its office (the server makes them so);
+ *   POST /admin/services-rendered/{ref}/void { reason };
+ *   POST /admin/tulong/requests/{ref}/complete-service { note } - counseling
+ *     and referral close from Assessment once a note is on them. A session's
+ *     case closes only when its session is finished.
  */
-export function servicesRendered() {
+export function caseNotes() {
     return {
-        srRows: [],
-        srMeta: { total: 0, page: 1, per_page: 25 },
-        srLoading: false,
-        srFailed: false,
-        srLoaded: false,
-        srSeq: 0,
-        srF: { q: '', service_key: '', kind: '', from: '', to: '', barangay: '', include_voided: false },
-        srPerson: null,
-        srKinds: RECORD_KINDS,
+        cnRows: [],
+        cnLoading: false,
+        cnFailed: false,
+        cnFor: null,
+        cnAdding: false,
+        cnDate: '',
+        cnMode: 'office',
+        cnDetails: '',
+        cnSaving: false,
+        cnAddError: '',
+        cnClosing: false,
+        cnNote: '',
+        cnBusy: false,
+        cnError: '',
+        cnModes: NOTE_MODES,
+        cnToday: manilaToday,
         day,
         peso,
-        kindLabel,
         modeLabel,
-        sourceLabel,
-        sourceOf: (s) => SOURCE_LABELS[s] || s || '',
-        srInit() {
-            const params = new URLSearchParams(window.location.search);
-            const ind = params.get('individual_ref');
-            const acc = params.get('account_no');
-            if (ind || acc) this.srPerson = { individual_ref: ind || null, account_no: acc || null, name: params.get('person') || ind || acc };
-        },
-        srServices() {
-            return Object.values(this.tulongTypesByName || {}).filter((t) => t && t.key).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-        },
-        srCanCreate() { return can('tulong_records', 'create'); },
-        srCanVoid() { return can('tulong_records', 'edit'); },
-        srParams(page) {
-            const p = { page, per_page: this.srMeta.per_page || 25 };
-            ['q', 'service_key', 'kind', 'from', 'to', 'barangay'].forEach((k) => { const v = String(this.srF[k] || '').trim(); if (v) p[k] = v; });
-            p.include_voided = this.srF.include_voided ? 1 : 0;
-            if (this.srPerson?.individual_ref) p.individual_ref = this.srPerson.individual_ref;
-            else if (this.srPerson?.account_no) p.account_no = this.srPerson.account_no;
-            return p;
-        },
-        async srLoad(page = 1) {
-            const seq = ++this.srSeq;
-            this.srLoading = true;
-            this.srFailed = false;
-            try {
-                const res = await api.get('/admin/services-rendered', { params: this.srParams(page) });
-                if (seq !== this.srSeq) return;
-                this.srRows = (res?.data || []).map(recordRow);
-                const m = res?.meta || {};
-                this.srMeta = { total: m.total ?? this.srRows.length, page: m.page || m.current_page || page, per_page: m.per_page || this.srMeta.per_page || 25 };
-                this.srLoaded = true;
-            } catch {
-                if (seq === this.srSeq) this.srFailed = true;
-            } finally {
-                if (seq === this.srSeq) this.srLoading = false;
-                icons();
-            }
-        },
-        srPages() { return Math.max(1, Math.ceil((this.srMeta.total || 0) / (this.srMeta.per_page || 25))); },
-        srClear() {
-            this.srF = { q: '', service_key: '', kind: '', from: '', to: '', barangay: '', include_voided: false };
-            this.srLoad(1);
-        },
-        srClearPerson() {
-            this.srPerson = null;
-            const url = new URL(window.location.href);
-            ['individual_ref', 'account_no', 'person'].forEach((k) => url.searchParams.delete(k));
-            window.history.replaceState(null, '', url);
-            this.srLoad(1);
-        },
-        srRecord() {
-            window.dispatchEvent(new CustomEvent('welfare-record-service', { detail: {} }));
-        },
-        srVoid(r) { return voidRecord(r); },
-        srCase(r) {
-            if (r.request_ref && typeof this.openByRef === 'function') this.openByRef(r.request_ref);
-        },
-    };
-}
-
-/**
- * "Record a service" (section C): POST /admin/services-rendered. Opened by a
- * 'welfare-record-service' window event; from a case it carries the case's
- * ref (the person then comes from the request) and its service. A sensitive
- * service's record is always confidential.
- */
-export function serviceRecordForm() {
-    return {
-        ...personPicker(),
-        rfOpen: false,
-        rfBusy: false,
-        rfError: '',
-        rfRequestRef: null,
-        rfFixedPerson: '',
-        rfKey: '',
-        rfOther: '',
-        rfKind: 'counseling',
-        rfDate: '',
-        rfMode: 'office',
-        rfSource: '',
-        rfReferredTo: '',
-        rfDetails: '',
-        rfAmount: '',
-        rfConfidential: false,
-        rfKinds: RECORD_KINDS,
-        rfModes: RECORD_MODES,
-        rfSources: RECORD_SOURCES,
-        rfToday: manilaToday,
-        rfServices() {
-            return Object.values(this.tulongTypesByName || {}).filter((t) => t && t.key).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-        },
-        rfType() {
-            return this.rfKey && this.rfKey !== '__other' ? this.rfServices().find((t) => t.key === this.rfKey) || null : null;
-        },
-        rfSensitive() { return !!this.rfType()?.sensitive; },
-        openRecord(opts = {}) {
-            this.pReset();
-            this.rfBusy = false;
-            this.rfError = '';
-            this.rfRequestRef = opts.request_ref || null;
-            this.rfFixedPerson = opts.person_name || '';
-            this.rfKey = '';
-            this.rfOther = '';
-            this.rfKind = 'counseling';
-            this.rfDate = manilaToday();
-            this.rfMode = 'office';
-            this.rfSource = '';
-            this.rfReferredTo = '';
-            this.rfDetails = '';
-            this.rfAmount = '';
-            this.rfConfidential = false;
-            if (opts.service_key) {
-                this.rfKey = opts.service_key;
-                this.rfChosen();
-            }
-            this.rfOpen = true;
-            icons();
-        },
-        rfChosen() {
-            const t = this.rfType();
-            if (t) this.rfKind = recordKind(t.processingKind);
-            else if (this.rfKey === '__other') this.rfKind = 'other';
-            if (this.rfSensitive()) this.rfConfidential = true;
-        },
-        rfProblem() {
-            if (!this.rfRequestRef) {
-                const who = this.pProblem();
-                if (who) return who;
-            }
-            if (!this.rfKey) return 'Choose the service given, or Other.';
-            if (this.rfKey === '__other' && this.rfOther.trim().length < 3) return 'Name the service given.';
-            if (!this.rfDate) return 'Give the date the service was given.';
-            if (this.rfDate > manilaToday()) return 'The date cannot be in the future.';
-            if (this.rfDetails.length > 2000) return 'The details are at most 2,000 characters.';
-            if (this.rfAmount !== '' && !(Number(this.rfAmount) >= 0)) return 'The amount must be zero or more.';
-            return '';
-        },
-        async rfSave() {
-            if (this.rfBusy) return;
-            const problem = this.rfProblem();
-            this.rfError = problem;
-            if (problem) return;
-            const body = {
-                kind: this.rfKind,
-                rendered_on: this.rfDate,
-                mode: this.rfMode || null,
-                referral_source: this.rfSource || null,
-                referred_to: this.rfReferredTo.trim() || null,
-                details: this.rfDetails.trim() || null,
-                amount: this.rfAmount === '' ? null : Number(this.rfAmount),
-                confidential: this.rfSensitive() ? true : !!this.rfConfidential,
-            };
-            if (this.rfKey === '__other') body.service_name = this.rfOther.trim();
-            else body.service_key = this.rfKey;
-            if (this.rfRequestRef) body.request_ref = this.rfRequestRef;
-            else body.person = this.pPayload();
-            this.rfBusy = true;
-            try {
-                const res = await api.post('/admin/services-rendered', body);
-                const row = res?.data || null;
-                this.rfOpen = false;
-                toast((row?.ref ? row.ref + ' recorded' : 'Recorded') + (this.rfRequestRef ? ' on ' + this.rfRequestRef : '') + '.');
-                window.dispatchEvent(new CustomEvent('welfare-records-changed', { detail: { request_ref: this.rfRequestRef, row } }));
-            } catch (err) {
-                this.rfError = says(err, 'Could not save the record.');
-            } finally {
-                this.rfBusy = false;
-            }
-        },
-    };
-}
-
-/**
- * A counseling, referral or session case's "Service records": its rows
- * (GET /admin/services-rendered?request_ref=), "Add a record", and - for
- * counseling and referral, from Assessment, once a record is on it - "Close
- * the case" (POST /admin/tulong/requests/{ref}/complete-service { note }).
- * A session's case closes only when its session is finished.
- */
-export function caseServiceRecords() {
-    return {
-        crRows: [],
-        crLoading: false,
-        crFailed: false,
-        crFor: null,
-        crClosing: false,
-        crNote: '',
-        crBusy: false,
-        crError: '',
-        day,
-        peso,
-        kindLabel,
-        modeLabel,
-        crShown() {
+        cnShown() {
             return !!this.selected && ['counseling', 'referral', 'session'].includes(this.processingKind);
         },
-        crSync() {
+        cnSync() {
             const ref = this.selected?.ref || null;
-            if (!this.crShown() || !ref) return;
-            if (ref === this.crFor) return;
-            this.crFor = ref;
-            this.crRows = [];
-            this.crClosing = false;
-            this.crNote = '';
-            this.crError = '';
-            this.crLoad();
+            if (!this.cnShown() || !ref) return;
+            if (ref === this.cnFor) return;
+            this.cnFor = ref;
+            this.cnRows = [];
+            this.cnAdding = false;
+            this.cnClosing = false;
+            this.cnNote = '';
+            this.cnError = '';
+            this.cnLoad();
         },
-        async crLoad() {
-            const ref = this.crFor;
+        async cnLoad() {
+            const ref = this.cnFor;
             if (!ref) return;
-            this.crLoading = true;
-            this.crFailed = false;
+            this.cnLoading = true;
+            this.cnFailed = false;
             try {
                 const res = await api.get('/admin/services-rendered', { params: { request_ref: ref, include_voided: 1, per_page: 50 } });
-                if (ref === this.crFor) this.crRows = (res?.data || []).map(recordRow);
+                if (ref === this.cnFor) this.cnRows = (res?.data || []).map(noteRow);
             } catch {
-                if (ref === this.crFor) this.crFailed = true;
+                if (ref === this.cnFor) this.cnFailed = true;
             } finally {
-                if (ref === this.crFor) this.crLoading = false;
+                if (ref === this.cnFor) this.cnLoading = false;
                 icons();
             }
         },
-        crLive() { return this.crRows.filter((r) => !r.voided_at).length; },
-        crCanAdd() { return can('tulong_records', 'create') && !['Rejected', 'Cancelled'].includes(this.selected?.status); },
-        crCanVoid() { return can('tulong_records', 'edit'); },
-        crMayClose() {
+        cnLive() { return this.cnRows.filter((r) => !r.voided_at).length; },
+        cnCanAdd() { return can('tulong_records', 'create') && !['Rejected', 'Cancelled'].includes(this.selected?.status); },
+        cnCanVoid() { return can('tulong_records', 'edit'); },
+        cnMayClose() {
             return ['counseling', 'referral'].includes(this.processingKind) && this.selected?.status === 'Assessment' && !this.detailLoading;
         },
-        crAdd() {
-            window.dispatchEvent(new CustomEvent('welfare-record-service', { detail: { request_ref: this.selected.ref, person_name: this.selected.citizen, service_key: this.selected.service_key } }));
+        /** A confidential Tulong type: its notes are shown only to its own office. */
+        cnSensitive() {
+            const t = Object.values(this.tulongTypesByName || {}).find((x) => x && x.key === this.selected?.service_key);
+            return !!t?.sensitive;
         },
-        crVoid(r) { return voidRecord(r); },
-        async crClose() {
-            const r = this.selected;
-            if (!r || this.crBusy) return;
-            if (this.crNote.trim().length < 5) { this.crError = 'Write a short closing summary (at least 5 characters).'; return; }
-            this.crBusy = true;
-            this.crError = '';
+        cnStartAdding() {
+            this.cnDate = manilaToday();
+            this.cnMode = 'office';
+            this.cnDetails = '';
+            this.cnAddError = '';
+            this.cnAdding = true;
+            this.$nextTick(() => document.getElementById('cn-details')?.focus());
+            icons();
+        },
+        cnProblem() {
+            if (!this.cnDate) return 'Give the date.';
+            if (this.cnDate > manilaToday()) return 'The date cannot be in the future.';
+            if (this.cnDetails.trim().length < 3) return 'Write what was done.';
+            if (this.cnDetails.length > 2000) return 'The note is at most 2,000 characters.';
+            return '';
+        },
+        async cnSave() {
+            const ref = this.selected?.ref;
+            if (this.cnSaving || !ref) return;
+            const problem = this.cnProblem();
+            this.cnAddError = problem;
+            if (problem) return;
+            this.cnSaving = true;
             try {
-                const res = await api.post('/admin/tulong/requests/' + encodeURIComponent(r.ref) + '/complete-service', { note: this.crNote.trim() });
+                await api.post('/admin/services-rendered', {
+                    request_ref: ref,
+                    rendered_on: this.cnDate,
+                    mode: this.cnMode || null,
+                    details: this.cnDetails.trim(),
+                    confidential: this.cnSensitive(),
+                });
+                this.cnAdding = false;
+                toast('Note added to ' + ref + '.');
+                if (ref === this.cnFor) this.cnLoad();
+            } catch (err) {
+                this.cnAddError = says(err, 'Could not save the note.');
+            } finally {
+                this.cnSaving = false;
+            }
+        },
+        cnVoid(r) { return voidNote(r); },
+        async cnClose() {
+            const r = this.selected;
+            if (!r || this.cnBusy) return;
+            if (this.cnNote.trim().length < 5) { this.cnError = 'Write a short closing summary (at least 5 characters).'; return; }
+            this.cnBusy = true;
+            this.cnError = '';
+            try {
+                const res = await api.post('/admin/tulong/requests/' + encodeURIComponent(r.ref) + '/complete-service', { note: this.cnNote.trim() });
                 if (res?.data && typeof this.applyDetail === 'function') this.applyDetail(r, res.data);
                 const row = (this.requests || []).find((x) => x.ref === r.ref);
                 if (row && res?.data?.status) row.status = res.data.status;
-                this.crClosing = false;
-                this.crNote = '';
-                toast(r.ref + ' is closed. The service is on record.');
-                this.crLoad();
+                this.cnClosing = false;
+                this.cnNote = '';
+                toast(r.ref + ' is closed. Its notes stay with the office.');
+                this.cnLoad();
             } catch (err) {
-                this.crError = says(err, 'Could not close ' + r.ref + '.');
+                this.cnError = says(err, 'Could not close ' + r.ref + '.');
             } finally {
-                this.crBusy = false;
+                this.cnBusy = false;
                 icons();
             }
-        },
-    };
-}
-
-/**
- * Constituents > individual detail: the latest ten services given to the
- * resident (GET /admin/services-rendered?individual_ref=&per_page=10), and
- * "See all" in the Tulong page's Services rendered view.
- */
-export function residentServices() {
-    return {
-        rsRows: [],
-        rsTotal: 0,
-        rsLoading: false,
-        rsFailed: false,
-        rsFor: null,
-        day,
-        peso,
-        kindLabel,
-        rsAllowed() { return can('tulong_records', 'view'); },
-        rsSync(ref, open) {
-            if (!open) { this.rsFor = null; return; }
-            if (!ref || !this.rsAllowed() || ref === this.rsFor) return;
-            this.rsFor = ref;
-            this.rsRows = [];
-            this.rsLoad();
-        },
-        async rsLoad() {
-            const ref = this.rsFor;
-            if (!ref) return;
-            this.rsLoading = true;
-            this.rsFailed = false;
-            try {
-                const res = await api.get('/admin/services-rendered', { params: { individual_ref: ref, per_page: 10, page: 1 } });
-                if (ref !== this.rsFor) return;
-                this.rsRows = (res?.data || []).slice(0, 10);
-                this.rsTotal = res?.meta?.total ?? this.rsRows.length;
-            } catch {
-                if (ref === this.rsFor) this.rsFailed = true;
-            } finally {
-                if (ref === this.rsFor) this.rsLoading = false;
-                icons();
-            }
-        },
-        rsSeeAll(ref, name) {
-            return '/admin/assistance-requests?view=services&individual_ref=' + encodeURIComponent(ref || '') + '&person=' + encodeURIComponent(name || '');
         },
     };
 }
@@ -1338,10 +1146,7 @@ export function caseSession() {
 export function register(Alpine) {
     registerCertificate(Alpine);
     Alpine.data('tulongApply', tulongApply);
-    Alpine.data('servicesRendered', servicesRendered);
-    Alpine.data('serviceRecordForm', serviceRecordForm);
-    Alpine.data('caseServiceRecords', caseServiceRecords);
-    Alpine.data('residentServices', residentServices);
+    Alpine.data('caseNotes', caseNotes);
     Alpine.data('sessionList', sessionList);
     Alpine.data('sessionDesk', sessionDesk);
     Alpine.data('caseSession', caseSession);

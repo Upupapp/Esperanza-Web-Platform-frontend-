@@ -1,8 +1,9 @@
 // The resident's side of the welfare round (2026-10-29), on the Tulong page:
-// the services the MSWDO recorded as given to them, and the certificates of
-// the sessions they attended - their own, and a partner's copy that names
-// them too. Loaded only on /citizen/assistance-requests (the area loader at
-// the end of app.js); register() runs before Alpine starts.
+// the certificates of the sessions they attended - their own, and a
+// partner's copy that names them too. (The services the MSWDO recorded as
+// given to them left in round 2, 2026-10-30: their Tulong list shows them.)
+// Loaded only on /citizen/assistance-requests (the area loader at the end of
+// app.js); register() runs before Alpine starts.
 import api from './api/client';
 import { registerCertificate, openWelfareCertificate } from './welfare-certificate';
 
@@ -18,43 +19,14 @@ function fmtDate(value) {
     return d.toLocaleDateString(isEn() ? 'en-US' : 'fil-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: bare ? 'UTC' : TZ });
 }
 
-function peso(value) {
-    if (value === null || value === undefined || value === '') return '';
-    const n = Number(value);
-    return Number.isNaN(n) ? String(value) : '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-/**
- * GET /citizen/services-rendered: the resident's own rows the office may show
- * them (never a confidential or voided one) - service_name, office,
- * rendered_on, amount. GET /citizen/certificates: every certificate naming
- * them (applicant or partner), each with the document to draw.
- */
+/** GET /citizen/certificates: every certificate naming them (applicant or partner), each with the document to draw. */
 export function citizenWelfare() {
     return {
-        services: [],
-        servicesLoading: true,
-        servicesFailed: false,
         certificates: [],
         fmtDate,
-        peso,
         tr,
         init() {
-            this.loadServices();
             this.loadCertificates();
-        },
-        async loadServices() {
-            this.servicesLoading = true;
-            this.servicesFailed = false;
-            try {
-                const res = await api.get('/citizen/services-rendered');
-                this.services = Array.isArray(res?.data) ? res.data : [];
-            } catch {
-                this.servicesFailed = true;
-            } finally {
-                this.servicesLoading = false;
-                window.Alpine?.nextTick(() => window.renderIcons?.());
-            }
         },
         async loadCertificates() {
             try {

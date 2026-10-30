@@ -232,4 +232,64 @@ class WelfareRoundTwoTest extends TestCase
         // The answer is the request's detail, which the page takes as its state.
         $this->assertStringContainsString('if (detail && typeof this.applyDetail === \'function\') this.applyDetail(r, detail);', $js);
     }
+
+    // ------------------------------- 3 + 4. services rendered folds into Tulong
+
+    public function test_the_tulong_page_has_no_services_rendered_view_or_window(): void
+    {
+        foreach (['services-rendered', 'record-service', 'case-service-records'] as $gone) {
+            $this->assertFileDoesNotExist(base_path('resources/views/admin/tulong/'.$gone.'.blade.php'));
+        }
+        $page = $this->shown('resources/views/admin/assistance-requests.blade.php');
+        $js = $this->source('resources/js/welfare-admin.js');
+
+        $this->assertStringNotContainsString("'services' => ['Services rendered'", $page);
+        $this->assertStringNotContainsString("@include('admin.tulong.services-rendered')", $page);
+        $this->assertStringNotContainsString("@include('admin.tulong.record-service')", $page);
+        $this->assertStringContainsString("if (params.get('view') === 'sessions') this.view = 'sessions';", $page);
+        $this->assertStringContainsString("@include('admin.tulong.case-notes')", $page);
+        foreach (['servicesRendered', 'serviceRecordForm', 'residentServices', 'caseServiceRecords', 'welfare-record-service'] as $gone) {
+            $this->assertStringNotContainsString($gone, $js, $gone);
+        }
+        // Record assistance already given stays in Apply.
+        $this->assertStringContainsString('Record assistance already given', $this->source('resources/views/admin/tulong/apply.blade.php'));
+    }
+
+    public function test_a_counseling_or_referral_case_keeps_its_case_notes(): void
+    {
+        $notes = $this->source('resources/views/admin/tulong/case-notes.blade.php');
+        $js = $this->source('resources/js/welfare-admin.js');
+
+        $this->assertStringContainsString('x-data="caseNotes()" x-effect="cnSync()" x-show="cnShown()"', $notes);
+        $this->assertStringContainsString('</i> Case notes</p>', $notes);
+        $this->assertStringContainsString('@click="cnStartAdding()">Add a note</x-ui.button>', $notes);
+        foreach (['>Date *</label>', '>How</label>', '>What was done *</label>'] as $field) {
+            $this->assertStringContainsString($field, $notes, $field);
+        }
+        $this->assertStringNotContainsString('Service records', $this->shown('resources/views/admin/tulong/case-notes.blade.php'));
+        $this->assertStringContainsString("Alpine.data('caseNotes', caseNotes);", $js);
+        $this->assertStringContainsString("return !!this.selected && ['counseling', 'referral', 'session'].includes(this.processingKind);", $js);
+        // Still a services-rendered row on the case: the person and type are the case's.
+        $this->assertStringContainsString("await api.post('/admin/services-rendered', {\n                    request_ref: ref,", $js);
+        $this->assertStringContainsString("const NOTE_MODES = [['office', 'At the office'], ['home_visit', 'Home visit'], ['field', 'In the field'], ['online', 'Online or by phone']];", $js);
+        $this->assertStringContainsString('/complete-service', $js);
+    }
+
+    public function test_the_resident_profile_and_the_citizen_page_drop_their_services_lists(): void
+    {
+        $detail = $this->source('resources/views/admin/constituents/modal-individual-detail.blade.php');
+        $this->assertStringNotContainsString('residentServices', $detail);
+        $this->assertStringNotContainsString('Services Rendered', $detail);
+        $this->assertStringNotContainsString('services-rendered', $detail);
+        // So Constituents no longer loads the welfare chunk.
+        $this->assertStringContainsString("area(/^\\/admin\\/assistance-requests(\\/|$)/.test(areaPath), () => import('./welfare-admin'));", $this->source('resources/js/app.js'));
+
+        $card = $this->source('resources/views/components/citizen/welfare-received.blade.php');
+        $citizen = $this->source('resources/js/welfare-citizen.js');
+        $this->assertStringNotContainsString('<x-ui.t fil="Mga natanggap na serbisyo"', $card);
+        $this->assertStringNotContainsString("api.get('/citizen/services-rendered')", $citizen);
+        // The certificates stay.
+        $this->assertStringContainsString('<x-ui.t fil="Aking mga sertipiko" en="My certificates" />', $card);
+        $this->assertStringContainsString("api.get('/citizen/certificates')", $citizen);
+    }
 }
