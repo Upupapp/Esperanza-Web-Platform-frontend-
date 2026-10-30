@@ -206,7 +206,9 @@ export function eventSignup(ev) {
                 if (this.suPast()) return mine.attended === false ? 'missed' : 'unrecorded';
                 return 'registered';
             }
-            if (!this.suInfo().open || this.suPast()) return 'none';
+            // enabled is the setting; open turns false once full or closed,
+            // when this still says which (round 2 review, 2026-10-30).
+            if (!(this.suInfo().enabled ?? this.suInfo().open) || this.suPast()) return 'none';
             if (!signedIn()) return 'guest';
             if (!this.$store.eventRegs.ready) return 'none';
             if (this.suInfo().full) return 'full';

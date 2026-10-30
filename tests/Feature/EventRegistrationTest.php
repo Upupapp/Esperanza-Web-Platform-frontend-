@@ -152,4 +152,18 @@ class EventRegistrationTest extends TestCase
         $this->assertStringContainsString("isEventCert(c) ? tr('Event', 'Kaganapan') : tr('Session', 'Sesyon')", $list);
         $this->assertStringContainsString('x-text="certLine(c)"', $list);
     }
+
+    /**
+     * The registration block's open means "a resident can register now" and
+     * turns false once the event is full or has begun; enabled is the setting.
+     * The form filled from open would switch registration off on save, and
+     * the resident's page would hide a full or closed event (2026-10-30).
+     */
+    public function test_the_setting_is_read_from_enabled_not_from_open(): void
+    {
+        $records = $this->source('resources/js/scope-admin-records.js');
+        $this->assertStringContainsString('registration_open: !!(e?.registration_open ?? reg.enabled ?? reg.open),', $records);
+        $this->assertStringContainsString("((r.enabled ?? r.open) && r.full ? 'Full: ' : '')", $records);
+        $this->assertStringContainsString("if (!(this.suInfo().enabled ?? this.suInfo().open) || this.suPast()) return 'none';", $this->source('resources/js/citizen-events.js'));
+    }
 }

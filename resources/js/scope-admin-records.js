@@ -928,7 +928,10 @@ function eventExtras(e = null) {
     const preset = CERT_PRESETS.find((p) => p.title === cfg?.title);
     const sigs = Array.isArray(cfg?.signatories) && cfg.signatories.length ? cfg.signatories : [{}];
     return {
-        registration_open: !!reg.open,
+        // The setting, not whether one can register right now: the block's
+        // open turns false once full or started, and saving would switch
+        // registration off (round 2 review, 2026-10-30).
+        registration_open: !!(e?.registration_open ?? reg.enabled ?? reg.open),
         capacity: reg.capacity ?? '',
         closes_at: closes && closes !== start ? closes : '',
         cert: {
@@ -1137,12 +1140,12 @@ function adminEvents(barangays = []) {
         regChip(e) {
             const r = e.registration || {};
             const n = r.count || 0;
-            const text = (r.open && r.full ? 'Full: ' : '') + n + (r.capacity ? ' of ' + r.capacity : '') + ' registered';
+            const text = ((r.enabled ?? r.open) && r.full ? 'Full: ' : '') + n + (r.capacity ? ' of ' + r.capacity : '') + ' registered';
             return text + (e.attended_count ? ' · ' + e.attended_count + ' attended' : '');
         },
         regTone(e) {
             const r = e.registration || {};
-            if (r.open && r.full) return 'bg-amber-50 text-amber-800';
+            if ((r.enabled ?? r.open) && r.full) return 'bg-amber-50 text-amber-800';
             return r.open ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600';
         },
         /** Registrations and attendance, for a published event (or an archived one that had some). */
