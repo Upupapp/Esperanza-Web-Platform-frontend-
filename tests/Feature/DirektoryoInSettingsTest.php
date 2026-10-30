@@ -55,7 +55,7 @@ class DirektoryoInSettingsTest extends TestCase
         $this->assertStringContainsString('@elseif($tabKey === \'integrations\') x-show="$store.session.canSettings() || facebookAllowed"', $settings);
         $this->assertStringContainsString('@elseif($tabKey === \'directory\') x-show="directoryAllowed"', $settings);
         $this->assertStringContainsString('<template x-if="$store.session.canSettings()">', $settings, 'the other tabs load only for Settings holders');
-        $this->assertStringContainsString("if (this.\$store.session.canSettings()) return;", $settings);
+        $this->assertStringContainsString('if (this.$store.session.canSettings()) return;', $settings);
         $this->assertStringContainsString("if (this.directoryAllowed) this.go('directory');", $settings);
         $this->assertStringContainsString("else if (this.facebookAllowed) this.go('integrations');", $settings);
         $this->assertStringContainsString("\$store.session.canPerm('comm_barangay_directory', 'view') || \$store.session.canPerm('comm_news', 'create') || \$store.session.canPerm('set_system', 'view')\" x-cloak", $topbar);
