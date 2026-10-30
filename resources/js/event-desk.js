@@ -269,10 +269,13 @@ export function eventDesk() {
             }
             this.edChecking = true;
             const before = this.edRows.find((r) => normCode(r.code) === code);
-            const already = before && before.attended === true;
             try {
                 const res = await api.post('/admin/events/' + encodeURIComponent(this.edEvent.key) + '/check-in', { code });
                 const row = res?.data || {};
+                // The server says so itself (already_checked_in) when another
+                // officer checked the person in since this list was read.
+                const already = row.already_checked_in === true || (before && before.attended === true);
+                const since = row.checked_in_at || before?.checked_in_at;
                 let r = this.edRows.find((x) => x.id === row.id);
                 if (!r && row.id !== undefined) {
                     r = { ...row };
@@ -284,7 +287,7 @@ export function eventDesk() {
                 }
                 const who = row.name || r?.name || 'The resident';
                 this.edCheck = already
-                    ? { tone: 'again', title: who + ' is already checked in', text: (before.checked_in_at ? 'Since ' + stamp(before.checked_in_at) + '. ' : '') + showCode(code) + (row.barangay ? ' · Brgy. ' + row.barangay : '') }
+                    ? { tone: 'again', title: who + ' is already checked in', text: (since ? 'Since ' + stamp(since) + '. ' : '') + showCode(code) + (row.barangay ? ' · Brgy. ' + row.barangay : '') }
                     : { tone: 'ok', title: who + ' is checked in', text: showCode(code) + (row.barangay ? ' · Brgy. ' + row.barangay : '') };
                 this.edCode = '';
                 this.edChanged = true;
