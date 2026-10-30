@@ -19,6 +19,12 @@
 // true when it was issued); what they do not carry falls back to the
 // catalog's certificate (config/esperanza_tulong_types.php), with :names,
 // :date and :venue filled in the same way the server fills them.
+//
+// An event's certificate (round 2, 2026-10-30) is drawn by the same window:
+// document_type event_certificate, issued by the municipality to those who
+// attended an event (field_values: cert_title, cert_subtitle = the event,
+// body, applicant, event_key, event_date, venue, signatories). Its office is
+// the municipality itself, already in the letterhead, so no MSWDO line.
 import { qrSvg } from './shared-docs';
 
 const TZ = 'Asia/Manila';
@@ -46,13 +52,19 @@ function givenDate(value) {
 
 const list = (v) => (Array.isArray(v) ? v : (v ? [v] : [])).map((x) => (x && typeof x === 'object' ? (x.name || '') : String(x))).map((x) => x.trim()).filter(Boolean);
 
-/** The catalog's certificate body with the session's details put in. */
-export function fillCertificateBody(template, { names, date, venue }) {
+/**
+ * The catalog's certificate body with the session's details put in; an
+ * event's wording says :name (one holder) and :event as well.
+ */
+export function fillCertificateBody(template, { names, date, venue, event }) {
     return String(template || '')
-        .replace(/:names/g, names || '')
+        .replace(/:names?\b/g, names || '')
+        .replace(/:event\b/g, event || 'the event')
         .replace(/:date/g, date || '')
         .replace(/:venue/g, venue || 'the Municipal Social Welfare and Development Office');
 }
+
+const EVENT_BODY = 'This is to certify that :name participated in :event held on :date at :venue.';
 
 /**
  * Who signs. The document's own signatories when the server froze them;
@@ -81,12 +93,15 @@ export function buildCertificate(doc, meta = {}, certByKey = {}) {
     const fv = d.field_values || d.fields || {};
     const key = d.document_type || fv.service_key || meta.service_key || '';
     const tpl = certByKey[key] || {};
+    const isEvent = key === 'event_certificate' || !!fv.event_key || meta.source === 'event';
     const holders = list(fv.holder_names || fv.names || meta.holder_names || fv.applicant || meta.applicant);
     const names = holders.join(' and ');
     const session = meta.session || {};
-    const date = longDate(fv.session_date || session.date);
-    const venue = fv.venue || fv.session_venue || session.venue || '';
-    const body = fv.body || fillCertificateBody(tpl.body || 'This is to certify that :names attended the session on :date at :venue.', { names, date, venue });
+    const date = longDate(fv.session_date || fv.event_date || session.date);
+    const venue = fv.venue || fv.session_venue || session.venue || (isEvent ? 'Esperanza, Masbate' : '');
+    const event = fv.cert_subtitle || meta.event_title || '';
+    const body = fv.body || fillCertificateBody(tpl.body || (isEvent ? EVENT_BODY : 'This is to certify that :names attended the session on :date at :venue.'), { names, date, venue, event });
+    const eventOffice = /^municipality of esperanza$/i.test(String(fv.office || '').trim()) ? '' : (fv.office || '');
     // The names stand out in the body, as they are typed in on paper. Split,
     // never x-html: a name is the resident's own text.
     const parts = [];
@@ -103,7 +118,7 @@ export function buildCertificate(doc, meta = {}, certByKey = {}) {
         subtitle: fv.cert_subtitle || tpl.subtitle || '',
         names,
         parts,
-        office: fv.office_name || OFFICE,
+        office: fv.office_name || (isEvent ? eventOffice : OFFICE),
         signatories: signatoriesOf(fv, tpl.signedBy),
         control: d.control_number || meta.control_number || '',
         code: d.serial || d.verification_code || meta.verification_code || '',
