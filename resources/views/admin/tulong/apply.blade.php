@@ -235,10 +235,11 @@
             </div>
         </section>
 
-        {{-- 4. Requirements, consent, and assistance already given. Nothing
-             here changes once the case is being filed or is filed. --}}
-        <section x-show="apStep === 4" x-cloak :inert="apBusy || !!apFiled" class="space-y-4">
-            <fieldset>
+        {{-- 4. Requirements, consent, and assistance already given. Its
+             answers are fixed once the case is being filed or is filed (the
+             fieldsets are disabled; the upload rows stay readable). --}}
+        <section x-show="apStep === 4" x-cloak class="space-y-4">
+            <fieldset :disabled="apBusy || !!apFiled">
                 <legend class="text-sm font-bold text-ink mb-2">How did the request come in?</legend>
                 <div class="flex flex-wrap gap-4 text-xs text-slate-700">
                     <label class="flex items-center gap-1.5"><input type="radio" name="ap-channel" value="walk_in" x-model="apChannel" class="text-brand-600 focus:ring-brand-200"> Walk-in at the office</label>
@@ -294,6 +295,7 @@
             {{-- Filed, with a document that did not go up: say what was filed. --}}
             <p x-show="apFiled && !apBusy" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/50 px-3 py-2 text-xs text-emerald-800" x-text="(apFiled?.ref ? apFiled.ref + ' is filed' : 'Filed') + (apFiled?.sessionRef ? ' and added to the session' : '') + '. Attach the documents marked above from the case with Upload file.'"></p>
 
+            <fieldset :disabled="apBusy || !!apFiled" class="space-y-4 min-w-0">
             <div class="rounded-xl border border-brand-100 bg-brand-50/50 p-3">
                 <p class="text-xs text-slate-700 leading-relaxed">Read to the person: "The Municipality of Esperanza collects your personal information only to process this request and to keep the record of the assistance given, under the Data Privacy Act of 2012 (RA 10173). It is kept by the office handling your request and shared only as the law allows."</p>
                 <label class="mt-2 flex items-start gap-2 text-xs font-semibold text-ink">
@@ -326,6 +328,7 @@
                     </div>
                 </div>
             </div>
+            </fieldset>
         </section>
 
         <x-slot:footer>

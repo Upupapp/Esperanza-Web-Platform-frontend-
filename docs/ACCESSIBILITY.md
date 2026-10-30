@@ -62,7 +62,7 @@ with Chrome, and TalkBack on an Android phone. Use this checklist:
 3. File a Tulong application.
 4. Report an incident from Emergency.
 5. Open and close a staff request, and mark a workflow step done.
-6. Publish a Service Catalog version.
+6. Publish a new version of a document type (Dokyu > Document types).
 
 At each step, check that:
 
