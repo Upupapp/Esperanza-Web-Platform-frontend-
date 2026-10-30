@@ -2,8 +2,8 @@
 // Constituents individual detail:
 //
 // - tulongApply: "Apply for New Tulong" - an officer files a case for a
-//   walk-in or a referral (person, service, its form, requirements seen at
-//   the office and consent), or records assistance already given.
+//   walk-in or a referral (person, service, its form, the requirements'
+//   documents uploaded and consent), or records assistance already given.
 // - servicesRendered, serviceRecordForm, caseServiceRecords,
 //   residentServices: the services given to a person (section C) - the
 //   Tulong page's "Services rendered" view, the "Record a service" window, a
@@ -22,6 +22,7 @@
 // prefixed (ap*, ...) so none shadows the page's.
 import api from './api/client';
 import { registerCertificate, openWelfareCertificate } from './welfare-certificate';
+import { uploadProblem, fileSize, attachAtOffice } from './requirement-upload';
 
 const TZ = 'Asia/Manila';
 
@@ -205,7 +206,14 @@ export function personPicker() {
  * or, for a walk-in at a group session, POST
  * /admin/tulong/sessions/{ref}/participants/walk-in with the same body.
  * Opened by the page's button, or by a 'tulong-apply' window event
- * ({ sessionRef, serviceKey, sessionTitle } for a walk-in).
+ * ({ sessionRef, serviceKey, sessionTitle, knownRefs } for a walk-in).
+ *
+ * The requirements' documents are uploaded, not ticked as seen (owner, round
+ * 2, 2026-10-30: "uploaded and is recorded by the system not just presented
+ * at the office"): a file per requirement, kept on its row (file, state,
+ * progress, error), each sent to the new case once it is filed. A file that
+ * does not go up leaves the window open on what was filed and which document
+ * to attach from the case.
  */
 export function tulongApply() {
     return {
@@ -214,8 +222,11 @@ export function tulongApply() {
         apStep: 1,
         apBusy: false,
         apError: '',
+        // The case once filed ({ ref, detail }): nothing is filed twice.
+        apFiled: null,
         apSessionRef: null,
         apSessionTitle: '',
+        apKnownRefs: [],
         apFixedKey: '',
         apLive: {},
         apSearch: '',
@@ -230,6 +241,13 @@ export function tulongApply() {
         apRecord: { completed_on: '', amount: '', released_to: '', note: '' },
         apSteps: ['Person', 'Service', 'Form', 'Requirements & consent'],
         day,
+        fileSize,
+
+        init() {
+            // Closed (Escape, outside it) on a filed case whose documents did
+            // not all go up: the case still opens on the page.
+            this.$watch('apOpen', (open) => { if (!open && this.apFiled && !this.apBusy) this.apFinish(); });
+        },
 
         /** Every Tulong service in the page's catalog, the server's wording over it. */
         apCatalog() {
@@ -253,6 +271,7 @@ export function tulongApply() {
             this.apStep = 1;
             this.apBusy = false;
             this.apError = '';
+            this.apFiled = null;
             this.apSearch = '';
             this.apKey = '';
             this.apType = null;
@@ -267,6 +286,8 @@ export function tulongApply() {
             // A walk-in files the session's own service.
             this.apFixedKey = opts.sessionRef ? (opts.serviceKey || '') : '';
             this.apSessionTitle = opts.sessionTitle || '';
+            // The session's cases before this one: the new case is the one not among them.
+            this.apKnownRefs = Array.isArray(opts.knownRefs) ? opts.knownRefs : [];
             this.apOpen = true;
             liveServices().then((live) => {
                 this.apLive = live;
@@ -285,8 +306,9 @@ export function tulongApply() {
             });
             if (!(t.fields || []).length) form.purpose = '';
             this.apForm = form;
-            // Each requirement keeps its place in the server's list: req_1, req_2...
-            this.apReqs = t.rules.map((r, i) => ({ key: 'req_' + (i + 1), label: r.label, showIf: r.showIf || null, presented: false }));
+            // Each requirement keeps its place in the server's list: req_1,
+            // req_2... Its chosen file and how its upload went stay on it.
+            this.apReqs = t.rules.map((r, i) => ({ key: 'req_' + (i + 1), label: r.label, showIf: r.showIf || null, file: null, state: '', progress: 0, error: '' }));
             this.apRecordOnly = false;
             this.apError = '';
             icons();
@@ -296,6 +318,27 @@ export function tulongApply() {
         },
         apShownReqs() {
             return this.apReqs.filter((r) => (window.showIfMet ? window.showIfMet(r.showIf, this.apForm) : true));
+        },
+        /** A file chosen for a requirement (from the files, or the camera): checked, then kept on the row. */
+        apPickFile(r, event) {
+            const input = event?.target;
+            const file = input?.files?.[0] || null;
+            if (input) input.value = '';
+            if (!file) return;
+            const problem = uploadProblem(file);
+            r.error = problem ? file.name + ': ' + problem : '';
+            if (!problem) r.file = file;
+            r.state = '';
+            r.progress = 0;
+        },
+        apDropFile(r) {
+            r.file = null;
+            r.error = '';
+            r.state = '';
+            r.progress = 0;
+        },
+        apChosenCount() {
+            return this.apShownReqs().filter((r) => r.file).length;
         },
         apToggle(key, option) {
             const list = Array.isArray(this.apForm[key]) ? this.apForm[key] : [];
@@ -373,7 +416,8 @@ export function tulongApply() {
                 form_data: form,
                 channel: this.apChannel,
                 referred_by: this.apChannel === 'referral' ? this.apReferredBy.trim() : null,
-                requirements_presented: this.apShownReqs().filter((r) => r.presented).map((r) => r.key),
+                // No requirements_presented any more (round 2): the documents
+                // are uploaded to the case once it is filed.
                 consent: !!this.apConsent,
                 record_only: null,
             };
@@ -388,7 +432,7 @@ export function tulongApply() {
             return body;
         },
         async apSubmit() {
-            if (this.apBusy) return;
+            if (this.apBusy || this.apFiled) return;
             for (const step of [1, 2, 3, 4]) {
                 const problem = this.apProblem(step);
                 if (problem) { this.apError = problem; this.apStep = step === 2 && this.apSessionRef ? 1 : step; return; }
@@ -396,29 +440,94 @@ export function tulongApply() {
             this.apBusy = true;
             this.apError = '';
             const sessionRef = this.apSessionRef;
+            let data;
             try {
                 const url = sessionRef
                     ? '/admin/tulong/sessions/' + encodeURIComponent(sessionRef) + '/participants/walk-in'
                     : '/admin/tulong/requests';
                 const res = await api.post(url, this.apPayload());
-                const data = res?.data || {};
-                this.apOpen = false;
-                if (sessionRef) {
-                    toast(this.pName() + ' was added to the session.');
-                    window.dispatchEvent(new CustomEvent('welfare-session-changed', { detail: { ref: sessionRef, session: data.participants ? data : null } }));
-                } else {
-                    toast((data.ref ? data.ref + ' filed' : 'Filed') + ' for ' + (data.applicant || this.pName()) + '.');
-                    // To the page by an event, never through this window's scope:
-                    // there the case window's `this.open = true` would land on
-                    // this window's own open setter and open it again.
-                    window.dispatchEvent(new CustomEvent('tulong-case-filed', { detail: data }));
-                }
+                data = res?.data || {};
             } catch (err) {
                 this.apError = says(err, 'Could not file the request.');
                 toast(this.apError, 'error');
-            } finally {
                 this.apBusy = false;
+                return;
             }
+            // Filed: from here on nothing files it again, whatever the uploads do.
+            // A walk-in's answer is the session; its case is the one new in it.
+            const fresh = sessionRef ? [...new Set((data.participants || []).map((p) => p.request_ref).filter((ref) => ref && !this.apKnownRefs.includes(ref)))] : [];
+            const caseRef = sessionRef ? (fresh.length === 1 ? fresh[0] : null) : (data.ref || null);
+            const filed = { ref: caseRef, data, sessionRef };
+            this.apFiled = filed;
+            const failed = await this.apUpload(filed);
+            this.apBusy = false;
+            // Closed while the files were going up: what happened is said in toasts.
+            if (!this.apOpen) { this.apFinish(true); return; }
+            if (failed.length) {
+                this.apError = 'Not uploaded: ' + failed.join(', ') + '. ' + (failed.length === 1 ? 'It' : 'They') + ' can be attached from the case (Upload file).';
+                return;
+            }
+            this.apFinish();
+        },
+        /**
+         * Each chosen file, one after another, to the case just filed. Returns
+         * the names of the documents that did not go up; the newest detail
+         * the server answered with replaces the filed one.
+         */
+        async apUpload(filed) {
+            const failed = [];
+            const caseRef = filed.ref;
+            const chosen = this.apShownReqs().filter((r) => r.file);
+            const rows = filed.sessionRef ? null : (Array.isArray(filed.data?.requirements) ? filed.data.requirements : null);
+            for (const r of chosen) {
+                // The case's own row for it: by its key, else by its wording.
+                const target = rows ? (rows.find((q) => q.key === r.key) || rows.find((q) => q.label === r.label)) : { key: r.key };
+                r.error = '';
+                if (!caseRef || !target) {
+                    r.state = 'failed';
+                    r.error = 'Not uploaded: the case could not be matched. Attach it from the case.';
+                    failed.push(r.label);
+                    continue;
+                }
+                r.state = 'uploading';
+                r.progress = 0;
+                try {
+                    const back = await attachAtOffice('tulong', caseRef, target.key, r.file, (p) => { r.progress = p; });
+                    r.state = 'done';
+                    if (back && back.ref && !filed.sessionRef) filed.data = back;
+                } catch (err) {
+                    r.state = 'failed';
+                    r.error = 'Not uploaded: ' + says(err, 'the upload did not go through') + ' Attach it from the case.';
+                    failed.push(r.label);
+                }
+                icons();
+            }
+            return failed;
+        },
+        /**
+         * Close and show what was filed: the case opens on the page, or the
+         * session updates. warn: also name, in a toast, the documents that
+         * did not go up (the window was closed before it could say so).
+         */
+        apFinish(warn = false) {
+            const filed = this.apFiled;
+            this.apFiled = null;
+            if (!filed) { this.apOpen = false; return; }
+            const done = this.apShownReqs().filter((r) => r.state === 'done').length;
+            const failed = this.apShownReqs().filter((r) => r.state === 'failed').map((r) => r.label);
+            const uploaded = done ? ' ' + done + ' document' + (done === 1 ? '' : 's') + ' uploaded.' : '';
+            this.apOpen = false;
+            if (filed.sessionRef) {
+                toast(this.pName() + ' was added to the session.' + uploaded);
+                window.dispatchEvent(new CustomEvent('welfare-session-changed', { detail: { ref: filed.sessionRef, session: filed.data.participants ? filed.data : null } }));
+            } else {
+                toast((filed.ref ? filed.ref + ' filed' : 'Filed') + ' for ' + (filed.data.applicant || this.pName()) + '.' + uploaded);
+                // To the page by an event, never through this window's scope:
+                // there the case window's `this.open = true` would land on
+                // this window's own open setter and open it again.
+                window.dispatchEvent(new CustomEvent('tulong-case-filed', { detail: filed.data }));
+            }
+            if (warn && failed.length) toast('Not uploaded: ' + failed.join(', ') + '. Attach ' + (failed.length === 1 ? 'it' : 'them') + ' from the case with Upload file.', 'warning');
         },
     };
 }
@@ -1004,7 +1113,9 @@ export function sessionDesk() {
         },
         sdWalkIn() {
             const type = this.sdType(this.ses.service_key);
-            window.dispatchEvent(new CustomEvent('tulong-apply', { detail: { sessionRef: this.ses.ref, serviceKey: this.ses.service_key, sessionTitle: this.ses.title || type?.name || '' } }));
+            // knownRefs: the session's cases now, so Apply can tell which one it filed (its documents go there).
+            const knownRefs = (this.ses.participants || []).map((p) => p.request_ref).filter(Boolean);
+            window.dispatchEvent(new CustomEvent('tulong-apply', { detail: { sessionRef: this.ses.ref, serviceKey: this.ses.service_key, sessionTitle: this.ses.title || type?.name || '', knownRefs } }));
         },
         sdRemove(p) {
             return this.sdRun(() => api.delete(this.sdUrl('/participants/' + encodeURIComponent(p.id))), p.name + ' was removed from the session.');

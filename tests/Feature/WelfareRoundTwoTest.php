@@ -163,4 +163,73 @@ class WelfareRoundTwoTest extends TestCase
         $this->assertStringContainsString(':disabled="!canEdit || officeLocked"', $partial);
         $this->assertStringContainsString('deptRestricted() {', $this->source('resources/js/app.js'));
     }
+
+    // ------------------------------------- 2. requirements uploaded, not seen
+
+    public function test_apply_uploads_each_requirement_instead_of_ticking_it(): void
+    {
+        $apply = $this->shown('resources/views/admin/tulong/apply.blade.php');
+        $js = $this->source('resources/js/welfare-admin.js');
+
+        $this->assertStringContainsString('Upload a photo or scan of each document. Documents not uploaded now can be attached to the case later.', $apply);
+        $this->assertStringNotContainsString('Presented at the office', $apply);
+        $this->assertStringNotContainsString('r.presented', $apply);
+        $this->assertStringContainsString('<input type="file" accept="image/*,application/pdf" class="sr-only" @change="apPickFile(r, $event)">', $apply);
+        $this->assertStringContainsString('<input type="file" accept="image/*" capture="environment" class="sr-only" @change="apPickFile(r, $event)">', $apply);
+        // The chosen file: its name, its size, and Remove.
+        $this->assertStringContainsString('x-text="r.file?.name"', $apply);
+        $this->assertStringContainsString('x-text="fileSize(r.file?.size)"', $apply);
+        $this->assertStringContainsString('@click="apDropFile(r)" class="font-medium text-rose-600 hover:underline">Remove</button>', $apply);
+        // Each upload's progress and outcome, kept on its row.
+        $this->assertStringContainsString("x-text=\"'Uploading… ' + r.progress + '%'\"", $apply);
+        $this->assertStringContainsString('role="progressbar"', $apply);
+        $this->assertStringContainsString('x-text="r.error"', $apply);
+        $this->assertStringContainsString("file: null, state: '', progress: 0, error: ''", $js);
+
+        // Filed first, without requirements_presented; then each file to the new case.
+        $this->assertStringNotContainsString('requirements_presented:', $js);
+        $this->assertStringContainsString("const back = await attachAtOffice('tulong', caseRef, target.key, r.file, (p) => { r.progress = p; });", $js);
+        $this->assertStringContainsString("r.error = 'Not uploaded: ' + says(err, 'the upload did not go through') + ' Attach it from the case.';", $js);
+        $this->assertStringContainsString("this.apError = 'Not uploaded: ' + failed.join(', ')", $js);
+        $this->assertStringContainsString('if (this.apBusy || this.apFiled) return;', $js, 'a filed case is never filed again');
+        // A walk-in's case is the one new in the session.
+        $this->assertStringContainsString('knownRefs } }));', $js);
+        $this->assertStringContainsString('!this.apKnownRefs.includes(ref)', $js);
+    }
+
+    public function test_one_upload_helper_checks_and_sends_the_file(): void
+    {
+        $up = $this->source('resources/js/requirement-upload.js');
+
+        $this->assertStringContainsString("'/admin/' + type + '/requests/' + encodeURIComponent(ref) + '/requirements/' + encodeURIComponent(key) + '/attach'", $up);
+        $this->assertStringContainsString("body.append('file', file);", $up);
+        $this->assertStringContainsString("const UPLOAD_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];", $up);
+        $this->assertStringContainsString('const UPLOAD_MAX_BYTES = 10 * 1024 * 1024;', $up);
+        $this->assertStringContainsString('onUploadProgress', $up);
+        // Imported by the two chunks that upload, never by app.js.
+        $this->assertStringContainsString("from './requirement-upload';", $this->source('resources/js/welfare-admin.js'));
+        $this->assertStringContainsString("from './requirement-upload';", $this->source('resources/js/scope-admin-requests.js'));
+        $this->assertStringNotContainsString('requirement-upload', $this->source('resources/js/app.js'));
+    }
+
+    public function test_a_requirement_with_no_file_can_be_uploaded_from_the_case(): void
+    {
+        $component = $this->source('resources/views/components/admin/requirement-upload.blade.php');
+        $js = $this->source('resources/js/scope-admin-requests.js');
+
+        foreach (['resources/views/admin/assistance-requests.blade.php', 'resources/views/admin/document-requests.blade.php'] as $page) {
+            $this->assertStringContainsString('<x-admin.requirement-upload />', $this->source($page), $page);
+        }
+        $this->assertStringContainsString('x-data="requirementUpload()" x-show="upShown(req)"', $component);
+        $this->assertStringContainsString('<input type="file" accept="image/*,application/pdf" class="sr-only" :disabled="req._upBusy" @change="upAttach(req, $event)">', $component);
+        $this->assertStringContainsString("'Upload file'", $component);
+        $this->assertStringContainsString("Alpine.data('requirementUpload', requirementUpload);", $js);
+        // Undecided, or accepted as presented with nothing on file; an open
+        // request, or a case recorded as help already given.
+        $this->assertStringContainsString("if (!r || !req || req.file || !['Submitted', 'Approved'].includes(req.status)) return false;", $js);
+        $this->assertStringContainsString("(r.status === 'Completed' && r.filed?.channel === 'record')", $js);
+        $this->assertStringContainsString('r.filed = d.filed || null;', $this->source('resources/views/admin/assistance-requests.blade.php'));
+        // The answer is the request's detail, which the page takes as its state.
+        $this->assertStringContainsString('if (detail && typeof this.applyDetail === \'function\') this.applyDetail(r, detail);', $js);
+    }
 }

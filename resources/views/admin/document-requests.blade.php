@@ -2736,6 +2736,8 @@
                                                 class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-ink-muted hover:text-brand-600 hover:border-brand-300 flex items-center justify-center transition-colors"
                                                 title="View submitted document"
                                             ><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
+                                            {{-- None on file: the officer uploads it (round 2). --}}
+                                            <x-admin.requirement-upload />
                                             <span
                                                 class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset whitespace-nowrap"
                                                 :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': req.status === 'Approved', 'bg-rose-50 text-rose-700 ring-rose-200': req.status === 'Rejected', 'bg-amber-50 text-amber-700 ring-amber-200': (req.status === 'Submitted' && req.file) || req.status === 'Flagged for Replacement', 'bg-slate-100 text-slate-600 ring-slate-200': req.status === 'Submitted' && !req.file, 'bg-sky-50 text-sky-700 ring-sky-200': req.status === 'Resubmitted' }"

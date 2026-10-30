@@ -4,11 +4,13 @@
 // app.js), so the shared bundle stays within its budget. register() runs
 // before Alpine starts.
 //
-// requestAssign and issuedDocuments sit inside a Dokyu or Tulong detail and
-// read the page's own selected, requests, processing, terminalStatuses and
-// apiBase() through Alpine's scope chain; they never redefine those names.
+// requestAssign, issuedDocuments and requirementUpload sit inside a Dokyu or
+// Tulong detail and read the page's own selected, requests, processing,
+// terminalStatuses, requestType and apiBase() through Alpine's scope chain;
+// they never redefine those names.
 
 import api from './api/client';
+import { uploadProblem, attachAtOffice } from './requirement-upload';
 
 const TZ = 'Asia/Manila';
 
@@ -791,7 +793,54 @@ export function requestWorkflow() {
     };
 }
 
+// "Upload file" on a requirement with no file (round 2, 2026-10-30): the
+// officer scans or photographs the paper the person brought, and it is on the
+// request like a resident's upload (resources/js/requirement-upload.js). For
+// a requirement the office has not decided yet, or one accepted as presented
+// at the counter with nothing on file; on an open request, or a Tulong case
+// recorded as help already given. The answer is the request's detail, which
+// the page takes as its new state (applyDetail). The row's upload state is
+// kept on the requirement itself (_upBusy, _upProgress).
+export function requirementUpload() {
+    return {
+        /** The server's own word when it sends one, else the service's create or edit. */
+        upMay(r) {
+            if (r.permitted && 'attach' in r.permitted) return !!r.permitted.attach;
+            const s = window.Alpine?.store('session');
+            return !!(s?.canPerm?.(r.service_key, 'create') || s?.canPerm?.(r.service_key, 'edit'));
+        },
+        upShown(req) {
+            const r = this.selected;
+            if (!r || !req || req.file || !['Submitted', 'Approved'].includes(req.status)) return false;
+            const open = !this.terminalStatuses.includes(r.status) || (r.status === 'Completed' && r.filed?.channel === 'record');
+            return open && this.upMay(r);
+        },
+        async upAttach(req, event) {
+            const input = event?.target;
+            const file = input?.files?.[0] || null;
+            if (input) input.value = '';
+            const r = this.selected;
+            if (!file || !r || req._upBusy) return;
+            const problem = uploadProblem(file);
+            if (problem) { toast(req.name + ': ' + problem, 'error'); return; }
+            req._upBusy = true;
+            req._upProgress = 0;
+            try {
+                const detail = await attachAtOffice(this.requestType, r.ref, req.key, file, (p) => { req._upProgress = p; });
+                if (detail && typeof this.applyDetail === 'function') this.applyDetail(r, detail);
+                toast(req.name + ' uploaded.');
+                window.Alpine?.nextTick(() => window.renderIcons?.());
+            } catch (err) {
+                toast(says(err, req.name + ' could not be uploaded.'), 'error');
+            } finally {
+                req._upBusy = false;
+            }
+        },
+    };
+}
+
 export function register(Alpine) {
+    Alpine.data('requirementUpload', requirementUpload);
     Alpine.data('requestWorkflow', requestWorkflow);
     Alpine.data('requestAssign', requestAssign);
     Alpine.data('issuedDocuments', issuedDocuments);

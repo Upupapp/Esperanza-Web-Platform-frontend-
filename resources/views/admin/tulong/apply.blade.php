@@ -5,9 +5,11 @@
      Four steps: the person (GET /admin/people/search, or "Not in the list"),
      the service (grouped by category; the ones only officers file are marked
      Office only), the service's form (the citizen wizard's field types with
-     their show-if rules), then the requirements seen at the office, the
-     person's consent, and "Record assistance already given".
-     POST /admin/tulong/requests, then the new case opens. A walk-in at a
+     their show-if rules), then the requirements' documents (a file or a
+     photo each), the person's consent, and "Record assistance already
+     given". POST /admin/tulong/requests, then each chosen file to the new
+     case (POST .../requirements/{key}/attach, round 2), then the case
+     opens. A walk-in at a
      group session files through the same steps (the service is the
      session's): POST /admin/tulong/sessions/{ref}/participants/walk-in.
      Logic: tulongApply() in resources/js/welfare-admin.js.
@@ -233,8 +235,9 @@
             </div>
         </section>
 
-        {{-- 4. Requirements, consent, and assistance already given --}}
-        <section x-show="apStep === 4" x-cloak class="space-y-4">
+        {{-- 4. Requirements, consent, and assistance already given. Nothing
+             here changes once the case is being filed or is filed. --}}
+        <section x-show="apStep === 4" x-cloak :inert="apBusy || !!apFiled" class="space-y-4">
             <fieldset>
                 <legend class="text-sm font-bold text-ink mb-2">How did the request come in?</legend>
                 <div class="flex flex-wrap gap-4 text-xs text-slate-700">
@@ -247,19 +250,49 @@
                 </div>
             </fieldset>
 
-            <fieldset>
+            {{-- Each document uploaded, not ticked as seen (owner, round 2,
+                 2026-10-30): a file or a photo per requirement, kept on its
+                 row, sent to the case once it is filed, each with its
+                 progress; one that does not go up says so here and is
+                 attached from the case. --}}
+            <fieldset data-testid="ap-requirements">
                 <legend class="text-sm font-bold text-ink mb-1">Requirements</legend>
-                <p class="text-xs text-ink-muted mb-2" x-show="apShownReqs().length">Tick each document the person showed at the office. It is accepted with the note "Original presented at the office"; the rest can still be attached to the case later.</p>
+                <p class="text-xs text-ink-muted mb-2" x-show="apShownReqs().length">Upload a photo or scan of each document. Documents not uploaded now can be attached to the case later.</p>
                 <p class="text-xs text-ink-muted" x-show="!apShownReqs().length">This service asks for no documents.</p>
-                <div class="space-y-1.5">
+                <ul class="space-y-1.5">
                     <template x-for="r in apShownReqs()" :key="r.key">
-                        <label class="flex items-start gap-2 rounded-xl border px-3 py-2 text-xs cursor-pointer transition-colors" :class="r.presented ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'">
-                            <input type="checkbox" x-model="r.presented" class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-200">
-                            <span class="min-w-0"><span class="text-slate-700" x-text="r.label"></span> <span class="text-ink-muted">· Presented at the office</span></span>
-                        </label>
+                        <li class="rounded-xl border px-3 py-2 text-xs transition-colors" :class="r.state === 'done' ? 'border-emerald-200 bg-emerald-50/40' : (r.state === 'failed' || r.error ? 'border-rose-200 bg-rose-50/30' : (r.file ? 'border-brand-200 bg-brand-50/30' : 'border-slate-200'))">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <span class="min-w-0 font-medium text-slate-700" x-text="r.label"></span>
+                                <span x-show="!r.file && !apBusy && !apFiled" class="flex items-center gap-1.5 shrink-0">
+                                    <label class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 font-medium text-brand-700 hover:border-brand-300 cursor-pointer focus-within:ring-4 focus-within:ring-brand-100">
+                                        <input type="file" accept="image/*,application/pdf" class="sr-only" @change="apPickFile(r, $event)">
+                                        <i data-lucide="paperclip" class="w-3.5 h-3.5"></i>Choose file
+                                    </label>
+                                    <label class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2 py-1 text-brand-700 hover:border-brand-300 cursor-pointer focus-within:ring-4 focus-within:ring-brand-100" title="Take a photo with this device's camera">
+                                        <input type="file" accept="image/*" capture="environment" class="sr-only" @change="apPickFile(r, $event)">
+                                        <i data-lucide="camera" class="w-3.5 h-3.5"></i><span class="sr-only">Take a photo of the document</span>
+                                    </label>
+                                </span>
+                            </div>
+                            <div x-show="r.file" x-cloak class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                                <i data-lucide="file-check" class="w-3.5 h-3.5 shrink-0 text-brand-600"></i>
+                                <span class="min-w-0 max-w-[16rem] truncate text-slate-700" x-text="r.file?.name"></span>
+                                <span class="text-ink-muted" x-text="fileSize(r.file?.size)"></span>
+                                <button type="button" x-show="!r.state && !apBusy && !apFiled" @click="apDropFile(r)" class="font-medium text-rose-600 hover:underline">Remove</button>
+                                <span x-show="r.state === 'uploading'" class="text-brand-700" x-text="'Uploading… ' + r.progress + '%'"></span>
+                                <span x-show="r.state === 'done'" class="font-semibold text-emerald-700">Uploaded</span>
+                            </div>
+                            <div x-show="r.state === 'uploading'" x-cloak class="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100" role="progressbar" :aria-valuenow="r.progress" aria-valuemin="0" aria-valuemax="100" :aria-label="'Uploading ' + r.label">
+                                <div class="h-full rounded-full bg-brand-500 transition-all duration-200" :style="'width: ' + r.progress + '%'"></div>
+                            </div>
+                            <p x-show="r.error" x-cloak class="mt-1 text-[11px] text-rose-700" role="alert" x-text="r.error"></p>
+                        </li>
                     </template>
-                </div>
+                </ul>
             </fieldset>
+            {{-- Filed, with a document that did not go up: say what was filed. --}}
+            <p x-show="apFiled && !apBusy" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/50 px-3 py-2 text-xs text-emerald-800" x-text="(apFiled?.ref ? apFiled.ref + ' is filed' : 'Filed') + (apFiled?.sessionRef ? ' and added to the session' : '') + '. Attach the documents marked above from the case with Upload file.'"></p>
 
             <div class="rounded-xl border border-brand-100 bg-brand-50/50 p-3">
                 <p class="text-xs text-slate-700 leading-relaxed">Read to the person: "The Municipality of Esperanza collects your personal information only to process this request and to keep the record of the service given, under the Data Privacy Act of 2012 (RA 10173). It is kept by the office handling your request and shared only as the law allows."</p>
@@ -297,9 +330,11 @@
 
         <x-slot:footer>
             <p class="mr-auto min-w-0 text-xs text-rose-600" role="alert" aria-live="assertive" x-text="apError"></p>
-            <x-ui.button variant="secondary" size="sm" @click="apStep > 1 ? apBack() : (apOpen = false)"><span x-text="apStep > 1 ? 'Back' : 'Cancel'"></span></x-ui.button>
+            <x-ui.button variant="secondary" size="sm" x-show="!apFiled" x-bind:disabled="apBusy" @click="apStep > 1 ? apBack() : (apOpen = false)"><span x-text="apStep > 1 ? 'Back' : 'Cancel'"></span></x-ui.button>
             <x-ui.button size="sm" x-show="apStep < 4" @click="apNext()">Continue</x-ui.button>
-            <x-ui.button size="sm" icon="send" x-show="apStep === 4" loading="apBusy" @click="apSubmit()"><span x-text="apRecordOnly ? 'Save the record' : (apSessionRef ? 'File and add to the session' : 'File the request')"></span></x-ui.button>
+            <x-ui.button size="sm" icon="send" x-show="apStep === 4 && (!apFiled || apBusy)" loading="apBusy" @click="apSubmit()"><span x-text="apBusy ? (apFiled ? 'Uploading the documents…' : 'Filing…') : (apRecordOnly ? 'Save the record' : (apSessionRef ? 'File and add to the session' : 'File the request'))"></span></x-ui.button>
+            {{-- Filed, a document not uploaded: on to the case, where it is attached. --}}
+            <x-ui.button size="sm" icon="arrow-right" x-show="apFiled && !apBusy" @click="apFinish()"><span x-text="apFiled?.sessionRef ? 'Done' : 'Open the case'"></span></x-ui.button>
         </x-slot:footer>
     </x-ui.modal>
     </div>
