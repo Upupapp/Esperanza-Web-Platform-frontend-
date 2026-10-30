@@ -1821,6 +1821,11 @@ area(/^\/citizen\/assistance-requests(\/|$)/.test(areaPath), () => import('./wel
 // on the staff Tulong page (welfare round, 2026-10-29). Constituents no
 // longer needs it: its services-rendered list left in round 2 (2026-10-30).
 area(/^\/admin\/assistance-requests(\/|$)/.test(areaPath), () => import('./welfare-admin'));
+// An event's registrations, attendance and certificates, on Balita > Events
+// (round 2, 2026-10-30): the page's addresses, as scope-admin-records'.
+area(/^\/admin\/(communications|announcements|settings\/support)(\/|$)/.test(areaPath), () => import('./event-desk'));
+// Registering for an event, and its certificate, on the resident's Events page.
+area(/^\/citizen\/events(\/|$)/.test(areaPath), () => import('./citizen-events'));
 Promise.allSettled(areaChunks).finally(() => Alpine.start());
 
 

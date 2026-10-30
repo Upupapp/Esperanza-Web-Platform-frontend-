@@ -38,14 +38,29 @@ export function citizenWelfare() {
                 window.Alpine?.nextTick(() => window.renderIcons?.());
             }
         },
+        // GET /citizen/certificates carries the certificates of the events the
+        // resident attended too (round 2, 2026-10-30): source event, with the
+        // event in its document's field_values (cert_subtitle, event_date, venue).
+        isEventCert(c) { return c.source === 'event' || !!c.event_key; },
         holders(c) {
-            return (Array.isArray(c.holder_names) ? c.holder_names : [c.holder_names]).filter(Boolean).join(tr(' and ', ' at '));
+            const names = (Array.isArray(c.holder_names) ? c.holder_names : [c.holder_names]).filter(Boolean);
+            return (names.length ? names : [c.document?.field_values?.applicant].filter(Boolean)).join(tr(' and ', ' at '));
+        },
+        certLine(c) {
+            if (!this.isEventCert(c)) return [c.session?.date ? fmtDate(c.session.date) : '', c.session?.venue, c.control_number].filter(Boolean).join(' · ');
+            const fv = c.document?.field_values || {};
+            const date = c.event?.date || fv.event_date;
+            return [c.event?.title || fv.cert_subtitle, date ? fmtDate(date) : '', c.event?.venue || fv.venue, c.control_number].filter(Boolean).join(' · ');
         },
         openCertificate(c) {
+            const fv = c.document?.field_values || {};
+            const event = this.isEventCert(c);
             openWelfareCertificate(c.document || { control_number: c.control_number, verify_url: c.verify_url, serial: c.verification_code, issued_on: c.issued_on }, {
                 title: c.title,
                 holder_names: c.holder_names,
-                session: c.session || null,
+                session: event ? { date: c.event?.date || fv.event_date || null, venue: c.event?.venue || fv.venue || null } : (c.session || null),
+                source: event ? 'event' : 'session',
+                event_title: event ? (c.event?.title || fv.cert_subtitle || '') : '',
                 verification_code: c.verification_code,
                 verify_url: c.verify_url,
                 issued_on: c.issued_on,

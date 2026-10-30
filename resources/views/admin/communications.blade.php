@@ -111,11 +111,15 @@
              reaches residents (2026-10-21): publishing it tells them in the bell
              and on their phones and, unless "Post in Balita too" is unticked,
              posts it in Balita with its photos. A published event can still be
-             put right, and withdrawing one before its day cancels it. --}}
+             put right, and withdrawing one before its day cancels it.
+             Round 2 (2026-10-30): residents can register for an event, and
+             those who attend can receive a certificate - set in its form; the
+             day itself is its Registrations window (event-desk partial). --}}
         <div
             x-show="tab === 'events'" x-cloak
             x-data="adminEvents(@js(config('esperanza.barangays')))"
             x-init="$store.session.whenReady().then(() => tabAllowed('events') && load())"
+            x-on:events-edit.window="editByKey($event.detail)"
         >
             <div x-show="loading" class="space-y-2"><x-ui.skeleton class="h-24" /><x-ui.skeleton class="h-24 opacity-80" /></div>
             <div x-show="failed" x-cloak><x-ui.error-state messageExpr="'Could not load events.'" retryExpr="load()" :retryable="true" /></div>
@@ -186,12 +190,15 @@
                                 <a x-show="e.balita_post_id" :href="'/admin/communications/?tab=balita&post=' + e.balita_post_id" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 bg-amber-50 text-amber-700 hover:underline"><i data-lucide="newspaper" class="w-2.5 h-2.5"></i>In Balita</a>
                                 <span x-show="!e.balita_post_id && e.post_to_balita && !['Released', 'Archived'].includes(e.status)" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 bg-slate-100 text-ink-muted"><i data-lucide="newspaper" class="w-2.5 h-2.5"></i>Goes into Balita when published</span>
                                 <span x-show="e.reminders_count" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5 bg-emerald-50 text-emerald-700"><i data-lucide="bell-ring" class="w-2.5 h-2.5"></i><span x-text="e.reminders_count + (e.reminders_count === 1 ? ' resident' : ' residents') + ' want a reminder'"></span></span>
+                                <span x-show="e.registration?.open || e.registration?.count || e.attended_count" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5" :class="regTone(e)"><i data-lucide="ticket" class="w-2.5 h-2.5"></i><span x-text="regChip(e)"></span></span>
+                                <span x-show="e.certificate?.enabled" class="inline-flex items-center gap-1 text-[10px] font-medium rounded-full px-2 py-0.5" :class="e.certificates_issued_at ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'"><i data-lucide="award" class="w-2.5 h-2.5"></i><span x-text="e.certificates_issued_at ? 'Certificates issued' : 'Certificates for attendees'"></span></span>
                             </div>
                             <p x-show="e.status === 'Rejected' && e.review_remarks" class="text-[11px] text-red-700 bg-red-50 rounded-xl px-2.5 py-1.5"><span class="font-semibold">Sent back:</span> <span x-text="e.review_remarks"></span></p>
                         </div>
                         <div class="flex border-t border-brand-600/10 mt-auto">
                             <button x-show="e.status === 'Pending Review' && canMove(e, 'Approved')" @click="openReview(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-orange-600 hover:bg-orange-50/60 transition-colors"><i data-lucide="history" class="w-3.5 h-3.5"></i>Review</button>
                             <button x-show="canEdit(e)" @click="openEdit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i>Edit</button>
+                            <button x-show="canDesk(e)" @click="openDesk(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-indigo-600 hover:bg-indigo-50/60 transition-colors whitespace-nowrap"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>Registrations</button>
                             <button x-show="e.status === 'Draft' && canMove(e, 'Pending Review')" @click="submit(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-brand-600 hover:bg-brand-50/60 transition-colors"><i data-lucide="send" class="w-3.5 h-3.5"></i>Submit for Review</button>
                             <button x-show="e.status === 'Approved' && canMove(e, 'Released')" @click="release(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-emerald-600 hover:bg-emerald-50/60 transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i>Publish</button>
                             <button x-show="isCancel(e) && canMove(e, 'Archived')" @click="openCancel(e)" class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 text-red-600 hover:bg-red-50/60 transition-colors"><i data-lucide="calendar-x" class="w-3.5 h-3.5"></i>Cancel Event</button>
@@ -278,6 +285,8 @@
                             <span class="block text-[11px] text-ink-muted" x-text="editing && editing.balita_post ? 'It is already in Balita. Its post follows the changes you make here.' : 'When it is published, it also goes into the Balita feed with its photos, where residents can like, comment and share it. Residents are told once, about the event.'"></span>
                         </span>
                     </label>
+
+                    @include('admin.communications.event-form-extras')
                 </div>
                 </div>
 
@@ -346,6 +355,10 @@
                 </x-slot:footer>
             </x-ui.modal>
             </div>
+
+            @include('admin.communications.event-desk')
+            {{-- An attendee's certificate, opened from Registrations: after it, so it opens above. --}}
+            <x-welfare.certificate />
         </div>
 
         {{-- ============================= BANNERS & OCCASIONS ============================= --}}

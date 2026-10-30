@@ -875,6 +875,90 @@ function balitaComments() {
 
 const EVENT_CATEGORY_COLOR = { Community: 'bg-brand-500', Health: 'bg-emerald-500', 'Public Service': 'bg-indigo-500', Advisory: 'bg-amber-500', Livelihood: 'bg-teal-500', Governance: 'bg-purple-500' };
 
+/** A time typed as text before (8:00 AM) as HH:MM; '' when it cannot be read. */
+function toHm(t) {
+    const m = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?$/.exec(String(t || '').trim());
+    if (!m) return '';
+    let h = Number(m[1]);
+    const ap = (m[3] || '').toLowerCase();
+    if (ap === 'pm' && h < 12) h += 12;
+    if (ap === 'am' && h === 12) h = 0;
+    return h > 23 ? '' : String(h).padStart(2, '0') + ':' + m[2];
+}
+
+/** '13:30' -> '1:30 PM'. */
+function clock(hm) {
+    const m = /^(\d{1,2}):(\d{2})/.exec(String(hm || ''));
+    if (!m) return hm || '';
+    const h = Number(m[1]);
+    return (h % 12 || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM');
+}
+
+// Registration and certificates (Esperanza round 2, 2026-10-30; owner: "the
+// e-certifications also should be in the Event screen ... have also buttons
+// for users to register to the posted events so that the municipality will
+// have record of those who attended"). The event form sets who may register
+// (and how many, until when) and the certificate those who attend receive:
+// its title, its wording with :name, :event, :date and :venue filled in for
+// each person by the server, and who signs it. The day itself - check-in,
+// walk-ins, attendance and issuing - is the Registrations window
+// (resources/js/event-desk.js).
+const CERT_PRESETS = [
+    { key: 'participation', title: 'Certificate of Participation', body: 'This is to certify that :name actively participated in :event held on :date at :venue.' },
+    { key: 'attendance', title: 'Certificate of Attendance', body: 'This is to certify that :name attended :event held on :date at :venue.' },
+    { key: 'completion', title: 'Certificate of Completion', body: 'This is to certify that :name has successfully completed :event held on :date at :venue.' },
+];
+const MAX_SIGNATORIES = 4;
+let signatoryKey = 0;
+const signatory = (s = {}) => ({ k: ++signatoryKey, name: s.name || '', position: s.position || '' });
+
+/**
+ * The form's registration and certificate fields, empty or read from an
+ * event row (registration {open, capacity, closes_at, count, full},
+ * certificate {enabled, title, body, signatories}). A closing time equal to
+ * the event's start is the default, shown empty: it follows the event if
+ * the date or time is moved.
+ */
+function eventExtras(e = null) {
+    const reg = e?.registration || {};
+    const cfg = e?.certificate || null;
+    const start = e?.date ? String(e.date).slice(0, 10) + 'T' + (toHm(e.time) || '00:00') : '';
+    const at = reg.closes_at ? manilaParts(reg.closes_at) : null;
+    const closes = at && at.date ? at.date + 'T' + at.time : '';
+    const preset = CERT_PRESETS.find((p) => p.title === cfg?.title);
+    const sigs = Array.isArray(cfg?.signatories) && cfg.signatories.length ? cfg.signatories : [{}];
+    return {
+        registration_open: !!reg.open,
+        capacity: reg.capacity ?? '',
+        closes_at: closes && closes !== start ? closes : '',
+        cert: {
+            enabled: !!cfg?.enabled,
+            had: !!cfg,
+            preset: cfg ? (preset ? preset.key : 'custom') : CERT_PRESETS[0].key,
+            title: cfg?.title || CERT_PRESETS[0].title,
+            body: cfg?.body || CERT_PRESETS[0].body,
+            signatories: sigs.map(signatory),
+        },
+    };
+}
+
+/** Those fields as the API takes them (create and update alike). */
+function extrasPayload(f) {
+    const c = f.cert;
+    const cap = String(f.capacity ?? '').trim();
+    return {
+        registration_open: !!f.registration_open,
+        capacity: cap === '' ? null : Number(cap),
+        registration_closes_at: f.closes_at ? manilaIso(f.closes_at.slice(0, 10), f.closes_at.slice(11, 16)) : null,
+        certificate: c.enabled || c.had ? {
+            enabled: !!c.enabled,
+            title: c.title.trim(),
+            body: c.body.trim(),
+            signatories: c.signatories.map((s) => ({ name: s.name.trim(), position: s.position.trim() })).filter((s) => s.name),
+        } : null,
+    };
+}
+
 /**
  * The Events tab (2026-10-21). An event reaches residents now: publishing it
  * tells the residents it is for (the bell and their phones) and, unless the
@@ -884,7 +968,7 @@ const EVENT_CATEGORY_COLOR = { Community: 'bg-brand-500', Health: 'bg-emerald-50
  * withdrawn before its day is a cancellation, told with its reason.
  */
 function adminEvents(barangays = []) {
-    const blank = () => ({ name: '', description: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: barangays[0] || '', post_to_balita: true });
+    const blank = () => ({ name: '', description: '', category: 'Community', date: '', time: '', venue: '', audience: 'Municipal', barangay: barangays[0] || '', post_to_balita: true, ...eventExtras() });
     return {
         loading: true,
         failed: false,
@@ -906,6 +990,8 @@ function adminEvents(barangays = []) {
         form: blank(),
         media: emptyMedia(),
         formKey: 1,
+        certPresets: CERT_PRESETS,
+        maxSignatories: MAX_SIGNATORIES,
 
         async load() {
             this.loading = true;
@@ -968,21 +1054,14 @@ function adminEvents(barangays = []) {
         },
         // A time typed as text before (8:00 AM) for the time field; one it
         // cannot read leaves the field empty and is kept as it was.
-        toTime(t) {
-            const m = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?$/.exec(String(t || '').trim());
-            if (!m) return '';
-            let h = Number(m[1]);
-            const ap = (m[3] || '').toLowerCase();
-            if (ap === 'pm' && h < 12) h += 12;
-            if (ap === 'am' && h === 12) h = 0;
-            return h > 23 ? '' : String(h).padStart(2, '0') + ':' + m[2];
-        },
+        toTime(t) { return toHm(t); },
         openEdit(e) {
             this.form = {
                 name: e.title || e.name || '', description: e.description || '', category: e.category || 'Community',
                 date: e.date || '', time: this.toTime(e.time), venue: e.venue || '',
                 audience: e.barangay ? 'Barangay' : 'Municipal', barangay: e.barangay || barangays[0] || '',
                 post_to_balita: e.post_to_balita !== false,
+                ...eventExtras(e),
             };
             this.media = emptyMedia();
             this.editing = e;
@@ -994,10 +1073,98 @@ function adminEvents(barangays = []) {
             if (this.media.failed) return 'A photo did not upload. Remove it or try it again.';
             return '';
         },
+        // ---- Registration and certificate (round 2, 2026-10-30)
+        /** '' when registration and the certificate are ready to save, else what to put right. */
+        extrasProblem() {
+            const f = this.form;
+            if (f.registration_open) {
+                const cap = String(f.capacity ?? '').trim();
+                if (cap !== '' && !(/^\d+$/.test(cap) && Number(cap) >= 1)) return 'Capacity is a whole number of people, or empty for no limit.';
+                if (f.closes_at && f.date && f.closes_at > f.date + 'T' + (f.time || '23:59')) return 'Registration has to close before the event starts.';
+            }
+            const c = f.cert;
+            if (c.enabled) {
+                if (c.title.trim().length < 3) return 'Give the certificate a title.';
+                if (!/:name\b/.test(c.body)) return 'The certificate wording needs :name, where each person’s name goes.';
+                if (!c.signatories.some((s) => s.name.trim())) return 'Name at least one person who signs the certificate.';
+                if (c.signatories.some((s) => s.name.trim() && !s.position.trim())) return 'Write the position of each person who signs.';
+            }
+            return '';
+        },
+        capacityHint() {
+            const n = this.editing?.registration?.count || 0;
+            const cap = Number(this.form.capacity);
+            if (n && cap && cap < n) return n + ' have registered already. No one is removed, but no one new can register.';
+            return n ? n + (n === 1 ? ' resident has' : ' residents have') + ' registered so far.' : 'Empty for no limit.';
+        },
+        closesHint() {
+            const f = this.form;
+            if (f.closes_at) return 'Residents can register until ' + this.dayLabel(f.closes_at.slice(0, 10)) + ', ' + clock(f.closes_at.slice(11, 16)) + '.';
+            return 'Empty: until the event starts' + (f.date ? ' (' + this.dayLabel(f.date) + (f.time ? ', ' + clock(f.time) : '') + ')' : '') + '.';
+        },
+        /** A preset's title, and its wording too while the wording is still a preset's own. */
+        certPreset(key) {
+            const c = this.form.cert;
+            const p = CERT_PRESETS.find((x) => x.key === key);
+            const stock = !c.body.trim() || CERT_PRESETS.some((x) => x.body === c.body.trim());
+            if (p) {
+                c.title = p.title;
+                if (stock) c.body = p.body;
+            } else if (CERT_PRESETS.some((x) => x.title === c.title)) {
+                c.title = '';
+            }
+        },
+        addSignatory() {
+            if (this.form.cert.signatories.length < MAX_SIGNATORIES) this.form.cert.signatories.push(signatory());
+        },
+        removeSignatory(s) {
+            const list = this.form.cert.signatories;
+            if (list.length > 1) list.splice(list.indexOf(s), 1);
+        },
+        /** The wording as one attendee will read it. */
+        certSample() {
+            const f = this.form;
+            const date = f.date ? new Date(f.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '(the date)';
+            return f.cert.body
+                .replace(/:names?\b/g, 'Juan Dela Cruz')
+                .replace(/:event\b/g, f.name.trim() || '(the event)')
+                .replace(/:date\b/g, date)
+                .replace(/:venue\b/g, f.venue.trim() || '(the venue)');
+        },
+
+        // ---- On the card
+        /** '12 of 50 registered', 'Full: 50 of 50 registered', with who attended once known. */
+        regChip(e) {
+            const r = e.registration || {};
+            const n = r.count || 0;
+            const text = (r.open && r.full ? 'Full: ' : '') + n + (r.capacity ? ' of ' + r.capacity : '') + ' registered';
+            return text + (e.attended_count ? ' · ' + e.attended_count + ' attended' : '');
+        },
+        regTone(e) {
+            const r = e.registration || {};
+            if (r.open && r.full) return 'bg-amber-50 text-amber-800';
+            return r.open ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600';
+        },
+        /** Registrations and attendance, for a published event (or an archived one that had some). */
+        canDesk(e) {
+            if (!this.can('edit') && !this.can('approve')) return false;
+            if (e.status === 'Released') return true;
+            return e.status === 'Archived' && ((e.registration?.count || 0) + (e.attended_count || 0)) > 0;
+        },
+        // On window: the Registrations window is a component of its own
+        // (eventDesk), and it asks for Edit back the same way (events-edit).
+        openDesk(e) { window.dispatchEvent(new CustomEvent('event-desk', { detail: e })); },
+        editByKey(key) {
+            const e = this.events.find((x) => x.key === key);
+            if (e && this.canEdit(e)) this.openEdit(e);
+        },
+
         async saveEvent(submit) {
             const f = this.form;
             if (this.processing || !f.name.trim() || !f.date) return;
             if (this.mediaProblem) { balitaToast(this.mediaProblem, 'error'); return; }
+            const problem = this.extrasProblem();
+            if (problem) { balitaToast(problem, 'error'); return; }
             return this.editing ? this.saveEdit(submit) : this.create(submit);
         },
         async create(submit) {
@@ -1010,6 +1177,7 @@ function adminEvents(barangays = []) {
                     time: f.time || null, venue: f.venue.trim() || null, category: f.category,
                     barangay: f.audience === 'Barangay' ? f.barangay : null,
                     post_to_balita: !!f.post_to_balita, media_ids: this.media.ids,
+                    ...extrasPayload(f),
                 });
                 if (submit) await api.post('/admin/events/' + encodeURIComponent(key) + '/transition', { to: 'Pending Review' });
                 this.open = false;
@@ -1037,6 +1205,9 @@ function adminEvents(barangays = []) {
             if (barangay !== (e.barangay || null)) changes.barangay = barangay;
             if (!!f.post_to_balita !== (e.post_to_balita !== false)) changes.post_to_balita = !!f.post_to_balita;
             if (!sameIds(this.media.ids, (e.media || []).map((m) => m.id))) changes.media_ids = this.media.ids;
+            // Registration and certificate: each field that differs from the event's own.
+            const was = extrasPayload(eventExtras(e));
+            Object.entries(extrasPayload(f)).forEach(([k, v]) => { if (JSON.stringify(v) !== JSON.stringify(was[k])) changes[k] = v; });
             if (!submit && !Object.keys(changes).length) {
                 this.open = false;
                 this.editing = null;

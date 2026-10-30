@@ -100,6 +100,7 @@
         }"
         class="animate-fade-up grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-5 items-start"
     >
+        <div class="space-y-5 min-w-0">
         <!-- Calendar -->
         <div class="surface-glass rounded-[26px] p-4">
             <!-- Legend: fixed at the very top so it never shifts position -->
@@ -161,6 +162,26 @@
             </div>
         </div>
 
+        {{-- The certificates the resident's events gave them, whatever month
+             each event was (round 2, 2026-10-30): eventCertificates() in
+             resources/js/citizen-events.js. --}}
+        <section x-data="eventCertificates()" x-show="ecList().length" x-cloak class="surface-glass rounded-[26px] p-4" aria-labelledby="event-certs-title">
+            <h3 id="event-certs-title" class="text-sm font-semibold text-ink flex items-center gap-2 mb-3"><i data-lucide="award" class="w-4 h-4 text-amber-600"></i><x-ui.t fil="Aking mga sertipiko mula sa mga kaganapan" en="My certificates from events" /></h3>
+            <ul class="space-y-2">
+                <template x-for="c in ecList()" :key="c.control_number">
+                    <li class="rounded-xl border border-brand-600/10 bg-white/70 p-3">
+                        <p class="text-sm font-semibold text-ink leading-snug" x-text="ecTitle(c)"></p>
+                        <p class="text-[11px] text-ink-muted mt-0.5" x-text="ecLine(c)"></p>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                            <button type="button" @click="ecOpen(c)" class="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:underline"><i data-lucide="award" class="w-3 h-3"></i><x-ui.t fil="Tingnan ang sertipiko" en="View certificate" /></button>
+                            <a x-show="ecHref(c)" :href="ecHref(c)" class="inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted hover:text-brand-600 hover:underline"><i data-lucide="calendar-days" class="w-3 h-3"></i><x-ui.t fil="Ang kaganapan" en="The event" /></a>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </section>
+        </div>
+
         <!-- Event list -->
         <div class="space-y-3.5 min-w-0">
             <div class="flex items-center justify-between" x-show="$store.barangay.mine">
@@ -184,8 +205,9 @@
             <template x-if="!loading && !failed">
                 {{-- Remind me (2026-10-21): here and on the phone the day before,
                      or a calendar file, or Google Calendar (eventCalendar in
-                     resources/js/scope-citizen.js). --}}
-                <div class="space-y-3.5" x-data="eventCalendar()" @keydown.escape.window="menu = null">
+                     resources/js/scope-citizen.js). Registering sets that
+                     reminder too (round 2, 2026-10-30): the card says so. --}}
+                <div class="space-y-3.5" x-data="eventCalendar()" @keydown.escape.window="menu = null" x-on:event-registered.window="markReminded($event.detail)">
                     <template x-for="(event, i) in selectedEvents" :key="event.key + event.title">
                         <x-ui.card ::id="'event-' + event.ref" ::class="(menu === event.key + event.title ? 'relative z-20 ' : '') + (focusKey === event.ref ? 'ring-2 ring-brand-300' : '')">
                             <img x-show="event.image_url" :src="event.image_url" :alt="event.title" loading="lazy" class="w-full max-h-56 object-cover rounded-xl mb-3">
@@ -255,6 +277,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <x-citizen.event-signup />
                             {{-- What it is about, as the office wrote it (2026-10-21). --}}
                             <div x-show="event.description || event.balita_post_id" class="mt-3 pt-3 border-t border-brand-600/10 space-y-2">
                                 <p x-show="event.description" class="text-xs text-slate-600 whitespace-pre-line" :class="open[event.ref] ? '' : 'line-clamp-3'" x-text="event.description"></p>
@@ -274,4 +297,7 @@
             </template>
         </div>
     </div>
+
+    {{-- An event's certificate (round 2, 2026-10-30), from a card or the list above. --}}
+    <x-welfare.certificate :bilingual="true" />
 </x-layouts.citizen>
