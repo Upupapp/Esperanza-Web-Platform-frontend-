@@ -479,7 +479,10 @@ unset($role);
 // log too; its 'approve' preset would give it no create on either.
 // ---------------------------------------------------------------
 $welfareGrants = [
-    'department_head' => ['tulong_sessions' => ['view', 'create', 'edit', 'release'], 'tulong_records' => ['view', 'create', 'edit']],
+    // ... and (owner, 2026-10-30: "in dokyu screen they can edit, add, modify
+    // the dokyu offered") manages its own office's Dokyu and Tulong types from
+    // those tabs; the backend keeps a head to their own office's types.
+    'department_head' => ['tulong_sessions' => ['view', 'create', 'edit', 'release'], 'tulong_records' => ['view', 'create', 'edit'], 'set_service_catalog' => ['view', 'edit']],
 ];
 foreach ($roles as &$role) {
     if (isset($welfareGrants[$role['key']])) {
