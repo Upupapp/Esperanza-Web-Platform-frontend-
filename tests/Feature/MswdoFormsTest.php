@@ -139,9 +139,10 @@ class MswdoFormsTest extends TestCase
     /** Staff editing a service keep its conditional requirements. */
     public function test_the_catalog_editor_keeps_a_requirement_condition(): void
     {
-        $js = $this->source('resources/js/scope-admin-settings.js');
+        // The editor is on Dokyu's and Tulong's own pages since round 2 (2026-10-30).
+        $js = $this->source('resources/js/catalog-editor.js');
         $this->assertStringContainsString("requirements: Array.isArray(c.requirements) ? c.requirements.map((r) => (r && typeof r === 'object' ? { ...r } : r)) : [],", $js);
         $this->assertStringContainsString('{ ...r, label: this.reqLabel(r).trim() }', $js);
-        $this->assertStringContainsString('data-conditional-requirement', $this->source('resources/views/admin/settings/service-catalog.blade.php'));
+        $this->assertStringContainsString('data-conditional-requirement', $this->source('resources/views/admin/partials/type-catalog.blade.php'));
     }
 }

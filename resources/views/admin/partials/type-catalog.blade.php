@@ -1,29 +1,51 @@
-{{-- ============================= SERVICE CATALOG =============================
-     Every service, offered or not (GET /admin/settings/catalog: the tab read
-     the public list, which hides switched-off services), and one editor per
-     service: its details (name, office, category, offered), its rules
-     published as a new version (fee, time, required documents, its workflow
-     - each step with who is responsible and how long it takes - and the
-     request form's questions), and its history (scope round 2026-10-15;
-     workflow, questions and new services 2026-10-17). Logic: catalogEditor
-     in resources/js/scope-admin-settings.js. --}}
-<div x-data="catalogEditor" x-show="tab === 'service-catalog'" x-cloak x-effect="tab === 'service-catalog' && start()">
-    <x-ui.card x-show="denied" x-cloak>
-        <p class="text-sm text-slate-600">Your role cannot view the Service Catalog.</p>
-    </x-ui.card>
+{{-- ============================= DOCUMENT / TULONG TYPES =============================
+     Dokyu's Document types and Tulong's Tulong types (owner, 2026-10-30:
+     moved from Settings > Service Catalog into each tab), one kind per page:
+     every type of it, offered or not (GET /admin/settings/catalog: the tab
+     read the public list, which hides switched-off ones), and one editor per
+     type: its details (name, office, category, offered), its rules published
+     as a new version (fee, time, required documents, its workflow - each step
+     with who is responsible and how long it takes - and the request form's
+     questions), and its history (scope round 2026-10-15; workflow, questions
+     and new types 2026-10-17). A Department Head sees and adds their own
+     office's only (the server keeps them to it). Never the word "service"
+     here: the owner's word for these was his own shorthand.
+     Included by admin/request-types.blade.php with $kind (dokyu | tulong).
+     Logic: catalogEditor in resources/js/catalog-editor.js. --}}
+@php
+    $isDokyu = $kind === 'dokyu';
+    $words = $isDokyu
+        ? ['one' => 'document type', 'many' => 'document types', 'One' => 'Document type', 'Many' => 'Document types', 'example' => 'Certificate of Good Moral Character']
+        : ['one' => 'Tulong type', 'many' => 'Tulong types', 'One' => 'Tulong type', 'Many' => 'Tulong types', 'example' => 'Educational Assistance'];
+    // The classes the editor's parts share (they were Settings' own).
+    $ui = [
+        'label' => 'block text-xs font-semibold text-slate-700 mb-1',
+        'input' => 'w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard disabled:opacity-60 disabled:cursor-not-allowed',
+        'inputSm' => 'w-full rounded-2xl border-0 surface-pressed-sm py-2 px-3.5 text-xs text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard',
+        'search' => 'w-full rounded-2xl border-0 surface-pressed-sm py-2 pl-9 pr-3 text-xs text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard',
+        'select' => 'text-xs rounded-2xl py-2 pl-3 pr-8 border-0 surface-pressed-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none',
+        'th' => 'px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted',
+        'iconBtn' => 'p-1.5 rounded-xl text-ink-muted hover:text-navy-700 hover:bg-slate-100 disabled:opacity-25 disabled:pointer-events-none transition-colors',
+        'iconBtnDanger' => 'p-1.5 rounded-xl text-ink-faint hover:text-rose-600 hover:bg-rose-50 transition-colors',
+        'note' => 'flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-xs text-slate-600',
+        'lock' => 'flex items-start gap-2.5 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-ink-muted',
+        'warn' => 'flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-800',
+        'error' => 'text-xs text-rose-600 mt-1',
+    ];
+@endphp
+<div x-data="catalogEditor('{{ $kind }}')" x-init="start()" data-type-catalog="{{ $kind }}">
+    <div x-show="denied" x-cloak>
+        <x-admin.access-restricted :module="$words['Many']" icon="layout-list" />
+    </div>
 
     <div x-show="!denied" class="space-y-3">
         <div class="flex flex-wrap items-center gap-2">
             <div class="relative flex-1 min-w-[12rem]">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-ink-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                <input type="search" x-model="search" aria-label="Search services" placeholder="Search by name, office or category" class="{{ $ui['search'] }}">
+                <input type="search" x-model="search" aria-label="Search {{ $words['many'] }}" placeholder="Search by name, office or category" class="{{ $ui['search'] }}">
             </div>
-            <select x-model="kind" aria-label="Kind of service" class="{{ $ui['select'] }}">
-                <option value="">Dokyu and Tulong</option>
-                <option value="dokyu">Dokyu (documents)</option>
-                <option value="tulong">Tulong (assistance)</option>
-            </select>
-            <select x-model="office" aria-label="Office" class="{{ $ui['select'] }} max-w-full sm:max-w-[15rem]">
+            {{-- One office's types only, for a Department Head: nothing to choose. --}}
+            <select x-model="office" x-show="officeFilterChoices.length > 1" aria-label="Office" class="{{ $ui['select'] }} max-w-full sm:max-w-[15rem]">
                 <option value="">All offices</option>
                 <template x-for="o in officeFilterChoices" :key="o"><option :value="o" x-text="o"></option></template>
             </select>
@@ -34,24 +56,24 @@
             </select>
         </div>
 
-        {{-- A new service starts switched off, to be finished first (2026-10-17). --}}
+        {{-- A new type starts switched off, to be finished first (2026-10-17). --}}
         <div x-show="canEdit && loaded" x-cloak class="flex justify-end">
-            <x-ui.button size="sm" icon="plus" @click="startAdding()">Add a service</x-ui.button>
+            <x-ui.button size="sm" icon="plus" @click="startAdding()">Add a {{ $words['one'] }}</x-ui.button>
         </div>
         <div x-show="!canEdit" class="{{ $ui['lock'] }}">
             <i data-lucide="lock" class="w-4 h-4 shrink-0 mt-0.5"></i>
-            <p><span class="font-semibold text-slate-600">View only.</span> The Service Catalog sets what every resident pays and submits, so only roles with Service Catalog editing can change it.</p>
+            <p><span class="font-semibold text-slate-600">View only.</span> {{ $words['Many'] }} set what every resident pays and submits, so only roles that may edit them can change them.</p>
         </div>
 
         <div x-show="loading" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-12 opacity-80" /><x-ui.skeleton class="h-12 opacity-60" /></div>
-        <div x-show="failed && !loading" x-cloak><x-ui.error-state messageExpr="'Could not load the service catalog.'" retryExpr="load()" :retryable="true" /></div>
+        <div x-show="failed && !loading" x-cloak><x-ui.error-state messageExpr="'Could not load the {{ $words['many'] }}.'" retryExpr="load()" :retryable="true" /></div>
 
         <div x-show="loaded && !loading && !failed" x-cloak>
             <p class="text-xs text-ink-muted mb-2" x-text="summary"></p>
             <x-ui.table>
                 <thead>
                     <tr class="bg-well/70">
-                        <th class="{{ $ui['th'] }}">Service</th>
+                        <th class="{{ $ui['th'] }}">{{ $words['One'] }}</th>
                         <th class="{{ $ui['th'] }} hidden md:table-cell">Office</th>
                         <th class="{{ $ui['th'] }} hidden sm:table-cell">Fee and time</th>
                         <th class="{{ $ui['th'] }} hidden lg:table-cell">Version</th>
@@ -64,7 +86,7 @@
                         <tr class="hover:bg-white/60 transition-colors cursor-pointer group" @click="edit(s)">
                             <td class="px-4 py-3 min-w-[11rem]">
                                 <p class="text-slate-700 font-medium group-hover:text-brand-600 transition-colors" x-text="s.name"></p>
-                                <p class="text-[11px] text-ink-muted" x-text="kindLabel(s.type) + (s.category ? ' · ' + s.category : '') + (s.staff_only ? ' · Office only' : '') + (s.sensitive ? ' · Confidential' : '')"></p>
+                                <p class="text-[11px] text-ink-muted" x-text="[s.category, s.staff_only ? 'Office only' : '', s.sensitive ? 'Confidential' : ''].filter(Boolean).join(' · ')"></p>
                                 <p class="text-[11px] text-ink-muted md:hidden" x-text="s.office"></p>
                                 <p class="text-[11px] text-ink-muted sm:hidden" x-text="(s.fee || 'No fee set') + (s.days ? ' · ' + s.days : '')"></p>
                             </td>
@@ -89,15 +111,15 @@
                 </tbody>
             </x-ui.table>
             <div x-show="!shown.length" class="surface-glass rounded-[26px] mt-3">
-                <x-ui.empty-state icon="search-x" title="No services match" description="Change the search or the filters." />
+                <x-ui.empty-state icon="search-x" title="No {{ $words['many'] }} match" description="Change the search or the filters." />
             </div>
         </div>
     </div>
 
-    {{-- ---------------- One service ---------------- --}}
-    <x-ui.modal title="Service Details" maxWidth="xl">
+    {{-- ---------------- One type ---------------- --}}
+    <x-ui.modal :title="$words['One']" maxWidth="xl">
         <div x-show="detailLoading" class="space-y-2" aria-busy="true"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-40 opacity-80" /></div>
-        <div x-show="detailFailed && !detailLoading" x-cloak><x-ui.error-state messageExpr="'Could not load this service.'" retryExpr="loadDetail()" :retryable="true" /></div>
+        <div x-show="detailFailed && !detailLoading" x-cloak><x-ui.error-state messageExpr="'Could not load this {{ $words['one'] }}.'" retryExpr="loadDetail()" :retryable="true" /></div>
         <template x-if="svc && !detailLoading">
             <div class="space-y-4">
                 <div class="flex flex-wrap items-start justify-between gap-2">
@@ -106,7 +128,6 @@
                         <p class="text-[11px] text-ink-muted font-mono break-all" x-text="svc.key"></p>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
-                        <span class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-brand-50 text-brand-700" x-text="kindLabel(svc.type)"></span>
                         <span class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-slate-100 text-slate-600" x-text="'Version ' + (svc.current?.version || 1)"></span>
                         {{-- The welfare round's marks (2026-10-29): filed by officers only, records kept to the office. --}}
                         <span x-show="svc.staff_only" x-cloak class="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-amber-50 text-amber-700" title="Filed only by officers; residents do not see it in their list.">Office only</span>
@@ -122,10 +143,10 @@
                 </div>
                 <div x-show="!rulesShapeOk" class="{{ $ui['note'] }}">
                     <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
-                    <p>This service's documents or steps are stored in a shape this screen does not edit, so they are shown read only.</p>
+                    <p>This {{ $words['one'] }}'s documents or steps are stored in a shape this screen does not edit, so they are shown read only.</p>
                 </div>
 
-                <nav aria-label="Service sections" class="flex gap-1 overflow-x-auto scrollbar-thin surface-pressed-sm rounded-2xl p-1">
+                <nav aria-label="{{ $words['One'] }} sections" class="flex gap-1 overflow-x-auto scrollbar-thin surface-pressed-sm rounded-2xl p-1">
                     @foreach([['details', 'info', 'Details'], ['fee', 'banknote', 'Fee & time'], ['documents', 'file-check', 'Required documents'], ['steps', 'workflow', 'Workflow'], ['form', 'text-cursor-input', 'Request form'], ['history', 'history', 'History']] as [$sectionKey, $sectionIcon, $sectionLabel])
                         <button type="button" @click="showSection('{{ $sectionKey }}')" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap transition-colors" :class="section === '{{ $sectionKey }}' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'" :aria-current="section === '{{ $sectionKey }}' ? 'true' : null"><i data-lucide="{{ $sectionIcon }}" class="w-3.5 h-3.5"></i>{{ $sectionLabel }}</button>
                     @endforeach
@@ -135,20 +156,20 @@
                 <section x-show="section === 'details'" class="space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="sm:col-span-2">
-                            <label for="svc-name" class="{{ $ui['label'] }}">Service name</label>
+                            <label for="svc-name" class="{{ $ui['label'] }}">Name</label>
                             <input id="svc-name" type="text" x-model="details.name" maxlength="160" :disabled="!canEdit" class="{{ $ui['input'] }}">
                         </div>
                         <div>
                             <label for="svc-office" class="{{ $ui['label'] }}">Responsible office</label>
                             <template x-if="!isBarangayService">
-                                <select id="svc-office" x-model="details.office" :disabled="!canEdit" class="{{ $ui['input'] }}">
+                                <select id="svc-office" x-model="details.office" :disabled="!canEdit || officeLocked" class="{{ $ui['input'] }}">
                                     <template x-for="o in officeOptions" :key="o"><option :value="o" x-text="o" :selected="o === details.office"></option></template>
                                 </select>
                             </template>
                             <template x-if="isBarangayService">
                                 <p class="text-sm text-slate-700 py-2.5 px-4 rounded-2xl bg-slate-50">Barangay Office (each barangay's own hall)</p>
                             </template>
-                            <p class="text-[11px] text-ink-muted mt-1" x-text="isBarangayService ? 'A barangay service stays with the barangays: it cannot move to a municipal office.' : 'From the Departments list under User Management.'"></p>
+                            <p class="text-[11px] text-ink-muted mt-1" x-text="isBarangayService ? 'A barangay certificate stays with the barangays: it cannot move to a municipal office.' : (officeLocked ? 'The office you work in: it stays there.' : 'From the Departments list under User Management.')"></p>
                         </div>
                         <div>
                             <label for="svc-category" class="{{ $ui['label'] }}">Category</label>
@@ -160,12 +181,12 @@
                         <input type="checkbox" x-model="details.active" :disabled="!canEdit" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-200">
                         <span>
                             <span class="block text-sm font-medium text-slate-700">Offered to residents</span>
-                            <span class="block text-xs text-ink-muted mt-0.5">A switched-off service takes no new requests and leaves the portals' service lists. Requests already filed carry on.</span>
+                            <span class="block text-xs text-ink-muted mt-0.5">A switched-off {{ $words['one'] }} takes no new requests and leaves the portals' lists. Requests already filed carry on.</span>
                         </span>
                     </label>
                     <div x-show="svc.active && !details.active" class="{{ $ui['warn'] }}">
                         <i data-lucide="triangle-alert" class="w-4 h-4 shrink-0 mt-px"></i>
-                        <p>Saving switches this service off for residents.</p>
+                        <p>Saving switches this {{ $words['one'] }} off for residents.</p>
                     </div>
                     <p x-show="detailsError" x-text="detailsError" role="alert" class="{{ $ui['error'] }}"></p>
                 </section>
@@ -227,7 +248,7 @@
                      shows these steps; officers mark the office steps done, and
                      Approve and Release wait for the office steps before them. --}}
                 <section x-show="section === 'steps'" class="space-y-2" data-testid="workflow-editor">
-                    <p class="text-xs text-ink-muted">Each step of the service, first to last, as residents see it: who is responsible and how many working days it takes (the Citizen's Charter). Officers mark <span class="font-semibold">office steps</span> done on each request; Approve and Release wait for the office steps before them.</p>
+                    <p class="text-xs text-ink-muted">Each step of the {{ $words['one'] }}, first to last, as residents see it: who is responsible and how many working days it takes (the Citizen's Charter). Officers mark <span class="font-semibold">office steps</span> done on each request; Approve and Release wait for the office steps before them.</p>
                     <div x-show="svc && !tracked" class="{{ $ui['note'] }}">
                         <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
                         <p>Requests of the current version show these steps as a plain list. From the version you publish here, each request tracks them.</p>
@@ -363,29 +384,23 @@
         </x-slot:footer>
     </x-ui.modal>
 
-    {{-- ---------------- Adding a service (2026-10-17) ---------------- --}}
+    {{-- ---------------- Adding a type (2026-10-17); its kind is the page's ---------------- --}}
     <div x-data="{ get open() { return adding; }, set open(v) { if (!creating) adding = v; } }">
-        <x-ui.modal title="Add a service" maxWidth="lg">
+        <x-ui.modal :title="'Add a '.$words['one']" maxWidth="lg">
             <form @submit.prevent="createService()" class="space-y-3" novalidate data-testid="add-service">
                 <p class="text-xs text-ink-muted">It starts <span class="font-semibold">switched off</span>, with a simple form and workflow. Finish its questions, documents and steps, then switch it on under Details.</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label for="new-svc-type" class="{{ $ui['label'] }}">Kind</label>
-                        <select id="new-svc-type" x-model="draft.type" @change="draft.permissions_like = ''; suggestLike()" class="{{ $ui['input'] }}">
-                            <option value="dokyu">Dokyu (a document)</option>
-                            <option value="tulong">Tulong (assistance)</option>
-                        </select>
+                    <div class="sm:col-span-2">
+                        <label for="new-svc-name" class="{{ $ui['label'] }}">Name</label>
+                        <input id="new-svc-name" type="text" x-model="draft.name" maxlength="160" placeholder="e.g. {{ $words['example'] }}" class="{{ $ui['input'] }}">
                     </div>
+                    {{-- A Department Head adds to their own office only (the server agrees). --}}
                     <div>
                         <label for="new-svc-office" class="{{ $ui['label'] }}">Responsible office</label>
-                        <select id="new-svc-office" x-model="draft.office" @change="suggestLike()" class="{{ $ui['input'] }}">
+                        <select id="new-svc-office" x-model="draft.office" @change="suggestLike()" :disabled="officeLocked" class="{{ $ui['input'] }}">
                             <option value="">Choose…</option>
-                            <template x-for="o in draftOffices" :key="o"><option :value="o" x-text="o === 'Barangay Office' ? 'Barangay Office (each barangay’s hall)' : o"></option></template>
+                            <template x-for="o in draftOffices" :key="o"><option :value="o" x-text="o === 'Barangay Office' ? 'Barangay Office (each barangay’s hall)' : o" :selected="o === draft.office"></option></template>
                         </select>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label for="new-svc-name" class="{{ $ui['label'] }}">Service name</label>
-                        <input id="new-svc-name" type="text" x-model="draft.name" maxlength="160" placeholder="e.g. Certificate of Good Moral Character" class="{{ $ui['input'] }}">
                     </div>
                     <div>
                         <label for="new-svc-category" class="{{ $ui['label'] }}">Category</label>
@@ -402,17 +417,17 @@
                     <div>
                         <label for="new-svc-like" class="{{ $ui['label'] }}">Handled by the officers of</label>
                         <select id="new-svc-like" x-model="draft.permissions_like" aria-describedby="new-svc-like-hint" class="{{ $ui['input'] }}">
-                            <option value="">Choose a service…</option>
+                            <option value="">Choose a {{ $words['one'] }}…</option>
                             <template x-for="r in likeChoices" :key="r.key"><option :value="r.key" x-text="r.name + ' (' + r.office + ')'" :selected="r.key === draft.permissions_like"></option></template>
                         </select>
-                        <p id="new-svc-like-hint" class="text-[11px] text-ink-muted mt-1">Whoever may process that service may process this one (Roles and permissions).</p>
+                        <p id="new-svc-like-hint" class="text-[11px] text-ink-muted mt-1">Whoever may process that {{ $words['one'] }} may process this one (Roles and permissions).</p>
                     </div>
                 </div>
                 <p x-show="createError" x-text="createError" role="alert" class="{{ $ui['error'] }}"></p>
             </form>
             <x-slot:footer>
                 <x-ui.button variant="secondary" size="sm" x-bind:disabled="creating" @click="adding = false">Cancel</x-ui.button>
-                <x-ui.button size="sm" icon="plus" x-bind:disabled="creating" @click="createService()"><span x-text="creating ? 'Adding…' : 'Add service'"></span></x-ui.button>
+                <x-ui.button size="sm" icon="plus" x-bind:disabled="creating" @click="createService()"><span x-text="creating ? 'Adding…' : 'Add {{ $words['one'] }}'"></span></x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     </div>

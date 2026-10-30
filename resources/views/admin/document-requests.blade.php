@@ -2363,12 +2363,17 @@
             </button>
         </div>
 
-        <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto mb-4">
+        {{-- Requests | Document types (their own page since 2026-10-30, the
+             editor that was Settings > Service Catalog) | Papeles. --}}
+        <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full overflow-x-auto mb-4">
             <button
                 type="button" @click="view = 'requests'"
                 class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap"
                 :class="view === 'requests' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"
-            ><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Document Requests</button>
+            ><i data-lucide="file-text" class="w-3.5 h-3.5"></i> Requests</button>
+            <a href="{{ route('admin.document-requests.types') }}" x-show="$store.session.canPerm('set_service_catalog', 'view')" x-cloak
+               class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap text-ink-muted hover:text-slate-700"
+            ><i data-lucide="layout-list" class="w-3.5 h-3.5"></i> Document types</a>
             <a
                 href="{{ route('admin.papeles') }}"
                 class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap text-ink-muted hover:text-slate-700"

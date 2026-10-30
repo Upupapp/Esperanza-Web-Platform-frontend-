@@ -799,6 +799,16 @@ document.addEventListener('alpine:init', () => {
             if (this.account.roleKey === 'super_admin') return true;
             return (this.account.moduleKeys || []).includes(moduleKey);
         },
+        // The Settings page: the settings module without the Service Catalog
+        // (round 2, 2026-10-30). Department Heads hold set_service_catalog to
+        // keep their office's Dokyu and Tulong types on those tabs' own pages;
+        // it is a settings submodule, so can('settings') turned true for them
+        // and would have opened a Settings of tabs they cannot use.
+        canSettings() {
+            if (!this.can('settings')) return false;
+            if (this.account.roleKey === 'super_admin') return true;
+            return Object.entries(this.account.permissions || {}).some(([sub, acts]) => sub.startsWith('set_') && sub !== 'set_service_catalog' && (Array.isArray(acts) ? acts.length > 0 : !!acts));
+        },
         canPerm(submoduleKey, permission) {
             if (!this.account) return false;
             // The Super Administrator can do everything, even actions no role
@@ -821,8 +831,13 @@ document.addEventListener('alpine:init', () => {
         // Tulong routing plan's role x scope matrix; backend Scope.php).
         inDeptScope(office) {
             if (!this.account) return false;
-            if (!['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff'].includes(this.account.roleKey)) return true;
+            if (!this.deptRestricted()) return true;
             return this.account.dept === office;
+        },
+        // Whether the account is held to its own office (above). The Dokyu
+        // and Tulong types pages fix such an officer's office (round 2).
+        deptRestricted() {
+            return !!this.account && ['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff'].includes(this.account.roleKey);
         },
         // Report-download gate: true if the account has 'export' on any
         // Reports & Analytics submodule (rep_population/assistance/document/
@@ -1788,6 +1803,9 @@ area(/^\/admin\/(settings|users)(\/|$)/.test(areaPath), () => import('./scope-ad
 // too (its Balita and Feedback tabs), so they need its components (2026-10-18).
 area(/^\/admin\/(constituents|communications|announcements|settings\/support)(\/|$)/.test(areaPath), () => import('./scope-admin-records'));
 area(/^\/admin\/(appointments|dashboard\/appointments|document-requests|assistance-requests)(\/|$)/.test(areaPath), () => import('./scope-admin-requests'));
+// Dokyu's Document types and Tulong's Tulong types (round 2, 2026-10-30):
+// the catalog editor, moved out of Settings, on those two pages only.
+area(/^\/admin\/(document-requests|assistance-requests)\/types(\/|$)/.test(areaPath), () => import('./catalog-editor'));
 // Sakuna's maps (2026-10-26): Leaflet only where a map is drawn.
 area(/^\/(admin\/sakuna|citizen\/emergency)(\/|$)/.test(areaPath), () => import('./sakuna-map'));
 // Two BDRRMC forms filled from records, and saved forms reopened (2026-10-27).

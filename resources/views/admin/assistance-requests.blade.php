@@ -1004,7 +1004,7 @@
 
         {{-- Cases | Sessions | Services rendered (welfare round, 2026-10-29): views
              of this page, never sidebar entries (owner rule). --}}
-        <div class="flex flex-wrap items-center gap-2 mb-4" x-show="$store.session.canPerm('tulong_sessions', 'view') || $store.session.canPerm('tulong_records', 'view')" x-cloak>
+        <div class="flex flex-wrap items-center gap-2 mb-4" x-show="$store.session.canPerm('tulong_sessions', 'view') || $store.session.canPerm('tulong_records', 'view') || $store.session.canPerm('set_service_catalog', 'view')" x-cloak>
             <div class="flex items-center gap-1 surface-pressed rounded-2xl p-1 w-fit max-w-full overflow-x-auto" role="group" aria-label="Tulong views">
                 @foreach(['cases' => ['Cases', 'folder-open', null], 'sessions' => ['Sessions', 'calendar-days', 'tulong_sessions'], 'services' => ['Services rendered', 'clipboard-list', 'tulong_records']] as $viewKey => [$viewLabel, $viewIcon, $viewPerm])
                     <button type="button" @click="setView('{{ $viewKey }}')" :aria-pressed="view === '{{ $viewKey }}'" @if($viewPerm) x-show="$store.session.canPerm('{{ $viewPerm }}', 'view')" @endif
@@ -1013,6 +1013,11 @@
                         <i data-lucide="{{ $viewIcon }}" class="w-3.5 h-3.5"></i>{{ $viewLabel }}
                     </button>
                 @endforeach
+                {{-- Tulong types: a page of its own (2026-10-30), the editor that was Settings > Service Catalog. --}}
+                <a href="{{ route('admin.assistance-requests.types') }}" x-show="$store.session.canPerm('set_service_catalog', 'view')"
+                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-colors whitespace-nowrap text-ink-muted hover:text-ink">
+                    <i data-lucide="layout-list" class="w-3.5 h-3.5"></i>Tulong types
+                </a>
             </div>
         </div>
 

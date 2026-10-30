@@ -190,9 +190,10 @@ class QaRunFixesTest extends TestCase
     /** Owner ruling 2026-10-05: the Super Administrator sees every action, as the server allows it. */
     public function test_the_super_admin_sees_every_action(): void
     {
-        // can, canPerm, canExportReports and inScope; inDeptScope already lets
-        // every role but Department Head and Staff across offices.
-        $this->assertSame(4, substr_count($this->source('resources/js/app.js'), "if (this.account.roleKey === 'super_admin') return true;"), 'every gate in the session store');
+        // can, canSettings (round 2), canPerm, canExportReports and inScope;
+        // inDeptScope already lets every role but Department Head and Staff
+        // across offices.
+        $this->assertSame(5, substr_count($this->source('resources/js/app.js'), "if (this.account.roleKey === 'super_admin') return true;"), 'every gate in the session store');
     }
 
     public function test_both_portals_apply_the_published_branding(): void

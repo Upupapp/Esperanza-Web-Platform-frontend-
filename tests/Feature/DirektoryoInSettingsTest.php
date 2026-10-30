@@ -47,13 +47,15 @@ class DirektoryoInSettingsTest extends TestCase
         $topbar = $this->source('resources/views/components/admin/topbar.blade.php');
 
         // Since 2026-10-29 anyone who can post in Balita also reaches the
-        // Facebook Page card on Integrations, and nothing more.
-        $this->assertStringContainsString('x-show="$store.session.can(\'settings\') || directoryAllowed || facebookAllowed"', $settings);
+        // Facebook Page card on Integrations, and nothing more. Settings is
+        // the module without the Service Catalog since round 2 (canSettings):
+        // a Department Head holds that one for their own office's types.
+        $this->assertStringContainsString('x-show="$store.session.canSettings() || directoryAllowed || facebookAllowed"', $settings);
         $this->assertStringContainsString('get facebookAllowed() { return this.$store.session.canPerm(\'comm_news\', \'create\') || this.$store.session.canPerm(\'set_system\', \'view\'); },', $settings);
-        $this->assertStringContainsString('@elseif($tabKey === \'integrations\') x-show="$store.session.can(\'settings\') || facebookAllowed"', $settings);
+        $this->assertStringContainsString('@elseif($tabKey === \'integrations\') x-show="$store.session.canSettings() || facebookAllowed"', $settings);
         $this->assertStringContainsString('@elseif($tabKey === \'directory\') x-show="directoryAllowed"', $settings);
-        $this->assertStringContainsString('<template x-if="$store.session.can(\'settings\')">', $settings, 'the other tabs load only for Settings holders');
-        $this->assertStringContainsString("if (this.\$store.session.can('settings')) return;", $settings);
+        $this->assertStringContainsString('<template x-if="$store.session.canSettings()">', $settings, 'the other tabs load only for Settings holders');
+        $this->assertStringContainsString("if (this.\$store.session.canSettings()) return;", $settings);
         $this->assertStringContainsString("if (this.directoryAllowed) this.go('directory');", $settings);
         $this->assertStringContainsString("else if (this.facebookAllowed) this.go('integrations');", $settings);
         $this->assertStringContainsString("\$store.session.canPerm('comm_barangay_directory', 'view') || \$store.session.canPerm('comm_news', 'create') || \$store.session.canPerm('set_system', 'view')\" x-cloak", $topbar);

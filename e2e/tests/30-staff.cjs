@@ -65,10 +65,11 @@ module.exports = [
     },
     {
         id: 'S6',
-        name: 'Settings > Service Catalog lists every service',
+        // The catalog left Settings for Dokyu's and Tulong's own pages (round 2, 2026-10-30).
+        name: 'Dokyu > Document types lists the document types',
         async run({ browser }) {
             const page = await signInStaff(browser);
-            await open(page, '/admin/settings/service-catalog/');
+            await open(page, '/admin/document-requests/types/');
             loaded(page, /\/admin\/settings\/catalog(\?|$)/, 'the catalog');
         },
     },

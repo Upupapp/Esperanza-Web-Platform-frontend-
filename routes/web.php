@@ -60,6 +60,11 @@ Route::view('/admin/appointments', 'admin.appointments')->name('admin.appointmen
 Route::view('/admin/dashboard/appointments', 'admin.appointments');
 Route::view('/admin/document-requests', 'admin.document-requests')->name('admin.document-requests');
 Route::view('/admin/assistance-requests', 'admin.assistance-requests')->name('admin.assistance-requests');
+// Each tab's own types, edited where they are worked (owner, 2026-10-30; they
+// were Settings > Service Catalog). Pages of their own, so the editor adds
+// nothing to the Dokyu and Tulong pages.
+Route::view('/admin/document-requests/types', 'admin.request-types', ['kind' => 'dokyu'])->name('admin.document-requests.types');
+Route::view('/admin/assistance-requests/types', 'admin.request-types', ['kind' => 'tulong'])->name('admin.assistance-requests.types');
 Route::view('/admin/payments', 'admin.payments')->name('admin.payments');
 
 // Constituents — Registry, Profiling Coverage, and Data Quality as tabs.
@@ -104,7 +109,9 @@ Route::view('/admin/settings/audit-logs', 'admin.settings', ['tab' => 'audit-log
 // Support tickets moved to Communications > Feedback (2026-10-15); the old
 // address still lands there.
 Route::view('/admin/settings/support', 'admin.communications', ['tab' => 'feedback'])->name('admin.support');
-Route::view('/admin/settings/service-catalog', 'admin.settings', ['tab' => 'service-catalog'])->name('admin.settings.catalog');
+// The Service Catalog left Settings (2026-10-30): its old address sends the
+// browser on to Dokyu's Document types.
+Route::view('/admin/settings/service-catalog', 'admin.forward', ['to' => '/admin/document-requests/types', 'label' => 'Document types', 'active' => 'document-requests'])->name('admin.settings.catalog');
 Route::view('/admin/settings/templates', 'admin.settings', ['tab' => 'templates'])->name('admin.settings.templates');
 Route::view('/admin/settings/system', 'admin.settings', ['tab' => 'system'])->name('admin.settings.system');
 Route::view('/admin/settings/site-content', 'admin.settings', ['tab' => 'site-content'])->name('admin.settings.site-content');

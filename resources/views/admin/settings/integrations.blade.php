@@ -11,7 +11,7 @@
      (set_system), so this tab is included outside the Settings-only block:
      such an officer without Settings sees that card and nothing else here. --}}
 <div x-show="tab === 'integrations'" x-cloak class="space-y-4">
-    <template x-if="$store.session.can('settings')">
+    <template x-if="$store.session.canSettings()">
     <div x-data="integrationsTab" x-effect="tab === 'integrations' && start()">
     <x-ui.card>
         <h3 class="text-sm font-semibold text-ink mb-1">Connected Services</h3>
