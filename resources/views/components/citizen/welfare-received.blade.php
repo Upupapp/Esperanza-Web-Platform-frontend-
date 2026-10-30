@@ -37,9 +37,10 @@
             <template x-for="c in certificates" :key="c.control_number">
                 <li class="rounded-xl border border-brand-600/10 bg-white/70 p-3 flex flex-wrap items-center justify-between gap-2">
                     <div class="min-w-0">
-                        <p class="text-sm font-semibold text-ink" x-text="c.title"></p>
+                        {{-- An event's certificate is listed here too (round 2, 2026-10-30), marked as one. --}}
+                        <p class="text-sm font-semibold text-ink"><span x-text="c.title"></span> <span class="ml-1 inline-block align-middle rounded-full px-2 py-0.5 text-[10px] font-semibold" :class="isEventCert(c) ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-800'" x-text="isEventCert(c) ? tr('Event', 'Kaganapan') : tr('Session', 'Sesyon')"></span></p>
                         <p class="text-[11px] text-ink-muted" x-text="holders(c)"></p>
-                        <p class="text-[11px] text-ink-muted" x-text="[c.session?.date ? fmtDate(c.session.date) : '', c.session?.venue, c.control_number].filter(Boolean).join(' · ')"></p>
+                        <p class="text-[11px] text-ink-muted" x-text="certLine(c)"></p>
                     </div>
                     <x-ui.button size="sm" variant="secondary" icon="award" @click="openCertificate(c)"><x-ui.t fil="Tingnan ang sertipiko" en="View certificate" /></x-ui.button>
                 </li>

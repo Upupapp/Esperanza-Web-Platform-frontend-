@@ -1236,6 +1236,14 @@ function eventCalendar() {
             icons();
         },
         isReminded(e) { return !!this.reminded[e.ref]; },
+        // Registering for an event sets its reminder on the server (round 2,
+        // 2026-10-30, resources/js/citizen-events.js): the button follows.
+        markReminded(key) {
+            if (!key || this.reminded[key]) return;
+            this.reminded = { ...this.reminded, [key]: true };
+            reminderKeys = Object.keys(this.reminded).filter((k) => this.reminded[k]);
+            icons();
+        },
         async toggleReminder(e) {
             if (this.saving || !e.ref) return;
             this.menu = null;

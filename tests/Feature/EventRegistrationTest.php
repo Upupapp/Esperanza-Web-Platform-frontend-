@@ -100,4 +100,56 @@ class EventRegistrationTest extends TestCase
             strpos($page, "@include('admin.communications.event-desk')"),
         );
     }
+
+    public function test_residents_register_show_their_code_and_find_their_certificate(): void
+    {
+        $page = $this->source('resources/views/citizen/events.blade.php');
+        $card = $this->source('resources/views/components/citizen/event-signup.blade.php');
+        $js = $this->source('resources/js/citizen-events.js');
+
+        $this->assertStringContainsString('<x-citizen.event-signup />', $page);
+        $this->assertStringContainsString('<div x-data="eventSignup(event)"', $card);
+        $this->assertStringContainsString("area(/^\\/citizen\\/events(\\/|$)/.test(areaPath), () => import('./citizen-events'));", $this->source('resources/js/app.js'));
+        // Register, then the code as text and as a QR, and cancel - confirmed on the page.
+        $this->assertStringContainsString('<x-ui.t fil="Magparehistro" en="Register" />', $card);
+        $this->assertStringContainsString('<x-ui.t fil="Nakarehistro ka" en="You are registered" />', $card);
+        $this->assertStringContainsString('x-html="suQr"', $card);
+        $this->assertStringContainsString('window.qrSvg(showCode(code), 4)', $js);
+        $this->assertStringContainsString('<x-ui.t fil="Kanselahin ang pagpaparehistro" en="Cancel my registration" />', $card);
+        $this->assertStringContainsString('@click="suCancel()"', $card);
+        $this->assertStringNotContainsString('window.confirm', $js);
+        $this->assertDoesNotMatchRegularExpression('/\bconfirm\(\s*[\'"`]/', $js);
+        $this->assertStringContainsString("api.post('/citizen/events/' + encodeURIComponent(ev.ref) + '/registration')", $js);
+        $this->assertStringContainsString("api.delete('/citizen/events/' + encodeURIComponent(ev.ref) + '/registration')", $js);
+        $this->assertStringContainsString("api.get('/citizen/event-registrations')", $js);
+        // A full event and a closed registration are explained, in both languages.
+        $this->assertStringContainsString('<x-ui.t fil="Puno na ang kaganapang ito" en="This event is full" />', $card);
+        $this->assertStringContainsString('<x-ui.t fil="Sarado na ang pagpaparehistro" en="Registration has closed" />', $card);
+        foreach (['EVENT_FULL', 'REGISTRATION_CLOSED', 'EVENT_NOT_UPCOMING'] as $code) {
+            $this->assertStringContainsString($code.': [', $js);
+        }
+        // After the event: attended, and the certificate.
+        $this->assertStringContainsString('<x-ui.t fil="Dumalo ka" en="You attended" />', $card);
+        $this->assertStringContainsString('<x-ui.t fil="Tingnan ang sertipiko" en="View certificate" />', $card);
+        $this->assertStringContainsString('<x-welfare.certificate :bilingual="true" />', $page);
+        $this->assertStringContainsString('x-data="eventCertificates()"', $page);
+        // Registering sets the reminder too: the Remind Me button follows.
+        $this->assertStringContainsString('x-on:event-registered.window="markReminded($event.detail)"', $page);
+        $this->assertStringContainsString('markReminded(key) {', $this->source('resources/js/scope-citizen.js'));
+    }
+
+    public function test_an_event_certificate_is_drawn_by_the_shared_window_and_listed_by_source(): void
+    {
+        $cert = $this->source('resources/js/welfare-certificate.js');
+        $welfare = $this->source('resources/js/welfare-citizen.js');
+        $list = $this->source('resources/views/components/citizen/welfare-received.blade.php');
+
+        $this->assertStringContainsString("key === 'event_certificate' || !!fv.event_key || meta.source === 'event'", $cert);
+        $this->assertStringContainsString(".replace(/:event\\b/g, event || 'the event')", $cert);
+        $this->assertStringContainsString('office: fv.office_name || (isEvent ? eventOffice : OFFICE),', $cert);
+        // The resident's certificates on the Tulong page say which come from an event.
+        $this->assertStringContainsString("isEventCert(c) { return c.source === 'event' || !!c.event_key; },", $welfare);
+        $this->assertStringContainsString("isEventCert(c) ? tr('Event', 'Kaganapan') : tr('Session', 'Sesyon')", $list);
+        $this->assertStringContainsString('x-text="certLine(c)"', $list);
+    }
 }
