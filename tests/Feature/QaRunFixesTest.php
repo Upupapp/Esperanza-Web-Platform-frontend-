@@ -315,6 +315,16 @@ class QaRunFixesTest extends TestCase
             $this->assertStringContainsString($needle, $js);
         }
         $this->assertStringContainsString("Alpine.data('sakunaReport', sakunaReport)", $this->source('resources/js/app.js'));
+
+        // 2026-10-30 (owner): a situation report, not incidents alone. The
+        // screen, the XLSX and the PDF carry the same sections, as counts.
+        $this->assertStringContainsString('aria-label="Report sections"', $tab);
+        $this->assertStringContainsString('tablesFor(section)', $tab);
+        foreach (["'evacuation'", "'relief'", "'resources'", "'damage'", "'missing'", "'alerts'", 'reportTables(d, true)', 'window.reportPdf(sections'] as $needle) {
+            $this->assertStringContainsString($needle, $js);
+        }
+        $this->assertStringContainsString('export async function reportPdf(', $this->source('resources/js/table-pdf.js'));
+        $this->assertStringContainsString('window.reportPdf = ', $this->source('resources/js/app.js'));
     }
 
     public function test_missing_persons_has_its_tab_widget_and_permission(): void

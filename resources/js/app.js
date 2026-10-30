@@ -51,6 +51,7 @@ window.loadHtml2Pdf = () => {
 let tablePdfModule = null;
 const tablePdfLoad = () => (tablePdfModule ??= import('./table-pdf'));
 window.tablePdf = (rows, options) => tablePdfLoad().then((m) => m.tablePdf(rows, options));
+window.reportPdf = (sections, options) => tablePdfLoad().then((m) => m.reportPdf(sections, options));
 window.rowsFromCsv = (csv) => tablePdfLoad().then((m) => m.rowsFromCsv(csv));
 
 // Reading an uploaded PDF inside the portal (Esperanza bugs QA, 2026-10-06:

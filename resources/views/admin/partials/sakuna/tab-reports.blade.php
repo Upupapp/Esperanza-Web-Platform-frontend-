@@ -22,7 +22,7 @@
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
             <h2 class="text-base font-semibold text-ink-body">Disaster Reports</h2>
-            <p class="text-sm text-ink-muted mt-0.5">Incidents, evacuation, missing persons, damage and livelihoods, from the records, under the filters below.</p>
+            <p class="text-sm text-ink-muted mt-0.5">The situation report: incidents, evacuation, relief, resources, damage, missing persons and alerts, from the records, under the filters below.</p>
         </div>
         <div class="flex items-center gap-2" x-show="can('sakuna_reports','export')">
             <x-ui.button size="sm" variant="secondary" icon="file-spreadsheet" x-bind:disabled="!!exporting || !!rangeError" @click="exportAs('XLSX')"><span x-text="exporting === 'XLSX' ? 'Exporting…' : 'Export XLSX'"></span></x-ui.button>
@@ -81,16 +81,20 @@
     <template x-if="summary">
     <div class="space-y-5">
         {{-- Figures: incidents, people and families each on their own. --}}
-        <div class="grid gap-3 grid-cols-2 sm:grid-cols-4 xl:grid-cols-8">
+        <div class="grid gap-3 grid-cols-2 sm:grid-cols-4 xl:grid-cols-6">
             <template x-for="card in [
                 ['Incidents', summary.incidents.total, 'text-ink'],
                 ['Evacuated individuals', summary.evacuated.individuals, 'text-brand-700'],
                 ['Evacuated families', summary.evacuated.families, 'text-brand-700'],
+                ['Inside centres now', summary.evacuation.now.persons_inside, 'text-brand-700'],
                 ['Still missing', summary.persons.missing, 'text-rose-700'],
                 ['Found', summary.persons.found, 'text-emerald-700'],
                 ['Deceased', summary.persons.deceased, 'text-slate-700'],
                 ['Unidentified', summary.persons.unidentified, 'text-amber-700'],
+                ['Relief released', summary.relief.totals.released, 'text-emerald-700'],
+                ['Resources deployed now', summary.resources.now.deployed, 'text-ink'],
                 ['Damage reports', summary.damage.reports, 'text-violet-700'],
+                ['Alerts issued', summary.alerts.issued, 'text-amber-700'],
             ]" :key="card[0]">
                 <div class="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
                     <p class="text-[11px] text-ink-muted" x-text="card[0]"></p>
@@ -99,6 +103,43 @@
             </template>
         </div>
 
+        {{-- The situation report's sections (2026-10-30): the same tables the
+             XLSX and PDF carry. Counts only; names stay in their own tabs. --}}
+        <div class="flex flex-wrap gap-1.5" role="tablist" aria-label="Report sections">
+            <template x-for="tab in sectionTabs" :key="tab[0]">
+                <button type="button" role="tab" :aria-selected="section === tab[0]" @click="section = tab[0]"
+                    class="text-sm font-medium rounded-xl px-3 py-1.5 border transition-colors"
+                    :class="section === tab[0] ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-200 text-ink-body hover:border-brand-300'"
+                    x-text="tab[1]"></button>
+            </template>
+        </div>
+        <div x-show="section !== 'overview'" x-cloak class="space-y-4" data-report-section>
+            <template x-for="tbl in tablesFor(section)" :key="tbl.heading">
+                <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                    <div class="px-4 pt-3 pb-2">
+                        <p class="text-sm font-semibold text-ink" x-text="tbl.heading"></p>
+                        <p class="text-xs text-ink-muted mt-0.5" x-show="tbl.note" x-text="tbl.note"></p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="text-xs text-ink-muted bg-slate-50">
+                                <tr><template x-for="c in tbl.columns" :key="c.key"><th scope="col" class="font-medium px-3 py-2" :class="c.num ? 'text-right' : 'text-left'" x-text="c.label"></th></template></tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(r, i) in tbl.rows" :key="i">
+                                    <tr class="border-t border-slate-100">
+                                        <template x-for="c in tbl.columns" :key="c.key"><td class="px-3 py-2" :class="c.num ? 'text-right tabular-nums' : ''" x-text="c.money ? '₱' + money(r[c.key]) : cell(r[c.key])"></td></template>
+                                    </tr>
+                                </template>
+                                <tr x-show="!tbl.rows.length"><td :colspan="tbl.columns.length" class="px-3 py-5 text-center text-sm text-ink-muted">None recorded.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="section === 'overview'" class="space-y-5">
         <div class="grid gap-4 lg:grid-cols-2">
             <div class="rounded-2xl border border-slate-200 bg-white p-4">
                 <p class="text-sm font-semibold text-ink mb-2">Incidents over time</p>
@@ -193,6 +234,7 @@
             <button type="button" :disabled="page <= 1" @click="load(page - 1)" class="px-3 py-1.5 rounded-xl border border-slate-200 disabled:opacity-40">Previous</button>
             <span x-text="'Page ' + page + ' of ' + lastPage + ' · ' + total + ' incidents'"></span>
             <button type="button" :disabled="page >= lastPage" @click="load(page + 1)" class="px-3 py-1.5 rounded-xl border border-slate-200 disabled:opacity-40">Next</button>
+        </div>
         </div>
     </div>
     </template>
