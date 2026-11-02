@@ -165,5 +165,13 @@ class EventRegistrationTest extends TestCase
         $this->assertStringContainsString('registration_open: !!(e?.registration_open ?? reg.enabled ?? reg.open),', $records);
         $this->assertStringContainsString("((r.enabled ?? r.open) && r.full ? 'Full: ' : '')", $records);
         $this->assertStringContainsString("if (!(this.suInfo().enabled ?? this.suInfo().open) || this.suPast()) return 'none';", $this->source('resources/js/citizen-events.js'));
+
+        // The registrations window's chip (live check, 2026-11-02): a started
+        // or full event that took registrations is closed or full, not "No
+        // online registration".
+        $desk = $this->source('resources/js/event-desk.js');
+        $this->assertStringContainsString("if (!(reg.enabled ?? reg.open)) return 'No online registration';", $desk);
+        $this->assertStringContainsString("return reg.full ? 'Registration full' : 'Registration closed';", $desk);
+        $this->assertStringContainsString('<span x-text="edRegistrationLabel()"></span>', $this->source('resources/views/admin/communications/event-desk.blade.php'));
     }
 }

@@ -401,6 +401,21 @@ export function eventDesk() {
             }
         },
 
+        /**
+         * The registration chip: `enabled` is the event's setting, `open` is
+         * whether a resident can register right now (false once it is full,
+         * past its closing time or started). Reading `open` alone said "No
+         * online registration" of an event that took registrations (live
+         * check, 2026-11-02).
+         */
+        edRegistrationLabel() {
+            const reg = this.edEvent?.registration || {};
+            if (!(reg.enabled ?? reg.open)) return 'No online registration';
+            if (reg.open) return 'Residents can register';
+
+            return reg.full ? 'Registration full' : 'Registration closed';
+        },
+
         // ---- Certificates
         edCertOn() { return !!this.edEvent?.certificate?.enabled; },
         edIssueCount() { return this.edRows.filter((r) => !cancelled(r) && r._attended && !r.certificate).length; },
