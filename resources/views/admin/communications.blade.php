@@ -70,7 +70,8 @@
                 return {
                     super_admin: 'Super Administrator: you can do everything here. Day to day the Municipal Information Office runs Balita and the Municipal Administrator leads it, so posts and events sent for review reach you only when neither is set up.',
                     municipal_admin: 'Municipal Administrator: for the Office of the Mayor, you lead the Municipal Information Office. You can do everything here, and what the Information Office sends for a second look comes to you.',
-                    info_officer: 'Municipal Information Officer: you publish Balita, banners, occasions and events for the whole municipality, and review what the offices send. Your lead is the Municipal Administrator: save a draft and send it for review to get their second look.',
+                    info_officer: 'Municipal Information Officer: you head the Municipal Information Office. You publish Balita, banners, occasions and events for the whole municipality, and review what your MIO Staff and the offices send. Your lead is the Municipal Administrator: save a draft and send it for review to get their second look.',
+                    mio_staff: 'MIO Staff: you write Balita posts, banners, occasions and events and send them for review. Your MIO Head, the Municipal Information Officer, approves and publishes them; the bell tells you when something is published or sent back. You can change only your own work.',
                     department_head: 'Department Head: you approve and publish your office’s Balita posts; the Municipal Information Office can too.',
                     mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts, such as disaster updates, and approve or delete what your staff send; the Municipal Information Office can too. An urgent warning belongs in Sakuna > Alerts, which also reaches residents on their phones.',
                 }[this.$store.session.account?.roleKey] || '';

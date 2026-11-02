@@ -522,7 +522,9 @@ function adminBalita(barangays = []) {
                     how === 'draft' ? (this.editing ? 'Changes saved.' : 'Saved as a draft.')
                         : status === 'Released' ? 'Published. ' + where + ' are notified.'
                             : status === 'Approved' ? 'Scheduled for ' + when(this.scheduleIso) + '. It goes out by itself then.'
-                                : 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.' : 'Your Department Head or the Municipal Information Office approves it.'),
+                                : 'Sent for review. ' + (this.approver ? 'The officers who approve Balita are notified.'
+                                    : this.$store.session.account?.roleKey === 'mio_staff' ? 'Your MIO Head is notified to review it.'
+                                        : 'Your Department Head or the Municipal Information Office approves it.'),
                 );
                 await this.load();
             } catch (err) {

@@ -313,10 +313,23 @@ $roles = [
     [
         'key' => 'info_officer', 'name' => 'Municipal Information Officer', 'icon' => 'megaphone',
         'color' => 'text-rose-700 bg-rose-50', 'users' => 2, 'editable' => true,
-        'desc' => 'Heads the Municipal Information Office: writes, reviews and publishes Balita, banners, occasions and events for the whole municipality, and reviews what other offices write. Led by the Municipal Administrator, for the Office of the Mayor.',
+        'desc' => 'Heads the Municipal Information Office: writes, reviews and publishes Balita, banners, occasions and events for the whole municipality, and reviews what its staff and the other offices write. Led by the Municipal Administrator, for the Office of the Mayor.',
         'permissions' => $buildPermissions([
             'communications' => 'full', 'reports' => 'view',
         ]),
+    ],
+    // The Municipal Information Office as a department (user, 2026-11-02):
+    // its head is the Municipal Information Officer above, its staff write
+    // and send for review. Held to their own office, like a department's.
+    [
+        'key' => 'mio_staff', 'name' => 'MIO Staff', 'icon' => 'pen-line',
+        'color' => 'text-rose-700 bg-rose-50', 'users' => 3, 'editable' => true,
+        'desc' => 'Municipal Information Office staff: write Balita posts, banners, occasions and events and send them for review. The Municipal Information Officer, the office head, approves, publishes, archives and deletes them.',
+        'permissions' => [
+            'comm_news' => ['view', 'create', 'edit', 'review'],
+            'comm_banners' => ['view', 'create', 'edit', 'review'],
+            'comm_events' => ['view', 'create', 'edit', 'review'],
+        ],
     ],
     [
         'key' => 'barangay_secretary', 'name' => 'Barangay Secretary', 'icon' => 'map-pinned',

@@ -77,8 +77,9 @@
             <button type="button" @click="compose('advisory')" aria-label="Post an advisory" title="Post an advisory" class="w-11 h-11 rounded-full grid place-items-center shrink-0 text-rose-600 hover:bg-rose-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-100 transition-colors"><i data-lucide="megaphone" class="w-6 h-6"></i></button>
         </div>
 
-        {{-- Every officer writes Balita; a writer's post waits for a head (2026-10-19). --}}
-        <p x-show="can('create') && !approver" x-cloak class="rounded-[14px] bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
+        {{-- Every officer writes Balita; a writer's post waits for a head (2026-10-19).
+             MIO Staff read their own note above the tabs instead (2026-11-02). --}}
+        <p x-show="can('create') && !approver && $store.session.account?.roleKey !== 'mio_staff'" x-cloak class="rounded-[14px] bg-sky-50 border border-sky-100 px-3.5 py-2.5 text-xs text-sky-900 flex items-start gap-2">
             <i data-lucide="info" class="w-4 h-4 shrink-0 mt-px"></i>
             <span>You can write Balita posts with photos and videos and send them for review, with a time for them to go out if you like. Your Department Head or the Municipal Information Office approves and publishes them. You can change only your own posts<span x-show="ownBarangay" x-text="', and they go to Brgy. ' + ownBarangay + ' residents'"></span>.</span>
         </p>

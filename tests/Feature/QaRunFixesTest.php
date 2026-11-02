@@ -424,7 +424,24 @@ class QaRunFixesTest extends TestCase
     {
         $app = $this->source('resources/js/app.js');
         $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff'", $app);
-        $this->assertStringContainsString("['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff'].includes(this.account.roleKey)", $app);
+        $this->assertStringContainsString("['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff', 'mio_staff'].includes(this.account.roleKey)", $app);
         $this->assertStringContainsString("mdrrmo_head: 'MDRRMO Head: you write, approve and publish Balita posts", $this->source('resources/views/admin/communications.blade.php'));
+
+        // The Municipal Information Office as a department (2026-11-02): MIO
+        // Staff write and send for review, held to their own office, with
+        // their own note; the Municipal Information Officer is their head.
+        $staff = collect(config('esperanza_rbac.roles'))->keyBy('key')['mio_staff'];
+        $this->assertSame('MIO Staff', $staff['name']);
+        $this->assertSame([
+            'comm_news' => ['view', 'create', 'edit', 'review'],
+            'comm_banners' => ['view', 'create', 'edit', 'review'],
+            'comm_events' => ['view', 'create', 'edit', 'review'],
+        ], $staff['permissions'], 'no approve, archive or delete: the head does those');
+        $this->assertStringContainsString("mio_staff: 'MIO Staff'", $app);
+        $page = $this->source('resources/views/admin/communications.blade.php');
+        $this->assertStringContainsString("mio_staff: 'MIO Staff: you write Balita posts, banners, occasions and events and send them for review. Your MIO Head", $page);
+        $this->assertStringContainsString('review what your MIO Staff and the offices send', $page);
+        $this->assertStringContainsString("x-show=\"can('create') && !approver && \$store.session.account?.roleKey !== 'mio_staff'\"", $this->source('resources/views/admin/communications/balita.blade.php'));
+        $this->assertStringContainsString("'Your MIO Head is notified to review it.'", $this->source('resources/js/scope-admin-records.js'));
     }
 }

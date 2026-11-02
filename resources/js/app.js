@@ -335,7 +335,7 @@ function endSession() {
  */
 // A role whose label is not its key in words (owner, 2026-10-21); the
 // MDRRMO's roles, made in Users -> Roles, keep their acronym (2026-10-28).
-const ROLE_LABELS = { info_officer: 'Municipal Information Officer', mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff' };
+const ROLE_LABELS = { info_officer: 'Municipal Information Officer', mio_staff: 'MIO Staff', mdrrmo_head: 'MDRRMO Head', mdrrmo_staff: 'MDRRMO Staff' };
 
 function formatRoleLabel(roleKey) {
     if (!roleKey) return '';
@@ -826,7 +826,7 @@ document.addEventListener('alpine:init', () => {
         },
         // Department-based row visibility for Dokyu/Tulong, mirroring inScope()
         // above. Only Department Head / Department Staff (and the MDRRMO's own
-        // roles, 2026-10-28) are office-restricted — Front Desk, Records
+        // roles, 2026-10-28, and MIO Staff, 2026-11-02) are office-restricted — Front Desk, Records
         // Officer, Municipal/Super Admin see across offices (per the Dokyu &
         // Tulong routing plan's role x scope matrix; backend Scope.php).
         inDeptScope(office) {
@@ -837,7 +837,7 @@ document.addEventListener('alpine:init', () => {
         // Whether the account is held to its own office (above). The Dokyu
         // and Tulong types pages fix such an officer's office (round 2).
         deptRestricted() {
-            return !!this.account && ['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff'].includes(this.account.roleKey);
+            return !!this.account && ['department_head', 'department_staff', 'mdrrmo_head', 'mdrrmo_staff', 'mio_staff'].includes(this.account.roleKey);
         },
         // Report-download gate: true if the account has 'export' on any
         // Reports & Analytics submodule (rep_population/assistance/document/
