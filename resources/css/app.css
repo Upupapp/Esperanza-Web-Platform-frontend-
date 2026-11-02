@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lora:ital,wght@0,500..700;1,500..700&display=swap');
 @import 'tailwindcss';
+@import './sakuna-ui.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -1767,4 +1768,9 @@ select:not([multiple]):not([size]):not(.appearance-none):not(.doc-toolbar-select
     background-position: right .875rem center;
     background-size: .95rem .95rem;
     padding-right: 2.5rem;
+}
+/* Sakuna Reports' one-row filters (2026-11-02): the chevron stays 14px in;
+   only the spare room after it is given back, so the labels fit. */
+.sk .sk-toolbar-row select.sk-sel:not([multiple]):not([size]) {
+    padding-right: 2.125rem;
 }

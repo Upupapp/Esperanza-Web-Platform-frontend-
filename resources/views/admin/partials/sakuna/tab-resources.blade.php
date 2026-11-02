@@ -37,129 +37,128 @@
             (!resourceCategoryFilter || r.category === resourceCategoryFilter)
         );
     },
-}" x-init="loadResources()" class="space-y-4">
+}" x-init="loadResources()" class="space-y-3">
 
-{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h2 class="text-base font-semibold text-ink-body">Response Assets &amp; Resources</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Track inventory and deploy MDRRMO response resources to active incidents.</p>
+{{-- Sakuna Redesign (2026-11-02): stat strip and actions, then the list card. --}}
+<div class="sk-pagebar">
+    <div class="sk-stats" x-show="!resourcesFailed" :class="resourcesLoading ? 'animate-pulse opacity-60' : ''">
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Resource types</span>
+            <span class="sk-sval tabular-nums" x-text="resourcesList.length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-amber"></span>Total units</span>
+            <span class="sk-sval tabular-nums" x-text="resourcesList.reduce((s,r) => s + r.quantity, 0)"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Deployed</span>
+            <span class="sk-sval tabular-nums" x-text="resourcesList.reduce((s,r) => s + r.deployed, 0)"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-teal"></span>Available</span>
+            <span class="sk-sval tabular-nums" x-text="resourcesList.reduce((s,r) => s + r.available, 0)"></span>
+        </div>
     </div>
-    <div class="flex items-center gap-2 flex-wrap">
-        <button @click="exportCSV(filteredResources, 'resources-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+    <div class="sk-actions">
+        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About response assets and resources: track inventory and deploy MDRRMO response resources to active incidents" title="Response assets and resources: track inventory and deploy MDRRMO response resources to active incidents.">
+            <i data-lucide="info"></i>
         </button>
-        <button @click="exportPDF(filteredResources, 'resources-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
-        </button>
-        <button x-show="can('sakuna_resources', 'create')" @click="openCreateResource()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Add Resource
+        <div class="sk-btngrp" role="group" aria-label="Export">
+            <button type="button" class="sk-btn" @click="exportCSV(filteredResources, 'resources-export.csv')">
+                <i data-lucide="download"></i> Export CSV
+            </button>
+            <button type="button" class="sk-btn" @click="exportPDF(filteredResources, 'resources-export.csv')">
+                Export PDF
+            </button>
+        </div>
+        <button type="button" x-show="can('sakuna_resources', 'create')" @click="openCreateResource()" class="sk-btn sk-btn-p">
+            <i data-lucide="plus"></i> Add Resource
         </button>
     </div>
 </div>
 
-<div x-show="resourcesLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
+<div x-show="resourcesLoading" class="sk-card h-72 animate-pulse"></div>
 <div x-show="resourcesFailed" x-cloak><x-ui.error-state messageExpr="'Could not load resources.'" retryExpr="loadResources()" :retryable="true" /></div>
 
-<div x-show="!resourcesLoading && !resourcesFailed" x-cloak class="space-y-4">
+<div x-show="!resourcesLoading && !resourcesFailed" x-cloak class="space-y-3">
 
-{{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <x-ui.stat-card layout="compact" tone="navy" object="box" label="Resource Types" valueBind="resourcesList.length" />
-    <x-ui.stat-card layout="compact" tone="gold" object="box" label="Total Units" valueBind="resourcesList.reduce((s,r) => s + r.quantity, 0)" />
-    <x-ui.stat-card layout="compact" tone="amber" object="tray" label="Deployed" valueBind="resourcesList.reduce((s,r) => s + r.deployed, 0)" />
-    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Available" valueBind="resourcesList.reduce((s,r) => s + r.available, 0)" />
-</div>
-
-{{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] p-4">
-    <div class="flex flex-wrap gap-3 items-center">
-        <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
-            <input aria-label="Search by name, ref or category" type="text" x-model="resourceSearch" placeholder="Search by name, ref or category…"
-                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+<section class="sk-card overflow-hidden">
+    {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <div class="sk-toolbar">
+        <div class="sk-search" style="max-width: 340px;">
+            <label for="resource-search" class="sr-only">Search by name, ref or category</label>
+            <i data-lucide="search"></i>
+            <input id="resource-search" aria-label="Search by name, ref or category" type="search" x-model="resourceSearch" placeholder="Search by name, ref or category…">
         </div>
-        <select aria-label="Resource category filter" x-model="resourceCategoryFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Categories</option>
+        <select aria-label="Resource category filter" x-model="resourceCategoryFilter" class="sk-sel">
+            <option value="">All categories</option>
             <template x-for="cat in resourceCategories()" :key="cat"><option :value="cat" x-text="cat"></option></template>
         </select>
-        <button @click="resourceSearch = ''; resourceCategoryFilter = ''"
-            class="text-sm text-ink-muted hover:text-slate-700 px-3 py-2 rounded-2xl hover:bg-slate-100 transition-colors">
-            Clear filters
-        </button>
+        <button type="button" class="sk-clear" @click="resourceSearch = ''; resourceCategoryFilter = ''">Clear</button>
+        <span class="sk-spacer"></span>
+        <span class="sk-csub">Showing <strong x-text="filteredResources.length"></strong> of <strong x-text="resourcesList.length"></strong> resources</span>
     </div>
-</div>
 
-{{-- ── Resources Table ─────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+    {{-- ── Resources Table ──────────────────────────────────────────────────────────────── --}}
+    <div class="sk-scroll" tabindex="0" role="region" aria-label="Resources table (scrolls sideways)">
+        <table class="sk-tbl min-w-[900px]">
             <thead>
-                <tr class="bg-well/70">
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Ref</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Resource Name</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Category</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Barangay</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Quantity</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Deployed</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Available</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Readiness</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
+                <tr>
+                    <th>Ref</th>
+                    <th>Resource name</th>
+                    <th>Category</th>
+                    <th>Barangay</th>
+                    <th class="sk-r">Quantity</th>
+                    <th class="sk-r">Deployed</th>
+                    <th class="sk-r">Available</th>
+                    <th>Readiness</th>
+                    <th class="sk-r">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-brand-600/[.08]">
+            <tbody>
                 <template x-for="r in filteredResources" :key="r.ref">
-                    <tr class="hover:bg-white/60 transition-colors cursor-pointer group" @click="openResourceDetail(r)" tabindex="0" @keydown.enter.prevent="openResourceDetail(r)">
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="r.ref"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-medium text-ink-body group-hover:text-brand-600 transition-colors" x-text="r.name"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="r.category"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="r.barangay || '—'"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700" x-text="r.quantity + (r.unit ? ' ' + r.unit : '')"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right" :class="r.deployed > 0 ? 'text-orange-600 font-medium' : 'text-ink-muted'" x-text="r.deployed"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right" :class="r.available > 0 ? 'text-emerald-600 font-medium' : 'text-ink-muted'" x-text="r.available"></td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <span x-show="r.readiness" class="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full text-xs font-medium" x-text="r.readiness"></span>
-                            <span x-show="!r.readiness" class="text-ink-faint text-xs">—</span>
+                    <tr class="cursor-pointer group" @click="openResourceDetail(r)" tabindex="0" @keydown.enter.prevent="openResourceDetail(r)">
+                        <td class="whitespace-nowrap"><span class="sk-mono" x-text="r.ref"></span></td>
+                        <td class="whitespace-nowrap"><span class="sk-b group-hover:text-[#1D4ED8] transition-colors" x-text="r.name"></span></td>
+                        <td class="whitespace-nowrap"><span class="sk-tag" x-text="r.category"></span></td>
+                        <td class="whitespace-nowrap" :class="r.barangay ? '' : 'sk-muted'" x-text="r.barangay || '—'"></td>
+                        <td class="sk-r whitespace-nowrap tabular-nums" x-text="r.quantity + (r.unit ? ' ' + r.unit : '')"></td>
+                        <td class="sk-r whitespace-nowrap tabular-nums" :class="r.deployed > 0 ? 'text-orange-700 font-medium' : 'sk-muted'" x-text="r.deployed"></td>
+                        <td class="sk-r whitespace-nowrap tabular-nums" :class="r.available > 0 ? 'text-emerald-700 font-medium' : 'sk-muted'" x-text="r.available"></td>
+                        <td class="whitespace-nowrap">
+                            <span x-show="r.readiness" class="sk-pill sk-p-blue" x-text="r.readiness"></span>
+                            <span x-show="!r.readiness" class="sk-muted">—</span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right" @click.stop>
-                            <div class="flex items-center justify-end gap-1">
-                                <button @click="openResourceDetail(r)" class="p-1.5 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View Details">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button x-show="can('sakuna_resources','edit')" @click="openEditResource(r)" class="p-1.5 rounded-xl text-ink-muted hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Edit">
-                                    <i data-lucide="pencil" class="w-4 h-4"></i>
-                                </button>
-                                <button x-show="r.available > 0" @click="openDeploy(r)" class="p-1.5 rounded-lg text-ink-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Deploy / Return">
-                                    <i data-lucide="send" class="w-4 h-4"></i>
-                                </button>
-                                <button x-show="r.available === 0 && r.deployed === 0" disabled title="Nothing to deploy"
-                                    class="p-1.5 rounded-xl text-ink-faint cursor-not-allowed">
-                                    <i data-lucide="send" class="w-4 h-4"></i>
-                                </button>
-                            </div>
+                        <td class="sk-r whitespace-nowrap" @click.stop>
+                            <button type="button" @click="openResourceDetail(r)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'View ' + r.ref" title="View Details">
+                                <i data-lucide="eye"></i>
+                            </button>
+                            <button type="button" x-show="can('sakuna_resources','edit')" @click="openEditResource(r)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Edit ' + r.ref" title="Edit">
+                                <i data-lucide="pencil"></i>
+                            </button>
+                            <button type="button" x-show="r.available > 0" @click="openDeploy(r)" class="sk-iconbtn sk-iconbtn-bare hover:!text-emerald-700" :aria-label="'Deploy or return ' + r.ref" title="Deploy / Return">
+                                <i data-lucide="send"></i>
+                            </button>
+                            <button type="button" x-show="r.available === 0 && r.deployed === 0" disabled title="Nothing to deploy" aria-label="Nothing to deploy"
+                                class="sk-iconbtn sk-iconbtn-bare opacity-40 cursor-not-allowed">
+                                <i data-lucide="send"></i>
+                            </button>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="filteredResources.length === 0">
-                    <td colspan="9" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-ink-muted">
-                            <i data-lucide="package" class="w-10 h-10 opacity-30"></i>
-                            <p class="text-sm font-medium text-ink-muted">No resources match your filters.</p>
-                            <button @click="resourceSearch = ''; resourceCategoryFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
+                    <td colspan="9">
+                        <div class="sk-empty" style="padding: 36px 16px;">
+                            <i data-lucide="package"></i>
+                            <span>No resources match your filters.</span>
+                            <button type="button" @click="resourceSearch = ''; resourceCategoryFilter = ''" class="sk-clear">Clear Filters</button>
                         </div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <div class="px-4 py-3 border-t border-brand-600/10 bg-slate-50/40">
-        <p class="text-xs text-ink-muted">Showing <strong x-text="filteredResources.length"></strong> of <strong x-text="resourcesList.length"></strong> resources</p>
-    </div>
-</div>
+</section>
 
 </div>{{-- /loaded content --}}
 

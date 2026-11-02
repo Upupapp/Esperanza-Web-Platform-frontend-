@@ -42,130 +42,129 @@
             (!reliefStatusFilter || d.status === reliefStatusFilter)
         );
     },
-}" x-init="loadRelief()" class="space-y-4">
+}" x-init="loadRelief()" class="space-y-3">
 
-{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h2 class="text-base font-semibold text-ink-body">Relief Distribution</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Record and release relief goods to beneficiaries, with built-in duplicate protection.</p>
+{{-- Sakuna Redesign (2026-11-02): stat strip and actions, then the list card. --}}
+<div class="sk-pagebar">
+    <div class="sk-stats" x-show="!reliefFailed" :class="reliefLoading ? 'animate-pulse opacity-60' : ''">
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-amber"></span>Total distributions</span>
+            <span class="sk-sval tabular-nums" x-text="reliefList.length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-blue"></span>Beneficiaries served</span>
+            <span class="sk-sval tabular-nums" x-text="new Set(reliefList.map(d => d.beneficiary)).size"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-teal"></span>Released</span>
+            <span class="sk-sval tabular-nums" x-text="reliefList.filter(d => d.status === 'Released').length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Awaiting release</span>
+            <span class="sk-sval tabular-nums" x-text="reliefList.filter(d => d.status === 'Submitted').length"></span>
+        </div>
     </div>
-    <div class="flex items-center gap-2 flex-wrap">
-        <button @click="exportCSV(filteredRelief, 'relief-distributions.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+    <div class="sk-actions">
+        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About relief distribution: record and release relief goods to beneficiaries, with built-in duplicate protection" title="Relief distribution: record and release relief goods to beneficiaries, with built-in duplicate protection.">
+            <i data-lucide="info"></i>
         </button>
-        <button @click="exportPDF(filteredRelief, 'relief-distributions.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
-        </button>
-        <button x-show="can('sakuna_relief', 'create')" @click="openCreateDistribution()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Record Distribution
+        <div class="sk-btngrp" role="group" aria-label="Export">
+            <button type="button" class="sk-btn" @click="exportCSV(filteredRelief, 'relief-distributions.csv')">
+                <i data-lucide="download"></i> Export CSV
+            </button>
+            <button type="button" class="sk-btn" @click="exportPDF(filteredRelief, 'relief-distributions.csv')">
+                Export PDF
+            </button>
+        </div>
+        <button type="button" x-show="can('sakuna_relief', 'create')" @click="openCreateDistribution()" class="sk-btn sk-btn-p">
+            <i data-lucide="plus"></i> Record Distribution
         </button>
     </div>
 </div>
 
-<div x-show="reliefLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
+<div x-show="reliefLoading" class="sk-card h-72 animate-pulse"></div>
 <div x-show="reliefFailed" x-cloak><x-ui.error-state messageExpr="'Could not load relief distributions.'" retryExpr="loadRelief()" :retryable="true" /></div>
 
-<div x-show="!reliefLoading && !reliefFailed" x-cloak class="space-y-4">
+<div x-show="!reliefLoading && !reliefFailed" x-cloak class="space-y-3">
 
-{{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <x-ui.stat-card layout="compact" tone="gold" object="box" label="Total Distributions" valueBind="reliefList.length" />
-    <x-ui.stat-card layout="compact" tone="brand" object="people" label="Beneficiaries Served" valueBind="new Set(reliefList.map(d => d.beneficiary)).size" />
-    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Released" valueBind="reliefList.filter(d => d.status === 'Released').length" />
-    <x-ui.stat-card layout="compact" tone="amber" object="tray" label="Awaiting Release" valueBind="reliefList.filter(d => d.status === 'Submitted').length" />
-</div>
-
-{{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] p-4">
-    <div class="flex flex-wrap gap-3 items-center">
-        <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
-            <input aria-label="Search by beneficiary, ref or item" type="text" x-model="reliefSearch" placeholder="Search by beneficiary, ref or item…"
-                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+<section class="sk-card overflow-hidden">
+    {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <div class="sk-toolbar">
+        <div class="sk-search" style="max-width: 340px;">
+            <label for="relief-search" class="sr-only">Search by beneficiary, ref or item</label>
+            <i data-lucide="search"></i>
+            <input id="relief-search" aria-label="Search by beneficiary, ref or item" type="search" x-model="reliefSearch" placeholder="Search by beneficiary, ref or item…">
         </div>
-        <select aria-label="Operation filter" x-model="reliefOperationFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Operations</option>
+        <select aria-label="Operation filter" x-model="reliefOperationFilter" class="sk-sel">
+            <option value="">All operations</option>
             <template x-for="op in reliefOperations()" :key="op"><option :value="op" x-text="op"></option></template>
         </select>
-        <select aria-label="Relief status filter" x-model="reliefStatusFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Statuses</option>
+        <select aria-label="Relief status filter" x-model="reliefStatusFilter" class="sk-sel">
+            <option value="">All statuses</option>
             <option value="Submitted">Submitted</option>
             <option value="Released">Released</option>
         </select>
-        <button @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''"
-            class="text-sm text-ink-muted hover:text-slate-700 px-3 py-2 rounded-2xl hover:bg-slate-100 transition-colors">
-            Clear filters
-        </button>
+        <button type="button" class="sk-clear" @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''">Clear</button>
+        <span class="sk-spacer"></span>
+        <span class="sk-csub">Showing <strong x-text="filteredRelief.length"></strong> of <strong x-text="reliefList.length"></strong> distributions</span>
     </div>
-</div>
 
-{{-- ── Distributions Table ─────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+    {{-- ── Distributions Table ──────────────────────────────────────────────────────────── --}}
+    <div class="sk-scroll" tabindex="0" role="region" aria-label="Relief distributions table (scrolls sideways)">
+        <table class="sk-tbl min-w-[960px]">
             <thead>
-                <tr class="bg-well/70">
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Ref</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Operation</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Beneficiary</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Barangay</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Item</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Qty</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Released</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
+                <tr>
+                    <th>Ref</th>
+                    <th>Operation</th>
+                    <th>Beneficiary</th>
+                    <th>Barangay</th>
+                    <th>Item</th>
+                    <th class="sk-r">Qty</th>
+                    <th>Status</th>
+                    <th>Released</th>
+                    <th class="sk-r">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-brand-600/[.08]">
+            <tbody>
                 <template x-for="d in filteredRelief" :key="d.ref">
-                    <tr class="hover:bg-white/60 transition-colors">
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="d.ref"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="d.operation"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="font-medium text-ink-body" x-text="d.beneficiary"></div>
-                            <div x-show="d.evacuee_ref" class="text-[11px] text-brand-600 font-mono" x-text="'FACED · ' + d.evacuee_ref"></div>
+                    <tr>
+                        <td class="whitespace-nowrap"><span class="sk-mono" x-text="d.ref"></span></td>
+                        <td class="whitespace-nowrap"><span class="sk-tag" x-text="d.operation"></span></td>
+                        <td class="whitespace-nowrap">
+                            <div class="sk-b" x-text="d.beneficiary"></div>
+                            <div x-show="d.evacuee_ref" class="sk-mono" style="color: #1D4ED8; font-size: 11px;" x-text="'FACED · ' + d.evacuee_ref"></div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="d.barangay"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-slate-600" x-text="d.item"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700">
+                        <td class="whitespace-nowrap" x-text="d.barangay"></td>
+                        <td class="whitespace-nowrap" x-text="d.item"></td>
+                        <td class="sk-r whitespace-nowrap tabular-nums">
                             <span x-text="d.quantity + (d.unit ? ' ' + d.unit : '')"></span>
-                            <div x-show="d.cost != null || d.provider" class="text-[11px] text-ink-muted" x-text="[d.cost != null ? '₱' + Number(d.cost).toLocaleString('en-PH') : null, d.provider].filter(Boolean).join(' · ')"></div>
+                            <div x-show="d.cost != null || d.provider" class="sk-sub" x-text="[d.cost != null ? '₱' + Number(d.cost).toLocaleString('en-PH') : null, d.provider].filter(Boolean).join(' · ')"></div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span>
+                        <td class="whitespace-nowrap"><span :class="statusBadge(d.status)" class="sk-pill" x-text="d.status"></span>
                             <div x-show="d.acknowledgement" class="text-[11px] font-medium mt-0.5" :class="d.acknowledgement === 'received' ? 'text-emerald-700' : 'text-rose-700'" data-relief-answer
                                 x-text="d.acknowledgement === 'received' ? 'Resident confirmed in app' : 'Resident says not received'"></div></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-xs text-ink-muted" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right">
-                            <button x-show="can('sakuna_relief','release') && d.status === 'Submitted'" @click="releaseDistribution(d)"
-                                class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 px-2 py-1 rounded-xl hover:bg-brand-50 transition-colors">
-                                <i data-lucide="package-check" class="w-3.5 h-3.5"></i> Release
+                        <td class="whitespace-nowrap" :class="d.distributed_at ? '' : 'sk-muted'" x-text="d.distributed_at ? new Date(d.distributed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></td>
+                        <td class="sk-r whitespace-nowrap">
+                            <button type="button" x-show="can('sakuna_relief','release') && d.status === 'Submitted'" @click="releaseDistribution(d)" class="sk-btn sk-btn-sm sk-btn-soft">
+                                <i data-lucide="package-check"></i> Release
                             </button>
-                            <span x-show="d.status === 'Released'" class="text-xs text-ink-faint">—</span>
+                            <span x-show="d.status === 'Released'" class="sk-muted">—</span>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="filteredRelief.length === 0">
-                    <td colspan="9" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-ink-muted">
-                            <i data-lucide="package" class="w-10 h-10 opacity-30"></i>
-                            <p class="text-sm font-medium text-ink-muted">No distributions match your filters.</p>
-                            <button @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
+                    <td colspan="9">
+                        <div class="sk-empty" style="padding: 36px 16px;">
+                            <i data-lucide="package"></i>
+                            <span>No distributions match your filters.</span>
+                            <button type="button" @click="reliefSearch = ''; reliefOperationFilter = ''; reliefStatusFilter = ''" class="sk-clear">Clear Filters</button>
                         </div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <div class="px-4 py-3 border-t border-brand-600/10 bg-slate-50/40">
-        <p class="text-xs text-ink-muted">Showing <strong x-text="filteredRelief.length"></strong> of <strong x-text="reliefList.length"></strong> distributions</p>
-    </div>
-</div>
+</section>
 
 </div>{{-- /loaded content --}}
 

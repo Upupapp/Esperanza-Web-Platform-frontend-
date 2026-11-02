@@ -167,84 +167,87 @@
             }
         },
     }"
-    class="space-y-5"
+    class="space-y-3"
 >
-    <div class="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-            <h2 class="text-lg font-bold text-ink-body">BDRRMC Capture Forms</h2>
-            <p class="text-sm text-ink-muted mt-0.5">The barangay DRRM capture forms (the layout Barangay Labangtaytay files with the MDRRMO/PDRRMC): fill one out, save it to the system, and print it.</p>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-        @foreach($bdrrmcForms as $f)
-            <div class="surface-glass rounded-[26px] p-4 hover:shadow-glass-hover transition-shadow">
-                <div class="flex items-start gap-3 mb-3">
-                    <div class="w-9 h-9 rounded-xl {{ $f['color'] }} flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="{{ $f['icon'] }}" class="w-4 h-4"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-[10px] font-semibold text-ink-muted uppercase tracking-wide">{{ $f['code'] }}</p>
-                        <p class="text-sm font-semibold text-ink-body leading-snug">{{ $f['name'] }}</p>
-                    </div>
-                </div>
-                <p class="text-xs text-ink-muted leading-relaxed mb-3">{{ $f['desc'] }}</p>
-                <button
-                    @click="openForm = '{{ $f['key'] }}'; fillOpen = false; fill.error = ''; $nextTick(() => window.renderIcons?.())"
-                    class="w-full text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg py-2 transition-colors"
-                >
-                    Open Capture Form
+    {{-- Sakuna Redesign (2026-11-02): the six forms as rows in one card,
+         then the saved ones. --}}
+    <section class="sk-card overflow-hidden">
+        <div class="sk-chead">
+            <h2 class="sk-ctitle inline-flex items-center gap-1.5">BDRRMC Capture Forms
+                <button type="button" class="sk-iconbtn sk-iconbtn-bare !w-6 !h-6"
+                    aria-label="About capture forms: the barangay DRRM capture forms (the layout Barangay Labangtaytay files with the MDRRMO/PDRRMC): fill one out, save it to the system, and print it."
+                    title="The barangay DRRM capture forms (the layout Barangay Labangtaytay files with the MDRRMO/PDRRMC): fill one out, save it to the system, and print it.">
+                    <i data-lucide="info" class="!w-3.5 !h-3.5"></i>
                 </button>
-            </div>
-        @endforeach
-    </div>
-
-    <div x-show="canListSubmissions" x-cloak class="surface-glass rounded-[26px]">
-        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-brand-600/10">
-            <div>
-                <h3 class="text-sm font-semibold text-ink-body">Submitted forms</h3>
-                <p class="text-xs text-ink-muted">Saved capture forms, newest first. The MDRRMO approves each one.</p>
-            </div>
-            <button type="button" @click="loadSubmissions()" class="inline-flex items-center gap-1.5 text-xs text-slate-600 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 hover:border-slate-300"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh</button>
+            </h2>
+            <span class="sk-csub">Fill out, save to the system, then print</span>
         </div>
-        <p x-show="submissionsLoading" class="px-4 py-3 text-xs text-ink-muted">Loading…</p>
-        <p x-show="!submissionsLoading && !submissions.length" class="px-4 py-6 text-center text-xs text-ink-muted">No capture form has been saved yet.</p>
-        <div x-show="submissions.length" class="overflow-x-auto">
-            <table class="w-full text-xs">
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));">
+            @foreach($bdrrmcForms as $f)
+                <div class="flex items-center gap-3 px-3.5 py-3 border-b border-r border-[#EEF2F7]">
+                    <span class="w-[34px] h-[34px] rounded-[9px] {{ $f['color'] }} flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="{{ $f['icon'] }}" class="w-4 h-4"></i>
+                    </span>
+                    <div class="flex-grow min-w-0">
+                        <p class="text-[10.5px] font-semibold tracking-[.06em] uppercase text-[#5F6B80]">{{ $f['code'] }}</p>
+                        <p class="sk-b text-[13px] leading-snug">{{ $f['name'] }}</p>
+                        <p class="sk-sub">{{ $f['desc'] }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        @click="openForm = '{{ $f['key'] }}'; fillOpen = false; fill.error = ''; $nextTick(() => window.renderIcons?.())"
+                        class="sk-btn sk-btn-sm sk-btn-soft shrink-0"
+                    >
+                        Open form <i data-lucide="arrow-right"></i>
+                    </button>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
+    <section x-show="canListSubmissions" x-cloak class="sk-card overflow-hidden">
+        <div class="sk-chead">
+            <h3 class="sk-ctitle">Submitted forms <span class="sk-csub">· saved capture forms, newest first. The MDRRMO approves each one.</span></h3>
+            <button type="button" @click="loadSubmissions()" class="sk-btn sk-btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
+        </div>
+        <p x-show="submissionsLoading" class="sk-empty">Loading…</p>
+        <p x-show="!submissionsLoading && !submissions.length" class="sk-empty">No capture form has been saved yet.</p>
+        <div x-show="submissions.length" class="sk-scroll" tabindex="0" role="region" aria-label="Submitted forms table (scrolls sideways)">
+            <table class="sk-tbl">
                 <thead>
-                    <tr class="text-left text-[10px] uppercase tracking-wide text-ink-muted border-b border-brand-600/10">
-                        <th class="px-4 py-2 font-semibold">Reference</th>
-                        <th class="px-4 py-2 font-semibold">Form</th>
-                        <th class="px-4 py-2 font-semibold">Barangay</th>
-                        <th class="px-4 py-2 font-semibold">Disaster</th>
-                        <th class="px-4 py-2 font-semibold text-right">Rows</th>
-                        <th class="px-4 py-2 font-semibold">Saved</th>
-                        <th class="px-4 py-2 font-semibold">Status</th>
-                        <th class="px-4 py-2"></th>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Form</th>
+                        <th>Barangay</th>
+                        <th>Disaster</th>
+                        <th class="sk-r">Rows</th>
+                        <th>Saved</th>
+                        <th>Status</th>
+                        <th class="sk-r">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-brand-600/[.08]">
+                <tbody>
                     <template x-for="sub in submissions" :key="sub.ref">
                         <tr>
-                            <td class="px-4 py-2 font-mono text-slate-700" x-text="sub.ref"></td>
-                            <td class="px-4 py-2 text-slate-700" x-text="formNames[sub.form] || sub.form"></td>
-                            <td class="px-4 py-2 text-slate-700" x-text="'Brgy. ' + sub.barangay"></td>
-                            <td class="px-4 py-2 text-ink-muted" x-text="sub.period || '—'"></td>
-                            <td class="px-4 py-2 text-right tabular-nums text-slate-700" x-text="sub.row_count"></td>
-                            <td class="px-4 py-2 text-ink-muted" x-text="(sub.submitted_by || '—') + ' · ' + (sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')"></td>
-                            <td class="px-4 py-2"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset" :class="sub.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-blue-50 text-blue-700 ring-blue-200'" x-text="sub.status"></span></td>
-                            <td class="px-4 py-2 text-right whitespace-nowrap">
-                                <button type="button" @click="viewSubmission(sub)" :disabled="viewLoading" class="text-xs font-medium text-brand-600 hover:underline mr-3">View</button>
+                            <td><span class="sk-mono" x-text="sub.ref"></span></td>
+                            <td class="sk-b" x-text="formNames[sub.form] || sub.form"></td>
+                            <td x-text="'Brgy. ' + sub.barangay"></td>
+                            <td class="sk-muted" x-text="sub.period || '—'"></td>
+                            <td class="sk-r tabular-nums" x-text="sub.row_count"></td>
+                            <td class="sk-muted" x-text="(sub.submitted_by || '—') + ' · ' + (sub.submitted_at ? new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')"></td>
+                            <td><span class="sk-pill" :class="statusBadge(sub.status)" x-text="sub.status"></span></td>
+                            <td class="sk-r whitespace-nowrap">
+                                <button type="button" @click="viewSubmission(sub)" :disabled="viewLoading" class="sk-btn sk-btn-sm sk-btn-soft">View</button>
                                 {{-- Who filed a form cannot approve it; the server refuses it too (2026-10-27). --}}
-                                <button type="button" x-show="sub.can_approve" @click="approve(sub)" class="text-xs font-medium text-brand-600 hover:underline">Approve</button>
-                                <span x-show="sub.status === 'Submitted' && sub.submitted_by_me && canApprove" class="text-[11px] text-ink-muted">Filed by you</span>
+                                <button type="button" x-show="sub.can_approve" @click="approve(sub)" class="sk-btn sk-btn-sm sk-btn-ok">Approve</button>
+                                <span x-show="sub.status === 'Submitted' && sub.submitted_by_me && canApprove" class="sk-ssub">Filed by you</span>
                             </td>
                         </tr>
                     </template>
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 
     {{-- The paper forms (bdrrmc-paper.blade.php), on screen and in print, in the
          barangay files' own look: A4, Arial, ruled black lines, grey header

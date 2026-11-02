@@ -1242,15 +1242,15 @@
 
         opStatusColor() {
             const map = {
-                'Normal': 'text-emerald-700 bg-emerald-50 border-emerald-200',
-                'Alert in effect': 'text-rose-700 bg-rose-50 border-rose-200',
-                'Monitoring': 'text-blue-700 bg-blue-50 border-blue-200',
-                'Blue Alert': 'text-indigo-700 bg-indigo-50 border-indigo-200',
-                'Red Alert': 'text-rose-700 bg-rose-50 border-rose-200',
-                'Emergency Operations Activated': 'text-red-700 bg-red-100 border-red-300 font-semibold',
-                'Recovery Operations': 'text-amber-700 bg-amber-50 border-amber-200',
+                'Normal': 'sk-p-green',
+                'Alert in effect': 'sk-p-red',
+                'Monitoring': 'sk-p-blue',
+                'Blue Alert': 'sk-p-navy',
+                'Red Alert': 'sk-p-red',
+                'Emergency Operations Activated': 'sk-p-red',
+                'Recovery Operations': 'sk-p-amber',
             };
-            return map[this.opStatus] || 'text-slate-600 bg-slate-50 border-slate-200';
+            return map[this.opStatus] || 'sk-p-slate';
         },
 
         severityBadge(sev) {
@@ -1426,66 +1426,63 @@
     x-init="
         setTimeout(() => { ready = true; $nextTick(() => window.renderIcons?.()); }, 600);
     "
-    class="space-y-4"
+    class="sk space-y-3 max-w-[1480px]"
 >
-    {{-- ── Operational Status Bar ──────────────────────────────────────────── --}}
-    <div class="flex flex-wrap items-center gap-2">
-        <span :class="opStatusColor()" class="inline-flex items-center gap-2 text-sm font-medium border rounded-xl px-3 py-1.5 shadow-card" :title="opStatusOverride ? 'Set on this screen only; nobody was notified' : 'From the public alerts in effect and the incidents still open'">
-            <i data-lucide="shield-alert" class="w-4 h-4"></i>
-            <span x-text="opStatus"></span>
-        </span>
+    {{-- ── Sakuna header (owner's Sakuna Redesign, 2026-11-02) ────────────────
+         One white band: the live status and the emergency actions, then the
+         tab row. The tabs stay links (each tab is its own page) and wrap
+         rather than scroll, so no tab is ever off screen (live test NAV-4). --}}
+    <header class="sk-card">
+        <div class="flex flex-wrap items-center gap-2 px-4 pt-2.5 pb-1">
+            <span :class="opStatusColor()" class="sk-pill" style="padding: 3px 9px;" :title="opStatusOverride ? 'Set on this screen only; nobody was notified' : 'From the public alerts in effect and the incidents still open'">
+                <i data-lucide="shield-alert" class="w-3 h-3"></i>
+                <span x-text="opStatus"></span>
+            </span>
 
-        <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" class="inline-flex items-center gap-2 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-1.5 hover:bg-white/90 transition-colors" title="Open the alerts or incidents behind this">
-            <i data-lucide="radio-tower" class="w-4 h-4 text-ink-muted"></i>
-            <span x-text="activeEventLabel" class="max-w-48 truncate"></span>
-        </button>
-
-        <button type="button" @click="loadHeader()" class="text-xs text-ink-muted hover:text-slate-700 flex items-center gap-1 transition-colors" title="Refresh">
-            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-            <span x-text="headerBoard?.generated_at ? 'Updated ' + new Date(headerBoard.generated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not updated yet'"></span>
-        </button>
-
-        <div class="ml-auto flex items-center gap-2">
-            <button x-show="tabAllowed('reports')" @click="setTab('reports')" class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-1.5 hover:bg-white/90 transition-colors">
-                <i data-lucide="file-bar-chart" class="w-4 h-4 text-ink-muted"></i> SitRep &amp; Reports
+            <button type="button" x-show="tabAllowed('alerts') || tabAllowed('incidents')" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" :class="headerBoard?.alerts?.length || headerBoard?.counts?.incidents_open ? 'sk-p-red' : 'sk-p-slate'" class="sk-pill hover:brightness-95" style="padding: 3px 9px;" title="Open the alerts or incidents behind this">
+                <span class="sk-dot"></span>
+                <span x-text="activeEventLabel" class="max-w-48 truncate"></span>
             </button>
-            {{-- Warning the public must never be past the edge of the tab row
-                 (live test 2026-10-07, NAV-4). --}}
-            <button x-show="permsReady && can('sakuna_alerts', 'create')" x-cloak
-                @click="activeTab === 'alerts' ? openCreateAlert() : (window.location.href = tabUrls['alerts'] + '?compose=1')"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-2xl px-3 py-1.5 shadow-card transition-colors">
-                <i data-lucide="bell-ring" class="w-4 h-4"></i> Send alert
-            </button>
-            <button x-show="can('sakuna_command', 'escalate')" @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-1.5 shadow-card transition-colors">
-                <i data-lucide="siren" class="w-4 h-4"></i> Activate EOC
-            </button>
-        </div>
-    </div>
 
-    {{-- ── Tab Navigation ───────────────────────────────────────────────────── --}}
-    <div class="surface-glass rounded-[26px] overflow-hidden">
-        <div>
-            {{-- Clay design (STYLE_GUIDE §3.6): a pressed track, never underline tabs.
-                 It wraps, so no tab is ever off screen (live test NAV-4). --}}
-            <nav class="flex flex-wrap gap-1 m-4 mb-1 p-1 rounded-2xl surface-pressed-sm">
-                @foreach($tabs as $t)
-                    <a
-                        href="{{ $tabUrls[$t['key']] }}"
-                        x-show="permsReady && tabAllowed('{{ $t['key'] }}')" x-cloak
-                        @if($activeTab === $t['key']) aria-current="page" @endif
-                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all duration-200 {{ $activeTab === $t['key'] ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink' }}"
-                    >
-                        <i data-lucide="{{ $t['icon'] }}" class="w-4 h-4"></i>
-                        {{ $t['label'] }}
-                    </a>
-                @endforeach
-            </nav>
+            <button type="button" @click="loadHeader()" class="inline-flex items-center gap-1 text-xs text-[#5F6B80] hover:text-slate-800 transition-colors" title="Refresh">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span x-text="headerBoard?.generated_at ? 'Updated ' + new Date(headerBoard.generated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not updated yet'"></span>
+            </button>
+
+            <div class="ml-auto flex items-center gap-2">
+                {{-- Warning the public must never be past the edge of the tab row
+                     (live test 2026-10-07, NAV-4). --}}
+                <button x-show="permsReady && can('sakuna_alerts', 'create')" x-cloak
+                    @click="activeTab === 'alerts' ? openCreateAlert() : (window.location.href = tabUrls['alerts'] + '?compose=1')"
+                    class="sk-btn sk-btn-amber">
+                    <i data-lucide="bell-ring"></i> Send alert
+                </button>
+                <button x-show="can('sakuna_command', 'escalate')" @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-red">
+                    <i data-lucide="siren"></i> Activate EOC
+                </button>
+            </div>
         </div>
 
+        {{-- The tabs share the spare width evenly while they fit on one row (owner, 2026-11-02). --}}
+        <div class="sk-tabhost">
+        <nav aria-label="Sakuna sections" class="flex flex-wrap px-2">
+            @foreach($tabs as $t)
+                <a
+                    href="{{ $tabUrls[$t['key']] }}"
+                    x-show="permsReady && tabAllowed('{{ $t['key'] }}')" x-cloak
+                    @if($activeTab === $t['key']) aria-current="page" @endif
+                    class="sk-tab {{ $activeTab === $t['key'] ? 'sk-tab-on' : '' }}"
+                >{{ $t['label'] }}</a>
+            @endforeach
+        </nav>
+        </div>
+    </header>
+
+    <div>
         {{-- Arrived from a resident's profile — offer a way straight back to it. --}}
         <div
             x-show="returnToProfile" x-cloak
-            class="flex items-center justify-between gap-3 mx-5 mt-4 px-4 py-2.5 rounded-xl bg-brand-50 border border-brand-100"
+            class="flex items-center justify-between gap-3 mb-3 px-4 py-2.5 rounded-xl bg-brand-50 border border-brand-100"
         >
             <p class="text-xs text-brand-700">
                 Showing the Sakuna report for <span class="font-semibold" x-text="returnToProfile?.name"></span>.
@@ -1500,7 +1497,7 @@
         </div>
 
         {{-- ── Tab Panels ───────────────────────────────────────────────────── --}}
-        <div class="p-5">
+        <div>
             {{-- A tab renders, and loads, only once the role may view it; a tab
                  outside the role's part sends them to the first one they hold. --}}
             <p x-show="!activeAllowed" class="py-10 text-center text-sm text-ink-muted">Loading…</p>

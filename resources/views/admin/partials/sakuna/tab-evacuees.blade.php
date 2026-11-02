@@ -43,144 +43,138 @@
             (!evStatusFilter || ev.status === evStatusFilter)
         );
     },
-}" x-init="loadEvacuees()" class="space-y-4">
+}" x-init="loadEvacuees()" class="space-y-3">
 
-{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h2 class="text-base font-semibold text-ink-body">Evacuee Registration & Tracking</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Tracked by family unit, with unregistered households accepted.</p>
+{{-- Sakuna Redesign (2026-11-02): stat strip and actions, then the list card. --}}
+<div class="sk-pagebar">
+    <div class="sk-stats" x-show="!evacueesFailed" :class="evacueesLoading ? 'animate-pulse opacity-60' : ''">
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-blue"></span>Total individuals</span>
+            <span class="sk-sval tabular-nums" x-text="evacueesList.reduce((s,e) => s + e.member_count, 0)"></span>
+            <span class="sk-ssub" x-text="evacueesList.filter(e => e.status === 'Processing').length + ' families sheltered'"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-teal"></span>Currently sheltered</span>
+            <span class="sk-sval tabular-nums" x-text="evacueesList.filter(e => e.status === 'Processing').reduce((s,e) => s + e.member_count, 0)"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Checked out</span>
+            <span class="sk-sval tabular-nums" x-text="evacueesList.filter(e => e.status === 'Completed').length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Unregistered</span>
+            <span class="sk-sval tabular-nums" x-text="evacueesList.filter(e => !e.registered).length"></span>
+            <span class="sk-ssub">Not linked to a resident record</span>
+        </div>
     </div>
-    <div class="flex items-center gap-2 flex-wrap">
-        <button @click="exportCSV(filteredEvacuees, 'evacuees-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+    <div class="sk-actions">
+        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About evacuee registration and tracking: tracked by family unit, with unregistered households accepted" title="Evacuee registration and tracking: tracked by family unit, with unregistered households accepted.">
+            <i data-lucide="info"></i>
         </button>
-        <button @click="exportPDF(filteredEvacuees, 'evacuees-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
-        </button>
-        <button x-show="can('sakuna_evacuees', 'check_in')" @click="openEvacueeReg()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="user-plus" class="w-4 h-4"></i> Register Evacuee
+        <div class="sk-btngrp" role="group" aria-label="Export">
+            <button type="button" class="sk-btn" @click="exportCSV(filteredEvacuees, 'evacuees-export.csv')">
+                <i data-lucide="download"></i> Export CSV
+            </button>
+            <button type="button" class="sk-btn" @click="exportPDF(filteredEvacuees, 'evacuees-export.csv')">
+                Export PDF
+            </button>
+        </div>
+        <button type="button" x-show="can('sakuna_evacuees', 'check_in')" @click="openEvacueeReg()" class="sk-btn sk-btn-p">
+            <i data-lucide="user-plus"></i> Register Evacuee
         </button>
     </div>
 </div>
 
-<div x-show="evacueesLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
+<div x-show="evacueesLoading" class="sk-card h-72 animate-pulse"></div>
 <div x-show="evacueesFailed" x-cloak><x-ui.error-state messageExpr="'Could not load evacuees.'" retryExpr="loadEvacuees()" :retryable="true" /></div>
 
-<div x-show="!evacueesLoading && !evacueesFailed" x-cloak class="space-y-4">
+<div x-show="!evacueesLoading && !evacueesFailed" x-cloak class="space-y-3">
 
-{{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <x-ui.stat-card layout="compact" tone="brand" object="people" label="Total Individuals" valueBind="evacueesList.reduce((s,e) => s + e.member_count, 0)" sublabelBind="evacueesList.filter(e => e.status === 'Processing').length + ' families sheltered'" />
-    <x-ui.stat-card layout="compact" tone="teal" object="building" label="Currently Sheltered" valueBind="evacueesList.filter(e => e.status === 'Processing').reduce((s,e) => s + e.member_count, 0)" />
-    <x-ui.stat-card layout="compact" tone="navy" object="stamp" label="Checked Out" valueBind="evacueesList.filter(e => e.status === 'Completed').length" />
-    <x-ui.stat-card layout="compact" tone="amber" object="document" label="Unregistered" valueBind="evacueesList.filter(e => !e.registered).length" sublabel="Not linked to a resident record" />
-</div>
-
-{{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] p-4">
-    <div class="flex flex-wrap gap-3 items-center">
-        <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
-            <input aria-label="Search by name or ID" type="text" x-model="evacueeSearch" placeholder="Search by name or ref…"
-                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+<section class="sk-card overflow-hidden">
+    {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <div class="sk-toolbar">
+        <div class="sk-search" style="max-width: 340px;">
+            <label for="evacuee-search" class="sr-only">Search by name or ID</label>
+            <i data-lucide="search"></i>
+            <input id="evacuee-search" aria-label="Search by name or ID" type="search" x-model="evacueeSearch" placeholder="Search by name or ref…">
         </div>
-        <select aria-label="Ev center filter" x-model="evCenterFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Centers</option>
+        <select aria-label="Ev center filter" x-model="evCenterFilter" class="sk-sel">
+            <option value="">All centers</option>
             <template x-for="c in evacueeCentersOpen" :key="c.ref"><option :value="c.name" x-text="c.name"></option></template>
         </select>
-        <select aria-label="Ev status filter" x-model="evStatusFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Statuses</option>
+        <select aria-label="Ev status filter" x-model="evStatusFilter" class="sk-sel">
+            <option value="">All statuses</option>
             <option value="Processing">Checked In</option>
             <option value="Completed">Checked Out</option>
         </select>
-        <button @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''"
-            class="text-sm text-ink-muted hover:text-slate-700 px-3 py-2 rounded-2xl hover:bg-slate-100 transition-colors">
-            Clear filters
-        </button>
+        <button type="button" class="sk-clear" @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''">Clear</button>
+        <span class="sk-spacer"></span>
+        <span class="sk-csub">
+            Showing <strong x-text="filteredEvacuees.length"></strong> household(s) &bull;
+            <strong x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0)"></strong> <span x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0) === 1 ? 'individual' : 'individuals'"></span>
+        </span>
     </div>
-</div>
 
-{{-- ── Evacuee Table ───────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+    {{-- ── Evacuee Table ────────────────────────────────────────────────────────────────── --}}
+    <div class="sk-scroll" tabindex="0" role="region" aria-label="Evacuees table (scrolls sideways)">
+        <table class="sk-tbl min-w-[860px]">
             <thead>
-                <tr class="bg-well/70">
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Ref</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Household Head</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Home Barangay</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Evacuation Center</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Checked In</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
+                <tr>
+                    <th>Ref</th>
+                    <th>Household head</th>
+                    <th>Home barangay</th>
+                    <th>Evacuation center</th>
+                    <th>Checked in</th>
+                    <th>Status</th>
+                    <th class="sk-r">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-brand-600/[.08]">
+            <tbody>
                 <template x-for="ev in filteredEvacuees" :key="ev.ref">
-                    <tr class="hover:bg-white/60 transition-colors cursor-pointer group" @click="openEvacueeDetail(ev)" tabindex="0" @keydown.enter.prevent="openEvacueeDetail(ev)">
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="ev.ref"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-8 h-8 text-xs rounded-full clay-blue font-extrabold flex items-center justify-center font-semibold shrink-0"
-                                     x-text="(ev.head_name || '').split(/\s+/).filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase()"></div>
-                                <div class="min-w-0">
-                                    <div class="font-medium text-ink-body group-hover:text-brand-600 transition-colors truncate" x-text="ev.head_name"></div>
-                                    <div class="text-xs text-ink-muted" x-text="ev.member_count + (ev.member_count === 1 ? ' member' : ' members')"></div>
-                                </div>
-                            </div>
+                    <tr class="cursor-pointer group" @click="openEvacueeDetail(ev)" tabindex="0" @keydown.enter.prevent="openEvacueeDetail(ev)">
+                        <td class="whitespace-nowrap"><span class="sk-mono" x-text="ev.ref"></span></td>
+                        <td class="whitespace-nowrap">
+                            <div class="sk-b group-hover:text-[#1D4ED8] transition-colors truncate max-w-[240px]" x-text="ev.head_name"></div>
+                            <div class="sk-sub" x-text="ev.member_count + (ev.member_count === 1 ? ' member' : ' members')"></div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="text-slate-700" x-text="ev.barangay"></div>
-                            <div class="text-xs text-ink-muted" x-text="ev.sitio || ''"></div>
+                        <td class="whitespace-nowrap">
+                            <div x-text="ev.barangay"></div>
+                            <div class="sk-sub" x-show="ev.sitio" x-text="ev.sitio || ''"></div>
                         </td>
-                        <td class="px-4 py-3"><div class="text-slate-700 max-w-[180px] truncate" x-text="ev.center || '—'"></div></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-slate-600 text-xs" x-text="ev.checked_in ? new Date(ev.checked_in).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—'"></td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <span :class="statusBadge(ev.status)" x-text="ev.status === 'Processing' ? 'Checked In' : 'Checked Out'"></span>
-                            <span x-show="!ev.registered" class="ml-1 text-[10px] text-amber-600 font-medium" title="Not linked to a resident record">unreg.</span>
+                        <td><div class="max-w-[200px] truncate" :class="ev.center ? '' : 'sk-muted'" x-text="ev.center || '—'"></div></td>
+                        <td class="whitespace-nowrap" x-text="ev.checked_in ? new Date(ev.checked_in).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—'"></td>
+                        <td class="whitespace-nowrap">
+                            <span :class="statusBadge(ev.status)" class="sk-pill" x-text="ev.status === 'Processing' ? 'Checked In' : 'Checked Out'"></span>
+                            <span x-show="!ev.registered" class="sk-tag ml-1" style="color: #B45309; background: #FFF7E6;" title="Not linked to a resident record">unreg.</span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right" @click.stop>
-                            <div class="flex items-center justify-end gap-1">
-                                <button @click="openEvacueeDetail(ev)" class="p-1.5 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View Details">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button x-show="can('sakuna_evacuees','transfer') && ev.status === 'Processing'" @click="selectedEvacuee = ev; transferToCenter = ''; showTransferForm = true; $nextTick(() => window.renderIcons?.())"
-                                    class="p-1.5 rounded-lg text-ink-muted hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Transfer Center">
-                                    <i data-lucide="arrow-right-left" class="w-4 h-4"></i>
-                                </button>
-                                <button x-show="can('sakuna_evacuees','check_out') && ev.status === 'Processing'" @click="openCheckout(ev)"
-                                    class="p-1.5 rounded-xl text-ink-muted hover:text-amber-600 hover:bg-amber-50 transition-colors" title="Check Out">
-                                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                                </button>
-                            </div>
+                        <td class="sk-r whitespace-nowrap" @click.stop>
+                            <button type="button" @click="openEvacueeDetail(ev)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'View ' + ev.ref" title="View Details">
+                                <i data-lucide="eye"></i>
+                            </button>
+                            <button type="button" x-show="can('sakuna_evacuees','transfer') && ev.status === 'Processing'" @click="selectedEvacuee = ev; transferToCenter = ''; showTransferForm = true; $nextTick(() => window.renderIcons?.())"
+                                class="sk-iconbtn sk-iconbtn-bare hover:!text-blue-700" :aria-label="'Transfer ' + ev.ref" title="Transfer Center">
+                                <i data-lucide="arrow-right-left"></i>
+                            </button>
+                            <button type="button" x-show="can('sakuna_evacuees','check_out') && ev.status === 'Processing'" @click="openCheckout(ev)"
+                                class="sk-iconbtn sk-iconbtn-bare hover:!text-amber-700" :aria-label="'Check out ' + ev.ref" title="Check Out">
+                                <i data-lucide="log-out"></i>
+                            </button>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="filteredEvacuees.length === 0">
-                    <td colspan="7" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-ink-muted">
-                            <i data-lucide="users" class="w-10 h-10 opacity-30"></i>
-                            <p class="text-sm font-medium text-ink-muted">No evacuees match your filters.</p>
-                            <button @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
+                    <td colspan="7">
+                        <div class="sk-empty" style="padding: 36px 16px;">
+                            <i data-lucide="users"></i>
+                            <span>No evacuees match your filters.</span>
+                            <button type="button" @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''" class="sk-clear">Clear Filters</button>
                         </div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <div class="px-4 py-3 border-t border-brand-600/10 bg-slate-50/40 flex items-center justify-between">
-        <p class="text-xs text-ink-muted">
-            Showing <strong x-text="filteredEvacuees.length"></strong> household(s) &bull;
-            <strong x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0)"></strong> <span x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0) === 1 ? 'individual' : 'individuals'"></span>
-        </p>
-    </div>
-</div>
+</section>
 
 </div>{{-- /loaded content --}}
 

@@ -17,224 +17,248 @@
     $reportStatuses = ['Submitted', 'Under Verification', 'Assigned', 'Processing', 'Completed', 'Archived', 'Rejected'];
 @endphp
 
-<div x-data="sakunaReport" class="space-y-5">
+<div x-data="sakunaReport" class="space-y-3">
 
-    <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-            <h2 class="text-base font-semibold text-ink-body">Disaster Reports</h2>
-            <p class="text-sm text-ink-muted mt-0.5">The situation report: incidents, evacuation, relief, resources, damage, missing persons and alerts, from the records, under the filters below.</p>
-        </div>
-        <div class="flex items-center gap-2" x-show="can('sakuna_reports','export')">
-            <x-ui.button size="sm" variant="secondary" icon="file-spreadsheet" x-bind:disabled="!!exporting || !!rangeError" @click="exportAs('XLSX')"><span x-text="exporting === 'XLSX' ? 'Exporting…' : 'Export XLSX'"></span></x-ui.button>
-            <x-ui.button size="sm" variant="secondary" icon="file-down" x-bind:disabled="!!exporting || !!rangeError" @click="exportAs('PDF')"><span x-text="exporting === 'PDF' ? 'Exporting…' : 'Export PDF'"></span></x-ui.button>
-        </div>
-    </div>
-
-    {{-- Filters: all of them apply together. --}}
-    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-4">
-        <label class="text-xs text-ink-muted">Barangay
-            <select x-model="f.barangay" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+    {{-- Sakuna Redesign (2026-11-02): filters and export in one row, as the
+         design draws it; on a narrow screen the row scrolls sideways rather
+         than wrapping. The dates sit behind one button (presets, From/To,
+         Apply). All the filters apply together. --}}
+    <section class="sk-card relative" @keydown.escape.window="cancelRange()">
+        <div class="sk-toolbar sk-toolbar-row">
+            <select x-model="f.barangay" @change="load(1)" aria-label="Barangay" class="sk-sel" style="flex: 1 1 126px; min-width: 96px;">
                 <option value="">All barangays</option>
                 @foreach($barangays as $b)<option value="{{ is_array($b) ? $b['name'] : $b }}">{{ is_array($b) ? $b['name'] : $b }}</option>@endforeach
             </select>
-        </label>
-        <label class="text-xs text-ink-muted">From
-            <input type="date" x-model="f.from" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
-        </label>
-        <label class="text-xs text-ink-muted">To
-            <input type="date" x-model="f.to" :min="f.from" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
-        </label>
-        <label class="text-xs text-ink-muted">Disaster type
-            <select x-model="f.type" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+            <button type="button" class="sk-daterange" @click="openRange($el)" :aria-expanded="rangeOpen ? 'true' : 'false'" aria-haspopup="dialog" aria-label="Date range" :title="rangeLabel">
+                <i data-lucide="calendar"></i><span x-text="rangeLabel">All dates</span><i data-lucide="chevron-down"></i>
+            </button>
+            <select x-model="f.type" @change="load(1)" aria-label="Disaster type" class="sk-sel" style="flex: 1 1 96px; min-width: 90px;">
                 <option value="">All types</option>
                 @foreach($reportTypes as $t)<option>{{ $t }}</option>@endforeach
             </select>
-        </label>
-        <label class="text-xs text-ink-muted">Incident status
-            <select x-model="f.status" @change="load(1)" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
+            <select x-model="f.status" @change="load(1)" aria-label="Incident status" class="sk-sel" style="flex: 1 1 114px; min-width: 96px;">
                 <option value="">All statuses</option>
                 @foreach($reportStatuses as $s)<option>{{ $s }}</option>@endforeach
             </select>
-        </label>
-        <label class="text-xs text-ink-muted">Livelihood group
-            <select x-model="f.livelihood_group" @change="groupChanged()" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2">
-                <option value="">All groups</option>
+            <select x-model="f.livelihood_group" @change="groupChanged()" aria-label="Livelihood group" class="sk-sel" style="flex: 1 1 128px; min-width: 110px;">
+                <option value="">All livelihoods</option>
                 <template x-for="g in $store.livelihood.groups" :key="g.code"><option :value="g.code" x-text="g.code + ' · ' + g.label"></option></template>
             </select>
-        </label>
-        <label class="text-xs text-ink-muted">Occupation or livelihood
-            <select x-model="f.livelihood_code" @change="load(1)" :disabled="!f.livelihood_group" class="mt-1 w-full text-sm border border-slate-200 rounded-xl px-3 py-2 disabled:opacity-60">
-                <option value="">All in the group</option>
+            <select x-model="f.livelihood_code" @change="load(1)" :disabled="!f.livelihood_group" aria-label="Occupation or livelihood" class="sk-sel" style="flex: 1 1 138px; min-width: 100px;">
+                <option value="" x-text="f.livelihood_group ? 'All in the group' : 'All occupations'">All occupations</option>
                 <template x-for="i in $store.livelihood.items(f.livelihood_group)" :key="i.code"><option :value="i.code" x-text="(i.heading ? i.heading + ' › ' : '') + i.label"></option></template>
             </select>
-        </label>
-        <div class="flex items-end gap-3">
-            <button type="button" @click="clear()" class="text-xs text-ink-muted hover:text-rose-600">Clear filters</button>
-            <span class="text-xs text-ink-muted" x-show="summary" x-text="summary ? summary.period.from + ' to ' + summary.period.to : ''"></span>
+            <button type="button" @click="clear()" class="sk-clear">Clear</button>
+            <button type="button" class="sk-iconbtn sk-iconbtn-bare"
+                aria-label="About this report: the situation report of incidents, evacuation, relief, resources, damage, missing persons and alerts, from the records, under the filters"
+                title="The situation report: incidents, evacuation, relief, resources, damage, missing persons and alerts, from the records, under the filters.">
+                <i data-lucide="info"></i>
+            </button>
+            <div class="sk-btngrp" role="group" aria-label="Export" x-show="can('sakuna_reports','export')" style="flex-shrink: 0;">
+                <button type="button" class="sk-btn" :disabled="!!exporting || !!rangeError" @click="exportAs('XLSX')"><i data-lucide="download"></i><span x-text="exporting === 'XLSX' ? 'Exporting…' : 'Export XLSX'"></span></button>
+                <button type="button" class="sk-btn" :disabled="!!exporting || !!rangeError" @click="exportAs('PDF')"><span x-text="exporting === 'PDF' ? 'Exporting…' : 'Export PDF'"></span></button>
+            </div>
         </div>
-        <p class="sm:col-span-2 lg:col-span-4 text-xs text-rose-700" x-show="rangeError" x-text="rangeError"></p>
-    </div>
 
+        {{-- The date range: presets apply at once; From/To wait for Apply. --}}
+        <div x-show="rangeOpen" x-cloak x-transition.opacity.duration.100ms @click.outside="if (!$event.target.closest('.sk-daterange')) cancelRange()"
+            role="dialog" aria-label="Choose the date range" class="sk-card sk-popover" :style="rangePos">
+            <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('week')">Last 7 days</button>
+                <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('month30')">Last 30 days</button>
+                <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('thisMonth')">This month</button>
+                <button type="button" class="sk-btn sk-btn-sm" @click="presetRange('all')">All dates</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="flex flex-col gap-1 text-[11.5px] text-[#4B5568]">From
+                    <input type="date" x-model="f.from" class="sk-sel">
+                </label>
+                <label class="flex flex-col gap-1 text-[11.5px] text-[#4B5568]">To
+                    <input type="date" x-model="f.to" :min="f.from" class="sk-sel">
+                </label>
+            </div>
+            <p class="text-xs text-rose-700" x-show="rangeError" x-text="rangeError"></p>
+            <div class="flex justify-end gap-1.5">
+                <button type="button" class="sk-btn sk-btn-sm" @click="cancelRange()">Cancel</button>
+                <button type="button" class="sk-btn sk-btn-sm sk-btn-p" :disabled="!!rangeError" @click="applyRange()">Apply</button>
+            </div>
+        </div>
+    </section>
     <p x-show="failed" x-cloak class="text-sm text-rose-700">The report could not load. Check the filters and try again.</p>
-    <p x-show="loading && !summary" class="text-sm text-ink-muted">Loading the report…</p>
+    <p x-show="loading && !summary" class="sk-empty">Loading the report…</p>
 
     <template x-if="summary">
-    <div class="space-y-5">
+    <div class="space-y-3">
         {{-- Figures: incidents, people and families each on their own. --}}
-        <div class="grid gap-3 grid-cols-2 sm:grid-cols-4 xl:grid-cols-6">
-            <template x-for="card in [
-                ['Incidents', summary.incidents.total, 'text-ink'],
-                ['Evacuated individuals', summary.evacuated.individuals, 'text-brand-700'],
-                ['Evacuated families', summary.evacuated.families, 'text-brand-700'],
-                ['Inside centres now', summary.evacuation.now.persons_inside, 'text-brand-700'],
-                ['Still missing', summary.persons.missing, 'text-rose-700'],
-                ['Found', summary.persons.found, 'text-emerald-700'],
-                ['Deceased', summary.persons.deceased, 'text-slate-700'],
-                ['Unidentified', summary.persons.unidentified, 'text-amber-700'],
-                ['Relief released', summary.relief.totals.released, 'text-emerald-700'],
-                ['Resources deployed now', summary.resources.now.deployed, 'text-ink'],
-                ['Damage reports', summary.damage.reports, 'text-violet-700'],
-                ['Alerts issued', summary.alerts.issued, 'text-amber-700'],
-            ]" :key="card[0]">
-                <div class="rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-                    <p class="text-[11px] text-ink-muted" x-text="card[0]"></p>
-                    <p class="text-xl font-extrabold tabular-nums" :class="card[2]" x-text="card[1].toLocaleString()"></p>
-                </div>
-            </template>
-        </div>
+        <section class="sk-card overflow-hidden">
+            <div class="sk-g6">
+                <template x-for="card in [
+                    ['Incidents', summary.incidents.total, 'sk-t-navy'],
+                    ['Evacuated individuals', summary.evacuated.individuals, 'sk-t-blue'],
+                    ['Evacuated families', summary.evacuated.families, 'sk-t-blue'],
+                    ['Inside centres now', summary.evacuation.now.persons_inside, 'sk-t-teal'],
+                    ['Still missing', summary.persons.missing, 'sk-t-red'],
+                    ['Found', summary.persons.found, 'sk-t-green'],
+                    ['Deceased', summary.persons.deceased, 'sk-t-slate'],
+                    ['Unidentified', summary.persons.unidentified, 'sk-t-orange'],
+                    ['Relief released', summary.relief.totals.released, 'sk-t-green'],
+                    ['Resources deployed now', summary.resources.now.deployed, 'sk-t-navy'],
+                    ['Damage reports', summary.damage.reports, 'sk-t-purple'],
+                    ['Alerts issued', summary.alerts.issued, 'sk-t-orange'],
+                ]" :key="card[0]">
+                    <div class="sk-stat">
+                        <span class="sk-slab"><span class="sk-dot" :class="card[2]"></span><span x-text="card[0]"></span></span>
+                        <span class="sk-sval tabular-nums" x-text="card[1].toLocaleString()"></span>
+                    </div>
+                </template>
+            </div>
+        </section>
 
         {{-- The situation report's sections (2026-10-30): the same tables the
              XLSX and PDF carry. Counts only; names stay in their own tabs. --}}
-        <div class="flex flex-wrap gap-1.5" role="tablist" aria-label="Report sections">
-            <template x-for="tab in sectionTabs" :key="tab[0]">
-                <button type="button" role="tab" :aria-selected="section === tab[0]" @click="section = tab[0]"
-                    class="text-sm font-medium rounded-xl px-3 py-1.5 border transition-colors"
-                    :class="section === tab[0] ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-200 text-ink-body hover:border-brand-300'"
-                    x-text="tab[1]"></button>
-            </template>
+        <div class="flex flex-wrap items-center justify-between gap-2.5">
+            <div class="sk-segwrap" role="tablist" aria-label="Report sections">
+                <template x-for="tab in sectionTabs" :key="tab[0]">
+                    <button type="button" role="tab" :aria-selected="section === tab[0]" @click="section = tab[0]"
+                        class="sk-seg" :class="section === tab[0] ? 'sk-seg-on' : ''"
+                        x-text="tab[1]"></button>
+                </template>
+            </div>
+            <span class="sk-csub" x-text="summary.period.from + ' to ' + summary.period.to + ' · ' + (f.barangay || 'all barangays')"></span>
         </div>
-        <div x-show="section !== 'overview'" x-cloak class="space-y-4" data-report-section>
+        <div x-show="section !== 'overview'" x-cloak class="space-y-3" data-report-section>
             <template x-for="tbl in tablesFor(section)" :key="tbl.heading">
-                <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-                    <div class="px-4 pt-3 pb-2">
-                        <p class="text-sm font-semibold text-ink" x-text="tbl.heading"></p>
-                        <p class="text-xs text-ink-muted mt-0.5" x-show="tbl.note" x-text="tbl.note"></p>
+                <section class="sk-card overflow-hidden">
+                    <div class="sk-chead">
+                        <h3 class="sk-ctitle" x-text="tbl.heading"></h3>
+                        <span class="sk-csub" x-show="tbl.note" x-text="tbl.note"></span>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-xs text-ink-muted bg-slate-50">
-                                <tr><template x-for="c in tbl.columns" :key="c.key"><th scope="col" class="font-medium px-3 py-2" :class="c.num ? 'text-right' : 'text-left'" x-text="c.label"></th></template></tr>
+                    <div class="sk-scroll" tabindex="0" role="region" :aria-label="tbl.heading + ' table (scrolls sideways)'">
+                        <table class="sk-tbl">
+                            <thead>
+                                <tr><template x-for="c in tbl.columns" :key="c.key"><th scope="col" :class="c.num ? 'sk-r' : ''" x-text="c.label"></th></template></tr>
                             </thead>
                             <tbody>
                                 <template x-for="(r, i) in tbl.rows" :key="i">
-                                    <tr class="border-t border-slate-100">
-                                        <template x-for="c in tbl.columns" :key="c.key"><td class="px-3 py-2" :class="c.num ? 'text-right tabular-nums' : ''" x-text="c.money ? '₱' + money(r[c.key]) : cell(r[c.key])"></td></template>
+                                    <tr>
+                                        <template x-for="c in tbl.columns" :key="c.key"><td :class="c.num ? 'sk-r tabular-nums' : ''" x-text="c.money ? '₱' + money(r[c.key]) : cell(r[c.key])"></td></template>
                                     </tr>
                                 </template>
-                                <tr x-show="!tbl.rows.length"><td :colspan="tbl.columns.length" class="px-3 py-5 text-center text-sm text-ink-muted">None recorded.</td></tr>
+                                <tr x-show="!tbl.rows.length"><td :colspan="tbl.columns.length"><div class="sk-empty">None recorded.</div></td></tr>
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </section>
             </template>
         </div>
 
-        <div x-show="section === 'overview'" class="space-y-5">
-        <div class="grid gap-4 lg:grid-cols-2">
-            <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                <p class="text-sm font-semibold text-ink mb-2">Incidents over time</p>
-                <x-ui.clay-trend data="{ labels: reportTrendLabels(), series: [{ label: 'Incidents', values: reportTrendData(), color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 }] }" label="Incidents reported in the period" />
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                <p class="text-sm font-semibold text-ink mb-2">Incidents by disaster type</p>
-                <x-ui.clay-donut rows="reportTypeBreakdown().map(t => ({ label: t[0], value: t[1] }))" total-label="Incidents" empty="No incidents to chart." />
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                <p class="text-sm font-semibold text-ink mb-3">Incidents by barangay</p>
-                <p class="text-sm text-ink-muted" x-show="!barangayRows().length">No incidents to chart.</p>
-                <ul class="space-y-1.5">
-                    <template x-for="b in barangayRows()" :key="b.label">
-                        <li class="grid grid-cols-[8rem_1fr_2.5rem] items-center gap-2 text-xs">
-                            <span class="truncate" x-text="b.label"></span>
-                            <span class="h-2.5 rounded-full bg-slate-100"><span class="block h-full rounded-full bg-brand-500" :style="'width:' + b.pct + '%'"></span></span>
-                            <span class="text-right tabular-nums font-semibold" x-text="b.count"></span>
-                        </li>
-                    </template>
-                </ul>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                <p class="text-sm font-semibold text-ink mb-2">Incidents by status</p>
-                <x-ui.clay-donut rows="statusRows()" total-label="Incidents" empty="No incidents to chart." />
-            </div>
+        <div x-show="section === 'overview'" class="space-y-3">
+        <div class="sk-g4">
+            <section class="sk-card sk-span2 flex flex-col">
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 0;"><h3 class="sk-ctitle">Incidents over time</h3><span class="sk-csub">Per day</span></div>
+                <div class="px-3.5 pb-3.5 pt-1.5">
+                    <x-ui.clay-trend data="{ labels: reportTrendLabels(), series: [{ label: 'Incidents', values: reportTrendData(), color: '#2f62f5', fill: '#2f62f5', fillOpacity: 0.38 }] }" label="Incidents reported in the period" />
+                </div>
+            </section>
+            <section class="sk-card">
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 0;"><h3 class="sk-ctitle">By disaster type</h3></div>
+                <x-ui.clay-donut rows="reportTypeBreakdown().map(t => ({ label: t[0], value: t[1] }))" total-label="Incidents" empty="No incidents to chart." class="px-3.5 pb-3.5 pt-2.5" />
+            </section>
+            <section class="sk-card">
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 0;"><h3 class="sk-ctitle">By status</h3></div>
+                <x-ui.clay-donut rows="statusRows()" total-label="Incidents" empty="No incidents to chart." class="px-3.5 pb-3.5 pt-2.5" />
+            </section>
         </div>
 
-        {{-- Livelihoods of the people evacuated, as recorded at check-in. --}}
-        <div class="grid gap-4 lg:grid-cols-2">
-            <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                <p class="text-sm font-semibold text-ink mb-2">Evacuated people by livelihood group</p>
-                <x-ui.clay-donut rows="livelihoodRows()" total-label="People" empty="No classified livelihoods among the people evacuated." />
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                <p class="text-sm font-semibold text-ink mb-2">Evacuated people by livelihood</p>
-                <table class="w-full text-sm">
-                    <thead class="text-xs text-ink-muted"><tr><th scope="col" class="text-left font-medium py-1">Livelihood</th><th scope="col" class="text-right font-medium py-1">People</th></tr></thead>
+        {{-- Where, and the livelihoods of the people evacuated, as recorded at check-in. --}}
+        <div class="sk-g4">
+            <section class="sk-card">
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 4px;"><h3 class="sk-ctitle">By barangay</h3></div>
+                <div class="px-3.5 pb-3.5 pt-1.5 flex flex-col gap-2.5 text-xs">
+                    <p class="sk-csub" x-show="!barangayRows().length">No incidents to chart.</p>
+                    <template x-for="b in barangayRows()" :key="b.label">
+                        <div>
+                            <div class="flex justify-between gap-2"><span class="truncate" x-text="b.label"></span><b class="tabular-nums" x-text="b.count"></b></div>
+                            <div class="h-1.5 rounded-full bg-[#EEF2F7] mt-1"><div class="h-full rounded-full bg-[#2563EB]" :style="'width:' + b.pct + '%'"></div></div>
+                        </div>
+                    </template>
+                </div>
+            </section>
+            <section class="sk-card">
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 4px;"><h3 class="sk-ctitle">Evacuated by livelihood group</h3></div>
+                <x-ui.clay-donut rows="livelihoodRows()" total-label="People" empty="No classified livelihoods among the people evacuated." class="px-3.5 pb-3.5 pt-1.5" />
+            </section>
+            <section class="sk-card overflow-hidden">
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 4px;"><h3 class="sk-ctitle">Evacuated by livelihood</h3><span class="sk-csub">People</span></div>
+                <table class="sk-tbl">
+                    <thead><tr><th scope="col">Livelihood</th><th scope="col" class="sk-r">People</th></tr></thead>
                     <tbody>
                         <template x-for="i in summary.livelihood.items" :key="i.code">
-                            <tr class="border-t border-slate-100"><td class="py-1"><span class="font-mono text-xs text-ink-muted" x-text="i.code"></span> <span x-text="i.label"></span></td><td class="py-1 text-right tabular-nums" x-text="i.people"></td></tr>
+                            <tr><td><span class="sk-mono" x-text="i.code"></span> <span x-text="i.label"></span></td><td class="sk-r tabular-nums" x-text="i.people"></td></tr>
                         </template>
-                        <tr class="border-t border-slate-100"><td class="py-1 text-ink-muted">Not yet classified</td><td class="py-1 text-right tabular-nums" x-text="summary.livelihood.unclassified"></td></tr>
+                        <tr><td class="sk-muted">Not yet classified</td><td class="sk-r tabular-nums" x-text="summary.livelihood.unclassified"></td></tr>
+                    </tbody>
+                </table>
+            </section>
+            <section class="sk-card">
+                <div class="sk-chead" style="border-bottom: 0; padding-bottom: 4px;"><h3 class="sk-ctitle">Damage</h3></div>
+                <div class="grid grid-cols-2 gap-x-1.5 gap-y-2.5 px-3.5 pb-3.5 pt-1.5">
+                    <div><div class="sk-b tabular-nums text-base" x-text="summary.damage.units_affected.toLocaleString()"></div><div class="sk-ssub">Units affected</div></div>
+                    <div><div class="sk-b tabular-nums text-base" x-text="'₱' + summary.damage.estimated_cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })"></div><div class="sk-ssub">Estimated cost</div></div>
+                    <div class="col-span-2"><div class="sk-b text-xs" x-text="summary.damage.by_sector.map((s) => s.sector + ' ' + s.reports).join(', ') || '—'"></div><div class="sk-ssub">By sector</div></div>
+                </div>
+            </section>
+        </div>
+
+        {{-- The incidents themselves, and what the figures do and do not count. --}}
+        <section class="sk-card overflow-hidden">
+            <div class="sk-chead">
+                <h3 class="sk-ctitle">Incidents in this period</h3>
+                <span class="sk-csub" x-text="total + (total === 1 ? ' incident' : ' incidents')"></span>
+            </div>
+            <div class="sk-scroll" tabindex="0" role="region" aria-label="Incidents in this period table (scrolls sideways)">
+                <table class="sk-tbl">
+                    <thead>
+                        <tr>
+                            <th scope="col">Incident</th>
+                            <th scope="col">Reported</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Barangay</th>
+                            <th scope="col">Summary</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="sk-r">Missing</th>
+                            <th scope="col" class="sk-r">Damage reports</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="r in rows" :key="r.ref">
+                            <tr>
+                                <td><span class="sk-mono" x-text="r.ref"></span></td>
+                                <td class="whitespace-nowrap" x-text="new Date(r.reported).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })"></td>
+                                <td x-text="r.type"></td>
+                                <td x-text="r.barangay"></td>
+                                <td x-text="r.title"></td>
+                                <td><span class="sk-pill" :class="statusBadge(r.status)" x-text="r.status"></span></td>
+                                <td class="sk-r tabular-nums" x-text="r.missing"></td>
+                                <td class="sk-r tabular-nums" x-text="r.damage_reports"></td>
+                            </tr>
+                        </template>
+                        <tr x-show="!rows.length"><td colspan="8"><div class="sk-empty">No incidents match these filters.</div></td></tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 bg-white p-4 grid gap-2 sm:grid-cols-3 text-sm">
-            <div><p class="text-xs text-ink-muted">Damage: units affected</p><p class="font-bold tabular-nums" x-text="summary.damage.units_affected.toLocaleString()"></p></div>
-            <div><p class="text-xs text-ink-muted">Damage: estimated cost</p><p class="font-bold tabular-nums" x-text="'₱' + summary.damage.estimated_cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })"></p></div>
-            <div><p class="text-xs text-ink-muted">By sector</p><p class="text-xs" x-text="summary.damage.by_sector.map((s) => s.sector + ' ' + s.reports).join(', ') || '—'"></p></div>
-        </div>
-
-        <ul class="rounded-2xl bg-slate-50 p-4 text-xs text-ink-muted space-y-1 list-disc pl-8">
-            <template x-for="(n, i) in summary.notes" :key="i"><li x-text="n"></li></template>
-        </ul>
-
-        {{-- The incidents themselves. --}}
-        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-            <table class="w-full text-sm">
-                <thead class="text-xs text-ink-muted uppercase tracking-wide bg-slate-50">
-                    <tr>
-                        <th scope="col" class="text-left font-medium px-3 py-2">Incident</th>
-                        <th scope="col" class="text-left font-medium px-3 py-2">Reported</th>
-                        <th scope="col" class="text-left font-medium px-3 py-2">Type</th>
-                        <th scope="col" class="text-left font-medium px-3 py-2">Barangay</th>
-                        <th scope="col" class="text-left font-medium px-3 py-2">Summary</th>
-                        <th scope="col" class="text-left font-medium px-3 py-2">Status</th>
-                        <th scope="col" class="text-right font-medium px-3 py-2">Missing</th>
-                        <th scope="col" class="text-right font-medium px-3 py-2">Damage reports</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="r in rows" :key="r.ref">
-                        <tr class="border-t border-slate-100">
-                            <td class="px-3 py-2 font-mono text-xs" x-text="r.ref"></td>
-                            <td class="px-3 py-2 text-xs" x-text="new Date(r.reported).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })"></td>
-                            <td class="px-3 py-2" x-text="r.type"></td>
-                            <td class="px-3 py-2" x-text="r.barangay"></td>
-                            <td class="px-3 py-2" x-text="r.title"></td>
-                            <td class="px-3 py-2 text-xs" x-text="r.status"></td>
-                            <td class="px-3 py-2 text-right tabular-nums" x-text="r.missing"></td>
-                            <td class="px-3 py-2 text-right tabular-nums" x-text="r.damage_reports"></td>
-                        </tr>
-                    </template>
-                    <tr x-show="!rows.length"><td colspan="8" class="px-3 py-6 text-center text-sm text-ink-muted">No incidents match these filters.</td></tr>
-                </tbody>
-            </table>
-        </div>
-        <div x-show="lastPage > 1" class="flex items-center justify-end gap-2 text-xs">
-            <button type="button" :disabled="page <= 1" @click="load(page - 1)" class="px-3 py-1.5 rounded-xl border border-slate-200 disabled:opacity-40">Previous</button>
-            <span x-text="'Page ' + page + ' of ' + lastPage + ' · ' + total + ' incidents'"></span>
-            <button type="button" :disabled="page >= lastPage" @click="load(page + 1)" class="px-3 py-1.5 rounded-xl border border-slate-200 disabled:opacity-40">Next</button>
-        </div>
+            <div x-show="lastPage > 1" class="sk-tfoot flex items-center justify-end gap-2">
+                <button type="button" :disabled="page <= 1" @click="load(page - 1)" class="sk-btn sk-btn-sm">Previous</button>
+                <span x-text="'Page ' + page + ' of ' + lastPage + ' · ' + total + ' incidents'"></span>
+                <button type="button" :disabled="page >= lastPage" @click="load(page + 1)" class="sk-btn sk-btn-sm">Next</button>
+            </div>
+            <details class="sk-about" x-show="summary.notes.length">
+                <summary><i data-lucide="info"></i>About these figures</summary>
+                <ul>
+                    <template x-for="(n, i) in summary.notes" :key="i"><li x-text="n"></li></template>
+                </ul>
+            </details>
+        </section>
         </div>
     </div>
     </template>

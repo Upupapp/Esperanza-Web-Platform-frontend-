@@ -40,123 +40,118 @@
             (!damageSectorFilter || d.sector === damageSectorFilter)
         );
     },
-}" x-init="loadDamage()" class="space-y-4">
+}" x-init="loadDamage()" class="space-y-3">
 
-{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h2 class="text-base font-semibold text-ink-body">Damage Assessment</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Barangay-level damage reports, with optional photo evidence.</p>
+{{-- Sakuna Redesign (2026-11-02): stat strip and actions, then the list card. --}}
+<div class="sk-pagebar">
+    <div class="sk-stats" x-show="!damagesFailed" :class="damagesLoading ? 'animate-pulse opacity-60' : ''">
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-indigo"></span>Total assessments</span>
+            <span class="sk-sval tabular-nums" x-text="damagesList.length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-amber"></span>Units affected</span>
+            <span class="sk-sval tabular-nums" x-text="damagesList.reduce((s,d) => s + (d.units_affected || 0), 0)"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-red"></span>Est. total damage</span>
+            <span class="sk-sval tabular-nums" x-text="'₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US')"></span>
+        </div>
     </div>
-    <div class="flex items-center gap-2 flex-wrap">
-        <button @click="exportCSV(filteredDamage, 'damage-assessments.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+    <div class="sk-actions">
+        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About damage assessment: barangay-level damage reports, with optional photo evidence" title="Damage assessment: barangay-level damage reports, with optional photo evidence.">
+            <i data-lucide="info"></i>
         </button>
-        <button @click="exportPDF(filteredDamage, 'damage-assessments.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
-        </button>
-        <button x-show="can('sakuna_damage', 'create')" @click="openCreateAssessment()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> New Assessment
+        <div class="sk-btngrp" role="group" aria-label="Export">
+            <button type="button" class="sk-btn" @click="exportCSV(filteredDamage, 'damage-assessments.csv')">
+                <i data-lucide="download"></i> Export CSV
+            </button>
+            <button type="button" class="sk-btn" @click="exportPDF(filteredDamage, 'damage-assessments.csv')">
+                Export PDF
+            </button>
+        </div>
+        <button type="button" x-show="can('sakuna_damage', 'create')" @click="openCreateAssessment()" class="sk-btn sk-btn-p">
+            <i data-lucide="plus"></i> New Assessment
         </button>
     </div>
 </div>
 
-<div x-show="damagesLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
+<div x-show="damagesLoading" class="sk-card h-72 animate-pulse"></div>
 <div x-show="damagesFailed" x-cloak><x-ui.error-state messageExpr="'Could not load damage assessments.'" retryExpr="loadDamage()" :retryable="true" /></div>
 
-<div x-show="!damagesLoading && !damagesFailed" x-cloak class="space-y-4">
+<div x-show="!damagesLoading && !damagesFailed" x-cloak class="space-y-3">
 
-{{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-    <x-ui.stat-card layout="compact" tone="violet" object="document" label="Total Assessments" valueBind="damagesList.length" />
-    <x-ui.stat-card layout="compact" tone="amber" object="building" label="Units Affected" valueBind="damagesList.reduce((s,d) => s + (d.units_affected || 0), 0)" />
-    <x-ui.stat-card layout="compact" tone="rose" object="flame" label="Est. Total Damage" valueBind="'₱' + damagesList.reduce((s,d) => s + (d.estimated_cost || 0), 0).toLocaleString('en-US')" />
-</div>
-
-{{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] p-4">
-    <div class="flex flex-wrap gap-3 items-center">
-        <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
-            <input aria-label="Search by ref, barangay or sector" type="text" x-model="damageSearch" placeholder="Search by ref, barangay or sector…"
-                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+<section class="sk-card overflow-hidden">
+    {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <div class="sk-toolbar">
+        <div class="sk-search" style="max-width: 340px;">
+            <label for="damage-search" class="sr-only">Search by ref, barangay or sector</label>
+            <i data-lucide="search"></i>
+            <input id="damage-search" aria-label="Search by ref, barangay or sector" type="search" x-model="damageSearch" placeholder="Search by ref, barangay or sector…">
         </div>
-        <select aria-label="Damage barangay filter" x-model="damageBarangayFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Barangays</option>
+        <select aria-label="Damage barangay filter" x-model="damageBarangayFilter" class="sk-sel">
+            <option value="">All barangays</option>
             @foreach($barangays as $brgy)
                 <option value="{{ $brgy }}">{{ $brgy }}</option>
             @endforeach
         </select>
-        <select aria-label="Damage sector filter" x-model="damageSectorFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Sectors</option>
+        <select aria-label="Damage sector filter" x-model="damageSectorFilter" class="sk-sel">
+            <option value="">All sectors</option>
             <template x-for="s in damageSectors()" :key="s"><option :value="s" x-text="s"></option></template>
         </select>
-        <button @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''"
-            class="text-sm text-ink-muted hover:text-slate-700 px-3 py-2 rounded-2xl hover:bg-slate-100 transition-colors">
-            Clear filters
-        </button>
+        <button type="button" class="sk-clear" @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''">Clear</button>
+        <span class="sk-spacer"></span>
+        <span class="sk-csub">Showing <strong x-text="filteredDamage.length"></strong> of <strong x-text="damagesList.length"></strong> assessments</span>
     </div>
-</div>
 
-{{-- ── Assessment Table ────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+    {{-- ── Assessment Table ─────────────────────────────────────────────────────────────── --}}
+    <div class="sk-scroll" tabindex="0" role="region" aria-label="Damage assessments table (scrolls sideways)">
+        <table class="sk-tbl min-w-[820px]">
             <thead>
-                <tr class="bg-well/70">
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Ref</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Barangay</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Sector</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Units Affected</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Est. Damage</th>
-                    <th class="text-center px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Photos</th>
-                    <th class="text-left px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Status</th>
-                    <th class="text-right px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] whitespace-nowrap">Actions</th>
+                <tr>
+                    <th>Ref</th>
+                    <th>Barangay</th>
+                    <th>Sector</th>
+                    <th class="sk-r">Units affected</th>
+                    <th class="sk-r">Est. damage</th>
+                    <th class="text-center">Photos</th>
+                    <th>Status</th>
+                    <th class="sk-r">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-brand-600/[.08]">
+            <tbody>
                 <template x-for="d in filteredDamage" :key="d.ref">
-                    <tr class="hover:bg-white/60 transition-colors cursor-pointer group" @click="openAssessmentDetail(d)" tabindex="0" @keydown.enter.prevent="openAssessmentDetail(d)">
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="d.ref"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap font-medium text-ink-body" x-text="d.barangay"></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium" x-text="d.sector"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700" x-text="d.units_affected || '—'"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right font-medium text-ink-body" x-text="d.estimated_cost ? '₱' + d.estimated_cost.toLocaleString('en-US') : '—'"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-center text-ink-muted" x-text="d.photos || 0"></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(d.status)" x-text="d.status"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right" @click.stop>
-                            <div class="flex items-center justify-end gap-1">
-                                <button @click="openAssessmentDetail(d)" class="p-1.5 rounded-xl text-ink-muted hover:text-brand-600 hover:bg-brand-50 transition-colors" title="View Details">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <button x-show="can('sakuna_damage','edit')" @click="openEditAssessment(d)" class="p-1.5 rounded-xl text-ink-muted hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Edit">
-                                    <i data-lucide="pencil" class="w-4 h-4"></i>
-                                </button>
-                            </div>
+                    <tr class="cursor-pointer group" @click="openAssessmentDetail(d)" tabindex="0" @keydown.enter.prevent="openAssessmentDetail(d)">
+                        <td class="whitespace-nowrap"><span class="sk-mono" x-text="d.ref"></span></td>
+                        <td class="whitespace-nowrap sk-b group-hover:text-[#1D4ED8] transition-colors" x-text="d.barangay"></td>
+                        <td class="whitespace-nowrap"><span class="sk-tag" x-text="d.sector"></span></td>
+                        <td class="sk-r whitespace-nowrap tabular-nums" x-text="d.units_affected || '—'"></td>
+                        <td class="sk-r whitespace-nowrap tabular-nums sk-b" x-text="d.estimated_cost ? '₱' + d.estimated_cost.toLocaleString('en-US') : '—'"></td>
+                        <td class="whitespace-nowrap text-center sk-muted tabular-nums" x-text="d.photos || 0"></td>
+                        <td class="whitespace-nowrap"><span :class="statusBadge(d.status)" class="sk-pill" x-text="d.status"></span></td>
+                        <td class="sk-r whitespace-nowrap" @click.stop>
+                            <button type="button" @click="openAssessmentDetail(d)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'View ' + d.ref" title="View Details">
+                                <i data-lucide="eye"></i>
+                            </button>
+                            <button type="button" x-show="can('sakuna_damage','edit')" @click="openEditAssessment(d)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Edit ' + d.ref" title="Edit">
+                                <i data-lucide="pencil"></i>
+                            </button>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="filteredDamage.length === 0">
-                    <td colspan="8" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-3 text-ink-muted">
-                            <i data-lucide="clipboard-list" class="w-10 h-10 opacity-30"></i>
-                            <p class="text-sm font-medium text-ink-muted">No assessments match your filters.</p>
-                            <button @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
+                    <td colspan="8">
+                        <div class="sk-empty" style="padding: 36px 16px;">
+                            <i data-lucide="clipboard-list"></i>
+                            <span>No assessments match your filters.</span>
+                            <button type="button" @click="damageSearch = ''; damageBarangayFilter = ''; damageSectorFilter = ''" class="sk-clear">Clear Filters</button>
                         </div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <div class="px-4 py-3 border-t border-brand-600/10 bg-slate-50/40">
-        <p class="text-xs text-ink-muted">Showing <strong x-text="filteredDamage.length"></strong> of <strong x-text="damagesList.length"></strong> assessments</p>
-    </div>
-</div>
+</section>
 
 </div>{{-- /loaded content --}}
 

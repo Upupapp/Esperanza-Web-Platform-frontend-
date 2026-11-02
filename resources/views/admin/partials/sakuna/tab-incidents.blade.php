@@ -47,26 +47,30 @@
             (!incidentSourceFilter || (incidentSourceFilter === 'resident') === (inc.source === 'Citizen Portal'))
         );
     },
-}" x-init="loadIncidentsList()" class="space-y-5">
+}" x-init="loadIncidentsList()" class="space-y-3">
 
-{{-- ── Header ──────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-start justify-between gap-3">
-    <div>
-        <h2 class="text-lg font-semibold text-ink-body">Incident Management</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Report, track, validate, and coordinate response to all active incidents.</p>
+{{-- ── Stats + actions (Sakuna Redesign, 2026-11-02) ───────────────────────────────────── --}}
+<div class="sk-pagebar">
+    <div class="sk-stats">
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Total</span><span class="sk-sval tabular-nums" x-text="incidentsList.length"></span></div>
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-red"></span>Critical</span><span class="sk-sval sk-t-red tabular-nums" x-text="incidentsList.filter(i => i.severity === 'Critical').length"></span></div>
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Active</span><span class="sk-sval tabular-nums" x-text="incidentsList.filter(i => !['Completed','Archived'].includes(i.status)).length"></span></div>
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-green"></span>Resolved</span><span class="sk-sval tabular-nums" x-text="incidentsList.filter(i => i.status === 'Completed').length"></span></div>
     </div>
-    <div class="flex items-center gap-2 flex-wrap">
-        <button @click="exportCSV(filteredIncidents, 'incidents-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+    <div class="sk-actions">
+        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About Incident Management: report, track, validate, and coordinate response to all active incidents." title="Incident Management: report, track, validate, and coordinate response to all active incidents.">
+            <i data-lucide="info"></i>
         </button>
-        <button @click="exportPDF(filteredIncidents, 'incidents-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
-        </button>
-        <button x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> New Incident
+        <div class="sk-btngrp" role="group" aria-label="Export">
+            <button type="button" @click="exportCSV(filteredIncidents, 'incidents-export.csv')" class="sk-btn">
+                <i data-lucide="download"></i> Export CSV
+            </button>
+            <button type="button" @click="exportPDF(filteredIncidents, 'incidents-export.csv')" class="sk-btn">
+                Export PDF
+            </button>
+        </div>
+        <button type="button" x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()" class="sk-btn sk-btn-p">
+            <i data-lucide="plus"></i> New Incident
         </button>
     </div>
 </div>
@@ -74,27 +78,17 @@
 <div x-show="incidentsLoading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-64 opacity-80" /></div>
 <div x-show="incidentsFailed" x-cloak><x-ui.error-state messageExpr="'Could not load incidents.'" retryExpr="loadIncidentsList()" :retryable="true" /></div>
 
-<div x-show="!incidentsLoading && !incidentsFailed" x-cloak class="space-y-5">
-
-{{-- ── Stats Summary ────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap gap-2">
-    <x-ui.pill color="slate"><i data-lucide="list" class="w-3.5 h-3.5"></i> <span x-text="'Total: ' + incidentsList.length"></span></x-ui.pill>
-    <x-ui.pill color="rose"><i data-lucide="flame" class="w-3.5 h-3.5"></i> <span x-text="'Critical: ' + incidentsList.filter(i => i.severity === 'Critical').length"></span></x-ui.pill>
-    <x-ui.pill color="orange"><i data-lucide="truck" class="w-3.5 h-3.5"></i> <span x-text="'Active: ' + incidentsList.filter(i => !['Completed','Archived'].includes(i.status)).length"></span></x-ui.pill>
-    <x-ui.pill color="emerald"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i> <span x-text="'Resolved: ' + incidentsList.filter(i => i.status === 'Completed').length"></span></x-ui.pill>
-</div>
+<section x-show="!incidentsLoading && !incidentsFailed" x-cloak class="sk-card overflow-hidden">
 
 {{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap gap-2 items-center">
-    <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-        <input aria-label="Search by ID, type, or barangay" type="text" x-model="incidentSearch"
-            placeholder="Search by ID, type, or barangay..."
-            class="pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none w-64 transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+<div class="sk-toolbar">
+    <div class="sk-search">
+        <i data-lucide="search"></i>
+        <input aria-label="Search by ID, type, or barangay" type="search" x-model="incidentSearch"
+            placeholder="Search by ID, type, or barangay…">
     </div>
-    <select aria-label="Incident type filter" x-model="incidentTypeFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Types</option>
+    <select aria-label="Incident type filter" x-model="incidentTypeFilter" class="sk-sel">
+        <option value="">All types</option>
         <option>Flood</option><option>Landslide</option><option>Fire</option><option>Earthquake</option>
         <option>Vehicular Accident</option><option>Medical Emergency</option><option>Missing Person</option>
         <option>Stranded Resident</option><option>Fallen Tree</option><option>Downed Power Line</option>
@@ -103,14 +97,12 @@
         <option>Water Interruption</option><option>Power Interruption</option><option>Public Health Emergency</option>
         <option>Other</option>
     </select>
-    <select aria-label="Incident severity filter" x-model="incidentSeverityFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Severities</option>
+    <select aria-label="Incident severity filter" x-model="incidentSeverityFilter" class="sk-sel">
+        <option value="">All severities</option>
         <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
     </select>
-    <select aria-label="Incident status filter" x-model="incidentStatusFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Statuses</option>
+    <select aria-label="Incident status filter" x-model="incidentStatusFilter" class="sk-sel">
+        <option value="">All statuses</option>
         <option value="Submitted">Reported</option>
         <option value="Under Verification">Validated</option>
         <option value="Assigned">Assigned</option>
@@ -118,108 +110,97 @@
         <option value="Completed">Resolved</option>
         <option value="Archived">Closed</option>
     </select>
-    <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Barangays</option>
+    <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter" class="sk-sel">
+        <option value="">All barangays</option>
         @foreach($barangays as $brgy)
             <option>{{ $brgy }}</option>
         @endforeach
     </select>
     {{-- Reports residents sent from their Sakuna page, apart from the ones staff entered (2026-10-17). --}}
-    <select aria-label="Incident source filter" x-model="incidentSourceFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Sources</option>
+    <select aria-label="Incident source filter" x-model="incidentSourceFilter" class="sk-sel">
+        <option value="">All sources</option>
         <option value="resident">Reported by residents</option>
         <option value="staff">Entered by staff</option>
     </select>
-    <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
-        class="inline-flex items-center gap-1.5 text-sm text-ink-muted surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-        <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
-    </button>
+    <button type="button" @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
+        class="sk-clear">Clear</button>
+    <span class="sk-spacer"></span>
+    <span class="sk-csub" x-text="filteredIncidents.length + (filteredIncidents.length === 1 ? ' incident' : ' incidents')"></span>
 </div>
 
 {{-- ── Incident Table ───────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-brand-600/[.08]">
-            <thead>
-                <tr class="bg-slate-50 text-left">
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Ref</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Type</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Reported</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Barangay / Sitio</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Severity</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Assigned To</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Status</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap">Elapsed</th>
-                    <th class="px-4 py-3 text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r whitespace-nowrap text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-brand-600/[.08]">
-                <template x-for="inc in filteredIncidents" :key="inc.ref">
-                    <tr class="hover:bg-white/60 transition-colors">
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="font-mono text-xs text-ink-muted" x-text="inc.ref"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
-                                <span class="flex-shrink-0 w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center">
-                                    <i :data-lucide="incidentTypeIcon(inc.type)" class="w-3.5 h-3.5 text-brand-600"></i>
-                                </span>
-                                <span class="text-sm font-medium text-slate-700" x-text="inc.type"></span>
-                                <span x-show="inc.source === 'Citizen Portal'" class="text-[10.5px] font-semibold text-sky-800 bg-sky-50 ring-1 ring-inset ring-sky-200 px-1.5 py-0.5 rounded-full">Resident</span>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="text-xs text-slate-600" x-text="inc.reported ? new Date(inc.reported).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></span><br>
-                            <span class="text-xs text-ink-muted" x-text="inc.reported ? new Date(inc.reported).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''"></span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="text-sm font-medium text-slate-700" x-text="inc.barangay"></span><br>
-                            <span class="text-xs text-ink-muted" x-text="inc.sitio || '—'"></span>
-                            {{-- On the Command Center's map, or not (no pin saved): never a guessed point. --}}
-                            <span class="mt-0.5 flex items-center gap-1 text-[10.5px] font-semibold" :class="hasMapPin(inc) ? 'text-emerald-700' : 'text-ink-muted'">
-                                <i :data-lucide="hasMapPin(inc) ? 'map-pin-check' : 'map-pin-off'" class="w-3 h-3"></i>
-                                <span x-text="hasMapPin(inc) ? 'On the map' : 'No map pin'"></span>
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span :class="severityBadge(inc.severity)" class="px-2.5 py-0.5 rounded-full text-xs font-medium" x-text="inc.severity"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="text-sm text-slate-700" x-text="inc.assigned_name || '—'" x-show="inc.assigned_name"></span>
-                            <span class="text-xs italic text-amber-600" x-show="!inc.assigned_name">Unassigned</span>
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(inc.status)" x-text="incidentStatusLabel(inc.status)" :title="'Status on record: ' + inc.status"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span class="text-xs text-ink-muted" x-text="elapsed(inc.reported)"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right">
-                            <div class="flex items-center justify-end gap-1.5">
-                                <button @click="openIncidentDetail(inc)"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-xl transition-colors">
-                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
-                                </button>
-                                <button x-show="inc.available_verbs.includes('validate')" @click="actIncidentVerb(inc, 'validate')"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-xl transition-colors">
-                                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Validate
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </template>
-                <tr x-show="filteredIncidents.length === 0">
-                    <td colspan="9" class="px-4 py-12 text-center">
-                        <div class="flex flex-col items-center gap-2">
-                            <span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-1">
-                                <i data-lucide="search-x" class="w-5 h-5 text-ink-muted"></i>
-                            </span>
-                            <p class="text-sm text-ink-muted font-medium">No incidents match your filters.</p>
-                            <button @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
-                                class="text-sm text-brand-600 hover:underline mt-1">Clear filters</button>
+<div class="sk-scroll" tabindex="0" role="region" aria-label="Incidents table (scrolls sideways)">
+    <table class="sk-tbl sk-tbl-tight">
+        <thead>
+            <tr>
+                <th>Ref</th>
+                <th>Type</th>
+                <th>Reported</th>
+                <th>Barangay / sitio</th>
+                <th>Severity</th>
+                <th>Assigned to</th>
+                <th>Status</th>
+                <th>Elapsed</th>
+                <th class="sk-r">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <template x-for="inc in filteredIncidents" :key="inc.ref">
+                <tr>
+                    <td class="whitespace-nowrap"><span class="sk-mono" x-text="inc.ref"></span></td>
+                    <td class="whitespace-nowrap">
+                        <div class="flex items-center gap-1.5">
+                            <i :data-lucide="incidentTypeIcon(inc.type)" class="w-3.5 h-3.5 text-[#1D4ED8] flex-shrink-0"></i>
+                            <span class="sk-b" x-text="inc.type"></span>
+                            <span x-show="inc.source === 'Citizen Portal'" class="sk-pill sk-p-blue ml-1" style="font-weight: 500;">Resident</span>
+                        </div>
+                    </td>
+                    <td class="whitespace-nowrap">
+                        <span x-text="inc.reported ? new Date(inc.reported).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></span>
+                        <span class="sk-muted" x-text="inc.reported ? new Date(inc.reported).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''"></span>
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-1.5 flex-wrap"><span class="sk-b" x-text="inc.barangay"></span><span class="sk-muted" x-show="inc.sitio" x-text="'· ' + inc.sitio"></span></div>
+                        {{-- On the Command Center's map, or not (no pin saved): never a guessed point. --}}
+                        <div class="sk-sub inline-flex items-center gap-1" :class="hasMapPin(inc) ? '!text-emerald-700' : ''">
+                            <i :data-lucide="hasMapPin(inc) ? 'map-pin-check' : 'map-pin-off'" class="w-3 h-3"></i>
+                            <span x-text="hasMapPin(inc) ? 'On the map' : 'No map pin'"></span>
+                        </div>
+                    </td>
+                    <td class="whitespace-nowrap"><span :class="severityBadge(inc.severity)" class="sk-pill" x-text="inc.severity"></span></td>
+                    <td class="whitespace-nowrap">
+                        <span x-text="inc.assigned_name || '—'" x-show="inc.assigned_name"></span>
+                        <span class="italic text-[#B45309]" x-show="!inc.assigned_name">Unassigned</span>
+                    </td>
+                    <td class="whitespace-nowrap"><span :class="statusBadge(inc.status)" class="sk-pill" x-text="incidentStatusLabel(inc.status)" :title="'Status on record: ' + inc.status"></span></td>
+                    <td class="whitespace-nowrap sk-muted" x-text="elapsed(inc.reported)"></td>
+                    <td class="whitespace-nowrap sk-r">
+                        <div class="inline-flex items-center justify-end gap-1.5">
+                            <button type="button" x-show="inc.available_verbs.includes('validate')" @click="actIncidentVerb(inc, 'validate')" class="sk-btn sk-btn-sm sk-btn-ok">
+                                <i data-lucide="check"></i> Validate
+                            </button>
+                            <button type="button" @click="openIncidentDetail(inc)" class="sk-btn sk-btn-sm sk-btn-soft">
+                                <i data-lucide="eye"></i> View
+                            </button>
                         </div>
                     </td>
                 </tr>
-            </tbody>
-        </table>
-    </div>
+            </template>
+            <tr x-show="filteredIncidents.length === 0">
+                <td colspan="9">
+                    <div class="sk-empty flex-col">
+                        <i data-lucide="search-x"></i>
+                        <span><b class="text-slate-700">No incidents match your filters.</b></span>
+                        <button type="button" @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
+                            class="sk-clear">Clear filters</button>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
-</div>{{-- /loaded content --}}
+</section>{{-- /loaded content --}}
 
 {{-- ────────────────────────────────────────────────────────────────────────────────────── --}}
 {{-- INCIDENT DETAIL MODAL (shared)                                                         --}}

@@ -36,213 +36,208 @@
             (!this.centerBarangayFilter || c.barangay === this.centerBarangayFilter)
         );
     },
-}" x-init="loadCenters()" class="space-y-5">
+}" x-init="loadCenters()" class="space-y-3">
 
-{{-- ── Header ──────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-start justify-between gap-3">
-    <div>
-        <h2 class="text-lg font-semibold text-ink-body">Evacuation Centers</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Register facilities and manage occupancy and open/close status.</p>
+{{-- Sakuna Redesign (2026-11-02): stat strip and actions, then one card
+     holding the toolbar and either the card grid or the table. --}}
+
+{{-- ── Stats + actions ──────────────────────────────────────────────────────────────────── --}}
+<div class="sk-pagebar">
+    <div class="sk-stats" x-show="!centersFailed" :class="centersLoading ? 'animate-pulse opacity-60' : ''">
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-green"></span>Open</span>
+            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status === 'Processing').length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Near/over capacity</span>
+            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status === 'Processing' && c.pct >= 75).length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-slate"></span>Not open</span>
+            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status !== 'Processing').length"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-blue"></span>Total capacity (open)</span>
+            <span class="sk-sval tabular-nums" x-text="centersList.filter(c => c.status === 'Processing').reduce((s,c) => s + c.capacity, 0).toLocaleString()"></span>
+        </div>
+        <div class="sk-stat">
+            <span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Current occupants</span>
+            <span class="sk-sval tabular-nums" x-text="centersList.reduce((s,c) => s + c.individuals, 0).toLocaleString()"></span>
+        </div>
     </div>
-    <div class="flex items-center gap-2 flex-wrap">
-        <button @click="exportCSV(filteredCenters, 'evacuation-centers-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+    <div class="sk-actions">
+        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About evacuation centers: register facilities and manage occupancy and open/close status" title="Register facilities and manage occupancy and open/close status.">
+            <i data-lucide="info"></i>
         </button>
-        <button @click="exportPDF(filteredCenters, 'evacuation-centers-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
-        </button>
-        <button x-show="can('sakuna_centers', 'create')" @click="openCreateCenter()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Add Center
+        <div class="sk-btngrp" role="group" aria-label="Export">
+            <button type="button" class="sk-btn" @click="exportCSV(filteredCenters, 'evacuation-centers-export.csv')">
+                <i data-lucide="download"></i> Export CSV
+            </button>
+            <button type="button" class="sk-btn" @click="exportPDF(filteredCenters, 'evacuation-centers-export.csv')">
+                Export PDF
+            </button>
+        </div>
+        <button type="button" x-show="can('sakuna_centers', 'create')" @click="openCreateCenter()" class="sk-btn sk-btn-p">
+            <i data-lucide="plus"></i> Add Center
         </button>
     </div>
 </div>
 
-<div x-show="centersLoading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-    @for ($i = 0; $i < 6; $i++)<div class="surface-glass rounded-[26px] h-56 animate-pulse"></div>@endfor
-</div>
+<div x-show="centersLoading" class="sk-card h-80 animate-pulse"></div>
 <div x-show="centersFailed" x-cloak><x-ui.error-state messageExpr="'Could not load evacuation centers.'" retryExpr="loadCenters()" :retryable="true" /></div>
 
-<div x-show="!centersLoading && !centersFailed" x-cloak class="space-y-5">
+<div x-show="!centersLoading && !centersFailed" x-cloak class="space-y-3">
 
-{{-- ── Status + Occupancy Summary ──────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap gap-2 items-center">
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-        <i data-lucide="door-open" class="w-3.5 h-3.5"></i> <span x-text="'Open: ' + centersList.filter(c => c.status === 'Processing').length"></span>
-    </span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-        <i data-lucide="triangle-alert" class="w-3.5 h-3.5"></i> <span x-text="'Near/Over Capacity: ' + centersList.filter(c => c.status === 'Processing' && c.pct >= 75).length"></span>
-    </span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-        <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> <span x-text="'Not Open: ' + centersList.filter(c => c.status !== 'Processing').length"></span>
-    </span>
-    <span class="mx-1 text-slate-200 select-none">|</span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-        <i data-lucide="users" class="w-3.5 h-3.5"></i> <span x-text="'Total Capacity (open): ' + centersList.filter(c => c.status === 'Processing').reduce((s,c) => s + c.capacity, 0).toLocaleString()"></span>
-    </span>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-        <i data-lucide="user-check" class="w-3.5 h-3.5"></i> <span x-text="'Current: ' + centersList.reduce((s,c) => s + c.individuals, 0).toLocaleString()"></span>
-    </span>
-</div>
-
-{{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap gap-2 items-center">
-    <div class="relative">
-        <i data-lucide="search" class="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-        <input aria-label="Search by name or barangay" type="text" x-model="centerSearch"
-            placeholder="Search by name or barangay..."
-            class="pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none w-60 transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-    </div>
-    <select aria-label="Center status filter" x-model="centerStatusFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Statuses</option>
-        <option value="Draft">Registered (not open)</option>
-        <option value="Processing">Open</option>
-        <option value="Archived">Closed</option>
-    </select>
-    <select aria-label="Center barangay filter" x-model="centerBarangayFilter"
-        class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-        <option value="">All Barangays</option>
-        @foreach($barangays as $brgy)
-            <option>{{ $brgy }}</option>
-        @endforeach
-    </select>
-    <button @click="centerSearch=''; centerStatusFilter=''; centerBarangayFilter='';"
-        class="inline-flex items-center gap-1.5 text-sm text-ink-muted surface-glass-sm rounded-2xl px-3.5 py-2 hover:bg-white/90 transition-colors">
-        <i data-lucide="x" class="w-3.5 h-3.5"></i> Clear
-    </button>
-    <div class="surface-glass rounded-[26px] ml-auto flex items-center overflow-hidden">
-        <button aria-label="Card view" @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-ink-muted hover:text-slate-600'" class="px-3 py-2 transition-colors">
-            <i data-lucide="layout-grid" class="w-4 h-4"></i>
-        </button>
-        <button aria-label="Table view" @click="viewMode = 'table'" :class="viewMode === 'table' ? 'bg-brand-50 text-brand-600' : 'text-ink-muted hover:text-slate-600'" class="px-3 py-2 border-l border-slate-200 transition-colors">
-            <i data-lucide="table" class="w-4 h-4"></i>
-        </button>
-    </div>
-</div>
-
-{{-- ── Centers Grid View ────────────────────────────────────────────────────────────────── --}}
-<div x-show="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-    <template x-for="c in filteredCenters" :key="c.ref">
-        <div class="surface-glass rounded-[26px] p-5 flex flex-col gap-3 hover:shadow-glass-hover transition-shadow">
-            <div class="flex items-start justify-between gap-2">
-                <div>
-                    <h3 class="text-sm font-semibold text-ink-body leading-tight" x-text="c.name"></h3>
-                    <p class="text-xs text-ink-muted mt-0.5" x-text="c.barangay"></p>
-                </div>
-                <span :class="statusBadge(c.status)" class="flex-shrink-0" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span>
-            </div>
-
-            <div class="space-y-1.5" x-show="c.status === 'Processing'">
-                <div class="flex justify-between text-xs text-ink-muted">
-                    <span>Occupancy</span>
-                    <span :class="c.pct >= 90 ? 'text-rose-600 font-semibold' : (c.pct >= 75 ? 'text-amber-600 font-medium' : 'text-slate-600')" x-text="c.pct + '%'"></span>
-                </div>
-                <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div class="h-2 rounded-full transition-all" :class="occupancyBar(c.pct)" :style="'width:' + c.pct + '%'"></div>
-                </div>
-                <p class="text-xs text-ink-muted" x-text="c.individuals.toLocaleString() + ' / ' + c.capacity.toLocaleString() + ' persons'"></p>
-            </div>
-            <p class="text-xs text-ink-muted italic" x-show="c.status !== 'Processing'" x-text="'Capacity: ' + c.capacity.toLocaleString()"></p>
-
-            <div class="grid grid-cols-2 gap-2 border-t border-slate-50 pt-3">
-                <div class="text-center">
-                    <p class="text-sm font-semibold text-ink-body" x-text="c.families"></p>
-                    <p class="text-xs text-ink-muted">Families</p>
-                </div>
-                <div class="text-center border-l border-brand-600/10">
-                    <p class="text-sm font-semibold" :class="(c.capacity - c.individuals) > 0 ? 'text-emerald-600' : 'text-rose-600'" x-text="(c.capacity - c.individuals).toLocaleString()"></p>
-                    <p class="text-xs text-ink-muted">Available</p>
-                </div>
-            </div>
-
-            <p class="text-xs text-ink-muted" x-show="c.address"><i data-lucide="map-pin" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i><span x-text="c.address"></span></p>
-            {{-- On the residents' map, or not yet (registered before the map, 2026-10-26). --}}
-            <div class="flex items-center justify-between gap-2 text-xs">
-                <span class="flex items-center gap-1 font-semibold" :class="hasMapPin(c) ? 'text-emerald-700' : 'text-amber-700'">
-                    <i :data-lucide="hasMapPin(c) ? 'map-pin-check' : 'map-pin-off'" class="w-3.5 h-3.5"></i>
-                    <span x-text="hasMapPin(c) ? 'On the map' : 'No map location yet'"></span>
-                </span>
-                <button x-show="hasMapPin(c)" @click="openCenterDetail(c)" class="font-semibold text-brand-600 hover:underline">View on map</button>
-                <button x-show="!hasMapPin(c) && can('sakuna_centers','edit')" @click="openEditCenter(c)" class="font-semibold text-brand-600 hover:underline">Add location</button>
-            </div>
-
-            <div class="flex items-center gap-2 border-t border-slate-50 pt-3 mt-auto">
-                <button @click="openCenterDetail(c)" class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-2 rounded-2xl transition-colors">
-                    <i data-lucide="eye" class="w-3.5 h-3.5"></i> View Details
-                </button>
-                <button x-show="can('sakuna_centers','open') && c.status !== 'Processing'" @click="pendingCenterAction = c; showOpenCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-xl transition-colors">
-                    <i data-lucide="door-open" class="w-3.5 h-3.5"></i> Open
-                </button>
-                <button x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-slate-600 border border-slate-200 hover:bg-white/60 px-3 py-2 rounded-xl transition-colors">
-                    <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> Close
-                </button>
-            </div>
+<section class="sk-card overflow-hidden">
+    {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <div class="sk-toolbar">
+        <div class="sk-search">
+            <label for="center-search" class="sr-only">Search by name or barangay</label>
+            <i data-lucide="search"></i>
+            <input id="center-search" aria-label="Search by name or barangay" type="search" x-model="centerSearch" placeholder="Search by name or barangay…">
         </div>
-    </template>
-    <div x-show="filteredCenters.length === 0" class="sm:col-span-2 xl:col-span-3 flex flex-col items-center py-14 text-center text-sm text-ink-muted">
-        No evacuation centers match your filters.
+        <select aria-label="Center status filter" x-model="centerStatusFilter" class="sk-sel">
+            <option value="">All statuses</option>
+            <option value="Draft">Registered (not open)</option>
+            <option value="Processing">Open</option>
+            <option value="Archived">Closed</option>
+        </select>
+        <select aria-label="Center barangay filter" x-model="centerBarangayFilter" class="sk-sel">
+            <option value="">All barangays</option>
+            @foreach($barangays as $brgy)
+                <option>{{ $brgy }}</option>
+            @endforeach
+        </select>
+        <button type="button" class="sk-clear" @click="centerSearch=''; centerStatusFilter=''; centerBarangayFilter='';">Clear</button>
+        <span class="sk-spacer"></span>
+        <span class="sk-csub" x-text="filteredCenters.length + (filteredCenters.length === 1 ? ' center' : ' centers')"></span>
+        <div class="sk-btngrp" role="group" aria-label="View">
+            <button type="button" aria-label="Card view" :aria-pressed="viewMode === 'grid'" @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'sk-iconbtn-on' : ''" class="sk-btn" style="padding: 0 9px;">
+                <i data-lucide="layout-grid"></i>
+            </button>
+            <button type="button" aria-label="Table view" :aria-pressed="viewMode === 'table'" @click="viewMode = 'table'" :class="viewMode === 'table' ? 'sk-iconbtn-on' : ''" class="sk-btn" style="padding: 0 9px;">
+                <i data-lucide="table"></i>
+            </button>
+        </div>
     </div>
-</div>
 
-{{-- ── Centers Table View ───────────────────────────────────────────────────────────────── --}}
-<div x-show="viewMode === 'table'" x-cloak class="surface-glass rounded-[26px] overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-brand-600/[.08]">
+    {{-- ── Centers Grid View ────────────────────────────────────────────────────────────── --}}
+    <div x-show="viewMode === 'grid'" class="grid gap-3 p-3 bg-[#F8FAFD]" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+        <template x-for="c in filteredCenters" :key="c.ref">
+            <article class="sk-card p-3 flex flex-col gap-2.5">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <h3 class="sk-b text-[13px] leading-snug" x-text="c.name"></h3>
+                        <p class="sk-sub" x-text="c.barangay + ' · Capacity ' + c.capacity.toLocaleString()"></p>
+                    </div>
+                    <span :class="statusBadge(c.status)" class="sk-pill flex-shrink-0" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span>
+                </div>
+
+                <div class="space-y-1" x-show="c.status === 'Processing'">
+                    <div class="flex justify-between text-[11.5px] sk-muted">
+                        <span>Occupancy</span>
+                        <span :class="c.pct >= 90 ? 'text-rose-600 font-semibold' : (c.pct >= 75 ? 'text-amber-600 font-medium' : 'text-slate-600')" x-text="c.pct + '%'"></span>
+                    </div>
+                    <div class="h-[5px] rounded-full bg-[#E9EEF6] overflow-hidden">
+                        <div class="h-full rounded-full transition-all" :class="occupancyBar(c.pct)" :style="'width:' + c.pct + '%'"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 text-center bg-[#F8FAFD] rounded-lg py-1.5">
+                    <div><p class="sk-b text-[15px] tabular-nums" x-text="c.families"></p><p class="sk-ssub">Families</p></div>
+                    <div><p class="sk-b text-[15px] tabular-nums" :class="(c.capacity - c.individuals) > 0 ? '!text-emerald-700' : '!text-rose-600'" x-text="(c.capacity - c.individuals).toLocaleString()"></p><p class="sk-ssub">Available</p></div>
+                    <div><p class="sk-b text-[15px] tabular-nums" x-text="c.status === 'Processing' ? c.individuals.toLocaleString() + ' / ' + c.capacity.toLocaleString() : '—'"></p><p class="sk-ssub">Occupancy</p></div>
+                </div>
+
+                <div class="flex flex-col gap-1 text-[11.5px]">
+                    <span class="sk-muted inline-flex items-center gap-1" x-show="c.address"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span x-text="c.address"></span></span>
+                    {{-- On the residents' map, or not yet (registered before the map, 2026-10-26). --}}
+                    <span class="flex items-center justify-between gap-1.5">
+                        <span class="inline-flex items-center gap-1 font-medium" :class="hasMapPin(c) ? 'text-emerald-700' : 'text-[#C2410C]'">
+                            <i :data-lucide="hasMapPin(c) ? 'map-pin-check' : 'map-pin-off'" class="w-3 h-3"></i>
+                            <span x-text="hasMapPin(c) ? 'On the map' : 'No map location yet'"></span>
+                        </span>
+                        <button type="button" x-show="hasMapPin(c)" @click="openCenterDetail(c)" class="sk-link" style="font-size: 11.5px;">View on map</button>
+                        <button type="button" x-show="!hasMapPin(c) && can('sakuna_centers','edit')" @click="openEditCenter(c)" class="sk-link" style="font-size: 11.5px;">Add location</button>
+                    </span>
+                </div>
+
+                <div class="flex gap-1.5 mt-auto">
+                    <button type="button" @click="openCenterDetail(c)" class="sk-btn sk-btn-sm sk-btn-soft flex-1">
+                        <i data-lucide="eye"></i> View details
+                    </button>
+                    <button type="button" x-show="can('sakuna_centers','open') && c.status !== 'Processing'" @click="pendingCenterAction = c; showOpenCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm sk-btn-ok flex-1">
+                        <i data-lucide="door-open"></i> Open
+                    </button>
+                    <button type="button" x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm flex-1">
+                        <i data-lucide="circle-x"></i> Close
+                    </button>
+                </div>
+            </article>
+        </template>
+        <div x-show="filteredCenters.length === 0" class="sk-empty" style="grid-column: 1 / -1;">
+            <i data-lucide="house"></i> No evacuation centers match your filters.
+        </div>
+    </div>
+
+    {{-- ── Centers Table View ───────────────────────────────────────────────────────────── --}}
+    <div x-show="viewMode === 'table'" x-cloak class="sk-scroll" tabindex="0" role="region" aria-label="Evacuation centres table (scrolls sideways)">
+        <table class="sk-tbl min-w-[860px]">
             <thead>
-                <tr class="bg-slate-50">
-                    <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Center</th>
-                    <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Barangay</th>
-                    <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Status</th>
-                    <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Occupancy</th>
-                    <th class="px-4 py-3 text-left text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Families</th>
-                    <th class="px-4 py-3 text-right text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em]r">Actions</th>
+                <tr>
+                    <th>Center</th>
+                    <th>Barangay</th>
+                    <th>Status</th>
+                    <th>Occupancy</th>
+                    <th class="sk-r">Families</th>
+                    <th class="sk-r">Available</th>
+                    <th>Location</th>
+                    <th class="sk-r">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-brand-600/[.08]">
+            <tbody>
                 <template x-for="c in filteredCenters" :key="c.ref">
-                    <tr class="hover:bg-white/60 transition-colors">
-                        <td class="px-4 py-3">
-                            <p class="text-sm font-medium text-ink-body" x-text="c.name"></p>
-                            <p class="text-xs text-ink-muted" x-text="c.address || ''"></p>
-                            <p x-show="!hasMapPin(c)" class="text-[10.5px] font-semibold text-amber-700">No map location yet</p>
+                    <tr>
+                        <td>
+                            <div class="sk-b" x-text="c.name"></div>
+                            <div class="sk-sub" x-text="c.address || ''"></div>
                         </td>
-                        <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap" x-text="c.barangay"></td>
-                        <td class="px-4 py-3 whitespace-nowrap"><span :class="statusBadge(c.status)" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span></td>
-                        <td class="px-4 py-3 whitespace-nowrap">
+                        <td class="whitespace-nowrap" x-text="c.barangay"></td>
+                        <td class="whitespace-nowrap"><span :class="statusBadge(c.status)" class="sk-pill" x-text="c.status === 'Processing' ? 'Open' : (c.status === 'Archived' ? 'Closed' : 'Registered')"></span></td>
+                        <td class="whitespace-nowrap">
                             <div class="flex items-center gap-2">
-                                <div class="w-24 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                    <div class="h-1.5 rounded-full" :class="occupancyBar(c.pct)" :style="'width:' + c.pct + '%'"></div>
+                                <div class="w-20 h-[5px] rounded-full bg-[#E9EEF6] overflow-hidden">
+                                    <div class="h-full rounded-full" :class="occupancyBar(c.pct)" :style="'width:' + c.pct + '%'"></div>
                                 </div>
-                                <span class="text-xs text-slate-600" x-text="c.individuals + '/' + c.capacity"></span>
+                                <span class="tabular-nums" x-text="c.individuals + '/' + c.capacity"></span>
                             </div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600" x-text="c.families"></td>
-                        <td class="px-4 py-3 whitespace-nowrap text-right">
-                            <div class="flex items-center justify-end gap-1.5">
-                                <button @click="openCenterDetail(c)" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-xl transition-colors">
-                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i> View
-                                </button>
-                                <button x-show="can('sakuna_centers','open') && c.status !== 'Processing'" @click="pendingCenterAction = c; showOpenCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg transition-colors">
-                                    <i data-lucide="door-open" class="w-3.5 h-3.5"></i> Open
-                                </button>
-                                <button x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 border border-slate-200 hover:bg-white/60 px-2.5 py-1.5 rounded-lg transition-colors">
-                                    <i data-lucide="circle-x" class="w-3.5 h-3.5"></i> Close
-                                </button>
-                            </div>
+                        <td class="sk-r tabular-nums" x-text="c.families"></td>
+                        <td class="sk-r tabular-nums" :class="(c.capacity - c.individuals) > 0 ? 'text-emerald-700' : 'text-rose-600'" x-text="(c.capacity - c.individuals).toLocaleString()"></td>
+                        <td class="whitespace-nowrap">
+                            <span x-show="hasMapPin(c)" class="text-emerald-700">On the map</span>
+                            <span x-show="!hasMapPin(c)"><span class="text-[#C2410C]">No map location yet</span><template x-if="can('sakuna_centers','edit')"><span> · <button type="button" @click="openEditCenter(c)" class="sk-link" style="font-size: 12px;">Add</button></span></template></span>
+                        </td>
+                        <td class="sk-r whitespace-nowrap">
+                            <button type="button" @click="openCenterDetail(c)" class="sk-btn sk-btn-sm sk-btn-soft">
+                                <i data-lucide="eye"></i> View
+                            </button>
+                            <button type="button" x-show="can('sakuna_centers','open') && c.status !== 'Processing'" @click="pendingCenterAction = c; showOpenCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm sk-btn-ok">
+                                <i data-lucide="door-open"></i> Open
+                            </button>
+                            <button type="button" x-show="can('sakuna_centers','close') && c.status !== 'Archived'" @click="pendingCenterAction = c; closeCenterConfirmed = false; showCloseCenterConfirm = true; $nextTick(() => window.renderIcons?.())" class="sk-btn sk-btn-sm">
+                                <i data-lucide="circle-x"></i> Close
+                            </button>
                         </td>
                     </tr>
                 </template>
+                <tr x-show="filteredCenters.length === 0">
+                    <td colspan="8"><div class="sk-empty"><i data-lucide="house"></i> No evacuation centers match your filters.</div></td>
+                </tr>
             </tbody>
         </table>
     </div>
-</div>
+</section>
 
 </div>{{-- /loaded content --}}
 

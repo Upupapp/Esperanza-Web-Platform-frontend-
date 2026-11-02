@@ -51,7 +51,52 @@ export function sakunaReport() {
                 this.$nextTick(() => window.renderIcons?.());
             }
         },
-        clear() { this.f = blankFilters(); this.load(1); },
+        clear() { this.f = blankFilters(); this.rangeOpen = false; this.load(1); },
+
+        // The date range (Sakuna Redesign, 2026-11-02): one button in the
+        // filter row opens From/To and the presets; nothing loads until Apply,
+        // and Cancel puts the dates back as they were.
+        rangeOpen: false,
+        rangeSnap: null,
+        rangePos: '',
+        get rangeLabel() {
+            const fmt = (d, year) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', year ? { month: 'short', day: 'numeric', year: 'numeric' } : { month: 'short', day: 'numeric' });
+            const { from, to } = this.f;
+            if (from && to) return fmt(from, from.slice(0, 4) !== to.slice(0, 4)) + ' – ' + fmt(to, true);
+            if (from) return 'From ' + fmt(from, true);
+            if (to) return 'Until ' + fmt(to, true);
+            return 'All dates';
+        },
+        openRange(btn) {
+            if (this.rangeOpen) return this.cancelRange();
+            this.rangeSnap = { from: this.f.from, to: this.f.to };
+            // Placed under the button, in the card, so the row's scroll cannot clip it.
+            this.rangePos = 'left:' + Math.max(0, btn.offsetLeft - btn.parentElement.scrollLeft) + 'px;top:' + (btn.offsetTop + btn.offsetHeight + 6) + 'px';
+            this.rangeOpen = true;
+        },
+        cancelRange() {
+            if (!this.rangeOpen) return;
+            if (this.rangeSnap) Object.assign(this.f, this.rangeSnap);
+            this.rangeOpen = false;
+        },
+        applyRange() {
+            if (this.rangeError) return;
+            this.rangeOpen = false;
+            this.load(1);
+        },
+        presetRange(kind) {
+            const iso = (d) => [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+            const today = new Date();
+            const back = (days) => { const d = new Date(today); d.setDate(d.getDate() - days); return iso(d); };
+            const ranges = {
+                week: [back(6), iso(today)],
+                month30: [back(29), iso(today)],
+                thisMonth: [iso(new Date(today.getFullYear(), today.getMonth(), 1)), iso(today)],
+                all: ['', ''],
+            };
+            [this.f.from, this.f.to] = ranges[kind];
+            this.applyRange();
+        },
         // A group change keeps the item only if it belongs to the group.
         groupChanged() { if (this.f.livelihood_code && !this.f.livelihood_code.startsWith(this.f.livelihood_group)) this.f.livelihood_code = ''; this.load(1); },
 

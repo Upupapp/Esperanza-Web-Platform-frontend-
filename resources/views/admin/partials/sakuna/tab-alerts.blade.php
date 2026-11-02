@@ -41,128 +41,116 @@
             (!alertStatusFilter || a.status === alertStatusFilter)
         );
     },
-}" x-init="loadAlerts(); composeOnArrival()" class="space-y-4">
+}" x-init="loadAlerts(); composeOnArrival()" class="space-y-3">
 
-{{-- ── Header ─────────────────────────────────────────────────────────────────────────── --}}
-<div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h2 class="text-base font-semibold text-ink-body">Public Alerts &amp; Advisories</h2>
-        <p class="text-sm text-ink-muted mt-0.5">Draft, publish and cancel bilingual public alerts. A cancellation reaches exactly the audience the alert reached.</p>
+{{-- ── Stats + actions (Sakuna Redesign, 2026-11-02) ──────────────────────────────────── --}}
+<div class="sk-pagebar">
+    <div class="sk-stats">
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Total alerts</span><span class="sk-sval tabular-nums" x-text="alertsList.length"></span></div>
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-amber"></span>Draft</span><span class="sk-sval tabular-nums" x-text="alertsList.filter(a => a.status === 'Draft').length"></span></div>
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-teal"></span>Released</span><span class="sk-sval tabular-nums" x-text="alertsList.filter(a => a.status === 'Released').length"></span></div>
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-red"></span>Cancelled</span><span class="sk-sval tabular-nums" x-text="alertsList.filter(a => a.status === 'Cancelled').length"></span></div>
     </div>
-    <div class="flex items-center gap-2 flex-wrap">
-        <button @click="exportCSV(filteredAlerts.map(a => ({ ref: a.ref, type: a.type, level: a.level, title_en: a.title?.en, status: a.status, recipients: a.recipients })), 'alerts-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="download" class="w-4 h-4 text-ink-muted"></i> Export CSV
+    <div class="sk-actions">
+        <button type="button" class="sk-iconbtn sk-iconbtn-bare"
+            aria-label="About public alerts and advisories: draft, publish and cancel bilingual public alerts. A cancellation reaches exactly the audience the alert reached."
+            title="Public alerts and advisories: draft, publish and cancel bilingual public alerts. A cancellation reaches exactly the audience the alert reached.">
+            <i data-lucide="info"></i>
         </button>
-        <button @click="exportPDF(filteredAlerts.map(a => ({ ref: a.ref, type: a.type, level: a.level, title_en: a.title?.en, status: a.status, recipients: a.recipients })), 'alerts-export.csv')"
-            class="inline-flex items-center gap-1.5 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-card hover:border-slate-300 transition-colors">
-            <i data-lucide="file-down" class="w-4 h-4 text-ink-muted"></i> Export PDF
-        </button>
-        <button x-show="can('sakuna_alerts', 'create')" @click="openCreateAlert()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Create Alert
+        <div class="sk-btngrp" role="group" aria-label="Export">
+            <button type="button" class="sk-btn" @click="exportCSV(filteredAlerts.map(a => ({ ref: a.ref, type: a.type, level: a.level, title_en: a.title?.en, status: a.status, recipients: a.recipients })), 'alerts-export.csv')">
+                <i data-lucide="download"></i> Export CSV
+            </button>
+            <button type="button" class="sk-btn" @click="exportPDF(filteredAlerts.map(a => ({ ref: a.ref, type: a.type, level: a.level, title_en: a.title?.en, status: a.status, recipients: a.recipients })), 'alerts-export.csv')">
+                Export PDF
+            </button>
+        </div>
+        <button type="button" x-show="can('sakuna_alerts', 'create')" @click="openCreateAlert()" class="sk-btn sk-btn-p">
+            <i data-lucide="plus"></i> Create Alert
         </button>
     </div>
 </div>
 
+<div class="flex flex-wrap gap-3 items-start">
+
+<div class="min-w-0 space-y-3" style="flex: 2 1 560px;">
 <div x-show="alertsLoading" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-64 opacity-80" /></div>
 <div x-show="alertsFailed" x-cloak><x-ui.error-state messageExpr="'Could not load alerts.'" retryExpr="loadAlerts()" :retryable="true" /></div>
 
-<div x-show="!alertsLoading && !alertsFailed" x-cloak class="space-y-4">
-
-{{-- ── Summary Cards ───────────────────────────────────────────────────────────────────── --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <x-ui.stat-card layout="compact" tone="navy" object="bell" label="Total Alerts" valueBind="alertsList.length" />
-    <x-ui.stat-card layout="compact" tone="amber" object="document" label="Draft" valueBind="alertsList.filter(a => a.status === 'Draft').length" />
-    <x-ui.stat-card layout="compact" tone="teal" object="stamp" label="Released" valueBind="alertsList.filter(a => a.status === 'Released').length" />
-    <x-ui.stat-card layout="compact" tone="rose" object="ring" label="Cancelled" valueBind="alertsList.filter(a => a.status === 'Cancelled').length" />
-</div>
-
-{{-- ── Filter Bar ──────────────────────────────────────────────────────────────────────── --}}
-<div class="surface-glass rounded-[26px] p-4">
-    <div class="flex flex-wrap gap-3 items-center">
-        <div class="relative flex-1 min-w-48">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"></i>
-            <input aria-label="Search by title or ref" type="text" x-model="alertSearch" placeholder="Search by title or ref…"
-                class="w-full pl-9 pr-3 py-2 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+{{-- ── Alert list: filters, then one row per alert ───────────────────────────────────────── --}}
+<section x-show="!alertsLoading && !alertsFailed" x-cloak class="sk-card overflow-hidden">
+    <div class="sk-toolbar">
+        <div class="sk-search">
+            <label for="alert-search" class="sr-only">Search by title or ref</label>
+            <i data-lucide="search"></i>
+            <input id="alert-search" aria-label="Search by title or ref" type="search" x-model="alertSearch" placeholder="Search by title or ref…">
         </div>
-        <select aria-label="Alert type filter" x-model="alertTypeFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Types</option>
+        <select aria-label="Alert type filter" x-model="alertTypeFilter" class="sk-sel">
+            <option value="">All types</option>
             <template x-for="t in alertTypes()" :key="t"><option :value="t" x-text="t"></option></template>
         </select>
-        <select aria-label="Alert level filter" x-model="alertLevelFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Levels</option>
+        <select aria-label="Alert level filter" x-model="alertLevelFilter" class="sk-sel">
+            <option value="">All levels</option>
             @foreach(['Information','Advisory','Watch','Warning','Critical'] as $lvl)
                 <option value="{{ $lvl }}">{{ $lvl }}</option>
             @endforeach
         </select>
-        <select aria-label="Alert status filter" x-model="alertStatusFilter"
-            class="text-sm rounded-2xl px-3 py-2 focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-            <option value="">All Statuses</option>
+        <select aria-label="Alert status filter" x-model="alertStatusFilter" class="sk-sel">
+            <option value="">All statuses</option>
             <option value="Draft">Draft</option>
             <option value="Released">Released</option>
             <option value="Cancelled">Cancelled</option>
         </select>
-        <button @click="alertSearch = ''; alertTypeFilter = ''; alertLevelFilter = ''; alertStatusFilter = ''"
-            class="text-sm text-ink-muted hover:text-slate-700 px-3 py-2 rounded-2xl hover:bg-slate-100 transition-colors">
-            Clear filters
-        </button>
+        <button type="button" @click="alertSearch = ''; alertTypeFilter = ''; alertLevelFilter = ''; alertStatusFilter = ''" class="sk-clear">Clear</button>
+        <span class="sk-spacer"></span>
+        <span class="sk-csub" x-text="filteredAlerts.length + (filteredAlerts.length === 1 ? ' alert' : ' alerts')"></span>
     </div>
-</div>
 
-{{-- ── Alert List ───────────────────────────────────────────────────────────────────────── --}}
-<div class="space-y-3">
     <template x-for="a in filteredAlerts" :key="a.ref">
-        <div class="surface-glass rounded-[26px] p-4 hover:shadow-glass-hover transition-shadow cursor-pointer" @click="openAlertDetail(a)">
-            <div class="flex items-start justify-between gap-3">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap mb-1">
-                        <span class="text-xs font-mono text-ink-muted" x-text="a.ref"></span>
-                        <span :class="alertLevelBadge(a.level)" x-text="a.level"></span>
-                        <span :class="statusBadge(a.status)" x-text="a.status"></span>
-                        <span x-show="a.expired && a.status === 'Released'" class="text-[10.5px] font-semibold text-slate-700 bg-slate-100 ring-1 ring-inset ring-slate-200 px-2 py-0.5 rounded-full">Expired: residents no longer see it</span>
-                        <span class="text-xs text-ink-muted bg-slate-100 px-2 py-0.5 rounded-full" x-text="a.type"></span>
-                    </div>
-                    <p class="text-sm font-semibold text-ink-body mb-1 truncate" x-text="a.title?.en"></p>
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-xs text-ink-muted flex items-center gap-1">
-                            <i data-lucide="target" class="w-3 h-3"></i>
-                            <span x-text="(a.barangays && a.barangays.length) ? a.barangays.join(', ') : 'Municipality-Wide'"></span>
-                        </span>
-                        <template x-for="ch in (a.channels || [])" :key="ch">
-                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full" x-text="ch"></span>
-                        </template>
-                    </div>
-                    <p class="text-xs text-ink-muted mt-1.5">
-                        <span x-text="a.status === 'Released' ? ('Published ' + new Date(a.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + ' — ' + a.recipients + ' resident(s)') : (a.status === 'Cancelled' && a.cancelled_at ? ('Cancelled ' + new Date(a.cancelled_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) + (a.published_at ? ' — it had reached ' + a.recipients + ' resident(s)' : '')) : 'Not yet published')"></span>
-                    </p>
+        <div class="flex gap-3 px-3.5 py-2.5 border-b border-[#EEF2F7] hover:bg-[#F8FAFE] transition-colors cursor-pointer" @click="openAlertDetail(a)">
+            <div class="flex-grow min-w-0 flex flex-col gap-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="sk-mono" x-text="a.ref"></span>
+                    <span :class="alertLevelBadge(a.level)" x-text="a.level"></span>
+                    <span :class="statusBadge(a.status)" x-text="a.status"></span>
+                    <span x-show="a.expired && a.status === 'Released'" class="sk-pill sk-p-slate">Expired: residents no longer see it</span>
+                    <span class="sk-tag" x-text="a.type"></span>
+                    <span class="sk-b text-[13px] ml-1 truncate" x-text="a.title?.en"></span>
                 </div>
-                <div class="flex gap-2 flex-shrink-0 flex-col items-end" @click.stop>
-                    <button @click="openAlertDetail(a)" class="text-xs text-brand-600 hover:text-brand-700 font-medium">View</button>
-                    <button x-show="can('sakuna_alerts','edit') && a.status === 'Draft'" @click="openEditAlert(a)" class="text-xs text-slate-600 hover:text-ink-body">Edit</button>
-                    <button x-show="can('sakuna_alerts','publish') && a.status === 'Draft'" @click="publishAlert(a)" class="text-xs text-brand-600 font-medium hover:text-brand-700">Publish Now</button>
-                    <button x-show="can('sakuna_alerts','cancel') && a.status === 'Released'" @click="openCancelAlert(a)" class="text-xs text-rose-600 hover:text-rose-700">Cancel Alert</button>
+                <div class="flex flex-wrap items-center gap-1.5 text-[11.5px] sk-muted">
+                    <span class="inline-flex items-center gap-1">
+                        <i data-lucide="target" class="w-3 h-3"></i>
+                        <span x-text="(a.barangays && a.barangays.length) ? a.barangays.join(', ') : 'Municipality-Wide'"></span>
+                    </span>
+                    <template x-for="ch in (a.channels || [])" :key="ch">
+                        <span class="sk-tag" x-text="ch"></span>
+                    </template>
+                    <span x-text="'· ' + (a.status === 'Released' ? ('Published ' + new Date(a.published_at).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) + ' — ' + a.recipients + ' resident(s)') : (a.status === 'Cancelled' && a.cancelled_at ? ('Cancelled ' + new Date(a.cancelled_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) + (a.published_at ? ' — it had reached ' + a.recipients + ' resident(s)' : '')) : 'Not yet published'))"></span>
                 </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-end gap-1 shrink-0" @click.stop>
+                <button type="button" x-show="can('sakuna_alerts','publish') && a.status === 'Draft'" @click="publishAlert(a)" class="sk-btn sk-btn-sm sk-btn-p">Publish Now</button>
+                <button type="button" x-show="can('sakuna_alerts','edit') && a.status === 'Draft'" @click="openEditAlert(a)" class="sk-btn sk-btn-sm">Edit</button>
+                <button type="button" x-show="can('sakuna_alerts','cancel') && a.status === 'Released'" @click="openCancelAlert(a)" class="sk-btn sk-btn-sm sk-btn-danger">Cancel Alert</button>
+                <button type="button" @click="openAlertDetail(a)" class="sk-btn sk-btn-sm sk-btn-soft">View</button>
             </div>
         </div>
     </template>
-    <div x-show="filteredAlerts.length === 0" class="flex flex-col items-center gap-3 text-ink-muted surface-glass rounded-[26px] py-12">
-        <i data-lucide="siren" class="w-10 h-10 opacity-30"></i>
-        <p class="text-sm font-medium text-ink-muted">No alerts match your filters.</p>
-        <button @click="alertSearch = ''; alertTypeFilter = ''; alertLevelFilter = ''; alertStatusFilter = ''" class="text-sm text-brand-600 hover:underline">Clear Filters</button>
+    <div x-show="filteredAlerts.length === 0" class="sk-empty flex-col">
+        <i data-lucide="siren"></i>
+        <span>No alerts match your filters.</span>
+        <button type="button" @click="alertSearch = ''; alertTypeFilter = ''; alertLevelFilter = ''; alertStatusFilter = ''" class="sk-clear">Clear Filters</button>
     </div>
+    <div class="sk-tfoot" x-show="filteredAlerts.length" x-text="'Showing ' + filteredAlerts.length + ' of ' + alertsList.length + ' alerts'"></div>
+</section>{{-- /loaded content --}}
 </div>
-
-</div>{{-- /loaded content --}}
 
 {{-- ── Emergency hotlines ──────────────────────────────────────────────────────────────────
      The numbers residents see on their Sakuna page (GET /hotlines), kept here
      by the people who run Sakuna (owner, 2026-10-17: emergencies belong in
      Sakuna, not the Directory). /admin/sakuna/hotlines only ever touches
      hotline rows. --}}
-<section class="surface-glass rounded-[26px] p-5" aria-labelledby="hotlines-admin-heading"
+<section class="sk-card overflow-hidden min-w-0" style="flex: 1 1 300px;" aria-labelledby="hotlines-admin-heading"
     x-data="{
         hotlines: [], hotlinesLoading: true, hotlinesFailed: false,
         hotlineForm: { id: null, office: '', position: '', contact: '' }, hotlineEditing: false, hotlineSaving: false, hotlineError: '',
@@ -204,65 +192,61 @@
             }
         },
     }" x-init="loadHotlines()">
-    <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="sk-chead">
         <div>
-            <h3 id="hotlines-admin-heading" class="text-base font-semibold text-ink-body flex items-center gap-2"><i data-lucide="phone-call" class="w-4 h-4 text-rose-600"></i> Emergency Hotlines</h3>
-            <p class="text-sm text-ink-muted mt-0.5">The numbers residents see on their Sakuna / Emergency page, below 911.</p>
+            <h3 id="hotlines-admin-heading" class="sk-ctitle inline-flex items-center gap-1.5"><i data-lucide="phone-call" class="w-4 h-4 text-rose-600"></i> Emergency Hotlines</h3>
+            <div class="sk-csub">The numbers residents see on their Sakuna / Emergency page, below 911.</div>
         </div>
-        <button x-show="can('sakuna_alerts', 'create') && !hotlineEditing" @click="startHotline()"
-            class="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-2 shadow-card transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i> Add Hotline
+        <button type="button" x-show="can('sakuna_alerts', 'create') && !hotlineEditing" @click="startHotline()" class="sk-btn sk-btn-sm sk-btn-p">
+            <i data-lucide="plus"></i> Add Hotline
         </button>
     </div>
 
-    <form x-show="hotlineEditing" x-cloak @submit.prevent="saveHotline()" class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-2xl bg-slate-50 p-4">
+    <form x-show="hotlineEditing" x-cloak @submit.prevent="saveHotline()" class="grid grid-cols-1 gap-2.5 p-3.5 bg-[#F8FAFD] border-b border-[#EEF2F7]">
         <label class="block">
-            <span class="text-xs font-medium text-ink-muted mb-1 block">Office <span class="text-rose-600">*</span></span>
-            <input id="hotline-office" type="text" x-model="hotlineForm.office" maxlength="160" required placeholder="e.g. MDRRMO Rescue"
-                class="w-full px-3 py-2 text-sm rounded-2xl border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 focus:outline-none">
+            <span class="text-[11.5px] font-medium text-[#4B5568] mb-1 block">Office <span class="text-rose-600">*</span></span>
+            <input id="hotline-office" type="text" x-model="hotlineForm.office" maxlength="160" required placeholder="e.g. MDRRMO Rescue" class="sk-sel w-full">
         </label>
         <label class="block">
-            <span class="text-xs font-medium text-ink-muted mb-1 block">What it is for</span>
-            <input type="text" x-model="hotlineForm.position" maxlength="120" placeholder="e.g. 24/7 rescue"
-                class="w-full px-3 py-2 text-sm rounded-2xl border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 focus:outline-none">
+            <span class="text-[11.5px] font-medium text-[#4B5568] mb-1 block">What it is for</span>
+            <input type="text" x-model="hotlineForm.position" maxlength="120" placeholder="e.g. 24/7 rescue" class="sk-sel w-full">
         </label>
         <label class="block">
-            <span class="text-xs font-medium text-ink-muted mb-1 block">Number <span class="text-rose-600">*</span></span>
-            <input type="tel" x-model="hotlineForm.contact" maxlength="80" required placeholder="e.g. 0917 123 4567"
-                class="w-full px-3 py-2 text-sm rounded-2xl border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 focus:outline-none">
+            <span class="text-[11.5px] font-medium text-[#4B5568] mb-1 block">Number <span class="text-rose-600">*</span></span>
+            <input type="tel" x-model="hotlineForm.contact" maxlength="80" required placeholder="e.g. 0917 123 4567" class="sk-sel w-full">
         </label>
-        <p x-show="hotlineError" x-cloak role="alert" class="sm:col-span-3 text-xs text-rose-700" x-text="hotlineError"></p>
-        <div class="sm:col-span-3 flex flex-wrap gap-2 justify-end">
-            <button type="button" @click="hotlineEditing = false" class="px-3.5 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-white/60">Cancel</button>
-            <button type="submit" :disabled="hotlineSaving || !hotlineForm.office.trim() || !hotlineForm.contact.trim()"
-                class="px-3.5 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-2xl disabled:opacity-50"
+        <p x-show="hotlineError" x-cloak role="alert" class="text-xs text-rose-700" x-text="hotlineError"></p>
+        <div class="flex flex-wrap gap-2 justify-end">
+            <button type="button" @click="hotlineEditing = false" class="sk-btn sk-btn-sm">Cancel</button>
+            <button type="submit" :disabled="hotlineSaving || !hotlineForm.office.trim() || !hotlineForm.contact.trim()" class="sk-btn sk-btn-sm sk-btn-p"
                 x-text="hotlineSaving ? 'Saving…' : (hotlineForm.id ? 'Save Hotline' : 'Add Hotline')"></button>
         </div>
     </form>
 
-    <div x-show="hotlinesLoading" class="mt-4 space-y-2"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-10 opacity-70" /></div>
-    <div x-show="hotlinesFailed" x-cloak class="mt-4"><x-ui.error-state messageExpr="'Could not load the hotlines.'" retryExpr="loadHotlines()" :retryable="true" class="!py-6" /></div>
-    <p x-show="!hotlinesLoading && !hotlinesFailed && !hotlines.length" x-cloak class="mt-4 text-sm text-ink-muted">No hotlines yet. Residents see only 911 until one is added.</p>
-    <ul x-show="!hotlinesLoading && hotlines.length" x-cloak class="mt-4 divide-y divide-brand-600/[.08]">
+    <div x-show="hotlinesLoading" class="p-3.5 space-y-2"><x-ui.skeleton class="h-10" /><x-ui.skeleton class="h-10 opacity-70" /></div>
+    <div x-show="hotlinesFailed" x-cloak class="p-3.5"><x-ui.error-state messageExpr="'Could not load the hotlines.'" retryExpr="loadHotlines()" :retryable="true" class="!py-6" /></div>
+    <p x-show="!hotlinesLoading && !hotlinesFailed && !hotlines.length" x-cloak class="sk-empty">No hotlines yet. Residents see only 911 until one is added.</p>
+    <ul x-show="!hotlinesLoading && hotlines.length" x-cloak>
         <template x-for="h in hotlines" :key="h.id">
-            <li class="flex flex-wrap items-center justify-between gap-3 py-2.5">
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-ink-body" x-text="h.office"></p>
-                    <p class="text-xs text-ink-muted" x-text="[h.position, h.contact].filter(Boolean).join(' · ')"></p>
+            <li class="flex flex-wrap items-center gap-2.5 px-3.5 py-2 border-b border-[#EEF2F7] last:border-b-0 hover:bg-[#F8FAFE]">
+                <div class="flex-grow min-w-0">
+                    <p class="sk-b text-[12.5px]" x-text="h.office"></p>
+                    <p class="sk-sub"><span x-text="h.position" x-show="h.position"></span><span x-show="h.position"> · </span><span class="sk-mono" style="color: #1D4ED8;" x-text="h.contact"></span></p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="startHotline(h)" class="text-xs text-slate-600 hover:text-ink-body" :aria-label="'Edit ' + h.office">Edit</button>
-                    <button x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="removingHotline = h.id" class="text-xs text-rose-600 hover:text-rose-700" :aria-label="'Remove ' + h.office">Remove</button>
-                    <span x-show="removingHotline === h.id" x-cloak class="flex items-center gap-2 text-xs">
-                        <span class="text-ink-body">Remove from residents' page?</span>
-                        <button @click="removeHotline(h)" class="font-semibold text-rose-700 hover:underline">Remove</button>
-                        <button @click="removingHotline = null" class="text-slate-600 hover:underline">Keep</button>
-                    </span>
-                </div>
+                <button type="button" x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="startHotline(h)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'Edit ' + h.office" title="Edit"><i data-lucide="pencil"></i></button>
+                <button type="button" x-show="can('sakuna_alerts', 'edit') && removingHotline !== h.id" @click="removingHotline = h.id" class="sk-iconbtn sk-iconbtn-bare !text-rose-600" :aria-label="'Remove ' + h.office" title="Remove"><i data-lucide="trash-2"></i></button>
+                <span x-show="removingHotline === h.id" x-cloak class="flex items-center gap-2 text-xs">
+                    <span class="text-ink-body">Remove from residents' page?</span>
+                    <button type="button" @click="removeHotline(h)" class="font-semibold text-rose-700 hover:underline">Remove</button>
+                    <button type="button" @click="removingHotline = null" class="text-slate-600 hover:underline">Keep</button>
+                </span>
             </li>
         </template>
     </ul>
 </section>
+
+</div>{{-- /alerts | hotlines --}}
+
 
 {{-- ── Alert Detail Modal ──────────────────────────────────────────────────────────────── --}}
 <div x-show="showAlertDetail" x-cloak
