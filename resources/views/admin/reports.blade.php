@@ -47,9 +47,15 @@
                     this.printable = reportsRes.meta?.printable || null;
                     this.runs = runsRes.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }
-                this.loadAnalytics();
+                // The analytics' eight report reads only when Analytics is
+                // opened (2026-11-03): on every visit they used up the report
+                // rate limit (20 a minute) before a report was even previewed.
+                if (this.tab === 'analytics') this.loadAnalytics();
+                this.$watch('tab', (t) => { if (t === 'analytics' && !this.analyticsLoaded) this.loadAnalytics(); });
             },
+            analyticsLoaded: false,
             async loadAnalytics() {
+                this.analyticsLoaded = true;
                 // GET /admin/reports lists only the reports this account may view.
                 const get = (key) => (this.reports.some((r) => r.key === key) ? $api.get('/admin/reports/' + key).then(r => r.data).catch(() => null) : Promise.resolve(null));
                 const [dash, doc, assist, sat, forms, sakuna, brgy, rev] = await Promise.all([
@@ -91,6 +97,8 @@
                     filename: (data?.key || 'report') + '-' + new Date().toISOString().slice(0, 10) + '.pdf',
                     title: data?.title || 'Report',
                     subtitle: totals,
+                    // The executive summary the server wrote (2026-11-03).
+                    summary: Array.isArray(data?.summary) ? data.summary : [],
                 });
             },
             saveCsv(data) {
@@ -111,9 +119,20 @@
                 document.body.appendChild(a); a.click(); a.remove();
                 setTimeout(() => URL.revokeObjectURL(a.href), 4000);
             },
+            // Weighted by how many each kind released (2026-11-03: the plain mean
+            // of the two means overweighted the smaller one).
             get avgResolutionDays() {
-                const vals = [this.docSummary?.totals?.avg_days_to_release, this.assistSummary?.totals?.avg_days_to_release].filter(v => v !== null && v !== undefined);
-                return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : null;
+                const parts = [this.docSummary?.totals, this.assistSummary?.totals]
+                    .filter((t) => t && t.avg_days_to_release !== null && t.avg_days_to_release !== undefined && t.released > 0);
+                const released = parts.reduce((n, t) => n + t.released, 0);
+                return released ? parts.reduce((sum, t) => sum + t.avg_days_to_release * t.released, 0) / released : null;
+            },
+            // 0.0 days read as a fault: under half a working day is the same day.
+            get avgResolutionText() {
+                const d = this.avgResolutionDays;
+                if (d === null) return '—';
+                if (d < 0.5) return 'Same day';
+                return d.toFixed(1) + (d.toFixed(1) === '1.0' ? ' day' : ' days');
             },
             get totalRequests() { return (this.docSummary?.totals?.requests || 0) + (this.assistSummary?.totals?.requests || 0); },
             get trendData() {
@@ -142,7 +161,13 @@
                 const rows = this.barangayActivity.rows.map(r => ({ name: r.barangay, requests: r.dokyu + r.tulong }))
                     .filter(r => this.$store.session.inScope(r.name));
                 const max = Math.max(1, ...rows.map(r => r.requests));
-                return rows.map(r => ({ ...r, pct: Math.round((r.requests / max) * 100) })).sort((a, b) => b.requests - a.requests).slice(0, 8);
+                // The barangays with requests, busiest first; those with none are
+                // counted in one line under the bars (2026-11-03).
+                return rows.filter((r) => r.requests > 0).map(r => ({ ...r, pct: Math.round((r.requests / max) * 100) })).sort((a, b) => b.requests - a.requests).slice(0, 8);
+            },
+            get barangaysWithout() {
+                if (!this.barangayActivity) return 0;
+                return this.barangayActivity.rows.filter((r) => this.$store.session.inScope(r.barangay) && !(r.dokyu + r.tulong)).length;
             },
         }"
         class="animate-fade-up"
@@ -178,32 +203,47 @@
                  saved to Excel (resources/js/dashboards.js printableReports). --}}
             <div x-data="printableReports()" x-effect="printable && setCatalog(printable)" x-show="ready && catalog.reports.length" x-cloak class="mb-6">
                 <h3 class="text-base font-extrabold text-ink mb-1">Printable Reports</h3>
-                <p class="text-[13px] text-ink-muted mb-3">The office and barangay reports in the LGU's format, with the letterhead, totals and signature lines. Choose whose and the period, then preview and print.</p>
+                <p class="text-[13px] text-ink-muted mb-3">The office and barangay reports in the LGU's format: the letterhead, an executive summary, the figures with graphs and totals, and the signature lines. Choose the period, then the office or barangay, and open a report to preview, print, or save it as PDF or Excel.</p>
                 <x-ui.card>
-                    <div class="flex flex-wrap items-end gap-3 mb-5">
-                        <div x-show="catalog.offices.length > 1" class="flex flex-col gap-1">
-                            <label for="pr-office" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office</label>
-                            <select id="pr-office" x-model="office" @change="service = ''" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[260px]">
-                                <template x-for="o in catalog.offices" :key="o.name">
-                                    <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
-                                </template>
-                            </select>
-                        </div>
-                        <div x-show="catalog.barangays.length > 1" class="flex flex-col gap-1">
-                            <label for="pr-barangay" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Barangay</label>
-                            <select id="pr-barangay" x-model="barangay" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
-                                <template x-for="b in catalog.barangays" :key="b">
-                                    <option :value="b" x-text="'Brgy. ' + b" :selected="b === barangay"></option>
-                                </template>
-                            </select>
-                        </div>
+                    {{-- The period first: it applies to every report below. Each
+                         group then has its own picker beside its reports (2026-11-03). --}}
+                    <div class="flex flex-wrap items-end gap-x-3 gap-y-1 mb-5">
                         <div class="flex flex-col gap-1">
                             <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Period</span>
                             <x-admin.dashboards.period-picker />
                         </div>
+                        <p class="text-[12px] text-ink-muted pb-2">Applies to every report below.</p>
+                    </div>
+
+                    <template x-for="group in [{ key: 'office', title: 'Office reports', who: officeEntry ? (officeEntry.short || officeEntry.name) : '', rows: office ? departmentReports : [] }, { key: 'barangay', title: 'Barangay reports', who: barangay ? 'Brgy. ' + barangay : '', rows: barangay ? barangayReports : [] }]" :key="group.title">
+                        <div x-show="group.rows.length" class="mb-6 last:mb-0">
+                            <div class="flex flex-wrap items-end gap-x-3 gap-y-2 mb-3 pb-3 border-b border-brand-600/10">
+                                <p class="w-full text-[13px] font-extrabold text-ink"><span x-text="group.title"></span><span class="text-ink-muted font-semibold" x-text="group.who ? ' · ' + group.who : ''"></span></p>
+                                {{-- x-if, not x-show: each picker exists once (one #pr-office on the page). --}}
+                                <template x-if="group.key === 'office'">
+                                <div x-show="catalog.offices.length > 1" class="flex flex-col gap-1">
+                                    <label for="pr-office" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office</label>
+                                    <select id="pr-office" x-model="office" @change="service = ''" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[260px]">
+                                        <template x-for="o in catalog.offices" :key="o.name">
+                                            <option :value="o.name" x-text="(o.short ? o.short + ' · ' : '') + o.name" :selected="o.name === office"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                </template>
+                                <template x-if="group.key === 'barangay'">
+                                <div x-show="catalog.barangays.length > 1" class="flex flex-col gap-1">
+                                    <label for="pr-barangay" class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Barangay</label>
+                                    <select id="pr-barangay" x-model="barangay" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none">
+                                        <template x-for="b in catalog.barangays" :key="b">
+                                            <option :value="b" x-text="'Brgy. ' + b" :selected="b === barangay"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                </template>
                         {{-- An office's reports narrow as its dashboard does (2026-10-28). --}}
-                        <div x-show="office && departmentReports.length" class="flex flex-col gap-1">
-                            <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Office reports narrowed to</span>
+                        <template x-if="group.key === 'office'">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Narrowed to</span>
                             <div class="flex flex-wrap items-center gap-2">
                                 <label class="sr-only" for="pr-service">Program or document</label>
                                 <select id="pr-service" x-model="service" x-show="services.length > 1" class="text-xs rounded-2xl py-2 px-3 border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none max-w-[240px]">
@@ -230,11 +270,9 @@
                                 <button type="button" x-show="anyFilter()" x-cloak @click="service = ''; sex = ''; age = ''; sector = ''" class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[12.5px] font-semibold text-brand-600 hover:bg-brand-50"><i data-lucide="x" class="w-3.5 h-3.5"></i>Clear</button>
                             </div>
                         </div>
-                    </div>
+                        </template>
+                            </div>
 
-                    <template x-for="group in [{ title: 'Office reports', who: officeEntry ? (officeEntry.short || officeEntry.name) : '', rows: office ? departmentReports : [] }, { title: 'Barangay reports', who: barangay ? 'Brgy. ' + barangay : '', rows: barangay ? barangayReports : [] }]" :key="group.title">
-                        <div x-show="group.rows.length" class="mb-4 last:mb-0">
-                            <p class="text-[12.5px] font-bold text-ink-body mb-2"><span x-text="group.title"></span><span class="text-ink-muted font-semibold" x-text="group.who ? ' · ' + group.who : ''"></span></p>
                             <div class="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                                 <template x-for="r in group.rows" :key="r.key">
                                     <button type="button" @click="mayOpen(r) && open(r)" :disabled="!mayOpen(r)" class="flex items-start text-left rounded-[18px] bg-white/60 border border-white/80 px-4 py-3.5 shadow-glass-sm hover:-translate-y-0.5 transition-transform duration-200 disabled:opacity-55 disabled:hover:translate-y-0">
@@ -243,7 +281,7 @@
                                             <span class="min-w-0">
                                                 <span class="block text-[14px] font-bold text-ink" x-text="titleOf(r)"></span>
                                                 <span class="block text-[12px] text-ink-muted mt-0.5" x-text="info(r.key).desc"></span>
-                                                <span class="block text-[11.5px] font-semibold mt-1.5" :class="mayOpen(r) ? 'text-brand-600' : 'text-ink-faint'" x-text="mayOpen(r) ? 'Preview and print' : 'Department Head and administrators only'"></span>
+                                                <span class="block text-[11.5px] font-semibold mt-1.5" :class="mayOpen(r) ? 'text-brand-600' : 'text-ink-faint'" x-text="mayOpen(r) ? 'Preview, print or save as PDF' : 'Department Head and administrators only'"></span>
                                             </span>
                                         </span>
                                     </button>
@@ -254,7 +292,8 @@
                 </x-ui.card>
             </div>
 
-            <h3 class="text-base font-extrabold text-ink mb-3">Data Exports</h3>
+            <h3 class="text-base font-extrabold text-ink mb-1">Data Exports</h3>
+            <p class="text-[13px] text-ink-muted mb-3">The raw figures across the municipality, as a CSV file for Excel or as a PDF table. Each copy is recorded under your name.</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
                 <template x-for="(report, i) in reports" :key="report.key">
                     <x-ui.card
@@ -321,8 +360,8 @@
         <div x-show="tab === 'analytics'" x-cloak>
             <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
                 <x-ui.stat-card layout="compact" class="h-full" label="Avg. Satisfaction Score" valueBind="satisfaction?.totals?.average_rating ? (satisfaction.totals.average_rating + ' / 5') : '—'" icon="smile" color="brand" sublabelBind="satisfaction?.totals?.responses ? (satisfaction.totals.responses + ' responses') : (satisfaction?.totals?.note || '')" :delay="0" />
-                <x-ui.stat-card layout="compact" class="h-full" label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="light" sublabel="Dokyu + Tulong" :delay="40" />
-                <x-ui.stat-card layout="compact" class="h-full" label="Avg. Resolution Time" valueBind="avgResolutionDays !== null ? (avgResolutionDays + ' days') : '—'" icon="timer" color="deep" sublabel="Submission to release" :delay="80" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Total Requests" valueBind="totalRequests.toLocaleString()" icon="inbox" color="light" sublabel="Dokyu + Tulong, all time" :delay="40" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Avg. Resolution Time" valueBind="avgResolutionText" icon="timer" color="deep" sublabel="Working days, filing to release" :delay="80" />
                 <x-ui.stat-card layout="compact" class="h-full" label="Incidents Logged" valueBind="incidentTotal" icon="triangle-alert" color="orange" :delay="120" />
             </div>
 
@@ -377,10 +416,11 @@
                         </div>
                     </template>
                     <div x-show="!barangayRequestRows.length" class="surface-pressed rounded-2xl px-4 py-5 text-center text-[14.5px] font-bold text-ink">No requests on file yet.</div>
+                    <p x-show="barangaysWithout" x-cloak class="text-[12.5px] text-ink-muted" x-text="barangaysWithout + (barangaysWithout === 1 ? ' barangay has' : ' barangays have') + ' no requests on file.'"></p>
                 </div>
             </x-ui.card>
-        </div>
 
+        {{-- Analytics only (2026-11-03): it showed under the Reports tab too. --}}
         <h3 class="text-base font-extrabold text-ink mb-3 mt-6">Internal Forms &amp; Incident Reports</h3>
         <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] mb-5">
             <x-ui.stat-card layout="compact" class="h-full" label="Internal Forms Submitted" valueBind="internalForms?.totals?.submissions ?? 0" icon="clipboard-list" color="light" :delay="0" />
@@ -399,6 +439,7 @@
                 <h3 class="text-lg font-extrabold text-ink mb-4">Incident Reports by Severity</h3>
                 <x-ui.clay-donut rows="incidentSeveritySplit" total-label="Incidents" empty="No incidents logged yet." :keep-colors="true" />
             </x-ui.card>
+        </div>
         </div>
 
         </div>

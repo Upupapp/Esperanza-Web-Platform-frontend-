@@ -141,6 +141,27 @@ function drawTable(st, columns, body) {
     });
 }
 
+/** An executive summary under the header (2026-11-03): its heading, then each paragraph wrapped to the page. */
+function drawSummary(st, paragraphs) {
+    if (!paragraphs || !paragraphs.length) return;
+    const { doc, margin, width } = st;
+    st.y += 2;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(11, 23, 48);
+    doc.text('Executive Summary', margin, st.y + 3);
+    st.y += 6.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(30);
+    paragraphs.forEach((p) => {
+        const lines = doc.splitTextToSize(clean(p), width);
+        doc.text(lines, margin, st.y + 2.5);
+        st.y += lines.length * 3.9 + 2.2;
+    });
+    st.y += 3;
+}
+
 /** "Page n of N" on every page, then the download. */
 function finish(st, title, filename) {
     const { doc, page, margin } = st;
@@ -158,13 +179,15 @@ function finish(st, title, filename) {
  * rows: the same objects the CSV is made from.
  * options.columns: [{key, label}] or keys, in order; otherwise every key whose
  *   values are plain (not objects) in the rows, minus options.skip.
+ * options.summary: paragraphs printed under the header, before the table.
  */
 export async function tablePdf(rows, options = {}) {
-    const { filename = 'export.pdf', title = 'Export', subtitle = '' } = options;
+    const { filename = 'export.pdf', title = 'Export', subtitle = '', summary = [] } = options;
     if (!rows || !rows.length) throw new Error('No records to export.');
     const columns = columnsOf(rows, options);
     const body = rows.map((r) => columns.map((c) => text(r[c.key])));
     const st = await startDoc(title, (subtitle ? subtitle + '  •  ' : '') + 'Made ' + madeNow() + '  •  ' + rows.length.toLocaleString('en-PH') + (rows.length === 1 ? ' row' : ' rows'));
+    drawSummary(st, summary);
     drawTable(st, columns, body);
     finish(st, title, filename);
 }

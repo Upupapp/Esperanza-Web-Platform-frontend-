@@ -577,14 +577,31 @@ export function reportSheet() {
                 if (!paper) throw new Error('no report on screen');
                 if (editor.waitForImages) await editor.waitForImages(paper);
                 if (editor.sanitizeExportColors) restoreColors = editor.sanitizeExportColors(document.body);
+                // Every page gets its own top and bottom margin, as the printed
+                // copy does (2026-11-03: page two began at the very top edge, the
+                // margin having been the paper's own padding, on page one only).
+                // The paper keeps its side padding; each page is numbered.
+                const copy = editor.exportClone ? editor.exportClone(paper) : paper.cloneNode(true);
+                Object.assign(copy.style, { paddingTop: '0', paddingBottom: '0', boxShadow: 'none', borderRadius: '0' });
                 await html2pdf().set({
-                    margin: 0,
+                    margin: this.landscape ? [10, 0, 12, 0] : [12, 0, 14, 0],
                     filename: (this.report.key || 'report') + '-' + new Date().toISOString().slice(0, 10) + '.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, backgroundColor: '#ffffff' },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: this.landscape ? 'landscape' : 'portrait', compress: true },
                     pagebreak: { mode: ['css', 'legacy'] },
-                }).from(editor.exportClone ? editor.exportClone(paper) : paper).save();
+                }).from(copy).toPdf().get('pdf').then((doc) => {
+                    const pages = doc.internal.getNumberOfPages();
+                    const w = doc.internal.pageSize.getWidth();
+                    const h = doc.internal.pageSize.getHeight();
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(85, 85, 85);
+                    for (let i = 1; i <= pages; i += 1) {
+                        doc.setPage(i);
+                        doc.text('Page ' + i + ' of ' + pages, w - 14, h - 6, { align: 'right' });
+                    }
+                }).save();
             } catch (e) {
                 this.$dispatch('toast', { message: e?.localised ? e.localised('en') : 'Could not make the PDF. Use Print and choose Save as PDF.', variant: 'error' });
             } finally {
@@ -611,6 +628,19 @@ export function reportSheet() {
                 if (r.filters?.label) aoa.push(['Narrowed to: ' + r.filters.label]);
                 if (r.filters?.note) aoa.push([r.filters.note]);
                 aoa.push([]);
+                // The executive summary, a line of about 110 characters to a row so
+                // it reads in Excel without wrapping a cell (2026-11-03).
+                if ((r.summary || []).length) {
+                    aoa.push(['Executive Summary']);
+                    r.summary.forEach((p) => {
+                        let line = '';
+                        String(p).split(' ').forEach((word) => {
+                            if (line && (line + ' ' + word).length > 110) { aoa.push([line]); line = word; } else { line = line ? line + ' ' + word : word; }
+                        });
+                        if (line) aoa.push([line]);
+                        aoa.push([]);
+                    });
+                }
                 (r.sections || []).forEach((s) => {
                     if (s.title) aoa.push([s.title]);
                     aoa.push(s.columns.map((c) => c.label));

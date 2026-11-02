@@ -806,26 +806,56 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
     font-style: italic;
     color: #333;
 }
+/* The executive summary under the period (2026-11-03): short paragraphs the
+   server writes from the tables, kept together on the first page. */
+.rep-summary {
+    margin: 0 0 4mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.rep-summary h2 {
+    margin: 0 0 1.5mm;
+    font-size: 10.5pt;
+    font-weight: 700;
+}
+.rep-summary p {
+    margin: 0 0 1.8mm;
+    text-align: justify;
+}
+.rep-summary p:last-child {
+    margin-bottom: 0;
+}
 /* A Summary Report: the figures at a glance, then a graph over each table.
-   A graph never splits across pages; its colours are its own (report-charts.js). */
+   A graph never splits across pages; its colours are its own (report-charts.js).
+   The tiles are ONE row however many there are (2026-11-03: the template sets
+   the columns); with five or more the type steps down, and each label keeps
+   two lines so every value sits on the same line. */
 .rep-tiles {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 2mm;
     break-inside: avoid;
     page-break-inside: avoid;
 }
 .rep-tile {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
     border: 1px solid #111;
     border-radius: 1.5mm;
     padding: 2mm 2.4mm;
 }
 .rep-tile p {
     margin: 0;
+    overflow-wrap: anywhere;
 }
 .rep-tile-label {
+    display: flex;
+    align-items: flex-end;
+    min-height: 2.5em;
     font-size: 8.5pt;
     font-weight: 700;
+    line-height: 1.2;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: #333;
@@ -840,6 +870,33 @@ body.dp-printing *:has(#dp-print-area) > *:not(:has(#dp-print-area)):not(#dp-pri
 .rep-tile-hint {
     font-size: 8pt;
     color: #444;
+}
+.rep-tiles-5 .rep-tile,
+.rep-tiles-6 .rep-tile,
+.rep-tiles-7 .rep-tile,
+.rep-tiles-8 .rep-tile {
+    padding: 1.6mm 1.8mm;
+}
+.rep-tiles-5 .rep-tile-value {
+    font-size: 13pt;
+}
+.rep-tiles-6 .rep-tile-value {
+    font-size: 12pt;
+}
+.rep-tiles-7 .rep-tile-value,
+.rep-tiles-8 .rep-tile-value {
+    font-size: 11pt;
+}
+.rep-tiles-6 .rep-tile-label,
+.rep-tiles-7 .rep-tile-label,
+.rep-tiles-8 .rep-tile-label {
+    font-size: 7pt;
+    letter-spacing: 0.01em;
+}
+.rep-tiles-6 .rep-tile-hint,
+.rep-tiles-7 .rep-tile-hint,
+.rep-tiles-8 .rep-tile-hint {
+    font-size: 7pt;
 }
 .rep-chart {
     margin: 1mm 0 2.5mm;

@@ -42,6 +42,15 @@
                             <p class="rep-filters" x-show="filterText">Narrowed to: <strong x-text="filterText"></strong></p>
                             <p class="rep-filters-note" x-show="report.filters && report.filters.note" x-text="report.filters ? report.filters.note : ''"></p>
 
+                            {{-- The executive summary (2026-11-03): two or more short
+                                 paragraphs the server writes from the tables below. --}}
+                            <section class="rep-summary" x-show="(report.summary || []).length">
+                                <h2>Executive Summary</h2>
+                                <template x-for="(p, pi) in (report.summary || [])" :key="pi">
+                                    <p x-text="p"></p>
+                                </template>
+                            </section>
+
                             <template x-if="report.key === 'dept_accomplishment'">
                                 <dl class="rep-ident">
                                     <div><dt>Name:</dt><dd x-text="signatories[0] ? signatories[0].name : ''"></dd></div>
@@ -57,9 +66,10 @@
                                 <section class="rep-section" :class="(s.rows || []).length <= 6 && 'rep-keep'">
                                     <div class="rep-keep">
                                     <h2 x-show="s.title" x-text="s.title"></h2>
-                                    {{-- The figures at a glance (a Summary Report's first section). --}}
+                                    {{-- The figures at a glance (a Summary Report's first section),
+                                         all on one row however many (2026-11-03): smaller type for 5+. --}}
                                     <template x-if="s.display === 'tiles'">
-                                        <div class="rep-tiles">
+                                        <div class="rep-tiles" :class="'rep-tiles-' + Math.min(s.rows.length, 8)" :style="'grid-template-columns: repeat(' + Math.max(s.rows.length, 1) + ', minmax(0, 1fr))'">
                                             <template x-for="(t, ti) in s.rows" :key="ti">
                                                 <div class="rep-tile">
                                                     <p class="rep-tile-label" x-text="t.item"></p>
