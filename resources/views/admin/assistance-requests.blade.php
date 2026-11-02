@@ -1141,7 +1141,7 @@
                 <tr class="bg-well/70">
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden xl:table-cell">Reference</th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Citizen</th>
-                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Assistance Type</th>
+                    <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">Tulong Type</th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Office</th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Barangay</th>
                     <th class="px-4 py-2.5 text-left text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted hidden 2xl:table-cell">Assigned</th>
@@ -1279,7 +1279,7 @@
                             <div class="flex items-center gap-2.5 px-4 py-3">
                                 <span class="w-8 h-8 rounded-lg bg-white text-purple-600 border border-slate-200 flex items-center justify-center shrink-0"><i data-lucide="hand-heart" class="w-4 h-4"></i></span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Assistance Type</p>
+                                    <p class="text-[10px] text-ink-muted uppercase tracking-wide">Tulong Type</p>
                                     <p class="text-sm font-medium text-ink truncate" x-text="selected.type"></p>
                                 </div>
                             </div>

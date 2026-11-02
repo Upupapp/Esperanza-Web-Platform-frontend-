@@ -306,6 +306,11 @@ class WelfareRoundTwoTest extends TestCase
         $this->assertStringContainsString("if (step === 2) return this.apKey ? '' : 'Choose the Tulong type.';", $js);
         $this->assertStringContainsString('<label for="sf-service" class="{{ $sdLabel }}">Tulong Type *</label>', $this->source('resources/views/admin/tulong/session-desk.blade.php'));
         $this->assertStringContainsString('<option value="">All Tulong types</option>', $this->source('resources/views/admin/tulong/sessions.blade.php'));
+        // The Tulong list and the case window too (live check, 2026-11-02).
+        $list = $this->source('resources/views/admin/assistance-requests.blade.php');
+        $this->assertStringContainsString('text-ink-muted">Tulong Type</th>', $list);
+        $this->assertStringContainsString('uppercase tracking-wide">Tulong Type</p>', $list);
+        $this->assertStringNotContainsString('>Assistance Type<', $list);
 
         // No "service" left in what these screens show: text between tags,
         // and the quoted strings their bindings print.
