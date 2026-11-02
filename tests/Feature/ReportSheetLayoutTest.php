@@ -80,6 +80,7 @@ class ReportSheetLayoutTest extends TestCase
         $this->assertStringContainsString('sublabel="Dokyu + Tulong, all time"', $page);
         $this->assertStringContainsString('valueBind="avgResolutionText"', $page);
         $this->assertStringContainsString("if (d < 0.5) return 'Same day';", $page);
+        $this->assertStringContainsString("(k.avg_working_days < 0.5 ? 'Same day' :", $this->source('resources/views/components/admin/dashboards/department.blade.php'), 'the office dashboard too');
         $this->assertStringContainsString('return rows.filter((r) => r.requests > 0)', $page);
         $this->assertStringContainsString("' barangays have') + ' no requests on file.'", $page);
     }

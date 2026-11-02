@@ -96,7 +96,7 @@
                 <div x-show="hasTulong"><x-ui.stat-card layout="compact" class="h-full" label="Clients Served" valueBind="num(k.served)" icon="package-check" color="deep" sublabelBind="num(k.people_served) + ' different persons'" :delay="120" /></div>
                 <div x-show="!hasTulong"><x-ui.stat-card layout="compact" class="h-full" label="Released" valueBind="num(k.served)" icon="package-check" color="deep" sublabel="Documents released in the period" :delay="120" /></div>
                 <div x-show="hasTulong"><x-ui.stat-card layout="compact" class="h-full" label="Amount Released" valueBind="pesoTile(k.amount_released)" icon="wallet" color="gold" sublabelBind="peso(k.amount_released) + ' to clients'" :delay="160" /></div>
-                <x-ui.stat-card layout="compact" class="h-full" label="Processing Time" valueBind="k.avg_working_days !== null && k.avg_working_days !== undefined ? k.avg_working_days + ' days' : '—'" icon="calendar-clock" color="slate" sublabel="Working days, filing to release" :delay="200" />
+                <x-ui.stat-card layout="compact" class="h-full" label="Processing Time" valueBind="k.avg_working_days === null || k.avg_working_days === undefined ? '—' : (k.avg_working_days < 0.5 ? 'Same day' : k.avg_working_days + (k.avg_working_days == 1 ? ' day' : ' days'))" icon="calendar-clock" color="slate" sublabel="Working days, filing to release" :delay="200" />
             </div>
 
             <div class="grid gap-5 grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start">
