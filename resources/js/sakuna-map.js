@@ -144,7 +144,8 @@ function pinIcon(tone = 'text-rose-600') {
 }
 
 function incidentIcon(severity) {
-    const tone = SEVERITY_TONE[severityKey(severity)] || 'bg-slate-400';
+    const key = severityKey(severity);
+    const tone = (SEVERITY_TONE[key] || 'bg-slate-400') + (key === 'Critical' ? ' sakuna-critical' : '');
     return L.divIcon({ className: '', html: '<span class="sakuna-dot ' + tone + '"></span>', iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -10] });
 }
 
@@ -165,7 +166,9 @@ function clusterIcon(cluster) {
     const worst = cluster.getAllChildMarkers()
         .map((m) => m.options.severity)
         .sort((a, b) => (SEVERITY_RANK[a] ?? 9) - (SEVERITY_RANK[b] ?? 9))[0];
-    const tone = SEVERITY_TONE[worst] || 'bg-slate-400';
+    // White figures need the darker shade of each severity to read (4.5:1);
+    // High keeps a true orange with dark figures, so it never reads as Critical.
+    const tone = ({ Critical: 'bg-rose-700 sakuna-critical', High: 'bg-orange-500 sakuna-cluster-dark', Medium: 'bg-amber-700', Low: 'bg-slate-600' })[worst] || 'bg-slate-600';
     return L.divIcon({ className: '', html: '<span class="sakuna-cluster ' + tone + '">' + cluster.getChildCount() + '</span>', iconSize: [36, 36], iconAnchor: [18, 18] });
 }
 
@@ -424,7 +427,7 @@ function sakunaLocationPicker({ target, search = false, bilingual = false, requi
 // ------------------------------------------------------------- pin view
 
 /** One saved place on a small map; `point` returns { lat, lng } or nothing. */
-function sakunaPinView({ point, tone = 'incident' } = {}) {
+function sakunaPinView({ point, tone = 'incident', severity = null } = {}) {
     let map = null;
     let marker = null;
     return {
@@ -446,8 +449,11 @@ function sakunaPinView({ point, tone = 'incident' } = {}) {
                         onFailed: () => { this.viewState = 'failed'; },
                     });
                 }
-                if (!marker) marker = L.marker(at, { icon: tone === 'centre' ? centreIcon(true) : pinIcon(), keyboard: false }).addTo(map);
-                else marker.setLatLng(at);
+                // An incident's pin takes its severity's colour (critique 2026-11-03).
+                const sev = { Critical: 'text-rose-600', High: 'text-orange-600', Medium: 'text-amber-500', Low: 'text-slate-500' }[severity?.()] || 'text-rose-600';
+                const icon = tone === 'centre' ? centreIcon(true) : pinIcon(sev);
+                if (!marker) marker = L.marker(at, { icon, keyboard: false }).addTo(map);
+                else { marker.setLatLng(at); marker.setIcon(icon); }
                 map.setView(at, 16);
                 map.invalidateSize();
             });
@@ -522,20 +528,23 @@ function sakunaCommandMap() {
             incidentLayer.clearLayers();
             centreLayer.clearLayers();
             incidentLayer.addLayers(incidents.map((m) => {
+                const label = (m.title || m.ref) + ', ' + (m.severity || 'severity not set') + ' severity';
                 const marker = L.marker([m.lat, m.lng], {
                     icon: incidentIcon(m.severity),
-                    title: m.title || m.ref,
-                    alt: (m.title || m.ref) + ', ' + severityKey(m.severity),
+                    title: label,
+                    alt: label,
                     riseOnHover: true,
                     severity: severityKey(m.severity),
                 });
+                marker.on('add', () => marker.getElement()?.setAttribute('aria-label', label));
                 marker.bindPopup(() => this.incidentPopup(m));
                 return marker;
             }));
             centres.forEach((c) => {
-                L.marker([c.lat, c.lng], { icon: centreIcon(c.open), title: c.name, alt: c.name, zIndexOffset: -200 })
-                    .bindPopup(() => this.centrePopup(c))
-                    .addTo(centreLayer);
+                const label = c.name + ', evacuation center, ' + (c.open ? 'open' : 'not open');
+                const marker = L.marker([c.lat, c.lng], { icon: centreIcon(c.open), title: label, alt: label, zIndexOffset: -200 });
+                marker.on('add', () => marker.getElement()?.setAttribute('aria-label', label));
+                marker.bindPopup(() => this.centrePopup(c)).addTo(centreLayer);
             });
             if (settled && !fitted) {
                 fitted = true;

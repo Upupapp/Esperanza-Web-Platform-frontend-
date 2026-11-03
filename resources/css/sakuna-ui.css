@@ -73,7 +73,7 @@
     /* surfaces */
     .sk-card { background: #fff; border: 1px solid var(--sk-line); border-radius: 12px; box-shadow: 0 1px 2px rgb(15 23 42 / .04); min-width: 0; }
     .sk-chead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--sk-line-soft); flex-wrap: wrap; }
-    .sk-ctitle { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--sk-text); }
+    .sk-ctitle { margin: 0; font-size: 14px; font-weight: 600; color: var(--sk-text); }
     .sk-csub { font-size: 12px; color: var(--sk-faint); font-weight: 400; }
     .sk-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--sk-line-soft); }
     /* One row that never wraps; a narrow screen scrolls it sideways (Reports). */
@@ -138,7 +138,7 @@
        that they wrap, left-aligned (NAV-4: never off screen). */
     .sk-tabhost { container: sktabs / inline-size; }
     @container sktabs (min-width: 1036px) { .sk-tabhost > nav { justify-content: space-between; } }
-    @container sktabs (min-width: 990px) and (max-width: 1035.98px) {
+    @container sktabs (min-width: 960px) and (max-width: 1035.98px) {
         .sk-tabhost > nav { justify-content: space-between; }
         .sk-tabhost .sk-tab { padding: 0 4px; }
     }
@@ -165,4 +165,146 @@
     @media (max-width: 560px) { .sk-g6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sk-g4 { grid-template-columns: minmax(0, 1fr); } .sk-g4 > .sk-span2 { grid-column: auto; } }
 
     .sk button:focus-visible, .sk a:focus-visible, .sk select:focus-visible, .sk input:focus-visible, .sk summary:focus-visible { outline: 2px solid var(--sk-blue); outline-offset: 2px; }
+
+    /* ── The Tulong look (owner, 2026-11-03) ─────────────────────────────
+       Sakuna takes its fonts, table and tab colours, and hover and click
+       behaviour from the Tulong page (admin/assistance-requests): glass
+       cards, a pale-blue header row, blue hairlines between rows, rows that
+       lighten and turn their name blue under the cursor, and tabs as white
+       pills on a pressed track. Kept as one block so it can be tuned. */
+    .sk {
+        --sk-line: rgb(29 71 214 / .10);
+        --sk-line-soft: rgb(29 71 214 / .08);
+        --sk-text: var(--color-ink);
+        --sk-muted: var(--color-ink-muted);
+        --sk-faint: var(--color-ink-muted);
+        --sk-blue: var(--color-brand-600);
+        --sk-blue-d: var(--color-brand-700);
+        --sk-blue-50: var(--color-brand-50);
+        --sk-blue-100: var(--color-brand-100);
+        --sk-well: var(--color-well);
+    }
+
+    /* Surfaces: the glass the Tulong toolbar and table sit on. */
+    .sk-card, .sk-stats { background: rgb(255 255 255 / .62); backdrop-filter: blur(12px) saturate(140%); border: 1px solid rgb(255 255 255 / .85); box-shadow: var(--shadow-glass); }
+    .sk-popover { background: #fff; border-color: rgb(29 71 214 / .10); }
+    /* Glass makes each card its own layer: lift the one whose pop-over is open above the next. */
+    .sk-card:has(> .sk-popover) { z-index: 20; }
+    button.sk-stat { transition: background-color .16s; }
+    button.sk-stat:hover { background: rgb(255 255 255 / .6); }
+    .sk-stat-on { background: rgb(255 255 255 / .75); box-shadow: inset 0 -2px 0 var(--sk-blue); }
+
+    /* Tables: Tulong's header band, type and hairlines. */
+    .sk-tbl > thead > tr > th, .sk-th { font-size: 11.5px; font-weight: 700; letter-spacing: .07em; color: var(--sk-muted); padding: 10px 16px; background: rgb(225 233 249 / .7); border-bottom: 0; }
+    .sk-tbl > tbody > tr > td, .sk-td { font-size: 14px; padding: 12px 16px; color: var(--sk-muted); border-bottom: 1px solid var(--sk-line-soft); }
+    .sk-tbl > tbody > tr { transition: background-color .15s; }
+    .sk-tbl > tbody > tr:hover { background: rgb(255 255 255 / .6); }
+    .sk-tbl > tbody > tr[tabindex] { cursor: pointer; }
+    .sk-tbl > tbody > tr[tabindex]:focus-visible { outline: 2px solid var(--sk-blue); outline-offset: -2px; }
+    .sk-tbl .sk-b { font-weight: 500; color: #334155; transition: color .15s; }
+    .sk-tbl > tbody > tr[tabindex]:hover .sk-b { color: var(--sk-blue); }
+    /* Dense tables (Incidents) keep every column on screen: a step smaller. */
+    .sk-tbl-tight > thead > tr > th, .sk-tbl-tight > tbody > tr > td { padding-left: 10px; padding-right: 10px; }
+    .sk-tbl-tight > tbody > tr > td { font-size: 13px; }
+    .sk-tbl-tight > thead > tr > th:first-child, .sk-tbl-tight > tbody > tr > td:first-child { padding-left: 16px; }
+    .sk-g4 .sk-tbl > tbody > tr > td { font-size: 13px; }
+    .sk-mono { font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace); font-size: 12px; color: var(--sk-muted); }
+    .sk-sub { font-size: 11px; color: var(--sk-muted); margin-top: 2px; }
+    .sk-chead { border-bottom-color: var(--sk-line-soft); }
+    .sk-ctitle { color: var(--sk-text); }
+
+    /* Tabs: a pressed track with the open one as a white pill. */
+    .sk-segwrap { gap: 6px; padding: 4px; border-radius: 12px; background: var(--sk-well); box-shadow: var(--shadow-pressed); }
+    .sk-seg { height: auto; padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 500; color: var(--sk-muted); transition: color .15s, background-color .15s; }
+    .sk-seg:hover { color: #334155; }
+    .sk-seg-on, .sk-seg-on:hover { background: #fff; color: var(--sk-text); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .05); }
+    .sk-tabhost { padding: 0 12px 12px; }
+    .sk-tabhost > nav { gap: 4px; padding-top: 4px; padding-bottom: 4px; border-radius: 16px; background: var(--sk-well); box-shadow: var(--shadow-pressed); }
+    .sk-tab { height: auto; padding: 6px 12px; border-bottom: 0; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--sk-muted); transition: color .15s, background-color .15s; }
+    .sk-tab:hover { color: var(--sk-text); }
+    .sk-tab-on, .sk-tab-on:hover { background: #fff; color: var(--sk-blue-d); box-shadow: 0 1px 2px rgb(0 0 0 / .05); }
+    @container sktabs (min-width: 1036px) { .sk-tabhost > nav { justify-content: normal; } .sk-tabhost .sk-tab { flex: 1 1 auto; padding: 6px 4px; } }
+    @container sktabs (min-width: 960px) and (max-width: 1035.98px) { .sk-tabhost > nav { justify-content: normal; gap: 2px; } .sk-tabhost .sk-tab { flex: 1 1 auto; padding: 6px 3px; font-size: 11.5px; } }
+
+    /* Fields: pressed wells that turn white with a soft ring when in use. */
+    .sk-sel, .sk-search input, .sk-daterange { border-color: transparent; border-radius: 16px; background-color: var(--sk-well); box-shadow: var(--shadow-pressed-sm); font-size: 12px; transition: background-color .16s, box-shadow .16s; }
+    .sk-sel:focus, .sk-search input:focus { outline: none; background-color: rgb(255 255 255 / .9); box-shadow: 0 0 0 4px var(--sk-blue-100); }
+    .sk-sel:disabled { background-color: var(--sk-well); opacity: .6; }
+    .sk-daterange:hover { background-color: rgb(255 255 255 / .9); }
+
+    /* Buttons: Tulong's quiet buttons turn blue under the cursor. */
+    .sk-btn { border-radius: 16px; font-size: 12px; transition: background-color .15s, border-color .15s, color .15s, filter .15s; }
+    .sk-btn-sm { border-radius: 12px; }
+    .sk-btn:not(.sk-btn-p):not(.sk-btn-red):not(.sk-btn-amber):not(.sk-btn-soft):not(.sk-btn-ghost):not(.sk-btn-ok):not(.sk-btn-danger) { background: #f8fafc; border-color: #e2e8f0; color: var(--sk-muted); }
+    .sk-btn:not(.sk-btn-p):not(.sk-btn-red):not(.sk-btn-amber):not(.sk-btn-soft):not(.sk-btn-ghost):not(.sk-btn-ok):not(.sk-btn-danger):hover { background: var(--sk-blue-50); border-color: var(--color-brand-200); color: var(--sk-blue); }
+    .sk-btn-p { background: var(--sk-blue); border-color: var(--sk-blue); box-shadow: var(--shadow-clay-blue); font-weight: 600; }
+    .sk-btn-p:hover { background: var(--sk-blue); filter: brightness(.95); }
+    .sk-btngrp > .sk-btn:first-child { border-radius: 16px 0 0 16px; }
+    .sk-btngrp > .sk-btn:last-child { border-radius: 0 16px 16px 0; }
+    .sk-iconbtn { border-radius: 12px; }
+    .sk-iconbtn:hover { background: var(--sk-blue-50); color: var(--sk-blue); }
+    .sk-clear { font-size: 12px; }
+
+    /* Needs action and waiting time (critique 2026-11-03, second run). */
+    .sk-need { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 12px; border-radius: 12px; border: 1px solid transparent; font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; transition: filter .15s; }
+    .sk-need:hover { filter: brightness(.96); }
+    .sk-need svg, .sk-need i { width: 15px; height: 15px; flex-shrink: 0; }
+    .sk-need-red { background: #FEE2E2; border-color: #FECACA; color: #991B1B; }
+    .sk-need-amber { background: #FEF3C7; border-color: #FDE68A; color: #78350F; }
+    /* The event band and large figures on the Command Center (third run). */
+    .sk-event-title { font-size: 20px; font-weight: 700; line-height: 1.3; color: var(--sk-text); letter-spacing: -.01em; }
+    .sk-sval-lg { font-size: 30px; line-height: 1.15; }
+    /* Figures line up across a strip even when a label wraps, and short notes
+       under a figure wrap instead of being cut off (third run). */
+    .sk-stats > .sk-stat { display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: 2px; align-content: start; }
+    .sk-ssub { white-space: normal; overflow: visible; text-overflow: clip; }
+    .sk-mono { white-space: nowrap; }
+    /* Sortable table headings: the heading is the button; the chosen one is ink with a caret. */
+    .sk-sort { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; border-radius: 4px; }
+    .sk-sort:hover { color: var(--sk-text); }
+    .sk-sort:focus-visible { outline: 2px solid var(--sk-blue); outline-offset: 2px; }
+    .sk-sort-on { color: var(--sk-text); }
+    .sk-sort-on::after { content: '▾'; font-size: 10px; }
+    .sk-tbl-wraphead > thead > tr > th { white-space: normal; vertical-align: bottom; line-height: 1.3; min-width: 72px; }
+    #alert-type::-webkit-calendar-picker-indicator { display: none !important; }
+    .sk-asof { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #92400E; background: #FEF3C7; border-radius: 999px; padding: 2px 10px; width: fit-content; }
+    .sk-need-neutral { background: #fff; border-color: var(--sk-line); color: var(--sk-text); }
+    .sk-longest { display: inline-flex; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: #FEE2E2; color: #991B1B; font-size: 12px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; vertical-align: 1px; }
+    .sk-wait-amber, .sk-tbl > tbody > tr > td.sk-wait-amber { color: #92400E; font-weight: 600; }
+    .sk-wait-red, .sk-tbl > tbody > tr > td.sk-wait-red { color: #B91C1C; font-weight: 700; }
+
+    /* Accessibility, second pass (critique 2026-11-03): a red that reads at AA
+       on the glass, tiles instead of cards inside cards, and a shadow on the
+       pinned action column so the table visibly scrolls beneath it. */
+    .sk-t-red { color: #B91C1C; }
+    .sk-tile { background: #fff; border: 1px solid var(--sk-line); border-radius: 12px; min-width: 0; }
+    .sk .sk-tbl-act > tbody > tr > td:last-child, .sk .sk-tbl-act > thead > tr > th:last-child { box-shadow: -8px 0 8px -8px rgb(15 23 42 / .22), inset 1px 0 0 var(--sk-line-soft); }
+
+    /* Readability (critique 2026-11-03): a 12px floor for secondary text, and
+       placeholders that pass AA on the pressed wells. */
+    .sk-slab { font-size: 12px; }
+    .sk-ssub, .sk-sub { font-size: 12px; }
+    .sk-tbl > thead > tr > th, .sk-th { font-size: 12px; }
+    .sk-pill, .sk-tag { font-size: 12px; }
+    .sk-seg { font-size: 12px; }
+    .sk-search input::placeholder { color: var(--sk-muted); }
+
+    /* A table's actions stay in view (critique 2026-11-03): when the table is
+       wider than its card it scrolls sideways under a pinned action column. */
+    .sk-tbl-act > thead > tr > th:last-child, .sk-tbl-act > tbody > tr > td:last-child { position: sticky; right: 0; z-index: 1; }
+    .sk-tbl-act > thead > tr > th:last-child { background: rgb(234 240 251); }
+    .sk-tbl-act > tbody > tr > td:last-child { background: #F9FBFE; box-shadow: inset 1px 0 0 var(--sk-line-soft); }
+    .sk-tbl-act > tbody > tr:hover > td:last-child { background: #fff; }
+
+    /* How fresh the live board is (critique 2026-11-03): quiet while live,
+       amber when stale, red when it never loaded. */
+    .sk-updated { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--sk-muted); background: none; border: 0; cursor: pointer; transition: background-color .15s, color .15s; }
+    .sk-updated:hover { background: rgb(255 255 255 / .7); color: var(--sk-text); }
+    .sk-updated:disabled { cursor: progress; }
+    .sk-updated svg, .sk-updated i { width: 14px; height: 14px; }
+    /* Freshness looks like nothing else on the page: a dashed outline on white. */
+    .sk-updated-stale, .sk-updated-failed { background: #fff; color: #1E293B; box-shadow: inset 0 0 0 1.5px #475569; outline: 1px dashed transparent; font-weight: 600; }
+    .sk-updated-stale { box-shadow: none; border: 1.5px dashed #475569; }
+    .sk-updated-failed { box-shadow: none; border: 1.5px dashed #1E293B; font-weight: 700; }
+    .sk-updated-stale:hover, .sk-updated-failed:hover { background: #F1F5F9; }
 }

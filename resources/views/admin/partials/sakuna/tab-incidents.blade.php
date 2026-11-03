@@ -17,17 +17,6 @@
 --}}
 
 <div x-data="{
-    incidentTypeIcon(type) {
-        const map = {
-            'Flood': 'waves', 'Landslide': 'triangle-alert', 'Fire': 'flame', 'Earthquake': 'activity',
-            'Vehicular Accident': 'car', 'Medical Emergency': 'heart-pulse', 'Missing Person': 'search',
-            'Stranded Resident': 'anchor', 'Fallen Tree': 'tree-pine', 'Downed Power Line': 'zap',
-            'Road Obstruction': 'cone', 'Damaged Bridge': 'construction', 'Rescue Request': 'life-buoy',
-            'Drowning or Water Rescue': 'anchor', 'Agricultural Damage': 'wheat', 'Structural Damage': 'building-2',
-            'Water Interruption': 'droplets', 'Power Interruption': 'zap-off', 'Public Health Emergency': 'shield-alert',
-        };
-        return map[type] || 'alert-circle';
-    },
     elapsed(iso) {
         if (!iso) return '—';
         const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -35,8 +24,37 @@
         if (mins < 1440) return Math.round(mins / 60) + 'h';
         return Math.round(mins / 1440) + 'd';
     },
+    // Triage (critique 2026-11-03, sixth run): the longest-waiting incidents
+    // come first unless another column is chosen, and several waiting to be
+    // validated can be validated together after one confirmation.
+    sortKey: 'waiting',
+    picked: [],
+    bulkAsk: false,
+    bulkBusy: false,
+    sortBy(key) { this.sortKey = key; },
+    ariaSort(key) { return this.sortKey === key ? (key === 'reported' || key === 'ref' ? 'descending' : 'ascending') : 'none'; },
+    get validatable() { return this.filteredIncidents.filter(i => i.available_verbs?.includes('validate')); },
+    togglePick(ref) { this.picked = this.picked.includes(ref) ? this.picked.filter(r => r !== ref) : [...this.picked, ref]; },
+    toggleAll() { this.picked = this.picked.length === this.validatable.length ? [] : this.validatable.map(i => i.ref); },
+    async validatePicked() {
+        if (this.bulkBusy) return;
+        this.bulkBusy = true;
+        for (const ref of [...this.picked]) {
+            const inc = incidentsList.find(i => i.ref === ref);
+            if (inc && inc.available_verbs?.includes('validate')) await actIncidentVerb(inc, 'validate');
+        }
+        this.picked = []; this.bulkAsk = false; this.bulkBusy = false;
+    },
     get filteredIncidents() {
         const q = incidentSearch.toLowerCase();
+        const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+        const at = (i) => new Date(i.reported || 0).getTime();
+        const order = {
+            waiting: (a, b) => (isWaiting(b) - isWaiting(a)) || (isWaiting(a) ? at(a) - at(b) : at(b) - at(a)),
+            severity: (a, b) => ((rank[a.severity] ?? 9) - (rank[b.severity] ?? 9)) || at(a) - at(b),
+            reported: (a, b) => at(b) - at(a),
+            ref: (a, b) => String(b.ref).localeCompare(String(a.ref)),
+        }[this.sortKey];
         return incidentsList.filter(inc =>
             $store.session.inScope(inc.barangay) &&
             (!q || inc.ref.toLowerCase().includes(q) || inc.type.toLowerCase().includes(q) || inc.barangay.toLowerCase().includes(q)) &&
@@ -44,21 +62,22 @@
             (!incidentSeverityFilter || inc.severity === incidentSeverityFilter) &&
             (!incidentStatusFilter || inc.status === incidentStatusFilter) &&
             (!incidentBarangayFilter || inc.barangay === incidentBarangayFilter) &&
-            (!incidentSourceFilter || (incidentSourceFilter === 'resident') === (inc.source === 'Citizen Portal'))
-        );
+            (!incidentSourceFilter || (incidentSourceFilter === 'resident') === (inc.source === 'Citizen Portal')) &&
+            (!incidentAssignedFilter || (incidentAssignedFilter === 'none' ? !inc.assigned_name && !['Completed', 'Archived', 'Rejected'].includes(inc.status) : !!inc.assigned_name))
+        ).sort(order);
     },
 }" x-init="loadIncidentsList()" class="space-y-3">
 
 {{-- ── Stats + actions (Sakuna Redesign, 2026-11-02) ───────────────────────────────────── --}}
 <div class="sk-pagebar">
     <div class="sk-stats">
-        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Total</span><span class="sk-sval tabular-nums" x-text="incidentsList.length"></span></div>
-        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-red"></span>Critical</span><span class="sk-sval sk-t-red tabular-nums" x-text="incidentsList.filter(i => i.severity === 'Critical').length"></span></div>
-        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Active</span><span class="sk-sval tabular-nums" x-text="incidentsList.filter(i => !['Completed','Archived'].includes(i.status)).length"></span></div>
-        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-green"></span>Resolved</span><span class="sk-sval tabular-nums" x-text="incidentsList.filter(i => i.status === 'Completed').length"></span></div>
+        <div class="sk-stat"><span class="sk-slab">Total</span><span class="sk-sval tabular-nums" x-text="fig(incidentsList.length, incidentsLoading || incidentsFailed)"></span></div>
+        <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-red" x-show="incidentsList.some(i => i.severity === 'Critical')"></span>Critical</span><span class="sk-sval tabular-nums" :class="incidentsList.some(i => i.severity === 'Critical') ? 'sk-t-red' : ''" x-text="fig(incidentsList.filter(i => i.severity === 'Critical').length, incidentsLoading || incidentsFailed)"></span></div>
+        <div class="sk-stat"><span class="sk-slab">Active</span><span class="sk-sval tabular-nums" x-text="fig(incidentsList.filter(i => !['Completed','Archived'].includes(i.status)).length, incidentsLoading || incidentsFailed)"></span></div>
+        <div class="sk-stat"><span class="sk-slab">Resolved</span><span class="sk-sval tabular-nums" x-text="fig(incidentsList.filter(i => i.status === 'Completed').length, incidentsLoading || incidentsFailed)"></span></div>
     </div>
     <div class="sk-actions">
-        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About Incident Management: report, track, validate, and coordinate response to all active incidents." title="Incident Management: report, track, validate, and coordinate response to all active incidents.">
+        <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About Incident Management" title="Incident Management: report, track, validate, and coordinate response to all active incidents.">
             <i data-lucide="info"></i>
         </button>
         <div class="sk-btngrp" role="group" aria-label="Export">
@@ -66,21 +85,22 @@
                 <i data-lucide="download"></i> Export CSV
             </button>
             <button type="button" @click="exportPDF(filteredIncidents, 'incidents-export.csv')" class="sk-btn">
-                Export PDF
+                <i data-lucide="file-text"></i> Export PDF
             </button>
         </div>
-        <button type="button" x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()" class="sk-btn sk-btn-p">
-            <i data-lucide="plus"></i> New Incident
+        <button type="button" x-show="can('sakuna_incidents', 'create')" @click="openCreateIncident()" :disabled="onLastCopy" :title="onLastCopy ? 'Waits for the connection' : ''" class="sk-btn sk-btn-p disabled:opacity-50">
+            <i data-lucide="plus"></i> New incident
         </button>
     </div>
 </div>
 
 <div x-show="incidentsLoading" class="space-y-2"><x-ui.skeleton class="h-12" /><x-ui.skeleton class="h-64 opacity-80" /></div>
-<div x-show="incidentsFailed" x-cloak><x-ui.error-state messageExpr="'Could not load incidents.'" retryExpr="loadIncidentsList()" :retryable="true" /></div>
+<div x-show="incidentsFailed" x-cloak><x-ui.error-state tone="neutral" icon="cloud-off" title="Not loaded" messageExpr="'Could not load incidents. ' + offlineWhy" retryExpr="loadIncidentsList()" :retryable="true" /></div>
 
 <section x-show="!incidentsLoading && !incidentsFailed" x-cloak class="sk-card overflow-hidden">
 
 {{-- ── Filter Bar ───────────────────────────────────────────────────────────────────────── --}}
+<h2 class="sr-only">Incidents</h2>
 <div class="sk-toolbar">
     <div class="sk-search">
         <i data-lucide="search"></i>
@@ -110,6 +130,11 @@
         <option value="Completed">Resolved</option>
         <option value="Archived">Closed</option>
     </select>
+    <select aria-label="Assigned to filter" x-model="incidentAssignedFilter" class="sk-sel">
+        <option value="">Anyone or nobody</option>
+        <option value="none">Nobody assigned (open)</option>
+        <option value="someone">Someone assigned</option>
+    </select>
     <select aria-label="Incident barangay filter" x-model="incidentBarangayFilter" class="sk-sel">
         <option value="">All barangays</option>
         @foreach($barangays as $brgy)
@@ -122,31 +147,46 @@
         <option value="resident">Reported by residents</option>
         <option value="staff">Entered by staff</option>
     </select>
-    <button type="button" @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
+    <button type="button" @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter=''; incidentAssignedFilter='';"
         class="sk-clear">Clear</button>
-    <span class="sk-spacer"></span>
-    <span class="sk-csub" x-text="filteredIncidents.length + (filteredIncidents.length === 1 ? ' incident' : ' incidents')"></span>
+    <span class="sk-csub ml-auto whitespace-nowrap" x-text="filteredIncidents.length + (filteredIncidents.length === 1 ? ' incident' : ' incidents')"></span>
+</div>
+<div x-show="picked.length" x-cloak class="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-[#EEF2F7] bg-brand-50/60" role="region" aria-label="Chosen incidents">
+    <template x-if="!bulkAsk">
+        <div class="flex flex-wrap items-center gap-2 w-full">
+            <span class="text-sm text-ink-body" x-text="picked.length + (picked.length === 1 ? ' incident chosen' : ' incidents chosen')"></span>
+            <button type="button" class="sk-btn sk-btn-sm sk-btn-p" @click="bulkAsk = true"><i data-lucide="check-check"></i> <span x-text="'Validate ' + picked.length + '…'"></span></button>
+            <button type="button" class="sk-clear" @click="picked = []">Clear choice</button>
+        </div>
+    </template>
+    <template x-if="bulkAsk">
+        <div class="flex flex-wrap items-center gap-2 w-full" role="alertdialog" aria-labelledby="bulk-validate-text">
+            <span id="bulk-validate-text" class="text-sm text-ink-body flex-1 min-w-[14rem]" x-text="'Validate ' + picked.length + (picked.length === 1 ? ' incident? It is' : ' incidents? Each is') + ' marked validated, as if done one by one.'"></span>
+            <button type="button" class="sk-btn sk-btn-sm" @click="bulkAsk = false">Not yet</button>
+            <button type="button" class="sk-btn sk-btn-sm sk-btn-p" :disabled="bulkBusy" @click="validatePicked()" x-text="bulkBusy ? 'Validating…' : 'Validate ' + picked.length"></button>
+        </div>
+    </template>
 </div>
 
 {{-- ── Incident Table ───────────────────────────────────────────────────────────────────── --}}
 <div class="sk-scroll" tabindex="0" role="region" aria-label="Incidents table (scrolls sideways)">
-    <table class="sk-tbl sk-tbl-tight">
+    <table class="sk-tbl sk-tbl-act sk-tbl-tight">
         <thead>
             <tr>
-                <th>Ref</th>
-                <th>Type</th>
-                <th>Reported</th>
+                <th class="!pr-0 w-8"><input type="checkbox" class="accent-brand-600 w-4 h-4 align-middle" x-show="validatable.length" :checked="picked.length && picked.length === validatable.length" @change="toggleAll()" aria-label="Choose every incident waiting to be validated"></th>
+                <th :aria-sort="ariaSort('ref')"><button type="button" class="sk-sort" :class="sortKey === 'ref' ? 'sk-sort-on' : ''" @click="sortBy('ref')">Ref</button></th>
+                <th :aria-sort="ariaSort('reported')"><button type="button" class="sk-sort" :class="sortKey === 'reported' ? 'sk-sort-on' : ''" @click="sortBy('reported')">Type · reported</button></th>
                 <th>Barangay / sitio</th>
-                <th>Severity</th>
-                <th>Assigned to</th>
-                <th>Status</th>
-                <th>Elapsed</th>
-                <th class="sk-r">Actions</th>
+                <th :aria-sort="ariaSort('severity')"><button type="button" class="sk-sort" :class="sortKey === 'severity' ? 'sk-sort-on' : ''" @click="sortBy('severity')">Severity</button></th>
+                <th :aria-sort="ariaSort('waiting')"><button type="button" class="sk-sort" :class="sortKey === 'waiting' ? 'sk-sort-on' : ''" @click="sortBy('waiting')">Waiting</button></th>
+                <th>Status · assigned to</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             <template x-for="inc in filteredIncidents" :key="inc.ref">
-                <tr>
+                <tr @click="openIncidentDetail(inc)" tabindex="0" @keydown.enter.prevent="openIncidentDetail(inc)">
+                    <td class="!pr-0" @click.stop><input type="checkbox" class="accent-brand-600 w-4 h-4 align-middle" x-show="inc.available_verbs.includes('validate')" :checked="picked.includes(inc.ref)" @change="togglePick(inc.ref)" :aria-label="'Choose ' + inc.ref + ' to validate'"></td>
                     <td class="whitespace-nowrap"><span class="sk-mono" x-text="inc.ref"></span></td>
                     <td class="whitespace-nowrap">
                         <div class="flex items-center gap-1.5">
@@ -154,10 +194,7 @@
                             <span class="sk-b" x-text="inc.type"></span>
                             <span x-show="inc.source === 'Citizen Portal'" class="sk-pill sk-p-blue ml-1" style="font-weight: 500;">Resident</span>
                         </div>
-                    </td>
-                    <td class="whitespace-nowrap">
-                        <span x-text="inc.reported ? new Date(inc.reported).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'"></span>
-                        <span class="sk-muted" x-text="inc.reported ? new Date(inc.reported).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : ''"></span>
+                        <div class="sk-sub" x-text="inc.reported ? new Date(inc.reported).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></div>
                     </td>
                     <td>
                         <div class="flex items-center gap-1.5 flex-wrap"><span class="sk-b" x-text="inc.barangay"></span><span class="sk-muted" x-show="inc.sitio" x-text="'· ' + inc.sitio"></span></div>
@@ -168,18 +205,17 @@
                         </div>
                     </td>
                     <td class="whitespace-nowrap"><span :class="severityBadge(inc.severity)" class="sk-pill" x-text="inc.severity"></span></td>
+                    <td class="whitespace-nowrap tabular-nums" :class="waitTone(inc)"><span x-text="elapsed(inc.reported)"></span><span x-show="waitTone(inc) === 'sk-wait-red'" class="sk-longest">Longest</span></td>
                     <td class="whitespace-nowrap">
-                        <span x-text="inc.assigned_name || '—'" x-show="inc.assigned_name"></span>
-                        <span class="italic text-[#B45309]" x-show="!inc.assigned_name">Unassigned</span>
+                        <span :class="statusBadge(inc.status)" class="sk-pill" x-text="incidentStatusLabel(inc.status)" :title="'Status on record: ' + inc.status"></span>
+                        <div class="sk-sub" x-text="inc.assigned_name || 'Nobody assigned'"></div>
                     </td>
-                    <td class="whitespace-nowrap"><span :class="statusBadge(inc.status)" class="sk-pill" x-text="incidentStatusLabel(inc.status)" :title="'Status on record: ' + inc.status"></span></td>
-                    <td class="whitespace-nowrap sk-muted" x-text="elapsed(inc.reported)"></td>
-                    <td class="whitespace-nowrap sk-r">
-                        <div class="inline-flex items-center justify-end gap-1.5">
-                            <button type="button" x-show="inc.available_verbs.includes('validate')" @click="actIncidentVerb(inc, 'validate')" class="sk-btn sk-btn-sm sk-btn-ok">
-                                <i data-lucide="check"></i> Validate
+                    <td class="whitespace-nowrap" @click.stop>
+                        <div class="inline-flex items-center gap-1.5">
+                            <button type="button" x-show="inc.available_verbs.includes('validate')" @click="openIncidentToValidate(inc)" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'Review and validate ' + inc.ref">
+                                <i data-lucide="check"></i> Validate…
                             </button>
-                            <button type="button" @click="openIncidentDetail(inc)" class="sk-btn sk-btn-sm sk-btn-soft">
+                            <button type="button" tabindex="-1" @click="openIncidentDetail(inc)" class="sk-btn sk-btn-sm sk-btn-soft">
                                 <i data-lucide="eye"></i> View
                             </button>
                         </div>
@@ -187,11 +223,11 @@
                 </tr>
             </template>
             <tr x-show="filteredIncidents.length === 0">
-                <td colspan="9">
+                <td colspan="8">
                     <div class="sk-empty flex-col">
                         <i data-lucide="search-x"></i>
                         <span><b class="text-slate-700">No incidents match your filters.</b></span>
-                        <button type="button" @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter='';"
+                        <button type="button" @click="incidentSearch=''; incidentTypeFilter=''; incidentSeverityFilter=''; incidentStatusFilter=''; incidentBarangayFilter=''; incidentSourceFilter=''; incidentAssignedFilter='';"
                             class="sk-clear">Clear filters</button>
                     </div>
                 </td>
@@ -236,7 +272,7 @@
                     <p class="text-xs text-ink-muted">The reporting officer is recorded automatically from your session.</p>
                 </div>
             </div>
-            <button aria-label="Close" @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors">
+            <button aria-label="Close window" @click="showCreateIncident = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 text-ink-muted transition-colors">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>

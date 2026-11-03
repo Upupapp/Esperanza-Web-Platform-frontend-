@@ -7,6 +7,8 @@
 import api from './api/client';
 import { loadXlsx } from './resident-import';
 
+// Incidents speak their own words for the universal statuses (sakuna.blade.php incidentStatusLabel).
+const incidentWords = { Submitted: 'Reported', 'Under Verification': 'Validated', Processing: 'Dispatched', Completed: 'Resolved', Archived: 'Closed' };
 const blankFilters = () => ({ barangay: '', from: '', to: '', type: '', status: '', livelihood_group: '', livelihood_code: '' });
 const toast = (message, variant = 'success') => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
 
@@ -102,10 +104,20 @@ export function sakunaReport() {
 
         // Charts, in the site's one look (clay-donut, clay-trend), from the
         // server's figures: nothing is counted in the browser.
+        // A disaster type's own colour, so Fire reads as fire on every chart.
+        incidentTypeColor(type) {
+            return ({ Fire: '#EA580C', Flood: '#2563EB', Landslide: '#92400E', Earthquake: '#7C3AED', 'Vehicular Accident': '#475569',
+                'Medical Emergency': '#DB2777', 'Missing Person': '#C2410C', 'Rescue Request': '#0E7490', 'Drowning or Water Rescue': '#0369A1',
+                'Structural Damage': '#78716C', 'Agricultural Damage': '#15803D' })[type] || '#64748B';
+        },
         reportTypeBreakdown() { return Object.entries(this.summary?.incidents.by_type || {}); },
         reportTrendLabels() { return (this.summary?.incidents.trend || []).map((t) => new Date(t.label + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); },
         reportTrendData() { return (this.summary?.incidents.trend || []).map((t) => t.count); },
-        statusRows() { return Object.entries(this.summary?.incidents.by_status || {}).map(([label, value]) => ({ label, value })); },
+        // The chart names each status as the Incidents tab does (critique 2026-11-03).
+        statusRows() {
+            const tone = { Submitted: '#2563EB', 'Under Verification': '#4F46E5', Assigned: '#7C3AED', Processing: '#EA580C', Completed: '#059669', Archived: '#64748B', Rejected: '#E11D48' };
+            return Object.entries(this.summary?.incidents.by_status || {}).map(([label, value]) => ({ label: incidentWords[label] || label, value, color: tone[label] || '#94A3B8' }));
+        },
         livelihoodRows() { return (this.summary?.livelihood.groups || []).filter((g) => g.people).map((g) => ({ label: g.code + ' · ' + g.label, value: g.people })); },
         barangayRows() {
             const rows = Object.entries(this.summary?.incidents.by_barangay || {});

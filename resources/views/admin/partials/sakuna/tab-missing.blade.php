@@ -11,7 +11,7 @@
         open: null, saving: false, move: { status: '', found_place: '', note: '' },
         adding: false, incidents: [], residents: [], residentQuery: '',
         form: { incident: '', kind: 'missing', individual_ref: '', name: '', sex: '', age: '', barangay: '', description: '', last_seen_place: '', last_seen_at: '' },
-        statusTone: { 'Missing': 'bg-rose-50 text-rose-700', 'Unidentified': 'bg-amber-50 text-amber-800', 'Deceased': 'bg-slate-100 text-slate-700', 'Found deceased': 'bg-slate-100 text-slate-700', 'Found safe': 'bg-emerald-50 text-emerald-700', 'Found injured': 'bg-orange-50 text-orange-700', 'Identified': 'bg-sky-50 text-sky-700', 'Closed': 'bg-slate-50 text-slate-500' },
+        statusTone: { 'Missing': 'bg-orange-50 text-orange-800', 'Unidentified': 'bg-amber-50 text-amber-800', 'Deceased': 'bg-slate-100 text-slate-700', 'Found deceased': 'bg-slate-100 text-slate-700', 'Found safe': 'bg-emerald-50 text-emerald-700', 'Found injured': 'bg-orange-50 text-orange-700', 'Identified': 'bg-sky-50 text-sky-700', 'Closed': 'bg-slate-50 text-slate-500' },
         kinds: { missing: 'Missing person', deceased: 'Deceased person', unidentified: 'Unidentified body' },
         when(iso) { return iso ? new Date(iso).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '—'; },
         params() { return Object.fromEntries(Object.entries({ ...this.f, page: this.page, per_page: 25 }).filter(([, v]) => v !== '' && v !== null)); },
@@ -20,12 +20,16 @@
             try {
                 const res = await $api.get('/admin/sakuna/missing', { params: this.params() });
                 this.rows = res.data || []; this.total = res.meta?.total ?? this.rows.length; this.lastPage = res.meta?.last_page || 1;
+                saveCopy('missing', { params: JSON.stringify(this.params()), rows: this.rows, total: this.total, lastPage: this.lastPage });
             } catch (err) {
-                if (err?.code === 'FEATURE_OFF' || err?.status === 404) this.off = true; else this.failed = true;
+                const copy = lastCopy('missing');
+                if (err?.code === 'FEATURE_OFF' || err?.status === 404) this.off = true;
+                else if (copy && copy.data.params === JSON.stringify(this.params())) { useCopy('missing'); this.rows = copy.data.rows || []; this.total = copy.data.total || 0; this.lastPage = copy.data.lastPage || 1; }
+                else this.failed = true;
             } finally { this.loading = false; }
         },
         // The stat strip: people, not cases, as the Command Center counts them.
-        loadSummary() { $api.get('/admin/sakuna/missing/summary').then((r) => { this.summary = r.data; }).catch(() => { this.summary = null; }); },
+        loadSummary() { $api.get('/admin/sakuna/missing/summary').then((r) => { this.summary = r.data; saveCopy('missing-summary', r.data); }).catch(() => { this.summary = lastCopy('missing-summary')?.data || null; }); },
         clear() { this.f = { q: '', status: 'active', kind: '', barangay: '', incident: '', from: '', to: '' }; this.load(1); },
         async show(ref) {
             try { this.open = (await $api.get('/admin/sakuna/missing/' + encodeURIComponent(ref))).data; this.move = { status: '', found_place: '', note: '' }; }
@@ -57,8 +61,10 @@
         },
         async startAdd() {
             this.adding = true; this.residents = []; this.residentQuery = '';
-            this.form = { incident: this.f.incident || '', kind: 'missing', individual_ref: '', name: '', sex: '', age: '', barangay: '', description: '', last_seen_place: '', last_seen_at: '' };
+            this.form = { incident: '', kind: 'missing', individual_ref: '', name: '', sex: '', age: '', barangay: '', description: '', last_seen_place: '', last_seen_at: '' };
             try { this.incidents = (await $api.get('/admin/sakuna/incidents', { params: { per_page: 100 } })).data || []; } catch { this.incidents = []; }
+            const want = this.f.incident || '';
+            if (want && this.incidents.some((i) => i.ref === want)) this.$nextTick(() => { this.form.incident = want; });
         },
         async findResident() {
             const q = this.residentQuery.trim();
@@ -78,7 +84,8 @@
             finally { this.saving = false; }
         },
      }"
-     x-init="f.incident = new URLSearchParams(window.location.search).get('incident') || ''; load(1); loadSummary()">
+     x-init="f.incident = new URLSearchParams(window.location.search).get('incident') || ''; load(1); loadSummary()"
+     @sakuna-missing-reload.window="load(page); loadSummary()">
 
     <div x-show="off" x-cloak class="sk-card sk-empty" style="padding: 24px;">
         Missing Persons is not switched on here yet. It holds personal details of people in a disaster, so it opens once the LGU's Data Protection Officer agrees.
@@ -89,17 +96,17 @@
              not cases, from GET /admin/sakuna/missing/summary like the Command Center. --}}
         <div class="sk-pagebar">
             <div class="sk-stats">
-                <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-red"></span>Still missing</span><span class="sk-sval tabular-nums" x-text="summary?.missing ?? 0"></span></div>
-                <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Unidentified</span><span class="sk-sval tabular-nums" x-text="summary?.unidentified ?? 0"></span></div>
-                <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-blue"></span>Recorded this week</span><span class="sk-sval tabular-nums" x-text="summary?.recent ?? 0"></span></div>
-                <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-green"></span>Found</span><span class="sk-sval tabular-nums" x-text="summary?.found ?? 0"></span></div>
-                <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-slate"></span>Closed</span><span class="sk-sval tabular-nums" x-text="summary?.closed ?? 0"></span></div>
+                <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-amber" x-show="summary?.missing"></span>Still missing</span><span class="sk-sval tabular-nums" x-text="summary?.missing ?? '—'"></span></div>
+                <div class="sk-stat"><span class="sk-slab"><span class="sk-dot sk-t-amber" x-show="summary?.unidentified"></span>Unidentified</span><span class="sk-sval tabular-nums" x-text="summary?.unidentified ?? '—'"></span></div>
+                <div class="sk-stat"><span class="sk-slab">Recorded this week</span><span class="sk-sval tabular-nums" x-text="summary?.recent ?? '—'"></span></div>
+                <div class="sk-stat"><span class="sk-slab">Found</span><span class="sk-sval tabular-nums" x-text="summary?.found ?? '—'"></span></div>
+                <div class="sk-stat"><span class="sk-slab">Closed</span><span class="sk-sval tabular-nums" x-text="summary?.closed ?? '—'"></span></div>
             </div>
             <div class="sk-actions">
-                <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About Missing Persons: missing, found, deceased and unidentified persons, each recorded under the incident they belong to. A resolved case is closed and kept." title="Missing, found, deceased and unidentified persons, each recorded under the incident they belong to. A resolved case is closed and kept.">
+                <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About Missing Persons" title="Missing, found, deceased and unidentified persons, each recorded under the incident they belong to. A resolved case is closed and kept.">
                     <i data-lucide="info"></i>
                 </button>
-                <button type="button" class="sk-btn sk-btn-p" x-show="can('sakuna_missing','create')" @click="startAdd()">
+                <button type="button" class="sk-btn sk-btn-p disabled:opacity-50" x-show="can('sakuna_missing','create')" @click="startAdd()" :disabled="onLastCopy" :title="onLastCopy ? 'Waits for the connection' : ''">
                     <i data-lucide="user-plus"></i> Record a person
                 </button>
             </div>
@@ -107,6 +114,7 @@
 
         <section class="sk-card overflow-hidden">
             {{-- Filters --}}
+            <h2 class="sr-only">Missing, found, deceased and unidentified persons</h2>
             <div class="sk-toolbar">
                 <div class="sk-search">
                     <label for="mp-q" class="sr-only">Search name or case number</label>
@@ -141,11 +149,11 @@
                 <span class="sk-csub" x-show="!loading && !failed" x-text="total + (total === 1 ? ' case' : ' cases')"></span>
             </div>
 
-            <p x-show="failed" x-cloak class="sk-empty text-rose-700">The list could not load. Try again.</p>
+            <div x-show="failed" x-cloak><x-ui.error-state tone="neutral" icon="cloud-off" title="Not loaded" messageExpr="'Could not load missing persons. ' + offlineWhy" retryExpr="load(page)" :retryable="true" /></div>
             <div x-show="!loading && !failed && rows.length === 0" x-cloak class="sk-empty">No cases match these filters.</div>
 
             <div x-show="rows.length" class="sk-scroll" tabindex="0" role="region" aria-label="Missing persons cases table (scrolls sideways)">
-                <table class="sk-tbl">
+                <table class="sk-tbl sk-tbl-act">
                     <thead>
                         <tr>
                             <th scope="col">Case</th>
@@ -154,17 +162,22 @@
                             <th scope="col">Barangay</th>
                             <th scope="col">Last seen</th>
                             <th scope="col">Incident</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <template x-for="r in rows" :key="r.ref">
-                            <tr class="cursor-pointer" @click="show(r.ref)" @keydown.enter="show(r.ref)" tabindex="0">
+                            <tr @click="show(r.ref)" @keydown.enter.prevent="show(r.ref)" tabindex="0">
                                 <td><span class="sk-mono" x-text="r.ref"></span></td>
-                                <td><span class="sk-b" x-text="r.name || 'Unidentified'"></span> <span class="sk-muted text-[11.5px]" x-text="kinds[r.kind]"></span></td>
+                                <td><span class="sk-b" x-text="r.name || 'Unidentified'"></span> <span class="sk-tag ml-1" x-text="kinds[r.kind]"></span></td>
                                 <td><span class="sk-pill" :class="statusTone[r.status]" x-text="r.status"></span></td>
                                 <td x-text="r.barangay || '—'"></td>
                                 <td x-text="(r.last_seen_place || '—') + (r.last_seen_at ? ' · ' + when(r.last_seen_at) : '')"></td>
                                 <td><span class="sk-mono" x-text="r.incident ? r.incident.ref : '—'"></span> <span class="sk-muted" x-show="r.incident" x-text="r.incident ? '· ' + r.incident.type : ''"></span></td>
+                                {{-- An action column like the other Sakuna tables (critique 2026-11-03). --}}
+                                <td class="whitespace-nowrap" @click.stop>
+                                    <button type="button" @click="show(r.ref)" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'View ' + r.ref"><i data-lucide="eye"></i> View</button>
+                                </td>
                             </tr>
                         </template>
                     </tbody>
@@ -183,7 +196,7 @@
                 <div>
                     <p class="sk-csub" x-text="open ? open.ref + ' · ' + kinds[open.kind] : ''"></p>
                     <div class="flex flex-wrap items-center gap-2 mt-0.5">
-                        <h3 class="sk-ctitle" style="font-size: 15px;" x-text="open ? (open.name || 'Unidentified') : ''"></h3>
+                        <h2 class="sk-ctitle" style="font-size: 15px;" x-text="open ? (open.name || 'Unidentified') : ''"></h2>
                         <span class="sk-pill" :class="open ? statusTone[open.status] : ''" x-text="open ? open.status : ''"></span>
                     </div>
                 </div>
@@ -221,7 +234,7 @@
                         <p class="text-xs font-semibold text-slate-800">Balita posts</p>
                         <button type="button" class="sk-btn sk-btn-sm" x-show="open && open.status !== 'Closed' && can('sakuna_missing','edit') && can('comm_news','create')" :disabled="saving" @click="draftPost()"><i data-lucide="newspaper"></i> Prepare a Balita post</button>
                     </div>
-                    <p class="text-[11px] sk-muted">Nothing is posted by itself. A draft holds only what may be made public (no description, address or contact details) and needs approval by the Information Officer, the Super Administrator or the MDRRMO Head.</p>
+                    <p class="text-xs sk-muted">Nothing is posted by itself. A draft holds only what may be made public (no description, address or contact details) and needs approval by the Information Officer, the Super Administrator or the MDRRMO Head.</p>
                     <ul class="space-y-1 text-xs">
                         <template x-for="a in (open ? (open.announcements || []) : [])" :key="a.id">
                             <li class="flex flex-wrap gap-x-2">
@@ -231,7 +244,7 @@
                             </li>
                         </template>
                     </ul>
-                    <p class="text-[11px] sk-muted" x-show="open && !(open.announcements || []).length">No post has been prepared from this case.</p>
+                    <p class="text-xs sk-muted" x-show="open && !(open.announcements || []).length">No post has been prepared from this case.</p>
                 </div>
 
                 <div>
@@ -247,7 +260,7 @@
 
         {{-- Record a person --}}
         <section x-show="adding" x-cloak class="sk-card overflow-hidden" aria-label="Record a person">
-            <div class="sk-chead"><h3 class="sk-ctitle">Record a person</h3><button type="button" @click="adding = false" class="sk-btn sk-btn-sm">Cancel</button></div>
+            <div class="sk-chead"><h2 class="sk-ctitle">Record a person</h2><button type="button" @click="adding = false" class="sk-btn sk-btn-sm">Cancel</button></div>
             <div class="p-3.5 space-y-3">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <label class="text-xs text-[#4B5568] flex flex-col gap-1">Incident *
@@ -269,7 +282,7 @@
                                 <button type="button" @click="form.individual_ref = p.ref; form.name = ''; residents = []; residentQuery = p.name + ' (' + p.ref + ')'" class="sk-btn sk-btn-sm" x-text="p.name + ' · ' + p.barangay"></button>
                             </template>
                         </div>
-                        <p class="text-[11px] sk-muted mt-1" x-show="form.individual_ref">The name, sex and barangay come from the registry record <span x-text="form.individual_ref"></span>.</p>
+                        <p class="text-xs sk-muted mt-1" x-show="form.individual_ref">The name, sex and barangay come from the registry record <span x-text="form.individual_ref"></span>.</p>
                     </div>
                     <label class="text-xs text-[#4B5568] flex flex-col gap-1" x-show="!form.individual_ref">Name
                         <input type="text" x-model="form.name" maxlength="160" class="sk-sel w-full">

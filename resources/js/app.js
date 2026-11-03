@@ -782,6 +782,8 @@ document.addEventListener('alpine:init', () => {
         clear() {
             this.account = null;
             writeJson('esperanza_session', null);
+            // Sakuna's last copies (kept for a weak connection) leave with the person.
+            try { Object.keys(sessionStorage).filter((k) => k.startsWith('sakuna-copy:')).forEach((k) => sessionStorage.removeItem(k)); } catch { /* storage blocked */ }
         },
 
         async logout() {
@@ -1529,7 +1531,7 @@ document.addEventListener('alpine:init', () => {
                 const pt = (rad, a) => `${(cx + rad * Math.cos(a)).toFixed(2)} ${(cy + rad * Math.sin(a)).toFixed(2)}`;
                 const add = (d, row, i, mid) => {
                     const el = svgEl('path', { d, fill: row.color, stroke: row.color, 'stroke-width': 5, 'stroke-linejoin': 'round', 'fill-rule': 'evenodd' });
-                    el.style.cssText = 'cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s,filter .2s;';
+                    el.style.cssText = 'cursor:pointer;transition:transform .25s cubic-bezier(.2,0,0,1),opacity .2s,filter .2s;';
                     el.addEventListener('mouseenter', () => { this.hover = i; });
                     g.appendChild(el);
                     paths.push({ el, mid });
@@ -1600,7 +1602,7 @@ document.addEventListener('alpine:init', () => {
                 last = input;
                 const svg = this.$refs.svg;
                 if (!svg) return;
-                data = { labels: [...(input?.labels || [])], series: (input?.series || []).map((s) => ({ ...s, values: [...(s.values || [])].map((v) => Number(v) || 0) })) };
+                data = { labels: [...(input?.labels || [])], straight: !!input?.straight, bars: !!input?.bars, series: (input?.series || []).map((s) => ({ ...s, values: [...(s.values || [])].map((v) => Number(v) || 0) })) };
                 svg.replaceChildren();
                 dots = [];
                 this.tip = null;
@@ -1616,6 +1618,7 @@ document.addEventListener('alpine:init', () => {
                 geo = { W, x, y, n };
                 const line = (vals) => vals.map((v, i) => {
                     if (!i) return `M${x(0)} ${y(v)}`;
+                    if (data.straight) return `L${x(i)} ${y(v)}`;
                     const x0 = x(i - 1), x1 = x(i), c = (x1 - x0) / 2;
                     return `C${x0 + c} ${y(vals[i - 1])} ${x1 - c} ${y(v)} ${x1} ${y(v)}`;
                 }).join('');
@@ -1630,7 +1633,7 @@ document.addEventListener('alpine:init', () => {
                 for (let t = 0; t <= 4; t++) {
                     const v = step * t, yy = y(v);
                     svg.append(svgEl('line', { x1: left, x2: W - right, y1: yy, y2: yy, stroke: 'rgba(29,71,214,.12)', 'stroke-dasharray': '4 6' }));
-                    const label = svgEl('text', { x: left - 10, y: yy + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#7d89a8' });
+                    const label = svgEl('text', { x: left - 10, y: yy + 4, 'text-anchor': 'end', 'font-size': 12, fill: '#7d89a8' });
                     label.textContent = String(v);
                     svg.append(label);
                 }
@@ -1639,15 +1642,23 @@ document.addEventListener('alpine:init', () => {
                 const every = Math.max(1, Math.ceil((n * 46) / (W - left - right)));
                 data.labels.forEach((m, i) => {
                     if ((n - 1 - i) % every) return;
-                    const label = svgEl('text', { x: x(i), y: H - 10, 'text-anchor': 'middle', 'font-size': 11, fill: '#7d89a8', 'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' });
+                    const label = svgEl('text', { x: x(i), y: H - 10, 'text-anchor': 'middle', 'font-size': 12, fill: '#7d89a8', 'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' });
                     label.textContent = trendMonth(m);
                     svg.append(label);
                 });
-                data.series.forEach((s, k) => {
+                // Counts per day are separate amounts: columns, not a joined line.
+                if (data.bars) {
+                    const w = Math.max(3, Math.min(18, ((W - left - right) / Math.max(n, 1)) * 0.6));
+                    data.series.forEach((s) => s.values.forEach((v, i) => {
+                        if (v > 0) svg.append(svgEl('rect', { x: x(i) - w / 2, y: y(v), width: w, height: Math.max(0, y(0) - y(v)), rx: 2, fill: s.color }));
+                    }));
+                }
+                if (!data.bars) data.series.forEach((s, k) => {
                     svg.append(svgEl('path', { d: line(s.values) + `L${x(n - 1)} ${y(0)}L${x(0)} ${y(0)}Z`, fill: `url(#${id}-${k})` }));
                 });
-                data.series.forEach((s) => {
-                    svg.append(svgEl('path', { d: line(s.values), fill: 'none', stroke: s.color, 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                if (!data.bars) data.series.forEach((s) => {
+                    svg.append(svgEl('path', { d: line(s.values), fill: 'none', stroke: s.color, 'stroke-width': data.straight ? 2.5 : 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+                    if (data.straight) s.values.forEach((v, i) => { if (v > 0) svg.append(svgEl('circle', { cx: x(i), cy: y(v), r: 3.5, fill: '#fff', stroke: s.color, 'stroke-width': 2 })); });
                 });
                 guide = svgEl('line', { y1: top, y2: H - bottom, stroke: 'rgba(11,23,48,.28)', 'stroke-dasharray': '4 4', visibility: 'hidden' });
                 svg.append(guide);

@@ -122,6 +122,12 @@ fi
 EMPTY=$(find dist -name '*.html' -size 0 2>/dev/null | wc -l | tr -d ' ')
 [ "$EMPTY" = "0" ] && pass "no zero-byte HTML" || { fail "$EMPTY zero-byte HTML file(s)"; }
 
+# A Blade component that fails to compile reaches the page as a literal
+# <x-...> tag and renders nothing: a broken attribute quote did exactly that to
+# nine Sakuna error states (2026-11-03), and every check above still passed.
+RAWX=$(grep -rlE '<x-[a-z]' dist --include='*.html' 2>/dev/null | head -5)
+[ -z "$RAWX" ] && pass "no uncompiled <x-...> component reached dist/" || { fail "uncompiled <x-...> component in: $(echo $RAWX | tr '\n' ' ')"; }
+
 # Every Alpine expression in the rendered pages must parse. A stray double quote
 # inside x-data="..." ends the attribute and prints the component as page text,
 # and nothing above notices: the page still renders and exports.

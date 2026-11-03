@@ -49,60 +49,61 @@
 <div class="sk-pagebar">
     <div class="sk-stats" x-show="!evacueesFailed" :class="evacueesLoading ? 'animate-pulse opacity-60' : ''">
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-blue"></span>Total individuals</span>
-            <span class="sk-sval tabular-nums" x-text="evacueesList.reduce((s,e) => s + e.member_count, 0)"></span>
+            <span class="sk-slab">Total individuals</span>
+            <span class="sk-sval tabular-nums" x-text="fig(evacueesList.reduce((s,e) => s + e.member_count, 0), evacueesLoading || evacueesFailed)"></span>
             <span class="sk-ssub" x-text="evacueesList.filter(e => e.status === 'Processing').length + ' families sheltered'"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-teal"></span>Currently sheltered</span>
-            <span class="sk-sval tabular-nums" x-text="evacueesList.filter(e => e.status === 'Processing').reduce((s,e) => s + e.member_count, 0)"></span>
+            <span class="sk-slab">Currently sheltered</span>
+            <span class="sk-sval tabular-nums" x-text="fig(evacueesList.filter(e => e.status === 'Processing').reduce((s,e) => s + e.member_count, 0), evacueesLoading || evacueesFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-navy"></span>Checked out</span>
-            <span class="sk-sval tabular-nums" x-text="evacueesList.filter(e => e.status === 'Completed').length"></span>
+            <span class="sk-slab">Checked out</span>
+            <span class="sk-sval tabular-nums" x-text="fig(evacueesList.filter(e => e.status === 'Completed').length, evacueesLoading || evacueesFailed)"></span>
         </div>
         <div class="sk-stat">
-            <span class="sk-slab"><span class="sk-dot sk-t-orange"></span>Unregistered</span>
-            <span class="sk-sval tabular-nums" x-text="evacueesList.filter(e => !e.registered).length"></span>
+            <span class="sk-slab"><span class="sk-dot sk-t-amber" x-show="evacueesList.some(e => !e.registered)"></span>Unregistered</span>
+            <span class="sk-sval tabular-nums" x-text="fig(evacueesList.filter(e => !e.registered).length, evacueesLoading || evacueesFailed)"></span>
             <span class="sk-ssub">Not linked to a resident record</span>
         </div>
     </div>
     <div class="sk-actions">
-        <button type="button" class="sk-iconbtn sk-iconbtn-bare" aria-label="About evacuee registration and tracking: tracked by family unit, with unregistered households accepted" title="Evacuee registration and tracking: tracked by family unit, with unregistered households accepted.">
+        <button type="button" data-info class="sk-iconbtn sk-iconbtn-bare" aria-label="About evacuee registration and tracking" title="Evacuee registration and tracking: tracked by family unit, with unregistered households accepted.">
             <i data-lucide="info"></i>
         </button>
         <div class="sk-btngrp" role="group" aria-label="Export">
-            <button type="button" class="sk-btn" @click="exportCSV(filteredEvacuees, 'evacuees-export.csv')">
+            <button type="button" class="sk-btn disabled:opacity-50" :disabled="evacueesLoading || evacueesFailed" @click="exportCSV(filteredEvacuees, 'evacuees-export.csv')">
                 <i data-lucide="download"></i> Export CSV
             </button>
-            <button type="button" class="sk-btn" @click="exportPDF(filteredEvacuees, 'evacuees-export.csv')">
-                Export PDF
+            <button type="button" class="sk-btn disabled:opacity-50" :disabled="evacueesLoading || evacueesFailed" @click="exportPDF(filteredEvacuees, 'evacuees-export.csv')">
+                <i data-lucide="file-text"></i> Export PDF
             </button>
         </div>
-        <button type="button" x-show="can('sakuna_evacuees', 'check_in')" @click="openEvacueeReg()" class="sk-btn sk-btn-p">
-            <i data-lucide="user-plus"></i> Register Evacuee
+        <button type="button" x-show="can('sakuna_evacuees', 'check_in')" @click="openEvacueeReg()" :disabled="evacueesLoading || evacueesFailed || onLastCopy" :title="evacueesFailed || onLastCopy ? 'Waits for the connection' : ''" class="sk-btn sk-btn-p disabled:opacity-50">
+            <i data-lucide="user-plus"></i> Register evacuee
         </button>
     </div>
 </div>
 
 <div x-show="evacueesLoading" class="sk-card h-72 animate-pulse"></div>
-<div x-show="evacueesFailed" x-cloak><x-ui.error-state messageExpr="'Could not load evacuees.'" retryExpr="loadEvacuees()" :retryable="true" /></div>
+<div x-show="evacueesFailed" x-cloak><x-ui.error-state tone="neutral" icon="cloud-off" title="Not loaded" messageExpr="'Could not load evacuees. ' + offlineWhy" retryExpr="loadEvacuees()" :retryable="true" /></div>
 
 <div x-show="!evacueesLoading && !evacueesFailed" x-cloak class="space-y-3">
 
 <section class="sk-card overflow-hidden">
     {{-- ── Toolbar ──────────────────────────────────────────────────────────────────────── --}}
+    <h2 class="sr-only">Evacuee households</h2>
     <div class="sk-toolbar">
         <div class="sk-search" style="max-width: 340px;">
             <label for="evacuee-search" class="sr-only">Search by name or ID</label>
             <i data-lucide="search"></i>
             <input id="evacuee-search" aria-label="Search by name or ID" type="search" x-model="evacueeSearch" placeholder="Search by name or ref…">
         </div>
-        <select aria-label="Ev center filter" x-model="evCenterFilter" class="sk-sel">
+        <select aria-label="Filter by evacuation center" x-model="evCenterFilter" class="sk-sel">
             <option value="">All centers</option>
             <template x-for="c in evacueeCentersOpen" :key="c.ref"><option :value="c.name" x-text="c.name"></option></template>
         </select>
-        <select aria-label="Ev status filter" x-model="evStatusFilter" class="sk-sel">
+        <select aria-label="Filter by check-in status" x-model="evStatusFilter" class="sk-sel">
             <option value="">All statuses</option>
             <option value="Processing">Checked In</option>
             <option value="Completed">Checked Out</option>
@@ -110,14 +111,14 @@
         <button type="button" class="sk-clear" @click="evacueeSearch = ''; evCenterFilter = ''; evStatusFilter = ''">Clear</button>
         <span class="sk-spacer"></span>
         <span class="sk-csub">
-            Showing <strong x-text="filteredEvacuees.length"></strong> household(s) &bull;
+            Showing <strong x-text="filteredEvacuees.length"></strong> <span x-text="filteredEvacuees.length === 1 ? 'household' : 'households'"></span> &bull;
             <strong x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0)"></strong> <span x-text="filteredEvacuees.reduce((s,e) => s + e.member_count, 0) === 1 ? 'individual' : 'individuals'"></span>
         </span>
     </div>
 
     {{-- ── Evacuee Table ────────────────────────────────────────────────────────────────── --}}
     <div class="sk-scroll" tabindex="0" role="region" aria-label="Evacuees table (scrolls sideways)">
-        <table class="sk-tbl min-w-[860px]">
+        <table class="sk-tbl sk-tbl-act min-w-[860px]">
             <thead>
                 <tr>
                     <th>Ref</th>
@@ -126,7 +127,7 @@
                     <th>Evacuation center</th>
                     <th>Checked in</th>
                     <th>Status</th>
-                    <th class="sk-r">Actions</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -144,21 +145,49 @@
                         <td><div class="max-w-[200px] truncate" :class="ev.center ? '' : 'sk-muted'" x-text="ev.center || '—'"></div></td>
                         <td class="whitespace-nowrap" x-text="ev.checked_in ? new Date(ev.checked_in).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—'"></td>
                         <td class="whitespace-nowrap">
-                            <span :class="statusBadge(ev.status)" class="sk-pill" x-text="ev.status === 'Processing' ? 'Checked In' : 'Checked Out'"></span>
-                            <span x-show="!ev.registered" class="sk-tag ml-1" style="color: #B45309; background: #FFF7E6;" title="Not linked to a resident record">unreg.</span>
+                            <span :class="stayPill(ev.status)" class="sk-pill" x-text="ev.status === 'Processing' ? 'Checked In' : 'Checked Out'"></span>
+                            <span x-show="!ev.registered" class="sk-tag ml-1" style="color: #92400E; background: #FFF7E6;" title="Not linked to a resident record">Unregistered</span>
                         </td>
-                        <td class="sk-r whitespace-nowrap" @click.stop>
-                            <button type="button" @click="openEvacueeDetail(ev)" class="sk-iconbtn sk-iconbtn-bare" :aria-label="'View ' + ev.ref" title="View Details">
-                                <i data-lucide="eye"></i>
-                            </button>
-                            <button type="button" x-show="can('sakuna_evacuees','transfer') && ev.status === 'Processing'" @click="selectedEvacuee = ev; transferToCenter = ''; showTransferForm = true; $nextTick(() => window.renderIcons?.())"
-                                class="sk-iconbtn sk-iconbtn-bare hover:!text-blue-700" :aria-label="'Transfer ' + ev.ref" title="Transfer Center">
-                                <i data-lucide="arrow-right-left"></i>
-                            </button>
-                            <button type="button" x-show="can('sakuna_evacuees','check_out') && ev.status === 'Processing'" @click="openCheckout(ev)"
-                                class="sk-iconbtn sk-iconbtn-bare hover:!text-amber-700" :aria-label="'Check out ' + ev.ref" title="Check Out">
-                                <i data-lucide="log-out"></i>
-                            </button>
+                        <td class="whitespace-nowrap" @click.stop>
+                            {{-- View, then the family's other steps in a menu, so the action
+                                 column stays narrow and Status stays in view at 1366 px
+                                 (critique 2026-11-03, fourth run). The menu is placed against
+                                 the window, so the table's own scrolling never clips it. --}}
+                            <div class="inline-flex items-center gap-1" x-data="{ menu: null }" @keydown.escape.stop="menu = null">
+                                <button type="button" @click="openEvacueeDetail(ev)" class="sk-btn sk-btn-sm sk-btn-soft" :aria-label="'View ' + ev.ref">
+                                    <i data-lucide="eye"></i> View
+                                </button>
+                                <template x-if="ev.status === 'Processing' && (can('sakuna_evacuees','transfer') || can('sakuna_evacuees','check_out'))">
+                                    <div>
+                                        <button type="button" class="sk-iconbtn" data-row-menu-button :aria-label="'More steps for ' + ev.ref" aria-haspopup="menu" :aria-expanded="menu ? 'true' : 'false'"
+                                            @click="const r = $el.getBoundingClientRect(); menu = menu ? null : { top: Math.min(r.bottom + 4, window.innerHeight - 100), right: window.innerWidth - r.right }; if (menu) $nextTick(() => document.querySelector('[data-row-menu] [role=menuitem]:not([style*=none])')?.focus())">
+                                            <i data-lucide="ellipsis"></i>
+                                        </button>
+                                        {{-- Teleported to the page: inside a glass card (backdrop-filter) a
+                                             fixed menu is placed against the card and clipped. --}}
+                                        <template x-teleport="body">
+                                        <div x-show="menu" x-cloak role="menu" data-row-menu :aria-label="'Steps for ' + ev.ref"
+                                            @click.outside="if (!$event.target.closest('[data-row-menu-button]')) menu = null" @scroll.window="menu = null"
+                                            @keydown.escape.window="menu = null"
+                                            @keydown.arrow-down.prevent="const items = [...$el.querySelectorAll('[role=menuitem]')].filter(i => i.offsetParent); items[(items.indexOf(document.activeElement) + 1) % items.length]?.focus()"
+                                            @keydown.arrow-up.prevent="const items = [...$el.querySelectorAll('[role=menuitem]')].filter(i => i.offsetParent); items[(items.indexOf(document.activeElement) - 1 + items.length) % items.length]?.focus()"
+                                            class="fixed z-50 min-w-[11rem] rounded-2xl bg-white border border-slate-200 shadow-float p-1 text-left"
+                                            :style="menu ? 'top:' + menu.top + 'px; right:' + menu.right + 'px' : ''">
+                                            <button type="button" role="menuitem" x-show="can('sakuna_evacuees','transfer')"
+                                                @click="menu = null; selectedEvacuee = ev; transferToCenter = ''; showTransferForm = true; $nextTick(() => window.renderIcons?.())"
+                                                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-body rounded-xl hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                                                <i data-lucide="arrow-right-left" class="w-4 h-4"></i> Transfer to another center
+                                            </button>
+                                            <button type="button" role="menuitem" x-show="can('sakuna_evacuees','check_out')"
+                                                @click="menu = null; openCheckout(ev)"
+                                                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink-body rounded-xl hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                                                <i data-lucide="log-out" class="w-4 h-4"></i> Check out
+                                            </button>
+                                        </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
                         </td>
                     </tr>
                 </template>
@@ -257,18 +286,18 @@
                     <div class="flex items-center gap-2 mt-0.5">
                         <span class="font-mono text-xs text-ink-muted" x-text="selectedEvacuee?.ref ?? ''"></span>
                         <span class="text-ink-faint">·</span>
-                        <span :class="statusBadge(selectedEvacuee?.status ?? '')" x-text="selectedEvacuee?.status === 'Processing' ? 'Checked In' : 'Checked Out'"></span>
+                        <span :class="'sk-pill ' + stayPill(selectedEvacuee?.status ?? '')" x-text="selectedEvacuee?.status === 'Processing' ? 'Checked In' : 'Checked Out'"></span>
                     </div>
                 </div>
             </div>
-            <button aria-label="Close" @click="showEvacueeDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showEvacueeDetail = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-5">
 
             <div data-shelter-record>
                 <div class="flex items-center justify-between mb-3">
-                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5"></i> Household</h4>
+                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="house" class="w-3.5 h-3.5"></i> Household</h4>
                     <button type="button" x-show="mayEditShelter() && !recordEditing" @click="editShelterRecord()" class="text-xs font-medium text-brand-600 hover:text-brand-700">Edit</button>
                 </div>
                 <div x-show="recordEditing" x-cloak class="mb-3 grid grid-cols-2 gap-3 rounded-2xl border border-brand-600/10 p-3" data-shelter-edit>
@@ -276,7 +305,7 @@
                     <div><label for="record-purok" class="text-xs text-ink-muted mb-1 block">Purok</label><input id="record-purok" type="text" x-model="recordForm.purok" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
                     <div><label for="record-hh" class="text-xs text-ink-muted mb-1 block">Household code (typed)</label><input id="record-hh" type="text" x-model="recordForm.hh_code" :disabled="!!selectedEvacuee?.household_ref" :placeholder="selectedEvacuee?.household_ref ? 'From the registry' : ''" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100 disabled:opacity-50"></div>
                     <div><label for="record-count" class="text-xs text-ink-muted mb-1 block">Headcount</label><input id="record-count" type="number" :min="Math.max(1, (selectedEvacuee?.members || []).length)" x-model="recordForm.member_count" class="w-full px-3 py-2.5 text-sm rounded-2xl focus:outline-none transition-colors border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100"></div>
-                    <p class="col-span-2 text-[11px] text-ink-muted">A sitio is not a purok; leave the purok blank if it is not known. The headcount cannot be lower than the members listed below.</p>
+                    <p class="col-span-2 text-xs text-ink-muted">A sitio is not a purok; leave the purok blank if it is not known. The headcount cannot be lower than the members listed below.</p>
                     <div class="col-span-2 flex justify-end gap-2">
                         <button type="button" @click="recordEditing = false" class="text-sm text-slate-600 bg-white border border-slate-200 rounded-2xl px-3 py-1.5">Cancel</button>
                         <button type="button" :disabled="recordSaving" @click="saveShelterRecord()" class="text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-2xl px-3 py-1.5 disabled:opacity-50" x-text="recordSaving ? 'Saving…' : 'Save'"></button>
@@ -288,14 +317,14 @@
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Barangay</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.barangay ?? '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Home Sitio</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.sitio || '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Purok</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.purok || '—'"></p></div>
-                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Household Code</p><p class="text-sm font-mono font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code || '—'"></p><p class="text-[11px] mt-0.5" x-show="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code" :class="selectedEvacuee?.household_ref ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.household_ref ? 'From the registry' : 'Typed at the centre, not verified'"></p></div>
+                    <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Household Code</p><p class="text-sm font-mono font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code || '—'"></p><p class="text-xs mt-0.5" x-show="selectedEvacuee?.household_ref || selectedEvacuee?.hh_code" :class="selectedEvacuee?.household_ref ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.household_ref ? 'From the registry' : 'Typed at the centre, not verified'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3 col-span-2"><p class="text-xs text-ink-muted">Resident Record</p><p class="text-sm font-medium mt-0.5" :class="selectedEvacuee?.registered ? 'text-emerald-600' : 'text-amber-600'" x-text="selectedEvacuee?.registered ? 'Linked' : 'Unregistered household'"></p></div>
                 </div>
             </div>
 
             <div data-faced-panel>
                 <div class="flex items-center justify-between mb-3">
-                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="id-card" class="w-3.5 h-3.5"></i> FACED Card (DSWD)</h4>
+                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="id-card" class="w-3.5 h-3.5"></i> FACED Card (DSWD)</h4>
                     <button type="button" x-show="can('sakuna_evacuees','check_in') && !facedEditing && !selectedEvacuee?.faced_restricted" @click="editFaced()" class="text-xs font-medium text-brand-600 hover:text-brand-700">Edit</button>
                 </div>
                 <p x-show="selectedEvacuee?.faced_restricted" x-cloak class="text-xs text-ink-muted rounded-xl bg-slate-50 p-3 flex items-center gap-1.5" data-faced-restricted><i data-lucide="lock" class="w-3.5 h-3.5 shrink-0"></i> FACED details are kept by the family's home barangay (<span x-text="selectedEvacuee?.barangay"></span>) and the municipality.</p>
@@ -318,7 +347,7 @@
             </div>
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Current Location</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Current Location</h4>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Evacuation Center</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.center || '—'"></p></div>
                     <div class="bg-slate-50 rounded-xl p-3"><p class="text-xs text-ink-muted">Checked In</p><p class="text-sm font-medium text-ink-body mt-0.5" x-text="selectedEvacuee?.checked_in ? new Date(selectedEvacuee.checked_in).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : '—'"></p></div>
@@ -327,7 +356,7 @@
 
             <div>
                 <div class="flex items-center justify-between mb-3">
-                    <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="users-round" class="w-3.5 h-3.5"></i> Members</h4>
+                    <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] flex items-center gap-1.5"><i data-lucide="users-round" class="w-3.5 h-3.5"></i> Members</h4>
                     <button type="button" x-show="mayEditShelter() && memberEditing === null" @click="newMember()" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add member</button>
                 </div>
                 <div x-show="memberEditing !== null" x-cloak class="mb-3 grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-2xl border border-brand-600/10 p-3" data-member-edit>
@@ -347,14 +376,14 @@
                     <template x-for="(m, idx) in (selectedEvacuee?.members || [])" :key="m.id ?? idx">
                         <div class="flex items-center justify-between px-4 py-2.5">
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-slate-700 truncate"><span x-text="m.name"></span> <span x-show="m.is_head" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-brand-50 text-brand-700 border border-brand-200">Head</span> <span x-show="!m.sex || (m.age == null && !m.dob)" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10.5px] font-medium bg-amber-50 text-amber-700 border border-amber-200" x-text="!m.sex ? 'No sex recorded' : 'No age recorded'"></span></p>
+                                <p class="text-sm font-medium text-slate-700 truncate"><span x-text="m.name"></span> <span x-show="m.is_head" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200">Head</span> <span x-show="!m.sex || (m.age == null && !m.dob)" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" x-text="!m.sex ? 'No sex recorded' : 'No age recorded'"></span></p>
                                 <p class="text-xs text-ink-muted" x-text="[m.relation, m.age ? m.age + ' yrs' : null, m.sex, m.dob ? 'born ' + m.dob : null].filter(Boolean).join(' · ') || '—'"></p>
                                 <p class="text-xs text-ink-muted" x-show="m.education || m.occupation" x-text="[m.education, m.occupation].filter(Boolean).join(' · ')"></p>
                             </div>
                             <div class="flex flex-wrap gap-1 justify-end shrink-0 max-w-[50%]">
-                                <span x-show="m.vulnerability" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-violet-50 text-violet-700 border border-violet-200" x-text="m.vulnerability"></span>
+                                <span x-show="m.vulnerability" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200" x-text="m.vulnerability"></span>
                                 <template x-for="n in (m.needs || [])" :key="n">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200" x-text="n"></span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200" x-text="n"></span>
                                 </template>
                                 <button type="button" x-show="mayEditShelter() && m.id && memberEditing === null" @click="editMember(m)" :aria-label="'Edit ' + m.name" class="text-xs font-medium text-brand-600 hover:text-brand-700 ml-1">Edit</button>
                             </div>
@@ -365,16 +394,16 @@
             </div>
 
             <div>
-                <h4 class="text-[11.5px] font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5"></i> Movement History</h4>
+                <h4 class="text-xs font-bold text-ink-muted uppercase tracking-[.07em] mb-3 flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5"></i> Movement History</h4>
                 <div class="space-y-0">
                     <template x-for="(mv, idx) in (selectedEvacuee?.movements || [])" :key="idx">
                         <div class="flex items-start gap-3 py-2.5" :class="idx < (selectedEvacuee.movements.length - 1) ? 'border-b border-slate-50' : ''">
                             <div class="w-2 h-2 rounded-full bg-brand-400 mt-2 flex-shrink-0"></div>
                             <div class="flex-1 min-w-0">
                                 <span class="text-xs font-semibold text-slate-700 capitalize" x-text="mv.verb.replace('_',' ')"></span>
-                                <span class="text-[11px] text-ink-muted" x-text="(mv.from ? ' from ' + mv.from : '') + (mv.to ? ' to ' + mv.to : '')"></span>
+                                <span class="text-xs text-ink-muted" x-text="(mv.from ? ' from ' + mv.from : '') + (mv.to ? ' to ' + mv.to : '')"></span>
                             </div>
-                            <span class="text-[11px] text-ink-muted whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
+                            <span class="text-xs text-ink-muted whitespace-nowrap flex-shrink-0" x-text="mv.at ? new Date(mv.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''"></span>
                         </div>
                     </template>
                     <p x-show="!(selectedEvacuee?.movements || []).length" class="text-xs text-ink-muted py-2">No movements recorded yet.</p>
@@ -416,7 +445,7 @@
                 <h3 class="font-semibold text-ink-body">Register Evacuee Household</h3>
                 <p class="text-xs text-ink-muted mt-0.5">Unregistered households are accepted — a disaster is not the moment to require an account.</p>
             </div>
-            <button aria-label="Close" @click="showEvacueeReg = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button aria-label="Close window" @click="showEvacueeReg = false" class="p-2 rounded-2xl text-ink-muted hover:text-slate-600 hover:bg-slate-100 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
@@ -430,7 +459,7 @@
                         <template x-for="f in registryResults" :key="f.ref">
                             <button type="button" @click="pickRegistryFamily(f)" class="w-full text-left px-3 py-2 hover:bg-brand-50/60 transition-colors">
                                 <p class="text-sm font-medium text-ink-body"><span x-text="f.head_name || f.label"></span> <span class="text-xs font-normal text-ink-muted" x-text="'· ' + f.barangay + (f.sitio ? ', ' + f.sitio : '') + ' · ' + f.members.length + (f.members.length === 1 ? ' member' : ' members')"></span></p>
-                                <p class="text-[11px] text-ink-muted"><span x-show="f.source === 'kept_by_resident'" class="mr-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-violet-50 text-violet-700 border border-violet-200">Kept by the resident</span><span class="font-mono" x-text="f.household_ref || f.ref"></span> <span x-show="f.already_sheltered" class="text-amber-700" x-text="f.already_sheltered ? '· already at ' + f.already_sheltered.center + ' (' + f.already_sheltered.ref + ')' : ''"></span></p>
+                                <p class="text-xs text-ink-muted"><span x-show="f.source === 'kept_by_resident'" class="mr-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200">Kept by the resident</span><span class="font-mono" x-text="f.household_ref || f.ref"></span> <span x-show="f.already_sheltered" class="text-amber-700" x-text="f.already_sheltered ? '· already at ' + f.already_sheltered.center + ' (' + f.already_sheltered.ref + ')' : ''"></span></p>
                             </button>
                         </template>
                     </div>
@@ -438,7 +467,7 @@
                 <div x-show="registryPicked" x-cloak class="flex items-start justify-between gap-3" data-registry-picked>
                     <div class="text-xs text-ink-body">
                         <p class="font-medium"><span x-text="registryPicked?.source === 'kept_by_resident' ? 'Filled from the list the resident keeps: ' : 'Filled from the registry: '"></span><span class="font-mono" x-text="registryPicked?.household_ref || registryPicked?.ref"></span></p>
-                        <p class="text-ink-muted">Untick anyone who did not come to the centre. Corrections here change this shelter record only, not the registry.</p>
+                        <p class="text-ink-muted">Untick anyone who did not come to the center. Corrections here change this shelter record only, not the registry.</p>
                         <p x-show="registryPicked?.already_sheltered" class="text-amber-700 mt-1" x-text="registryPicked?.already_sheltered ? 'Already checked in at ' + registryPicked.already_sheltered.center + ' (' + registryPicked.already_sheltered.ref + ').' : ''"></p>
                     </div>
                     <button type="button" @click="clearRegistryPick()" class="text-xs font-medium text-brand-600 hover:text-brand-700 shrink-0">Unlink</button>
@@ -498,7 +527,7 @@
                 <div class="space-y-2">
                     <template x-for="(m, idx) in checkInForm.members" :key="idx">
                         <div class="flex flex-wrap items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white" :class="m.arrived === false ? 'opacity-50' : ''">
-                            <label x-show="registryPicked" class="flex items-center gap-1 text-[11px] text-ink-muted"><input type="checkbox" x-model="m.arrived" :aria-label="'Member ' + (idx+1) + ' arrived at the centre'" class="rounded border-slate-300 text-brand-600"> Here</label>
+                            <label x-show="registryPicked" class="flex items-center gap-1 text-xs text-ink-muted"><input type="checkbox" x-model="m.arrived" :aria-label="'Member ' + (idx+1) + ' arrived at the center'" class="rounded border-slate-300 text-brand-600"> Here</label>
                             <input type="radio" name="checkin-head-pick" :checked="m.is_head" @change="setCheckInHead(idx)" :aria-label="'Member ' + (idx+1) + ' is the family head'" class="text-brand-600 border-slate-300">
                             <input type="text" x-model="m.name" :aria-label="'Member ' + (idx+1) + ' name'" placeholder="Name" class="flex-1 min-w-[120px] text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                             <input type="text" x-model="m.relation" :aria-label="'Member ' + (idx+1) + ' relation'" placeholder="Relation" class="w-24 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
@@ -512,7 +541,7 @@
                             <select x-model="m.vulnerability" :aria-label="'Member ' + (idx+1) + ' vulnerable sector'" class="w-36 text-xs border border-slate-200 rounded-xl px-2 py-1.5">
                                 <option value="">Vulnerable sector</option><option>Older person</option><option>Pregnant</option><option>Lactating mother</option><option>PWD</option><option>Solo parent</option><option>Child (under 18)</option>
                             </select>
-                            <button aria-label="Close" type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-ink-muted hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                            <button :aria-label="'Remove family member ' + (idx + 1)" title="Remove this member" type="button" @click="removeCheckInMember(idx)" class="p-1.5 text-ink-muted hover:text-rose-600 transition-colors"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
                             {{-- Occupation (owner, 2026-10-29): a registered resident's comes from the registry. --}}
                             <div class="basis-full flex flex-wrap items-center gap-2 text-xs" x-show="m.individual_id && m.registry_has_occupation && !m.update_registry">
                                 <span class="text-ink-muted">Occupation: recorded from the resident's registry record.</span>
@@ -520,10 +549,10 @@
                             </div>
                             <div class="basis-full" x-show="!(m.individual_id && m.registry_has_occupation) || m.update_registry">
                                 <x-livelihood-select model="m" dynamic-id="'checkin-m-lv-' + idx"
-                                    label-class="block text-[11px] font-medium text-ink-muted mb-1"
+                                    label-class="block text-xs font-medium text-ink-muted mb-1"
                                     input-class="w-full text-xs border border-slate-200 rounded-xl px-2 py-1.5" />
-                                <p class="text-[11px] text-ink-muted mt-1" x-show="m.individual_id && !m.registry_has_occupation && can('const_resident','edit')">Saved to this resident's registry record too.</p>
-                                <p class="text-[11px] text-amber-700 mt-1" x-show="m.update_registry">This changes the resident's registry record. <button type="button" class="underline" @click="m.update_registry = false; m.livelihood_code = ''; m.livelihood_other = ''">Keep the registry's</button></p>
+                                <p class="text-xs text-ink-muted mt-1" x-show="m.individual_id && !m.registry_has_occupation && can('const_resident','edit')">Saved to this resident's registry record too.</p>
+                                <p class="text-xs text-amber-700 mt-1" x-show="m.update_registry">This changes the resident's registry record. <button type="button" class="underline" @click="m.update_registry = false; m.livelihood_code = ''; m.livelihood_other = ''">Keep the registry's</button></p>
                             </div>
                         </div>
                     </template>
@@ -555,7 +584,7 @@
                 <h3 class="font-semibold text-ink-body">Family Assistance Card in Emergencies and Disasters</h3>
                 <div class="flex items-center gap-2">
                     <button type="button" @click="printFacedCard()" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print</button>
-                    <button type="button" aria-label="Close" @click="facedCard = null" class="w-8 h-8 rounded-xl grid place-items-center text-ink-muted hover:bg-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    <button type="button" aria-label="Close window" @click="facedCard = null" class="w-8 h-8 rounded-xl grid place-items-center text-ink-muted hover:bg-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
             </div>
             <div id="dp-print-area" class="doc-paper p-8 text-[11px] leading-snug text-black" data-faced-card>
