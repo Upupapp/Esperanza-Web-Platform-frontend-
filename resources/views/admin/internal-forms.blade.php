@@ -93,6 +93,9 @@
                 const role = this.$store.session.account?.roleKey;
                 return !this.$store.session.account || ['super_admin', 'municipal_admin', 'department_head'].includes(role);
             },
+            // The server shows a Department Head their office's forms and those
+            // of their own staff that wait on them, not every office's.
+            get isOfficeHead() { return this.$store.session.account?.roleKey === 'department_head'; },
             get filteredForms() {
                 const q = this.search.trim().toLowerCase();
                 return (this.currentOffice?.forms || []).filter(f => !q || f.form.toLowerCase().includes(q));
@@ -348,9 +351,13 @@
 
         <div x-show="!loading && !failed">
         <!-- Visibility banner: authorities see every submission, everyone else only their own -->
-        <div x-show="isAuthority" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
+        <div x-show="isAuthority && !isOfficeHead" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="shield-check" class="w-4 h-4 text-brand-500 shrink-0"></i>
             <p class="text-xs text-brand-700">Full visibility — as <strong x-text="$store.session.account?.role || 'an administrator'"></strong>, you can see every staff member's submissions across all offices.</p>
+        </div>
+        <div x-show="isOfficeHead" x-cloak class="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5 mb-4">
+            <i data-lucide="shield-check" class="w-4 h-4 text-brand-500 shrink-0"></i>
+            <p class="text-xs text-brand-700">Your office's view — the forms your office signs, and your own staff's forms that wait on you as their Department Head.</p>
         </div>
         <div x-show="!isAuthority" x-cloak class="flex items-center gap-2.5 rounded-xl bg-purple-50 border border-purple-100 px-3.5 py-2.5 mb-4">
             <i data-lucide="lock" class="w-4 h-4 text-purple-500 shrink-0"></i>

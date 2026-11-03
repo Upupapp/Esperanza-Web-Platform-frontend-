@@ -4,7 +4,7 @@
      step's part filled by its officer). Every type the office papers need
      (2026-11-03): text, number, date, time, textarea, select, checkbox,
      checkbox-group. Tables are their own step in the wizard. --}}
-<div :class="['checkbox-group', 'textarea'].includes(f.type) || f.wide ? 'sm:col-span-2 lg:col-span-3' : ''">
+<div :class="['checkbox-group', 'textarea'].includes(f.type) || f.wide ? 'col-span-full' : ''">
     <template x-if="['text', 'number', 'date', 'time'].includes(f.type) || !f.type">
         <div>
             <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>

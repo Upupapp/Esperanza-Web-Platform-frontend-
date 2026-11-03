@@ -50,8 +50,10 @@ class OfficePapersTest extends TestCase
             'Others is the typed box, not a ninth tick');
         $this->assertSame(['capital_figures', 'capital_words'], array_values(array_filter(
             array_column($this->barangayDocument('brgy_business_clearance')['fields'], 'key'), fn ($k) => str_starts_with($k, 'capital'))));
-        // A typed "Others" joins the list on a paper with no Others tick.
-        $this->assertStringContainsString("[...list, 'Others: ' + v]", $this->source('resources/views/citizen/document-requests.blade.php'));
+        // A typed "Others" joins the list on a paper with no Others tick, in the preview too.
+        $wizard = $this->source('resources/views/citizen/document-requests.blade.php');
+        $this->assertStringContainsString("[...list, 'Others: ' + v]", $wizard);
+        $this->assertStringContainsString('bind="previewData"', $wizard);
 
         $lookup = config('esperanza_document_type_lookup');
         $this->assertSame(3, $lookup['Barangay Residency']['validityMonths']);
@@ -104,6 +106,10 @@ class OfficePapersTest extends TestCase
         $this->assertStringContainsString('printPaper()', $page);
         $this->assertStringContainsString('data: Object.keys(filled).length ? filled : undefined', $page, "a step's own part goes with the decision");
         $this->assertStringContainsString('Other entries (earlier version of this form)', $page);
+        // A Department Head is told what the server shows them: their office's view.
+        $this->assertStringContainsString('x-show="isAuthority && !isOfficeHead"', $page);
+        // A wide field spans the row without adding columns to a one-column grid (the approval dialog).
+        $this->assertStringContainsString("? 'col-span-full' : ''", $this->source('resources/views/components/admin/internal-forms/field-input.blade.php'));
         $this->assertStringContainsString('paperSignatures(viewing)', $this->source('resources/views/components/admin/internal-forms/paper.blade.php'));
     }
 }

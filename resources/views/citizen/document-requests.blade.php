@@ -826,6 +826,19 @@
                         backToCategories() { this.selectedCategory = null; this.search = ''; },
                         formData: {},
                         otherPurposeText: {},
+                        // Others with its typed text replaces an Others tick, or joins the list on a paper
+                        // with no Others box of its own (Residency, Indigency): it was dropped there, and
+                        // the preview showed it blank (2026-11-03).
+                        withOthers(data) {
+                            Object.entries(this.otherPurposeText || {}).forEach(([k, v]) => {
+                                v = String(v || '').trim();
+                                if (!v) return;
+                                const list = Array.isArray(data[k]) ? data[k] : [];
+                                data[k] = list.some((o) => /^others/i.test(o)) ? list.map((o) => /^others/i.test(o) ? 'Others: ' + v : o) : [...list, 'Others: ' + v];
+                            });
+                            return data;
+                        },
+                        get previewData() { return this.withOthers({ ...(this.formData || {}) }); },
                         selectDoc(i) {
                             this.selectedDoc = i;
                             this.attachments = {};
@@ -985,15 +998,7 @@
                             const formData = JSON.parse(JSON.stringify(this.formData || {}));
                             // An answer to a question that is hidden is not sent.
                             for (const f of (doc?.fields || [])) if (!this.fieldShown(f)) delete formData[f.key];
-                            // Others with its typed text replaces an Others tick, or joins the list on a paper
-                            // with no Others box of its own (Residency, Indigency): it was
-                            // dropped there (2026-11-03).
-                            Object.entries(this.otherPurposeText || {}).forEach(([k, v]) => {
-                                v = String(v || '').trim();
-                                if (!v) return;
-                                const list = Array.isArray(formData[k]) ? formData[k] : [];
-                                formData[k] = list.some((o) => /^others/i.test(o)) ? list.map((o) => /^others/i.test(o) ? 'Others: ' + v : o) : [...list, 'Others: ' + v];
-                            });
+                            this.withOthers(formData);
                             // The applicant block says 'edit if needed', so what the
                             // resident confirmed or corrected goes with the request.
                             Object.assign(formData, {
@@ -1568,7 +1573,7 @@
                                 <template x-if="docs[selectedDoc]?.previewType === 'barangay'">
                                     <x-citizen.barangay-certificate-preview
                                         docKey="docs[selectedDoc]?.key"
-                                        bind="formData"
+                                        bind="previewData"
                                         title="docs[selectedDoc]?.certTitle"
                                         subtitle="docs[selectedDoc]?.certSubtitle"
                                         barangay="selectedDocBarangayInfo?.label"
