@@ -577,18 +577,26 @@
 
 {{-- ── FACED Card (print) ─────────────────────────────────────────────────────────────── --}}
 <template x-if="facedCard">
-    <div class="fixed inset-0 z-[60] flex items-start justify-center p-4 pt-8 bg-navy-950/60 backdrop-blur-sm overflow-y-auto" @click.self="facedCard = null"
-         x-trap="facedCard" role="dialog" aria-modal="true" aria-label="FACED card" @keydown.escape.window="facedCard = null">
-        <div class="bg-white rounded-[28px] shadow-float w-full max-w-4xl mb-8">
-            <div class="flex items-center justify-between px-6 py-3 border-b border-brand-600/10">
-                <h3 class="font-semibold text-ink-body">Family Assistance Card in Emergencies and Disasters</h3>
-                <div class="flex items-center gap-2">
+    {{-- A document viewer sized to the screen (owner, 2026-11-03): the title bar
+         stays put, the sheet scrolls on a grey desk when the family is large,
+         and on screen the sheet is as tall as its content, never a fixed A4
+         with blank space under it. Print still makes the exact A4 page. --}}
+    <div class="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-navy-950/60 backdrop-blur-sm" @click.self="facedCard = null"
+         x-trap="facedCard" role="dialog" aria-modal="true" aria-labelledby="faced-title" @keydown.escape.window="facedCard = null">
+        <div class="bg-white rounded-[24px] shadow-float w-full max-w-[1000px] max-h-full flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between gap-3 px-5 py-3 border-b border-brand-600/10 shrink-0">
+                <div class="min-w-0">
+                    <h3 id="faced-title" class="font-semibold text-ink-body leading-tight">Family Assistance Card in Emergencies and Disasters</h3>
+                    <p class="text-xs text-ink-muted truncate" x-text="[facedCard.ref, facedCard.head_name, (facedCard.members || []).length ? (facedCard.members.length + ((facedCard.members.length === 1) ? ' member' : ' members')) : null].filter(Boolean).join(' · ')"></p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
                     <button type="button" @click="printFacedCard()" class="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 text-white px-3 py-1.5 text-xs font-semibold"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Print</button>
                     <button type="button" aria-label="Close window" @click="facedCard = null" class="w-8 h-8 rounded-xl grid place-items-center text-ink-muted hover:bg-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
             </div>
-            <div id="dp-print-area" class="doc-paper p-8 text-[11px] leading-snug text-black" data-faced-card>
-                <div class="flex items-start justify-between">
+            <div class="flex-1 min-h-0 overflow-y-auto bg-[#E9EEF6] p-3 sm:p-5">
+            <div id="dp-print-area" class="doc-paper faced-sheet mx-auto bg-white px-6 py-6 sm:px-10 sm:py-8 text-[12px] leading-snug text-black" data-faced-card>
+                <div class="grid grid-cols-[1fr_auto_1fr] items-start gap-4 pb-3 border-b-2 border-black">
                     <div>
                         <p class="font-bold">DSWD-DRMB-FACED</p>
                         <p>Serial No. <span class="font-mono font-semibold" x-text="facedCard.faced?.serial || '__________'"></span></p>
@@ -596,27 +604,27 @@
                     <div class="text-center">
                         <p>Republic of the Philippines · Municipality of Esperanza</p>
                         <p class="font-bold">MUNICIPAL SOCIAL WELFARE AND DEVELOPMENT OFFICE</p>
-                        <p class="text-sm font-bold mt-1">FAMILY ASSISTANCE CARD IN EMERGENCIES AND DISASTERS (FACED)</p>
+                        <p class="text-[14px] font-bold mt-1 leading-tight">FAMILY ASSISTANCE CARD IN EMERGENCIES AND DISASTERS (FACED)</p>
                     </div>
                     <p class="text-right">Ref. <span class="font-mono" x-text="facedCard.ref"></span></p>
                 </div>
 
-                <p class="font-bold mt-3 border-b border-black">Location of the Affected Family</p>
-                <table class="w-full mt-1"><tbody>
+                <p class="faced-h">Location of the Affected Family</p>
+                <table class="faced-kv"><tbody>
                     <tr><td class="w-1/4 py-0.5">Barangay</td><td class="font-semibold" x-text="facedCard.barangay"></td><td class="w-1/4">Sitio / Purok</td><td class="font-semibold" x-text="facedCard.sitio || '—'"></td></tr>
                     <tr><td class="py-0.5">Evacuation center</td><td class="font-semibold" x-text="facedCard.center || '—'"></td><td>Checked in</td><td x-text="facedCard.checked_in ? new Date(facedCard.checked_in).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}) : '—'"></td></tr>
                 </tbody></table>
 
-                <p class="font-bold mt-3 border-b border-black">Head of the Family</p>
-                <table class="w-full mt-1"><tbody>
+                <p class="faced-h">Head of the Family</p>
+                <table class="faced-kv"><tbody>
                     <tr><td class="w-1/4 py-0.5">Name</td><td class="font-semibold" x-text="facedCard.head_name"></td><td class="w-1/4">Contact no.</td><td x-text="facedCard.faced?.contact || '—'"></td></tr>
                     <tr><td class="py-0.5">Monthly family net income</td><td x-text="facedCard.faced?.monthly_income || '—'"></td><td>4Ps beneficiary</td><td x-text="facedCard.faced?.is_4ps ? 'Yes' : 'No'"></td></tr>
                     <tr><td class="py-0.5">House ownership</td><td x-text="facedCard.faced?.house_ownership || '—'"></td><td>Shelter damage</td><td x-text="facedCard.faced?.shelter_damage || '—'"></td></tr>
                     <tr><td class="py-0.5">Indigenous People</td><td colspan="3" x-text="facedCard.faced?.is_ip ? 'Yes' + (facedCard.faced.ip_ethnicity ? ' — ' + facedCard.faced.ip_ethnicity : '') : 'No'"></td></tr>
                 </tbody></table>
 
-                <p class="font-bold mt-3 border-b border-black">Family Information</p>
-                <table class="w-full mt-1 border border-black border-collapse">
+                <p class="faced-h">Family Information</p>
+                <table class="faced-grid">
                     <thead><tr class="bg-slate-100">
                         <th class="border border-black px-1 text-left">Family members</th><th class="border border-black px-1">Relation to head</th><th class="border border-black px-1">Birthdate</th><th class="border border-black px-1">Age</th><th class="border border-black px-1">Sex</th><th class="border border-black px-1">Highest educ. attainment</th><th class="border border-black px-1">Occupation</th><th class="border border-black px-1">Remarks (vulnerable sector)</th>
                     </tr></thead>
@@ -628,8 +636,8 @@
                     </tbody>
                 </table>
 
-                <p class="font-bold mt-3 border-b border-black">Family Assistance Record</p>
-                <table class="w-full mt-1 border border-black border-collapse" data-faced-assistance>
+                <p class="faced-h">Family Assistance Record</p>
+                <table class="faced-grid" data-faced-assistance>
                     <thead><tr class="bg-slate-100">
                         <th class="border border-black px-1">Date</th><th class="border border-black px-1 text-left">Kind / type of assistance</th><th class="border border-black px-1">Unit</th><th class="border border-black px-1">Qty</th><th class="border border-black px-1">Cost</th><th class="border border-black px-1">Provider</th><th class="border border-black px-1">Ref.</th>
                     </tr></thead>
@@ -641,12 +649,13 @@
                     </tbody>
                 </table>
 
-                <div class="grid grid-cols-2 gap-10 mt-8 text-center">
-                    <div><p class="border-t border-black pt-1">Signature / thumbmark of the family head</p></div>
-                    <div><p class="border-t border-black pt-1">Barangay Captain</p></div>
-                    <div><p class="border-t border-black pt-1">MSWDO / LSWDO</p></div>
-                    <div><p class="border-t border-black pt-1">Date registered</p></div>
+                <div class="faced-signs">
+                    <p>Signature / thumbmark of the family head</p>
+                    <p>Barangay Captain</p>
+                    <p>MSWDO / LSWDO</p>
+                    <p>Date registered</p>
                 </div>
+            </div>
             </div>
         </div>
     </div>

@@ -1831,3 +1831,62 @@ select:not([multiple]):not([size]):not(.appearance-none):not(.doc-toolbar-select
 .sk .sk-toolbar-row select.sk-sel:not([multiple]):not([size]) {
     padding-right: 2.125rem;
 }
+
+/* The FACED card (Sakuna > Evacuees, owner 2026-11-03): on screen a sheet as
+   tall as its content inside a scrolling viewer, not a fixed A4 with blank
+   space below; printed, the shared .doc-paper rules make it the A4 page,
+   and a large family carries on to a second page instead of being cut. */
+.doc-paper.faced-sheet {
+    width: 100%;
+    max-width: 940px;
+    min-height: 0;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgb(11 23 48 / .12), 0 0 0 1px rgb(11 23 48 / .05);
+}
+.faced-sheet .faced-h {
+    margin-top: 14px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-size: .92em;
+}
+.faced-sheet .faced-kv { width: 100%; margin-top: 4px; table-layout: fixed; }
+.faced-sheet .faced-kv td { padding: 3px 8px 3px 0; vertical-align: top; }
+.faced-sheet .faced-kv td:nth-child(odd) { width: 19%; color: #374151; }
+.faced-sheet .faced-kv td:nth-child(even) { width: 31%; border-bottom: 1px solid #cbd5e1; }
+.faced-sheet .faced-kv td[colspan] { width: auto; }
+.faced-sheet .faced-grid { width: 100%; margin-top: 6px; border-collapse: collapse; }
+.faced-sheet .faced-grid th, .faced-sheet .faced-grid td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
+.faced-sheet .faced-grid th { background: #f1f5f9; font-weight: 700; font-size: .92em; line-height: 1.2; }
+.faced-sheet .faced-grid thead { display: table-header-group; }
+.faced-sheet .faced-grid tr { break-inside: avoid; }
+.faced-sheet .faced-signs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 44px;
+    text-align: center;
+    break-inside: avoid;
+}
+.faced-sheet .faced-signs p { border-top: 1px solid #000; padding-top: 4px; font-size: .92em; }
+@media (max-width: 640px) {
+    .faced-sheet .faced-signs { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 40px; }
+}
+body.dp-printing .doc-paper.faced-sheet {
+    font-size: 11px !important;
+    max-width: none !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+}
+/* Printed on the reports' named page: a 12mm margin on every sheet, so a
+   long card's second page does not start at the paper's edge, and "Page x of y". */
+@media print {
+    body.dp-printing #dp-print-area.faced-sheet {
+        page: rep-portrait;
+        position: static !important;
+        width: auto !important;
+        min-height: 0 !important;
+    }
+}

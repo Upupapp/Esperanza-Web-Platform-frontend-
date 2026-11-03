@@ -308,3 +308,7 @@
     .sk-updated-failed { box-shadow: none; border: 1.5px dashed #1E293B; font-weight: 700; }
     .sk-updated-stale:hover, .sk-updated-failed:hover { background: #F1F5F9; }
 }
+
+/* BDRRMC forms as separate cards (owner, 2026-11-03). */
+.sk .sk-form-tile { transition: border-color .15s, box-shadow .15s; }
+.sk .sk-form-tile:hover, .sk .sk-form-tile:focus-within { border-color: #BFD0F5; box-shadow: 0 2px 8px rgb(29 71 214 / .08); }

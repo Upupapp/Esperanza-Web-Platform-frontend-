@@ -5,7 +5,9 @@
 // logged on the server (POST /admin/sakuna/reports/export); the file is built
 // here from what that returns, as the other exports are.
 import api from './api/client';
-import { loadXlsx } from './resident-import';
+// The export's summary, charts and workbook writer load only when an export is asked for.
+const loadInsights = () => import('./sakuna-insights');
+const loadWorkbook = () => import('./xlsx-report');
 
 // Incidents speak their own words for the universal statuses (sakuna.blade.php incidentStatusLabel).
 const incidentWords = { Submitted: 'Reported', 'Under Verification': 'Validated', Processing: 'Dispatched', Completed: 'Resolved', Archived: 'Closed' };
@@ -143,13 +145,17 @@ export function sakunaReport() {
             const f = d.filters || {};
             return [
                 ['Report', d.title],
-                ['Generated', new Date(d.generated_at).toLocaleString('en-PH') + ' by ' + d.generated_by],
-                ['Period', d.summary.period.from + ' to ' + d.summary.period.to],
+                ['Generated', new Date(d.generated_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) + ' by ' + d.generated_by],
+                ['Period', this.periodText(d.summary.period)],
                 ['Barangay', f.barangay || 'All barangays'],
                 ['Disaster type', f.type || 'All types'],
-                ['Incident status', f.status || 'All statuses'],
-                ['Livelihood', f.livelihood_code ? this.$store.livelihood.label(f.livelihood_code) : (f.livelihood_group || 'All')],
+                ['Incident status', f.status ? (incidentWords[f.status] || f.status) : 'All statuses'],
+                ['Livelihood / occupation', f.livelihood_code ? this.$store.livelihood.label(f.livelihood_code) : (f.livelihood_group ? this.$store.livelihood.label(f.livelihood_group) || f.livelihood_group : 'All')],
             ];
+        },
+        periodText(p) {
+            const fmt = (iso) => (iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+            return p.from && p.to ? fmt(p.from) + ' – ' + fmt(p.to) : (fmt(p.from) || fmt(p.to) || 'All dates');
         },
         // The situation report's key figures (2026-10-30): every section, not
         // incidents alone. "Now" figures say so; the rest count the period.
@@ -248,34 +254,99 @@ export function sakunaReport() {
             return { heading: 'Evacuated people by livelihood', note: 'The occupation recorded at check-in.', columns: [{ key: 'code', label: 'Code' }, { key: 'label', label: 'Livelihood' }, { key: 'people', label: 'People', num: true }],
                 rows: [...s.livelihood.items, { code: '', label: 'Not yet classified', people: s.livelihood.unclassified }] };
         },
-        // One sheet per section after the Summary and the Incidents: each of
-        // its tables stacked, a heading and note above the column heads.
+        // The workbook (owner, 2026-11-03): the Executive Summary first, then
+        // Analytics (each chart's table with a native Excel chart beside it),
+        // then the detailed data, one sheet per section. Every sheet is read
+        // from the same export as the PDF.
         async writeXlsx(d) {
-            const XLSX = await loadXlsx();
-            const wb = XLSX.utils.book_new();
-            const cover = [...this.filterLines(d), ['As of', new Date(d.summary.as_of).toLocaleString('en-PH')], [], ['Section', 'Figure', 'Value'],
-                ...this.keyFigures(d.summary).map(([sec, k, v]) => [sec, k, typeof v === 'string' ? Number(v.replace(/,/g, '')) : v]), [], ['Notes'], ...d.summary.notes.map((x) => [x])];
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cover), 'Summary');
+            const [{ executiveSummary, charts: reportCharts }, { S, downloadXlsx }] = await Promise.all([loadInsights(), loadWorkbook()]);
+            const width = (rows) => {
+                const w = [];
+                rows.forEach((r) => (r || []).forEach((c, i) => {
+                    const v = c && typeof c === 'object' ? c.v : c;
+                    const len = v === null || v === undefined ? 0 : (typeof v === 'number' ? v.toLocaleString('en-PH').length + 2 : String(v).length);
+                    if (!(c && typeof c === 'object' && [S.title, S.subtitle, S.section, S.note, S.para].includes(c.s))) w[i] = Math.max(w[i] || 8, Math.min(48, len + 2));
+                }));
+                return w.map((x) => x || 10);
+            };
+            const head = (labels) => labels.map((v) => ({ v, s: S.header }));
+            const val = (col, v) => (typeof v === 'number' ? { v, s: col.money ? S.money : S.num } : v ?? '');
+            const paraHeight = (text, chars = 118) => Math.max(18, Math.ceil(String(text).length / chars) * 15 + 6);
+
+            // 1. Executive Summary
+            const sum = { name: 'Executive Summary', gridlines: false, cols: [26, 44, 16, 14, 14, 14], rows: [], merges: [], heights: {} };
+            const push = (row, h) => { sum.rows.push(row); if (h) sum.heights[sum.rows.length - 1] = h; return sum.rows.length - 1; };
+            const span = (r, from = 'A') => sum.merges.push(from + (r + 1) + ':F' + (r + 1));
+            span(push([{ v: d.title, s: S.title }], 26));
+            span(push([{ v: 'Municipality of Esperanza  ·  Municipal Disaster Risk Reduction and Management Office', s: S.subtitle }]));
+            push([]);
+            [...this.filterLines(d).slice(1), ['Data as of', new Date(d.summary.as_of).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })]].forEach(([k, v]) => span(push([{ v: k, s: S.label }, v]), 'B'));
+            push([]);
+            push([{ v: 'Executive summary', s: S.section }]);
+            executiveSummary(d).forEach((ptext) => span(push([{ v: ptext, s: S.para }], paraHeight(ptext))));
+            push([]);
+            push([{ v: 'Key figures', s: S.section }]);
+            push(head(['Section', 'Figure', 'Value']));
+            this.keyFigures(d.summary).forEach(([sec, k, v]) => {
+                const n = typeof v === 'string' ? Number(v.replace(/,/g, '')) : v;
+                push([sec, k, { v: n, s: /PHP/.test(k) ? S.money : S.num }]);
+            });
+            push([]);
+            push([{ v: 'What is in this workbook', s: S.section }]);
+            const contents = [['Analytics', 'Each chart with the table it reads; change a number or restyle a chart in Excel.'], ['Incidents', 'Every incident in the period, one row each.'],
+                ['Evacuation', 'Centres now, evacuated people by sex, age and sector, FACED details.'], ['Relief', 'Relief by item, operation and barangay; what families said in the app.'],
+                ['Resources', 'Stock now; deployed and returned in the period.'], ['Damage', 'Damage by sector and barangay.'], ['Missing persons', 'Counts by status and by incident (no names).'],
+                ['Alerts', 'Public alerts issued.'], ['Livelihood', 'Evacuated people by occupation.']];
+            contents.forEach(([k, v]) => span(push([{ v: k, s: S.label }, v]), 'B'));
+            push([]);
+            push([{ v: 'Notes', s: S.section }]);
+            d.summary.notes.forEach((note) => span(push([{ v: note, s: S.note }], paraHeight(note, 140))));
+
+            // 2. Analytics: each chart's table, its chart to the right.
+            const an = { name: 'Analytics', gridlines: false, cols: [36, 15, 15, 3], rows: [], merges: [], heights: {}, charts: [] };
+            an.rows.push([{ v: 'Analytics', s: S.title }]);
+            an.heights[0] = 24;
+            an.rows.push([{ v: 'Charts read their numbers from the tables beside them, under the same filters as the Executive Summary.', s: S.subtitle }]);
+            an.rows.push([]);
+            reportCharts(d).forEach((c) => {
+                const r = an.rows.length;
+                const n = c.categories.length;
+                an.rows.push([{ v: c.title, s: S.section }]);
+                if (c.note) an.rows[r].push({ v: c.note, s: S.note });
+                an.rows.push(head(['Category', ...c.series.map((sr) => sr.name)]));
+                c.categories.forEach((cat, i) => an.rows.push([cat, ...c.series.map((sr) => ({ v: Number(sr.values[i] || 0), s: c.format === 'money' ? S.money : S.num }))]));
+                const tall = c.kind === 'bar' ? Math.max(15, n * c.series.length + 6) : 16;
+                an.charts.push({ title: c.title, kind: c.kind, money: c.format === 'money', categories: c.categories, catRange: [0, r + 2, r + 1 + n],
+                    series: c.series.map((sr, k) => ({ name: sr.name, color: sr.color, colors: sr.colors, values: sr.values, col: 1 + k, nameCell: [1 + k, r + 1] })),
+                    anchor: { col: 4, row: r, toCol: 13, toRow: r + tall } });
+                while (an.rows.length < r + Math.max(n + 3, tall + 1)) an.rows.push([]);
+                an.rows.push([]);
+            });
+            if (!an.charts.length) an.rows.push([{ v: 'No figures in this period to chart.', s: S.note }]);
+
+            // 3. Detailed data.
             const cols = this.columns();
-            const rows = d.rows.map((r) => cols.map((c) => (c.key === 'reported' ? new Date(r.reported).toLocaleString('en-PH') : r[c.key])));
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cols.map((c) => c.label), ...rows]), 'Incidents');
+            const incRows = [head(cols.map((c) => c.label)), ...d.rows.map((r) => cols.map((c) => (c.key === 'reported' ? new Date(r.reported).toLocaleString('en-PH') : c.key === 'status' ? (incidentWords[r.status] || r.status) : val({ money: false }, r[c.key]))))];
+            if (!d.rows.length) incRows.push([{ v: 'No incidents in this period under these filters.', s: S.note }]);
+            const incidents = { name: 'Incidents', rows: incRows, freeze: 1 };
+            incidents.cols = width(incRows);
             const tables = this.reportTables(d, true);
-            const sheets = [['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Missing persons'], ['alerts', 'Alerts']];
-            const block = (tbl) => [[tbl.heading], ...(tbl.note ? [[tbl.note]] : []), tbl.columns.map((c) => c.label),
-                ...(tbl.rows.length ? tbl.rows.map((r) => tbl.columns.map((c) => r[c.key] ?? '')) : [['None recorded.']]), []];
-            for (const [group, name] of sheets) {
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(tables.filter((x) => x.group === group).flatMap(block)), name);
-            }
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(block(this.livelihoodTable(d.summary))), 'Livelihood');
-            XLSX.writeFile(wb, 'sakuna-report_' + d.summary.period.from + '_' + d.summary.period.to + '.xlsx');
+            const block = (tbl) => [[{ v: tbl.heading, s: S.section }], ...(tbl.note ? [[{ v: tbl.note, s: S.note }]] : []), head(tbl.columns.map((c) => c.label)),
+                ...(tbl.rows.length ? tbl.rows.map((r) => tbl.columns.map((c) => val(c, r[c.key]))) : [[{ v: 'None recorded.', s: S.note }]]), []];
+            const sectionSheets = [['evacuation', 'Evacuation'], ['relief', 'Relief'], ['resources', 'Resources'], ['damage', 'Damage'], ['missing', 'Missing persons'], ['alerts', 'Alerts']]
+                .map(([group, name]) => { const rows = tables.filter((x) => x.group === group).flatMap(block); return { name, rows, cols: width(rows) }; });
+            const livRows = block(this.livelihoodTable(d.summary));
+            await downloadXlsx([sum, an, incidents, ...sectionSheets, { name: 'Livelihood', rows: livRows, cols: width(livRows) }],
+                'sakuna-report_' + d.summary.period.from + '_' + d.summary.period.to + '.xlsx', { title: d.title + ', ' + this.periodText(d.summary.period), creator: d.generated_by });
         },
-        // The situation report as one PDF: the filters, the key figures, the
-        // incidents, then every section's tables and the notes.
+        // The management report as one PDF (owner, 2026-11-03): the period and
+        // filters, the executive summary, the key figures and the charts, then
+        // every detailed table on its own pages, numbered "Page x of y".
         async writePdf(d) {
-            const subtitle = this.filterLines(d).slice(2).map(([k, v]) => k + ': ' + v).join(' · ');
-            const incidents = d.rows.map((r) => ({ ...r, reported: new Date(r.reported).toLocaleDateString('en-PH') }));
+            const { executiveSummary, kpis: reportKpis, charts: reportCharts } = await loadInsights();
+            const incidents = d.rows.map((r) => ({ ...r, status: incidentWords[r.status] || r.status, reported: new Date(r.reported).toLocaleDateString('en-PH') }));
             const sections = [
-                { heading: 'Key figures', note: 'As of ' + new Date(d.summary.as_of).toLocaleString('en-PH') + '. "Right now" figures show that moment; the rest count the period.',
+                { heading: 'Key figures in full', note: 'As of ' + new Date(d.summary.as_of).toLocaleString('en-PH') + '. "Right now" figures show that moment; the rest count the period.',
                     columns: [{ key: 's', label: 'Section' }, { key: 'k', label: 'Figure' }, { key: 'v', label: 'Value' }],
                     rows: this.keyFigures(d.summary).map(([s, k, v]) => ({ s, k, v: typeof v === 'number' ? v.toLocaleString('en-PH') : v })) },
                 { heading: 'Incidents', columns: this.columns(), rows: incidents },
@@ -283,7 +354,16 @@ export function sakunaReport() {
                 this.livelihoodTable(d.summary),
                 { heading: 'Notes', columns: [{ key: 'note', label: 'What the records can and cannot say' }], rows: d.summary.notes.map((note) => ({ note })) },
             ];
-            await window.reportPdf(sections, { filename: 'sakuna-report_' + d.summary.period.from + '_' + d.summary.period.to + '.pdf', title: d.title, subtitle });
+            await window.reportPdf(sections, {
+                filename: 'sakuna-report_' + d.summary.period.from + '_' + d.summary.period.to + '.pdf',
+                title: d.title,
+                office: 'Municipal Disaster Risk Reduction and Management Office',
+                subtitle: 'Generated by ' + d.generated_by,
+                filters: [...this.filterLines(d).slice(2), ['Data as of', new Date(d.summary.as_of).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })]],
+                summary: executiveSummary(d),
+                kpis: reportKpis(d),
+                charts: reportCharts(d),
+            });
         },
     };
 }

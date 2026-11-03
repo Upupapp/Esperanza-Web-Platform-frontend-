@@ -188,9 +188,12 @@
             <span class="sk-csub">Fill out, save to the system, then print</span>
         </div>
         <p class="px-3.5 py-2 text-xs sk-muted border-b border-[#EEF2F7]">DROMIC: the DSWD's Disaster Response Operations Monitoring and Information Center report. RDS: Relief Distribution Sheet.</p>
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));">
+        {{-- Each form its own card (owner, 2026-11-03): white tiles on the
+             tinted well, equal heights per row, a hover edge because each is
+             something to pick. --}}
+        <div class="grid gap-2.5 p-3 bg-[#F4F7FC]" style="grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));">
             @foreach($bdrrmcForms as $f)
-                <div class="flex items-center gap-3 px-3.5 py-3 border-b border-r border-[#EEF2F7]">
+                <div class="sk-tile sk-form-tile flex items-center gap-3 px-3.5 py-3">
                     <span class="w-[34px] h-[34px] rounded-[9px] {{ $f['color'] }} flex items-center justify-center flex-shrink-0">
                         <i data-lucide="{{ $f['icon'] }}" class="w-4 h-4"></i>
                     </span>
