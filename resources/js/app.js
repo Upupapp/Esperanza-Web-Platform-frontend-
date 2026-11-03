@@ -409,6 +409,11 @@ function profileDefaults(fields, account) {
     };
     const out = {};
     for (const field of fields || []) {
+        // A detail of someone else on the record (the deceased's sex and birth
+        // date, the child's, the person on a delayed registration) is never
+        // the resident's own: the form marks it 'prefill: false' (MCRO papers,
+        // 2026-11-03).
+        if (field.prefill === false) continue;
         const value = byKey[field.key];
         if (value === undefined || value === null || value === '') continue;
         if (!['text', 'number', 'date', 'select', 'tel'].includes(field.type)) continue;

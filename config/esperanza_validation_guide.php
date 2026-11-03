@@ -289,7 +289,7 @@ return [
             'source_basis' => 'Official Esperanza source', 'source_note' => 'MPESO - TESDA-DPA Form 1 Registration Form (MIS 03-01).pdf',
             'checks' => [
                 ['check' => 'Identity / birth record', 'accept' => 'Valid ID or Birth Certificate identifies applicant.', 'weak' => 'Request clearer/stronger identity evidence.', 'reject' => 'Confirmed wrong identity/fraud.'],
-                ['check' => 'Photo', 'accept' => 'Required 2x2 photo is clear and appropriate.', 'weak' => 'Request compliant photo.', 'reject' => 'Reject only after failure/refusal to provide mandatory photo.'],
+                ['check' => 'Photo', 'accept' => 'Both 1x1 photos (taken within the last 6 months, as MIS 03-01 asks) are clear and appropriate.', 'weak' => 'Request compliant photo.', 'reject' => 'Reject only after failure/refusal to provide mandatory photo.'],
                 ['check' => 'Training profile', 'accept' => 'Course/qualification and learner classification fields are complete enough for screening.', 'weak' => 'Request missing profile information/manual MPESO-TESDA screening.', 'reject' => 'Confirmed applicant does not meet the selected training/program criteria.'],
             ],
         ],

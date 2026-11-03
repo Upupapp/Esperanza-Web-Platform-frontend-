@@ -84,7 +84,13 @@
             },
             officialAreaLabel(o) {
                 const en = this.$store.lang.current === 'en';
-                return { captain: en ? 'Also chairs' : 'Pinamumunuan din', officer: en ? 'Handles' : 'Hawak', kagawad: en ? 'Committee' : 'Komite' }[this.officialRole(o)];
+                const many = this.officialCommittees(o).length > 1;
+                return { captain: en ? 'Also chairs' : 'Pinamumunuan din', officer: en ? 'Handles' : 'Hawak', kagawad: en ? (many ? 'Committees' : 'Committee') : (many ? 'Mga Komite' : 'Komite') }[this.officialRole(o)];
+            },
+            // A Kagawad chairs two committees, as their portrait prints them
+            // (LABANGTATAY OFFICIALS PIC, 2026-11-03), written with a semicolon between.
+            officialCommittees(o) {
+                return this.officialCommittee(o).split(/;\s*/).filter(Boolean);
             },
             // The committee, without a '(Former Punong Barangay, ...)' note that Also served already says.
             officialCommittee(o) {
@@ -318,6 +324,19 @@
                                 </div>
                             </div>
 
+                            {{-- Recognition: the awards the barangay's own profile lists (DILG Barangay Profile, 2026-11-03) --}}
+                            <div x-show="(selectedBarangayProfile?.history?.awards?.items || []).length" class="flex flex-col gap-3" data-barangay-awards>
+                                <h4 class="text-base font-bold text-ink"><x-ui.t fil="Mga parangal" en="Recognition" /></h4>
+                                <div class="rounded-[14px] border border-slate-200 p-[18px] flex flex-col gap-2.5">
+                                    <span x-show="selectedBarangayProfile?.history?.awards?.title" class="text-xs font-semibold tracking-[0.06em] uppercase text-ink-muted" x-text="selectedBarangayProfile?.history?.awards?.title"></span>
+                                    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                                        <template x-for="(a, ai) in (selectedBarangayProfile?.history?.awards?.items || [])" :key="ai">
+                                            <li class="flex gap-2.5 text-sm text-ink-body"><i data-lucide="award" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"></i><span x-text="a"></span></li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </div>
+
                             <div x-show="profileLeaders.length" class="flex flex-col gap-3">
                                 <div class="flex items-baseline justify-between">
                                     <h4 class="text-base font-bold text-ink"><x-ui.t fil="Pamunuan" en="Leadership" /></h4>
@@ -373,7 +392,7 @@
                                     <span class="flex-1 min-w-0 flex flex-col gap-1">
                                         <span class="text-xs font-semibold tracking-[0.06em] uppercase text-brand-600" x-text="o.position"></span>
                                         <span class="text-[19px] font-bold text-ink" x-text="o.name"></span>
-                                        <span class="text-[13px] text-ink-muted" x-text="o.committee"></span>
+                                        <template x-for="(c, ci) in officialCommittees(o)" :key="ci"><span class="text-[13px] text-ink-muted leading-snug" x-text="c"></span></template>
                                     </span>
                                     <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400 shrink-0"></i>
                                 </button>
@@ -432,7 +451,7 @@
                             <div class="w-full flex flex-col gap-2.5 border-t border-slate-100 pt-3">
                                 <div x-show="person?.committee" class="flex flex-col text-sm">
                                     <span class="text-xs text-ink-muted" x-text="officialAreaLabel(person)"></span>
-                                    <span class="font-semibold text-ink" x-text="officialCommittee(person)"></span>
+                                    <template x-for="(c, ci) in officialCommittees(person)" :key="ci"><span class="font-semibold text-ink" x-text="c"></span></template>
                                 </div>
                                 <div x-show="officialAlsoServed(person)" class="flex flex-col text-sm">
                                     <span class="text-xs text-ink-muted"><x-ui.t fil="Naging" en="Also served" /></span>

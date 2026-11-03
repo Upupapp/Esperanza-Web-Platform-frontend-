@@ -1760,11 +1760,14 @@
                             </div>
                         </div>
 
-                        {{-- Reference Form — the citizen's own submitted
-                             application form (not a Dokyu-style prepared
-                             document), gated the same as Proof of Release
-                             above. --}}
-                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status === 'Ready for Release' || selected.release_evidence" x-cloak>
+                        {{-- Reference Form — the office's paper this Tulong
+                             type follows (not a Dokyu-style prepared
+                             document). Beside the case from screening on, so
+                             staff check the answers against the paper while
+                             they screen and assess, not only at release
+                             (MPESO papers, 2026-11-03); a type without one
+                             says so only at release, as before. --}}
+                        <div class="rounded-2xl border border-slate-200 p-4 mt-3" x-show="selected.status !== 'Submitted' && (selected.reference_pdf || selected.status === 'Ready for Release' || selected.release_evidence)" x-cloak>
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted flex items-center gap-1.5">
                                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Reference Form
                             </p>

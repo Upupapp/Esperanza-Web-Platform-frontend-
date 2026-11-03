@@ -16,6 +16,16 @@
 return [
     'documents' => [
         [
+            // PSA Municipal Form No. 97 (Revised August 2016), the MCRO's own
+            // copy ("MCRO - Certificate of Marriage.pdf", 2026-11-03): items
+            // 1-22; at the back 20b Witnesses, the Affidavit of Solemnizing
+            // Officer and the Affidavit for Delayed Registration of Marriage.
+            // The same file carries Municipal Form No. 92 (Consent), No. 68
+            // (Advice) and the LCRO's ten-day Notice: those belong to the
+            // Marriage License. A copy asks only what finds the record; a
+            // registration (is_delayed 'Yes') the items the parties supply; a
+            // delayed one ('delayed') the affidavit's too. Signatures, the
+            // witnesses and the office's boxes are not asked.
             'key' => 'mcro_marriage',
             'reference_pdf' => 'documents/reference-forms/certificate-of-marriage.pdf',
             'name' => 'Certificate of Marriage (Certified Copy / Registration)',
@@ -24,29 +34,83 @@ return [
             'office_short' => 'MCRO',
             'level' => 'Municipal',
             'title' => 'REQUEST FOR CERTIFICATE OF MARRIAGE',
-            'formNo' => 'Municipal Form No. 97',
+            'formNo' => 'Municipal Form No. 97 (Revised August 2016)',
             'fee' => '₱155.00', 'days' => '3-5 working days',
             'requirements' => [
                 'One (1) valid government-issued ID of the requester',
-                'Duly accomplished Municipal Form No. 97 (Certificate of Marriage) — for new registration only',
-                'Marriage License, or Affidavit of Solemnizing Officer — for new registration only',
-                'Consent to Marriage (Municipal Form No. 92) — required if either party is below 21 years old',
-                'Advice Upon Intended Marriage (Municipal Form No. 68) — required if either party is 21 to below 25 years old',
-                'Affidavit for Delayed Registration of Marriage — required if the marriage was never previously registered',
+                ['label' => 'Duly accomplished Municipal Form No. 97 (Certificate of Marriage) — for new registration only', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['label' => 'Marriage License, or Affidavit of Solemnizing Officer — for new registration only', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['label' => 'Consent to Marriage (Municipal Form No. 92) — required if either party is below 21 years old', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['label' => 'Advice Upon Intended Marriage (Municipal Form No. 68) — required if either party is 21 to below 25 years old', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['label' => 'Affidavit for Delayed Registration of Marriage — required if the marriage was never previously registered', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
                 'Muslim Rites Attachment — required if solemnized under Muslim rites',
             ],
             'process' => ['Submit Request', 'MCRO Records Verification', 'Pay Fee', 'Release'],
             'fields' => [
+                ['key' => 'is_delayed', 'label' => 'Is this a request for a copy, or a new / delayed registration (not yet on file)?', 'type' => 'select', 'required' => true, 'options' => ['No — requesting a copy of an existing record', 'Yes — new registration, reported on time', 'Yes — delayed registration (reported late)']],
                 ['key' => 'requester_name', 'label' => 'Requester Full Name', 'type' => 'text', 'required' => true],
                 ['key' => 'relationship', 'label' => 'Relationship to Record', 'type' => 'select', 'options' => ['Husband', 'Wife', 'Authorized Representative', 'Other Legal Requester']],
-                ['key' => 'husband_name', 'label' => "Husband's Full Name", 'type' => 'text'],
-                ['key' => 'wife_name', 'label' => "Wife's Full Name", 'type' => 'text'],
+                ['key' => 'registry_no', 'label' => 'Registry No. (if known)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'copy']],
+                ['key' => 'husband_name', 'label' => "Husband's Full Name (First, Middle, Last)", 'type' => 'text'],
+                ['key' => 'wife_name', 'label' => "Wife's Full Name (First, Middle, Last)", 'type' => 'text'],
                 ['key' => 'date_of_marriage', 'label' => 'Date of Marriage', 'type' => 'date'],
-                ['key' => 'place_of_marriage', 'label' => 'Place of Marriage (City/Municipality)', 'type' => 'text'],
-                ['key' => 'is_delayed', 'label' => 'Is this a new / delayed registration (not yet on file)?', 'type' => 'select', 'options' => ['No — requesting a copy of an existing record', 'Yes — this marriage has never been registered']],
+                ['key' => 'place_of_marriage', 'label' => 'Place of Marriage (City/Municipality, Province)', 'type' => 'text'],
+                // Registration: items 15 and 17, then 2-14 for each party.
+                ['key' => 'marriage_venue', 'label' => 'Place of Marriage: Office of the / House of / Barangay of / Church of / Mosque of', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'time_of_marriage', 'label' => 'Time of Marriage (am/pm)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_dob', 'label' => "Husband's Date of Birth", 'type' => 'date', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_place_of_birth', 'label' => "Husband's Place of Birth (City/Municipality, Province, Country)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_citizenship', 'label' => "Husband's Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_residence', 'label' => "Husband's Residence (House No., St., Barangay, City/Municipality, Province, Country)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_religion', 'label' => "Husband's Religion/Religious Sect", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_civil_status', 'label' => "Husband's Civil Status", 'type' => 'select', 'options' => ['Single', 'Widow/er', 'Divorced/Annulled'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_father_name', 'label' => "Husband's Father — Name (First, Middle, Last)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_father_citizenship', 'label' => "Husband's Father — Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_mother_maiden_name', 'label' => "Husband's Mother — Maiden Name (First, Middle, Last)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_mother_citizenship', 'label' => "Husband's Mother — Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_consent_person', 'label' => 'Husband — Name of Person/Wali Who Gave Consent or Advice (if any)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_consent_relationship', 'label' => 'Husband — Relationship of That Person', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'husband_consent_residence', 'label' => 'Husband — Residence of That Person', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_dob', 'label' => "Wife's Date of Birth", 'type' => 'date', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_place_of_birth', 'label' => "Wife's Place of Birth (City/Municipality, Province, Country)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_citizenship', 'label' => "Wife's Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_residence', 'label' => "Wife's Residence (House No., St., Barangay, City/Municipality, Province, Country)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_religion', 'label' => "Wife's Religion/Religious Sect", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_civil_status', 'label' => "Wife's Civil Status", 'type' => 'select', 'options' => ['Single', 'Widow/er', 'Divorced/Annulled'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_father_name', 'label' => "Wife's Father — Name (First, Middle, Last)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_father_citizenship', 'label' => "Wife's Father — Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_mother_maiden_name', 'label' => "Wife's Mother — Maiden Name (First, Middle, Last)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_mother_citizenship', 'label' => "Wife's Mother — Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_consent_person', 'label' => 'Wife — Name of Person/Wali Who Gave Consent or Advice (if any)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_consent_relationship', 'label' => 'Wife — Relationship of That Person', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'wife_consent_residence', 'label' => 'Wife — Residence of That Person', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Items 18-19: the parties' and the solemnizing officer's certifications.
+                ['key' => 'marriage_settlement', 'label' => 'Marriage Settlement (Certification of the Contracting Parties)', 'type' => 'select', 'options' => ['Have entered into a marriage settlement (copy attached)', 'Have not entered into a marriage settlement'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'license_basis', 'label' => 'Certification of the Solemnizing Officer', 'type' => 'select', 'options' => ['Marriage License exhibited', 'No marriage license necessary (Executive Order No. 209)', 'Solemnized under Presidential Decree No. 1083'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'marriage_license_no', 'label' => 'Marriage License No.', 'type' => 'text', 'showIf' => ['field' => 'license_basis', 'contains' => 'License exhibited']],
+                ['key' => 'marriage_license_issued_on', 'label' => 'Marriage License — Issued On', 'type' => 'date', 'showIf' => ['field' => 'license_basis', 'contains' => 'License exhibited']],
+                ['key' => 'marriage_license_issued_at', 'label' => 'Marriage License — Issued At', 'type' => 'text', 'showIf' => ['field' => 'license_basis', 'contains' => 'License exhibited']],
+                ['key' => 'eo209_article', 'label' => 'Solemnized under Art. ___ of Executive Order No. 209', 'type' => 'text', 'showIf' => ['field' => 'license_basis', 'contains' => 'Executive Order']],
+                ['key' => 'solemnizing_officer_name', 'label' => 'Solemnizing Officer — Printed Name', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'solemnizing_officer_position', 'label' => 'Solemnizing Officer — Position/Designation', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Affidavit for Delayed Registration of Marriage (back of Form 97).
+                ['key' => 'affiant_name', 'label' => "Affiant's Name (Affidavit for Delayed Registration)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_civil_status', 'label' => "Affiant's Civil Status", 'type' => 'select', 'options' => ['Single', 'Married', 'Divorced', 'Widow', 'Widower'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_address', 'label' => "Affiant's Residence and Postal Address", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'delayed_registration_of', 'label' => 'I am the applicant for the delayed registration of', 'type' => 'select', 'options' => ['My marriage', 'The marriage between the parties named above'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'solemnized_under', 'label' => 'The marriage was solemnized under', 'type' => 'select', 'options' => ['Religious ceremony', 'Civil ceremony', 'Muslim rites', 'Tribal rites'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'reason_for_delay', 'label' => 'The reason for the delay in registering the marriage', 'type' => 'textarea', 'required' => true, 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
             ],
         ],
         [
+            // PSA Municipal Form No. 90 (Form No. 2) (Revised January 2007), the
+            // MCRO's own copy ("MCRO - Application for Marriage License.pdf",
+            // 2026-11-03): items 1-21 for the Groom and for the Bride, each
+            // sworn before the Civil Registrar with a CTC. Its companions came
+            // in "MCRO - Certificate of Marriage.pdf": Form No. 92 (Consent, p3),
+            // Form No. 68 (Advice, p4) and the LCRO Notice posted ten days with
+            // each applicant's picture (p5). Sex follows the column; the
+            // office's boxes (Registry No., License No.) are not asked.
             'key' => 'mcro_marriage_license',
             'reference_pdf' => 'documents/reference-forms/marriage-license.pdf',
             'name' => 'Application for Marriage License',
@@ -55,33 +119,80 @@ return [
             'office_short' => 'MCRO',
             'level' => 'Municipal',
             'title' => 'APPLICATION FOR MARRIAGE LICENSE',
-            'formNo' => 'Municipal Form No. 90 (Revised January 2007)',
+            'formNo' => 'Municipal Form No. 90 (Form No. 2) (Revised January 2007)',
             'fee' => '₱155.00', 'days' => '10 working days (10-day posting period required by law)',
             'requirements' => [
                 'One (1) valid government-issued ID of both applicants',
                 'PSA Certificate of Live Birth of both applicants',
                 'Certificate of No Marriage (CENOMAR) from PSA',
                 'Community Tax Certificate (Cedula) of both applicants',
+                'Photo of each applicant, for the Notice of the application posted for ten (10) days',
                 'Consent to Marriage (Municipal Form No. 92) — required if either party is below 21 years old',
-                'Advice Upon Intended Marriage (Municipal Form No. 68) — required if either party is 21 to below 25 years old',
+                'Advice Upon Intended Marriage (Municipal Form No. 68), with the sworn statement that the advice was asked (Form No. 7) — required if either party is 21 to below 25 years old',
                 'Certificate of Legal Capacity to Marry — required if either party is a foreign national',
             ],
             'process' => ['Submit Application', 'MCRO Verification', 'Ten (10) Day Posting Period', 'Release of License'],
             'fields' => [
-                ['key' => 'groom_name', 'label' => "Groom's Full Name", 'type' => 'text', 'required' => true],
+                ['key' => 'groom_name', 'label' => "Groom's Full Name (First, Middle, Last)", 'type' => 'text', 'required' => true],
                 ['key' => 'groom_dob', 'label' => "Groom's Date of Birth", 'type' => 'date'],
+                ['key' => 'groom_age', 'label' => "Groom's Age", 'type' => 'derived_age', 'derived_from' => 'groom_dob'],
+                ['key' => 'groom_place_of_birth', 'label' => "Groom's Place of Birth (City/Municipality, Province, Country)", 'type' => 'text'],
                 ['key' => 'groom_citizenship', 'label' => "Groom's Citizenship", 'type' => 'text', 'default' => 'Filipino'],
-                ['key' => 'groom_residence', 'label' => "Groom's Residence", 'type' => 'text'],
+                ['key' => 'groom_residence', 'label' => "Groom's Residence (House No., St., Barangay, City/Municipality, Province, Country)", 'type' => 'text'],
+                ['key' => 'groom_religion', 'label' => "Groom's Religion/Religious Sect", 'type' => 'text'],
                 ['key' => 'groom_civil_status', 'label' => "Groom's Civil Status", 'type' => 'select', 'options' => ['Single', 'Widow/er', 'Divorced/Annulled']],
-                ['key' => 'bride_name', 'label' => "Bride's Full Name", 'type' => 'text', 'required' => true],
+                ['key' => 'groom_dissolved_how', 'label' => 'Groom — If previously married: how was it dissolved?', 'type' => 'text'],
+                ['key' => 'groom_dissolved_place', 'label' => 'Groom — Place where dissolved (City/Municipality, Province, Country)', 'type' => 'text'],
+                ['key' => 'groom_dissolved_date', 'label' => 'Groom — Date when dissolved', 'type' => 'date'],
+                ['key' => 'groom_father_name', 'label' => "Groom's Father — Name (First, Middle, Last)", 'type' => 'text'],
+                ['key' => 'groom_father_citizenship', 'label' => "Groom's Father — Citizenship", 'type' => 'text', 'default' => 'Filipino'],
+                ['key' => 'groom_father_residence', 'label' => "Groom's Father — Residence", 'type' => 'text'],
+                ['key' => 'groom_mother_maiden_name', 'label' => "Groom's Mother — Maiden Name (First, Middle, Last)", 'type' => 'text'],
+                ['key' => 'groom_mother_citizenship', 'label' => "Groom's Mother — Citizenship", 'type' => 'text', 'default' => 'Filipino'],
+                ['key' => 'groom_mother_residence', 'label' => "Groom's Mother — Residence", 'type' => 'text'],
+                // Kept key (it was one answer for both parties): now the Groom's item 18.
+                ['key' => 'consent_person', 'label' => 'Groom — Persons who gave consent or advice (if below 25)', 'type' => 'text'],
+                ['key' => 'groom_consent_relationship', 'label' => 'Groom — Relationship of the person who gave consent or advice', 'type' => 'text'],
+                ['key' => 'groom_consent_citizenship', 'label' => 'Groom — Citizenship of the person who gave consent or advice', 'type' => 'text'],
+                ['key' => 'groom_consent_residence', 'label' => 'Groom — Residence of the person who gave consent or advice', 'type' => 'text'],
+                ['key' => 'bride_name', 'label' => "Bride's Full Name (First, Middle, Last)", 'type' => 'text', 'required' => true],
                 ['key' => 'bride_dob', 'label' => "Bride's Date of Birth", 'type' => 'date'],
+                ['key' => 'bride_age', 'label' => "Bride's Age", 'type' => 'derived_age', 'derived_from' => 'bride_dob'],
+                ['key' => 'bride_place_of_birth', 'label' => "Bride's Place of Birth (City/Municipality, Province, Country)", 'type' => 'text'],
                 ['key' => 'bride_citizenship', 'label' => "Bride's Citizenship", 'type' => 'text', 'default' => 'Filipino'],
-                ['key' => 'bride_residence', 'label' => "Bride's Residence", 'type' => 'text'],
+                ['key' => 'bride_residence', 'label' => "Bride's Residence (House No., St., Barangay, City/Municipality, Province, Country)", 'type' => 'text'],
+                ['key' => 'bride_religion', 'label' => "Bride's Religion/Religious Sect", 'type' => 'text'],
                 ['key' => 'bride_civil_status', 'label' => "Bride's Civil Status", 'type' => 'select', 'options' => ['Single', 'Widow/er', 'Divorced/Annulled']],
-                ['key' => 'consent_person', 'label' => 'Person Who Gave Consent or Advice (if either party is below 25)', 'type' => 'text'],
+                ['key' => 'bride_dissolved_how', 'label' => 'Bride — If previously married: how was it dissolved?', 'type' => 'text'],
+                ['key' => 'bride_dissolved_place', 'label' => 'Bride — Place where dissolved (City/Municipality, Province, Country)', 'type' => 'text'],
+                ['key' => 'bride_dissolved_date', 'label' => 'Bride — Date when dissolved', 'type' => 'date'],
+                ['key' => 'bride_father_name', 'label' => "Bride's Father — Name (First, Middle, Last)", 'type' => 'text'],
+                ['key' => 'bride_father_citizenship', 'label' => "Bride's Father — Citizenship", 'type' => 'text', 'default' => 'Filipino'],
+                ['key' => 'bride_father_residence', 'label' => "Bride's Father — Residence", 'type' => 'text'],
+                ['key' => 'bride_mother_maiden_name', 'label' => "Bride's Mother — Maiden Name (First, Middle, Last)", 'type' => 'text'],
+                ['key' => 'bride_mother_citizenship', 'label' => "Bride's Mother — Citizenship", 'type' => 'text', 'default' => 'Filipino'],
+                ['key' => 'bride_mother_residence', 'label' => "Bride's Mother — Residence", 'type' => 'text'],
+                ['key' => 'bride_consent_person', 'label' => 'Bride — Persons who gave consent or advice (if below 25)', 'type' => 'text'],
+                ['key' => 'bride_consent_relationship', 'label' => 'Bride — Relationship of the person who gave consent or advice', 'type' => 'text'],
+                ['key' => 'bride_consent_citizenship', 'label' => 'Bride — Citizenship of the person who gave consent or advice', 'type' => 'text'],
+                ['key' => 'bride_consent_residence', 'label' => 'Bride — Residence of the person who gave consent or advice', 'type' => 'text'],
+                ['key' => 'degree_of_relationship', 'label' => 'Degree of relationship of contracting parties', 'type' => 'text'],
             ],
         ],
         [
+            // PSA Municipal Form No. 102 (Revised August 2016), the MCRO's own
+            // copy ("MCRO - Certificate of Live Birth.pdf", 2026-11-03): front
+            // items 1-25; at the back the Affidavit of Acknowledgment/Admission
+            // of Paternity and the Affidavit for Delayed Registration of Birth;
+            // then Esperanza's Sworn Attestation, which goes with the Affidavit
+            // to Use the Surname of the Father (R.A. No. 9255 Form No. 1). The
+            // Muslim Attachment is Municipal Form No. 102 (Revised January 2007,
+            // attachment). A copy asks only what finds the record; a
+            // registration (is_delayed 'Yes') the items the informant supplies;
+            // a delayed one ('delayed') the affidavit's too. What the attendant
+            // certifies (21b) and the office's boxes (23-25) are not asked.
+            // The service awaits the LGU's ruling (PolicyGaps): only its
+            // questions follow the paper; its requirements and steps stay.
             'key' => 'mcro_live_birth',
             'reference_pdf' => 'documents/reference-forms/certificate-of-live-birth.pdf',
             'name' => 'Certificate of Live Birth (Certified Copy / Registration)',
@@ -90,7 +201,7 @@ return [
             'office_short' => 'MCRO',
             'level' => 'Municipal',
             'title' => 'REQUEST FOR CERTIFICATE OF LIVE BIRTH',
-            'formNo' => 'Municipal Form No. 102',
+            'formNo' => 'Municipal Form No. 102 (Revised August 2016)',
             'fee' => '₱155.00', 'days' => '3-5 working days',
             'requirements' => [
                 'One (1) valid government-issued ID of the requester',
@@ -102,24 +213,77 @@ return [
             ],
             'process' => ['Submit Request', 'MCRO Records Verification', 'Pay Fee', 'Release'],
             'fields' => [
-                ['key' => 'child_name', 'label' => "Child's Full Name", 'type' => 'text', 'required' => true],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'date_of_birth', 'label' => 'Date of Birth', 'type' => 'date'],
-                ['key' => 'place_of_birth', 'label' => 'Place of Birth (City/Municipality)', 'type' => 'text'],
-                ['key' => 'mother_maiden_name', 'label' => "Mother's Maiden Name", 'type' => 'text'],
-                ['key' => 'mother_citizenship', 'label' => "Mother's Citizenship", 'type' => 'text', 'default' => 'Filipino'],
-                ['key' => 'father_name', 'label' => "Father's Full Name", 'type' => 'text'],
-                ['key' => 'father_citizenship', 'label' => "Father's Citizenship", 'type' => 'text', 'default' => 'Filipino'],
+                ['key' => 'is_delayed', 'label' => 'Is this a request for a copy, or a new / delayed registration (not yet on file)?', 'type' => 'select', 'required' => true, 'options' => ['No — requesting a copy of an existing record', 'Yes — new registration, reported on time', 'Yes — delayed registration (reported late)']],
                 ['key' => 'requester_relationship', 'label' => 'Requester Relationship to Child', 'type' => 'select', 'options' => ['Self (Record Owner)', 'Parent', 'Legal Guardian', 'Authorized Representative']],
-                ['key' => 'is_delayed', 'label' => 'Is this a new / delayed registration (not yet on file)?', 'type' => 'select', 'options' => ['No — requesting a copy of an existing record', 'Yes — this birth has never been registered']],
-                // Municipal Form No. 102 (Revised January 2007, attachment) — only
-                // needed if either parent is Muslim; left blank otherwise.
-                ['key' => 'ethnicity_father', 'label' => 'Ethnicity of the Father (Muslim Attachment, if applicable)', 'type' => 'text'],
-                ['key' => 'ethnicity_mother', 'label' => 'Ethnicity of the Mother (Muslim Attachment, if applicable)', 'type' => 'text'],
-                ['key' => 'dob_hijrah', 'label' => 'Date of Birth, Hijrah Calendar (Muslim Attachment, if applicable)', 'type' => 'text'],
+                ['key' => 'registry_no', 'label' => 'Registry No. (if known)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'copy']],
+                // Child (items 1-6). Sex and birth date are the child's, never the
+                // requester's own profile ('prefill' => false).
+                ['key' => 'child_name', 'label' => 'Name of the Child (First, Middle, Last)', 'type' => 'text', 'required' => true],
+                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female'], 'prefill' => false],
+                ['key' => 'date_of_birth', 'label' => 'Date of Birth', 'type' => 'date', 'prefill' => false],
+                ['key' => 'place_of_birth', 'label' => 'Place of Birth (Name of Hospital/Clinic/Institution/House No., St., Barangay, City/Municipality, Province)', 'type' => 'text'],
+                ['key' => 'type_of_birth', 'label' => 'Type of Birth', 'type' => 'select', 'options' => ['Single', 'Twin', 'Triplet', 'Others'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'multiple_birth_order', 'label' => 'If Multiple Birth, Child Was', 'type' => 'select', 'options' => ['First', 'Second', 'Third', 'Others'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'birth_order', 'label' => 'Birth Order (order of this birth to previous live births, including fetal death: First, Second, Third, etc.)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'weight_at_birth', 'label' => 'Weight at Birth (grams)', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Mother (items 7-13)
+                ['key' => 'mother_maiden_name', 'label' => "Mother's Maiden Name (First, Middle, Last)", 'type' => 'text'],
+                ['key' => 'mother_citizenship', 'label' => "Mother's Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_religion', 'label' => "Mother's Religion/Religious Sect", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_children_born_alive', 'label' => 'Mother: Total Number of Children Born Alive', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_children_living', 'label' => 'Mother: No. of Children Still Living, Including This Birth', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_children_dead', 'label' => 'Mother: No. of Children Born Alive but Are Now Dead', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_occupation', 'label' => "Mother's Occupation", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_age', 'label' => "Mother's Age at the Time of This Birth (completed years)", 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_residence', 'label' => "Mother's Residence (House No., St., Barangay, City/Municipality, Province, Country)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Father (items 14-19)
+                ['key' => 'father_name', 'label' => "Father's Name (First, Middle, Last)", 'type' => 'text'],
+                ['key' => 'father_citizenship', 'label' => "Father's Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_religion', 'label' => "Father's Religion/Religious Sect", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_occupation', 'label' => "Father's Occupation", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_age', 'label' => "Father's Age at the Time of This Birth (completed years)", 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_residence', 'label' => "Father's Residence (House No., St., Barangay, City/Municipality, Province, Country)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Marriage of parents (item 20) and the back pages it calls for
+                ['key' => 'parents_married', 'label' => 'Were the parents married to each other? (If not, the Affidavit of Acknowledgment/Admission of Paternity is accomplished)', 'type' => 'select', 'options' => ['Yes', 'No'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'parents_marriage_date', 'label' => 'Marriage of Parents — Date', 'type' => 'date', 'showIf' => ['field' => 'parents_married', 'contains' => 'Yes']],
+                ['key' => 'parents_marriage_place', 'label' => 'Marriage of Parents — Place (City/Municipality, Province, Country)', 'type' => 'text', 'showIf' => ['field' => 'parents_married', 'contains' => 'Yes']],
+                ['key' => 'acknowledged_by_father', 'label' => 'Was the child acknowledged by the father?', 'type' => 'select', 'options' => ['Acknowledged', 'Not acknowledged'], 'showIf' => ['field' => 'parents_married', 'contains' => 'No']],
+                ['key' => 'uses_father_surname', 'label' => "Will the child use the father's surname? (R.A. No. 9255)", 'type' => 'select', 'options' => ['Yes', 'No'], 'showIf' => ['field' => 'acknowledged_by_father', 'contains' => 'Acknowledged']],
+                // Attendant (item 21) and informant (item 22)
+                ['key' => 'attendant', 'label' => 'Attendant at Birth', 'type' => 'select', 'options' => ['Physician', 'Nurse', 'Midwife', 'Hilot (Traditional Birth Attendant)', 'Others'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'attendant_other', 'label' => 'Attendant at Birth — Others (Specify)', 'type' => 'text', 'showIf' => ['field' => 'attendant', 'contains' => 'Others']],
+                ['key' => 'attendant_name', 'label' => 'Attendant at Birth — Name in Print', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'attendant_address', 'label' => 'Attendant at Birth — Address', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_name', 'label' => 'Informant — Name in Print', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_relationship', 'label' => 'Informant — Relationship to the Child', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_address', 'label' => 'Informant — Address', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Affidavit for Delayed Registration of Birth (back of Form 102)
+                ['key' => 'affiant_name', 'label' => "Affiant's Name (hospital/clinic administrator, father, mother, guardian, or the person himself if 18 years old or over)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_civil_status', 'label' => "Affiant's Civil Status", 'type' => 'select', 'options' => ['Single', 'Married', 'Divorced', 'Widow', 'Widower'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_address', 'label' => "Affiant's Residence and Postal Address", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'delayed_registration_of', 'label' => 'I am the applicant for the delayed registration of', 'type' => 'select', 'options' => ['My birth', 'The birth of the child named above'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'registrant_citizenship', 'label' => 'I am / He / She is a citizen of', 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'reason_for_delay', 'label' => 'The reason for the delay in registering the birth', 'type' => 'textarea', 'required' => true, 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_spouse_name', 'label' => '(For the applicant only) I am married to', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                // Muslim Attachment (Municipal Form No. 102, Revised January 2007,
+                // attachment): asked only when a registration says a parent is Muslim.
+                ['key' => 'muslim_attachment', 'label' => 'Is either parent Muslim? (Muslim Attachment, Municipal Form No. 102)', 'type' => 'select', 'options' => ['Yes', 'No'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'dob_hijrah', 'label' => 'Date of Birth — Hijrah Calendar (Muslim Attachment)', 'type' => 'text', 'showIf' => ['field' => 'muslim_attachment', 'contains' => 'Yes']],
+                ['key' => 'ethnicity_father', 'label' => 'Ethnicity of the Father (Muslim Attachment)', 'type' => 'text', 'showIf' => ['field' => 'muslim_attachment', 'contains' => 'Yes']],
+                ['key' => 'ethnicity_mother', 'label' => 'Ethnicity of the Mother (Muslim Attachment)', 'type' => 'text', 'showIf' => ['field' => 'muslim_attachment', 'contains' => 'Yes']],
             ],
         ],
         [
+            // PSA Municipal Form No. 103 (Revised August 2016), the MCRO's own
+            // copy ("MCRO - Certificate of Death.pdf", 2026-11-03): items 1-13
+            // and 23-29 from the informant, the Medical Certificate (14-22) from
+            // the attendant, reviewed by the Health Officer; at the back the
+            // Postmortem Certificate, the Certification of Embalmer and the
+            // Affidavit for Delayed Registration of Death. A copy asks only what
+            // finds the record; a registration ('Yes') the informant's items; a
+            // delayed one ('delayed') the affidavit's too. The deceased's sex,
+            // birth date and civil status are never filled from the requester's
+            // own profile ('prefill' => false).
             'key' => 'mcro_death',
             'reference_pdf' => 'documents/reference-forms/certificate-of-death.pdf',
             'name' => 'Certificate of Death (Certified Copy / Registration)',
@@ -128,40 +292,153 @@ return [
             'office_short' => 'MCRO',
             'level' => 'Municipal',
             'title' => 'REQUEST FOR CERTIFICATE OF DEATH',
-            'formNo' => 'Municipal Form No. 103',
+            'formNo' => 'Municipal Form No. 103 (Revised August 2016)',
             'fee' => '₱155.00', 'days' => '3-5 working days',
             'requirements' => [
                 'One (1) valid government-issued ID of the requester',
                 'Proof of relationship to the deceased',
-                'Duly accomplished Municipal Form No. 103 (Certificate of Death), signed by the attending physician or health officer — for new registration only',
-                'Affidavit for Delayed Registration of Death — required if the death was never previously registered',
-                'Burial or Cremation Permit, if available',
+                ['label' => 'Duly accomplished Municipal Form No. 103 (Certificate of Death), signed by the attending physician or health officer and reviewed by the Health Officer — for new registration only', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['label' => 'Affidavit for Delayed Registration of Death — required if the death was never previously registered', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['label' => 'Burial or Cremation Permit, if available', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
             ],
             'process' => ['Submit Request', 'MCRO Records Verification', 'Pay Fee', 'Release'],
             'fields' => [
-                ['key' => 'deceased_name', 'label' => "Deceased's Full Name", 'type' => 'text', 'required' => true],
-                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female']],
-                ['key' => 'date_of_death', 'label' => 'Date of Death', 'type' => 'date'],
-                ['key' => 'place_of_death', 'label' => 'Place of Death (City/Municipality)', 'type' => 'text'],
-                ['key' => 'date_of_birth', 'label' => 'Date of Birth', 'type' => 'date'],
-                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widowed', 'Separated']],
-                ['key' => 'citizenship', 'label' => 'Citizenship', 'type' => 'text', 'default' => 'Filipino'],
-                ['key' => 'residence', 'label' => 'Residence', 'type' => 'text'],
-                ['key' => 'father_name', 'label' => 'Name of Father', 'type' => 'text'],
-                ['key' => 'mother_maiden_name', 'label' => "Mother's Maiden Name", 'type' => 'text'],
+                ['key' => 'is_delayed', 'label' => 'Is this a request for a copy, or a new / delayed registration (not yet on file)?', 'type' => 'select', 'required' => true, 'options' => ['No — requesting a copy of an existing record', 'Yes — new registration, reported on time', 'Yes — delayed registration (reported late)']],
                 ['key' => 'requester_relationship', 'label' => 'Requester Relationship to Deceased', 'type' => 'select', 'options' => ['Spouse', 'Child', 'Parent', 'Sibling', 'Authorized Representative']],
-                ['key' => 'is_delayed', 'label' => 'Is this a new / delayed registration (not yet on file)?', 'type' => 'select', 'options' => ['No — requesting a copy of an existing record', 'Yes — this death has never been registered']],
+                ['key' => 'registry_no', 'label' => 'Registry No. (if known)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'copy']],
+                ['key' => 'deceased_name', 'label' => "Deceased's Full Name (First, Middle, Last)", 'type' => 'text', 'required' => true],
+                ['key' => 'sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female'], 'prefill' => false],
+                ['key' => 'date_of_death', 'label' => 'Date of Death', 'type' => 'date'],
+                ['key' => 'place_of_death', 'label' => 'Place of Death (Name of Hospital/Clinic/Institution/House No., St., Barangay, City/Municipality, Province)', 'type' => 'text'],
+                ['key' => 'father_name', 'label' => 'Name of Father (First, Middle, Last)', 'type' => 'text'],
+                ['key' => 'mother_maiden_name', 'label' => 'Maiden Name of Mother (First, Middle, Last)', 'type' => 'text'],
+                // Registration: items 4, 5, 7-11, 23, 25, 26
+                ['key' => 'date_of_birth', 'label' => 'Date of Birth', 'type' => 'date', 'prefill' => false, 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'age_at_death', 'label' => 'Age at the Time of Death (completed years; months and days if under 1 year; hours and minutes if under 24 hours)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'civil_status', 'label' => 'Civil Status', 'type' => 'select', 'options' => ['Single', 'Married', 'Widow', 'Widower', 'Annulled', 'Divorced'], 'prefill' => false, 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'deceased_religion', 'label' => 'Religion/Religious Sect', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'citizenship', 'label' => 'Citizenship', 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'residence', 'label' => 'Residence (House No., St., Barangay, City/Municipality, Province, Country)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'deceased_occupation', 'label' => 'Occupation', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'corpse_disposal', 'label' => 'Corpse Disposal', 'type' => 'select', 'options' => ['Burial', 'Cremation', 'Others'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'corpse_disposal_other', 'label' => 'Corpse Disposal — Others (Specify)', 'type' => 'text', 'showIf' => ['field' => 'corpse_disposal', 'contains' => 'Others']],
+                ['key' => 'cemetery_name_address', 'label' => 'Name and Address of Cemetery or Crematory', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_name', 'label' => 'Informant — Name in Print', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_relationship', 'label' => 'Informant — Relationship to the Deceased', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_address', 'label' => 'Informant — Address', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Affidavit for Delayed Registration of Death (back of Form 103)
+                ['key' => 'affiant_name', 'label' => "Affiant's Name (Affidavit for Delayed Registration)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_civil_status', 'label' => "Affiant's Civil Status", 'type' => 'select', 'options' => ['Single', 'Married', 'Divorced', 'Widow', 'Widower'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_address', 'label' => "Affiant's Residence and Postal Address", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'burial_date', 'label' => 'Date Buried/Cremated', 'type' => 'date', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'death_attended', 'label' => 'The deceased at the time of his/her death', 'type' => 'select', 'options' => ['Was attended', 'Was not attended'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'death_attended_by', 'label' => 'Was attended by', 'type' => 'text', 'showIf' => ['field' => 'death_attended', 'contains' => 'Was attended']],
+                ['key' => 'cause_of_death', 'label' => 'The cause of death of the deceased was', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'reason_for_delay', 'label' => 'The reason for the delay in registering this death', 'type' => 'textarea', 'required' => true, 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
             ],
         ],
         [
+            // PSA Municipal Form No. 103A (Revised January 2007), the MCRO's own
+            // copy ("MCRO - Certificate of Fetal Death.pdf", 2026-11-03): Fetus
+            // 1-5e, Mother 6-12, Father 13-17, Marriage of Parents 18, the
+            // Medical Certificate (19-22b) from the attendant, reviewed by the
+            // Health Officer, then 23-30; at the back the Postmortem Certificate
+            // of Fetal Death, the Certification of Embalmer and the Affidavit for
+            // Delayed Registration of Fetal Death. Modelled on mcro_death, with
+            // its fee and days, and on its permissions ('submodule'), as the
+            // Solo Parent ID shares the PWD ID's.
+            'key' => 'mcro_fetal_death',
+            'submodule' => 'mcro_death',
+            'reference_pdf' => 'documents/reference-forms/certificate-of-fetal-death.pdf',
+            'name' => 'Certificate of Fetal Death (Certified Copy / Registration)',
+            'category' => 'Civil Registry',
+            'office' => 'Office of the Municipal Civil Registrar',
+            'office_short' => 'MCRO',
+            'level' => 'Municipal',
+            'title' => 'REQUEST FOR CERTIFICATE OF FETAL DEATH',
+            'formNo' => 'Municipal Form No. 103A (Revised January 2007)',
+            'fee' => '₱155.00', 'days' => '3-5 working days',
+            'requirements' => [
+                'One (1) valid government-issued ID of the requester',
+                'Proof of relationship to the deceased',
+                ['label' => 'Duly accomplished Municipal Form No. 103A (Certificate of Fetal Death), its Medical Certificate signed by the attendant and reviewed by the Health Officer — for new registration only', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['label' => 'Affidavit for Delayed Registration of Fetal Death — required if the fetal death was never previously registered', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['label' => 'Burial or Cremation Permit, if available', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+            ],
+            'process' => ['Submit Request', 'MCRO Records Verification', 'Pay Fee', 'Release'],
+            'fields' => [
+                ['key' => 'is_delayed', 'label' => 'Is this a request for a copy, or a new / delayed registration (not yet on file)?', 'type' => 'select', 'required' => true, 'options' => ['No — requesting a copy of an existing record', 'Yes — new registration, reported on time', 'Yes — delayed registration (reported late)']],
+                ['key' => 'requester_relationship', 'label' => 'Requester Relationship to the Fetus', 'type' => 'select', 'options' => ['Mother', 'Father', 'Other Relative', 'Authorized Representative']],
+                ['key' => 'registry_no', 'label' => 'Registry No. (if known)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'copy']],
+                // Fetus (items 1-5e)
+                ['key' => 'fetus_name', 'label' => 'Name of the Fetus (First, Middle, Last), if given', 'type' => 'text'],
+                ['key' => 'fetus_sex', 'label' => 'Sex', 'type' => 'select', 'options' => ['Male', 'Female', 'Undetermined']],
+                ['key' => 'date_of_delivery', 'label' => 'Date of Delivery', 'type' => 'date', 'required' => true],
+                ['key' => 'place_of_delivery', 'label' => 'Place of Delivery (Name of Hospital/Clinic/Institution/House No., St., Barangay, City/Municipality, Province)', 'type' => 'text'],
+                ['key' => 'mother_maiden_name', 'label' => "Mother's Maiden Name (First, Middle, Last)", 'type' => 'text', 'required' => true],
+                ['key' => 'type_of_delivery', 'label' => 'Type of Delivery', 'type' => 'select', 'options' => ['Single', 'Twin', 'Triplet', 'Others'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'multiple_delivery_order', 'label' => 'If Multiple Delivery, Fetus Was', 'type' => 'select', 'options' => ['First', 'Second', 'Third', 'Others'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'method_of_delivery', 'label' => 'Method of Delivery (normal spontaneous vertex; if others, specify)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'birth_order', 'label' => 'Birth Order (live births and fetal deaths, including this delivery: First, Second, Third, etc.)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'weight_of_fetus', 'label' => 'Weight of Fetus (grams)', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Mother (items 7-12)
+                ['key' => 'mother_citizenship', 'label' => "Mother's Citizenship", 'type' => 'text', 'default' => 'Filipino', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_religion', 'label' => "Mother's Religion/Religious Sect", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_occupation', 'label' => "Mother's Occupation", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_age', 'label' => "Mother's Age at the Time of This Delivery (completed years)", 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_children_born_alive', 'label' => 'Mother: Total Number of Children Born Alive', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_children_living', 'label' => 'Mother: No. of Children Still Living', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_children_dead', 'label' => 'Mother: No. of Children Born Alive but Are Now Dead', 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'mother_residence', 'label' => "Mother's Residence (House No., St., Barangay, City/Municipality, Province, Country)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Father (items 13-17) and marriage of parents (18)
+                ['key' => 'father_name', 'label' => "Father's Name (First, Middle, Last)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_citizenship', 'label' => "Father's Citizenship", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_religion', 'label' => "Father's Religion/Religious Sect", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_occupation', 'label' => "Father's Occupation", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'father_age', 'label' => "Father's Age at the Time of This Delivery (completed years)", 'type' => 'number', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'parents_marriage_date', 'label' => 'Marriage of Parents — Date (if married)', 'type' => 'date', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'parents_marriage_place', 'label' => 'Marriage of Parents — Place (City/Municipality, Province, Country)', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Items 23, 25, 26 and 27 (the Medical Certificate, 19-22, is the attendant's)
+                ['key' => 'corpse_disposal', 'label' => 'Corpse Disposal', 'type' => 'select', 'options' => ['Burial', 'Cremation', 'Others'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'corpse_disposal_other', 'label' => 'Corpse Disposal — Others (Specify)', 'type' => 'text', 'showIf' => ['field' => 'corpse_disposal', 'contains' => 'Others']],
+                ['key' => 'autopsy', 'label' => 'Autopsy', 'type' => 'select', 'options' => ['Yes', 'No'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'cemetery_name_address', 'label' => 'Name and Address of Cemetery or Crematory', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_name', 'label' => 'Informant — Name in Print', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_relationship', 'label' => 'Informant — Relationship to the Deceased', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                ['key' => 'informant_address', 'label' => 'Informant — Address', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'Yes']],
+                // Affidavit for Delayed Registration of Fetal Death (back of Form 103A)
+                ['key' => 'affiant_name', 'label' => "Affiant's Name (Affidavit for Delayed Registration)", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_civil_status', 'label' => "Affiant's Civil Status", 'type' => 'select', 'options' => ['Single', 'Married', 'Divorced', 'Widow', 'Widower'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'affiant_address', 'label' => "Affiant's Residence and Postal Address", 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'burial_date', 'label' => 'Date Buried/Cremated', 'type' => 'date', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'fetus_attended', 'label' => 'The fetus at the time of his/her death', 'type' => 'select', 'options' => ['Was attended', 'Was not attended'], 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'fetus_attended_by', 'label' => 'Was attended by', 'type' => 'text', 'showIf' => ['field' => 'fetus_attended', 'contains' => 'Was attended']],
+                ['key' => 'cause_of_death', 'label' => 'The cause of death of the fetus was', 'type' => 'text', 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+                ['key' => 'reason_for_delay', 'label' => 'The reason for the delay in registering this fetal death', 'type' => 'textarea', 'required' => true, 'showIf' => ['field' => 'is_delayed', 'contains' => 'delayed']],
+            ],
+        ],
+        [
+            // The MCRO's own affidavits for a delayed registration ("MCRO -
+            // Affidavit of 2 Disinterested Person Form.pdf", 2026-11-03): the
+            // Affidavit of Two Disinterested Persons (Delayed Registration of
+            // Birth); R.A. No. 9255 Form No. 1 (Revised March 2016), the
+            // Affidavit to Use the Surname of the Father; and "Attachment 2 -
+            // Templates of Affidavit", the applicant's own affidavit listing the
+            // supporting documents. All are sworn before the Municipal Civil
+            // Registrar, Narec N. Conag, as administering officer (Doc./Page/
+            // Book "n/a"), not notarized. The papers are for a birth: their
+            // questions and documents are asked only for one. The applicant's
+            // affidavit for each kind is printed on the back of its certificate
+            // (Forms 102, 103, 103A, 97).
             'key' => 'mcro_delayed_registration',
+            'reference_pdf' => 'documents/reference-forms/affidavit-of-two-disinterested-persons.pdf',
             'name' => 'Affidavit for Delayed Registration (Birth, Marriage, or Death)',
             'category' => 'Civil Registry',
             'office' => 'Office of the Municipal Civil Registrar',
             'office_short' => 'MCRO',
             'level' => 'Municipal',
             'title' => 'AFFIDAVIT FOR DELAYED REGISTRATION',
-            'officiant' => 'Atty. Marivic S. Ong',
+            'officiant' => 'Narec N. Conag',
             'officiantTitle' => 'Municipal Civil Registrar',
             'fee' => 'Free', 'days' => '1-2 working days (affidavit drafting)',
             'requirements' => [
@@ -169,13 +446,30 @@ return [
                 'Certificate of No Record (Negative Certification) from PSA',
                 'Supporting documents establishing the fact and date of the event (baptismal certificate, school records, or similar)',
                 'Affidavit of Two Disinterested Persons — required for delayed registration of birth or death',
+                ['label' => 'Affidavit of the applicant listing the supporting documents (Attachment 2 — Templates of Affidavit)', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['label' => "Affidavit to Use the Surname of the Father (AUSF), R.A. No. 9255 Form No. 1 — if the parents were not married and the child will use the father's surname", 'showIf' => [['field' => 'registration_type', 'contains' => 'Birth'], ['field' => 'parents_marital_status', 'contains' => 'Not married']]],
             ],
-            'process' => ['Submit Request', 'MCRO Verification', 'Affidavit Drafting & Notarization', 'Release'],
+            'process' => ['Submit Request', 'MCRO Verification', 'Affidavit Drafting & Oath Before the Civil Registrar', 'Release'],
             'fields' => [
-                ['key' => 'registration_type', 'label' => 'Type of Delayed Registration', 'type' => 'select', 'options' => ['Birth', 'Marriage', 'Death'], 'required' => true],
-                ['key' => 'subject_name', 'label' => 'Full Name of the Person on the Record', 'type' => 'text'],
+                ['key' => 'registration_type', 'label' => 'Type of Delayed Registration', 'type' => 'select', 'options' => ['Birth', 'Marriage', 'Death', 'Fetal Death'], 'required' => true],
+                // The person on the record, not the requester's own name ('prefill' => false).
+                ['key' => 'subject_name', 'label' => 'Full Name of the Person on the Record', 'type' => 'text', 'prefill' => false],
                 ['key' => 'applicant_relationship', 'label' => "Applicant's Relationship to the Record", 'type' => 'text'],
                 ['key' => 'reason_for_delay', 'label' => 'Reason for the Delay', 'type' => 'text'],
+                // Affidavit of Two Disinterested Persons (Delayed Registration of Birth)
+                ['key' => 'disinterested_person_1', 'label' => 'First Disinterested Person — Full Name', 'type' => 'text', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'disinterested_person_2', 'label' => 'Second Disinterested Person — Full Name', 'type' => 'text', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'disinterested_persons_residence', 'label' => 'The two are residents of (barangay), Esperanza, Masbate', 'type' => 'text', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'subject_date_of_birth', 'label' => 'Who was born on', 'type' => 'date', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'subject_place_of_birth', 'label' => 'At (place of birth), Esperanza, Masbate', 'type' => 'text', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'subject_father_name', 'label' => "To parents — Father's Name", 'type' => 'text', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'subject_mother_name', 'label' => "To parents — Mother's Name", 'type' => 'text', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'parents_marital_status', 'label' => 'Who were', 'type' => 'select', 'options' => ['Married (date and place known)', "Married, but we don't know the date and place", 'Not married'], 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'parents_marriage_date', 'label' => 'Parents married on', 'type' => 'date', 'showIf' => ['field' => 'parents_marital_status', 'contains' => 'place known']],
+                ['key' => 'parents_marriage_place', 'label' => 'Parents married at', 'type' => 'text', 'showIf' => ['field' => 'parents_marital_status', 'contains' => 'place known']],
+                ['key' => 'child_birth_order', 'label' => 'Is the ___ child (First, Second, Third, etc.)', 'type' => 'text', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'number_of_children', 'label' => 'Of how many children of the spouses', 'type' => 'number', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
+                ['key' => 'supporting_documents', 'label' => 'Supporting personal documents secured from government/private entities (one per line)', 'type' => 'textarea', 'showIf' => ['field' => 'registration_type', 'contains' => 'Birth']],
             ],
         ],
         [

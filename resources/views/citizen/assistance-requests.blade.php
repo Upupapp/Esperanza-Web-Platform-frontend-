@@ -775,8 +775,12 @@
                             <p class="text-sm font-semibold text-ink mb-1" x-text="types[selectedType]?.certTitle || ''"></p>
                             <p class="text-xs text-ink-muted mb-3" x-show="types[selectedType]?.certSubtitle" x-text="types[selectedType]?.certSubtitle"></p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type !== 'table')" :key="f.key">
-                                    <div :class="(f.type === 'checkbox-group' || f.type === 'multiselect' || f.type === 'textarea') ? 'sm:col-span-2 lg:col-span-3' : ''" x-show="fieldShown(f)">
+                                {{-- Every question in the paper's order, a table across the full width
+                                     where it stands: tables used to follow all other questions, so a
+                                     business plan's expenses came after its last question (MPESO papers,
+                                     2026-11-03). --}}
+                                <template x-for="f in (types[selectedType]?.fields || [])" :key="f.key">
+                                    <div :class="f.type === 'table' ? 'col-span-full' : ((f.type === 'checkbox-group' || f.type === 'multiselect' || f.type === 'textarea') ? 'sm:col-span-2 lg:col-span-3' : '')" x-show="fieldShown(f)">
                                         <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date' || f.type === 'tel'">
                                             <div>
                                                 <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
@@ -832,69 +836,70 @@
                                                 </div>
                                             </div>
                                         </template>
+                                        {{-- A table (e.g. Family Composition, FACED Family Members), across the full
+                                             width. It follows its show-if rule like every other question: it was
+                                             drawn while the submit dropped its rows (parity check, 2026-10-26). --}}
+                                        <template x-if="f.type === 'table'">
+                                            <div>
+                                                <div class="flex items-center justify-between mb-2.5">
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-ink" x-text="f.label"></p>
+                                                        {{-- Said in the table's own row name: not every table is a household
+                                                             (business interests, expenses, start-up items: MPESO papers, 2026-11-03). --}}
+                                                        <p class="text-xs text-ink-muted mt-0.5" x-text="($store.lang.current === 'en' ? 'Add each ' + (f.rowLabel || 'entry').toLowerCase() : 'Idagdag ang bawat ' + (f.rowLabel || 'entry').toLowerCase()) + '.'"></p>
+                                                    </div>
+                                                    <span class="text-[11px] text-ink-muted shrink-0" x-text="(formData[f.key] || []).length + ' ' + ($store.lang.current === 'en' ? 'added' : 'nadagdag')"></span>
+                                                </div>
+                                                <div class="space-y-2.5">
+                                                    <template x-for="(row, ri) in (formData[f.key] || [])" :key="ri">
+                                                        <div class="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+                                                            <div class="flex items-center justify-between mb-3">
+                                                                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-700 bg-brand-100/70 rounded-full pl-1.5 pr-2.5 py-1">
+                                                                    <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3"></i>
+                                                                    <span x-text="row[f.columns[0].key] || ((f.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
+                                                                </span>
+                                                                <button aria-label="Remove" type="button" @click="formData[f.key].splice(ri, 1)" class="text-ink-faint hover:text-rose-500 transition-colors">
+                                                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                                </button>
+                                                            </div>
+                                                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                                <template x-for="col in f.columns" :key="col.key">
+                                                                    <div>
+                                                                        <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
+                                                                        <template x-if="col.options">
+                                                                            <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                                                                                <option value="">—</option>
+                                                                                <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt" :selected="row[col.key] === opt"></option></template>
+                                                                            </select>
+                                                                        </template>
+                                                                        <template x-if="!col.options">
+                                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+
+                                                    <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[f.key] || []).length === 0">
+                                                        <span class="w-9 h-9 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i :data-lucide="f.rowIcon || 'list'" class="w-4 h-4"></i></span>
+                                                        <p class="text-xs text-ink-muted" x-text="$store.lang.current === 'en' ? 'No ' + (f.rowLabel || 'entry').toLowerCase() + ' added yet.' : 'Wala pang naidagdag na ' + (f.rowLabel || 'entry').toLowerCase() + '.'"></p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button" @click="addTableRow(f)"
+                                                        class="w-full flex items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-ink-muted hover:text-brand-600 py-2.5 transition-all duration-[160ms] ease-standard"
+                                                    >
+                                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                                        <span x-text="($store.lang.current === 'en' ? 'Add ' : 'Magdagdag ng ') + (f.rowLabel || 'Entry')"></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
                             </div>
                         </div>
-
-                        <!-- Full-width table fields (e.g. Family Composition, FACED Family Members) -->
-                        {{-- A table follows its show-if rule like every other question: it was
-                             drawn while the submit dropped its rows (parity check, 2026-10-26). --}}
-                        <template x-for="f in (types[selectedType]?.fields || []).filter(f => f.type === 'table')" :key="f.key">
-                            <div class="mb-6" x-show="fieldShown(f)">
-                                <div class="flex items-center justify-between mb-2.5">
-                                    <div>
-                                        <p class="text-sm font-semibold text-ink" x-text="f.label"></p>
-                                        <p class="text-xs text-ink-muted mt-0.5"><x-ui.t fil="Idagdag ang bawat miyembro ng sambahayan." en="Add each member of the household." /></p>
-                                    </div>
-                                    <span class="text-[11px] text-ink-muted shrink-0" x-text="(formData[f.key] || []).length + ' ' + ($store.lang.current === 'en' ? 'added' : 'nadagdag')"></span>
-                                </div>
-                                <div class="space-y-2.5">
-                                    <template x-for="(row, ri) in (formData[f.key] || [])" :key="ri">
-                                        <div class="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
-                                            <div class="flex items-center justify-between mb-3">
-                                                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-700 bg-brand-100/70 rounded-full pl-1.5 pr-2.5 py-1">
-                                                    <i :data-lucide="f.rowIcon || 'list'" class="w-3 h-3"></i>
-                                                    <span x-text="row[f.columns[0].key] || ((f.rowLabel || 'Entry') + ' ' + (ri + 1))"></span>
-                                                </span>
-                                                <button aria-label="Remove" type="button" @click="formData[f.key].splice(ri, 1)" class="text-ink-faint hover:text-rose-500 transition-colors">
-                                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                </button>
-                                            </div>
-                                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                                                <template x-for="col in f.columns" :key="col.key">
-                                                    <div>
-                                                        <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
-                                                        <template x-if="col.options">
-                                                            <select :aria-label="col.label" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-                                                                <option value="">—</option>
-                                                                <template x-for="opt in col.options" :key="opt"><option :value="opt" x-text="opt" :selected="row[col.key] === opt"></option></template>
-                                                            </select>
-                                                        </template>
-                                                        <template x-if="!col.options">
-                                                            <input :aria-label="col.label" :type="col.type === 'date' ? 'date' : (col.type === 'number' ? 'number' : 'text')" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:border-brand-400 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4 focus:ring-brand-100">
-                                                        </template>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <div class="flex flex-col items-center text-center py-6 rounded-xl border-2 border-dashed border-slate-200" x-show="(formData[f.key] || []).length === 0">
-                                        <span class="w-9 h-9 rounded-full bg-slate-100 text-ink-muted flex items-center justify-center mb-2"><i :data-lucide="f.rowIcon || 'list'" class="w-4 h-4"></i></span>
-                                        <p class="text-xs text-ink-muted"><x-ui.t fil="Wala pang idinagdag na miyembro." en="No members added yet." /></p>
-                                    </div>
-
-                                    <button
-                                        type="button" @click="addTableRow(f)"
-                                        class="w-full flex items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-xs font-medium text-ink-muted hover:text-brand-600 py-2.5 transition-all duration-[160ms] ease-standard"
-                                    >
-                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                        <span x-text="($store.lang.current === 'en' ? 'Add ' : 'Magdagdag ng ') + (f.rowLabel || 'Entry')"></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
 
                         <div class="flex items-center justify-between mb-1">
                             <p class="text-sm font-semibold text-ink"><x-ui.t fil="Mga Requirement" en="Requirements" /></p>

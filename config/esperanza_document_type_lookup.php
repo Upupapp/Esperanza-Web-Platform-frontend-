@@ -33,12 +33,12 @@ return [
     // --- Barangay-level ---
     'Barangay Clearance' => ['docKey' => 'brgy_clearance', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CLEARANCE', 'nameField' => 'requester_name', 'purposeField' => 'purpose', 'purposeIsArray' => true],
     'Barangay Business Clearance' => ['docKey' => 'brgy_business_clearance', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY BUSINESS CLEARANCE', 'nameField' => 'applicant_name'],
-    'Barangay Residency' => ['docKey' => 'brgy_residency', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY RESIDENCY', 'nameField' => 'requester_name', 'purposeField' => 'purpose', 'purposeIsArray' => true],
-    'Barangay Indigency' => ['docKey' => 'brgy_indigency', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY INDIGENCY', 'nameField' => 'requester_name', 'purposeField' => 'purpose', 'purposeIsArray' => true],
-    'First Time Jobseeker Certificate (RA 11261)' => ['docKey' => 'brgy_first_time_jobseeker', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'certSubtitle' => 'First Time Jobseekers Assistance Act (RA 11261)', 'nameField' => 'requester_name'],
+    'Barangay Residency' => ['docKey' => 'brgy_residency', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY RESIDENCY', 'validityMonths' => 3, 'nameField' => 'requester_name', 'purposeField' => 'purpose', 'purposeIsArray' => true],
+    'Barangay Indigency' => ['docKey' => 'brgy_indigency', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY INDIGENCY', 'validityMonths' => 3, 'nameField' => 'requester_name', 'purposeField' => 'purpose', 'purposeIsArray' => true],
+    'First Time Jobseeker Certificate (RA 11261)' => ['docKey' => 'brgy_first_time_jobseeker', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'certSubtitle' => 'First Time Jobseekers Assistance Act RA 11261', 'validityMonths' => 12, 'nameField' => 'requester_name'],
     'Barangay Certification (General Purpose)' => ['docKey' => 'brgy_cert_general', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'nameField' => 'subject_name', 'purposeField' => 'purpose'],
-    'Barangay Certification (Late Registration)' => ['docKey' => 'brgy_cert_late_registration', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'certSubtitle' => 'Supporting a Late/Delayed Civil Registration', 'nameField' => 'subject_name'],
-    'Barangay Certification (Registration of Death)' => ['docKey' => 'brgy_cert_death_registration', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'certSubtitle' => 'Supporting a Death Registration', 'nameField' => 'subject_name'],
+    'Barangay Certification (Late Registration)' => ['docKey' => 'brgy_cert_late_registration', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'nameField' => 'subject_name'],
+    'Barangay Certification (Registration of Death)' => ['docKey' => 'brgy_cert_death_registration', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY CERTIFICATION', 'nameField' => 'subject_name'],
     // No dedicated docKey/Reference_forms source exists for these two — they
     // are content-shape-identical to a general barangay certification
     // ("this certifies that [name]... is of good standing... for [purpose]"),
@@ -72,6 +72,8 @@ return [
     'Barangay Business Permit' => ['docKey' => 'brgy_business_permit', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY BUSINESS PERMIT', 'nameField' => 'proprietor_name'],
     'Barangay Event / Special Permit' => ['docKey' => 'brgy_event_permit', 'previewType' => 'barangay', 'certTitle' => 'BARANGAY PERMIT', 'certSubtitle' => 'Event / Special Occasion Permit', 'nameField' => 'organizer_name'],
     'Certificate of Death (Certified Copy / Registration)' => ['docKey' => 'mcro_death', 'previewType' => 'municipal_request', 'certTitle' => 'REQUEST FOR CERTIFICATE OF DEATH'],
+    // Municipal Form No. 103A, the MCRO's paper (2026-11-03).
+    'Certificate of Fetal Death (Certified Copy / Registration)' => ['docKey' => 'mcro_fetal_death', 'previewType' => 'municipal_request', 'certTitle' => 'REQUEST FOR CERTIFICATE OF FETAL DEATH'],
     'PWD ID (Person with Disability Registration)' => ['docKey' => 'msw_pwd_id', 'previewType' => 'municipal_request', 'certTitle' => 'PHILIPPINE REGISTRY FOR PERSONS WITH DISABILITY — APPLICATION FORM', 'nameField' => 'full_name'],
     'Solo Parent ID (SPIC)' => ['docKey' => 'msw_solo_parent_id', 'previewType' => 'municipal_request', 'certTitle' => 'APPLICATION FORM FOR SOLO PARENT', 'certSubtitle' => 'Annex B (2023) — Solo Parent Identification Card', 'nameField' => 'full_name'],
 ];

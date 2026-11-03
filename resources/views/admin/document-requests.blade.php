@@ -26,9 +26,10 @@
     // the API returns), so a request filed from the portal is labelled by the
     // form it was actually filed on. One filed from the app answers the app's
     // own form spec instead; formStepsFor() tells them apart by the answers.
+    // Dokyu documents only: this page lists no Tulong request, and the Tulong
+    // questions (the MPESO papers', 2026-11-03) put it over its weight budget.
     $wizardFieldsByKey = collect(config('esperanza_municipal_documents.documents'))
         ->concat(collect(config('esperanza_barangay_documents'))->first()['documents'] ?? [])
-        ->concat(config('esperanza_tulong_types.types'))
         ->filter(fn ($d) => ! empty($d['key']) && ! empty($d['fields']))
         ->mapWithKeys(fn ($d) => [$d['key'] => collect($d['fields'])
             ->map(fn ($f) => ['key' => $f['key'], 'label' => $f['label'] ?? $f['key'], 'type' => $f['type'] ?? 'text'])
@@ -3167,7 +3168,7 @@
                                                         title="resolvedDocument.certTitle"
                                                         subtitle="resolvedDocument.certSubtitle"
                                                         barangay="selected.barangay"
-                                                        seal="null"
+                                                        seal="barangayCatalog[selected.barangay]?.seal || null"
                                                         punongBarangay="resolvedDocument.barangayOfficials?.punong_barangay"
                                                         barangaySecretary="resolvedDocument.barangayOfficials?.barangay_secretary"
                                                         background="documentBackground"

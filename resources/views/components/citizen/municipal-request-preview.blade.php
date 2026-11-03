@@ -121,6 +121,33 @@
                         <x-citizen.doc-field :bind="$bind" field="is_delayed" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                     </div>
                 </div>
+                {{-- Form 97's other items, asked only for a new or delayed registration (MCRO papers, 2026-11-03). --}}
+                <div class="border border-slate-300 rounded-sm overflow-hidden" x-show="String({{ $bind }}.is_delayed || '').startsWith('Yes') || {{ $editing }}" x-cloak>
+                    <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Registration Details</p>
+                    <div class="grid grid-cols-2">
+                        @foreach ([
+                            'marriage_venue' => 'Place of Marriage (Office / House / Barangay / Church / Mosque of)',
+                            'time_of_marriage' => 'Time of Marriage',
+                            'husband_dob' => 'Husband — Date of Birth',
+                            'wife_dob' => 'Wife — Date of Birth',
+                            'husband_citizenship' => 'Husband — Citizenship',
+                            'wife_citizenship' => 'Wife — Citizenship',
+                            'husband_residence' => 'Husband — Residence',
+                            'wife_residence' => 'Wife — Residence',
+                            'license_basis' => 'Solemnizing Officer Certifies',
+                            'marriage_license_no' => 'Marriage License No.',
+                            'solemnizing_officer_name' => 'Solemnizing Officer',
+                            'marriage_settlement' => 'Marriage Settlement',
+                        ] as $cellField => $cellLabel)
+                            <div class="px-3 py-2 border-b border-slate-300 odd:border-r">
+                                <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-500">{{ $cellLabel }}</p>
+                                <x-citizen.doc-field :bind="$bind" :field="$cellField" fallback=" " tag="p" class="font-medium min-h-[1.4rem]" :editing="$editing" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="text-xs px-1" x-show="{{ $bind }}.registry_no || {{ $editing }}" x-cloak><span class="text-slate-500">Registry No.:</span> <x-citizen.doc-field :bind="$bind" field="registry_no" fallback="—" class="font-medium" :editing="$editing" /></p>
+                <p class="text-xs px-1" x-show="String({{ $bind }}.is_delayed || '').includes('delayed') || {{ $editing }}" x-cloak><span class="text-slate-500">Reason for the Delay:</span> <x-citizen.doc-field :bind="$bind" field="reason_for_delay" fallback="—" class="font-medium" :editing="$editing" /></p>
             </div>
         </template>
 
@@ -182,8 +209,30 @@
                             <x-citizen.doc-field :bind="$bind" field="bride_civil_status" fallback=" " tag="p" class="font-medium" :editing="$editing" />
                         </div>
                     </div>
+                    {{-- Form 90's other items for each party (MCRO papers, 2026-11-03). --}}
+                    @foreach ([
+                        'Place of Birth' => ['groom_place_of_birth', 'bride_place_of_birth'],
+                        'Religion' => ['groom_religion', 'bride_religion'],
+                        "Father's Name" => ['groom_father_name', 'bride_father_name'],
+                        "Mother's Maiden Name" => ['groom_mother_maiden_name', 'bride_mother_maiden_name'],
+                    ] as $rowLabel => [$groomField, $brideField])
+                        <div class="grid grid-cols-2 divide-x divide-slate-300 border-t border-slate-300">
+                            <div class="px-3 py-2">
+                                <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-500">{{ $rowLabel }}</p>
+                                <x-citizen.doc-field :bind="$bind" :field="$groomField" fallback=" " tag="p" class="font-medium min-h-[1.4rem]" :editing="$editing" />
+                            </div>
+                            <div class="px-3 py-2">
+                                <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-500">{{ $rowLabel }}</p>
+                                <x-citizen.doc-field :bind="$bind" :field="$brideField" fallback=" " tag="p" class="font-medium min-h-[1.4rem]" :editing="$editing" />
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-                <p class="text-xs px-1"><span class="text-slate-500">Consent/Advice Given By:</span> <x-citizen.doc-field :bind="$bind" field="consent_person" fallback="—" class="font-medium" :editing="$editing" /></p>
+                <div class="grid grid-cols-2 gap-x-4 text-xs px-1">
+                    <p><span class="text-slate-500">Groom — Consent/Advice Given By:</span> <x-citizen.doc-field :bind="$bind" field="consent_person" fallback="—" class="font-medium" :editing="$editing" /></p>
+                    <p><span class="text-slate-500">Bride — Consent/Advice Given By:</span> <x-citizen.doc-field :bind="$bind" field="bride_consent_person" fallback="—" class="font-medium" :editing="$editing" /></p>
+                </div>
+                <p class="text-xs px-1" x-show="{{ $bind }}.degree_of_relationship || {{ $editing }}" x-cloak><span class="text-slate-500">Degree of Relationship of Contracting Parties:</span> <x-citizen.doc-field :bind="$bind" field="degree_of_relationship" fallback="—" class="font-medium" :editing="$editing" /></p>
             </div>
         </template>
 
@@ -241,6 +290,34 @@
                     <p><span class="text-slate-500">Requester:</span> <x-citizen.doc-field :bind="$bind" field="requester_relationship" fallback="—" class="font-medium" :editing="$editing" /></p>
                     <p><span class="text-slate-500">Status:</span> <x-citizen.doc-field :bind="$bind" field="is_delayed" fallback="—" class="font-medium" :editing="$editing" /></p>
                 </div>
+                <p class="text-xs px-1" x-show="{{ $bind }}.registry_no || {{ $editing }}" x-cloak><span class="text-slate-500">Registry No.:</span> <x-citizen.doc-field :bind="$bind" field="registry_no" fallback="—" class="font-medium" :editing="$editing" /></p>
+
+                {{-- Form 102's other items, asked only for a new or delayed registration (MCRO papers, 2026-11-03). --}}
+                <div class="border border-slate-300 rounded-sm overflow-hidden" x-show="String({{ $bind }}.is_delayed || '').startsWith('Yes') || {{ $editing }}" x-cloak>
+                    <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Registration Details</p>
+                    <div class="grid grid-cols-2">
+                        @foreach ([
+                            'type_of_birth' => 'Type of Birth',
+                            'birth_order' => 'Birth Order',
+                            'weight_at_birth' => 'Weight at Birth (grams)',
+                            'attendant' => 'Attendant at Birth',
+                            'mother_age' => "Mother's Age at This Birth",
+                            'father_age' => "Father's Age at This Birth",
+                            'mother_residence' => "Mother's Residence",
+                            'father_residence' => "Father's Residence",
+                            'parents_marriage_date' => 'Marriage of Parents — Date',
+                            'parents_marriage_place' => 'Marriage of Parents — Place',
+                            'informant_name' => 'Informant',
+                            'informant_relationship' => 'Relationship to the Child',
+                        ] as $cellField => $cellLabel)
+                            <div class="px-3 py-2 border-b border-slate-300 odd:border-r">
+                                <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-500">{{ $cellLabel }}</p>
+                                <x-citizen.doc-field :bind="$bind" :field="$cellField" fallback=" " tag="p" class="font-medium min-h-[1.4rem]" :editing="$editing" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="text-xs px-1" x-show="String({{ $bind }}.is_delayed || '').includes('delayed') || {{ $editing }}" x-cloak><span class="text-slate-500">Reason for the Delay:</span> <x-citizen.doc-field :bind="$bind" field="reason_for_delay" fallback="—" class="font-medium" :editing="$editing" /></p>
 
                 <!-- Muslim Attachment (Municipal Form No. 102, attachment) — only shown once any of its fields are filled -->
                 <div
@@ -325,6 +402,89 @@
                     <p><span class="text-slate-500">Requester:</span> <x-citizen.doc-field :bind="$bind" field="requester_relationship" fallback="—" class="font-medium" :editing="$editing" /></p>
                     <p><span class="text-slate-500">Status:</span> <x-citizen.doc-field :bind="$bind" field="is_delayed" fallback="—" class="font-medium" :editing="$editing" /></p>
                 </div>
+                <p class="text-xs px-1" x-show="{{ $bind }}.registry_no || {{ $editing }}" x-cloak><span class="text-slate-500">Registry No.:</span> <x-citizen.doc-field :bind="$bind" field="registry_no" fallback="—" class="font-medium" :editing="$editing" /></p>
+                {{-- Form 103's other informant items, asked only for a new or delayed registration (MCRO papers, 2026-11-03). --}}
+                <div class="border border-slate-300 rounded-sm overflow-hidden" x-show="String({{ $bind }}.is_delayed || '').startsWith('Yes') || {{ $editing }}" x-cloak>
+                    <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Registration Details</p>
+                    <div class="grid grid-cols-2">
+                        @foreach ([
+                            'age_at_death' => 'Age at the Time of Death',
+                            'deceased_religion' => 'Religion',
+                            'deceased_occupation' => 'Occupation',
+                            'corpse_disposal' => 'Corpse Disposal',
+                            'cemetery_name_address' => 'Cemetery or Crematory',
+                            'informant_name' => 'Informant',
+                        ] as $cellField => $cellLabel)
+                            <div class="px-3 py-2 border-b border-slate-300 odd:border-r">
+                                <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-500">{{ $cellLabel }}</p>
+                                <x-citizen.doc-field :bind="$bind" :field="$cellField" fallback=" " tag="p" class="font-medium min-h-[1.4rem]" :editing="$editing" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="text-xs px-1" x-show="String({{ $bind }}.is_delayed || '').includes('delayed') || {{ $editing }}" x-cloak><span class="text-slate-500">Reason for the Delay:</span> <x-citizen.doc-field :bind="$bind" field="reason_for_delay" fallback="—" class="font-medium" :editing="$editing" /></p>
+            </div>
+        </template>
+
+        <!-- Certificate of Fetal Death: Fetus / Mother / Father boxed grid, matching Municipal Form No. 103A (MCRO papers, 2026-11-03) -->
+        <template x-if="{{ $docKey }} === 'mcro_fetal_death'">
+            <div class="space-y-3">
+                @foreach ([
+                    'Fetus' => [
+                        'fetus_name' => 'Name',
+                        'fetus_sex' => 'Sex',
+                        'date_of_delivery' => 'Date of Delivery',
+                        'place_of_delivery' => 'Place of Delivery',
+                    ],
+                    'Mother' => [
+                        'mother_maiden_name' => 'Maiden Name',
+                        'mother_citizenship' => 'Citizenship',
+                        'mother_age' => 'Age at This Delivery',
+                        'mother_residence' => 'Residence',
+                    ],
+                    'Father' => [
+                        'father_name' => 'Name',
+                        'father_citizenship' => 'Citizenship',
+                        'father_age' => 'Age at This Delivery',
+                        'parents_marriage_date' => 'Marriage of Parents — Date',
+                    ],
+                ] as $boxLabel => $boxCells)
+                    <div class="border border-slate-300 rounded-sm overflow-hidden">
+                        <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">{{ $boxLabel }}</p>
+                        <div class="grid grid-cols-2">
+                            @foreach ($boxCells as $cellField => $cellLabel)
+                                <div class="px-3 py-2 border-b border-slate-300 odd:border-r">
+                                    <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-500">{{ $cellLabel }}</p>
+                                    <x-citizen.doc-field :bind="$bind" :field="$cellField" fallback=" " tag="p" class="font-medium min-h-[1.4rem]" :editing="$editing" />
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+                <div class="grid grid-cols-2 gap-x-4 text-xs px-1">
+                    <p><span class="text-slate-500">Requester:</span> <x-citizen.doc-field :bind="$bind" field="requester_relationship" fallback="—" class="font-medium" :editing="$editing" /></p>
+                    <p><span class="text-slate-500">Status:</span> <x-citizen.doc-field :bind="$bind" field="is_delayed" fallback="—" class="font-medium" :editing="$editing" /></p>
+                </div>
+                <p class="text-xs px-1" x-show="{{ $bind }}.registry_no || {{ $editing }}" x-cloak><span class="text-slate-500">Registry No.:</span> <x-citizen.doc-field :bind="$bind" field="registry_no" fallback="—" class="font-medium" :editing="$editing" /></p>
+                <div class="border border-slate-300 rounded-sm overflow-hidden" x-show="String({{ $bind }}.is_delayed || '').startsWith('Yes') || {{ $editing }}" x-cloak>
+                    <p class="text-[8px] font-bold uppercase tracking-wider text-white bg-navy-800 px-3 py-1">Registration Details</p>
+                    <div class="grid grid-cols-2">
+                        @foreach ([
+                            'type_of_delivery' => 'Type of Delivery',
+                            'birth_order' => 'Birth Order',
+                            'weight_of_fetus' => 'Weight of Fetus (grams)',
+                            'corpse_disposal' => 'Corpse Disposal',
+                            'cemetery_name_address' => 'Cemetery or Crematory',
+                            'informant_name' => 'Informant',
+                        ] as $cellField => $cellLabel)
+                            <div class="px-3 py-2 border-b border-slate-300 odd:border-r">
+                                <p class="text-[8px] font-semibold uppercase tracking-wider text-slate-500">{{ $cellLabel }}</p>
+                                <x-citizen.doc-field :bind="$bind" :field="$cellField" fallback=" " tag="p" class="font-medium min-h-[1.4rem]" :editing="$editing" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="text-xs px-1" x-show="String({{ $bind }}.is_delayed || '').includes('delayed') || {{ $editing }}" x-cloak><span class="text-slate-500">Reason for the Delay:</span> <x-citizen.doc-field :bind="$bind" field="reason_for_delay" fallback="—" class="font-medium" :editing="$editing" /></p>
             </div>
         </template>
 
@@ -342,6 +502,23 @@
                     <x-citizen.doc-field :bind="$bind" field="reason_for_delay" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />.
                 </p>
                 <p class="leading-relaxed">That I am executing this affidavit to attest to the truthfulness of the foregoing statements for all legal intents and purposes.</p>
+                {{-- The MCRO's Affidavit of Two Disinterested Persons, worded for a delayed
+                     registration of birth only (MCRO papers, 2026-11-03). --}}
+                <div class="space-y-2 pt-3 border-t border-dashed border-slate-200" x-show="String({{ $bind }}.registration_type || '').includes('Birth') || {{ $editing }}" x-cloak>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Affidavit of Two Disinterested Persons (Delayed Registration of Birth)</p>
+                    <p class="leading-relaxed">
+                        We, <x-citizen.doc-field :bind="$bind" field="disinterested_person_1" fallback="_______________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />
+                        and <x-citizen.doc-field :bind="$bind" field="disinterested_person_2" fallback="_______________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
+                        residents of <x-citizen.doc-field :bind="$bind" field="disinterested_persons_residence" fallback="_______" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, Esperanza, Masbate,
+                        personally know <x-citizen.doc-field :bind="$bind" field="subject_name" fallback="_______________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
+                        who was born on <x-citizen.doc-field :bind="$bind" field="subject_date_of_birth" fallback="_______" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />
+                        at <x-citizen.doc-field :bind="$bind" field="subject_place_of_birth" fallback="_______" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, Esperanza, Masbate,
+                        to parents <x-citizen.doc-field :bind="$bind" field="subject_father_name" fallback="_______________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />
+                        and <x-citizen.doc-field :bind="$bind" field="subject_mother_name" fallback="_______________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
+                        who were <x-citizen.doc-field :bind="$bind" field="parents_marital_status" fallback="_______" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />.
+                    </p>
+                    <p class="text-xs text-slate-500">Supporting documents: <x-citizen.doc-field :bind="$bind" field="supporting_documents" fallback="—" class="font-medium text-slate-700" :editing="$editing" /></p>
+                </div>
             </div>
         </template>
 

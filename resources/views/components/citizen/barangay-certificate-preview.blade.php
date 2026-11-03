@@ -114,7 +114,43 @@
         <p class="text-xs font-medium text-slate-500 mt-1" x-show="$store.docTemplates.subtitle({{ $docKey }}, {{ $subtitle }})" x-text="$store.docTemplates.subtitle({{ $docKey }}, {{ $subtitle }})"></p>
     </div>
 
-    <div class="relative text-[13px] leading-relaxed text-slate-800 space-y-3">
+    {{-- The paper's ways (Barangay Labangtaytay's seven templates, LABANGTATAY
+         BRGY TEMPLATES, 2026-11-03): the date it was issued (the issued copy's
+         own date, else today) written "3rd day of November, 2026"; the
+         residency and purposes printed as the paper's tick list, "( / )" on
+         the resident's choices; and each document's own signature block. --}}
+    <div class="relative text-[13px] leading-relaxed text-slate-800 space-y-3 flex flex-col flex-1" x-data="{
+        get issuedOn() {
+            const v = {{ $verify }};
+            const list = Array.isArray(v) ? v : (v ? [v] : []);
+            const doc = [...list].reverse().find((d) => d && !d.revoked && d.issued_on);
+            return doc ? new Date(doc.issued_on + 'T00:00:00') : new Date();
+        },
+        get issuanceDate() {
+            const d = this.issuedOn;
+            const day = d.getDate();
+            const suffix = (day >= 11 && day <= 13) ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] || 'th');
+            return day + suffix + ' day of ' + d.toLocaleDateString('en-US', { month: 'long' }) + ', ' + d.getFullYear();
+        },
+        norm(v) { return String(v || '').toLowerCase().replace(/^others:\s*/, '').replace(/[^a-z0-9]/g, ''); },
+        same(a, b) { const x = this.norm(a), y = this.norm(b); return x !== '' && (x === y || x + 's' === y || x === y + 's' || (x.length > 7 && y.includes(x))); },
+        chosen(field) { const v = ({{ $bind }} || {})[field]; return Array.isArray(v) ? v : (v ? String(v).split(/,\s*/) : []); },
+        tick(field, opt) { return this.chosen(field).some((c) => this.same(c, opt)) ? '( / )' : '(\u00a0\u00a0)'; },
+        others(field, options) {
+            return this.chosen(field).filter((c) => !options.some((o) => this.same(c, o))).map((c) => String(c).replace(/^others:\s*/i, '')).filter((c) => !/^others$/i.test(c)).join(', ');
+        },
+        pb(withHon) {
+            const n = String(({{ $punongBarangay }}) || '').trim();
+            if (!n) return 'Hon. Punong Barangay';
+            return withHon ? (/^hon\.?\s/i.test(n) ? n : 'Hon. ' + n) : n.replace(/^hon\.?\s+/i, '');
+        },
+        residencyTypes: ['permanent', 'temporary', 'renter'],
+        purposes: {
+            brgy_residency: ['Proof of Residency', 'Local Employment', 'Travel Abroad', 'Postal I.D', 'Bank Requirement', 'NBI Clearance', 'Loan Purpose', 'Medical/Financial Assistance'],
+            brgy_clearance: ['Proof of Residency', 'Local Employment', 'Travel Abroad', 'Postal I.D.', 'Bank Requirement', 'NBI Clearance', 'Loan Purposes', 'Medical/Financial Assistance'],
+            brgy_indigency: ['Medical Assistance/Financial Assistance', 'Burial Assistance', 'Educational Assistance'],
+        },
+    }">
         <p class="font-semibold">TO WHOM IT MAY CONCERN:</p>
 
         <!-- Registration of Death -->
@@ -124,7 +160,7 @@
                 <p>This further certifies for the other information of this person to wit:</p>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Father:</span><x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
-                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden Name):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Date of Death:</span><x-citizen.doc-field :bind="$bind" field="date_of_death" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Place of Death:</span><x-citizen.doc-field :bind="$bind" field="place_of_death" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Civil Status:</span><x-citizen.doc-field :bind="$bind" field="civil_status" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
@@ -132,7 +168,7 @@
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Citizenship:</span><x-citizen.doc-field :bind="$bind" field="citizenship" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Sex:</span><x-citizen.doc-field :bind="$bind" field="sex" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                 </div>
-                <p>Issued upon request of the interested party for the <span class="font-semibold">REGISTRATION of Death</span> and for whatever legal purposes this will serve him/her best.</p>
+                <p>Issued this <span x-text="issuanceDate"></span>, upon request of the interested party for the <span class="font-semibold">REGISTRATION of Death</span> and for whatever legal purposes this will serve him/her best.</p>
             </div>
         </template>
 
@@ -143,7 +179,7 @@
                 <p>This further certifies for the other information of this person to wit:</p>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Father:</span><x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
-                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden Name):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Date of Birth:</span><x-citizen.doc-field :bind="$bind" field="date_of_birth" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Place of Birth:</span><x-citizen.doc-field :bind="$bind" field="place_of_birth" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Sex:</span><x-citizen.doc-field :bind="$bind" field="sex" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
@@ -152,12 +188,7 @@
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Occupation:</span><x-citizen.doc-field :bind="$bind" field="occupation" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="col-span-2 flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Husband/Wife (if married):</span><x-citizen.doc-field :bind="$bind" field="spouse_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                 </div>
-                <p>Issued upon request of the herein interested party for the <span class="font-semibold">LATE REGISTRATION of Birth</span> at the Municipal Registry Office of Esperanza, Masbate.</p>
-                <div class="flex items-center gap-6 pt-2 text-[10px] text-slate-500">
-                    <span class="border border-slate-300 rounded px-4 py-3">Right Thumbmark</span>
-                    <span class="border border-slate-300 rounded px-4 py-3">Left Thumbmark</span>
-                    <span class="border border-slate-300 rounded px-6 py-3">Picture</span>
-                </div>
+                <p>Issued this <span x-text="issuanceDate"></span> upon request of the herein interested party for the <span class="font-semibold">LATE REGISTRATION of his/her birth</span> at the Municipal Registry Office of Esperanza, Masbate.</p>
             </div>
         </template>
 
@@ -173,7 +204,7 @@
                     with the capital of ( <x-citizen.doc-field :bind="$bind" field="capital_figures" fallback="_______" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> )
                     ( <x-citizen.doc-field :bind="$bind" field="capital_words" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> ).
                 </p>
-                <p>This is Non-Transferrable, and shall be null and void, upon failure of the aforementioned applicant to strictly comply with the conditions of this clearance.</p>
+                <p>This is non-transferable and shall be null and void upon failure of the aforementioned applicant to strictly comply with the conditions of this clearance.</p>
                 <p>This clearance is being issued upon request of the interested party for identification and whatever legal purposes it may serve.</p>
             </div>
         </template>
@@ -183,13 +214,20 @@
             <div class="space-y-2.5">
                 <p>
                     This is to certify that <x-citizen.doc-field :bind="$bind" field="requester_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
-                    <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> of legal age, is a
-                    <x-citizen.doc-field :bind="$bind" field="residency_type" fallback="permanent" transform="lowercase" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> bonafide resident of Purok
+                    <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years of age, is a
+                    <template x-if="!{{ $editing }}"><span><template x-for="t in residencyTypes" :key="t"><span><span x-text="tick('residency_type', t)"></span> <span x-text="t"></span><span x-text="t === residencyTypes.at(-1) ? '' : ', '"></span></span></template></span></template>
+                    <template x-if="{{ $editing }}"><x-citizen.doc-field :bind="$bind" field="residency_type" fallback="permanent" transform="lowercase" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /></template> a bonafide resident of Purok
                     <x-citizen.doc-field :bind="$bind" field="purok" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate.
                 </p>
-                <p>He/She has no pending case/complaint against him/her as per record of this office. He/She has no derogatory record file in this office.</p>
-                <p>This certification is being issued by this office upon the request of aforementioned name for:</p>
-                <x-citizen.doc-field :bind="$bind" field="purpose" transform="array" fallback="_______________________" tag="p" class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" :editing="$editing" />
+                <p>He/She has no pending case/complaint against him/her as per record of this office. He/She has no derogatory record on file in this office.</p>
+                <p>This certification is being issued by this office upon the request of the aforementioned name for:</p>
+                <template x-if="!{{ $editing }}">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-0.5 pl-2 text-xs">
+                        <template x-for="o in purposes[{{ $docKey }}]" :key="o"><p><span x-text="tick('purpose', o)"></span> <span x-text="o"></span></p></template>
+                        <p class="sm:col-span-3"><span x-text="others('purpose', purposes[{{ $docKey }}]) ? '( / )' : '(\u00a0\u00a0)'"></span> Others: <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="others('purpose', purposes[{{ $docKey }}]) || '_______________________'"></span></p>
+                    </div>
+                </template>
+                <template x-if="{{ $editing }}"><x-citizen.doc-field :bind="$bind" field="purpose" transform="array" fallback="_______________________" tag="p" class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" :editing="$editing" /></template>
             </div>
         </template>
 
@@ -202,7 +240,9 @@
                     <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years of age, is a qualified availee of
                     <span class="font-semibold">RA 11261</span> or the First Time Jobseekers Assistance Act of 2019.
                 </p>
-                <p>This certifies that the holder/bearer was informed of their rights, including the duties and responsibilities accorded by RA 11261, through the Oath of Understanding signed and executed in the presence of Barangay Officials.</p>
+                <p>I further certify that the holder/bearer was informed of his/her rights, including the duties and responsibilities accorded by RA 11261, through the Oath of Undertaking he/she has signed and executed in the presence of Barangay Officials.</p>
+                <p>Signed this <span x-text="issuanceDate"></span> at Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, Philippines.</p>
+                <p>This certification is valid for one (1) year from the date of issuance.</p>
             </div>
         </template>
 
@@ -212,11 +252,18 @@
                 <p>
                     This is to certify that <x-citizen.doc-field :bind="$bind" field="requester_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
                     <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years of age, is a
-                    <x-citizen.doc-field :bind="$bind" field="residency_type" fallback="permanent" transform="lowercase" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> resident of Purok
+                    <template x-if="!{{ $editing }}"><span><template x-for="t in residencyTypes" :key="t"><span><span x-text="tick('residency_type', t)"></span> <span x-text="t"></span><span x-text="t === residencyTypes.at(-1) ? '' : ', '"></span></span></template></span></template>
+                    <template x-if="{{ $editing }}"><x-citizen.doc-field :bind="$bind" field="residency_type" fallback="permanent" transform="lowercase" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /></template> a resident of Purok
                     <x-citizen.doc-field :bind="$bind" field="purok" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, for:
                 </p>
-                <x-citizen.doc-field :bind="$bind" field="purpose" transform="array" fallback="_______________________" tag="p" class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" :editing="$editing" />
-                <p>The way of life of the family is a hand-to-mouth existence, meaning they belong to below poverty line. Further certified that he/she has no pending case/complaint, no derogatory record on file against him/her as per record of this office.</p>
+                <template x-if="!{{ $editing }}">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-0.5 pl-2 text-xs">
+                        <template x-for="o in purposes[{{ $docKey }}]" :key="o"><p><span x-text="tick('purpose', o)"></span> <span x-text="o"></span></p></template>
+                        <p class="sm:col-span-3"><span x-text="others('purpose', purposes[{{ $docKey }}]) ? '( / )' : '(\u00a0\u00a0)'"></span> Others: <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="others('purpose', purposes[{{ $docKey }}]) || '_______________________'"></span></p>
+                    </div>
+                </template>
+                <template x-if="{{ $editing }}"><x-citizen.doc-field :bind="$bind" field="purpose" transform="array" fallback="_______________________" tag="p" class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" :editing="$editing" /></template>
+                <p>The way of life of his/her family is a hand-to-mouth existence, meaning they belong below the poverty line. Further certified that he/she has no pending case/complaint, no derogatory record on file against him/her as per record of this office.</p>
             </div>
         </template>
 
@@ -232,12 +279,19 @@
                     This is to certify that
                     <x-citizen.doc-field :bind="$bind" field="requester_name" fallback="_______________________" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />,
                     <x-citizen.doc-field :bind="$bind" field="age" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> years of age, is a
-                    <x-citizen.doc-field :bind="$bind" field="residency_type" fallback="permanent" transform="lowercase" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /> resident of Purok
+                    <template x-if="!{{ $editing }}"><span><template x-for="t in residencyTypes" :key="t"><span><span x-text="tick('residency_type', t)"></span> <span x-text="t"></span><span x-text="t === residencyTypes.at(-1) ? '' : ', '"></span></span></template></span></template>
+                    <template x-if="{{ $editing }}"><x-citizen.doc-field :bind="$bind" field="residency_type" fallback="permanent" transform="lowercase" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" /></template> resident of Purok
                     <x-citizen.doc-field :bind="$bind" field="purok" fallback="___" class="font-semibold underline decoration-dotted underline-offset-2" :editing="$editing" />, Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate.
                 </p>
-                <p>He/She has no pending case/complaint against his/her as per record of this office. He/She has no derogatory record file in this office.</p>
+                <p>He/She has no pending case/complaint against him/her as per record of this office. He/She has no derogatory record on file in this office.</p>
                 <p>This certification is being issued by this office upon the request of the aforementioned name for:</p>
-                <x-citizen.doc-field :bind="$bind" field="purpose" transform="array" fallback="_______________________" tag="p" class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" :editing="$editing" />
+                <template x-if="!{{ $editing }}">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-0.5 pl-2 text-xs">
+                        <template x-for="o in purposes[{{ $docKey }}]" :key="o"><p><span x-text="tick('purpose', o)"></span> <span x-text="o"></span></p></template>
+                        <p class="sm:col-span-3"><span x-text="others('purpose', purposes[{{ $docKey }}]) ? '( / )' : '(\u00a0\u00a0)'"></span> Others: <span class="font-semibold underline decoration-dotted underline-offset-2" x-text="others('purpose', purposes[{{ $docKey }}]) || '_______________________'"></span></p>
+                    </div>
+                </template>
+                <template x-if="{{ $editing }}"><x-citizen.doc-field :bind="$bind" field="purpose" transform="array" fallback="_______________________" tag="p" class="pl-2 text-xs font-semibold underline decoration-dotted underline-offset-2 inline-block" :editing="$editing" /></template>
             </div>
         </template>
 
@@ -248,7 +302,7 @@
                 <p>This further certifies for the other information of the above-named person, to wit:</p>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pl-2">
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Father:</span><x-citizen.doc-field :bind="$bind" field="father_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
-                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
+                    <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Name of Mother (Maiden Name):</span><x-citizen.doc-field :bind="$bind" field="mother_name" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Date of Birth:</span><x-citizen.doc-field :bind="$bind" field="date_of_birth" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Place of Birth:</span><x-citizen.doc-field :bind="$bind" field="place_of_birth" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
                     <p class="flex items-baseline gap-1.5"><span class="text-slate-500 shrink-0">Sex:</span><x-citizen.doc-field :bind="$bind" field="sex" fallback=" " class="flex-1 font-medium border-b border-dotted border-slate-400" :editing="$editing" /></p>
@@ -319,50 +373,61 @@
             </div>
         </template>
 
-        <p class="text-[11px] text-slate-500 pt-1" x-show="{{ $bind }}.__validity" x-text="{{ $bind }}.__validity"></p>
+        {{-- Issuance-date sentence: Clearance and Residency say "Given today",
+             Business Clearance and Indigency "Issued this", each verbatim from
+             its paper (Death, Late Registration and the Jobseeker certificate
+             carry theirs in the body above). The date is the issued copy's own,
+             so a copy reopened later keeps it; before issue, today. --}}
+        <p class="pt-1" x-show="['brgy_clearance', 'brgy_residency'].includes({{ $docKey }})">
+            Given today <span x-text="issuanceDate"></span> at Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, Philippines.
+        </p>
+        <p class="pt-1" x-show="['brgy_business_clearance', 'brgy_indigency'].includes({{ $docKey }})">
+            Issued this <span x-text="issuanceDate"></span> at Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, Philippines.
+        </p>
 
-        {{-- Issuance-date sentence — every one of the "TO WHOM IT MAY
-             CONCERN" reference forms (Clearance, Residency, Indigency,
-             Business Clearance, First Time Jobseeker) closes the
-             certification paragraph with this line immediately before the
-             signature block; it was missing from this component entirely.
-             Wording differs per doc: Clearance/Residency say "Given today",
-             Business Clearance/Indigency/Jobseeker say "Issued this" — both
-             verbatim from their own reference docx. Dated to today, since
-             this is the moment the document is actually being generated. --}}
-        <div x-data="{
-            get issuanceDate() {
-                const d = new Date();
-                const day = d.getDate();
-                const suffix = (day >= 11 && day <= 13) ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] || 'th');
-                return day + suffix + ' day of ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            },
-        }">
-            <p class="pt-1" x-show="['brgy_clearance', 'brgy_residency'].includes({{ $docKey }})">
-                Given today <span x-text="issuanceDate"></span> at Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, Philippines.
-            </p>
-            <p class="pt-1" x-show="['brgy_business_clearance', 'brgy_indigency', 'brgy_first_time_jobseeker'].includes({{ $docKey }})">
-                Issued this <span x-text="issuanceDate"></span> at Barangay <span x-text="{{ $barangay }}"></span>, Esperanza, Masbate, Philippines.
-            </p>
+    <!-- Signatures — mt-auto pushes this block, and the "Not Valid without
+         Barangay Seal" footer below it, down to the bottom of the A4 page
+         however short the text above is. Each of Labangtaytay's papers signs
+         its own way (2026-11-03): who signs, the resident's line and boxes,
+         "Certified by:", "Released by" and the validity line. -->
+    <div class="relative mt-auto pt-6 text-[12px] text-slate-800">
+        {{-- Late Registration: thumbmarks and picture, taken at the barangay hall --}}
+        <div x-show="{{ $docKey }} === 'brgy_cert_late_registration'" class="flex items-end gap-4 mb-4 text-[10px] text-slate-500">
+            <div class="border border-slate-500 w-[37mm] h-[26mm] flex items-end justify-center pb-1">Right Thumbmark</div>
+            <div class="border border-slate-500 w-[39mm] h-[26mm] flex items-end justify-center pb-1">Left Thumbmark</div>
+            <div class="border border-slate-500 w-[30mm] h-[26mm] flex items-end justify-center pb-1">Picture</div>
         </div>
-    </div>
 
-    <!-- Signatures — mt-auto (the outer container is now flex flex-col)
-         pushes this whole block, and the "Not Valid without Barangay Seal"
-         footer below it, down to the bottom of the A4-proportioned page
-         regardless of how short the certification text above it is. -->
-    <div class="relative flex items-end justify-between mt-auto pt-4">
-        <div class="text-center">
-            <div class="w-40 border-b border-slate-400 mb-1"></div>
-            <p class="text-[10px] text-slate-500">Signature over Printed Name of the Requester</p>
+        <div class="flex items-end justify-between gap-6">
+            {{-- The requester's line, as each paper words it --}}
+            <div class="text-center" x-show="!['brgy_residency', 'brgy_indigency', 'brgy_first_time_jobseeker'].includes({{ $docKey }})">
+                <div class="flex items-end gap-3">
+                    <div>
+                        <div class="w-44 border-b border-slate-500 mb-1"></div>
+                        <p class="text-[10px] text-slate-500" x-text="['brgy_clearance', 'brgy_business_clearance'].includes({{ $docKey }}) ? 'Resident Signature' : 'Signature over Printed Name of the requester'"></p>
+                    </div>
+                    <div x-show="['brgy_clearance', 'brgy_business_clearance'].includes({{ $docKey }})" class="border border-slate-500 w-[40mm] h-[22mm] flex items-end justify-center pb-1 text-[10px] text-slate-500">Right Thumbmark</div>
+                </div>
+            </div>
+            <div class="ml-auto text-center">
+                <p class="text-[11px] text-left mb-3" x-show="['brgy_cert_late_registration', 'brgy_cert_death_registration'].includes({{ $docKey }})">Certified by:</p>
+                <p class="text-sm font-bold text-navy-900 uppercase underline underline-offset-2" x-text="pb({{ $docKey }} === 'brgy_cert_late_registration')"></p>
+                <p class="text-[10px] text-slate-500">Punong Barangay</p>
+                <template x-if="{{ $docKey }} === 'brgy_first_time_jobseeker'">
+                    <div class="mt-6"><div class="w-36 mx-auto border-b border-slate-500 mb-1"></div><p class="text-[10px] text-slate-500">Date</p></div>
+                </template>
+            </div>
         </div>
-        <div class="text-center">
-            <p class="text-sm font-bold text-navy-900 uppercase" x-text="({{ $punongBarangay }}) || 'Hon. Punong Barangay'"></p>
-            <p class="text-[10px] text-slate-500">Punong Barangay</p>
+
+        {{-- "Released by" the Barangay Secretary: not on Death, Late Registration or the Jobseeker certificate --}}
+        <div class="mt-5" x-show="({{ $barangaySecretary }}) && !['brgy_cert_late_registration', 'brgy_cert_death_registration', 'brgy_first_time_jobseeker'].includes({{ $docKey }})">
+            <p class="text-[11px]">Released by: <span class="font-bold uppercase underline underline-offset-2" x-text="{{ $barangaySecretary }}"></span></p>
+            <p class="text-[10px] text-slate-500 pl-[4.6rem]">Barangay Secretary</p>
         </div>
+
+        <p class="mt-3 text-[11px] text-slate-600" x-show="{{ $docKey }} === 'brgy_residency'">(Residency certificate valid three (3) months from the date of issuance)</p>
+        <p class="mt-3 text-[11px] text-slate-600" x-show="{{ $docKey }} === 'brgy_indigency'">(Indigency certificate valid three (3) months from the date of issuance)</p>
     </div>
-    <div class="relative mt-4 text-[11px] text-slate-500" x-show="{{ $barangaySecretary }}">
-        Released by: <span class="font-semibold text-slate-700" x-text="{{ $barangaySecretary }}"></span> — Barangay Secretary
     </div>
 
     <x-documents.verify-strip :doc="$verify" :doc-key="$docKey" />

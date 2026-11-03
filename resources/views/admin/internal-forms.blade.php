@@ -53,28 +53,33 @@
                     this.submissions = subsRes.data || [];
                 } catch { this.failed = true; } finally { this.loading = false; }
             },
-            // Auto-splits a form's fields into logical steps: each repeatable
-            // table gets its own step, plain fields are chunked in groups of
-            // 6. A short form (few fields) naturally resolves to a single
-            // step, so it renders exactly like a flat form.
+            // Splits a form's fields into steps: a form that follows its paper's
+            // sections (2026-11-03) takes one step per section, as the paper
+            // reads; otherwise plain fields are chunked in groups of 6. Each
+            // repeatable table gets its own step. A short form resolves to a
+            // single step, so it renders exactly like a flat form.
             get formSteps() {
                 if (!this.selectedForm) return [];
                 const steps = [];
                 let bucket = [];
-                const flush = () => { if (bucket.length) { steps.push({ type: 'fields', fields: bucket }); bucket = []; } };
+                let section = null;
+                const flush = () => { if (bucket.length) { steps.push({ type: 'fields', fields: bucket, section }); bucket = []; } };
                 (this.selectedForm.fields || []).forEach(f => {
+                    if ((f.section || null) !== section) { flush(); section = f.section || null; }
                     if (f.type === 'table') {
                         flush();
                         steps.push({ type: 'table', field: f, label: f.label });
                     } else {
                         bucket.push(f);
-                        if (bucket.length >= 6) flush();
+                        if (!section && bucket.length >= 6) flush();
                     }
                 });
                 flush();
                 if (!steps.length) steps.push({ type: 'fields', fields: [] });
-                const fieldSteps = steps.filter(s => s.type === 'fields');
-                fieldSteps.forEach((s, i) => { s.label = fieldSteps.length > 1 ? `Form Details — Part ${i + 1}` : 'Form Details'; });
+                const fieldSteps = steps.filter(s => s.type === 'fields' && !s.section);
+                steps.filter(s => s.type === 'fields').forEach(s => {
+                    s.label = s.section || (fieldSteps.length > 1 ? `Form Details — Part ${fieldSteps.indexOf(s) + 1}` : 'Form Details');
+                });
                 return steps;
             },
             get totalFormSteps() { return this.formSteps.length; },
@@ -108,6 +113,7 @@
                 (f.fields || []).forEach(fld => {
                     if (fld.type === 'checkbox-group') { this.formData[fld.key] = []; }
                     else if (fld.type === 'table') { this.formData[fld.key] = []; }
+                    else if (fld.type === 'checkbox') { this.formData[fld.key] = false; }
                     else { this.formData[fld.key] = fld.default || ''; }
                 });
                 this.open = true;
@@ -130,24 +136,46 @@
             // it is this officer's turn (can_decide) and which step it is on.
             decision: null,
             decisionRemarks: '',
+            decisionData: {},
+            decisionFields: [],
+            decisionLoading: false,
             deciding: false,
-            startDecision(s, kind) {
+            // The step's own part of the paper (CS Form 6's 7.A, the trip
+            // ticket's fuel after the trip), filled by whoever decides it.
+            async startDecision(s, kind) {
                 this.decision = { s, kind };
                 this.decisionRemarks = '';
+                this.decisionData = {};
+                this.decisionFields = [];
+                this.decisionLoading = true;
+                try {
+                    const detail = this.viewing?.ref === s.ref ? this.viewing : (await $api.get('/admin/internal-forms/submissions/' + encodeURIComponent(s.ref))).data;
+                    const step = (detail.chain || []).find(c => c.step === s.step?.number);
+                    this.decisionFields = (step?.fields || []).filter(f => f.type !== 'table');
+                    this.decisionFields.forEach(f => { this.decisionData[f.key] = f.type === 'checkbox-group' ? [] : (f.type === 'checkbox' ? false : (f.default || '')); });
+                } catch { this.decisionFields = []; } finally { this.decisionLoading = false; }
+            },
+            get decisionMissing() {
+                if (this.decision?.kind !== 'approve') return false;
+                return this.decisionFields.some(f => f.required && (Array.isArray(this.decisionData[f.key]) ? !this.decisionData[f.key].length : !String(this.decisionData[f.key] ?? '').trim()));
             },
             async confirmDecision() {
                 const d = this.decision;
                 if (!d || this.deciding) return;
                 if (d.kind === 'reject' && !this.decisionRemarks.trim()) return;
+                if (this.decisionMissing) return;
                 this.deciding = true;
                 try {
+                    const filled = Object.fromEntries(Object.entries(this.decisionData).filter(([, v]) => v !== '' && v !== false && !(Array.isArray(v) && !v.length)));
                     const res = await $api.post('/admin/internal-forms/submissions/' + encodeURIComponent(d.s.ref) + '/decide', {
                         decision: d.kind,
                         remarks: this.decisionRemarks.trim() || undefined,
+                        data: Object.keys(filled).length ? filled : undefined,
                     });
                     const i = this.submissions.findIndex((x) => x.ref === d.s.ref);
                     if (i !== -1) this.submissions.splice(i, 1, { ...this.submissions[i], ...res.data });
                     this.decision = null;
+                    if (this.viewing?.ref === d.s.ref) this.openView(this.submissions[i] || d.s);
                     this.$dispatch('toast', {
                         message: d.s.ref + (d.kind === 'approve' ? ' approved' : ' rejected') + ' — now ' + res.data.status + '.',
                         variant: d.kind === 'approve' ? 'success' : 'error',
@@ -155,6 +183,125 @@
                 } catch (err) {
                     this.$dispatch('toast', { message: err.localised ? err.localised('en') : 'Could not record the decision.', variant: 'error' });
                 } finally { this.deciding = false; }
+            },
+            // A filed form, read and printed as its office's paper (2026-11-03).
+            viewing: null,
+            viewLoading: false,
+            viewFailed: false,
+            async openView(s) {
+                this.viewLoading = true;
+                this.viewFailed = false;
+                if (this.viewing?.ref !== s.ref) this.viewing = { ...s, fields: [], chain: [], approvals: [], loading: true };
+                try {
+                    const res = await $api.get('/admin/internal-forms/submissions/' + encodeURIComponent(s.ref));
+                    this.viewing = { ...s, ...res.data };
+                } catch { this.viewFailed = true; } finally {
+                    this.viewLoading = false;
+                    this.$nextTick(() => window.renderIcons?.());
+                }
+            },
+            approvalOf(step) { return (this.viewing?.approvals || []).find(a => a.step === step) || null; },
+            officeLongName(key, fallback) {
+                return ({ hr: 'Municipal Human Resource Management Office', gso: 'Municipal General Services Office', mswd: 'Municipal Social Welfare and Development Office', agriculture: 'Municipal Agriculture Office' })[key] || fallback || '';
+            },
+            longDate(v) {
+                if (!v) return '';
+                const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(v) ? v + 'T00:00:00' : v);
+                return isNaN(d) ? String(v) : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            },
+            fieldText(f, v) {
+                if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) return '—';
+                if (f.type === 'checkbox') return v ? 'Yes' : 'No';
+                if (Array.isArray(v)) return v.join(', ');
+                if (f.type === 'date') return this.longDate(v);
+                if (f.type === 'time' && /^\d{2}:\d{2}/.test(v)) {
+                    const [h, m] = v.split(':').map(Number);
+                    return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' AM' : ' PM');
+                }
+                return String(v);
+            },
+            // The answers under the paper's own section headings, in order.
+            paperSections(fields, data) {
+                const out = [];
+                (fields || []).forEach(f => {
+                    const heading = f.section || null;
+                    let sec = out[out.length - 1];
+                    if (!sec || sec.heading !== heading) { sec = { heading, items: [] }; out.push(sec); }
+                    const value = (data || {})[f.key];
+                    sec.items.push({ f, value, text: this.fieldText(f, value) });
+                });
+                // Answers to questions an earlier version of the form asked:
+                // a form filed before 2026-11-03 still prints whole.
+                const known = new Set((fields || []).map((f) => f.key));
+                const left = Object.entries(data || {}).filter(([k, v]) => !known.has(k) && v !== '' && v !== null && !(Array.isArray(v) && !v.length));
+                if (left.length) {
+                    out.push({ heading: 'Other entries (earlier version of this form)', items: left.map(([k, v]) => {
+                        const f = { key: k, label: k.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()), type: 'text' };
+                        const text = Array.isArray(v) ? v.map((r) => (r && typeof r === 'object') ? Object.values(r).filter(Boolean).join(' / ') : String(r)).join('; ') : this.fieldText(f, v);
+                        return { f, value: v, text };
+                    }) });
+                }
+                return out;
+            },
+            // The letterhead lines: the paper's own, none for the CSC forms
+            // that print none, else the LGU's with the office's long name.
+            paperLetterhead(v) {
+                if (Array.isArray(v?.paper?.letterhead)) return v.paper.letterhead;
+                return ['Republic of the Philippines', 'Province of Masbate', 'Municipality of Esperanza', v?.paper?.office || this.officeLongName(v?.office_key, v?.office)];
+            },
+            optionTick(value, o) {
+                const chosen = Array.isArray(value) ? value : (value === undefined || value === null || value === '' ? [] : [value]);
+                return chosen.some((c) => String(c) === String(o)) ? '( / )' : '(\u00a0\u00a0\u00a0)';
+            },
+            // The signature lines: as the paper lists them ('submitter', a
+            // step's approver, or a blank line signed by hand), else the
+            // filer's line and one for each step that names a signatory.
+            paperSignatures(v) {
+                const chain = v?.chain || [];
+                const approver = (label) => {
+                    const step = chain.find((c) => c.label === label);
+                    const a = step ? this.approvalOf(step.step) : null;
+                    return a && a.decision === 'approve' ? (a.by || '') : '';
+                };
+                const listed = v?.paper?.signatures;
+                if (Array.isArray(listed) && listed.length) {
+                    return listed.map((sg) => ({
+                        role: sg.role || '',
+                        name: sg.name === 'submitter' ? (v.submitted_by || '') : (String(sg.name || '').startsWith('step:') ? approver(sg.name.slice(5)) : ''),
+                    }));
+                }
+                return [
+                    { role: v?.paper?.applicantSigns || 'Signature over Printed Name', name: v?.submitted_by || '' },
+                    ...chain.filter((c) => c.signatory).map((c) => ({ role: c.signatory, name: approver(c.label) })),
+                ];
+            },
+            // Prints the paper alone: a copy goes to a plain section at the top
+            // of the page and only that prints (the modal would clip it). A
+            // paper kept in copies (the MGSO's and the borrower's) prints once
+            // per copy, each with its label.
+            printPaper() {
+                const el = this.$refs.ifPaper;
+                if (!el) return;
+                document.getElementById('if-print-root')?.remove();
+                const root = document.createElement('div');
+                root.id = 'if-print-root';
+                root.setAttribute('x-ignore', '');
+                const copies = (this.viewing?.paper?.copies || []).length ? this.viewing.paper.copies : [null];
+                copies.forEach((label) => {
+                    const copy = el.cloneNode(true);
+                    if (label) {
+                        const tag = document.createElement('p');
+                        tag.className = 'if-copy-label';
+                        tag.textContent = label;
+                        copy.prepend(tag);
+                    }
+                    root.appendChild(copy);
+                });
+                document.body.appendChild(root);
+                document.documentElement.classList.add('if-printing');
+                const done = () => { root.remove(); document.documentElement.classList.remove('if-printing'); window.removeEventListener('afterprint', done); };
+                window.addEventListener('afterprint', done);
+                window.print();
             },
             // ERPAT & KALIPI: the officers, members and activities of each
             // barangay's fathers' association, and the federation's meetings,
@@ -392,6 +539,8 @@
                             <x-ui.badge statusBind="s.status" />
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <button type="button" @click="openView(s)" class="text-xs font-semibold text-brand-600 hover:underline mr-1.5" :aria-label="'View ' + s.ref">View</button>
+                            <span x-show="s.can_decide" class="text-slate-200" aria-hidden="true">·</span>
                             <div x-show="s.can_decide" class="inline-flex items-center gap-1.5">
                                 <button type="button" @click="startDecision(s, 'approve')" class="text-xs font-semibold text-emerald-700 hover:underline">Approve</button>
                                 <span class="text-slate-200" aria-hidden="true">·</span>
@@ -411,13 +560,22 @@
         </div>
 
         <!-- Decide on the waiting step -->
-        <div x-show="decision" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
+        <div x-show="decision" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm"
              @click.self="decision = null" @keydown.escape.window="decision = null"
              role="dialog" aria-modal="true" aria-labelledby="if-decide-title">
-            <div class="bg-white rounded-2xl shadow-float w-full max-w-md p-6 space-y-4">
+            <div class="bg-white rounded-2xl shadow-float w-full p-6 space-y-4" :class="decisionFields.length ? 'max-w-lg' : 'max-w-md'">
                 <div>
                     <h3 id="if-decide-title" class="text-base font-semibold text-ink" x-text="(decision?.kind === 'approve' ? 'Approve ' : 'Reject ') + (decision?.s.ref || '')"></h3>
                     <p class="text-xs text-ink-muted mt-1" x-text="(decision?.s.form || '') + (decision?.s.step ? ' · Step ' + decision.s.step.number + (decision.s.step.label ? ': ' + decision.s.step.label : '') : '')"></p>
+                </div>
+                <div x-show="decisionLoading" class="space-y-2"><x-ui.skeleton class="h-10" /></div>
+                <div x-show="!decisionLoading && decisionFields.length" x-cloak class="space-y-3 max-h-[46vh] overflow-y-auto scrollbar-thin pr-1" data-step-part>
+                    <p class="text-[11px] font-bold uppercase tracking-[.07em] text-ink-muted">This step’s part of the form</p>
+                    <div class="grid grid-cols-1 gap-3">
+                        <template x-for="f in decisionFields" :key="f.key">
+                            <x-admin.internal-forms.field-input model="decisionData" />
+                        </template>
+                    </div>
                 </div>
                 <label class="block">
                     <span class="text-xs font-medium text-slate-600" x-text="decision?.kind === 'reject' ? 'Reason (required)' : 'Remarks (optional)'"></span>
@@ -426,10 +584,37 @@
                 <div class="flex justify-end gap-2">
                     <button type="button" @click="decision = null" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl">Cancel</button>
                     <button type="button" @click="confirmDecision()"
-                        :disabled="deciding || (decision?.kind === 'reject' && !decisionRemarks.trim())"
+                        :disabled="deciding || decisionLoading || decisionMissing || (decision?.kind === 'reject' && !decisionRemarks.trim())"
                         :class="decision?.kind === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'"
                         class="px-4 py-2 text-xs font-semibold text-white rounded-2xl disabled:opacity-40"
                         x-text="deciding ? 'Saving…' : (decision?.kind === 'approve' ? 'Confirm Approval' : 'Confirm Rejection')"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- A filed form, as its paper -->
+        <div x-show="viewing" x-cloak class="fixed inset-0 z-40 flex items-start sm:items-center justify-center p-3 sm:p-6 bg-navy-950/60 backdrop-blur-sm"
+             @click.self="viewing = null" @keydown.escape.window="!decision && (viewing = null)"
+             role="dialog" aria-modal="true" aria-labelledby="if-view-title" data-if-view>
+            <div class="bg-white rounded-2xl shadow-float w-full max-w-3xl max-h-[92vh] flex flex-col">
+                <div class="flex items-center gap-3 px-5 py-3.5 border-b border-brand-600/10">
+                    <div class="min-w-0">
+                        <h3 id="if-view-title" class="text-sm font-semibold text-ink truncate" x-text="viewing ? viewing.form + ' · ' + viewing.ref : ''"></h3>
+                        <p class="text-[11px] text-ink-muted" x-text="viewing?.status || ''"></p>
+                    </div>
+                    <button type="button" @click="viewing = null" class="ml-auto text-ink-muted hover:text-ink" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div class="overflow-y-auto scrollbar-thin px-3 sm:px-6 py-5 bg-slate-50/70">
+                    <div x-show="viewLoading && !viewing?.chain?.length" class="space-y-2"><x-ui.skeleton class="h-16" /><x-ui.skeleton class="h-48 opacity-80" /></div>
+                    <div x-show="viewFailed" x-cloak><x-ui.error-state messageExpr="'Could not open this form.'" retryExpr="openView(viewing)" :retryable="true" /></div>
+                    <template x-if="viewing && !viewing.loading">
+                        <x-admin.internal-forms.paper />
+                    </template>
+                </div>
+                <div class="flex flex-wrap items-center justify-end gap-2 px-5 py-3 border-t border-brand-600/10">
+                    <button type="button" x-show="viewing?.can_decide" @click="startDecision(viewing, 'reject')" class="px-4 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-2xl">Reject</button>
+                    <button type="button" x-show="viewing?.can_decide" @click="startDecision(viewing, 'approve')" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-2xl">Approve</button>
+                    <button type="button" @click="printPaper()" :disabled="!viewing || viewing.loading" class="px-4 py-2 text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-2xl inline-flex items-center gap-1.5 disabled:opacity-40"><i data-lucide="printer" class="w-3.5 h-3.5"></i>Print</button>
                 </div>
             </div>
         </div>
@@ -495,39 +680,7 @@
                             {{-- Fields step --}}
                             <div x-show="currentFormStep.type === 'fields'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <template x-for="f in (currentFormStep.fields || [])" :key="f.key">
-                                    <div :class="f.type === 'checkbox-group' ? 'sm:col-span-2' : ''">
-                                        <template x-if="f.type === 'text' || f.type === 'number' || f.type === 'date'">
-                                            <div>
-                                                <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                <input :aria-label="f.label"
-                                                    :type="f.type" x-model="formData[f.key]"
-                                                    class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-ink-body focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard"
-                                                >
-                                            </div>
-                                        </template>
-                                        <template x-if="f.type === 'select'">
-                                            <div>
-                                                <label class="block text-xs font-medium text-slate-700 mb-1" x-text="f.label + (f.required ? ' *' : '')"></label>
-                                                <select :aria-label="f.label" x-model="formData[f.key]" class="w-full rounded-2xl border-0 surface-pressed py-2.5 px-4 text-sm text-slate-700 focus:bg-white/90 focus:ring-4 focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard">
-                                                    <option value="">—</option>
-                                                    <template x-for="opt in f.options" :key="opt"><option :value="opt" x-text="opt"></option></template>
-                                                </select>
-                                            </div>
-                                        </template>
-                                        <template x-if="f.type === 'checkbox-group'">
-                                            <div>
-                                                <label class="block text-xs font-medium text-slate-700 mb-2" x-text="f.label"></label>
-                                                <div class="grid grid-cols-2 gap-2">
-                                                    <template x-for="opt in f.options" :key="opt">
-                                                        <label class="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-2 text-xs text-slate-600 cursor-pointer hover:border-slate-300 transition-colors" :class="(formData[f.key] || []).includes(opt) && 'border-brand-300 bg-brand-50/60 text-brand-700'">
-                                                            <input type="checkbox" class="rounded text-brand-600 focus:ring-brand-200" :checked="(formData[f.key] || []).includes(opt)" @change="toggleChecklist(f.key, opt)">
-                                                            <span x-text="opt"></span>
-                                                        </label>
-                                                    </template>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
+                                    <x-admin.internal-forms.field-input model="formData" />
                                 </template>
                             </div>
 
@@ -555,7 +708,7 @@
                                                         <template x-for="col in currentFormStep.field.columns" :key="col.key">
                                                             <div>
                                                                 <label class="block text-[10px] font-medium text-ink-muted uppercase tracking-wide mb-1" x-text="col.label"></label>
-                                                                <input :aria-label="col.label" type="text" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4">
+                                                                <input :aria-label="col.label" :type="col.type || 'text'" x-model="row[col.key]" class="w-full rounded-xl py-1.5 px-2.5 text-xs text-ink-body focus:ring-brand-100 outline-none transition-all duration-[160ms] ease-standard border-0 surface-pressed-sm focus:bg-white/90 focus:ring-4">
                                                             </div>
                                                         </template>
                                                     </div>
@@ -601,4 +754,59 @@
             </x-slot:footer>
         </x-ui.modal>
     </div>
+
+    <style>
+        .if-paper { background: #fff; color: #111827; max-width: 794px; margin: 0 auto; padding: 36px 40px 32px; box-shadow: 0 1px 3px rgb(15 23 42 / .12); font-family: Arial, Helvetica, sans-serif; font-size: 12.5px; line-height: 1.45; }
+        .if-top { display: flex; justify-content: space-between; gap: 12px; min-height: 14px; margin-bottom: 6px; }
+        .if-formno { font-size: 10.5px; font-style: italic; color: #374151; margin: 0; white-space: pre-line; }
+        .if-corner { font-size: 11px; font-weight: 700; margin: 0; }
+        .if-copy-label { text-align: right; font-size: 11px; font-weight: 700; font-style: italic; margin: 0 0 4px; }
+        .if-titlebar { position: relative; }
+        .if-stamp { position: absolute; right: 0; top: -6px; border: 1px dashed #6b7280; padding: 4px 8px; font-size: 9.5px; text-align: center; min-width: 120px; }
+        .if-stamp p { margin: 0; color: #4b5563; }
+        .if-subtitle { text-align: center; font-size: 11px; margin: 0 0 2px; }
+        .if-statement { margin: 0 0 6px; font-size: 11.5px; white-space: pre-line; }
+        .if-statement-end { margin-top: 10px; }
+        .if-ticks { display: flex; flex-wrap: wrap; gap: 2px 14px; font-weight: 500 !important; border-bottom: 0 !important; }
+        .if-letterhead { text-align: center; line-height: 1.35; }
+        .if-letterhead p { margin: 0; }
+        .if-lgu { font-weight: 700; }
+        .if-office { font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
+        .if-title { text-align: center; font-size: 16px; font-weight: 800; letter-spacing: .06em; margin: 14px 0 2px; text-transform: uppercase; }
+        .if-ref { text-align: center; font-size: 10.5px; color: #4b5563; margin-bottom: 12px; }
+        .if-restricted { border: 1px solid #e5e7eb; padding: 10px; font-size: 11.5px; color: #6b21a8; background: #faf5ff; }
+        .if-section { border: 1px solid #111827; margin-top: -1px; padding: 8px 10px 10px; page-break-inside: avoid; break-inside: avoid; }
+        .if-section h3 { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; margin: 0 0 6px; }
+        .if-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; margin: 0; }
+        .if-grid > div { min-width: 0; }
+        .if-grid .if-wide { grid-column: 1 / -1; }
+        .if-grid dt { font-size: 10.5px; color: #4b5563; }
+        .if-grid dd { margin: 0; border-bottom: 1px solid #9ca3af; min-height: 18px; white-space: pre-wrap; overflow-wrap: anywhere; font-weight: 600; }
+        .if-table-wrap { margin-top: 8px; overflow-x: auto; }
+        .if-table-label { font-size: 10.5px; color: #4b5563; margin: 0 0 3px; }
+        .if-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .if-table th, .if-table td { border: 1px solid #111827; padding: 3px 5px; text-align: left; vertical-align: top; }
+        .if-table th { font-weight: 700; background: #f3f4f6; font-size: 10px; }
+        .if-none { color: #6b7280; font-style: italic; text-align: center !important; }
+        .if-office-part h3 { color: #111827; }
+        .if-decision { margin: 8px 0 0; font-size: 11.5px; }
+        .if-remarks { margin: 2px 0 0; font-size: 11.5px; white-space: pre-wrap; }
+        .if-pending { margin: 0; font-size: 11.5px; color: #6b7280; font-style: italic; }
+        .if-signs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 26px 28px; margin-top: 34px; page-break-inside: avoid; break-inside: avoid; }
+        .if-sign { text-align: center; }
+        .if-sign-name { border-bottom: 1px solid #111827; min-height: 20px; margin: 0; font-weight: 700; text-transform: uppercase; font-size: 11.5px; }
+        .if-sign-role { margin: 3px 0 0; font-size: 10.5px; color: #374151; }
+        .if-notes { margin: 22px 0 0; padding-left: 16px; font-size: 10px; color: #374151; }
+        .if-notes li { margin: 2px 0; }
+        @media (max-width: 640px) { .if-paper { padding: 20px 16px; } .if-grid { grid-template-columns: minmax(0, 1fr); } }
+        #if-print-root { display: none; }
+        @media print {
+            @page { size: A4 portrait; margin: 12mm; }
+            html.if-printing body > *:not(#if-print-root) { display: none !important; }
+            html.if-printing #if-print-root { display: block !important; }
+            #if-print-root .if-paper { box-shadow: none; padding: 0; max-width: none; }
+            #if-print-root .if-paper + .if-paper { break-before: page; page-break-before: always; }
+            #if-print-root .if-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+    </style>
 </x-layouts.admin>

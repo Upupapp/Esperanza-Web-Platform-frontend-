@@ -314,7 +314,7 @@ return [
         // completeness/future use since Dokyu's own catalog defines it (see
         // this file's own header comment above); deliberately not paired
         // with a fabricated fetal-death scenario for the one demo citizen.
-        'source' => 'Office of the Municipal Civil Registrar — Certificate of Fetal Death (PSA Municipal Form No. 103)',
+        'source' => 'Office of the Municipal Civil Registrar — Certificate of Fetal Death (PSA Municipal Form No. 103A, Revised January 2007)',
         'steps' => [
             ['label' => 'Fetal Information', 'fields' => [
                 ['key' => 'fetusFullName', 'label' => "Fetus's Name", 'type' => 'text', 'required' => false, 'hint' => 'Leave blank if the fetus was not given a name'],
@@ -473,7 +473,7 @@ return [
     ],
 
     'TESDA Skills Training Registration' => [
-        'source' => "TESDA — Learner's Enrollment Form (OP-CO-05-F09)",
+        'source' => 'TESDA — Registration Form, Learners Profile Form (MIS 03-01, ver. 2021)',
         'steps' => [
             ['label' => 'Personal Information', 'fields' => [
                 ['key' => 'email', 'label' => 'Email / Facebook', 'type' => 'text', 'required' => false],

@@ -4,7 +4,7 @@
 // formats below (fields, requirements, legal wording rendered by
 // x-citizen.barangay-certificate-preview) were standardized from Barangay
 // Labangtaytay's actual document templates — the Municipality of Esperanza
-// uses the same 6 form formats across every barangay, only the letterhead
+// uses the same 7 form formats across every barangay, only the letterhead
 // (barangay name, seal, officials) changes per barangay. Not a model/business
 // logic file — same category as config/esperanza.php: shared display data
 // consumed by the citizen Dokyu wizard (dynamic form fields) and the
@@ -53,7 +53,6 @@ $standardDocuments = [
         'office' => 'Barangay Office',
         'level' => 'Barangay',
         'title' => 'BARANGAY CERTIFICATION',
-        'subtitle' => 'Late Registration of Birth — for Death Registration',
         'fee' => 'Free', 'days' => '1-2 working days',
         'requirements' => ['One (1) valid government-issued ID of the requester', 'Right Thumbmark (to be taken at Barangay Hall)', 'Left Thumbmark (to be taken at Barangay Hall)', '1x1 or 2x2 ID Picture'],
         'process' => ['Submit Request', 'Barangay Verification', 'Certification by Punong Barangay', 'Release'],
@@ -86,8 +85,8 @@ $standardDocuments = [
             ['key' => 'business_type', 'label' => 'Nature / Type of Business', 'type' => 'text'],
             ['key' => 'years_operating', 'label' => 'Years in Operation', 'type' => 'text'],
             ['key' => 'purok', 'label' => 'Purok', 'type' => 'text'],
-            ['key' => 'capital_words', 'label' => 'Capital (in words)', 'type' => 'text'],
             ['key' => 'capital_figures', 'label' => 'Capital (in figures)', 'type' => 'text'],
+            ['key' => 'capital_words', 'label' => 'Capital (in words)', 'type' => 'text'],
         ],
     ],
     [
@@ -147,7 +146,7 @@ $standardDocuments = [
             ['key' => 'residency_type', 'label' => 'Residency Type', 'type' => 'select', 'options' => ['Permanent', 'Temporary', 'Renter']],
             ['key' => 'purok', 'label' => 'Purok', 'type' => 'text'],
             ['key' => 'purpose', 'label' => 'Purpose', 'type' => 'checkbox-group', 'allowOther' => true, 'options' => [
-                'Medical Assistance', 'Financial Assistance', 'Burial Assistance', 'Educational Assistance',
+                'Medical Assistance/Financial Assistance', 'Burial Assistance', 'Educational Assistance',
             ]],
         ],
     ],
@@ -169,7 +168,7 @@ $standardDocuments = [
             ['key' => 'purok', 'label' => 'Purok', 'type' => 'text'],
             ['key' => 'purpose', 'label' => 'Purpose', 'type' => 'checkbox-group', 'allowOther' => true, 'options' => [
                 'Proof of Residency', 'Local Employment', 'Travel Abroad', 'Postal I.D',
-                'Bank Requirement', 'NBI Clearance', 'Loan Purposes', 'Medical/Financial Assistance', 'Others',
+                'Bank Requirement', 'NBI Clearance', 'Loan Purposes', 'Medical/Financial Assistance',
             ]],
         ],
     ],
@@ -285,21 +284,23 @@ return [
             'punong_barangay' => 'Hon. Jorge C. Bruza',
             'barangay_secretary' => 'Jenneth A. Cachila',
         ],
-        // Full Sangguniang Barangay roster — real names/photos supplied by the client (orga. profile.docx
-        // was image-only with no caption text, so exact committee titles below are a standard 7-Kagawad +
-        // SK Chairperson + Treasurer allocation, not independently confirmed from the source document).
+        // Names, positions and committees as the officials' portraits print them (LABANGTATAY OFFICIALS
+        // PIC) and in the DILG Barangay Profile CY 2024's order (LABANGTATAY BRGY PROFILE): Punong
+        // Barangay, Sangguniang Barangay Members 1-7, SK Chairperson, Secretary, Treasurer (2026-11-03;
+        // the August roster had guessed the committees and swapped the 7th Kagawad and the SK Chair).
+        // The Punong Barangay chairs the BDRRMC (LABANGTATAY BDRRMC forms).
         'officialsRoster' => [
-            ['name' => 'Hon. Jorge C. Bruza', 'position' => 'Punong Barangay', 'committee' => 'Over-all Chairperson, BDRRMC', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/jorge-bruza.jpg'],
-            ['name' => 'Jenneth A. Cachila', 'position' => 'Barangay Secretary', 'committee' => 'Records & Civil Registry', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/jenneth-cachila.jpg'],
-            ['name' => 'Ma. Cindy F. Arabis', 'position' => 'Barangay Treasurer', 'committee' => 'Finance & Budget', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/cindy-arabis.jpg'],
-            ['name' => 'Ma. Remjie R. Abilong', 'position' => 'SK Chairperson', 'committee' => 'Youth & Sports Development', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/remjie-abilong.jpg'],
-            ['name' => 'John Lester L. Conde', 'position' => 'Barangay Kagawad', 'committee' => 'Peace and Order', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/john-lester-conde.jpg'],
-            ['name' => 'Angelo T. Sontosidad', 'position' => 'Barangay Kagawad', 'committee' => 'Infrastructure & Public Works', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/angelo-sontosidad.jpg'],
-            ['name' => 'Cherry Ann S. Andales', 'position' => 'Barangay Kagawad', 'committee' => 'Health & Sanitation', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/cherry-ann-andales.jpg'],
-            ['name' => 'Teodato M. Rodrigo', 'position' => 'Barangay Kagawad', 'committee' => 'Agriculture & Fisheries', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/teodato-rodrigo.jpg'],
-            ['name' => 'Monie C. Bruza', 'position' => 'Barangay Kagawad', 'committee' => 'Women & Family', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/monie-bruza.jpg'],
-            ['name' => 'Ernesto N. Rodrigo', 'position' => 'Barangay Kagawad', 'committee' => 'Disaster Risk Reduction (Former Punong Barangay, 2007–2010)', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/ernesto-rodrigo.jpg'],
-            ['name' => 'Dioquino A. Bruza Sr.', 'position' => 'Barangay Kagawad', 'committee' => 'Environment (Former Punong Barangay, 2001–2007)', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/dioquino-bruza-sr.jpg'],
+            ['name' => 'Hon. Jorge C. Bruza', 'position' => 'Punong Barangay', 'committee' => 'BDRRMC Chairperson', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/jorge-bruza.jpg'],
+            ['name' => 'Hon. Teodato M. Rodrigo', 'position' => 'Barangay Kagawad', 'committee' => 'Good Governance and Public Accountability (Blue Ribbon Committee); Public Works, Infrastructure, Housing and Land Utilization', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/teodato-rodrigo.jpg'],
+            ['name' => 'Hon. Angelo T. Sontosidad', 'position' => 'Barangay Kagawad', 'committee' => 'Ordinances and Legal Matters; Environmental Protection, Solid Waste Management and Sanitation, and Disaster Resilience', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/angelo-sontosidad.jpg'],
+            ['name' => 'Hon. Ernesto N. Rodrigo', 'position' => 'Barangay Kagawad', 'committee' => 'Health and Nutrition; Labor and Employment, Trade, Commerce and Industry', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/ernesto-rodrigo.jpg'],
+            ['name' => 'Hon. Cherry Ann S. Andales', 'position' => 'Barangay Kagawad', 'committee' => 'Appropriation, Budget and Finance; Women, Children and Family', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/cherry-ann-andales.jpg'],
+            ['name' => 'Hon. Monie C. Bruza', 'position' => 'Barangay Kagawad', 'committee' => 'Ways and Means; Agriculture and Fisheries', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/monie-bruza.jpg'],
+            ['name' => 'Hon. Dioquino A. Bruza Sr.', 'position' => 'Barangay Kagawad', 'committee' => 'Social Welfare and Protection, Senior Citizens and Persons with Disabilities, and Education; Human Rights, Peace and Order, Public Safety and Illegal Drugs', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/dioquino-bruza-sr.jpg'],
+            ['name' => 'Hon. Maria Remjie R. Abilong', 'position' => 'Barangay Kagawad', 'committee' => 'Rules and Privileges; Cooperative and Community Affairs', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/remjie-abilong.jpg'],
+            ['name' => 'Hon. John Lester T. Conde', 'position' => 'SK Chairperson', 'committee' => 'Youth and Sports Development; Games and Amusement, Tourism, Beautification and Culture', 'photo' => 'images/esperanza/barangays/labangtaytay/officials/john-lester-conde.jpg'],
+            ['name' => 'Jenneth A. Cachila', 'position' => 'Barangay Secretary', 'committee' => null, 'photo' => 'images/esperanza/barangays/labangtaytay/officials/jenneth-cachila.jpg'],
+            ['name' => 'Ma. Cindy F. Arabis', 'position' => 'Barangay Treasurer', 'committee' => null, 'photo' => 'images/esperanza/barangays/labangtaytay/officials/cindy-arabis.jpg'],
         ],
         'history' => [
             'founding' => "In the early part of 1915, a group of Cebuano settlers from Medellin, Tuburan, Daanbantayan, San Remigio, and Bogo crossed the sea by sailboat in search of a new place to live. Among these founding families were Severo Paghubasan, Angel Rosaceña, Francisco \"Kiko\" Ygot, Teofisto Ygot, Simplicio Ygot, Francisca Andales, Teodolo Conag, Gregorio Conag, Mateo Rodrigo, and Pascual Arabis together with his nine sons — Julio, Pedro, Melencio, Fernando, Elino, Andres, Buenaventura, Estanislao, and Caloy Rodrigo Arabis. They landed on the long, white shoreline of Masbate island and settled in what was then part of Barrio Esperanza (Poblacion), naming their new home Sitio Tabunok after the coarse texture of the local sand. Pascual Arabis, well-respected by the settlers, became the sitio's informal leader. The community cultivated the uplands, growing magay, romblon, and root crops such as cassava, sweet potato, onions, and banana — the women weaving mats, baskets, and bandi from magay and romblon fiber, while the men fished and farmed.",
@@ -325,12 +326,31 @@ return [
             // redesign, 2026-10-22): a summary under the name, a few facts,
             // where the name comes from, and what people live on. Each is
             // optional; a barangay without them shows the rest.
-            'summary' => 'Puroks 9–12 · Formerly Barrio Tabunok',
+            // The first four facts and the awards are the DILG Barangay Profile
+            // CY 2024's (LABANGTATAY BRGY PROFILE, 2026-11-03); its land area
+            // reads "106.16.18" (106 ha 16 a 18 ca).
+            'summary' => 'Urban barangay · Puroks 9–12 · Formerly Barrio Tabunok',
             'facts' => [
+                ['value' => '920', 'label' => 'Residents (CY 2024)'],
+                ['value' => '204', 'label' => 'Households'],
+                ['value' => '593', 'label' => 'Registered voters'],
+                ['value' => '106.16', 'label' => 'Hectares of land'],
                 ['value' => '4', 'label' => 'Puroks (9–12)'],
                 ['value' => '1961', 'label' => 'Became a barrio'],
                 ['value' => '~90%', 'label' => 'Roads cemented'],
                 ['value' => 'May 3–5', 'label' => 'Sta. Cruz fiesta'],
+            ],
+            'awards' => [
+                'title' => 'Local recognition, CY 2024',
+                'items' => [
+                    'SGLGB, Excellence in Governance — Rank 1',
+                    'Full Disclosure Excellence Awardee — Rank 1',
+                    'Pag-unlad Category — Rank 1',
+                    'Punctual Processor and Sole Awardee — Rank 1',
+                    'Complete Submission and Formulation of Infrastructure Plan — Rank 1',
+                    'Top Rated Barangay Council for the Protection of Children (BCPC) — Rank 1',
+                    'Prime Budget Setter Awardee, Barangay Category — Rank 1',
+                ],
             ],
             'name_origin' => [
                 'title' => 'labang + taytayan',

@@ -89,7 +89,8 @@ class ParityCheckFixesTest extends TestCase
         $this->assertStringContainsString('this.types.filter(t => this.isOffered(t)).forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });', $page);
         $this->assertStringNotContainsString('this.types.forEach(t => { counts[t.category]', $page);
 
-        $this->assertMatchesRegularExpression('/x-for="f in \(types\[selectedType\]\?\.fields \|\| \[\]\)\.filter\(f => f\.type === \'table\'\)" :key="f\.key">\s*<div class="mb-6" x-show="fieldShown\(f\)">/', $page);
+        // Tables sit among the other questions in the paper's order (MPESO papers, 2026-11-03).
+        $this->assertMatchesRegularExpression('/x-for="f in \(types\[selectedType\]\?\.fields \|\| \[\]\)" :key="f\.key">\s*<div :class="f\.type === \'table\' \? \'col-span-full\'[^"]*" x-show="fieldShown\(f\)">/', $page);
         $this->assertStringContainsString('<div class="mt-3" x-show="fieldShown(f) && (formData[f.key] || []).length">', $page);
     }
 
