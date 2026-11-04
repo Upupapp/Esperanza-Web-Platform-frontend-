@@ -75,7 +75,7 @@
 
         <div class="surface-glass rounded-[26px] p-3 mb-4 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit overflow-x-auto">
+                <div class="flex flex-wrap items-center gap-1.5 surface-pressed rounded-xl p-1 w-fit max-w-full">
                     <button @click="tab = 'all'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap" :class="tab === 'all' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'"><x-ui.t fil="Lahat" en="All" /></button>
                     <button @click="tab = 'unread'" class="px-3 py-1.5 text-[11px] font-medium rounded-xl transition-colors whitespace-nowrap inline-flex items-center gap-1.5" :class="tab === 'unread' ? 'bg-white text-ink shadow-sm' : 'text-ink-muted hover:text-slate-700'">
                         <x-ui.t fil="Hindi Pa Nababasa" en="Unread" />
@@ -101,7 +101,7 @@
         </div>
 
         <x-ui.data-panel empty-title="Walang abisong tumutugma dito" empty-title-en="No notifications here" empty-icon="inbox">
-                <x-ui.card padded="false">
+                <x-ui.card :padded="false">
                     <div class="divide-y divide-brand-600/[.08]">
                         <template x-for="n in visible" :key="n.id">
                             <div

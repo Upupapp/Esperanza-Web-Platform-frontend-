@@ -36,7 +36,7 @@
 <header
     class="relative z-20 flex items-center gap-4 flex-wrap px-1 lg:px-3 pt-1 shrink-0"
     x-data="{ time: '' }"
-    x-init="setInterval(() => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000); $store.adminNotifications.load(); $store.adminNotifications.poll()"
+    x-init="const tick = () => time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); tick(); setInterval(tick, 30000); $store.adminNotifications.load(); $store.adminNotifications.poll()"
 >
     <div class="flex-1 basis-44 flex items-center gap-3 min-w-0">
         <button aria-label="Open menu" @click="mobileOpen = true" class="lg:hidden w-11 h-11 rounded-2xl surface-glass-sm grid place-items-center text-ink-body shrink-0">

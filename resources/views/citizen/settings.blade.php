@@ -97,12 +97,12 @@
     >
 
         <div class="lg:col-span-1">
-            <x-ui.card padded="false" class="p-2">
-                <nav class="space-y-0.5">
+            <x-ui.card :padded="false" class="p-2">
+                <nav class="flex flex-wrap gap-1 lg:block lg:space-y-0.5">
                     @foreach(['notifications' => ['bell', 'Mga Abiso', 'Notifications'], 'security' => ['shield', 'Seguridad', 'Security'], 'privacy' => ['lock', 'Pribasiya', 'Privacy'], 'preferences' => ['sliders-horizontal', 'Kagustuhan', 'Preferences']] as $key => [$icon, $labelFil, $labelEn])
                         <button
                             @click="tab = '{{ $key }}'"
-                            class="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-sm font-medium transition-colors"
+                            class="lg:w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-sm font-medium transition-colors"
                             :class="tab === '{{ $key }}' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-white/60'"
                         >
                             <i data-lucide="{{ $icon }}" class="w-4 h-4"></i><x-ui.t :fil="$labelFil" :en="$labelEn" />
@@ -125,16 +125,18 @@
                         <i data-lucide="message-square-off" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
                         <x-ui.t fil="Darating pa ang text message (SMS). Hangga't wala pa, sa email namin ipinapadala ang mga update na pinili mong i-text." en="Text messages (SMS) are coming soon. Until then, updates you chose to get by text are sent by email." />
                     </p>
-                    <div class="hidden sm:grid grid-cols-[minmax(0,1fr)_64px_64px] gap-4 pb-2 text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted">
+                    {{-- Owner decision 2026-11-04: until SMS works the SMS column is hidden
+                         (it showed six disabled switches); the code stays and returns with smsAvailable. --}}
+                    <div class="hidden sm:grid gap-4 pb-2 text-[11.5px] font-bold uppercase tracking-[.07em] text-ink-muted" :class="smsAvailable ? 'grid-cols-[minmax(0,1fr)_64px_64px]' : 'grid-cols-[minmax(0,1fr)_64px]'">
                         <span><x-ui.t fil="Uri ng update" en="Update type" /></span>
-                        <span class="text-center" x-text="smsAvailable ? 'SMS' : ($store.lang.current === 'en' ? 'SMS (soon)' : 'SMS (darating)')"></span>
+                        <span class="text-center" x-show="smsAvailable" x-text="smsAvailable ? 'SMS' : ($store.lang.current === 'en' ? 'SMS (soon)' : 'SMS (darating)')"></span>
                         <span class="text-center">Email</span>
                     </div>
                     <div class="divide-y divide-brand-600/[.08]">
                         <template x-for="pref in notifPrefs" :key="pref.category">
-                            <div class="grid grid-cols-[minmax(0,1fr)_64px_64px] items-center gap-4 py-3.5">
+                            <div class="grid items-center gap-4 py-3.5" :class="smsAvailable ? 'grid-cols-[minmax(0,1fr)_64px_64px]' : 'grid-cols-[minmax(0,1fr)_64px]'">
                                 <p class="min-w-0 text-sm font-medium text-slate-700" x-text="$store.lang.current === 'en' ? pref.label?.en : (pref.label?.fil || pref.label?.en)"></p>
-                                <template x-for="channel in ['sms', 'email']" :key="channel">
+                                <template x-for="channel in (smsAvailable ? ['sms', 'email'] : ['email'])" :key="channel">
                                     <div class="flex flex-col items-center gap-1">
                                         <button
                                             @click="togglePref(pref, channel)"

@@ -114,13 +114,13 @@
                 <button x-show="hasTutorials" x-cloak @click="tab = 'tutorials'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'tutorials' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i><x-ui.t fil="Mga Gabay" en="Tutorials" /></button>
                 <button @click="tab = 'support'" class="px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5" :class="tab === 'support' ? 'bg-white/85 text-brand-600 font-bold shadow-[0_1px_2px_rgb(11_23_48/.08)]' : 'text-ink-muted hover:text-ink'">
                     <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i><x-ui.t fil="Suporta" en="Support" />
-                    <span class="text-[9px] font-semibold bg-white/25 rounded-full px-1.5 py-0.5" :class="tab === 'support' ? 'text-white' : 'bg-slate-100 text-ink-muted'" x-text="tickets.length"></span>
+                    <span class="text-[11px] font-semibold rounded-full px-1.5 py-0.5" :class="tab === 'support' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-ink-muted'" x-text="tickets.length"></span>
                 </button>
             </div>
         </div>
 
         <!-- FAQs -->
-        <div x-show="tab === 'faqs'" class="max-w-3xl">
+        <div x-show="tab === 'faqs'" class="max-w-3xl mx-auto">
             <div class="surface-glass rounded-[26px] p-3 mb-4">
                 <div class="flex flex-wrap items-center gap-2 mb-2.5">
                     <div class="relative flex-1 min-w-[180px]">
@@ -333,7 +333,7 @@
                     </div>
                 </x-ui.card>
 
-                <x-ui.card padded="false">
+                <x-ui.card :padded="false">
                     <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
                         <h3 class="text-sm font-semibold text-ink"><x-ui.t fil="Aking mga Support Ticket" en="My Support Tickets" /></h3>
                         <span class="text-[11px] text-ink-muted" x-text="tickets.length + ' ' + ($store.lang.current === 'en' ? 'total' : 'kabuuan')"></span>

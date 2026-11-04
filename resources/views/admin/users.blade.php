@@ -60,8 +60,8 @@
 
         <div x-show="$store.session.can('user_management')" x-cloak>
 
-        {{-- Scrolls sideways at phone width instead of the page (scope round 2026-10-15). --}}
-        <nav aria-label="User Management sections" class="flex items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full overflow-x-auto scrollbar-thin mb-4">
+        {{-- Wraps onto a second line on a narrow screen, so every section stays in view. --}}
+        <nav aria-label="User Management sections" class="flex flex-wrap items-center gap-1.5 surface-pressed-sm rounded-2xl p-1 w-fit max-w-full mb-4">
             @foreach(['personnel' => ['user-cog', 'Personnel'], 'roles' => ['shield-check', 'Roles'], 'permissions' => ['key-round', 'Permissions'], 'departments' => ['building-2', 'Departments'], 'matrix' => ['table-properties', 'Dokyu & Tulong Matrix']] as $tabKey => [$tabIcon, $tabLabel])
                 <button
                     type="button"
@@ -802,8 +802,8 @@
             <!-- Role description + permission tree -->
             <div class="lg:col-span-6 space-y-4" x-show="!loading && !failed && selectedRole">
                 <div class="surface-glass rounded-[26px] p-4">
-                    <div class="flex items-start justify-between gap-3 mb-1">
-                        <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-start justify-between gap-3 mb-1">
+                        <div class="flex items-center gap-3 min-w-0">
                             <span class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" :class="selectedRole?.color || 'text-slate-600 bg-slate-50'">
                                 <i :data-lucide="selectedRole?.icon" class="w-5 h-5"></i>
                             </span>
@@ -815,7 +815,7 @@
                                 <p class="text-xs text-ink-muted" x-text="(selectedRole?.accounts || 0) + ' personnel assigned'"></p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 shrink-0">
+                        <div class="flex flex-wrap items-center gap-2">
                             <x-ui.button
                                 variant="secondary" size="sm" icon="download"
                                 x-show="$store.session.canExportReports()"

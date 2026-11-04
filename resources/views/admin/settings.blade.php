@@ -87,11 +87,10 @@
         </div>
 
         <div x-show="$store.session.canSettings() || directoryAllowed || facebookAllowed" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-
-        {{-- A strip that scrolls sideways below the desktop width, a list beside the content from it. --}}
+        {{-- Below the desktop width the sections wrap onto rows (NAV-4: tabs wrap, never hide off screen); a list beside the content from it, where a long name wraps inside the narrow column. --}}
         <div class="lg:col-span-1 min-w-0">
             <x-ui.card :padded="false" class="p-2">
-                <nav aria-label="Settings sections" class="flex lg:flex-col gap-0.5 overflow-x-auto lg:overflow-visible scrollbar-thin" x-init="$nextTick(() => $el.querySelector('[aria-current=page]')?.scrollIntoView({ block: 'nearest', inline: 'center' }))">
+                <nav aria-label="Settings sections" class="flex flex-wrap lg:flex-col lg:flex-nowrap gap-0.5" x-init="$nextTick(() => $el.querySelector('[aria-current=page]')?.scrollIntoView({ block: 'nearest', inline: 'center' }))">
                     @foreach($settingsTabs as $tabKey => [$tabIcon, $tabLabel])
                         <button
                             type="button"
@@ -100,7 +99,7 @@
                             @elseif($tabKey === 'directory') x-show="directoryAllowed" x-cloak
                             @elseif($tabKey === 'integrations') x-show="$store.session.canSettings() || facebookAllowed" x-cloak
                             @else x-show="$store.session.canSettings()" x-cloak @endif
-                            class="shrink-0 lg:w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
+                            class="shrink-0 lg:w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors"
                             :class="tab === '{{ $tabKey }}' ? 'bg-brand-50 text-brand-700' : 'text-ink-muted hover:bg-white/60'"
                             :aria-current="tab === '{{ $tabKey }}' ? 'page' : null"
                         >

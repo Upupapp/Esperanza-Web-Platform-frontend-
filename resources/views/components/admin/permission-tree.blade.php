@@ -114,7 +114,7 @@
                                         type="button"
                                         @click="togglePerm(sub.key, perm)"
                                         :disabled="{{ $locked }}"
-                                        class="px-2.5 py-1 rounded-xl text-[10px] font-medium border transition-colors"
+                                        class="px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors"
                                         :class="[
                                             hasPerm(sub.key, perm) ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-200 text-ink-muted',
                                             ({{ $locked }}) ? 'cursor-not-allowed opacity-70' : 'hover:border-slate-300'
