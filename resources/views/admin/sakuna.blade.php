@@ -83,8 +83,6 @@
         // The status bar reads the live board (GET /admin/sakuna/command-center):
         // the alerts in effect and the incidents still open. It used to show a
         // fixed Red Alert and a July 2026 monsoon that never happened.
-        // Activate EOC still sets a display-only status on this screen.
-        opStatusOverride: '',
         headerBoard: null,
         headerFailed: false,
         // Never a false all-clear (critique 2026-11-03): until the board has
@@ -157,7 +155,6 @@
             if (c.incidents_open > 0) return 'Monitoring';
             return 'Normal';
         },
-        get opStatus() { return this.opStatusOverride || this.liveStatus; },
         get activeEventLabel() {
             const b = this.headerBoard;
             if (this.headerFailed && !b) return 'Live board not available';
@@ -1250,7 +1247,6 @@
         },
 
         // Command center state
-        showEOCConfirm: false,
         // Shaped with real empty defaults, not null: the content wrapper below
         // is only display:none while loading, not removed from the DOM, so
         // Alpine still evaluates its bindings against this before the fetch
@@ -1646,9 +1642,8 @@
                 Watch: 'sk-p-amber', Yellow: 'sk-p-amber', Advisory: 'sk-p-teal', Information: 'sk-p-blue' })[level] || 'sk-p-slate';
         },
         opStatusColor() {
-            if (this.opStatusOverride) return 'sk-p-navy';
-            if (this.opStatus === 'Alert in effect') return this.alertLevelPill(this.headerBoard?.alerts?.[0]?.level);
-            if (this.opStatus === 'Normal') return 'sk-p-green';
+            if (this.liveStatus === 'Alert in effect') return this.alertLevelPill(this.headerBoard?.alerts?.[0]?.level);
+            if (this.liveStatus === 'Normal') return 'sk-p-green';
             return 'sk-p-slate';
         },
 
@@ -1807,9 +1802,9 @@
          rather than scroll, so no tab is ever off screen (live test NAV-4). --}}
     <header class="sk-card">
         <div class="flex flex-wrap items-center gap-2 px-4 pt-2.5 pb-1">
-            <span x-show="opStatusOverride || !headerBoard?.alerts?.length" :class="opStatusColor()" class="sk-pill" style="padding: 3px 9px;" :title="opStatusOverride ? 'Set on this screen only; nobody was notified' : 'From the public alerts in effect and the incidents still open'">
+            <span x-show="!headerBoard?.alerts?.length" :class="opStatusColor()" class="sk-pill" style="padding: 3px 9px;" title="From the public alerts in effect and the incidents still open">
                 <i data-lucide="shield-alert" class="w-3 h-3"></i>
-                <span x-text="opStatus"></span>
+                <span x-text="liveStatus"></span>
             </span>
 
             <button type="button" x-show="headerBoard && activeTab !== 'command-center' && (tabAllowed('alerts') || tabAllowed('incidents'))" @click="setTab(headerBoard?.alerts?.length && tabAllowed('alerts') ? 'alerts' : 'incidents')" :class="headerBoard?.alerts?.length ? alertLevelPill(headerBoard.alerts[0].level) : 'sk-p-slate'" class="sk-pill hover:brightness-95" style="padding: 3px 9px;" title="Open the alerts or incidents behind this">
@@ -1831,14 +1826,6 @@
                     @click="activeTab === 'alerts' ? openCreateAlert() : (window.location.href = tabUrls['alerts'] + '?compose=1')"
                     class="sk-btn sk-btn-amber" title="Write a public alert; you review it before it is sent">
                     <i data-lucide="bell-ring"></i> New alert
-                </button>
-                {{-- Critique 2026-11-03: this only changes the label on this screen, so
-                     it is a quiet control, never the page's loudest button, until a
-                     real EOC activation exists on the server. --}}
-                <button x-show="can('sakuna_command', 'escalate')" @click="showEOCConfirm = true; $nextTick(() => window.renderIcons?.())"
-                    class="sk-btn sk-btn-sm sk-btn-ghost" :class="opStatusOverride ? '!text-rose-700' : ''"
-                    title="Change the status label on this screen only. Nobody is notified.">
-                    <i data-lucide="monitor-cog"></i> <span x-text="opStatusOverride ? 'Screen status: set' : 'Screen status'"></span>
                 </button>
             </div>
         </div>
@@ -1984,32 +1971,6 @@
 
             </div>
             </template>
-        </div>
-    </div>
-
-    {{-- ── EOC Activation Confirmation Modal ──────────────────────────────── --}}
-    <div x-show="showEOCConfirm" x-cloak x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm" @click.self="showEOCConfirm = false"
-        x-trap="showEOCConfirm"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="eoc-status-title"
-        @keydown.escape.window="showEOCConfirm = false">
-        <div x-transition:enter="transition duration-[200ms] ease-emphasized" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="bg-white rounded-[28px] shadow-float w-full max-w-md p-6">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                    <i data-lucide="monitor-cog" class="w-6 h-6 text-slate-600"></i>
-                </div>
-                <div>
-                    <h3 id="eoc-status-title" class="text-base font-semibold text-ink-body">Screen status</h3>
-                    <p class="text-sm text-ink-muted">Changes the status label on this screen only.</p>
-                </div>
-            </div>
-            <p class="text-sm text-slate-600 mb-5">This does not activate the EOC. Nobody is notified and nothing is recorded: it only changes what the status label reads on this screen, until you clear it or reload the page. To warn residents, send a public alert.</p>
-            <div class="flex gap-3">
-                <button @click="showEOCConfirm = false" class="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">Cancel</button>
-                <button x-show="opStatusOverride" @click="showEOCConfirm = false; opStatusOverride = ''; toast('Screen status cleared. The label follows the live board again.', 'success')" class="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-2xl hover:border-slate-300 transition-colors">Clear status</button>
-                <button x-show="!opStatusOverride" @click="showEOCConfirm = false; opStatusOverride = 'Emergency Operations Activated'; toast('Screen status set. Only this screen changed; nobody was notified.', 'warning'); $nextTick(() => window.renderIcons?.())" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-navy-700 rounded-2xl hover:bg-navy-800 transition-colors">Show “Emergency Operations Activated”</button>
-            </div>
         </div>
     </div>
 

@@ -37,7 +37,9 @@ class FullQaRunFixesTest extends TestCase
         $this->assertStringContainsString('x-show="permsReady && tabAllowed(', $view, 'the strip shows only permitted tabs');
         $this->assertStringContainsString('<template x-if="activeAllowed">', $view, 'a tab loads only once permitted');
         $this->assertStringContainsString('this.landOnAllowedTab();', $view, 'a tab outside the role sends them to the first they hold');
-        $this->assertStringContainsString("x-show=\"can('sakuna_command', 'escalate')\"", $view, 'Activate EOC only for who may escalate');
+        // Screen status (formerly Activate EOC) was display-only and is gone (owner, 2026-11-04).
+        $this->assertStringNotContainsString('showEOCConfirm', $view);
+        $this->assertStringNotContainsString('opStatusOverride', $view);
     }
 
     /** The Barangay Secretary opened Balita to a pop-up per tab: they hold only their directory entry. */
